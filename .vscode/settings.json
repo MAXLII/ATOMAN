@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "*.rasi": "css",
+        "*.bbmodel": "json",
+        "*.sublime-snippet": "xml",
+        "*.hbs": "html",
+        "*.ejs": "html",
+        "*.emu": "html",
+        "lesskey": "lesskey",
+        "*.Xresources": "xdefaults",
+        "i3/config": "i3",
+        "i3/*.conf": "i3",
+        "polybar/config": "ini",
+        "polybar/*.conf": "ini",
+        "*.bat": "bat",
+        "gd32g5x3.h": "c",
+        "section.h": "c",
+        "gpio.h": "c",
+        "winapifamily.h": "c"
+    }
+}
