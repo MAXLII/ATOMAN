@@ -16,6 +16,10 @@
         "gd32g5x3.h": "c",
         "section.h": "c",
         "gpio.h": "c",
-        "winapifamily.h": "c"
+        "winapifamily.h": "c",
+        "stdio.h": "c",
+        "stdint.h": "c",
+        "bsp_usart.h": "c",
+        "stdarg.h": "c"
     }
 }
