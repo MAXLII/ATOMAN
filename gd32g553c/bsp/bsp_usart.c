@@ -3,7 +3,6 @@
 #include "gd32g5x3.h"
 #include "stdio.h"
 #include "stdint.h"
-#include "shell.h"
 #include <stdarg.h>
 
 USART_LINK_E usart_link = USART0_LINK;

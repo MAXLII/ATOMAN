@@ -142,7 +142,9 @@ typedef struct
 
 void section_fsm_func(reg_fsm_t *str);
 
-void shell_run(char data, void (*my_printf)(const char *__format, ...));
+#define DEC_MY_PRINTF void (*my_printf)(const char *__format, ...)
+
+void shell_run(char data, DEC_MY_PRINTF);
 
 typedef enum
 {
@@ -162,12 +164,12 @@ typedef struct section_shell_t
     uint32_t p_name_size;
     void *p_var;
     uint32_t type;
-    void (*func)(void);
+    void (*func)(DEC_MY_PRINTF);
     struct section_shell_t *p_next; // 可修改的指针
 } section_shell_t;
 
 #define REG_SHELL_VAR(_name, _var, _type, _func)                       \
-    section_shell_t section_shell_##_name = {                    \
+    section_shell_t section_shell_##_name = {                          \
         .p_name = #_name,                                              \
         .p_name_size = (sizeof(#_name) - 1),                           \
         .p_var = (void *)&_var,                                        \
@@ -181,7 +183,7 @@ typedef struct section_shell_t
     };
 
 #define REG_SHELL_CMD(_name, _func)                                    \
-    section_shell_t section_shell_##_name = {                    \
+    section_shell_t section_shell_##_name = {                          \
         .p_name = #_name,                                              \
         .p_name_size = sizeof(#_name) - 1,                             \
         .p_var = NULL,                                                 \
@@ -200,11 +202,10 @@ typedef struct
     uint32_t buff_size;
     uint32_t pos;
     uint32_t *dma_cnt;
-    void (*my_printf)(const char *__format, ...);
+    DEC_MY_PRINTF;
     void(*p_next);
-    void (**func_arr)(char,
-                      void (*my_printf)(const char *__format, ...)); // 新增：函数指针数组
-    uint32_t func_num;                                               // 新增：函数数量
+    void (**func_arr)(char, DEC_MY_PRINTF); // 新增：函数指针数组
+    uint32_t func_num;                      // 新增：函数数量
 } section_link_t;
 
 #define REG_LINK(link, size, print, _dma_cnt, _func_arr, _func_num)  \

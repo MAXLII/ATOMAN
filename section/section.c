@@ -232,7 +232,7 @@ uint8_t shell_index = 0;
 
 #include "string.h"
 
-void shell_run(char data, void (*my_printf)(const char *__format, ...))
+void shell_run(char data, DEC_MY_PRINTF)
 {
     uint8_t err = 0;
     uint8_t u8_temp = 0;
@@ -246,8 +246,6 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
     float f32_integer = 0.0f;
     float f32_decimal = 0.0f;
     uint8_t is_decimal = 0;
-    uint32_t match_cnt = 0;
-    uint8_t is_match = 1;
 
     shell_buffer[shell_index++] = data;
     if (shell_index >= 128)
@@ -277,7 +275,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_UINT8:
@@ -308,7 +306,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_UINT16:
@@ -339,7 +337,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_UINT32:
@@ -370,7 +368,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_INT8:
@@ -410,7 +408,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_INT16:
@@ -450,7 +448,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_INT32:
@@ -491,11 +489,11 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         case SHELL_FP32:
-                        	i++;
+                            i++;
                             f32_temp = 0.0f;
                             f32_decimal = 1.0f;
                             f32_integer = 0.0f;
@@ -546,7 +544,7 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
                             if (p_shell->func != NULL)
                             {
                                 my_printf("Executing %s\r\n", p_shell->p_name);
-                                p_shell->func();
+                                p_shell->func(my_printf);
                             }
                             break;
                         }
@@ -574,45 +572,47 @@ void shell_run(char data, void (*my_printf)(const char *__format, ...))
         shell_index = 0;
     }
 }
+#ifndef IS_PLECS
+
 #include "bsp_usart.h"
-static void list(void)
+static void list(DEC_MY_PRINTF)
 {
     section_shell_t *p_shell = p_shell_first; // 获取第一个shell命令
     while (p_shell != NULL)
     {
-        usart0_printf("%s\t", p_shell->p_name);
+        my_printf("%s\t", p_shell->p_name);
         switch (p_shell->type)
         {
         case SHELL_CMD:
-            usart0_printf("SHELL_CMD\r\n");
+            my_printf("SHELL_CMD\r\n");
             break;
         case SHELL_UINT8:
-            usart0_printf("SHELL_DATA_UINT8_T\t");
-            usart0_printf("%d\r\n", *(uint8_t *)p_shell->p_var);
+            my_printf("SHELL_DATA_UINT8_T\t");
+            my_printf("%d\r\n", *(uint8_t *)p_shell->p_var);
             break;
         case SHELL_UINT16:
-            usart0_printf("SHELL_DATA_UINT16_T\t");
-            usart0_printf("%d\r\n", *(uint16_t *)p_shell->p_var);
+            my_printf("SHELL_DATA_UINT16_T\t");
+            my_printf("%d\r\n", *(uint16_t *)p_shell->p_var);
             break;
         case SHELL_UINT32:
-            usart0_printf("SHELL_DATA_UINT32_T\t");
-            usart0_printf("%d\r\n", *(uint32_t *)p_shell->p_var);
+            my_printf("SHELL_DATA_UINT32_T\t");
+            my_printf("%d\r\n", *(uint32_t *)p_shell->p_var);
             break;
         case SHELL_INT8:
-            usart0_printf("SHELL_DATA_INT8_T\t");
-            usart0_printf("%d\r\n", *(int8_t *)p_shell->p_var);
+            my_printf("SHELL_DATA_INT8_T\t");
+            my_printf("%d\r\n", *(int8_t *)p_shell->p_var);
             break;
         case SHELL_INT16:
-            usart0_printf("SHELL_DATA_INT16_T\t");
-            usart0_printf("%d\r\n", *(int16_t *)p_shell->p_var);
+            my_printf("SHELL_DATA_INT16_T\t");
+            my_printf("%d\r\n", *(int16_t *)p_shell->p_var);
             break;
         case SHELL_INT32:
-            usart0_printf("SHELL_DATA_INT32_T\t");
-            usart0_printf("%d\r\n", *(int32_t *)p_shell->p_var);
+            my_printf("SHELL_DATA_INT32_T\t");
+            my_printf("%d\r\n", *(int32_t *)p_shell->p_var);
             break;
         case SHELL_FP32:
-            usart0_printf("SHELL_DATA_FLOAT\t");
-            usart0_printf("%f\r\n", *(float *)p_shell->p_var);
+            my_printf("SHELL_DATA_FLOAT\t");
+            my_printf("%f\r\n", *(float *)p_shell->p_var);
             break;
         }
         p_shell = p_shell->p_next; // 移动到下一个命令
@@ -620,3 +620,5 @@ static void list(void)
 }
 
 REG_SHELL_CMD(list, list);
+
+#endif
