@@ -1,5 +1,6 @@
 #include "section.h"
 #include "stddef.h"
+#include "string.h"
 
 #ifdef IS_PLECS
 
@@ -229,8 +230,6 @@ REG_TASK(10, section_link_task);
 
 uint8_t shell_buffer[128];
 uint8_t shell_index = 0;
-
-#include "string.h"
 
 void shell_run(char data, DEC_MY_PRINTF)
 {
