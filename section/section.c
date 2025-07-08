@@ -572,9 +572,7 @@ void shell_run(char data, DEC_MY_PRINTF)
         shell_index = 0;
     }
 }
-#ifndef IS_PLECS
 
-#include "bsp_usart.h"
 static void list(DEC_MY_PRINTF)
 {
     section_shell_t *p_shell = p_shell_first; // 获取第一个shell命令
@@ -620,5 +618,3 @@ static void list(DEC_MY_PRINTF)
 }
 
 REG_SHELL_CMD(list, list);
-
-#endif
