@@ -582,34 +582,34 @@ static void list(DEC_MY_PRINTF)
         switch (p_shell->type)
         {
         case SHELL_CMD:
-            my_printf("SHELL_CMD\r\n");
+            my_printf("CMD\r\n");
             break;
         case SHELL_UINT8:
-            my_printf("SHELL_DATA_UINT8_T\t");
+            my_printf("U8\t");
             my_printf("%d\r\n", *(uint8_t *)p_shell->p_var);
             break;
         case SHELL_UINT16:
-            my_printf("SHELL_DATA_UINT16_T\t");
+            my_printf("U16\t");
             my_printf("%d\r\n", *(uint16_t *)p_shell->p_var);
             break;
         case SHELL_UINT32:
-            my_printf("SHELL_DATA_UINT32_T\t");
+            my_printf("U32\t");
             my_printf("%d\r\n", *(uint32_t *)p_shell->p_var);
             break;
         case SHELL_INT8:
-            my_printf("SHELL_DATA_INT8_T\t");
+            my_printf("I8\t");
             my_printf("%d\r\n", *(int8_t *)p_shell->p_var);
             break;
         case SHELL_INT16:
-            my_printf("SHELL_DATA_INT16_T\t");
+            my_printf("I16\t");
             my_printf("%d\r\n", *(int16_t *)p_shell->p_var);
             break;
         case SHELL_INT32:
-            my_printf("SHELL_DATA_INT32_T\t");
+            my_printf("I32\t");
             my_printf("%d\r\n", *(int32_t *)p_shell->p_var);
             break;
         case SHELL_FP32:
-            my_printf("SHELL_DATA_FLOAT\t");
+            my_printf("FP32\t");
             my_printf("%f\r\n", *(float *)p_shell->p_var);
             break;
         }
