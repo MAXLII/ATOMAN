@@ -51,7 +51,7 @@ typedef struct
                                                                      \
     };
 
-#define REG_TASK_MS(period, func) REG_TASK(period * 10, func)
+#define REG_TASK_MS(period, func) REG_TASK((period) * 10, func)
 
 void run_task(void);
 
