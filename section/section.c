@@ -5,8 +5,8 @@
  * @version 1.0
  * @date 2025-07-09
  * @copyright Copyright (c) 2025
- * 
- * @details 
+ *
+ * @details
  * 本文件实现了基于段的自动注册管理系统，支持以下功能：
  * - 任务管理：定时任务的注册和执行
  * - 初始化管理：初始化函数的自动调用
@@ -27,28 +27,28 @@
 #ifdef IS_PLECS
 #include "plecs.h"
 extern uint32_t plecs_time_100us;
-#define SECTION_SYS_TICK plecs_time_100us           ///< 系统时钟（100us单位）
+#define SECTION_SYS_TICK plecs_time_100us ///< 系统时钟（100us单位）
 extern size_t __start_section;
 extern size_t __stop_section;
-#define SECTION_START __start_section               ///< 段起始地址
-#define SECTION_STOP __stop_section                 ///< 段结束地址
-#define SYSTEM_RESET ;                              ///< 系统复位（PLECS中为空）
+#define SECTION_START __start_section ///< 段起始地址
+#define SECTION_STOP __stop_section   ///< 段结束地址
+#define SYSTEM_RESET ;                ///< 系统复位（PLECS中为空）
 #else
 #include "systick.h"
 #include "gd32g5x3.h"
-#define SECTION_SYS_TICK systick_gettime_100us()   ///< 系统时钟（100us单位）
+#define SECTION_SYS_TICK systick_gettime_100us() ///< 系统时钟（100us单位）
 extern uint32_t __section_start;
 extern uint32_t __section_end;
-#define SECTION_START __section_start               ///< 段起始地址
-#define SECTION_STOP __section_end                  ///< 段结束地址
-#define SYSTEM_RESET nvic_system_reset()            ///< 系统复位
+#define SECTION_START __section_start            ///< 段起始地址
+#define SECTION_STOP __section_end               ///< 段结束地址
+#define SYSTEM_RESET nvic_system_reset()         ///< 系统复位
 #endif
 
 // 全局链表头指针
-reg_task_t *p_task_first = NULL;                    ///< 任务链表头指针
-reg_interrupt_t *p_interrupt_first = NULL;          ///< 中断链表头指针
-section_shell_t *p_shell_first = NULL;              ///< Shell命令链表头指针
-section_link_t *p_link_first = NULL;                ///< 链路链表头指针
+reg_task_t *p_task_first = NULL;           ///< 任务链表头指针
+reg_interrupt_t *p_interrupt_first = NULL; ///< 中断链表头指针
+section_shell_t *p_shell_first = NULL;     ///< Shell命令链表头指针
+section_link_t *p_link_first = NULL;       ///< 链路链表头指针
 
 /**
  * @brief 检查字符串是否为有效数字表达式
@@ -60,11 +60,11 @@ static int is_string_number(const char *str)
 {
     if (!str || !*str)
         return 0;
-    
+
     // 处理正负号
     if (*str == '-' || *str == '+')
         str++;
-    
+
     int has_digit = 0, has_dot = 0;
     while (*str)
     {
@@ -118,25 +118,29 @@ static float eval_expr_inner(const char **p)
     while (*expr)
     {
         // 跳过空格
-        while (*expr == ' ') expr++;
+        while (*expr == ' ')
+            expr++;
 
         // 处理连续的正负号
         int sign = 1;
         while (*expr == '+' || *expr == '-')
         {
-            if (*expr == '-') sign *= -1;
+            if (*expr == '-')
+                sign *= -1;
             expr++;
         }
-        while (*expr == ' ') expr++;
+        while (*expr == ' ')
+            expr++;
 
         float number = 0;
-        
+
         // 处理括号
         if (*expr == '(')
         {
             expr++; // 跳过 '('
             number = eval_expr_inner(&expr);
-            if (*expr == ')') expr++; // 跳过 ')'
+            if (*expr == ')')
+                expr++; // 跳过 ')'
         }
         else
         {
@@ -148,36 +152,42 @@ static float eval_expr_inner(const char **p)
         // 处理连续的乘除运算（优先级高）
         while (1)
         {
-            while (*expr == ' ') expr++;
-            if (*expr != '*' && *expr != '/') break;
+            while (*expr == ' ')
+                expr++;
+            if (*expr != '*' && *expr != '/')
+                break;
 
             char muldiv = *expr++;
-            while (*expr == ' ') expr++;
-            
+            while (*expr == ' ')
+                expr++;
+
             float next = 0;
             int next_sign = 1;
-            
+
             // 处理乘除运算后的正负号
             while (*expr == '+' || *expr == '-')
             {
-                if (*expr == '-') next_sign *= -1;
+                if (*expr == '-')
+                    next_sign *= -1;
                 expr++;
             }
-            while (*expr == ' ') expr++;
-            
+            while (*expr == ' ')
+                expr++;
+
             // 处理括号或数字
             if (*expr == '(')
             {
                 expr++;
                 next = eval_expr_inner(&expr);
-                if (*expr == ')') expr++;
+                if (*expr == ')')
+                    expr++;
             }
             else
             {
                 next = strtof(expr, (char **)&expr);
             }
             next *= next_sign;
-            
+
             // 执行乘除运算
             if (muldiv == '*')
                 number *= next;
@@ -192,7 +202,8 @@ static float eval_expr_inner(const char **p)
             result -= number;
 
         // 获取下一个运算符
-        while (*expr == ' ') expr++;
+        while (*expr == ' ')
+            expr++;
         if (*expr == '+' || *expr == '-')
             op = *expr++;
         else if (*expr == ')')
@@ -217,7 +228,7 @@ static int parse_integer(const char *param, int32_t *out)
 {
     if (param == NULL)
         return 0;
-        
+
     if (strncmp(param, "0x", 2) == 0)
     {
         // 十六进制
@@ -247,11 +258,12 @@ static int parse_integer(const char *param, int32_t *out)
  */
 void shell_run(char data, DEC_MY_PRINTF)
 {
-    static uint8_t shell_buffer[128];               ///< Shell缓冲区
-    static uint8_t shell_index = 0;                 ///< 缓冲区索引
+    static uint8_t shell_buffer[128]; ///< Shell缓冲区
+    static uint8_t shell_index = 0;   ///< 缓冲区索引
 
     // 溢出保护
-    if (shell_index >= sizeof(shell_buffer) - 1) {
+    if (shell_index >= sizeof(shell_buffer) - 1)
+    {
         shell_index = 0;
     }
     shell_buffer[shell_index++] = data;
@@ -404,10 +416,10 @@ void shell_run(char data, DEC_MY_PRINTF)
             }
             p = p->p_next;
         }
-        
+
         // 未找到匹配的命令
         my_printf("Unknown command\r\n");
-        
+
     shell_done:
         // 清空缓冲区
         memset(shell_buffer, 0, sizeof(shell_buffer));
@@ -424,7 +436,7 @@ static void task_insert(reg_task_t *task)
 {
     task->time_last = SECTION_SYS_TICK;
     task->p_next = NULL;
-    
+
     if (p_task_first == NULL)
     {
         p_task_first = task;
@@ -445,10 +457,11 @@ static void task_insert(reg_task_t *task)
  */
 static void interrupt_insert(reg_interrupt_t *intr)
 {
-    if (!intr) return;
-    
+    if (!intr)
+        return;
+
     intr->p_next = NULL;
-    
+
     // 插入到链表头或按优先级顺序插入
     if (!p_interrupt_first || intr->priority < p_interrupt_first->priority)
     {
@@ -474,14 +487,17 @@ static void interrupt_insert(reg_interrupt_t *intr)
  */
 static void shell_insert(section_shell_t *shell)
 {
-    if (!shell) return;
-    
+    if (!shell)
+        return;
+
     // 防止重复插入
     section_shell_t *last = NULL;
-    for (section_shell_t *p = p_shell_first; p; last = p, p = p->p_next) {
-        if (p == shell) return;
+    for (section_shell_t *p = p_shell_first; p; last = p, p = p->p_next)
+    {
+        if (p == shell)
+            return;
     }
-    
+
     shell->p_next = NULL;
     if (last)
         last->p_next = shell;
@@ -497,7 +513,7 @@ static void shell_insert(section_shell_t *shell)
 static void link_insert(section_link_t *link)
 {
     link->p_next = NULL;
-    
+
     if (!p_link_first)
         p_link_first = link;
     else
@@ -551,14 +567,14 @@ void section_init(void)
 void run_task(void)
 {
     uint32_t now = SECTION_SYS_TICK;
-    
+
     // 遍历任务链表，检查是否到期
     for (reg_task_t *t = p_task_first; t != NULL; t = (reg_task_t *)t->p_next)
     {
         if (now - t->time_last >= t->t_period)
         {
-            t->p_func();                // 执行任务函数
-            t->time_last = now;         // 更新最后执行时间
+            t->p_func();        // 执行任务函数
+            t->time_last = now; // 更新最后执行时间
         }
     }
 }
@@ -584,7 +600,7 @@ void section_fsm_func(reg_fsm_t *fsm)
 {
     if (!fsm->p_fsm_func_table || !fsm->p_fsm_ev)
         return;
-        
+
     // 查找当前状态对应的处理函数
     for (uint32_t i = 0; i < fsm->fsm_table_size; ++i)
     {
@@ -597,22 +613,22 @@ void section_fsm_func(reg_fsm_t *fsm)
                 fsm->fsm_sta_is_change = 0;
                 entry->func_in();
             }
-            
+
             // 执行状态处理函数
             entry->func_exe();
-            
+
             // 检查是否有事件需要处理
             if (*fsm->p_fsm_ev)
             {
                 uint32_t next = entry->func_chk(*fsm->p_fsm_ev);
                 *fsm->p_fsm_ev = 0;
-                
+
                 // 状态切换
                 if (next && next != entry->fsm_sta)
                 {
-                    entry->func_out();              // 执行出口函数
-                    fsm->fsm_sta = next;            // 切换状态
-                    fsm->fsm_sta_is_change = 1;    // 标记状态已改变
+                    entry->func_out();          // 执行出口函数
+                    fsm->fsm_sta = next;        // 切换状态
+                    fsm->fsm_sta_is_change = 1; // 标记状态已改变
                 }
             }
             break;
@@ -638,7 +654,7 @@ static void link_process(section_link_t *link)
     while (link->pos != cnt)
     {
         uint8_t data = (*link->p_buff)[link->pos];
-        
+
         // 调用所有注册的处理函数
         for (uint32_t i = 0; i < link->func_num; ++i)
         {
@@ -647,7 +663,7 @@ static void link_process(section_link_t *link)
                 link->func_arr[i](data, link->my_printf);
             }
         }
-        
+
         // 更新位置指针（环形缓冲区）
         link->pos = (link->pos + 1) % buff_size;
     }
