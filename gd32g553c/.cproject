@@ -16,7 +16,7 @@
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="${command_rm} -rf" description="" id="com.gigadevice.mbs.arm.configuration.debug.388775432" name="gd_dbg" parent="com.gigadevice.mbs.arm.configuration.debug">
 					<folderInfo id="com.gigadevice.mbs.arm.configuration.debug.388775432." name="/" resourcePath="">
-						<toolChain id="com.gigadevice.mbs.arm.toolChain.elf.debug.1056840063" name="GD ARM MCU Toolchain" secondaryOutputs="com.gigadevice.mbs.arm.outputType.objcopy.bin;com.gigadevice.mbs.arm.outputType.objdump.list;com.gigadevice.mbs.arm.outputType.size" superClass="com.gigadevice.mbs.arm.toolChain.elf.debug">
+						<toolChain id="com.gigadevice.mbs.arm.toolChain.elf.debug.1056840063" name="GD ARM MCU Toolchain" secondaryOutputs="com.gigadevice.mbs.arm.outputType.objcopy.bin;com.gigadevice.mbs.arm.outputType.objdump.list;com.gigadevice.mbs.arm.outputType.size;com.gigadevice.mbs.arm.outputType.objcopy.hex;com.gigadevice.mbs.arm.outputType.objcopy.mot;com.gigadevice.mbs.arm.outputType.objdump.dump" superClass="com.gigadevice.mbs.arm.toolChain.elf.debug">
 							<option id="com.gigadevice.mbs.arm.option.optimization.messageLength.1931056738" name="Message length (-fmessage-length=0)" superClass="com.gigadevice.mbs.arm.option.optimization.messageLength"/>
 							<option id="com.gigadevice.mbs.arm.option.optimization.allOptions.1505378011" name="All options" superClass="com.gigadevice.mbs.arm.option.optimization.allOptions" value="-O3 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections" valueType="string"/>
 							<option id="com.gigadevice.mbs.arm.option.optimization.signedChar.285323304" name="Plain char is signed (-fsigned-char)" superClass="com.gigadevice.mbs.arm.option.optimization.signedChar"/>
@@ -36,10 +36,10 @@
 							<option id="com.gigadevice.mbs.arm.option.targetProcessor.allOptions.590699349" name="All options" superClass="com.gigadevice.mbs.arm.option.targetProcessor.allOptions" value="-mcpu=cortex-m33 -mthumb" valueType="string"/>
 							<option id="com.gigadevice.mbs.arm.option.optimization.level.575133882" name="Optimization Level" superClass="com.gigadevice.mbs.arm.option.optimization.level" value="com.gigadevice.mbs.option.toolSettings.optimization.level.most" valueType="enumerated"/>
 							<option id="com.gigadevice.mbs.arm.option.targetProcessor.other.1538145783" name="Other target flags" superClass="com.gigadevice.mbs.arm.option.targetProcessor.other" value="" valueType="string"/>
-							<option id="com.gigadevice.mbs.arm.option.targetProcessor.fpu.abi.399510985" superClass="com.gigadevice.mbs.arm.option.targetProcessor.fpu.abi" value="com.gigadevice.mbs.arm.option.targetProcessor.fpu.abi.default" valueType="enumerated"/>
-							<option id="com.gigadevice.mbs.arm.option.outputFile.dump.2053664011" superClass="com.gigadevice.mbs.arm.option.outputFile.dump" value="true" valueType="boolean"/>
-							<option id="com.gigadevice.mbs.arm.option.outputFile.hex.1280874481" superClass="com.gigadevice.mbs.arm.option.outputFile.hex" value="true" valueType="boolean"/>
-							<option id="com.gigadevice.mbs.arm.option.outputFile.mot.169206094" superClass="com.gigadevice.mbs.arm.option.outputFile.mot" value="true" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.targetProcessor.fpu.abi.399510985" name="Float ABI" superClass="com.gigadevice.mbs.arm.option.targetProcessor.fpu.abi" value="com.gigadevice.mbs.arm.option.targetProcessor.fpu.abi.default" valueType="enumerated"/>
+							<option id="com.gigadevice.mbs.arm.option.outputFile.dump.2053664011" name="Dump" superClass="com.gigadevice.mbs.arm.option.outputFile.dump" value="true" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.outputFile.hex.1280874481" name="Hex" superClass="com.gigadevice.mbs.arm.option.outputFile.hex" value="true" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.outputFile.mot.169206094" name="Mot" superClass="com.gigadevice.mbs.arm.option.outputFile.mot" value="true" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.gigadevice.mbs.arm.targetPlatform.1115440926" isAbstract="false" osList="all" superClass="com.gigadevice.mbs.arm.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/gd32g553cstart}/GD ARM MCU Debug" id="com.gigadevice.mbs.arm.builder.1720268552" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="com.gigadevice.mbs.arm.builder"/>
 							<tool id="com.gigadevice.mbs.arm.tool.CCompiler.2005980156" name="GD ARM MCU C Compiler" superClass="com.gigadevice.mbs.arm.tool.CCompiler">
@@ -57,6 +57,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/bsp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/code/app}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/code/interface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/code/dbg}&quot;"/>
 								</option>
 								<inputType id="com.gigadevice.mbs.arm.inputType.CCompiler.1372937123" superClass="com.gigadevice.mbs.arm.inputType.CCompiler"/>
 							</tool>

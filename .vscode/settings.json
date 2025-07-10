@@ -21,6 +21,7 @@
         "stdint.h": "c",
         "bsp_usart.h": "c",
         "stdarg.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "scope.h": "c"
     }
 }
