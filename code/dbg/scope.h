@@ -1,7 +1,7 @@
 /**
  * @file scope.h
  * @brief 软件示波器（Scope）模块头文件
- * @author
+ * @author Max.Li
  * @version 1.0
  * @date 2025-07-09
  *
@@ -20,118 +20,102 @@
  */
 typedef enum
 {
-    SCOPE_IDLE,     ///< 空闲状态
-    SCOPE_RUN,      ///< 采集运行状态
-    SCOPE_IN_TRIG,  ///< 触发后采集状态
-} SCOPE_E;
+    SCOPE_STATE_IDLE,      ///< 空闲状态
+    SCOPE_STATE_RUNNING,   ///< 采集运行状态
+    SCOPE_STATE_TRIGGERED, ///< 触发后采集状态
+} scope_state_e;
 
 /**
  * @brief Scope主控制结构体
- * @details
- * 采集变量指针、缓冲区、状态、触发点等信息。
  */
 typedef struct
 {
-    uint32_t pos_cnt;      ///< 当前采集位置
-    uint32_t trig;         ///< 触发标志
-    uint8_t is_run;        ///< 运行标志
-    uint32_t buffer_size;  ///< 缓冲区长度
-    uint32_t trig_point;   ///< 触发后采集点数
-    uint8_t var_num;       ///< 采集变量数量
-    uint32_t trig_cnt;     ///< 触发后采集计数
-    uint32_t in_trig;      ///< 处于触发采集状态标志
-    float *p_buffer;       ///< 采集缓冲区指针
-    float **p_var;         ///< 采集变量指针数组
-    const char **p_var_name; ///< 采集变量名指针数组
-    uint8_t sta;           ///< 当前状态（SCOPE_E）
+    uint32_t write_index;      ///< 当前写入位置
+    uint32_t trigger_index;    ///< 触发点在缓冲区的索引
+    uint8_t is_triggered;      ///< 触发标志
+    uint8_t is_running;        ///< 运行标志
+    uint32_t buffer_size;      ///< 缓冲区长度
+    uint32_t trigger_post_cnt; ///< 触发后采集点数
+    uint8_t var_count;         ///< 采集变量数量
+    uint32_t trigger_counter;  ///< 触发后采集计数
+    uint8_t in_trigger;        ///< 处于触发采集状态标志
+    float *buffer;             ///< 采集缓冲区指针
+    float **var_ptrs;          ///< 采集变量指针数组
+    const char **var_names;    ///< 采集变量名指针数组
+    scope_state_e state;       ///< 当前状态
 } scope_t;
 
-/**
- * @brief 采集变量地址宏
- */
-#define ADDR(x) &x
+// 采集变量地址宏
+#define SCOPE_ADDR(x) (&x)
 
-/**
- * @brief 变参宏展开工具
- */
-#define EXPAND(...) __VA_ARGS__
+// 变参宏展开工具
+#define SCOPE_EXPAND(...) __VA_ARGS__
 
-/**
- * @brief FOR_EACH宏族：对每个参数应用宏m
- * @note 用于生成变量指针数组
- */
-#define FOR_EACH_1(m, a) m(a)
-#define FOR_EACH_2(m, a, ...) m(a), FOR_EACH_1(m, __VA_ARGS__)
-#define FOR_EACH_3(m, a, ...) m(a), FOR_EACH_2(m, __VA_ARGS__)
-#define FOR_EACH_4(m, a, ...) m(a), FOR_EACH_3(m, __VA_ARGS__)
-#define FOR_EACH_5(m, a, ...) m(a), FOR_EACH_4(m, __VA_ARGS__)
-#define FOR_EACH_6(m, a, ...) m(a), FOR_EACH_5(m, __VA_ARGS__)
-#define FOR_EACH_7(m, a, ...) m(a), FOR_EACH_6(m, __VA_ARGS__)
-#define FOR_EACH_8(m, a, ...) m(a), FOR_EACH_7(m, __VA_ARGS__)
-#define FOR_EACH_9(m, a, ...) m(a), FOR_EACH_8(m, __VA_ARGS__)
-#define FOR_EACH_10(m, a, ...) m(a), FOR_EACH_9(m, __VA_ARGS__)
-#define FOR_EACH_11(m, a, ...) m(a), FOR_EACH_10(m, __VA_ARGS__)
-#define FOR_EACH_12(m, a, ...) m(a), FOR_EACH_11(m, __VA_ARGS__)
-#define FOR_EACH_13(m, a, ...) m(a), FOR_EACH_12(m, __VA_ARGS__)
-#define FOR_EACH_14(m, a, ...) m(a), FOR_EACH_13(m, __VA_ARGS__)
-#define FOR_EACH_15(m, a, ...) m(a), FOR_EACH_14(m, __VA_ARGS__)
-#define FOR_EACH_N(          \
-    _1, _2, _3, _4, _5,      \
-    _6, _7, _8, _9, _10,     \
-    _11, _12, _13, _14, _15, \
-    N, ...) FOR_EACH_##N
-#define FOR_EACH(m, ...)                  \
-    EXPAND(FOR_EACH_N(__VA_ARGS__,        \
-                      15, 14, 13, 12, 11, \
-                      10, 9, 8, 7, 6,     \
-                      5, 4, 3, 2, 1)(m, __VA_ARGS__))
+// FOR_EACH宏族
+#define SCOPE_FOR_EACH_1(m, a) m(a)
+#define SCOPE_FOR_EACH_2(m, a, ...) m(a), SCOPE_FOR_EACH_1(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_3(m, a, ...) m(a), SCOPE_FOR_EACH_2(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_4(m, a, ...) m(a), SCOPE_FOR_EACH_3(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_5(m, a, ...) m(a), SCOPE_FOR_EACH_4(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_6(m, a, ...) m(a), SCOPE_FOR_EACH_5(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_7(m, a, ...) m(a), SCOPE_FOR_EACH_6(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_8(m, a, ...) m(a), SCOPE_FOR_EACH_7(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_9(m, a, ...) m(a), SCOPE_FOR_EACH_8(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_10(m, a, ...) m(a), SCOPE_FOR_EACH_9(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_N( \
+    _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) SCOPE_FOR_EACH_##N
+#define SCOPE_FOR_EACH(m, ...) \
+    SCOPE_EXPAND(SCOPE_FOR_EACH_N(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)(m, __VA_ARGS__))
 
-/**
- * @brief 统计变参数量宏
- */
-#define COUNT_ARGS_N(                      \
-    _, _1, _2, _3, _4, _5, _6, _7, _8, _9, \
-    _10, _11, _12, _13, _14, _15, _16, N, ...) N
+// 统计变参数量宏
+#define SCOPE_COUNT_ARGS_N(_, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) N
+#define SCOPE_COUNT_ARGS(...) \
+    SCOPE_EXPAND(SCOPE_COUNT_ARGS_N(_, __VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
 
-#define COUNT_ARGS(...)                         \
-    EXPAND(COUNT_ARGS_N(_,                      \
-                        __VA_ARGS__,            \
-                        16, 15, 14, 13, 12, 11, \
-                        10, 9, 8, 7, 6,         \
-                        5, 4, 3, 2, 1, 0))
-
-// 辅助宏：将变量名转为字符串
-#define STR(x) #x
+// 辅助宏：变量名转字符串
+#define SCOPE_STR(x) #x
 
 /**
  * @brief 注册Scope采集对象
  * @param name 采集对象名称
- * @param _buffer_size 缓冲区长度
- * @param _trig_point 触发后采集点数
+ * @param buf_size 缓冲区长度
+ * @param trig_post_cnt 触发后采集点数
  * @param ... 采集变量列表（float类型变量名）
- * @note 自动生成缓冲区、变量指针数组、变量名数组和scope_t对象
- * @example
- * REG_SCOPE(my_scope, 256, 64, var1, var2, var3)
  */
-#define REG_SCOPE(name, _buffer_size, _trig_point, ...)                                \
-    float scope_buffer_##name[EXPAND(COUNT_ARGS(__VA_ARGS__))][_buffer_size];          \
-    float __VA_ARGS__;                                                                 \
-    float *scope_var_##name[EXPAND(COUNT_ARGS(__VA_ARGS__))] = {FOR_EACH(ADDR, __VA_ARGS__)}; \
-    const char *scope_name_##name[EXPAND(COUNT_ARGS(__VA_ARGS__))] = {FOR_EACH(STR, __VA_ARGS__)}; \
-    scope_t scope_##name = {                                                           \
-        .pos_cnt = 0,                                                                  \
-        .trig = 0,                                                                     \
-        .is_run = 0,                                                                   \
-        .buffer_size = _buffer_size,                                                   \
-        .var_num = EXPAND(COUNT_ARGS(__VA_ARGS__)),                                    \
-        .trig_point = _trig_point,                                                     \
-        .p_var = &scope_var_##name[0],                                                 \
-        .p_buffer = &scope_buffer_##name[0][0],                                        \
-        .p_var_name = &scope_name_##name[0],                                           \
-        .trig_cnt = 0,                                                                 \
-        .in_trig = 0,                                                                  \
-        .sta = SCOPE_IDLE,                                                             \
+#define REG_SCOPE(name, buf_size, trig_post_cnt, ...)                                                               \
+    float scope_##name##_buffer[SCOPE_COUNT_ARGS(__VA_ARGS__)][buf_size];                                           \
+    float __VA_ARGS__;                                                                                              \
+    float *scope_##name##_var_ptrs[SCOPE_COUNT_ARGS(__VA_ARGS__)] = {SCOPE_FOR_EACH(SCOPE_ADDR, __VA_ARGS__)};      \
+    const char *scope_##name##_var_names[SCOPE_COUNT_ARGS(__VA_ARGS__)] = {SCOPE_FOR_EACH(SCOPE_STR, __VA_ARGS__)}; \
+    scope_t scope_##name = {                                                                                        \
+        .write_index = 0,                                                                                           \
+        .trigger_index = 0,                                                                                         \
+        .is_triggered = 0,                                                                                          \
+        .is_running = 0,                                                                                            \
+        .buffer_size = buf_size,                                                                                    \
+        .var_count = SCOPE_COUNT_ARGS(__VA_ARGS__),                                                                 \
+        .trigger_post_cnt = trig_post_cnt,                                                                          \
+        .var_ptrs = &scope_##name##_var_ptrs[0],                                                                    \
+        .buffer = &scope_##name##_buffer[0][0],                                                                     \
+        .var_names = &scope_##name##_var_names[0],                                                                  \
+        .trigger_counter = 0,                                                                                       \
+        .in_trigger = 0,                                                                                            \
+        .state = SCOPE_STATE_IDLE,                                                                                  \
     };
+
+// Scope接口
+#define SCOPE_RUN(name) scope_run(&scope_##name)
+#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
+#define SCOPE_STATUS(name, my_printf) scope_print_status(&scope_##name, my_printf)
+#define SCOPE_DATA(name, my_printf) scope_print_data(&scope_##name, my_printf)
+
+void scope_run(scope_t *scope);
+void scope_start(scope_t *scope);
+void scope_stop(scope_t *scope);
+void scope_trigger(scope_t *scope);
+void scope_reset(scope_t *scope);
+void scope_print_status(scope_t *scope, DEC_MY_PRINTF);
+void scope_print_data(scope_t *scope, DEC_MY_PRINTF);
 
 /**
  * @brief 获取Scope缓冲区指针
@@ -211,5 +195,12 @@ void scope_reset(scope_t *scope);
 
 void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
 void scope_printf_data(scope_t *scope, DEC_MY_PRINTF);
+
+/**
+ * @brief 触发Scope采集（宏）
+ * @param name 采集对象名称
+ * @note 等价于 scope_trigger(&scope_##name)
+ */
+#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
 
 #endif

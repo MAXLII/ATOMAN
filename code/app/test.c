@@ -15,7 +15,7 @@
 #include "section.h"
 
 // 注册Scope采集对象：采集sin_data和cos_data两个变量，缓冲区256，触发点100
-REG_SCOPE(tsm, 256, 100, sin_data, cos_data)
+REG_SCOPE(tsm, 256, 100, sin_data, cos_data, sin_cos_data)
 
 // 触发变量，通过Shell写1触发Scope
 uint8_t trig = 0;
@@ -39,8 +39,8 @@ void test_scope_trig(DEC_MY_PRINTF)
         my_printf("Trigger not set\r\n");
     }
 }
-// 注册trig变量到Shell，类型为SHELL_UINT8，回调为test_scope_trig
-REG_SHELL_VAR(trig, trig, SHELL_UINT8, test_scope_trig)
+// 注册trig变量到Shell，类型为SHELL_UINT8
+REG_SHELL_VAR(trig, trig, SHELL_UINT8, NULL)
 
 /**
  * @brief Shell命令：查询Scope状态
@@ -83,12 +83,21 @@ void test_task(void)
 {
     static uint32_t tick = 0;
     // 1ms周期，50Hz信号，周期T=20ms，步进2*PI/20
-    float theta = 2.0f * 3.1415926f * (tick % 20) / 20.0f;
+    float theta = 2.0f * 3.1415926f * (tick % 13) / 13.0f;
     sin_data = sinf(theta);
     cos_data = cosf(theta);
+    sin_cos_data = sin_data * cos_data;
     tick++;
 
+    static float sin_data_last = 0.0f;
+    if ((trig == 1) &&
+        (sin_data_last * sin_data < 0.0f))
+    {
+        trig = 0;
+        SCOPE_TRIGGER(tsm);
+    }
     SCOPE(tsm);
+    sin_data_last = sin_data;
 }
 // 注册test_task为1ms周期定时任务
 REG_TASK_MS(1, test_task)

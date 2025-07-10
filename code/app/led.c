@@ -16,7 +16,7 @@ void led_task(void)
     gpio_set_led4((sta & 0x80) ? 1 : 0);
 }
 
-REG_TASK(1000, led_task)
+REG_TASK_MS(10, led_task)
 
 uint8_t u8_temp;
 REG_SHELL_VAR(u8_temp, u8_temp, SHELL_UINT8, NULL);
