@@ -726,3 +726,109 @@ static void list(DEC_MY_PRINTF)
 
 // 注册list命令到Shell系统
 REG_SHELL_CMD(list, list);
+
+/**
+ * @brief list分时打印上下文
+ */
+typedef struct
+{
+    section_shell_t *cur;
+    void (*my_printf)(const char *__format, ...);
+    uint8_t active;
+} list_print_ctx_t;
+
+static list_print_ctx_t g_list_print_ctx = {0};
+
+/**
+ * @brief 启动list分时打印
+ * @param my_printf 打印函数指针
+ */
+void list_print_start(DEC_MY_PRINTF)
+{
+    if (!my_printf || g_list_print_ctx.active)
+        return;
+    g_list_print_ctx.cur = p_shell_first;
+    g_list_print_ctx.my_printf = my_printf;
+    g_list_print_ctx.active = 1;
+    my_printf("\r\n========== Shell命令与变量分段打印开始 ==========\r\n");
+}
+
+REG_SHELL_CMD(list_print_start, list_print_start);
+
+/**
+ * @brief list分时打印，每次调用打印一项，并交替打印分隔线
+ * @return 1: 未完成，0: 已完成
+ */
+int list_print_step(void)
+{
+    static uint8_t print_flag = 0; // 0: 打印数据, 1: 打印分隔线
+
+    if (!g_list_print_ctx.active)
+        return 0;
+
+    // 打印数据行
+    if (print_flag == 0)
+    {
+        section_shell_t *s = g_list_print_ctx.cur;
+        if (!s)
+        {
+            g_list_print_ctx.active = 0;
+            print_flag = 0;
+            return 0;
+        }
+
+        g_list_print_ctx.my_printf("%s\t", s->p_name);
+        switch (s->type)
+        {
+        case SHELL_CMD:
+            g_list_print_ctx.my_printf("CMD\r\n");
+            break;
+        case SHELL_UINT8:
+            g_list_print_ctx.my_printf("U8\t%d\r\n", *(uint8_t *)s->p_var);
+            break;
+        case SHELL_UINT16:
+            g_list_print_ctx.my_printf("U16\t%d\r\n", *(uint16_t *)s->p_var);
+            break;
+        case SHELL_UINT32:
+            g_list_print_ctx.my_printf("U32\t%d\r\n", *(uint32_t *)s->p_var);
+            break;
+        case SHELL_INT8:
+            g_list_print_ctx.my_printf("I8\t%d\r\n", *(int8_t *)s->p_var);
+            break;
+        case SHELL_INT16:
+            g_list_print_ctx.my_printf("I16\t%d\r\n", *(int16_t *)s->p_var);
+            break;
+        case SHELL_INT32:
+            g_list_print_ctx.my_printf("I32\t%d\r\n", *(int32_t *)s->p_var);
+            break;
+        case SHELL_FP32:
+            g_list_print_ctx.my_printf("FP32\t%f\r\n", *(float *)s->p_var);
+            break;
+        }
+        g_list_print_ctx.cur = s->p_next;
+        print_flag = 1;
+        return 1;
+    }
+    // 打印分隔线
+    else
+    {
+        g_list_print_ctx.my_printf("---------------------\r\n");
+        print_flag = 0;
+        return 1;
+    }
+}
+
+/**
+ * @brief 1ms分时任务，驱动list分时打印
+ */
+static void list_print_task(void)
+{
+    // 每次调用打印一项，直到完成
+    if (g_list_print_ctx.active)
+    {
+        list_print_step();
+    }
+}
+
+// 注册1ms分时任务
+REG_TASK_MS(1, list_print_task);
