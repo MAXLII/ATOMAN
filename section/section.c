@@ -45,10 +45,12 @@ extern uint32_t __section_end;
 #endif
 
 // 全局链表头指针
-reg_task_t *p_task_first = NULL;           ///< 任务链表头指针
-reg_interrupt_t *p_interrupt_first = NULL; ///< 中断链表头指针
-section_shell_t *p_shell_first = NULL;     ///< Shell命令链表头指针
-section_link_t *p_link_first = NULL;       ///< 链路链表头指针
+reg_task_t *p_task_first = NULL;                   ///< 任务链表头指针
+reg_interrupt_t *p_interrupt_first = NULL;         ///< 中断链表头指针
+section_shell_t *p_shell_first = NULL;             ///< Shell命令链表头指针
+section_link_t *p_link_first = NULL;               ///< 链路链表头指针
+section_perf_record_t *p_perf_record_first = NULL; ///< 性能计数器链表头指针
+uint32_t *p_perf_cnt = NULL;                       /// 性能计数器一级指针
 
 /**
  * @brief 检查字符串是否为有效数字表达式
@@ -526,6 +528,48 @@ static void link_insert(section_link_t *link)
 }
 
 /**
+ * @brief 将性能计数器或记录插入到性能管理系统
+ * @param perf 要插入的性能计数器或记录
+ * @note 支持性能计数器基地址和性能记录的注册
+ */
+static void perf_insert(section_perf_t *perf)
+{
+    if (!perf)
+        return;
+    section_perf_base_t *base;
+    section_perf_record_t *rec;
+    switch (perf->perf_type)
+    {
+    case SECTION_PERF_BASE:
+        // 性能计数器基地址注册
+        base = (section_perf_base_t *)perf->p_perf;
+        if (base && base->p_cnt)
+            p_perf_cnt = base->p_cnt;
+        break;
+    case SECTION_PERF_RECORD:
+        // 性能记录注册，链表管理
+        rec = (section_perf_record_t *)perf->p_perf;
+        if (rec)
+        {
+            rec->p_cnt = &p_perf_cnt; // 赋值为一级指针的地址
+            rec->p_next = NULL;
+            if (!p_perf_record_first)
+                p_perf_record_first = rec;
+            else
+            {
+                section_perf_record_t *cur = p_perf_record_first;
+                while (cur->p_next)
+                    cur = (section_perf_record_t *)cur->p_next;
+                cur->p_next = rec;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+/**
  * @brief 系统初始化函数
  * @note 遍历段中的所有注册项，根据类型进行相应的初始化操作
  */
@@ -556,6 +600,10 @@ void section_init(void)
             // 插入链路到链路链表
             link_insert((section_link_t *)p->p_str);
             break;
+        case SECTION_PERF:
+            // 性能计数器初始化
+            perf_insert((section_perf_t *)p->p_str);
+            break;
         }
     }
 }
@@ -573,7 +621,20 @@ void run_task(void)
     {
         if (now - t->time_last >= t->t_period)
         {
-            t->p_func();        // 执行任务函数
+            if ((t->p_perf_record == NULL) ||
+                (*t->p_perf_record->p_cnt == NULL)) // 如果没有性能记录或计数器
+            {
+                t->p_func(); // 执行任务函数
+            }
+            else
+            {
+                t->p_perf_record->start = **t->p_perf_record->p_cnt;                      // 记录开始时间
+                t->p_func();                                                              // 执行任务函数
+                t->p_perf_record->end = **t->p_perf_record->p_cnt;                        // 记录结束时间
+                t->p_perf_record->time = t->p_perf_record->end - t->p_perf_record->start; // 计算执行时间
+                if (t->p_perf_record->time > t->p_perf_record->max_time)
+                    t->p_perf_record->max_time = t->p_perf_record->time; // 更新最大时间
+            }
             t->time_last = now; // 更新最后执行时间
         }
     }
@@ -741,23 +802,6 @@ typedef struct
 static list_print_ctx_t g_list_print_ctx = {0};
 
 /**
- * @brief 统计并初始化最长变量名长度
- */
-static void list_max_name_len_init(void)
-{
-    int max_len = 0;
-    for (section_shell_t *s = p_shell_first; s; s = s->p_next)
-    {
-        int len = strlen(s->p_name);
-        if (len > max_len)
-            max_len = len;
-    }
-    g_list_print_ctx.max_name_len = max_len;
-}
-
-// 注册初始化函数
-REG_INIT(list_max_name_len_init);
-/**
  * @brief 启动list分时打印
  * @param my_printf 打印函数指针
  */
@@ -768,6 +812,14 @@ void list_print_start(DEC_MY_PRINTF)
     g_list_print_ctx.cur = p_shell_first;
     g_list_print_ctx.my_printf = my_printf;
     g_list_print_ctx.active = 1;
+    int max_len = 0;
+    for (section_shell_t *s = p_shell_first; s; s = s->p_next)
+    {
+        int len = strlen(s->p_name);
+        if (len > max_len)
+            max_len = len;
+    }
+    g_list_print_ctx.max_name_len = max_len;
     my_printf("\r\n========== SHELL COMMANDS AND VARIABLES ==========\r\n");
 }
 
@@ -857,3 +909,105 @@ static void list_print_task(void)
 
 // 注册1ms分时任务
 REG_TASK_MS(1, list_print_task);
+
+/**
+ * @brief 打印所有性能统计结果
+ * @param my_printf 打印函数指针
+ */
+void print_perf_record(DEC_MY_PRINTF)
+{
+    if (!my_printf)
+        return;
+    section_perf_record_t *p = p_perf_record_first;
+    my_printf("Perf Name\tTime(us)\tMax(us)\r\n");
+    while (p)
+    {
+        my_printf("%s\t%u\t%u\r\n", p->p_name, (unsigned)(p->time * 1.0f / 216.0f * 21.0f), (unsigned)(p->max_time * 0.105));
+        p = (section_perf_record_t *)p->p_next;
+    }
+}
+
+typedef struct
+{
+    section_perf_record_t *cur;
+    void (*my_printf)(const char *__format, ...);
+    uint8_t active;
+    uint32_t perf_max_name_len;
+} perf_print_ctx_t;
+
+static perf_print_ctx_t g_perf_print_ctx = {0};
+
+/**
+ * @brief 启动分时打印性能统计结果
+ * @param my_printf 打印函数指针
+ */
+void print_perf_record_start(DEC_MY_PRINTF)
+{
+    if (!my_printf || g_perf_print_ctx.active)
+        return;
+    g_perf_print_ctx.cur = p_perf_record_first;
+    g_perf_print_ctx.my_printf = my_printf;
+    g_perf_print_ctx.active = 1;
+    int max_len = 0;
+    for (section_perf_record_t *s = p_perf_record_first; s; s = s->p_next)
+    {
+        int len = strlen(s->p_name);
+        if (len > max_len)
+            max_len = len;
+    }
+    g_perf_print_ctx.perf_max_name_len = max_len;
+    my_printf("Perf Name\tTime(us)\tMax(us)\r\n");
+}
+
+/**
+ * @brief 分时打印性能统计结果，每次调用打印一项
+ * @return 1: 未完成，0: 已完成
+ */
+int print_perf_record_step(void)
+{
+    if (!g_perf_print_ctx.active)
+        return 0;
+    section_perf_record_t *p = g_perf_print_ctx.cur;
+    if (!p)
+    {
+        g_perf_print_ctx.active = 0;
+        return 0;
+    }
+    int name_len = strlen(p->p_name);
+    int tab_size = 8;
+    int tab_count = (g_perf_print_ctx.perf_max_name_len / tab_size) - (name_len / tab_size) + 1;
+    g_perf_print_ctx.my_printf("%s", p->p_name);
+    for (int i = 0; i < tab_count; i++)
+        g_perf_print_ctx.my_printf("\t");
+    g_perf_print_ctx.my_printf("%u\t%u\r\n", (unsigned)(p->time * 0.105), (unsigned)(p->max_time * 0.105));
+    g_perf_print_ctx.cur = (section_perf_record_t *)p->p_next;
+    return 1;
+}
+
+/**
+ * @brief 1ms分时任务，驱动性能统计分时打印
+ */
+static void perf_print_task(void)
+{
+    if (g_perf_print_ctx.active)
+        print_perf_record_step();
+}
+
+// 注册分时打印性能统计任务
+REG_TASK_MS(1, perf_print_task);
+
+// 注册性能统计打印命令到Shell
+REG_SHELL_CMD(perf_print_record, print_perf_record_start)
+
+static void perf_clear_max_time(DEC_MY_PRINTF)
+{
+    section_perf_record_t *p = p_perf_record_first;
+    while (p)
+    {
+        p->max_time = 0; // 清除最大时间
+        p = (section_perf_record_t *)p->p_next;
+    }
+    my_printf("Performance max time cleared.\r\n");
+}
+
+REG_SHELL_CMD(perf_clear_max_time, perf_clear_max_time);

@@ -40,6 +40,17 @@
 							<option id="com.gigadevice.mbs.arm.option.outputFile.dump.2053664011" name="Dump" superClass="com.gigadevice.mbs.arm.option.outputFile.dump" value="true" valueType="boolean"/>
 							<option id="com.gigadevice.mbs.arm.option.outputFile.hex.1280874481" name="Hex" superClass="com.gigadevice.mbs.arm.option.outputFile.hex" value="true" valueType="boolean"/>
 							<option id="com.gigadevice.mbs.arm.option.outputFile.mot.169206094" name="Mot" superClass="com.gigadevice.mbs.arm.option.outputFile.mot" value="true" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.syntaxOnly.1486177455" superClass="com.gigadevice.mbs.arm.option.warnings.syntaxOnly" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.allOptions.10290647" superClass="com.gigadevice.mbs.arm.option.warnings.allOptions" value="" valueType="string"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.noWarn.753033128" superClass="com.gigadevice.mbs.arm.option.warnings.noWarn" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.toErrors.1726274792" superClass="com.gigadevice.mbs.arm.option.warnings.toErrors" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.pedantic.1554005005" superClass="com.gigadevice.mbs.arm.option.warnings.pedantic" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.pedanticErrors.1823321371" superClass="com.gigadevice.mbs.arm.option.warnings.pedanticErrors" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.allWarn.1549057992" superClass="com.gigadevice.mbs.arm.option.warnings.allWarn" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.extraWarn.730275182" superClass="com.gigadevice.mbs.arm.option.warnings.extraWarn" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.unused.1973217608" superClass="com.gigadevice.mbs.arm.option.warnings.unused" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.uninitialized.707549418" superClass="com.gigadevice.mbs.arm.option.warnings.uninitialized" value="false" valueType="boolean"/>
+							<option id="com.gigadevice.mbs.arm.option.warnings.conversion.481395230" superClass="com.gigadevice.mbs.arm.option.warnings.conversion" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.gigadevice.mbs.arm.targetPlatform.1115440926" isAbstract="false" osList="all" superClass="com.gigadevice.mbs.arm.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/gd32g553cstart}/GD ARM MCU Debug" id="com.gigadevice.mbs.arm.builder.1720268552" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="com.gigadevice.mbs.arm.builder"/>
 							<tool id="com.gigadevice.mbs.arm.tool.CCompiler.2005980156" name="GD ARM MCU C Compiler" superClass="com.gigadevice.mbs.arm.tool.CCompiler">

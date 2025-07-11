@@ -42,6 +42,9 @@ void test_scope_trig(DEC_MY_PRINTF)
 // 注册trig变量到Shell，类型为SHELL_UINT8
 REG_SHELL_VAR(trig, trig, SHELL_UINT8, NULL)
 
+REG_PERF_RECORD(tsmtime)
+REG_PERF_RECORD(scope)
+
 /**
  * @brief 1ms周期任务，产生50Hz正弦和余弦信号并采集
  * @details
@@ -51,6 +54,7 @@ REG_SHELL_VAR(trig, trig, SHELL_UINT8, NULL)
  */
 void test_task(void)
 {
+    PERF_START(tsmtime);
     static uint32_t tick = 0;
     // 1ms周期，50Hz信号，周期T=20ms，步进2*PI/20
     float theta = 2.0f * 3.1415926f * (tick % 13) / 13.0f;
@@ -58,7 +62,8 @@ void test_task(void)
     cos_data = cosf(theta);
     sin_cos_data = sin_data * cos_data;
     tick++;
-
+    
+    PERF_START(scope);
     static float sin_data_last = 0.0f;
     if ((trig == 1) &&
         (sin_data_last * sin_data < 0.0f))
@@ -67,8 +72,9 @@ void test_task(void)
         SCOPE_TRIGGER(tsm);
     }
     SCOPE(tsm);
+    PERF_END(scope);
     sin_data_last = sin_data;
+    PERF_END(tsmtime);
 }
 // 注册test_task为1ms周期定时任务
 REG_TASK_MS(1, test_task)
-

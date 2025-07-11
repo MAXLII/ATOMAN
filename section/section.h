@@ -36,6 +36,7 @@ typedef enum
     SECTION_INTERRUPT, ///< 中断处理函数注册
     SECTION_SHELL,     ///< Shell命令注册
     SECTION_LINK,      ///< 链路处理注册
+    SECTION_PERF,      ///< 代码运行时间统计注册
 } SECTION_E;
 
 /**
@@ -62,16 +63,92 @@ typedef struct
  * 任务管理相关定义
  *============================================================================*/
 
+typedef enum
+{
+    SECTION_PERF_RECORD, ///< 记录代码运行时间统计注册
+    SECTION_PERF_BASE,   ///< 基础代码运行时间统计注册
+} SECTION_PERF_E;
+
+typedef struct
+{
+    uint32_t *p_cnt; ///< 计数器一级指针
+} section_perf_base_t;
+
+typedef struct
+{
+    uint32_t perf_type; ///< 性能类型标识
+    void *p_perf;       ///< 指向具体性能数据的指针
+} section_perf_t;
+
+#define REG_PERF_BASE_CNT(timer_cnt)                                     \
+    section_perf_base_t section_perf_base_timer = {                      \
+        .p_cnt = (uint32_t *)&(timer_cnt),                               \
+    };                                                                   \
+    section_perf_t section_timer_cnt_perf = {                            \
+        .perf_type = SECTION_PERF_BASE,                                  \
+        .p_perf = (void *)&section_perf_base_timer,                      \
+    };                                                                   \
+    const reg_section_t reg_section_perf_base_timer AUTO_REG_SECTION = { \
+        .section_type = SECTION_PERF,                                    \
+        .p_str = (void *)&section_timer_cnt_perf,                        \
+    };
+
+typedef struct
+{
+    char *p_name;      /// 计时名称
+    uint16_t start;    ///< 计时开始点
+    uint16_t end;      ///< 计时结束点
+    uint16_t time;     ///< 计时时间（100us单位）
+    uint16_t reserved; ///< 保留字段，便于对齐
+    uint32_t max_time; ///< 最大计时值
+    uint32_t **p_cnt;  ///< 计数器二级指针
+    void *p_next;      ///< 链表下一个节点指针
+} section_perf_record_t;
+
+#define PERF_START(name) section_perf_record_##name.start = **section_perf_record_##name.p_cnt
+#define PERF_END(name)                                                                                   \
+    section_perf_record_##name.end = **section_perf_record_##name.p_cnt;                                 \
+    section_perf_record_##name.time = section_perf_record_##name.end - section_perf_record_##name.start; \
+    if (section_perf_record_##name.time > section_perf_record_##name.max_time)                           \
+        section_perf_record_##name.max_time = section_perf_record_##name.time;
+
+#define PERF_RECORD_ENABLE 1 ///< 是否启用性能记录功能
+
+#if (PERF_RECORD_ENABLE == 1)
+#define P_RECORD_PERF(name) (section_perf_record_t *)&section_perf_record_##name
+#define REG_PERF_RECORD(name)                                               \
+    section_perf_record_t section_perf_record_##name = {                    \
+        .p_name = #name,                                                    \
+        .start = 0,                                                         \
+        .end = 0,                                                           \
+        .max_time = 0,                                                      \
+        .p_cnt = NULL,                                                      \
+        .p_next = NULL,                                                     \
+    };                                                                      \
+    section_perf_t section_perf_record_##name##_perf = {                    \
+        .perf_type = SECTION_PERF_RECORD,                                   \
+        .p_perf = (void *)&section_perf_record_##name,                      \
+    };                                                                      \
+    const reg_section_t reg_section_perf_record_##name AUTO_REG_SECTION = { \
+        .section_type = SECTION_PERF,                                       \
+        .p_str = (void *)&section_perf_record_##name##_perf,                \
+    };
+#else
+#define P_RECORD_PERF(name) NULL
+#define REG_PERF_RECORD(name)
+#endif
+
 /**
  * @brief 任务注册结构
  * @note 定义了定时任务的所有属性
  */
 typedef struct
 {
-    uint32_t t_period;    ///< 任务执行周期（100us为单位）
-    uint32_t time_last;   ///< 上次执行时间戳
-    void (*p_func)(void); ///< 任务函数指针
-    void *p_next;         ///< 链表下一个节点指针
+    uint32_t t_period;                    ///< 任务执行周期（100us为单位）
+    uint32_t time_last;                   ///< 上次执行时间戳
+    void (*p_func)(void);                 ///< 任务函数指针
+    section_perf_record_t *p_perf_record; ///< 性能计数器指针（可选）
+    void *p_next;                         ///< 链表下一个节点指针
 } reg_task_t;
 
 /**
@@ -81,10 +158,12 @@ typedef struct
  * @note 使用示例：REG_TASK(100, my_task_func); // 每10ms执行一次
  */
 #define REG_TASK(period, func)                                       \
+    REG_PERF_RECORD(func)                                            \
     reg_task_t reg_task_##func = {                                   \
         .t_period = period,                                          \
         .p_func = func,                                              \
         .time_last = 0,                                              \
+        .p_perf_record = P_RECORD_PERF(func),                        \
         .p_next = NULL,                                              \
     };                                                               \
     const reg_section_t reg_section_task_##func AUTO_REG_SECTION = { \
