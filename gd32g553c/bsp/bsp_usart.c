@@ -74,8 +74,12 @@ int _write(int file, char *ptr, int len)
     (void)file;
     for (int i = 0; i < len; i++)
     {
+        uint32_t timeout = 10000; // 超时计数
         while (usart_flag_get(USART0, USART_FLAG_TBE) == RESET)
-            ;
+        {
+            if (--timeout == 0)
+                break; // 超时退出，避免死循环
+        }
         usart_data_transmit(USART0, ptr[i]);
     }
     return len;
