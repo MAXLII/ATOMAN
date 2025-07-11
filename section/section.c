@@ -768,7 +768,7 @@ void list_print_start(DEC_MY_PRINTF)
     g_list_print_ctx.cur = p_shell_first;
     g_list_print_ctx.my_printf = my_printf;
     g_list_print_ctx.active = 1;
-    my_printf("\r\n========== Shell命令与变量分段打印开始 ==========\r\n");
+    my_printf("\r\n========== SHELL COMMANDS AND VARIABLES ==========\r\n");
 }
 
 REG_SHELL_CMD(list_print_start, list_print_start);
