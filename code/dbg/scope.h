@@ -15,6 +15,8 @@
 #include "stdint.h"
 #include "section.h"
 
+//================= 类型定义 =================
+
 /**
  * @brief Scope状态枚举
  */
@@ -44,6 +46,8 @@ typedef struct
     const char **var_names;    ///< 采集变量名指针数组
     scope_state_e state;       ///< 当前状态
 } scope_t;
+
+//================= 宏工具 =================
 
 // 采集变量地址宏
 #define SCOPE_ADDR(x) (&x)
@@ -75,12 +79,38 @@ typedef struct
 // 辅助宏：变量名转字符串
 #define SCOPE_STR(x) #x
 
+//================= Shell命令注册宏 =================
+
+#define REG_SCOPE_STATUS_CMD(name)                     \
+    static void scope_status_##name(DEC_MY_PRINTF)     \
+    {                                                  \
+        scope_printf_status(&scope_##name, my_printf); \
+    }                                                  \
+    REG_SHELL_CMD(scope_status_##name, scope_status_##name)
+
+#define REG_SCOPE_START_CMD(name)                 \
+    static void scope_start_##name(DEC_MY_PRINTF) \
+    {                                             \
+        scope_start(&scope_##name);               \
+        my_printf("Scope started\r\n");           \
+    }                                             \
+    REG_SHELL_CMD(scope_start_##name, scope_start_##name)
+
+#define SCOPE_DATA_STEP_START(name, my_printf) scope_printf_data_start(&scope_##name, my_printf)
+
+#define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
+    static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
+    REG_SHELL_CMD(scope_data_step_##name, scope_data_step_##name)
+
+//================= Scope对象注册宏 =================
+
 /**
  * @brief 注册Scope采集对象
  * @param name 采集对象名称
  * @param buf_size 缓冲区长度
  * @param trig_post_cnt 触发后采集点数
  * @param ... 采集变量列表（float类型变量名）
+ * @note 自动注册Scope对象及其状态、启动、分时打印Shell命令
  */
 #define REG_SCOPE(name, buf_size, trig_post_cnt, ...)                                                               \
     float scope_##name##_buffer[SCOPE_COUNT_ARGS(__VA_ARGS__)][buf_size];                                           \
@@ -101,106 +131,68 @@ typedef struct
         .trigger_counter = 0,                                                                                       \
         .in_trigger = 0,                                                                                            \
         .state = SCOPE_STATE_IDLE,                                                                                  \
-    };
+    };                                                                                                              \
+    REG_SCOPE_STATUS_CMD(name)                                                                                      \
+    REG_SCOPE_START_CMD(name)                                                                                       \
+    REG_SCOPE_DATA_STEP_CMD(name)
 
-// Scope接口
-#define SCOPE_RUN(name) scope_run(&scope_##name)
-#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
-#define SCOPE_STATUS(name, my_printf) scope_print_status(&scope_##name, my_printf)
-#define SCOPE_DATA(name, my_printf) scope_print_data(&scope_##name, my_printf)
+//================= Scope接口函数声明 =================
 
 void scope_run(scope_t *scope);
 void scope_start(scope_t *scope);
 void scope_stop(scope_t *scope);
 void scope_trigger(scope_t *scope);
 void scope_reset(scope_t *scope);
-void scope_print_status(scope_t *scope, DEC_MY_PRINTF);
-void scope_print_data(scope_t *scope, DEC_MY_PRINTF);
+void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
+void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
+int scope_printf_data_step(void);
+int scope_printf_data_is_active(void);
+void scope_func(scope_t *restrict p_str);
+//================= Scope接口宏 =================
 
-/**
- * @brief 获取Scope缓冲区指针
- * @param name 采集对象名称
- */
+#define SCOPE_RUN(name) scope_run(&scope_##name)
+#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
+#define SCOPE(name) scope_func(&scope_##name)
 #define SCOPE_GET_BUFFER(name) (scope_##name.p_buffer)
-
-/**
- * @brief 获取Scope缓冲区长度
- * @param name 采集对象名称
- */
 #define SCOPE_GET_BUFFER_SIZE(name) (scope_##name.buffer_size)
-
-/**
- * @brief 获取Scope采集变量数量
- * @param name 采集对象名称
- */
 #define SCOPE_GET_VAR_NUM(name) (scope_##name.var_num)
-
-/**
- * @brief 获取Scope变量指针数组
- * @param name 采集对象名称
- */
 #define SCOPE_GET_VAR_PTRS(name) (scope_##name.p_var)
+#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
 
 /**
+ * @brief 分时打印Scope数据（宏，每次调用打印一行）
+ */
+#define SCOPE_DATA_STEP_RUN()              \
+    do                                     \
+    {                                      \
+        if (scope_printf_data_is_active()) \
+        {                                  \
+            scope_printf_data_step();      \
+        }                                  \
+    } while (0)
+/*
  * @brief 运行Scope采集对象
  * @param name 采集对象名称
  * @note 等价于 scope_func(&scope_##name)
  */
 #define SCOPE(name) scope_func(&scope_##name)
-
-/**
- * @brief 打印Scope状态信息
- * @param name 采集对象名称
- * @param my_printf 打印函数
- */
-#define SCOPE_PRINTF_STATUS(name, my_printf) scope_printf_status(&scope_##name, my_printf)
-
-/**
- * @brief 打印Scope采集数据
- * @param name 采集对象名称
- * @param my_printf 打印函数
- */
-#define SCOPE_PRINTF_DATA(name, my_printf) scope_printf_data(&scope_##name, my_printf)
-
-/**
- * @brief Scope采集主函数
- * @param p_str scope_t结构体指针
- * @note 需周期性调用，实现变量采集与触发处理
- */
-void scope_func(scope_t *restrict p_str);
-
-/**
- * @brief 启动Scope采集
- * @param scope scope_t结构体指针
- */
-void scope_start(scope_t *scope);
-
-/**
- * @brief 停止Scope采集
- * @param scope scope_t结构体指针
- */
-void scope_stop(scope_t *scope);
-
-/**
- * @brief 触发Scope采集
- * @param scope scope_t结构体指针
- */
-void scope_trigger(scope_t *scope);
-
-/**
- * @brief 重置Scope采集
- * @param scope scope_t结构体指针
- */
-void scope_reset(scope_t *scope);
-
-void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
-void scope_printf_data(scope_t *scope, DEC_MY_PRINTF);
-
 /**
  * @brief 触发Scope采集（宏）
  * @param name 采集对象名称
  * @note 等价于 scope_trigger(&scope_##name)
  */
 #define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
+
+/**
+ * @brief 分时打印Scope数据（宏，每次调用打印一行）
+ */
+#define SCOPE_DATA_STEP_RUN()              \
+    do                                     \
+    {                                      \
+        if (scope_printf_data_is_active()) \
+        {                                  \
+            scope_printf_data_step();      \
+        }                                  \
+    } while (0)
 
 #endif

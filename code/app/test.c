@@ -43,41 +43,11 @@ void test_scope_trig(DEC_MY_PRINTF)
 REG_SHELL_VAR(trig, trig, SHELL_UINT8, NULL)
 
 /**
- * @brief Shell命令：查询Scope状态
- * @param my_printf 打印函数
- */
-void test_scope_status(DEC_MY_PRINTF)
-{
-    SCOPE_PRINTF_STATUS(tsm, my_printf);
-}
-REG_SHELL_CMD(scope_status, test_scope_status)
-
-/**
- * @brief Shell命令：查询Scope采集数据
- * @param my_printf 打印函数
- */
-void test_scope_data(DEC_MY_PRINTF)
-{
-    SCOPE_PRINTF_DATA(tsm, my_printf);
-}
-REG_SHELL_CMD(scope_data, test_scope_data)
-
-/**
- * @brief Shell命令：启动Scope采集
- * @param my_printf 打印函数
- */
-void test_scope_start(DEC_MY_PRINTF)
-{
-    scope_start(&scope_tsm);
-    my_printf("Scope started\r\n");
-}
-REG_SHELL_CMD(scope_start, test_scope_start)
-
-/**
  * @brief 1ms周期任务，产生50Hz正弦和余弦信号并采集
  * @details
  * - 生成sin_data/cos_data信号
  * - 调用SCOPE(tsm)进行采集
+ * - 分时打印Scope数据（如果激活）
  */
 void test_task(void)
 {
@@ -101,3 +71,10 @@ void test_task(void)
 }
 // 注册test_task为1ms周期定时任务
 REG_TASK_MS(1, test_task)
+
+void print_scope_data(void)
+{
+    SCOPE_DATA_STEP_RUN();
+}
+
+REG_TASK_MS(1, print_scope_data);
