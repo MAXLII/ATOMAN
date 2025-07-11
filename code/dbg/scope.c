@@ -312,3 +312,10 @@ int scope_printf_data_is_active(void)
 {
     return g_scope_print_ctx.active;
 }
+
+void scope_print_data(void)
+{
+    SCOPE_DATA_STEP_RUN();
+}
+
+REG_TASK_MS(1, scope_print_data);

@@ -72,9 +72,3 @@ void test_task(void)
 // 注册test_task为1ms周期定时任务
 REG_TASK_MS(1, test_task)
 
-void print_scope_data(void)
-{
-    SCOPE_DATA_STEP_RUN();
-}
-
-REG_TASK_MS(1, print_scope_data);
