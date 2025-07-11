@@ -735,10 +735,28 @@ typedef struct
     section_shell_t *cur;
     void (*my_printf)(const char *__format, ...);
     uint8_t active;
+    int max_name_len; // 记录最长变量名长度
 } list_print_ctx_t;
 
 static list_print_ctx_t g_list_print_ctx = {0};
 
+/**
+ * @brief 统计并初始化最长变量名长度
+ */
+static void list_max_name_len_init(void)
+{
+    int max_len = 0;
+    for (section_shell_t *s = p_shell_first; s; s = s->p_next)
+    {
+        int len = strlen(s->p_name);
+        if (len > max_len)
+            max_len = len;
+    }
+    g_list_print_ctx.max_name_len = max_len;
+}
+
+// 注册初始化函数
+REG_INIT(list_max_name_len_init);
 /**
  * @brief 启动list分时打印
  * @param my_printf 打印函数指针
@@ -756,7 +774,7 @@ void list_print_start(DEC_MY_PRINTF)
 REG_SHELL_CMD(list_print_start, list_print_start);
 
 /**
- * @brief list分时打印，每次调用打印一项，并交替打印分隔线
+ * @brief list分时打印，每次调用打印一项，并交替打印分隔线（自动对齐）
  * @return 1: 未完成，0: 已完成
  */
 int list_print_step(void)
@@ -777,7 +795,14 @@ int list_print_step(void)
             return 0;
         }
 
-        g_list_print_ctx.my_printf("%s\t", s->p_name);
+        int name_len = strlen(s->p_name);
+        int tab_size = 8; // 一个\t约4字符宽
+        int tab_count = (g_list_print_ctx.max_name_len / tab_size) - (name_len / tab_size) + 1;
+
+        g_list_print_ctx.my_printf("%s", s->p_name);
+        for (int i = 0; i < tab_count; i++)
+            g_list_print_ctx.my_printf("\t");
+
         switch (s->type)
         {
         case SHELL_CMD:
@@ -812,7 +837,7 @@ int list_print_step(void)
     // 打印分隔线
     else
     {
-        g_list_print_ctx.my_printf("---------------------\r\n");
+        g_list_print_ctx.my_printf("-----------------------------------------\r\n");
         print_flag = 0;
         return 1;
     }
