@@ -1001,6 +1001,7 @@ static void perf_clear_max_time(DEC_MY_PRINTF)
     section_perf_record_t *p = p_perf_record_first;
     while (p)
     {
+        p->time = 0;     // 清除当前时间
         p->max_time = 0; // 清除最大时间
         p = (section_perf_record_t *)p->p_next;
     }
