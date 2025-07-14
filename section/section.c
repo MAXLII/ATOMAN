@@ -953,7 +953,13 @@ void print_perf_record_start(DEC_MY_PRINTF)
             max_len = len;
     }
     g_perf_print_ctx.perf_max_name_len = max_len;
-    my_printf("Perf Name\tTime(us)\tMax(us)\r\n");
+    int name_len = strlen("Perf Name");
+    int tab_size = 8;
+    int tab_count = (g_perf_print_ctx.perf_max_name_len / tab_size) - (name_len / tab_size) + 1;
+    my_printf("Perf Name");
+    for (int i = 0; i < tab_count; i++)
+        my_printf("\t");
+    my_printf("Time\tMax\r\n");
 }
 
 /**
