@@ -16,7 +16,8 @@ void usart0_printf(const char *__format, ...)
     va_end(args);
 }
 
-void (*my_func_arr[])(char, void (*my_printf)(const char *__format, ...)) = {shell_run};
+void (*my_func_arr[])(uint8_t, void (*my_printf)(const char *__format, ...)) = {shell_run,
+                                                                                comm_run};
 
 REG_LINK(ut0,
          128,

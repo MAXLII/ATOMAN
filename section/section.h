@@ -37,6 +37,7 @@ typedef enum
     SECTION_SHELL,     ///< Shell命令注册
     SECTION_LINK,      ///< 链路处理注册
     SECTION_PERF,      ///< 代码运行时间统计注册
+    SECTION_COMM,      ///< 通信
 } SECTION_E;
 
 /**
@@ -362,7 +363,7 @@ void section_fsm_func(reg_fsm_t *str);
  * @param my_printf 打印函数指针
  * @note 处理交互式命令行输入
  */
-void shell_run(char data, DEC_MY_PRINTF);
+void shell_run(uint8_t data, DEC_MY_PRINTF);
 
 /**
  * @brief Shell变量类型枚举
@@ -460,7 +461,7 @@ typedef struct
     uint32_t *dma_cnt;                      ///< DMA计数器指针
     DEC_MY_PRINTF;                          ///< 打印函数指针
     void(*p_next);                          ///< 链表下一个节点指针
-    void (**func_arr)(char, DEC_MY_PRINTF); ///< 数据处理函数数组
+    void (**func_arr)(uint8_t, DEC_MY_PRINTF); ///< 数据处理函数数组
     uint32_t func_num;                      ///< 处理函数数量
 } section_link_t;
 
@@ -512,5 +513,58 @@ typedef struct
  * @return 缓冲区大小
  */
 #define GET_LINK_SIZE(link) section_link_##link.buff_size
+
+typedef enum
+{
+    SECTION_PACKFORM_STA_SOP,
+    SECTION_PACKFORM_STA_CMD,
+    SECTION_PACKFORM_STA_LEN,
+    SECTION_PACKFORM_STA_DATA,
+    SECTION_PACKFORM_STA_CRC,
+    SECTION_PACKFORM_STA_EOP,
+} SECTION_PACKFORM_STA_E;
+
+typedef struct
+{
+    uint8_t sop;     ///< 起始符 固定0xE8
+    uint8_t cmd;     ///< 命令字
+    uint16_t len;    ///< 数据长度
+    uint8_t *p_data; ///< 数据指针
+    uint16_t sum;    ///< 校验和
+    uint16_t eop;    ///< 结束符 固定0x0A0D
+} section_packform_t;
+
+typedef struct
+{
+    uint8_t data_buffer[512]; ///< 通信缓冲区
+    uint8_t index;            ///< 缓冲区索引
+    uint8_t status;           ///< 通信状态
+    uint16_t sum;             ///< 校验和
+    section_packform_t pack;  ///< 当前包指针
+    void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
+    uint16_t len;
+    uint8_t len_flag; ///< 长度标志位
+    uint8_t eop_flag; ///< 结束符标志位
+} comm_ctx_t;
+
+typedef struct
+{
+    uint8_t cmd;
+    void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
+    void *p_next; ///< 链表下一个节点指针
+} section_com_t;
+
+#define REG_COMM(_cmd, _func)                                      \
+    section_com_t section_com_##_cmd = {                           \
+        .cmd = _cmd,                                               \
+        .func = _func,                                             \
+        .p_next = NULL,                                            \
+    };                                                             \
+    const reg_section_t reg_section_com_##cmd AUTO_REG_SECTION = { \
+        .section_type = SECTION_COMM,                              \
+        .p_str = (void *)&section_com_##_cmd,                      \
+    };
+
+void comm_run(uint8_t data, DEC_MY_PRINTF);
 
 #endif
