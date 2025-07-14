@@ -23,6 +23,7 @@
         "stdarg.h": "c",
         "stdlib.h": "c",
         "scope.h": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "stddef.h": "c"
     }
 }

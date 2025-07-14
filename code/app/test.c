@@ -78,3 +78,45 @@ void test_task(void)
 }
 // 注册test_task为1ms周期定时任务
 REG_TASK_MS(1, test_task)
+
+test_value_t test_value = {
+    .fp32 = 3.1415926f,
+    .u8 = 0xAB,
+    .u16 = 0x1234,
+    .i16 = -1234,
+    .i32 = -12345678,
+    .i8 = -12,
+    .u32 = 0xFFFFFFFF};
+
+/**
+ * @brief Shell回调：打印测试值
+ * @param my_printf 打印函数
+ * @details
+ * 通过Shell命令打印test_value的所有字段
+ */
+REG_SHELL_VAR(test_value_fp32, test_value.fp32, SHELL_FP32, NULL)
+REG_SHELL_VAR(test_value_u8, test_value.u8, SHELL_UINT8, NULL)
+REG_SHELL_VAR(test_value_u16, test_value.u16, SHELL_UINT16, NULL)
+REG_SHELL_VAR(test_value_i16, test_value.i16, SHELL_INT16, NULL)
+REG_SHELL_VAR(test_value_i32, test_value.i32, SHELL_INT32, NULL)
+REG_SHELL_VAR(test_value_i8, test_value.i8, SHELL_INT8, NULL)
+REG_SHELL_VAR(test_value_u32, test_value.u32, SHELL_UINT32, NULL)
+
+void test_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if (p_pack->len != sizeof(test_value_t))
+    {
+        my_printf("Invalid data length: %d\r\n", p_pack->len);
+        return;
+    }
+    test_value_t *p_value = (test_value_t *)p_pack->p_data;
+    test_value.fp32 = p_value->fp32;
+    test_value.u8 = p_value->u8;
+    test_value.u16 = p_value->u16;
+    test_value.i16 = p_value->i16;
+    test_value.i32 = p_value->i32;
+    test_value.i8 = p_value->i8;
+    test_value.u32 = p_value->u32;
+}
+
+REG_COMM(0x05, test_comm);
