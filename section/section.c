@@ -785,9 +785,6 @@ static void list(DEC_MY_PRINTF)
     }
 }
 
-// 注册list命令到Shell系统
-REG_SHELL_CMD(list, list);
-
 /**
  * @brief list分时打印上下文
  */
@@ -823,7 +820,7 @@ void list_print_start(DEC_MY_PRINTF)
     my_printf("\r\n========== SHELL COMMANDS AND VARIABLES ==========\r\n");
 }
 
-REG_SHELL_CMD(list_print_start, list_print_start);
+REG_SHELL_CMD(list, list_print_start);
 
 /**
  * @brief list分时打印，每次调用打印一项，并交替打印分隔线（自动对齐）
