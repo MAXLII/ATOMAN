@@ -455,14 +455,14 @@ typedef struct section_shell_t
  */
 typedef struct
 {
-    uint8_t (*p_buff)[];                    ///< 接收缓冲区指针
-    uint32_t buff_size;                     ///< 缓冲区大小
-    uint32_t pos;                           ///< 当前处理位置
-    uint32_t *dma_cnt;                      ///< DMA计数器指针
-    DEC_MY_PRINTF;                          ///< 打印函数指针
-    void(*p_next);                          ///< 链表下一个节点指针
+    uint8_t (*p_buff)[];                       ///< 接收缓冲区指针
+    uint32_t buff_size;                        ///< 缓冲区大小
+    uint32_t pos;                              ///< 当前处理位置
+    uint32_t *dma_cnt;                         ///< DMA计数器指针
+    DEC_MY_PRINTF;                             ///< 打印函数指针
+    void(*p_next);                             ///< 链表下一个节点指针
     void (**func_arr)(uint8_t, DEC_MY_PRINTF); ///< 数据处理函数数组
-    uint32_t func_num;                      ///< 处理函数数量
+    uint32_t func_num;                         ///< 处理函数数量
 } section_link_t;
 
 /**
@@ -547,24 +547,26 @@ typedef struct
     uint8_t eop_flag; ///< 结束符标志位
 } comm_ctx_t;
 
-typedef struct
+typedef struct section_com_t
 {
     uint8_t cmd;
     void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
-    void *p_next; ///< 链表下一个节点指针
+    struct section_com_t *p_next; ///< 链表下一个节点指针
 } section_com_t;
 
-#define REG_COMM(_cmd, _func)                                      \
-    section_com_t section_com_##_cmd = {                           \
-        .cmd = _cmd,                                               \
-        .func = _func,                                             \
-        .p_next = NULL,                                            \
-    };                                                             \
-    const reg_section_t reg_section_com_##cmd AUTO_REG_SECTION = { \
-        .section_type = SECTION_COMM,                              \
-        .p_str = (void *)&section_com_##_cmd,                      \
+#define REG_COMM(_cmd, _func)                                       \
+    section_com_t section_com_##_cmd = {                            \
+        .cmd = _cmd,                                                \
+        .func = _func,                                              \
+        .p_next = NULL,                                             \
+    };                                                              \
+    const reg_section_t reg_section_com_##_cmd AUTO_REG_SECTION = { \
+        .section_type = SECTION_COMM,                               \
+        .p_str = (void *)&section_com_##_cmd,                       \
     };
 
 void comm_run(uint8_t data, DEC_MY_PRINTF);
+
+void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF);
 
 #endif
