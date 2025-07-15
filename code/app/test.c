@@ -62,7 +62,7 @@ void test_task(void)
     cos_data = cosf(theta);
     sin_cos_data = sin_data * cos_data;
     tick++;
-    
+
     PERF_START(scope);
     static float sin_data_last = 0.0f;
     if ((trig == 1) &&
@@ -109,6 +109,7 @@ void test_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
         my_printf("Invalid data length: %d\r\n", p_pack->len);
         return;
     }
+    my_printf("oo\r\n");
     test_value_t *p_value = (test_value_t *)p_pack->p_data;
     test_value.fp32 = p_value->fp32;
     test_value.u8 = p_value->u8;
@@ -117,6 +118,16 @@ void test_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
     test_value.i32 = p_value->i32;
     test_value.i8 = p_value->i8;
     test_value.u32 = p_value->u32;
+    comm_send_data(p_pack, my_printf);
 }
 
+REG_COMM(0x01, test_comm);
+REG_COMM(0x02, test_comm);
+REG_COMM(0x03, test_comm);
+REG_COMM(0x04, test_comm);
 REG_COMM(0x05, test_comm);
+REG_COMM(0x06, test_comm);
+REG_COMM(0x07, test_comm);
+REG_COMM(0x08, test_comm);
+REG_COMM(0x09, test_comm);
+REG_COMM(0x10, test_comm);
