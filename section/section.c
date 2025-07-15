@@ -1054,10 +1054,21 @@ REG_SHELL_CMD(perf_clear_max_time, perf_clear_max_time);
 void (*find_comm_func(uint8_t cmd))(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     section_com_t *p = p_com_first;
+    section_com_t *p_last = NULL;
     while (p)
     {
         if (p->cmd == cmd)
+        {
+            if (p_last)
+            {
+                p_last->p_next = p->p_next; // 断开前一个节点的链接
+                p->p_next = p_com_first;    // 将当前节点移到链表头部
+                p_com_first = p;            // 更新链表头指针
+            }
+            void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
             return p->func;
+        }
+        p_last = p;
         p = (section_com_t *)p->p_next;
     }
     return NULL;
