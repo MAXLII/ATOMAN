@@ -1081,7 +1081,6 @@ static comm_ctx_t g_comm_ctx = {0};
  */
 void comm_clear(void)
 {
-    memset(&g_comm_ctx.data_buffer[0], 0, sizeof(g_comm_ctx.data_buffer));
     g_comm_ctx.index = 0;
     g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
     g_comm_ctx.sum = 0;
@@ -1103,29 +1102,29 @@ void comm_run(uint8_t data, DEC_MY_PRINTF)
         if (data == 0xE8)          // 假设'C'为开始字符
         {
             g_comm_ctx.status = 1;                           // 切换到接收状态
+            g_comm_ctx.sum = 0;                              // 重置校验和
             g_comm_ctx.sum += data;                          // 累加校验和
             g_comm_ctx.pack.sop = data;                      // 记录开始字符
-            g_comm_ctx.index = 0;                            // 重置索引
             g_comm_ctx.pack.p_data = g_comm_ctx.data_buffer; // 指向数据缓
         }
         else
         {
-            g_comm_ctx.sum = 0;
-            return; // 非开始字符，清除状态
+            return; // 非开始字符
         }
         break;
     case SECTION_PACKFORM_STA_CMD: // 接收数据状态
         g_comm_ctx.func = find_comm_func(data);
         if (g_comm_ctx.func == NULL)
         {
-            comm_clear();
-            return; // 未找到对应的处理函数，直接返回
+            g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 未找到对应的处理函数，重置状态
+            return;                                       // 未找到对应的处理函数，直接返回
         }
         else
         {
             g_comm_ctx.pack.cmd = data;                   // 记录命令字
             g_comm_ctx.sum += data;                       // 累加校验和
             g_comm_ctx.pack.len = 0;                      // 重置长度
+            g_comm_ctx.len_flag = 0;                      // 重置长度标志
             g_comm_ctx.status = SECTION_PACKFORM_STA_LEN; // 切换到长度接收状态
         }
         break;
@@ -1148,7 +1147,7 @@ void comm_run(uint8_t data, DEC_MY_PRINTF)
             // 检查长度是否超出缓冲区
             if (g_comm_ctx.len > sizeof(g_comm_ctx.data_buffer))
             {
-                comm_clear(); // 长度超出缓冲区，清除状态
+                g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
                 return;
             }
         }
@@ -1162,6 +1161,7 @@ void comm_run(uint8_t data, DEC_MY_PRINTF)
         }
         else
         {
+            g_comm_ctx.pack.sum = 0;                      // 接收到数据长度为0，准备接收CRC校验和
             g_comm_ctx.pack.sum += data;                  // 累加CRC校验和
             g_comm_ctx.status = SECTION_PACKFORM_STA_CRC; // 切换到CRC接收状态
         }
@@ -1173,6 +1173,10 @@ void comm_run(uint8_t data, DEC_MY_PRINTF)
             g_comm_ctx.status = SECTION_PACKFORM_STA_EOP; // 切换到结束状态
             g_comm_ctx.eop_flag = 0;
             g_comm_ctx.pack.eop = 0; // 记录结束字符
+        }
+        else
+        {
+            g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 校验和不匹配，重置状态为等待开始字符
         }
         break;
     case SECTION_PACKFORM_STA_EOP:
@@ -1192,9 +1196,8 @@ void comm_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     g_comm_ctx.func(&g_comm_ctx.pack, my_printf);
                 }
-                g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
-                g_comm_ctx.index = 0;                         // 重置索引
             }
+            g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
         }
         break;
     }
