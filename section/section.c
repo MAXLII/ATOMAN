@@ -1202,3 +1202,42 @@ void comm_run(uint8_t data, DEC_MY_PRINTF)
         break;
     }
 }
+
+void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if (!p_pack)
+        return;
+
+    p_pack->sum = 0;
+
+    // 发送开始字符
+    my_printf("%c", 0xE8);
+    p_pack->sum += 0xE8;
+
+    // 发送命令字
+    my_printf("%c", p_pack->cmd);
+    p_pack->sum += p_pack->cmd;
+
+    // 发送长度
+    my_printf("%c%c", (uint8_t)(p_pack->len & 0xFF), (uint8_t)((p_pack->len >> 8) & 0xFF));
+    p_pack->sum += p_pack->len & 0xFF;
+    p_pack->sum += (uint8_t)((p_pack->len >> 8) & 0xFF);
+
+    // 发送数据
+    if (p_pack->p_data)
+    {
+        for (uint32_t i = 0; i < p_pack->len; i++)
+        {
+            my_printf("%c", p_pack->p_data[i]);
+            p_pack->sum += p_pack->p_data[i];
+        }
+    }
+
+    // 发送CRC校验和
+    uint16_t crc = p_pack->sum;
+    my_printf("%c%c", (uint8_t)(crc & 0xFF), (uint8_t)((crc >> 8) & 0xFF));
+
+    // 发送结束字符
+    p_pack->eop = 0x0A0D;
+    my_printf("%c%c", p_pack->eop & 0xFF, (p_pack->eop >> 8) & 0xFF);
+}
