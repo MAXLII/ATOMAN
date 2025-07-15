@@ -312,11 +312,18 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
 
         // 查找匹配的Shell命令或变量
         section_shell_t *p = p_shell_first;
+        section_shell_t *p_last = NULL; // 用于记录上一个节点
         while (p)
         {
             if (strncmp((char *)shell_buffer, p->p_name, p->p_name_size) == 0 &&
                 (shell_buffer[p->p_name_size] == ':' || shell_buffer[p->p_name_size] == '\0'))
             {
+                if (p_last)
+                {
+                    p_last->p_next = p->p_next; // 断开前一个节点的链接
+                    p->p_next = p_shell_first;  // 将当前节点移到链表头部
+                    p_shell_first = p;          // 更新链表头指针
+                }
                 char *param = NULL;
                 if (shell_buffer[p->p_name_size] == ':')
                 {
@@ -417,11 +424,9 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 }
                 goto shell_done;
             }
+            p_last = p; // 记录上一个节点
             p = p->p_next;
         }
-
-        // 未找到匹配的命令
-        my_printf("Unknown command\r\n");
 
     shell_done:
         // 清空缓冲区
