@@ -1,0 +1,49 @@
+#include "bsp_timer.h"
+#include "gd32g5x3.h"
+#include "section.h"
+
+// REG_PERF_BASE_CNT(TIMER_CNT(TIMER5))
+
+section_perf_base_t section_perf_base_timer = {
+    .p_cnt = (uint32_t *)&((*(volatile uint32_t *)(uint32_t)((((((uint32_t)0x40000000U) + 0x00000000U) + 0x00001000U)) + 0x00000024U))),
+};
+section_perf_t section_timer_cnt_perf = {
+    .perf_type = SECTION_PERF_BASE,
+    .p_perf = (void *)&section_perf_base_timer,
+};
+reg_section_t reg_section_perf_base_timer __attribute__((used, __section__("section"))) = {
+    .section_type = SECTION_PERF,
+    .p_str = (void *)&section_timer_cnt_perf,
+};
+
+void bsp_timer5_init(void)
+{
+    timer_parameter_struct timer_initpara;
+
+    // 1. 使能TIMER5时钟
+    rcu_periph_clock_enable(RCU_TIMER5);
+
+    // 2. 初始化结构体为默认值
+    timer_struct_para_init(&timer_initpara);
+
+    // 3. 配置参数（定时器每计数一次周期为105ns）
+    timer_initpara.prescaler = 7; // (7+1)/84MHz = 105ns
+    timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
+    timer_initpara.counterdirection = TIMER_COUNTER_UP;
+    timer_initpara.period = 0xFFFF; // 每计数一次溢出
+    timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
+    timer_initpara.repetitioncounter = 0;
+
+    // 4. 初始化TIMER5
+    timer_init(TIMER5, &timer_initpara);
+
+    // 5. 启动TIMER5
+    timer_enable(TIMER5);
+}
+
+// REG_INIT(bsp_timer5_init);
+
+reg_init_t reg_init_bsp_timer5_init = {
+    .p_func = bsp_timer5_init,
+};
+const reg_section_t reg_section_bsp_timer5_init __attribute__((used, __section__("section"))) = {.section_type = SECTION_INIT, .p_str = (void *)&reg_init_bsp_timer5_init};
