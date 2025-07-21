@@ -45,7 +45,7 @@ DLLEXPORT void plecsOutput(struct SimulationState *aState)
     plecs_astate = aState;
     static float time = 0.0f;
     static float time_last = 0.0f;
-    time = plecs_get_input(PLECS_INPUT_SIM_TIME);
+    time = plecs_astate->time;
     if ((time - time_last) > 0.0001f)
     {
         plecs_time_100us += (uint32_t)((time - time_last) * 10000.0f);
