@@ -1250,3 +1250,54 @@ Command-line arguments:  -os win32 -ws win32 -arch x86_64
 
 !ENTRY com.gigadevice.mbs 4 1 2025-07-16 13:45:02.922
 !MESSAGE getOptionStringValue returns null. com.gigadevice.mbs.riscv.option.toolChain.name not found
+!SESSION 2025-07-23 12:07:34.528 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=17.0.10
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=zh_CN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.gigadevice.debug 1 1 2025-07-23 12:09:50.665
+!MESSAGE  server cmd params 0 : -device GD32G553CET7 -speed 2000 -if swd
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 12:09:57.699
+!MESSAGE Addressable size was never initialized for gdb[0].proc[42000].threadGroup[i1]
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 12:20:22.530
+!MESSAGE TimeoutException while shutting down launch com.gigadevice.debug.dsf.GdbExtendedLaunch@177b18d5
+!SESSION 2025-07-23 15:42:45.300 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=17.0.10
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=zh_CN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.gigadevice.debug 1 1 2025-07-23 15:43:29.082
+!MESSAGE  server cmd params 0 : -device GD32G553CET7 -speed 2000 -if swd
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 15:43:35.824
+!MESSAGE Addressable size was never initialized for gdb[0].proc[42000].threadGroup[i1]
+
+!ENTRY com.gigadevice.mbs 4 1 2025-07-23 16:08:30.538
+!MESSAGE getOptionStringValue returns null. com.gigadevice.mbs.riscv.option.toolChain.name not found
+
+!ENTRY com.gigadevice.debug 1 1 2025-07-23 16:08:53.143
+!MESSAGE  server cmd params 0 : -device GD32G553CET7 -speed 2000 -if swd
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 16:08:59.584
+!MESSAGE Addressable size was never initialized for gdb[1].proc[42000].threadGroup[i1]
+
+!ENTRY com.gigadevice.debug 1 1 2025-07-23 16:10:04.567
+!MESSAGE  server cmd params 0 : -device GD32G553CET7 -speed 2000 -if swd
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 16:10:10.961
+!MESSAGE Addressable size was never initialized for gdb[2].proc[42000].threadGroup[i1]
+
+!ENTRY com.gigadevice.debug 1 1 2025-07-23 16:15:20.434
+!MESSAGE  server cmd params 0 : -device GD32G553CET7 -speed 2000 -if swd
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 16:15:26.830
+!MESSAGE Addressable size was never initialized for gdb[3].proc[42000].threadGroup[i1]
+
+!ENTRY org.eclipse.cdt.dsf.gdb 4 0 2025-07-23 16:18:04.040
+!MESSAGE TimeoutException while shutting down launch com.gigadevice.debug.dsf.GdbExtendedLaunch@6ac88597
