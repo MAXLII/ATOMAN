@@ -244,7 +244,7 @@ static int parse_integer(const char *param, int32_t *out)
         *out = (int32_t)strtol(param + 2, NULL, 2);
         return 1;
     }
-    else
+    else if (is_string_number(param))
     {
         // 十进制或表达式
         *out = (int32_t)eval_expr(param);
@@ -422,6 +422,40 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                     break;
                 }
                 }
+
+                int status_set = -1; // -1:未指定, 0:仅-s, 1:有-s 1
+                char *s_flag = NULL;
+                if (param)
+                {
+                    // 查找-s
+                    char *ps = strstr(param, "-s");
+                    if (ps)
+                    {
+                        s_flag = ps;
+                        // 判断-s后是否有数字
+                        char *ps_num = ps + 2;
+                        while (*ps_num == ' ')
+                            ps_num++;
+                        if (isdigit((unsigned char)*ps_num))
+                        {
+                            status_set = atoi(ps_num);
+                        }
+                        else
+                        {
+                            status_set = 0;
+                        }
+                    }
+                    if (status_set == -1)
+                    {
+                        // 仅-s，不改变status
+                    }
+                    else
+                    {
+                        p->status = status_set;
+                        p->my_printf = my_printf; // 更新打印函数指针
+                    }
+                }
+
                 goto shell_done;
             }
             p_last = p; // 记录上一个节点
@@ -434,6 +468,78 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
         shell_index = 0;
     }
 }
+
+void shell_status_run(void)
+{
+    // 遍历所有Shell命令，打印状态
+    section_shell_t *p = p_shell_first;
+    while (p)
+    {
+        if (p->status)
+        {
+            if (p->status & (1 << 0))
+            {
+                switch (p->type)
+                {
+                case SHELL_CMD:
+                    // 执行命令
+                    break;
+                case SHELL_UINT8:
+                {
+                    uint8_t val = *(uint8_t *)p->p_var;
+                    p->my_printf("%s = %u\r\n", p->p_name, val);
+                    break;
+                }
+                case SHELL_INT8:
+                {
+                    int8_t val = *(int8_t *)p->p_var;
+                    p->my_printf("%s = %d\r\n", p->p_name, val);
+                    break;
+                }
+                case SHELL_UINT16:
+                {
+                    uint16_t val = *(uint16_t *)p->p_var;
+                    p->my_printf("%s = %u\r\n", p->p_name, val);
+                    break;
+                }
+                case SHELL_INT16:
+                {
+                    int16_t val = *(int16_t *)p->p_var;
+                    p->my_printf("%s = %d\r\n", p->p_name, val);
+                    break;
+                }
+                case SHELL_UINT32:
+                {
+                    uint32_t val = *(uint32_t *)p->p_var;
+                    p->my_printf("%s = %lu\r\n", p->p_name, val);
+                    break;
+                }
+                case SHELL_INT32:
+                {
+                    int32_t val = *(int32_t *)p->p_var;
+                    p->my_printf("%s = %ld\r\n", p->p_name, val);
+                    break;
+                }
+                case SHELL_FP32:
+                {
+                    float val = *(float *)p->p_var;
+                    p->my_printf("%s = %f\r\n", p->p_name, val);
+                    break;
+                }
+                }
+            }
+            if (p->status & (1 << 1))
+            {
+                // 执行状态更新函数
+                if (p->func)
+                    p->func(p->my_printf);
+            }
+        }
+        p = p->p_next;
+    }
+}
+
+REG_TASK_MS(1000, shell_status_run) // 每200ms检查一次Shell状态
 
 /**
  * @brief 将任务插入到任务链表中
