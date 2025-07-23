@@ -390,6 +390,8 @@ typedef struct section_shell_t
     void *p_var;                    ///< 变量指针（命令为NULL）
     uint32_t type;                  ///< 类型（来自SHELL_TYPE_E）
     void (*func)(DEC_MY_PRINTF);    ///< 回调函数（可选）
+    uint32_t status;                ///< 状态（可选）
+    DEC_MY_PRINTF;                  ///< 打印函数指针
     struct section_shell_t *p_next; ///< 链表下一个节点指针
 } section_shell_t;
 
