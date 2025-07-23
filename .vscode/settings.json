@@ -25,5 +25,9 @@
         "scope.h": "c",
         "typeinfo": "c",
         "stddef.h": "c"
-    }
+    },
+    "C_Cpp.default.includePath": [
+        "C:/Users/22500238/Documents/Plexim/PLECS 4.7 (64 bit)/include/plecs",
+        "${workspaceFolder}/**"
+    ]
 }
