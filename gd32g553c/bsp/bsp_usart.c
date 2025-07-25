@@ -43,7 +43,7 @@ void bsp_usart_init(void)
     gpio_mode_set(USART0_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_PULLUP, USART0_RX_PIN);
     gpio_output_options_set(USART0_RX_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_12MHZ, USART0_RX_PIN);
 
-    usart_baudrate_set(USART0, 3000000);
+    usart_baudrate_set(USART0, 115200);
     usart_receive_config(USART0, USART_RECEIVE_ENABLE);
     usart_dma_receive_config(USART0, USART_RECEIVE_DMA_ENABLE);
     usart_transmit_config(USART0, USART_TRANSMIT_ENABLE);
