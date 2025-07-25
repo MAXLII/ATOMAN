@@ -4,6 +4,7 @@
 #include "section.h"
 #include "systick.h"
 
+static int last_grid[ROWS][COLS] = {0};
 static int grid[ROWS][COLS] = {0};
 static int next_grid[ROWS][COLS] = {0};
 
@@ -25,7 +26,7 @@ void zero_player_print(DEC_MY_PRINTF)
     {
         for (int j = 0; j < COLS; ++j)
         {
-            my_printf("%c ", grid[i][j] ? '*' : '.');
+            my_printf("%c ", grid[i][j] ? '*' : ' ');
         }
         my_printf("\n");
     }
@@ -45,6 +46,10 @@ static int count_neighbors(int x, int y)
                 continue;
             int nx = x + dx;
             int ny = y + dy;
+            nx += ROWS;
+            nx %= ROWS;
+            ny += COLS;
+            ny %= COLS;
             if (nx >= 0 && nx < ROWS && ny >= 0 && ny < COLS)
             {
                 cnt += grid[nx][ny];
@@ -57,6 +62,8 @@ static int count_neighbors(int x, int y)
 // 运行一步
 void zero_player_step(void)
 {
+    uint8_t is_equal_now_next = 1;
+    uint8_t is_equal_last_next = 1;
     for (int i = 0; i < ROWS; ++i)
     {
         for (int j = 0; j < COLS; ++j)
@@ -72,17 +79,36 @@ void zero_player_step(void)
                 // 死细胞规则
                 next_grid[i][j] = (neighbors == 3) ? 1 : 0;
             }
+
+            if (next_grid[i][j] != last_grid[i][j])
+            {
+                is_equal_last_next = 0;
+            }
+
+            if (grid[i][j] != next_grid[i][j])
+            {
+                is_equal_now_next = 0;
+            }
         }
     }
+    memcpy(last_grid, grid, sizeof(grid));
     memcpy(grid, next_grid, sizeof(grid));
+    if ((is_equal_last_next == 1) ||
+        (is_equal_now_next == 1))
+    {
+        zero_player_add((void (*)(const char *__format, ...))NULL);
+    }
 }
 
-REG_TASK_MS(1000, zero_player_step); // 每秒运行一次
+REG_TASK(1, zero_player_step); // 每秒运行一次
 
 void zero_player_add(DEC_MY_PRINTF)
 {
     uint32_t system_time = systick_gettime_100us();
-    my_printf("system_time = %u\r\n", system_time);
+    if (my_printf != NULL)
+    {
+        my_printf("system_time = %u\r\n", system_time);
+    }
     // 使用更复杂的伪随机算法
     uint32_t rand_seed = system_time ^ 0xA5A5A5A5;
     for (uint32_t i = 0; i < ROWS; i++)
@@ -97,7 +123,17 @@ void zero_player_add(DEC_MY_PRINTF)
             }
         }
     }
-    my_printf("zero_player_add: 随机填充完成\r\n");
+    if (my_printf != NULL)
+    {
+        my_printf("zero_player_add: random fill done\r\n");
+    }
 }
 
 REG_SHELL_CMD(zero_player_add, zero_player_add)
+
+void timing_add_seed(void)
+{
+    zero_player_add(NULL);
+}
+
+REG_TASK_MS(10 * 60 * 1000, timing_add_seed)
