@@ -771,7 +771,7 @@ void run_task(void)
                 if (t->p_perf_record->time > t->p_perf_record->max_time)
                     t->p_perf_record->max_time = t->p_perf_record->time; // 更新最大时间
             }
-            t->time_last = now; // 更新最后执行时间
+            t->time_last += t->t_period; // 更新最后执行时间
         }
     }
 }
