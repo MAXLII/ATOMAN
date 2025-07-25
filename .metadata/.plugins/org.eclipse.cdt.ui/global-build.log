@@ -36,3 +36,160 @@ Finished building: gd32g553c.lst
  
 Finished building: gd32g553c.dump
  
+12:16:16 **** Incremental Build of configuration gd_dbg for project gd32g553c ****
+make -j12 all 
+Building file: D:/project/base/section/section.c
+Building file: D:/project/base/code/app/zero_player.c
+Invoking: GD ARM MCU C Compiler
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -std=gnu11 -DGD32G5X3 -DGD_ECLIPSE_GCC -DUSE_STDPERIPH_DRIVER -I"../Firmware/CMSIS/" -I"../Firmware/CMSIS/GD/GD32G5x3/Include/" -I"../Firmware/GD32G5x3_standard_peripheral/Include/" -I"../inc/" -I"D:\project\base\section" -I"D:\project\base\gd32g553c\bsp" -I"D:\project\base\code\app" -I"D:\project\base\code\interface" -I"D:\project\base\code\dbg" -MMD -MP -MF"section/section.d" -MT"section/section.o" -Wa,-adhlns=section/section.o.lst   -c -o "section/section.o" "D:/project/base/section/section.c"
+Invoking: GD ARM MCU C Compiler
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -std=gnu11 -DGD32G5X3 -DGD_ECLIPSE_GCC -DUSE_STDPERIPH_DRIVER -I"../Firmware/CMSIS/" -I"../Firmware/CMSIS/GD/GD32G5x3/Include/" -I"../Firmware/GD32G5x3_standard_peripheral/Include/" -I"../inc/" -I"D:\project\base\section" -I"D:\project\base\gd32g553c\bsp" -I"D:\project\base\code\app" -I"D:\project\base\code\interface" -I"D:\project\base\code\dbg" -MMD -MP -MF"code/app/zero_player.d" -MT"code/app/zero_player.o" -Wa,-adhlns=code/app/zero_player.o.lst   -c -o "code/app/zero_player.o" "D:/project/base/code/app/zero_player.c"
+Finished building: D:/project/base/code/app/zero_player.c
+ 
+Finished building: D:/project/base/section/section.c
+ 
+Building target: gd32g553c.elf
+Invoking: GD ARM MCU C Linker
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -Wl,-Map,"gd32g553c.map" -T gd32g5x3_flash.ld -Xlinker --gc-sections -L"../ldscripts/" --specs=nano.specs -u_printf_float --specs=nosys.specs -o "gd32g553c.elf"  ./src/gd32g5x3_it.o ./src/main.o ./src/systick.o  ./section/section.o  ./gcc_startup/startup_gd32g5x3.o  ./code/interface/gpio.o  ./code/dbg/scope.o  ./code/app/led.o ./code/app/test.o ./code/app/zero_player.o  ./bsp/bsp_gpio.o ./bsp/bsp_init.o ./bsp/bsp_timer.o ./bsp/bsp_usart.o  ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_adc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_can.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_aes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_des.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_tdes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cla.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cmp.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cpdm.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_crc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dbg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dma.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exti.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fft.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc_ramfunc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fwdgt.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_gpio.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hpdf.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hrtimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_i2c.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_lptimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_misc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_pmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_qspi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rcu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rtc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_spi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_syscfg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_timer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_tmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trigsel.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trng.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_usart.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_vref.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.o  ./Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.o ./Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.o   
+Finished building target: gd32g553c.elf
+ 
+Invoking: GD ARM MCU Flash Image(Hex)
+arm-none-eabi-objcopy -O ihex  "gd32g553c.elf"  "gd32g553c.hex"
+Invoking: GD ARM MCU Listing
+arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "gd32g553c.elf" > "gd32g553c.lst"
+Invoking: GD ARM MCU Print Size
+arm-none-eabi-size --format=berkeley "gd32g553c.elf"
+Invoking: GD ARM MCU Flash Image(Bin)
+arm-none-eabi-objcopy -O binary  "gd32g553c.elf"  "gd32g553c.bin"
+Invoking: GD ARM MCU Flash Image(Mot)
+arm-none-eabi-objcopy -O srec  "gd32g553c.elf"  "gd32g553c.mot"
+Invoking: GD ARM MCU Dump
+arm-none-eabi-objdump -D  "gd32g553c.elf" > "gd32g553c.dump"
+   text	   data	    bss	    dec	    hex	filename
+  44368	   1976	  10344	  56688	   dd70	gd32g553c.elf
+Finished building: gd32g553c.hex
+Finished building: gd32g553c.siz
+Finished building: gd32g553c.bin
+ 
+Finished building: gd32g553c.mot
+ 
+Finished building: gd32g553c.lst
+ 
+ 
+ 
+Finished building: gd32g553c.dump
+ 
+12:17:57 **** Incremental Build of configuration gd_dbg for project gd32g553c ****
+make -j12 all 
+Building file: D:/project/base/code/app/zero_player.c
+Invoking: GD ARM MCU C Compiler
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -std=gnu11 -DGD32G5X3 -DGD_ECLIPSE_GCC -DUSE_STDPERIPH_DRIVER -I"../Firmware/CMSIS/" -I"../Firmware/CMSIS/GD/GD32G5x3/Include/" -I"../Firmware/GD32G5x3_standard_peripheral/Include/" -I"../inc/" -I"D:\project\base\section" -I"D:\project\base\gd32g553c\bsp" -I"D:\project\base\code\app" -I"D:\project\base\code\interface" -I"D:\project\base\code\dbg" -MMD -MP -MF"code/app/zero_player.d" -MT"code/app/zero_player.o" -Wa,-adhlns=code/app/zero_player.o.lst   -c -o "code/app/zero_player.o" "D:/project/base/code/app/zero_player.c"
+Finished building: D:/project/base/code/app/zero_player.c
+ 
+Building target: gd32g553c.elf
+Invoking: GD ARM MCU C Linker
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -Wl,-Map,"gd32g553c.map" -T gd32g5x3_flash.ld -Xlinker --gc-sections -L"../ldscripts/" --specs=nano.specs -u_printf_float --specs=nosys.specs -o "gd32g553c.elf"  ./src/gd32g5x3_it.o ./src/main.o ./src/systick.o  ./section/section.o  ./gcc_startup/startup_gd32g5x3.o  ./code/interface/gpio.o  ./code/dbg/scope.o  ./code/app/led.o ./code/app/test.o ./code/app/zero_player.o  ./bsp/bsp_gpio.o ./bsp/bsp_init.o ./bsp/bsp_timer.o ./bsp/bsp_usart.o  ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_adc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_can.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_aes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_des.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_tdes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cla.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cmp.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cpdm.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_crc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dbg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dma.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exti.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fft.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc_ramfunc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fwdgt.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_gpio.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hpdf.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hrtimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_i2c.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_lptimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_misc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_pmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_qspi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rcu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rtc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_spi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_syscfg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_timer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_tmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trigsel.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trng.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_usart.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_vref.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.o  ./Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.o ./Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.o   
+Finished building target: gd32g553c.elf
+ 
+Invoking: GD ARM MCU Flash Image(Hex)
+arm-none-eabi-objcopy -O ihex  "gd32g553c.elf"  "gd32g553c.hex"
+Invoking: GD ARM MCU Flash Image(Bin)
+arm-none-eabi-objcopy -O binary  "gd32g553c.elf"  "gd32g553c.bin"
+Invoking: GD ARM MCU Listing
+arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "gd32g553c.elf" > "gd32g553c.lst"
+Invoking: GD ARM MCU Flash Image(Mot)
+arm-none-eabi-objcopy -O srec  "gd32g553c.elf"  "gd32g553c.mot"
+Invoking: GD ARM MCU Print Size
+arm-none-eabi-size --format=berkeley "gd32g553c.elf"
+Invoking: GD ARM MCU Dump
+arm-none-eabi-objdump -D  "gd32g553c.elf" > "gd32g553c.dump"
+   text	   data	    bss	    dec	    hex	filename
+  44368	   1976	  10344	  56688	   dd70	gd32g553c.elf
+Finished building: gd32g553c.hex
+Finished building: gd32g553c.siz
+Finished building: gd32g553c.mot
+Finished building: gd32g553c.bin
+ 
+ 
+ 
+Finished building: gd32g553c.lst
+ 
+ 
+Finished building: gd32g553c.dump
+ 
+12:24:53 **** Incremental Build of configuration gd_dbg for project gd32g553c ****
+make -j12 all 
+Building file: D:/project/base/code/app/zero_player.c
+Invoking: GD ARM MCU C Compiler
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -std=gnu11 -DGD32G5X3 -DGD_ECLIPSE_GCC -DUSE_STDPERIPH_DRIVER -I"../Firmware/CMSIS/" -I"../Firmware/CMSIS/GD/GD32G5x3/Include/" -I"../Firmware/GD32G5x3_standard_peripheral/Include/" -I"../inc/" -I"D:\project\base\section" -I"D:\project\base\gd32g553c\bsp" -I"D:\project\base\code\app" -I"D:\project\base\code\interface" -I"D:\project\base\code\dbg" -MMD -MP -MF"code/app/zero_player.d" -MT"code/app/zero_player.o" -Wa,-adhlns=code/app/zero_player.o.lst   -c -o "code/app/zero_player.o" "D:/project/base/code/app/zero_player.c"
+Finished building: D:/project/base/code/app/zero_player.c
+ 
+Building target: gd32g553c.elf
+Invoking: GD ARM MCU C Linker
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -Wl,-Map,"gd32g553c.map" -T gd32g5x3_flash.ld -Xlinker --gc-sections -L"../ldscripts/" --specs=nano.specs -u_printf_float --specs=nosys.specs -o "gd32g553c.elf"  ./src/gd32g5x3_it.o ./src/main.o ./src/systick.o  ./section/section.o  ./gcc_startup/startup_gd32g5x3.o  ./code/interface/gpio.o  ./code/dbg/scope.o  ./code/app/led.o ./code/app/test.o ./code/app/zero_player.o  ./bsp/bsp_gpio.o ./bsp/bsp_init.o ./bsp/bsp_timer.o ./bsp/bsp_usart.o  ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_adc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_can.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_aes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_des.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_tdes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cla.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cmp.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cpdm.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_crc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dbg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dma.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exti.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fft.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc_ramfunc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fwdgt.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_gpio.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hpdf.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hrtimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_i2c.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_lptimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_misc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_pmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_qspi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rcu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rtc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_spi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_syscfg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_timer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_tmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trigsel.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trng.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_usart.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_vref.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.o  ./Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.o ./Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.o   
+Finished building target: gd32g553c.elf
+ 
+Invoking: GD ARM MCU Flash Image(Hex)
+arm-none-eabi-objcopy -O ihex  "gd32g553c.elf"  "gd32g553c.hex"
+Invoking: GD ARM MCU Flash Image(Bin)
+arm-none-eabi-objcopy -O binary  "gd32g553c.elf"  "gd32g553c.bin"
+Invoking: GD ARM MCU Flash Image(Mot)
+arm-none-eabi-objcopy -O srec  "gd32g553c.elf"  "gd32g553c.mot"
+Invoking: GD ARM MCU Dump
+arm-none-eabi-objdump -D  "gd32g553c.elf" > "gd32g553c.dump"
+Invoking: GD ARM MCU Listing
+arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "gd32g553c.elf" > "gd32g553c.lst"
+Invoking: GD ARM MCU Print Size
+arm-none-eabi-size --format=berkeley "gd32g553c.elf"
+Finished building: gd32g553c.hex
+   text	   data	    bss	    dec	    hex	filename
+  44368	   1976	  10344	  56688	   dd70	gd32g553c.elf
+Finished building: gd32g553c.bin
+Finished building: gd32g553c.mot
+ 
+Finished building: gd32g553c.siz
+ 
+ 
+Finished building: gd32g553c.lst
+ 
+ 
+Finished building: gd32g553c.dump
+ 
+13:56:46 **** Incremental Build of configuration gd_dbg for project gd32g553c ****
+make -j12 all 
+Building file: D:/project/base/code/app/zero_player.c
+Invoking: GD ARM MCU C Compiler
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -std=gnu11 -DGD32G5X3 -DGD_ECLIPSE_GCC -DUSE_STDPERIPH_DRIVER -I"../Firmware/CMSIS/" -I"../Firmware/CMSIS/GD/GD32G5x3/Include/" -I"../Firmware/GD32G5x3_standard_peripheral/Include/" -I"../inc/" -I"D:\project\base\section" -I"D:\project\base\gd32g553c\bsp" -I"D:\project\base\code\app" -I"D:\project\base\code\interface" -I"D:\project\base\code\dbg" -MMD -MP -MF"code/app/zero_player.d" -MT"code/app/zero_player.o" -Wa,-adhlns=code/app/zero_player.o.lst   -c -o "code/app/zero_player.o" "D:/project/base/code/app/zero_player.c"
+Finished building: D:/project/base/code/app/zero_player.c
+ 
+Building target: gd32g553c.elf
+Invoking: GD ARM MCU C Linker
+arm-none-eabi-gcc -mcpu=cortex-m33 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g3 -Wl,-Map,"gd32g553c.map" -T gd32g5x3_flash.ld -Xlinker --gc-sections -L"../ldscripts/" --specs=nano.specs -u_printf_float --specs=nosys.specs -o "gd32g553c.elf"  ./src/gd32g5x3_it.o ./src/main.o ./src/systick.o  ./section/section.o  ./gcc_startup/startup_gd32g5x3.o  ./code/interface/gpio.o  ./code/dbg/scope.o  ./code/app/led.o ./code/app/test.o ./code/app/zero_player.o  ./bsp/bsp_gpio.o ./bsp/bsp_init.o ./bsp/bsp_timer.o ./bsp/bsp_usart.o  ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_adc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_can.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_aes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_des.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_tdes.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cla.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cmp.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cpdm.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_crc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dbg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dma.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exti.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fac.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fft.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc_ramfunc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fwdgt.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_gpio.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hpdf.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hrtimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_i2c.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_lptimer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_misc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_pmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_qspi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rcu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rtc.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_spi.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_syscfg.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_timer.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_tmu.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trigsel.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trng.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_usart.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_vref.o ./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.o  ./Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.o ./Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.o   
+Finished building target: gd32g553c.elf
+ 
+Invoking: GD ARM MCU Flash Image(Hex)
+arm-none-eabi-objcopy -O ihex  "gd32g553c.elf"  "gd32g553c.hex"
+Invoking: GD ARM MCU Flash Image(Mot)
+arm-none-eabi-objcopy -O srec  "gd32g553c.elf"  "gd32g553c.mot"
+Invoking: GD ARM MCU Dump
+arm-none-eabi-objdump -D  "gd32g553c.elf" > "gd32g553c.dump"
+Invoking: GD ARM MCU Flash Image(Bin)
+arm-none-eabi-objcopy -O binary  "gd32g553c.elf"  "gd32g553c.bin"
+Invoking: GD ARM MCU Print Size
+arm-none-eabi-size --format=berkeley "gd32g553c.elf"
+Invoking: GD ARM MCU Listing
+arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "gd32g553c.elf" > "gd32g553c.lst"
+   text	   data	    bss	    dec	    hex	filename
+  44440	   1976	  11944	  58360	   e3f8	gd32g553c.elf
+Finished building: gd32g553c.mot
+Finished building: gd32g553c.hex
+ 
+Finished building: gd32g553c.bin
+Finished building: gd32g553c.siz
+ 
+ 
+ 
+Finished building: gd32g553c.lst
+ 
+Finished building: gd32g553c.dump
+ 

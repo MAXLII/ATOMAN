@@ -1,4 +1,4 @@
-17:02:58 **** Incremental Build of configuration gd_dbg for project gd32g553c ****
+13:56:46 **** Incremental Build of configuration gd_dbg for project gd32g553c ****
 make -j12 all 
 Building file: D:/project/base/code/app/zero_player.c
 Invoking: GD ARM MCU C Compiler
@@ -12,24 +12,24 @@ Finished building target: gd32g553c.elf
  
 Invoking: GD ARM MCU Flash Image(Hex)
 arm-none-eabi-objcopy -O ihex  "gd32g553c.elf"  "gd32g553c.hex"
-Invoking: GD ARM MCU Flash Image(Bin)
 Invoking: GD ARM MCU Flash Image(Mot)
-Invoking: GD ARM MCU Listing
-arm-none-eabi-objcopy -O binary  "gd32g553c.elf"  "gd32g553c.bin"
-Invoking: GD ARM MCU Print Size
 arm-none-eabi-objcopy -O srec  "gd32g553c.elf"  "gd32g553c.mot"
 Invoking: GD ARM MCU Dump
-arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "gd32g553c.elf" > "gd32g553c.lst"
-arm-none-eabi-size --format=berkeley "gd32g553c.elf"
 arm-none-eabi-objdump -D  "gd32g553c.elf" > "gd32g553c.dump"
-Finished building: gd32g553c.hex
+Invoking: GD ARM MCU Flash Image(Bin)
+arm-none-eabi-objcopy -O binary  "gd32g553c.elf"  "gd32g553c.bin"
+Invoking: GD ARM MCU Print Size
+arm-none-eabi-size --format=berkeley "gd32g553c.elf"
+Invoking: GD ARM MCU Listing
+arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "gd32g553c.elf" > "gd32g553c.lst"
    text	   data	    bss	    dec	    hex	filename
-  44136	   1948	   7940	  54024	   d308	gd32g553c.elf
-Finished building: gd32g553c.bin
+  44440	   1976	  11944	  58360	   e3f8	gd32g553c.elf
 Finished building: gd32g553c.mot
+Finished building: gd32g553c.hex
  
- 
+Finished building: gd32g553c.bin
 Finished building: gd32g553c.siz
+ 
  
  
 Finished building: gd32g553c.lst
@@ -37,5 +37,5 @@ Finished building: gd32g553c.lst
 Finished building: gd32g553c.dump
  
 
-17:03:04 Build Finished. 0 errors, 0 warnings. (took 5s.937ms)
+13:56:51 Build Finished. 0 errors, 0 warnings. (took 4s.886ms)
 

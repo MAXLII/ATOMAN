@@ -1,0 +1,23 @@
+GD-Link GDB Server 1.6.1.30290
+Copyright (C) 2025 GigaDevice
+Info: Core type: Cortex-M33
+Info: Part No: GD32G553CET7 
+Info: CMSIS-DAP: swd used
+Info: GD-Link speed 2000 KHz
+Info: Flash size 512 KBytes
+Info: The core supports 8 hardware breakpoints
+we got a new connection, port=5099, client_count=1, ip=127.0.0.1, client port=55326
+Info: Erase Successfully 
+Info: Download Successfully 
+Info: Target state: halted
+      Target halted due to debug request
+      xPSR: 0x69000000, PC: 0x08001374, MSP: 0x20003010
+Info: Target state: halted
+      Target halted due to debug request
+      xPSR: 0x29000000, PC: 0x08003642, MSP: 0x20002FE8
+Info: Target state: halted
+      Target halted due to debug request
+      xPSR: 0x69000000, PC: 0x08003718, MSP: 0x20002FE8
+Info: Target state: halted
+      Target halted due to debug request
+      xPSR: 0x29000000, PC: 0x08002264, MSP: 0x20003000

@@ -1,0 +1,123 @@
+#include "zero_player.h"
+#include <stdio.h>
+#include <string.h>
+#include "section.h"
+#include "systick.h"
+
+static int grid[ROWS][COLS] = {0};
+static int next_grid[ROWS][COLS] = {0};
+
+// 初始化棋盘
+void zero_player_init(const int init[ROWS][COLS])
+{
+    memcpy(grid, init, sizeof(grid));
+}
+
+// 打印棋盘
+void zero_player_print(DEC_MY_PRINTF)
+{
+    for (int i = 0; i < COLS; i++)
+    {
+        printf("--");
+    }
+    printf("\n");
+    for (int i = 0; i < ROWS; ++i)
+    {
+        for (int j = 0; j < COLS; ++j)
+        {
+            my_printf("%c ", grid[i][j] ? '*' : ' ');
+        }
+        my_printf("\n");
+    }
+}
+
+REG_SHELL_CMD(zero_player_print, zero_player_print);
+
+// 计算某个细胞的邻居数量
+static int count_neighbors(int x, int y)
+{
+    int cnt = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            if (dx == 0 && dy == 0)
+                continue;
+            int nx = x + dx;
+            int ny = y + dy;
+            nx += ROWS;
+            nx %= ROWS;
+            ny += COLS;
+            ny %= COLS;
+            if (nx >= 0 && nx < ROWS && ny >= 0 && ny < COLS)
+            {
+                cnt += grid[nx][ny];
+            }
+        }
+    }
+    return cnt;
+}
+
+// 运行一步
+void zero_player_step(void)
+{
+    uint32_t is_equal = 1;
+    for (int i = 0; i < ROWS; ++i)
+    {
+        for (int j = 0; j < COLS; ++j)
+        {
+            int neighbors = count_neighbors(i, j);
+            if (grid[i][j])
+            {
+                // 活细胞规则
+                next_grid[i][j] = (neighbors == 2 || neighbors == 3) ? 1 : 0;
+            }
+            else
+            {
+                // 死细胞规则
+                next_grid[i][j] = (neighbors == 3) ? 1 : 0;
+            }
+
+            if (grid[i][j] != next_grid[i][j])
+            {
+                is_equal = 0;
+            }
+        }
+    }
+    if (is_equal == 1)
+    {
+        zero_player_add((void (*)(const char *__format, ...))NULL);
+    }
+    memcpy(grid, next_grid, sizeof(grid));
+}
+
+REG_TASK_MS(1000, zero_player_step); // 每秒运行一次
+
+void zero_player_add(DEC_MY_PRINTF)
+{
+    uint32_t system_time = systick_gettime_100us();
+    if (my_printf != NULL)
+    {
+        my_printf("system_time = %u\r\n", system_time);
+    }
+    // 使用更复杂的伪随机算法
+    uint32_t rand_seed = system_time ^ 0xA5A5A5A5;
+    for (uint32_t i = 0; i < ROWS; i++)
+    {
+        for (uint32_t j = 0; j < COLS; j++)
+        {
+            if (grid[i][j] == 0)
+            {
+                // 线性同余法伪随机
+                rand_seed = rand_seed * 1664525 + 1013904223 + i * 73 + j * 37;
+                grid[i][j] = ((rand_seed >> 16) & 0xFF) < 51 ? 1 : 0; // 约20%概率
+            }
+        }
+    }
+    if (my_printf != NULL)
+    {
+        my_printf("zero_player_add: random fill done\r\n");
+    }
+}
+
+REG_SHELL_CMD(zero_player_add, zero_player_add)
