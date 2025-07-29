@@ -3,8 +3,8 @@
 
 #include "section.h"
 
-#define ROWS 37
-#define COLS 41
+#define ROWS 30
+#define COLS 31
 
 void zero_player_init(const int init[ROWS][COLS]);
 void zero_player_step(void);
