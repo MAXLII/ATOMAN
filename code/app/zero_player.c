@@ -14,23 +14,53 @@ void zero_player_init(const int init[ROWS][COLS])
     memcpy(grid, init, sizeof(grid));
 }
 
+static uint8_t zp_in_print = 0;
+static uint32_t row_cnt;
+static uint32_t col_cnt;
+
+void (*zp_printf)(const char *__format, ...);
+
 // 打印棋盘
 void zero_player_print(DEC_MY_PRINTF)
 {
+    if (zp_in_print != 0)
+    {
+        return;
+    }
+    zp_printf = my_printf;
+    zp_in_print = 1;
+    row_cnt = 0;
+    col_cnt = 0;
     for (int i = 0; i < COLS; i++)
     {
-        printf("--");
+        my_printf("--");
     }
-    printf("\n");
-    for (int i = 0; i < ROWS; ++i)
+    my_printf("\n");
+}
+
+void zero_player_print_step(void)
+{
+    if (zp_in_print != 1)
     {
-        for (int j = 0; j < COLS; ++j)
-        {
-            my_printf("%c ", grid[i][j] ? '*' : ' ');
-        }
-        my_printf("\n");
+        return;
+    }
+
+    zp_printf("%c ", grid[row_cnt][col_cnt] ? '*' : ' ');
+    col_cnt = (col_cnt + 1) % COLS;
+    if (col_cnt == 0)
+    {
+        zp_printf("\n");
+        row_cnt++;
+    }
+
+    if ((row_cnt >= ROWS) &&
+        (zp_in_print == 1))
+    {
+        zp_in_print = 2;
     }
 }
+
+REG_TASK_MS(1, zero_player_print_step)
 
 REG_SHELL_CMD(zero_player_print, zero_player_print);
 
@@ -62,6 +92,10 @@ static int count_neighbors(int x, int y)
 // 运行一步
 void zero_player_step(void)
 {
+    if (zp_in_print != 2)
+    {
+        return;
+    }
     uint8_t is_equal_now_next = 1;
     uint8_t is_equal_last_next = 1;
     for (int i = 0; i < ROWS; ++i)
@@ -98,6 +132,7 @@ void zero_player_step(void)
     {
         zero_player_add((void (*)(const char *__format, ...))NULL);
     }
+    zp_in_print = 0;
 }
 
 REG_TASK(1, zero_player_step); // 每秒运行一次
