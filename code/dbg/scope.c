@@ -21,7 +21,7 @@
  * - 检查触发标志，进入触发采集状态
  * - 触发后采集trigger_post_cnt个点后停止
  */
-__attribute__((always_inline, hot)) inline void scope_func(scope_t *scope)
+__attribute__((always_inline, hot)) inline void scope_run(scope_t *scope)
 {
     float *buffer = scope->buffer;
     const uint32_t buf_size = scope->buffer_size;
@@ -249,8 +249,8 @@ void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF)
 
     g_scope_print_ctx.scope = scope;
     g_scope_print_ctx.my_printf = my_printf;
-    g_scope_print_ctx.start = (int32_t)trig_idx - (int32_t)trig_post_cnt;
-    g_scope_print_ctx.end = (int32_t)trig_idx + (int32_t)(buf_size - trig_post_cnt);
+    g_scope_print_ctx.start = ((int32_t)trig_idx + (int32_t)trig_post_cnt + 1) % buf_size;
+    g_scope_print_ctx.end = ((int32_t)trig_idx + (int32_t)trig_post_cnt) % buf_size;
     g_scope_print_ctx.cur = g_scope_print_ctx.start;
     g_scope_print_ctx.active = 1;
 
@@ -276,18 +276,12 @@ int scope_printf_data_step(void)
     const uint32_t var_count = scope->var_count;
     float *buffer = scope->buffer;
 
-    int32_t i = g_scope_print_ctx.cur;
-    int32_t rel = i - (int32_t)scope->trigger_index;
-    uint32_t idx;
-    // 优化：掩码加速
-    uint32_t mask = 0;
-    for (uint32_t t = buf_size; t; t >>= 1)
-        mask = (mask << 1) | 1;
-    int use_mask = ((mask + 1) == buf_size);
-    if (use_mask)
-        idx = (uint32_t)i & mask;
-    else
-        idx = ((i % (int32_t)buf_size) + buf_size) % buf_size;
+    int32_t rel_start = (int32_t)scope->trigger_post_cnt - (int32_t)buf_size;
+    int32_t rel_offset = g_scope_print_ctx.cur - g_scope_print_ctx.start;
+    if (rel_offset < 0)
+        rel_offset += buf_size; // 确保相对位置为正
+    int32_t rel = rel_start + rel_offset;
+    uint32_t idx = g_scope_print_ctx.cur % buf_size;
 
     my_printf("%d\t", rel);
     float *row = buffer + idx;
@@ -295,8 +289,8 @@ int scope_printf_data_step(void)
         my_printf("%f\t", row[v * buf_size]);
     my_printf("\r\n");
 
-    g_scope_print_ctx.cur++;
-    if (g_scope_print_ctx.cur >= g_scope_print_ctx.end)
+    g_scope_print_ctx.cur = (g_scope_print_ctx.cur + 1) % buf_size;
+    if (g_scope_print_ctx.cur == g_scope_print_ctx.start)
     {
         g_scope_print_ctx.active = 0;
         return 0; // 打印完成
