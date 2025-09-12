@@ -70,7 +70,7 @@ void bsp_usart_init(void)
     dma_channel_enable(DMA0, DMA_CH0);
 }
 
-REG_INIT(bsp_usart_init)
+REG_INIT(0, bsp_usart_init)
 
 int _write(int file, char *ptr, int len)
 {

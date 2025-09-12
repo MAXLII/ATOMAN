@@ -28,4 +28,4 @@ void bsp_timer5_init(void)
     timer_enable(TIMER5);
 }
 
-REG_INIT(bsp_timer5_init);
+REG_INIT(0, bsp_timer5_init);
