@@ -21,7 +21,7 @@
  * - 检查触发标志，进入触发采集状态
  * - 触发后采集trigger_post_cnt个点后停止
  */
-__attribute__((always_inline, hot)) inline void scope_run(scope_t *scope)
+__attribute__((always_inline, hot)) inline void scope_func(scope_t *scope)
 {
     float *buffer = scope->buffer;
     const uint32_t buf_size = scope->buffer_size;
