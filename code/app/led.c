@@ -38,3 +38,12 @@ REG_SHELL_VAR(i32_temp, i32_temp, SHELL_INT32, NULL);
 
 float fp32_temp;
 REG_SHELL_VAR(fp32_temp, fp32_temp, SHELL_FP32, NULL);
+
+#include "plecs.h"
+
+void test_printf(void)
+{
+    PLECS_LOG("Hello PLECS World!\n");
+}
+
+REG_TASK_MS(1000, test_printf)

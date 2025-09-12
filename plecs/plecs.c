@@ -2,6 +2,10 @@
 #include "plecs.h"
 #include "section.h"
 #include "stdint.h"
+#include "stdio.h"
+#include "stdarg.h"
+
+FILE *fp_plecs;
 
 static struct SimulationState *plecs_astate;
 uint32_t plecs_time_100us = 0;
@@ -26,6 +30,20 @@ void plecs_set_output(PLECS_INPUT_E num, float val)
     }
 }
 
+void plecs_printf(const char *file, int line, const char *format, ...)
+{
+    if (fp_plecs)
+    {
+        double time = plecs_astate->time; // unit: seconds
+        fprintf(fp_plecs, "[%8.4f] [%s:%d] ", time, file, line);
+        va_list args;
+        va_start(args, format);
+        vfprintf(fp_plecs, format, args);
+        va_end(args);
+        fflush(fp_plecs);
+    }
+}
+
 DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 {
     aSizes->numInputs = PLECS_INPUT_NUM;
@@ -37,6 +55,12 @@ DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 DLLEXPORT void plecsStart(struct SimulationState *aState)
 {
     plecs_astate = aState;
+    if (fp_plecs)
+    {
+        fclose(fp_plecs);
+        fp_plecs = NULL;
+    }
+    fp_plecs = fopen("D:/OneDrive/LWX/GD32/base/plecs_log.txt", "w"); // 以写入模式打开
     section_init();
 }
 
