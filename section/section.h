@@ -194,9 +194,11 @@ void run_task(void);
 /**
  * @brief 初始化函数注册结构
  */
-typedef struct
+typedef struct reg_init
 {
-    void (*p_func)(void); ///< 初始化函数指针
+    uint8_t priority;
+    void (*p_func)(void);    ///< 初始化函数指针
+    struct reg_init *p_next; ///< 链表下一个节点指针
 } reg_init_t;
 
 /**
@@ -205,9 +207,11 @@ typedef struct
  * @note 使用示例：REG_INIT(my_init_func);
  * @note 注册的函数会在section_init()中自动调用
  */
-#define REG_INIT(func)                                          \
+#define REG_INIT(prio, func)                                    \
     reg_init_t reg_init_##func = {                              \
+        .priority = prio,                                       \
         .p_func = func,                                         \
+        .p_next = NULL,                                         \
     };                                                          \
     const reg_section_t reg_section_##func AUTO_REG_SECTION = { \
         .section_type = SECTION_INIT,                           \

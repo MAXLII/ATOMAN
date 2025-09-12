@@ -52,6 +52,7 @@ section_link_t *p_link_first = NULL;               ///< 链路链表头指针
 section_perf_record_t *p_perf_record_first = NULL; ///< 性能计数器链表头指针
 uint32_t *p_perf_cnt = NULL;                       /// 性能计数器一级指针
 section_com_t *p_com_first = NULL;                 ///< COMM链表头指针
+reg_init_t *p_init_first = NULL;                   ///< INIT链表头指针
 
 /**
  * @brief 检查字符串是否为有效数字表达式
@@ -701,6 +702,31 @@ static void comm_insert(section_com_t *com)
     }
 }
 
+static void init_insert(reg_init_t *init)
+{
+    if (!init)
+        return;
+
+    init->p_next = NULL;
+
+    // 插入到链表头或按优先级顺序插入
+    if (!p_init_first || init->priority < p_init_first->priority)
+    {
+        init->p_next = p_init_first;
+        p_init_first = init;
+    }
+    else
+    {
+        reg_init_t *prev = p_init_first;
+        while (prev->p_next && prev->p_next->priority <= init->priority)
+        {
+            prev = prev->p_next;
+        }
+        init->p_next = prev->p_next;
+        prev->p_next = init;
+    }
+}
+
 /**
  * @brief 系统初始化函数
  * @note 遍历段中的所有注册项，根据类型进行相应的初始化操作
@@ -714,7 +740,7 @@ void section_init(void)
         {
         case SECTION_INIT:
             // 执行初始化函数
-            ((reg_init_t *)p->p_str)->p_func();
+            init_insert((reg_init_t *)p->p_str);
             break;
         case SECTION_TASK:
             // 插入任务到任务链表
@@ -741,6 +767,12 @@ void section_init(void)
             comm_insert((section_com_t *)p->p_str);
             break;
         }
+    }
+    // 执行所有初始化函数
+    for (reg_init_t *init = p_init_first; init != NULL; init = (reg_init_t *)init->p_next)
+    {
+        if (init->p_func)
+            init->p_func();
     }
 }
 
