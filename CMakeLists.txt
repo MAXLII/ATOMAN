@@ -11,7 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/code/interface)
 include_directories(${CMAKE_SOURCE_DIR}/plecs)
 include_directories(${CMAKE_SOURCE_DIR}/plecs/bsp)
 include_directories(${CMAKE_SOURCE_DIR}/section)
-include_directories("C:/Users/22500238/Documents/Plexim/PLECS 4.7 (64 bit)/include/plecs/")
+include_directories("D:/Documents/Plexim/PLECS 4.7 (64 bit)/include/plecs")
 
 # 源文件
 set(SOURCES

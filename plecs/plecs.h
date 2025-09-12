@@ -24,6 +24,10 @@ typedef enum
 float plecs_get_input(PLECS_INPUT_E num);
 void plecs_set_output(PLECS_INPUT_E num, float val);
 
+void plecs_printf(const char *file, int line, const char *format, ...);
+
+#define PLECS_LOG(...) plecs_printf(__FILE__, __LINE__, __VA_ARGS__)
+
 extern uint32_t plecs_time_1ms;
 
 #endif
