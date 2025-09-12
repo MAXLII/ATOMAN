@@ -204,7 +204,7 @@ typedef struct reg_init
 /**
  * @brief 注册初始化函数
  * @param func 初始化函数名
- * @note 使用示例：REG_INIT(my_init_func);
+ * @note 使用示例：REG_INIT(num, my_init_func);
  * @note 注册的函数会在section_init()中自动调用
  */
 #define REG_INIT(prio, func)                                    \

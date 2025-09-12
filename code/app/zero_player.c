@@ -35,7 +35,7 @@ void zero_player_print(DEC_MY_PRINTF)
     {
         my_printf("--");
     }
-    my_printf("\n");
+    my_printf("\r\n");
 }
 
 void zero_player_print_step(void)
@@ -49,7 +49,7 @@ void zero_player_print_step(void)
     col_cnt = (col_cnt + 1) % COLS;
     if (col_cnt == 0)
     {
-        zp_printf("\n");
+        zp_printf("\r\n");
         row_cnt++;
     }
 

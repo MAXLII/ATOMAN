@@ -27,12 +27,12 @@
 		<link>
 			<name>code</name>
 			<type>2</type>
-			<location>D:/project/base/code</location>
+			<location>D:/OneDrive/LWX/GD32/base/code</location>
 		</link>
 		<link>
 			<name>section</name>
 			<type>2</type>
-			<location>D:/project/base/section</location>
+			<location>D:/OneDrive/LWX/GD32/base/section</location>
 		</link>
 	</linkedResources>
 </projectDescription>

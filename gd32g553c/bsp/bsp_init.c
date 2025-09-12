@@ -7,4 +7,4 @@ void bsp_init(void)
     bsp_gpio_init();
 }
 
-REG_INIT(bsp_init)
+REG_INIT(0, bsp_init)
