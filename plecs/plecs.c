@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "stdio.h"
 #include "stdarg.h"
+#include "plecs_log_file_path.c"
 
 FILE *fp_plecs;
 
@@ -60,7 +61,7 @@ DLLEXPORT void plecsStart(struct SimulationState *aState)
         fclose(fp_plecs);
         fp_plecs = NULL;
     }
-    fp_plecs = fopen("D:/OneDrive/LWX/GD32/base/plecs_log.txt", "w"); // 以写入模式打开
+    fp_plecs = fopen(PLECS_LOG_FILE_PATH, "w"); // 以写入模式打开
     section_init();
 }
 

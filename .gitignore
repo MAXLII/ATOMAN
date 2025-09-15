@@ -3,3 +3,5 @@ gd32g553c/debug_log.txt
 build
 gd32g553c/gd_dbg
 .metadata
+plecs/plecs_log_file_path.c
+plecs/plecs_log.txt
