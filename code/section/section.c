@@ -21,7 +21,11 @@
 #include "string.h"
 #include <stdlib.h>
 #include <ctype.h>
-#include <math.h>
+#include "my_math.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
 
 // 平台相关配置
 #ifdef IS_PLECS
@@ -41,7 +45,10 @@ extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start            ///< 段起始地址
 #define SECTION_STOP __section_end               ///< 段结束地址
-#define SYSTEM_RESET nvic_system_reset()         ///< 系统复位
+#define SYSTEM_RESET NVIC_SystemReset()          ///< 系统复位
+#ifndef PLECS_LOG
+#define PLECS_LOG(...)
+#endif
 #endif
 
 // 全局链表头指针
@@ -53,6 +60,12 @@ section_perf_record_t *p_perf_record_first = NULL; ///< 性能计数器链表头
 uint32_t *p_perf_cnt = NULL;                       /// 性能计数器一级指针
 section_com_t *p_com_first = NULL;                 ///< COMM链表头指针
 reg_init_t *p_init_first = NULL;                   ///< INIT链表头指针
+comm_route_t *p_comm_route_first = NULL;           /// 路由链表
+
+static uint32_t shell_data_num = 0;
+
+// 预计算的CRC查找表
+static uint16_t crc16_table[256];
 
 /**
  * @brief 检查字符串是否为有效数字表达式
@@ -260,52 +273,51 @@ static int parse_integer(const char *param, int32_t *out)
  * @param my_printf 打印函数指针
  * @note 处理交互式命令行，支持变量查看/修改和命令执行
  */
-void shell_run(uint8_t data, DEC_MY_PRINTF)
+void shell_run(uint8_t data, DEC_MY_PRINTF, void *p)
 {
-    static uint8_t shell_buffer[128]; ///< Shell缓冲区
-    static uint8_t shell_index = 0;   ///< 缓冲区索引
+    comm_ctx_t *p_comm_ctx = (comm_ctx_t *)p;
 
     // 溢出保护
-    if (shell_index >= sizeof(shell_buffer) - 1)
+    if (p_comm_ctx->shell_ctx.shell_index >= sizeof(p_comm_ctx->shell_ctx.shell_buffer) - 1)
     {
-        shell_index = 0;
+        p_comm_ctx->shell_ctx.shell_index = 0;
     }
-    shell_buffer[shell_index++] = data;
+    p_comm_ctx->shell_ctx.shell_buffer[p_comm_ctx->shell_ctx.shell_index++] = data;
 
     // 检测命令结束（兼容 '\n' 或 "\r\n"）
-    if ((data == '\n' && shell_index > 1 && shell_buffer[shell_index - 2] == '\r') ||
-        (data == '\n' && shell_index > 0))
+    if ((data == '\n' && p_comm_ctx->shell_ctx.shell_index > 1 && p_comm_ctx->shell_ctx.shell_buffer[p_comm_ctx->shell_ctx.shell_index - 2] == '\r') ||
+        (data == '\n' && p_comm_ctx->shell_ctx.shell_index > 0))
     {
         // 计算有效命令长度
-        uint8_t end = shell_index;
-        if (shell_index > 1 && shell_buffer[shell_index - 2] == '\r')
-            end = shell_index - 2;
+        uint8_t end = p_comm_ctx->shell_ctx.shell_index;
+        if (p_comm_ctx->shell_ctx.shell_index > 1 && p_comm_ctx->shell_ctx.shell_buffer[p_comm_ctx->shell_ctx.shell_index - 2] == '\r')
+            end = p_comm_ctx->shell_ctx.shell_index - 2;
         else
-            end = shell_index - 1;
-        shell_buffer[end] = '\0';
+            end = p_comm_ctx->shell_ctx.shell_index - 1;
+        p_comm_ctx->shell_ctx.shell_buffer[end] = '\0';
 
         // 处理内置命令
-        if (strcmp((char *)shell_buffer, "time") == 0)
+        if (strcmp((char *)p_comm_ctx->shell_ctx.shell_buffer, "time") == 0)
         {
             // 显示系统时间
-            my_printf("time = %us.%03ums\r\n",
-                      SECTION_SYS_TICK / 10000,
-                      SECTION_SYS_TICK % 10000 / 10);
+            my_printf->my_printf("time = %us.%03ums\r\n",
+                                 SECTION_SYS_TICK / 10000,
+                                 SECTION_SYS_TICK % 10000 / 10);
             goto shell_done;
         }
-        else if (strcmp((char *)shell_buffer, "reset") == 0)
+        else if (strcmp((char *)p_comm_ctx->shell_ctx.shell_buffer, "reset") == 0)
         {
             // 系统复位
             SYSTEM_RESET;
             goto shell_done;
         }
-        else if (strcmp((char *)shell_buffer, "help") == 0)
+        else if (strcmp((char *)p_comm_ctx->shell_ctx.shell_buffer, "help") == 0)
         {
             // 显示帮助信息
             section_shell_t *s = p_shell_first;
             while (s)
             {
-                my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
+                my_printf->my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
                 s = s->p_next;
             }
             goto shell_done;
@@ -313,29 +325,21 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
 
         // 查找匹配的Shell命令或变量
         section_shell_t *p = p_shell_first;
-        section_shell_t *p_last = NULL; // 用于记录上一个节点
         while (p)
         {
-            if (strncmp((char *)shell_buffer, p->p_name, p->p_name_size) == 0 &&
-                (shell_buffer[p->p_name_size] == ':' || shell_buffer[p->p_name_size] == '\0'))
+            if (strncmp((char *)p_comm_ctx->shell_ctx.shell_buffer, p->p_name, p->p_name_size) == 0 &&
+                (p_comm_ctx->shell_ctx.shell_buffer[p->p_name_size] == ':' || p_comm_ctx->shell_ctx.shell_buffer[p->p_name_size] == '\0'))
             {
-                if (p_last)
-                {
-                    p_last->p_next = p->p_next; // 断开前一个节点的链接
-                    p->p_next = p_shell_first;  // 将当前节点移到链表头部
-                    p_shell_first = p;          // 更新链表头指针
-                }
                 char *param = NULL;
-                if (shell_buffer[p->p_name_size] == ':')
+                if (p_comm_ctx->shell_ctx.shell_buffer[p->p_name_size] == ':')
                 {
                     // 提取参数
-                    param = (char *)&shell_buffer[p->p_name_size + 1];
+                    param = (char *)&p_comm_ctx->shell_ctx.shell_buffer[p->p_name_size + 1];
                     while (*param == ' ')
                         param++;
                 }
 
                 int32_t intval = 0;
-                float floatval = 0.0f;
 
                 // 根据变量类型进行处理
                 switch (p->type)
@@ -349,9 +353,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     uint8_t val = *(uint8_t *)p->p_var;
                     if (param && parse_integer(param, &intval))
+                    {
                         val = (uint8_t)intval;
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %u\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %u\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -360,9 +367,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     int8_t val = *(int8_t *)p->p_var;
                     if (param && parse_integer(param, &intval))
+                    {
                         val = (int8_t)intval;
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %d\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %d\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -371,9 +381,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     uint16_t val = *(uint16_t *)p->p_var;
                     if (param && parse_integer(param, &intval))
+                    {
                         val = (uint16_t)intval;
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %u\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %u\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -382,9 +395,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     int16_t val = *(int16_t *)p->p_var;
                     if (param && parse_integer(param, &intval))
+                    {
                         val = (int16_t)intval;
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %d\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %d\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -393,9 +409,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     uint32_t val = *(uint32_t *)p->p_var;
                     if (param && parse_integer(param, &intval))
+                    {
                         val = (uint32_t)intval;
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %lu\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %lu\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -404,9 +423,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     int32_t val = *(int32_t *)p->p_var;
                     if (param && parse_integer(param, &intval))
+                    {
                         val = (int32_t)intval;
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %ld\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %ld\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -415,9 +437,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 {
                     float val = *(float *)p->p_var;
                     if (param && is_string_number(param))
+                    {
                         val = eval_expr(param);
+                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+                    }
                     memcpy(p->p_var, &val, sizeof(val));
-                    my_printf("%s = %f\r\n", p->p_name, val);
+                    my_printf->my_printf("%s = %f\r\n", p->p_name, val);
                     if (p->func)
                         p->func(my_printf);
                     break;
@@ -425,14 +450,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
                 }
 
                 int status_set = -1; // -1:未指定, 0:仅-s, 1:有-s 1
-                char *s_flag = NULL;
                 if (param)
                 {
                     // 查找-s
                     char *ps = strstr(param, "-s");
                     if (ps)
                     {
-                        s_flag = ps;
                         // 判断-s后是否有数字
                         char *ps_num = ps + 2;
                         while (*ps_num == ' ')
@@ -459,14 +482,13 @@ void shell_run(uint8_t data, DEC_MY_PRINTF)
 
                 goto shell_done;
             }
-            p_last = p; // 记录上一个节点
             p = p->p_next;
         }
 
     shell_done:
         // 清空缓冲区
-        memset(shell_buffer, 0, sizeof(shell_buffer));
-        shell_index = 0;
+        memset(p_comm_ctx->shell_ctx.shell_buffer, 0, sizeof(p_comm_ctx->shell_ctx.shell_buffer));
+        p_comm_ctx->shell_ctx.shell_index = 0;
     }
 }
 
@@ -488,43 +510,43 @@ void shell_status_run(void)
                 case SHELL_UINT8:
                 {
                     uint8_t val = *(uint8_t *)p->p_var;
-                    p->my_printf("%s = %u\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %u\r\n", p->p_name, val);
                     break;
                 }
                 case SHELL_INT8:
                 {
                     int8_t val = *(int8_t *)p->p_var;
-                    p->my_printf("%s = %d\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %d\r\n", p->p_name, val);
                     break;
                 }
                 case SHELL_UINT16:
                 {
                     uint16_t val = *(uint16_t *)p->p_var;
-                    p->my_printf("%s = %u\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %u\r\n", p->p_name, val);
                     break;
                 }
                 case SHELL_INT16:
                 {
                     int16_t val = *(int16_t *)p->p_var;
-                    p->my_printf("%s = %d\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %d\r\n", p->p_name, val);
                     break;
                 }
                 case SHELL_UINT32:
                 {
                     uint32_t val = *(uint32_t *)p->p_var;
-                    p->my_printf("%s = %lu\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %lu\r\n", p->p_name, val);
                     break;
                 }
                 case SHELL_INT32:
                 {
                     int32_t val = *(int32_t *)p->p_var;
-                    p->my_printf("%s = %ld\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %ld\r\n", p->p_name, val);
                     break;
                 }
                 case SHELL_FP32:
                 {
                     float val = *(float *)p->p_var;
-                    p->my_printf("%s = %f\r\n", p->p_name, val);
+                    p->my_printf->my_printf("%s = %f\r\n", p->p_name, val);
                     break;
                 }
                 }
@@ -606,18 +628,24 @@ static void shell_insert(section_shell_t *shell)
         return;
 
     // 防止重复插入
-    section_shell_t *last = NULL;
-    for (section_shell_t *p = p_shell_first; p; last = p, p = p->p_next)
+    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
         if (p == shell)
             return;
     }
 
     shell->p_next = NULL;
-    if (last)
-        last->p_next = shell;
-    else
+    if (p_shell_first)
+    {
+        shell->p_next = p_shell_first;
         p_shell_first = shell;
+        shell_data_num++;
+    }
+    else
+    {
+        p_shell_first = shell;
+        shell_data_num++;
+    }
 }
 
 /**
@@ -702,6 +730,25 @@ static void comm_insert(section_com_t *com)
     }
 }
 
+static void comm_route_insert(comm_route_t *com)
+{
+    if (!com)
+        return;
+
+    com->p_next = NULL;
+    if (!p_comm_route_first)
+    {
+        p_comm_route_first = com;
+    }
+    else
+    {
+        comm_route_t *curr = p_comm_route_first;
+        while (curr->p_next)
+            curr = curr->p_next;
+        curr->p_next = com;
+    }
+}
+
 static void init_insert(reg_init_t *init)
 {
     if (!init)
@@ -766,6 +813,10 @@ void section_init(void)
             // 插入COMM命令到COMM链表
             comm_insert((section_com_t *)p->p_str);
             break;
+        case SECTION_COMM_ROUTE:
+            // 生成路由链表
+            comm_route_insert((comm_route_t *)p->p_str);
+            break;
         }
     }
     // 执行所有初始化函数
@@ -775,6 +826,8 @@ void section_init(void)
             init->p_func();
     }
 }
+
+static float task_run_time = 0.0f;
 
 /**
  * @brief 运行所有注册的定时任务
@@ -802,11 +855,44 @@ void run_task(void)
                 t->p_perf_record->time = t->p_perf_record->end - t->p_perf_record->start; // 计算执行时间
                 if (t->p_perf_record->time > t->p_perf_record->max_time)
                     t->p_perf_record->max_time = t->p_perf_record->time; // 更新最大时间
+                task_run_time += t->p_perf_record->time;
             }
-            t->time_last += t->t_period; // 更新最后执行时间
+            if (likely((now - t->time_last) < (t->t_period << 2)))
+            {
+                t->time_last += t->t_period; // 更新最后执行时间
+            }
+            else
+            {
+                t->time_last = now; // 要是上次时间与当前时间间隔太大直接更新为当前时间
+            }
         }
     }
 }
+
+float task_metric = 0.0f;
+float task_metric_max = 0.0f;
+
+REG_SHELL_VAR(TASK_METRIC, task_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(TASK_METRIC_MAX, task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
+
+static void task_metric_calculate(void)
+{
+    task_metric = task_run_time * 500e-6f;
+    if (task_metric > task_metric_max)
+    {
+        task_metric_max = task_metric;
+    }
+    task_run_time = 0.0f;
+}
+
+REG_TASK_MS(100, task_metric_calculate)
+
+static void CPU_Utilization(DEC_MY_PRINTF)
+{
+    my_printf->my_printf("CPU利用率:%f%%,CPU峰值:%f%%\n", task_metric, task_metric_max);
+}
+
+REG_SHELL_CMD(CPU_Utilization, CPU_Utilization)
 
 /**
  * @brief 执行所有注册的中断处理函数
@@ -825,6 +911,7 @@ void section_interrupt(void)
  * @param fsm 状态机控制结构
  * @note 根据当前状态执行相应的状态处理函数，处理状态转换
  */
+
 void section_fsm_func(reg_fsm_t *fsm)
 {
     if (!fsm->p_fsm_func_table || !fsm->p_fsm_ev)
@@ -840,6 +927,7 @@ void section_fsm_func(reg_fsm_t *fsm)
             if (fsm->fsm_sta_is_change)
             {
                 fsm->fsm_sta_is_change = 0;
+                PLECS_LOG("%s\n", entry->p_name);
                 entry->func_in();
             }
 
@@ -850,15 +938,16 @@ void section_fsm_func(reg_fsm_t *fsm)
             if (*fsm->p_fsm_ev)
             {
                 uint32_t next = entry->func_chk(*fsm->p_fsm_ev);
-                *fsm->p_fsm_ev = 0;
 
                 // 状态切换
                 if (next && next != entry->fsm_sta)
                 {
+                    PLECS_LOG("%s-chk_ev:%d\n", entry->p_name, *fsm->p_fsm_ev);
                     entry->func_out();          // 执行出口函数
                     fsm->fsm_sta = next;        // 切换状态
                     fsm->fsm_sta_is_change = 1; // 标记状态已改变
                 }
+                *fsm->p_fsm_ev = 0;
             }
             break;
         }
@@ -872,7 +961,7 @@ void section_fsm_func(reg_fsm_t *fsm)
  */
 static void link_process(section_link_t *link)
 {
-    if (!link || !link->p_buff || !link->dma_cnt || !link->func_arr)
+    if (!link || !link->dma_cnt || !link->func_arr)
         return;
 
     uint32_t buff_size = link->buff_size;
@@ -882,14 +971,15 @@ static void link_process(section_link_t *link)
     // 处理缓冲区中的新数据
     while (link->pos != cnt)
     {
-        uint8_t data = (*link->p_buff)[link->pos];
+        uint8_t data = link->rx_buff[link->pos];
 
         // 调用所有注册的处理函数
         for (uint32_t i = 0; i < link->func_num; ++i)
         {
             if (link->func_arr[i])
             {
-                link->func_arr[i](data, link->my_printf);
+                link->p_comm_ctx->link_id = link->link_id;
+                link->func_arr[i](data, link->my_printf, link->p_comm_ctx);
             }
         }
 
@@ -910,48 +1000,8 @@ void section_link_task(void)
     }
 }
 
-// 注册链路处理任务，每100ms执行一次
-REG_TASK(10, section_link_task);
-
-/**
- * @brief 列出所有Shell命令和变量
- * @param my_printf 打印函数指针
- * @note 显示所有注册的Shell命令和变量及其当前值
- */
-static void list(DEC_MY_PRINTF)
-{
-    for (section_shell_t *s = p_shell_first; s; s = s->p_next)
-    {
-        my_printf("%s\t", s->p_name);
-        switch (s->type)
-        {
-        case SHELL_CMD:
-            my_printf("CMD\r\n");
-            break;
-        case SHELL_UINT8:
-            my_printf("U8\t%d\r\n", *(uint8_t *)s->p_var);
-            break;
-        case SHELL_UINT16:
-            my_printf("U16\t%d\r\n", *(uint16_t *)s->p_var);
-            break;
-        case SHELL_UINT32:
-            my_printf("U32\t%d\r\n", *(uint32_t *)s->p_var);
-            break;
-        case SHELL_INT8:
-            my_printf("I8\t%d\r\n", *(int8_t *)s->p_var);
-            break;
-        case SHELL_INT16:
-            my_printf("I16\t%d\r\n", *(int16_t *)s->p_var);
-            break;
-        case SHELL_INT32:
-            my_printf("I32\t%d\r\n", *(int32_t *)s->p_var);
-            break;
-        case SHELL_FP32:
-            my_printf("FP32\t%f\r\n", *(float *)s->p_var);
-            break;
-        }
-    }
-}
+// 注册链路处理任务，每1ms执行一次
+REG_TASK(10, section_link_task)
 
 /**
  * @brief list分时打印上下文
@@ -959,9 +1009,10 @@ static void list(DEC_MY_PRINTF)
 typedef struct
 {
     section_shell_t *cur;
-    void (*my_printf)(const char *__format, ...);
+    DEC_MY_PRINTF;
     uint8_t active;
     int max_name_len; // 记录最长变量名长度
+    int tab_count;
 } list_print_ctx_t;
 
 static list_print_ctx_t g_list_print_ctx = {0};
@@ -985,10 +1036,10 @@ void list_print_start(DEC_MY_PRINTF)
             max_len = len;
     }
     g_list_print_ctx.max_name_len = max_len;
-    my_printf("\r\n========== SHELL COMMANDS AND VARIABLES ==========\r\n");
+    my_printf->my_printf("\r\n==================== SHELL COMMANDS AND VARIABLES ====================\r\n");
 }
 
-REG_SHELL_CMD(list, list_print_start);
+REG_SHELL_CMD(list, list_print_start)
 
 /**
  * @brief list分时打印，每次调用打印一项，并交替打印分隔线（自动对齐）
@@ -1012,39 +1063,63 @@ int list_print_step(void)
             return 0;
         }
 
-        int name_len = strlen(s->p_name);
-        int tab_size = 8; // 一个\t约4字符宽
-        int tab_count = (g_list_print_ctx.max_name_len / tab_size) - (name_len / tab_size) + 1;
-
-        g_list_print_ctx.my_printf("%s", s->p_name);
-        for (int i = 0; i < tab_count; i++)
-            g_list_print_ctx.my_printf("\t");
+        // g_list_print_ctx.my_printf->my_printf("%s", s->p_name);
+        // for (int i = 0; i < g_list_print_ctx.tab_count; i++)
+        //     g_list_print_ctx.my_printf->my_printf("\t");
 
         switch (s->type)
         {
         case SHELL_CMD:
-            g_list_print_ctx.my_printf("CMD\r\n");
+            g_list_print_ctx.my_printf->my_printf("%s\tCMD\r\n", s->p_name);
             break;
         case SHELL_UINT8:
-            g_list_print_ctx.my_printf("U8\t%d\r\n", *(uint8_t *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tU8\t(%d)\t(%d)\t%d\r\n",
+                                                  s->p_name,
+                                                  *(uint8_t *)s->p_max,
+                                                  *(uint8_t *)s->p_min,
+                                                  *(uint8_t *)s->p_var);
             break;
         case SHELL_UINT16:
-            g_list_print_ctx.my_printf("U16\t%d\r\n", *(uint16_t *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tU16\t(%d)\t(%d)\t%d\r\n",
+                                                  s->p_name,
+                                                  *(uint16_t *)s->p_max,
+                                                  *(uint16_t *)s->p_min,
+                                                  *(uint16_t *)s->p_var);
             break;
         case SHELL_UINT32:
-            g_list_print_ctx.my_printf("U32\t%d\r\n", *(uint32_t *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tU32\t(%u)\t(%u)\t%u\r\n",
+                                                  s->p_name,
+                                                  *(uint32_t *)s->p_max,
+                                                  *(uint32_t *)s->p_min,
+                                                  *(uint32_t *)s->p_var);
             break;
         case SHELL_INT8:
-            g_list_print_ctx.my_printf("I8\t%d\r\n", *(int8_t *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tI8\t(%d)\t(%d)\t%d\r\n",
+                                                  s->p_name,
+                                                  *(int8_t *)s->p_max,
+                                                  *(int8_t *)s->p_min,
+                                                  *(int8_t *)s->p_var);
             break;
         case SHELL_INT16:
-            g_list_print_ctx.my_printf("I16\t%d\r\n", *(int16_t *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tI16\t(%d)\t(%d)\t%d\r\n",
+                                                  s->p_name,
+                                                  *(int16_t *)s->p_max,
+                                                  *(int16_t *)s->p_min,
+                                                  *(int16_t *)s->p_var);
             break;
         case SHELL_INT32:
-            g_list_print_ctx.my_printf("I32\t%d\r\n", *(int32_t *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tI32\t(%d)\t(%d)\t%d\r\n",
+                                                  s->p_name,
+                                                  *(int32_t *)s->p_max,
+                                                  *(int32_t *)s->p_min,
+                                                  *(int32_t *)s->p_var);
             break;
         case SHELL_FP32:
-            g_list_print_ctx.my_printf("FP32\t%f\r\n", *(float *)s->p_var);
+            g_list_print_ctx.my_printf->my_printf("%s\tFP32\t(%f)\t(%f)\t%f\r\n",
+                                                  s->p_name,
+                                                  *(float *)s->p_max,
+                                                  *(float *)s->p_min,
+                                                  *(float *)s->p_var);
             break;
         }
         g_list_print_ctx.cur = s->p_next;
@@ -1054,7 +1129,7 @@ int list_print_step(void)
     // 打印分隔线
     else
     {
-        g_list_print_ctx.my_printf("-----------------------------------------\r\n");
+        g_list_print_ctx.my_printf->my_printf("-----------------------------------------\r\n");
         print_flag = 0;
         return 1;
     }
@@ -1073,7 +1148,7 @@ static void list_print_task(void)
 }
 
 // 注册1ms分时任务
-REG_TASK_MS(1, list_print_task);
+REG_TASK_MS(10, list_print_task)
 
 /**
  * @brief 打印所有性能统计结果
@@ -1084,10 +1159,10 @@ void print_perf_record(DEC_MY_PRINTF)
     if (!my_printf)
         return;
     section_perf_record_t *p = p_perf_record_first;
-    my_printf("Perf Name\tTime(us)\tMax(us)\r\n");
+    my_printf->my_printf("Perf Name\tTime(us)\tMax(us)\r\n");
     while (p)
     {
-        my_printf("%s\t%u\t%u\r\n", p->p_name, (unsigned)(p->time * 1.0f / 216.0f * 21.0f), (unsigned)(p->max_time * 0.105));
+        my_printf->my_printf("%s\t%u\t%u\r\n", p->p_name, (unsigned)(p->time * 0.5f), (unsigned)(p->max_time * 0.5f));
         p = (section_perf_record_t *)p->p_next;
     }
 }
@@ -1095,7 +1170,7 @@ void print_perf_record(DEC_MY_PRINTF)
 typedef struct
 {
     section_perf_record_t *cur;
-    void (*my_printf)(const char *__format, ...);
+    DEC_MY_PRINTF;
     uint8_t active;
     uint32_t perf_max_name_len;
 } perf_print_ctx_t;
@@ -1124,10 +1199,10 @@ void print_perf_record_start(DEC_MY_PRINTF)
     int name_len = strlen("Perf Name");
     int tab_size = 8;
     int tab_count = (g_perf_print_ctx.perf_max_name_len / tab_size) - (name_len / tab_size) + 1;
-    my_printf("Perf Name");
+    my_printf->my_printf("Perf Name");
     for (int i = 0; i < tab_count; i++)
-        my_printf("\t");
-    my_printf("Time\tMax\r\n");
+        my_printf->my_printf("\t");
+    my_printf->my_printf("Time\tMax\r\n");
 }
 
 /**
@@ -1147,10 +1222,10 @@ int print_perf_record_step(void)
     int name_len = strlen(p->p_name);
     int tab_size = 8;
     int tab_count = (g_perf_print_ctx.perf_max_name_len / tab_size) - (name_len / tab_size) + 1;
-    g_perf_print_ctx.my_printf("%s", p->p_name);
+    g_perf_print_ctx.my_printf->my_printf("%s", p->p_name);
     for (int i = 0; i < tab_count; i++)
-        g_perf_print_ctx.my_printf("\t");
-    g_perf_print_ctx.my_printf("%u\t%u\r\n", (unsigned)(p->time * 0.105), (unsigned)(p->max_time * 0.105));
+        g_perf_print_ctx.my_printf->my_printf("\t");
+    g_perf_print_ctx.my_printf->my_printf("%u\t%u\r\n", (unsigned)(p->time * 0.5f), (unsigned)(p->max_time * 0.5f));
     g_perf_print_ctx.cur = (section_perf_record_t *)p->p_next;
     return 1;
 }
@@ -1165,7 +1240,7 @@ static void perf_print_task(void)
 }
 
 // 注册分时打印性能统计任务
-REG_TASK_MS(1, perf_print_task);
+REG_TASK_MS(5, perf_print_task)
 
 // 注册性能统计打印命令到Shell
 REG_SHELL_CMD(perf_print_record, print_perf_record_start)
@@ -1179,23 +1254,24 @@ static void perf_clear_max_time(DEC_MY_PRINTF)
         p->max_time = 0; // 清除最大时间
         p = (section_perf_record_t *)p->p_next;
     }
-    my_printf("Performance max time cleared.\r\n");
+    my_printf->my_printf("Performance max time cleared.\r\n");
 }
 
-REG_SHELL_CMD(perf_clear_max_time, perf_clear_max_time);
+REG_SHELL_CMD(perf_clear_max_time, perf_clear_max_time)
 
 /**
  * @brief 根据cmd查找COMM链表，返回对应的处理函数指针
  * @param cmd 命令字
  * @return 对应的处理函数指针，未找到返回NULL
  */
-void (*find_comm_func(uint8_t cmd))(section_packform_t *p_pack, DEC_MY_PRINTF)
+void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     section_com_t *p = p_com_first;
     section_com_t *p_last = NULL;
     while (p)
     {
-        if (p->cmd == cmd)
+        if ((p->cmd_set == cmd_set) &&
+            (p->cmd_word == cmd_word))
         {
             if (p_last)
             {
@@ -1203,7 +1279,6 @@ void (*find_comm_func(uint8_t cmd))(section_packform_t *p_pack, DEC_MY_PRINTF)
                 p->p_next = p_com_first;    // 将当前节点移到链表头部
                 p_com_first = p;            // 更新链表头指针
             }
-            void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
             return p->func;
         }
         p_last = p;
@@ -1212,133 +1287,318 @@ void (*find_comm_func(uint8_t cmd))(section_packform_t *p_pack, DEC_MY_PRINTF)
     return NULL;
 }
 
-static comm_ctx_t g_comm_ctx = {0};
-
-/**
- * @brief 清理COMM相关静态数据
- */
-void comm_clear(void)
+// 初始化CRC表（系统启动时执行一次）
+static void crc16_init_table(void)
 {
-    g_comm_ctx.index = 0;
-    g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
-    g_comm_ctx.sum = 0;
-    g_comm_ctx.pack.cmd = 0;
-    g_comm_ctx.pack.len = 0;
-    g_comm_ctx.pack.p_data = NULL;
-    g_comm_ctx.pack.sum = 0;
-    g_comm_ctx.func = NULL;
-    g_comm_ctx.len = 0; // 重置长度
-    g_comm_ctx.pack.sop = 0;
-    g_comm_ctx.pack.eop = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        uint16_t crc = 0;
+        uint16_t c = i << 8;
+
+        for (int j = 0; j < 8; j++)
+        {
+            if ((crc ^ c) & 0x8000)
+            {
+                crc = (crc << 1) ^ CRC16_CCITT_POLY;
+            }
+            else
+            {
+                crc = crc << 1;
+            }
+            c = c << 1;
+        }
+
+        crc16_table[i] = crc;
+    }
 }
 
-void comm_run(uint8_t data, DEC_MY_PRINTF)
+REG_INIT(0, crc16_init_table)
+
+// CRC初始化 - 开始新的CRC计算
+uint16_t crc16_init(void)
 {
-    switch (g_comm_ctx.status)
+    return CRC16_CCITT_INIT;
+}
+
+// 更新CRC值 - 每次接收一个字节时调用
+uint16_t crc16_update(uint16_t crc, uint8_t data)
+{
+    uint8_t table_index = (crc >> 8) ^ data;
+    return (crc << 8) ^ crc16_table[table_index];
+}
+
+// 获取最终CRC结果（可选，有些标准需要异或输出）
+uint16_t crc16_final(uint16_t crc)
+{
+    // return crc ^ 0x0000;  // 如果需要异或输出，可以在这里处理
+    return crc;
+}
+
+uint16_t section_crc16(uint8_t *p_data, uint32_t len)
+{
+    uint16_t crc = crc16_init();
+    for (uint32_t i = 0; i < len; i++)
+    {
+        crc = crc16_update(crc, *(p_data + i));
+    }
+    return crc16_final(crc);
+}
+
+uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in)
+{
+    uint16_t crc = crc_in;
+    for (uint32_t i = 0; i < len; i++)
+    {
+        crc = crc16_update(crc, *(p_data + i));
+    }
+    return crc;
+}
+
+void comm_route_run(comm_ctx_t *p_comm_ctx)
+{
+    comm_route_t *p_comm_route = p_comm_route_first;
+
+    while (p_comm_route)
+    {
+        if ((p_comm_ctx->link_id == p_comm_route->src_link_id) &&
+            (p_comm_ctx->pack.dst == p_comm_route->dst_addr))
+        {
+            section_link_t *p_link = p_link_first;
+            while (p_link)
+            {
+                if (p_comm_route->dst_link_id == p_link->link_id)
+                {
+                    comm_send_data(&p_comm_ctx->pack, p_link->my_printf);
+                }
+                p_link = p_link->p_next;
+            }
+        }
+        p_comm_route = p_comm_route->p_next;
+    }
+}
+
+void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
+{
+    comm_ctx_t *p_comm_ctx = (comm_ctx_t *)p;
+    switch (p_comm_ctx->status)
     {
     case SECTION_PACKFORM_STA_SOP: // 等待开始字符
         if (data == 0xE8)          // 假设'C'为开始字符
         {
-            g_comm_ctx.status = 1;                           // 切换到接收状态
-            g_comm_ctx.sum = 0;                              // 重置校验和
-            g_comm_ctx.sum += data;                          // 累加校验和
-            g_comm_ctx.pack.sop = data;                      // 记录开始字符
-            g_comm_ctx.pack.p_data = g_comm_ctx.data_buffer; // 指向数据缓
+            p_comm_ctx->status = SECTION_PACKFORM_STA_VER;                  // 切换到接收状态
+            p_comm_ctx->crc = crc16_init();                                 // 重置CRC
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);          // 累加CRC
+            p_comm_ctx->pack.sop = data;                                    // 记录开始字符
+            p_comm_ctx->pack.p_data = (uint8_t *)p_comm_ctx->p_data_buffer; // 指向数据缓
+            p_comm_ctx->is_route = 0;                                       // 清除路由标志
         }
         else
         {
             return; // 非开始字符
         }
         break;
-    case SECTION_PACKFORM_STA_CMD: // 接收数据状态
-        g_comm_ctx.func = find_comm_func(data);
-        if (g_comm_ctx.func == NULL)
+    case SECTION_PACKFORM_STA_VER:
+        p_comm_ctx->pack.version = data;
+        p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);
+        if (p_comm_ctx->pack.version == 0x01)
         {
-            g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 未找到对应的处理函数，重置状态
-            return;                                       // 未找到对应的处理函数，直接返回
+            p_comm_ctx->status = SECTION_PACKFORM_STA_SRC;
+            p_comm_ctx->src_flag = 0;
         }
         else
         {
-            g_comm_ctx.pack.cmd = data;                   // 记录命令字
-            g_comm_ctx.sum += data;                       // 累加校验和
-            g_comm_ctx.pack.len = 0;                      // 重置长度
-            g_comm_ctx.len_flag = 0;                      // 重置长度标志
-            g_comm_ctx.status = SECTION_PACKFORM_STA_LEN; // 切换到长度接收状态
+            p_comm_ctx->status = SECTION_PACKFORM_STA_SOP; // 未找到对应的处理函数，重置状态
+            return;                                        // 未找到对应的处理函数，直接返回
         }
         break;
-    case SECTION_PACKFORM_STA_LEN: // 接收长度状态
-        if (g_comm_ctx.len_flag == 0)
+    case SECTION_PACKFORM_STA_SRC:
+        if (p_comm_ctx->src_flag == 0)
         {
-            g_comm_ctx.pack.len += data;
-            g_comm_ctx.len_flag = 1;
-            g_comm_ctx.sum += data; // 累加校验和
+            p_comm_ctx->pack.src = data;
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);
+            p_comm_ctx->src_flag = 1;
         }
         else
         {
-            g_comm_ctx.pack.len += (data << 8);              // 累加长度
-            g_comm_ctx.len = g_comm_ctx.pack.len;            // 设置数据长度
-            g_comm_ctx.len_flag = 0;                         // 重置长度标志
-            g_comm_ctx.status = SECTION_PACKFORM_STA_DATA;   // 切换到数据接收状态
-            g_comm_ctx.index = 0;                            // 重置索引
-            g_comm_ctx.sum += data;                          // 累加校验和
-            g_comm_ctx.pack.p_data = g_comm_ctx.data_buffer; // 指向数据缓冲区
-            // 检查长度是否超出缓冲区
-            if (g_comm_ctx.len > sizeof(g_comm_ctx.data_buffer))
+            p_comm_ctx->pack.d_src = data;
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);
+            p_comm_ctx->dst_flag = 0;
+            p_comm_ctx->status = SECTION_PACKFORM_STA_DST;
+        }
+        break;
+    case SECTION_PACKFORM_STA_DST:
+        if (p_comm_ctx->dst_flag == 0)
+        {
+            p_comm_ctx->pack.dst = data;
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);
+            if ((p_comm_ctx->pack.dst == 0x00) ||
+                (p_comm_ctx->pack.dst == p_comm_ctx->src))
             {
-                g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
+                p_comm_ctx->dst_flag = 1;
+            }
+            else
+            {
+                p_comm_ctx->is_route = 1;
+                p_comm_ctx->dst_flag = 1;
+            }
+        }
+        else
+        {
+            p_comm_ctx->pack.d_dst = data;
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);
+            if ((p_comm_ctx->pack.d_dst == 0x00) ||
+                (p_comm_ctx->pack.d_dst == p_comm_ctx->d_src))
+            {
+                p_comm_ctx->cmd_flag = 0;
+                p_comm_ctx->status = SECTION_PACKFORM_STA_CMD;
+            }
+            else if (p_comm_ctx->is_route == 1)
+            {
+                p_comm_ctx->cmd_flag = 0;
+                p_comm_ctx->status = SECTION_PACKFORM_STA_CMD;
+            }
+            else
+            {
+                p_comm_ctx->status = SECTION_PACKFORM_STA_SOP;
+                return;
+            }
+        }
+        break;
+    case SECTION_PACKFORM_STA_CMD: // 接收数据状态
+        if (p_comm_ctx->cmd_flag == 0)
+        {
+            p_comm_ctx->pack.cmd_set = data;                       // 记录命令字
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data); // 累加CRC
+            p_comm_ctx->cmd_flag = 1;
+        }
+        else
+        {
+            p_comm_ctx->pack.cmd_word = data;
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data); // 累加CRC
+            if (p_comm_ctx->is_route == 0)
+            {
+                p_comm_ctx->func = find_comm_func(p_comm_ctx->pack.cmd_set,
+                                                  p_comm_ctx->pack.cmd_word);
+                if (p_comm_ctx->func == NULL)
+                {
+                    p_comm_ctx->status = SECTION_PACKFORM_STA_SOP; // 未找到对应的处理函数，重置状态
+                    return;                                        // 未找到对应的处理函数，直接返回
+                }
+                else
+                {
+                    p_comm_ctx->status = SECTION_PACKFORM_STA_ACK; // 切换到长度接收状态
+                }
+            }
+            else
+            {
+                p_comm_ctx->status = SECTION_PACKFORM_STA_ACK; // 切换到长度接收状态
+            }
+        }
+        break;
+    case SECTION_PACKFORM_STA_ACK:
+        p_comm_ctx->pack.is_ack = data;
+        p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);
+        p_comm_ctx->pack.len = 0;                      // 重置长度
+        p_comm_ctx->len_flag = 0;                      // 重置长度标志
+        p_comm_ctx->status = SECTION_PACKFORM_STA_LEN; // 切换到长度接收状态
+        break;
+    case SECTION_PACKFORM_STA_LEN: // 接收长度状态
+        if (p_comm_ctx->len_flag == 0)
+        {
+            p_comm_ctx->pack.len += data;
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data); // 累加CRC
+            p_comm_ctx->len_flag = 1;
+        }
+        else
+        {
+            p_comm_ctx->pack.len += (data << 8);                            // 累加长度
+            p_comm_ctx->len = p_comm_ctx->pack.len;                         // 设置数据长度
+            p_comm_ctx->len_flag = 0;                                       // 重置长度标志
+            p_comm_ctx->status = SECTION_PACKFORM_STA_DATA;                 // 切换到数据接收状态
+            p_comm_ctx->index = 0;                                          // 重置索引
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);          // 累加CRC
+            p_comm_ctx->pack.p_data = (uint8_t *)p_comm_ctx->p_data_buffer; // 指向数据缓冲区
+            // 检查长度是否超出缓冲区
+            if (p_comm_ctx->len > p_comm_ctx->buffer_size)
+            {
+                p_comm_ctx->status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
                 return;
             }
         }
         break;
     case SECTION_PACKFORM_STA_DATA: // 接收数据状态
-        if (g_comm_ctx.len != 0)
+        if (p_comm_ctx->len != 0)
         {
-            g_comm_ctx.len--;
-            g_comm_ctx.data_buffer[g_comm_ctx.index++] = data; // 存储数据
-            g_comm_ctx.sum += data;                            // 累加校验和
+            p_comm_ctx->len--;
+            uint8_t *p_data = (uint8_t *)*p_comm_ctx->p_data_buffer + p_comm_ctx->index;
+            *p_data = data;                                        // 存储数据
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data); // CRC
+            p_comm_ctx->index++;
         }
         else
         {
-            g_comm_ctx.pack.sum = 0;                      // 接收到数据长度为0，准备接收CRC校验和
-            g_comm_ctx.pack.sum += data;                  // 累加CRC校验和
-            g_comm_ctx.status = SECTION_PACKFORM_STA_CRC; // 切换到CRC接收状态
+            p_comm_ctx->pack.crc = 0;                      // 接收到数据长度为0，准备接收CRC
+            p_comm_ctx->pack.crc += data;                  // 接收CRC
+            p_comm_ctx->status = SECTION_PACKFORM_STA_CRC; // 切换到CRC接收状态
         }
         break;
-    case SECTION_PACKFORM_STA_CRC:                 // 接收CRC校验和状态
-        g_comm_ctx.pack.sum += (data << 8);        // 累加CRC校验和
-        if (g_comm_ctx.sum == g_comm_ctx.pack.sum) // 校验和匹配
+    case SECTION_PACKFORM_STA_CRC:           // 接收CRC状态
+        p_comm_ctx->pack.crc += (data << 8); // 累加CRC
+        p_comm_ctx->crc = crc16_final(p_comm_ctx->crc);
+        if (p_comm_ctx->crc == p_comm_ctx->pack.crc) // 匹配
         {
-            g_comm_ctx.status = SECTION_PACKFORM_STA_EOP; // 切换到结束状态
-            g_comm_ctx.eop_flag = 0;
-            g_comm_ctx.pack.eop = 0; // 记录结束字符
+            p_comm_ctx->status = SECTION_PACKFORM_STA_EOP; // 切换到结束状态
+            p_comm_ctx->eop_flag = 0;
+            p_comm_ctx->pack.eop = 0; // 记录结束字符
         }
         else
         {
-            g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 校验和不匹配，重置状态为等待开始字符
+            p_comm_ctx->status = SECTION_PACKFORM_STA_SOP; // 不匹配，重置状态为等待开始字符
+            return;
         }
         break;
     case SECTION_PACKFORM_STA_EOP:
-        if (g_comm_ctx.eop_flag == 0)
+        if (p_comm_ctx->eop_flag == 0)
         {
-            g_comm_ctx.pack.eop += data; // 记录结束字符
-            g_comm_ctx.eop_flag = 1;     // 设置结束标志
+            p_comm_ctx->pack.eop += data; // 记录结束字符
+            p_comm_ctx->eop_flag = 1;     // 设置结束标志
+        }
+        else if (p_comm_ctx->is_route == 1)
+        {
+            comm_route_run(p_comm_ctx);
+            p_comm_ctx->status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
         }
         else
         {
-            g_comm_ctx.eop_flag = 0;            // 设置结束标志
-            g_comm_ctx.pack.eop += (data << 8); // 记录结束字符
-            if (g_comm_ctx.pack.eop == 0x0A0D)
+            p_comm_ctx->eop_flag = 0;            // 设置结束标志
+            p_comm_ctx->pack.eop += (data << 8); // 记录结束字符
+            if (p_comm_ctx->pack.eop == 0x0A0D)
             {
                 // 调用处理函数
-                if (g_comm_ctx.func)
+                if (p_comm_ctx->func)
                 {
-                    g_comm_ctx.func(&g_comm_ctx.pack, my_printf);
+                    p_comm_ctx->func(&p_comm_ctx->pack, my_printf);
                 }
             }
-            g_comm_ctx.status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
+            p_comm_ctx->status = SECTION_PACKFORM_STA_SOP; // 重置状态为等待开始字符
         }
         break;
+    case SECTION_PACKFORM_STA_ROUTE:
+        break;
     }
+}
+
+static uint8_t tx_buffer[512] = {0};
+static int tx_buffer_index = 0;
+
+static void write_tx_buffer(uint8_t data)
+{
+    if (tx_buffer_index >= 512)
+    {
+        return;
+    }
+    tx_buffer[tx_buffer_index] = data;
+    tx_buffer_index++;
 }
 
 void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
@@ -1346,36 +1606,501 @@ void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
     if (!p_pack)
         return;
 
-    p_pack->sum = 0;
+    tx_buffer_index = 0;
+
+    p_pack->version = 0x01;
+    p_pack->crc = crc16_init();
 
     // 发送开始字符
-    my_printf("%c", 0xE8);
-    p_pack->sum += 0xE8;
+    write_tx_buffer(0xE8);
+    p_pack->crc = crc16_update(p_pack->crc, 0xE8);
+
+    // 发送版本
+    write_tx_buffer(p_pack->version);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->version);
+
+    // 发送源地址
+    write_tx_buffer(p_pack->src);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->src);
+
+    // 发送动态源地址
+    write_tx_buffer(p_pack->d_src);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->d_src);
+
+    // 发送目的地址
+    write_tx_buffer(p_pack->dst);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->dst);
+
+    // 发送动态目的地址
+    write_tx_buffer(p_pack->d_dst);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->d_dst);
+
+    // 发送命令集
+    write_tx_buffer(p_pack->cmd_set);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->cmd_set);
 
     // 发送命令字
-    my_printf("%c", p_pack->cmd);
-    p_pack->sum += p_pack->cmd;
+    write_tx_buffer(p_pack->cmd_word);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->cmd_word);
+
+    // 发送是响应
+    write_tx_buffer(p_pack->is_ack);
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->is_ack);
 
     // 发送长度
-    my_printf("%c%c", (uint8_t)(p_pack->len & 0xFF), (uint8_t)((p_pack->len >> 8) & 0xFF));
-    p_pack->sum += p_pack->len & 0xFF;
-    p_pack->sum += (uint8_t)((p_pack->len >> 8) & 0xFF);
+    write_tx_buffer((uint8_t)(p_pack->len & 0xFF));
+    write_tx_buffer((uint8_t)((p_pack->len >> 8) & 0xFF));
+    p_pack->crc = crc16_update(p_pack->crc, p_pack->len & 0xFF);
+    p_pack->crc = crc16_update(p_pack->crc, (uint8_t)((p_pack->len >> 8) & 0xFF));
 
     // 发送数据
     if (p_pack->p_data)
     {
         for (uint32_t i = 0; i < p_pack->len; i++)
         {
-            my_printf("%c", p_pack->p_data[i]);
-            p_pack->sum += p_pack->p_data[i];
+            write_tx_buffer(p_pack->p_data[i]);
+            p_pack->crc = crc16_update(p_pack->crc, p_pack->p_data[i]);
         }
     }
 
-    // 发送CRC校验和
-    uint16_t crc = p_pack->sum;
-    my_printf("%c%c", (uint8_t)(crc & 0xFF), (uint8_t)((crc >> 8) & 0xFF));
+    // 发送CRC
+    uint16_t crc = crc16_final(p_pack->crc);
 
-    // 发送结束字符
-    p_pack->eop = 0x0A0D;
-    my_printf("%c%c", p_pack->eop & 0xFF, (p_pack->eop >> 8) & 0xFF);
+    write_tx_buffer((uint8_t)(crc & 0xFF));
+    write_tx_buffer((uint8_t)((crc >> 8) & 0xFF));
+
+    write_tx_buffer(0x0D);
+    write_tx_buffer(0x0A);
+
+    if (my_printf)
+        my_printf->tx_by_dma((char *)tx_buffer, tx_buffer_index);
 }
+
+static shell_report_ctx_t shell_report_ctx = {0};
+
+void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if ((p_pack->is_ack == 1) ||
+        (shell_report_ctx.active == 1))
+    {
+        return;
+    }
+    section_packform_t pack_ret = {0};
+    pack_ret.src = p_pack->dst;
+    pack_ret.d_src = p_pack->d_dst;
+    pack_ret.dst = p_pack->src;
+    pack_ret.d_dst = p_pack->d_src;
+    pack_ret.cmd_set = CMD_SET_SHELL_DATA_NUM;
+    pack_ret.cmd_word = CMD_WORD_SHELL_DATA_NUM;
+    pack_ret.is_ack = 1;
+    pack_ret.len = sizeof(uint32_t);
+    pack_ret.p_data = (uint8_t *)&shell_data_num;
+
+    shell_report_ctx.active = 1;
+    shell_report_ctx.my_printf = my_printf;
+    shell_report_ctx.p_shell = p_shell_first;
+    shell_report_ctx.src = pack_ret.src;
+    shell_report_ctx.d_src = pack_ret.d_src;
+    shell_report_ctx.dst = pack_ret.dst;
+    shell_report_ctx.d_dst = pack_ret.d_dst;
+
+    comm_send_data(&pack_ret, my_printf);
+}
+
+REG_COMM(CMD_SET_SHELL_DATA_NUM, CMD_WORD_SHELL_DATA_NUM, shell_data_num_act)
+
+static void shell_data_report_act(void)
+{
+    if (shell_report_ctx.active == 1)
+    {
+        if (shell_report_ctx.p_shell == NULL)
+        {
+            shell_report_ctx.active = 0;
+        }
+        else
+        {
+            section_packform_t packform = {0};
+
+            shell_report_list_t shell_report_list;
+            shell_report_list.name_len = shell_report_ctx.p_shell->p_name_size;
+            shell_report_list.type = shell_report_ctx.p_shell->type;
+            shell_report_list.data = *(uint32_t *)shell_report_ctx.p_shell->p_var;
+            shell_report_list.data_max = *(uint32_t *)shell_report_ctx.p_shell->p_max;
+            shell_report_list.data_min = *(uint32_t *)shell_report_ctx.p_shell->p_min;
+            memcpy(shell_report_list.name, shell_report_ctx.p_shell->p_name, shell_report_ctx.p_shell->p_name_size);
+            shell_report_list.auto_report = (shell_report_ctx.p_shell->status & (1 << 2)) ? 1 : 0;
+
+            packform.src = shell_report_ctx.src;
+            packform.d_src = shell_report_ctx.d_src;
+            packform.dst = shell_report_ctx.dst;
+            packform.d_dst = shell_report_ctx.d_dst;
+            packform.cmd_set = CMD_SET_SHELL_REPORT_LIST;
+            packform.cmd_word = CMD_WORD_SHELL_REPORT_LIST;
+            packform.is_ack = 0;
+            packform.len = sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + shell_report_ctx.p_shell->p_name_size;
+            packform.p_data = (uint8_t *)&shell_report_list;
+            comm_send_data(&packform, shell_report_ctx.my_printf);
+            shell_report_ctx.p_shell = shell_report_ctx.p_shell->p_next;
+        }
+    }
+}
+
+REG_TASK_MS(50, shell_data_report_act)
+
+static section_shell_t *find_shell(char *p_name, uint8_t len)
+{
+    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    {
+        if (p->p_name_size != len)
+        {
+            continue;
+        }
+        if (memcmp(p->p_name, p_name, len) == 0)
+        {
+            return p;
+        }
+    }
+    return NULL;
+}
+
+static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    shell_read_data_t *p_shell_read_data;
+    p_shell_read_data = (shell_read_data_t *)p_pack->p_data;
+    if (p_pack->len != sizeof(shell_read_data_t) - SHELL_STR_SIZE_MAX + p_shell_read_data->name_len)
+    {
+        return;
+    }
+    section_shell_t *p = find_shell(p_shell_read_data->name, p_shell_read_data->name_len);
+    if (p)
+    {
+        if (p->func)
+        {
+            p->func(my_printf);
+        }
+        shell_read_data_ret_t shell_read_data_ret = {0};
+        shell_read_data_ret.name_len = p->p_name_size;
+        shell_read_data_ret.type = p->type;
+        shell_read_data_ret.data = *(uint32_t *)p->p_var;
+        memcpy(shell_read_data_ret.name, p->p_name, p->p_name_size);
+
+        section_packform_t packform = {0};
+        packform.src = p_pack->dst;
+        packform.d_src = p_pack->d_dst;
+        packform.dst = p_pack->src;
+        packform.d_dst = p_pack->d_src;
+        packform.cmd_set = CMD_SET_SHELL_READ_DATA;
+        packform.cmd_word = CMD_WORD_SHELL_READ_DATA;
+        packform.is_ack = 1;
+        packform.len = sizeof(shell_read_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size;
+        packform.p_data = (uint8_t *)&shell_read_data_ret;
+
+        comm_send_data(&packform, my_printf);
+    }
+}
+
+REG_COMM(CMD_SET_SHELL_READ_DATA, CMD_WORD_SHELL_READ_DATA, shell_read_data_act)
+
+static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    shell_write_data_t *p_shell_write_data;
+    p_shell_write_data = (shell_write_data_t *)p_pack->p_data;
+    section_shell_t *p;
+    p = find_shell(p_shell_write_data->name, p_shell_write_data->name_len);
+    if (p)
+    {
+        // 根据变量类型进行处理
+        switch (p->type)
+        {
+        case SHELL_CMD:
+            // 执行命令
+
+            break;
+        case SHELL_UINT8:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(uint8_t));
+            uint8_t val = *(uint8_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint8_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint8_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_INT8:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(int8_t));
+            int8_t val = *(int8_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(int8_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(int8_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_UINT16:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(uint16_t));
+            uint16_t val = *(uint16_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint16_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint16_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_INT16:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(int16_t));
+            int16_t val = *(int16_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(int16_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(int16_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_UINT32:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(uint32_t));
+            uint32_t val = *(uint32_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint32_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint32_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_INT32:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(int32_t));
+            int32_t val = *(int32_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(int32_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(int32_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_FP32:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(float));
+            float val = *(float *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(float));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(float));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        }
+        shell_write_data_ret_t shell_write_data_ret = {0};
+        shell_write_data_ret.data = *(uint32_t *)p->p_var;
+        shell_write_data_ret.data_max = *(uint32_t *)p->p_max;
+        shell_write_data_ret.data_min = *(uint32_t *)p->p_min;
+        memcpy(shell_write_data_ret.name, p->p_name, p->p_name_size);
+        shell_write_data_ret.name_len = p->p_name_size;
+        shell_write_data_ret.type = p->type;
+
+        section_packform_t packform = {0};
+        packform.src = p_pack->dst;
+        packform.d_src = p_pack->d_dst;
+        packform.dst = p_pack->src;
+        packform.d_dst = p_pack->d_src;
+        packform.cmd_set = CMD_SET_SHELL_WRITE_DATA;
+        packform.cmd_word = CMD_WORD_SHELL_WRITE_DATA;
+        packform.is_ack = 1;
+        packform.len = sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size;
+        packform.p_data = (uint8_t *)&shell_write_data_ret;
+
+        comm_send_data(&packform, my_printf);
+
+        if (p->func)
+            p->func(my_printf);
+    }
+}
+
+REG_COMM(CMD_SET_SHELL_WRITE_DATA, CMD_WORD_SHELL_WRITE_DATA, shell_write_data_act)
+
+static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    shell_wave_enable_param_t *p_shell_wave_enable_param;
+    p_shell_wave_enable_param = (shell_wave_enable_param_t *)p_pack->p_data;
+    if (p_pack->len != sizeof(shell_wave_enable_param_t) - SHELL_STR_SIZE_MAX + p_shell_wave_enable_param->name_len)
+    {
+        return;
+    }
+    section_shell_t *p = find_shell(p_shell_wave_enable_param->name, p_shell_wave_enable_param->name_len);
+
+    shell_wave_enable_param_ack_t shell_wave_enable_param_ack;
+
+    if (p)
+    {
+        shell_wave_enable_param_ack.ok = 1;
+        if (p_shell_wave_enable_param->auto_report == 1)
+        {
+            p->status |= 1 << 2;
+        }
+        else
+        {
+            p->status &= ~(1 << 2);
+        }
+    }
+
+    section_packform_t packform = {0};
+    packform.cmd_set = CMD_SET_SHELL_WAVE_ENABLE_PARAM;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_ENABLE_PARAM;
+    packform.src = p_pack->dst;
+    packform.dst = p_pack->src;
+    packform.is_ack = 1;
+    packform.len = sizeof(shell_wave_enable_param_ack_t);
+    packform.p_data = (uint8_t *)&shell_wave_enable_param_ack;
+    comm_send_data(&packform, my_printf);
+}
+
+REG_COMM(CMD_SET_SHELL_WAVE_ENABLE_PARAM, CMD_WORD_SHELL_WAVE_ENABLE_PARAM, shell_wave_param_enable_act)
+
+static uint8_t shell_wave_report_flg = 0;
+static uint32_t shell_wave_report_period = 300;
+static uint32_t shell_wave_report_dn_cnt = 0;
+static section_link_tx_func_t *p_shell_wave_report_printf;
+static uint8_t shell_wave_src = 0;
+static uint8_t shell_wave_dst = 0;
+
+static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if (p_pack->len != sizeof(shell_wave_start_t))
+    {
+        return;
+    }
+    shell_wave_start_t *p_shell_wave_start = (shell_wave_start_t *)p_pack->p_data;
+    shell_wave_report_flg = p_shell_wave_start->start_report;
+
+    section_packform_t packform = {0};
+    packform.cmd_set = CMD_SET_SHELL_WAVE_START;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_START;
+    packform.src = p_pack->dst;
+    packform.dst = p_pack->src;
+    packform.is_ack = 1;
+    packform.len = 0;
+    packform.p_data = NULL;
+    comm_send_data(&packform, my_printf);
+    p_shell_wave_report_printf = my_printf;
+    shell_wave_src = packform.src;
+    shell_wave_dst = packform.dst;
+}
+REG_COMM(CMD_SET_SHELL_WAVE_START, CMD_WORD_SHELL_WAVE_START, shell_wave_start_act)
+
+static void shell_wave_period_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if (p_pack->len != sizeof(shell_wave_period_t))
+    {
+        return;
+    }
+    shell_wave_period_t *p_shell_wave_period = (shell_wave_period_t *)p_pack->p_data;
+    shell_wave_report_period = p_shell_wave_period->reprot_period;
+
+    shell_wave_period_ack_t shell_wave_period_ack = {.reprot_period = shell_wave_report_period};
+
+    section_packform_t packform = {0};
+    packform.cmd_set = CMD_SET_SHELL_WAVE_PERIOD;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_PERIOD;
+    packform.src = p_pack->dst;
+    packform.dst = p_pack->src;
+    packform.is_ack = 1;
+    packform.len = sizeof(shell_wave_period_ack_t);
+    packform.p_data = (uint8_t *)&shell_wave_period_ack;
+    comm_send_data(&packform, my_printf);
+}
+REG_COMM(CMD_SET_SHELL_WAVE_PERIOD, CMD_WORD_SHELL_WAVE_PERIOD, shell_wave_period_act)
+
+static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
+{
+    section_packform_t packform = {0};
+
+    packform.cmd_set = CMD_SET_SHELL_WAVE_PARAM;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
+    packform.src = shell_wave_src;
+    packform.dst = shell_wave_dst;
+    packform.len = sizeof(shell_wave_param_t) - SHELL_STR_SIZE_MAX + p->name_len;
+    packform.p_data = (uint8_t *)p;
+
+    comm_send_data(&packform, my_printf);
+}
+
+typedef enum
+{
+    SHELL_WAVE_FSM_IDLE,
+    SHELL_WAVE_FSM_START,
+    SHELL_WAVE_FSM_DATA,
+    SHELL_WAVE_FSM_END,
+    SHELL_WAVE_FSM_WAIT,
+} SHELL_WAVE_FSM_E;
+
+static SHELL_WAVE_FSM_E shell_wave_fsm = 0;
+
+static void shell_wave_report_task(void)
+{
+    static uint8_t delay_cnt = 0;
+    shell_wave_param_t shell_wave_param = {0};
+    static section_shell_t *p = NULL;
+    switch (shell_wave_fsm)
+    {
+    case SHELL_WAVE_FSM_IDLE:
+        if (shell_wave_report_flg == 1)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_START;
+        }
+        break;
+    case SHELL_WAVE_FSM_START:
+        shell_wave_param.data = 0x55555555;
+        shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
+        p = p_shell_first;
+        shell_wave_fsm = SHELL_WAVE_FSM_DATA;
+        delay_cnt = 10;
+        break;
+    case SHELL_WAVE_FSM_DATA:
+        if (delay_cnt)
+        {
+            delay_cnt--;
+            break;
+        }
+        else
+        {
+            delay_cnt = 10;
+        }
+        while (p)
+        {
+            if (p->status & (1 << 2))
+            {
+                shell_wave_param.data = (uint32_t)*(uint32_t *)p->p_var;
+                shell_wave_param.name_len = p->p_name_size;
+                shell_wave_param.type = p->type;
+                memcpy((uint8_t *)shell_wave_param.name, (uint8_t *)p->p_name, shell_wave_param.name_len);
+                p = p->p_next;
+                shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
+                break;
+            }
+            p = p->p_next;
+        }
+        if (p == NULL)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_END;
+        }
+        break;
+    case SHELL_WAVE_FSM_END:
+        shell_wave_param.data = 0xAAAAAAAA;
+        shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
+        shell_wave_fsm = SHELL_WAVE_FSM_WAIT;
+        shell_wave_report_dn_cnt = shell_wave_report_period;
+        break;
+    case SHELL_WAVE_FSM_WAIT:
+        DN_CNT(shell_wave_report_dn_cnt);
+        if (shell_wave_report_dn_cnt == 0)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_START;
+        }
+        if (shell_wave_report_flg == 0)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_IDLE;
+        }
+        break;
+    }
+}
+
+REG_TASK_MS(1, shell_wave_report_task)
+
+#pragma GCC diagnostic pop
