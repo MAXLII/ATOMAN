@@ -376,7 +376,7 @@ void fft_interrupt_disable(uint32_t fft_interrupt)
 */
 FlagStatus fft_interrupt_flag_get(uint32_t int_flag)
 {
-    uint32_t reg1, reg2;
+    uint32_t reg1 = 0, reg2 = 0;
 
     switch(int_flag){
     /* calculation completion interrupt */

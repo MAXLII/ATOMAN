@@ -33,6 +33,7 @@ OF SUCH DAMAGE.
 */
 
 #include "gd32g5x3_tmu.h"
+#include <string.h>
 
 #define MASK_LOW_HALFWORD       ((uint32_t)0xFFFF0000U)
 #define MASK_HIGH_HALFWORD      ((uint32_t)0x0000FFFFU)
@@ -187,7 +188,9 @@ void tmu_two_q15_write(uint16_t data1, uint16_t data2)
 */
 void tmu_one_f32_write(float data)
 {
-    TMU_IDATA = *((uint32_t *)(&data));
+    uint32_t tmp;
+    memcpy(&tmp, &data, sizeof(tmp));
+    TMU_IDATA = tmp;
 }
 
 /*!
@@ -199,8 +202,11 @@ void tmu_one_f32_write(float data)
 */
 void tmu_two_f32_write(float data1, float data2)
 {
-    TMU_IDATA = *((uint32_t *)(&data1));
-    TMU_IDATA = *((uint32_t *)(&data2));
+    uint32_t tmp;
+    memcpy(&tmp, &data1, sizeof(tmp));
+    TMU_IDATA = tmp;
+    memcpy(&tmp, &data2, sizeof(tmp));
+    TMU_IDATA = tmp;
 }
 
 /*!
@@ -250,7 +256,8 @@ void tmu_two_q15_read(uint16_t* p1, uint16_t* p2)
 */
 void tmu_one_f32_read(float* p)
 {
-    *p = *((float *)(uint32_t)(&TMU_ODATA));
+    uint32_t tmp = TMU_ODATA;
+    memcpy(p, &tmp, sizeof(tmp));
 }
 
 /*!
@@ -262,8 +269,11 @@ void tmu_one_f32_read(float* p)
 */
 void tmu_two_f32_read(float* p1, float* p2)
 {
-    *p1 = *((float *)(uint32_t)(&TMU_ODATA));
-    *p2 = *((float *)(uint32_t)(&TMU_ODATA));
+    uint32_t tmp;
+    tmp = TMU_ODATA;
+    memcpy(p1, &tmp, sizeof(tmp));
+    tmp = TMU_ODATA;
+    memcpy(p2, &tmp, sizeof(tmp));
 }
 
 /*!

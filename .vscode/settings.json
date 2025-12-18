@@ -1,32 +1,8 @@
 {
-    "files.associations": {
-        "*.bat": "bat",
-        "*.rasi": "css",
-        "*.bbmodel": "json",
-        "*.sublime-snippet": "xml",
-        "*.hbs": "html",
-        "*.ejs": "html",
-        "*.emu": "html",
-        "lesskey": "lesskey",
-        "*.Xresources": "xdefaults",
-        "i3/config": "i3",
-        "i3/*.conf": "i3",
-        "polybar/config": "ini",
-        "polybar/*.conf": "ini",
-        "gd32g5x3.h": "c",
-        "section.h": "c",
-        "gpio.h": "c",
-        "winapifamily.h": "c",
-        "stdio.h": "c",
-        "stdint.h": "c",
-        "bsp_usart.h": "c",
-        "stdarg.h": "c",
-        "stdlib.h": "c",
-        "scope.h": "c",
-        "typeinfo": "c",
-        "stddef.h": "c",
-        "gd32g5x3_libopt.h": "c"
-    },
+    "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.3 rel1/bin/arm-none-eabi-gcc.exe",
+    "C_Cpp.default.cStandard": "c11",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.intelliSenseMode": "gcc-arm",
     "C_Cpp.default.includePath": [
         "code/alg",
         "code/app",
@@ -37,9 +13,18 @@
         "gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
         "gd32g553c/Firmware/CMSIS",
         "gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include",
+        "plecs",
     ],
     "C_Cpp.default.defines": [
         "GD32G5X3",
     ],
-    "C_Cpp.default.cStandard": "gnu23",
+    "files.associations": {
+        "*.bat": "bat",
+        "my_math.h": "c",
+        "string.h": "c",
+        "ac_loss_det.h": "c",
+        "core_cm33.h": "c",
+        "gd32g5x3_libopt.h": "c"
+    },
+    "cmake.ignoreCMakeListsMissing": true
 }
