@@ -12,6 +12,7 @@ typedef struct
     float a1;
     float b0;
     float b1;
+    float b1_inv;
     float up_lmt;
     float dn_lmt;
     float e[2];
