@@ -31,7 +31,7 @@ typedef struct
 {
     uint32_t dly_cnt;
     uint32_t dly;
-    RLY_ON_STA_E sta;
+    uint8_t sta;
 } rly_on_inter_t;
 
 typedef struct

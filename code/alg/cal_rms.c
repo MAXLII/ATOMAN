@@ -164,5 +164,7 @@ void cal_rms_slave_run(cal_rms_t *str)
             str->inter.sta = CAL_RMS_STA_IDLE;
         }
         break;
+    default:
+        break;
     }
 }

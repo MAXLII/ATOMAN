@@ -12,7 +12,8 @@ typedef struct
     float a1;
     float b0;
     float b1;
-    float lmt;
+    float up_lmt;
+    float dn_lmt;
     float e[2];
     float u[2];
 } pi_tustin_inter_t;
@@ -33,7 +34,8 @@ void pi_tustin_init(pi_tustin_t *p_str,
                     float kp,
                     float ki,
                     float ts,
-                    float lmt,
+                    float up_lmt,
+                    float dn_lmt,
                     float *p_ref,
                     float *p_act);
 
