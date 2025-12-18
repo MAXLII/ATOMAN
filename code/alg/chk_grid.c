@@ -76,3 +76,10 @@ void chk_grid_func(chk_grid_t *p_str)
         }
     }
 }
+
+void chk_grid_reset(chk_grid_t *p_str)
+{
+    p_str->output.is_ok = 0;
+    p_str->inter.abnormal_cnt = 0;
+    p_str->inter.is_ok_cnt = 0;
+}

@@ -29,11 +29,12 @@ void rly_on_func(rly_on_t *p_str)
         if ((p_str->func.rly_off == NULL) ||
             (p_str->func.rly_on == NULL))
         {
-            p_str->inter.sta = RLY_ON_STA_ERR;
+            return;
         }
         else
         {
             p_str->inter.sta = RLY_ON_STA_IDLE;
+            *p_str->input.p_rly_on_trig = 0;
         }
         break;
     case RLY_ON_STA_IDLE:
@@ -64,6 +65,7 @@ void rly_on_func(rly_on_t *p_str)
             p_str->func.rly_on();
             p_str->inter.dly_cnt = 0;
             p_str->inter.sta = RLY_ON_STA_RUN;
+            *p_str->input.p_rly_off_trig = 0;
         }
         else
         {
@@ -76,6 +78,7 @@ void rly_on_func(rly_on_t *p_str)
             *p_str->input.p_rly_off_trig = 0;
             p_str->func.rly_off();
             p_str->inter.sta = RLY_ON_STA_IDLE;
+            *p_str->input.p_rly_on_trig = 0;
         }
         break;
     case RLY_ON_STA_ERR:

@@ -63,4 +63,6 @@ void chk_grid_init(chk_grid_t *p_str,
 
 void chk_grid_func(chk_grid_t *p_str);
 
+void chk_grid_reset(chk_grid_t *p_str);
+
 #endif
