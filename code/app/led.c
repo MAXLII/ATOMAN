@@ -1,5 +1,6 @@
 #include "gpio.h"
 #include "section.h"
+#include "stdint.h"
 
 void led_task(void)
 {
@@ -19,25 +20,27 @@ void led_task(void)
 REG_TASK_MS(100, led_task)
 
 uint8_t u8_temp;
-REG_SHELL_VAR(u8_temp, u8_temp, SHELL_UINT8, NULL);
+REG_SHELL_VAR(u8_temp, u8_temp, SHELL_UINT8, 0xFF, 0, NULL, SHELL_STA_NULL)
 
 uint16_t u16_temp;
-REG_SHELL_VAR(u16_temp, u16_temp, SHELL_UINT16, NULL);
+REG_SHELL_VAR(u16_temp, u16_temp, SHELL_UINT16, 0xFFFF, 0, NULL, SHELL_STA_NULL)
 
 uint32_t u32_temp;
-REG_SHELL_VAR(u32_temp, u32_temp, SHELL_UINT32, NULL);
+REG_SHELL_VAR(u32_temp, u32_temp, SHELL_UINT32, 0xFFFFFFFF, 0, NULL, SHELL_STA_NULL)
 
 int8_t i8_temp;
-REG_SHELL_VAR(i8_temp, i8_temp, SHELL_INT8, NULL);
+REG_SHELL_VAR(i8_temp, i8_temp, SHELL_INT8, 127, -128, NULL, SHELL_STA_NULL)
 
 int16_t i16_temp;
-REG_SHELL_VAR(i16_temp, i16_temp, SHELL_INT16, NULL);
+REG_SHELL_VAR(i16_temp, i16_temp, SHELL_INT16, 32767, -32768, NULL, SHELL_STA_NULL)
 
 int32_t i32_temp;
-REG_SHELL_VAR(i32_temp, i32_temp, SHELL_INT32, NULL);
+REG_SHELL_VAR(i32_temp, i32_temp, SHELL_INT32, 2147483647, -2147483648, NULL, SHELL_STA_NULL)
 
 float fp32_temp;
-REG_SHELL_VAR(fp32_temp, fp32_temp, SHELL_FP32, NULL);
+REG_SHELL_VAR(fp32_temp, fp32_temp, SHELL_FP32, 1000.0f, -1000.0f, NULL, SHELL_STA_NULL)
+
+#ifdef IS_PLECS
 
 #include "plecs.h"
 
@@ -47,3 +50,5 @@ void test_printf(void)
 }
 
 REG_TASK_MS(1000, test_printf)
+
+#endif

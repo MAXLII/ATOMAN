@@ -32,15 +32,15 @@ void test_scope_trig(DEC_MY_PRINTF)
     {
         trig = 0;
         scope_trigger(&scope_tsm);
-        my_printf("Trigger set\r\n");
+        my_printf->my_printf("Trigger set\r\n");
     }
     else
     {
-        my_printf("Trigger not set\r\n");
+        my_printf->my_printf("Trigger not set\r\n");
     }
 }
 // 注册trig变量到Shell，类型为SHELL_UINT8
-REG_SHELL_VAR(trig, trig, SHELL_UINT8, NULL)
+REG_SHELL_VAR(trig, trig, SHELL_UINT8, 0xFF, 0, NULL, SHELL_STA_NULL)
 
 REG_PERF_RECORD(tsmtime)
 REG_PERF_RECORD(scope)
@@ -71,7 +71,7 @@ void test_task(void)
         trig = 0;
         SCOPE_TRIGGER(tsm);
     }
-    SCOPE(tsm);
+    SCOPE_RUN(tsm);
     PERF_END(scope);
     sin_data_last = sin_data;
     PERF_END(tsmtime);
@@ -94,22 +94,22 @@ test_value_t test_value = {
  * @details
  * 通过Shell命令打印test_value的所有字段
  */
-REG_SHELL_VAR(test_value_fp32, test_value.fp32, SHELL_FP32, NULL)
-REG_SHELL_VAR(test_value_u8, test_value.u8, SHELL_UINT8, NULL)
-REG_SHELL_VAR(test_value_u16, test_value.u16, SHELL_UINT16, NULL)
-REG_SHELL_VAR(test_value_i16, test_value.i16, SHELL_INT16, NULL)
-REG_SHELL_VAR(test_value_i32, test_value.i32, SHELL_INT32, NULL)
-REG_SHELL_VAR(test_value_i8, test_value.i8, SHELL_INT8, NULL)
-REG_SHELL_VAR(test_value_u32, test_value.u32, SHELL_UINT32, NULL)
+REG_SHELL_VAR(test_value_fp32, test_value.fp32, SHELL_FP32, 1000.0f, -1000.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(test_value_u8, test_value.u8, SHELL_UINT8, 0xFF, 0, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(test_value_u16, test_value.u16, SHELL_UINT16, 0xFFFF, 0, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(test_value_i16, test_value.i16, SHELL_INT16, 32767, -32768, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(test_value_i32, test_value.i32, SHELL_INT32, 2147483647, -2147483648, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(test_value_i8, test_value.i8, SHELL_INT8, 127, -128, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(test_value_u32, test_value.u32, SHELL_UINT32, 0xFFFFFFFFU, 0U, NULL, SHELL_STA_NULL)
 
 void test_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     if (p_pack->len != sizeof(test_value_t))
     {
-        my_printf("Invalid data length: %d\r\n", p_pack->len);
+        my_printf->my_printf("Invalid data length: %d\r\n", p_pack->len);
         return;
     }
-    my_printf("oo\r\n");
+    my_printf->my_printf("oo\r\n");
     test_value_t *p_value = (test_value_t *)p_pack->p_data;
     test_value.fp32 = p_value->fp32;
     test_value.u8 = p_value->u8;
@@ -121,13 +121,4 @@ void test_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
     comm_send_data(p_pack, my_printf);
 }
 
-REG_COMM(0x01, test_comm);
-REG_COMM(0x02, test_comm);
-REG_COMM(0x03, test_comm);
-REG_COMM(0x04, test_comm);
-REG_COMM(0x05, test_comm);
-REG_COMM(0x06, test_comm);
-REG_COMM(0x07, test_comm);
-REG_COMM(0x08, test_comm);
-REG_COMM(0x09, test_comm);
-REG_COMM(0x10, test_comm);
+REG_COMM(0x22, 0x01, test_comm)

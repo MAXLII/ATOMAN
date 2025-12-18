@@ -5,3 +5,4 @@ gd32g553c/gd_dbg
 .metadata
 plecs/plecs_log_file_path.c
 plecs/plecs_log.txt
+gd32g553c/fw_info.exe

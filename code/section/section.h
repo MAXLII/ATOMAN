@@ -1,4 +1,3 @@
-
 /**
  * @file section.h
  * @brief 段管理系统头文件
@@ -125,7 +124,7 @@ typedef struct
     void *p_next;      ///< 链表下一个节点指针
 } section_perf_record_t;
 
-#define PERF_RECORD_ENABLE 0 ///< 是否启用性能记录功能
+#define PERF_RECORD_ENABLE 1 ///< 是否启用性能记录功能
 
 #if (PERF_RECORD_ENABLE == 1)
 
@@ -194,7 +193,7 @@ typedef struct reg_task_t
     struct reg_task_t *p_next;            ///< 链表下一个节点指针
 } reg_task_t;
 
-#define TASK_RECORD_PERF_ENABLE 1
+#define TASK_RECORD_PERF_ENABLE 0
 
 #if (TASK_RECORD_PERF_ENABLE == 1)
 #define REG_TASK_PERF_RECORD(name) REG_PERF_RECORD(name)

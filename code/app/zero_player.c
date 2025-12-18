@@ -18,7 +18,7 @@ static uint8_t zp_in_print = 0;
 static uint32_t row_cnt;
 static uint32_t col_cnt;
 
-void (*zp_printf)(const char *__format, ...);
+section_link_tx_func_t *zp_printf = NULL;
 
 // 打印棋盘
 void zero_player_print(DEC_MY_PRINTF)
@@ -33,9 +33,9 @@ void zero_player_print(DEC_MY_PRINTF)
     col_cnt = 0;
     for (int i = 0; i < COLS; i++)
     {
-        my_printf("--");
+        my_printf->my_printf("--");
     }
-    my_printf("\r\n");
+    my_printf->my_printf("\r\n");
 }
 
 void zero_player_print_step(void)
@@ -45,11 +45,11 @@ void zero_player_print_step(void)
         return;
     }
 
-    zp_printf("%c ", grid[row_cnt][col_cnt] ? '*' : ' ');
+    zp_printf->my_printf("%c ", grid[row_cnt][col_cnt] ? '*' : ' ');
     col_cnt = (col_cnt + 1) % COLS;
     if (col_cnt == 0)
     {
-        zp_printf("\r\n");
+        zp_printf->my_printf("\r\n");
         row_cnt++;
     }
 
@@ -62,7 +62,7 @@ void zero_player_print_step(void)
 
 REG_TASK_MS(1, zero_player_print_step)
 
-REG_SHELL_CMD(zero_player_print, zero_player_print);
+REG_SHELL_CMD(zero_player_print, zero_player_print)
 
 // 计算某个细胞的邻居数量
 static int count_neighbors(int x, int y)
@@ -130,19 +130,19 @@ void zero_player_step(void)
     if ((is_equal_last_next == 1) ||
         (is_equal_now_next == 1))
     {
-        zero_player_add((void (*)(const char *__format, ...))NULL);
+        zero_player_add(zp_printf);
     }
     zp_in_print = 0;
 }
 
-REG_TASK(1, zero_player_step); // 每秒运行一次
+REG_TASK(1, zero_player_step) // 每秒运行一次
 
 void zero_player_add(DEC_MY_PRINTF)
 {
     uint32_t system_time = systick_gettime_100us();
     if (my_printf != NULL)
     {
-        my_printf("system_time = %u\r\n", system_time);
+        my_printf->my_printf("system_time = %u\r\n", system_time);
     }
     // 使用更复杂的伪随机算法
     uint32_t rand_seed = system_time ^ 0xA5A5A5A5;
@@ -160,7 +160,7 @@ void zero_player_add(DEC_MY_PRINTF)
     }
     if (my_printf != NULL)
     {
-        my_printf("zero_player_add: random fill done\r\n");
+        my_printf->my_printf("zero_player_add: random fill done\r\n");
     }
 }
 

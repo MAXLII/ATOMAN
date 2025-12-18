@@ -4,11 +4,6 @@
 void pr_init(pr_t *p_str, pr_cfg_t *p_cfg)
 {
     p_str->cfg = *p_cfg;
-    float ts = p_str->cfg.ts;
-    float kp = p_str->cfg.kp;
-    float kr = p_str->cfg.kr;
-    float w0 = p_str->cfg.w0;
-    float wc = p_str->cfg.wc;
 
     pr_update_freq(p_str, p_str->cfg.w0);
 

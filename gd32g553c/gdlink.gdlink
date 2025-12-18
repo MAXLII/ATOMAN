@@ -1,3 +1,0 @@
-c A94E642AE4024BDCD385391E
-load gd32g553c\gd_dbg\gd32g553c.bin 0x8000000
-r

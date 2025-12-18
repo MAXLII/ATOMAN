@@ -35,7 +35,7 @@ OF SUCH DAMAGE.
 #include "gd32g5x3.h"
 #include "systick.h"
 
-volatile static uint32_t delay;
+static volatile uint32_t delay;
 volatile uint32_t sys_tick_100us;
 
 /*!

@@ -16,17 +16,23 @@ void usart0_printf(const char *__format, ...)
     va_end(args);
 }
 
-void (*my_func_arr[])(uint8_t, DEC_MY_PRINTF) = {
+void (*my_func_arr[])(uint8_t, DEC_MY_PRINTF, void *) = {
     shell_run,
     comm_run,
 };
 
-REG_LINK(ut0,
+section_link_tx_func_t ut1_printf = {
+    .my_printf = usart0_printf,
+    .tx_by_dma = NULL,
+};
+
+REG_LINK(USART0_LINK,
          128,
-         usart0_printf,
+         ut1_printf,
          (uint32_t *)&DMA_CH0CNT(DMA0),
          my_func_arr,
-         sizeof(my_func_arr) / sizeof(my_func_arr[0]));
+         sizeof(my_func_arr) / sizeof(my_func_arr[0]),
+         0x02);
 
 void bsp_usart_init(void)
 {
@@ -57,9 +63,9 @@ void bsp_usart_init(void)
     dma_parameter_struct dma_parameter;
     dma_parameter.periph_addr = (uint32_t)(uint32_t *)&USART_RDATA(USART0);
     dma_parameter.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
-    dma_parameter.memory_addr = (uint32_t)GET_LINK_BUFF(ut0);
+    dma_parameter.memory_addr = (uint32_t)GET_LINK_BUFF(USART0_LINK);
     dma_parameter.memory_width = DMA_MEMORY_WIDTH_8BIT;
-    dma_parameter.number = GET_LINK_SIZE(ut0);
+    dma_parameter.number = GET_LINK_SIZE(USART0_LINK);
     dma_parameter.priority = DMA_PRIORITY_MEDIUM;
     dma_parameter.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
     dma_parameter.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
