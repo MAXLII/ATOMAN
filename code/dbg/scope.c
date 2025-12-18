@@ -12,6 +12,10 @@
 #include "scope.h"
 #include "section.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+
 /**
  * @brief Scope采集主函数，周期性调用
  * @param scope Scope结构体指针
@@ -21,7 +25,7 @@
  * - 检查触发标志，进入触发采集状态
  * - 触发后采集trigger_post_cnt个点后停止
  */
-__attribute__((always_inline, hot)) inline void scope_func(scope_t *scope)
+__attribute__((always_inline, hot)) inline void scope_run(scope_t *scope)
 {
     float *buffer = scope->buffer;
     const uint32_t buf_size = scope->buffer_size;
@@ -153,13 +157,13 @@ void scope_printf_status(scope_t *scope, DEC_MY_PRINTF)
     if (!scope || !my_printf)
         return;
 
-    my_printf("Scope Status: %s\n", scope->is_running ? "Running" : "Idle");
-    my_printf("Current Write Index: %u\n", scope->write_index);
-    my_printf("Trigger Index: %u\n", scope->trigger_index);
-    my_printf("Trigger Counter: %u\n", scope->trigger_counter);
-    my_printf("In Trigger State: %s\n", scope->in_trigger ? "Yes" : "No");
-    my_printf("Buffer Size: %u\n", scope->buffer_size);
-    my_printf("Trigger Post Count: %u\n", scope->trigger_post_cnt);
+    my_printf->my_printf("Scope Status: %s\n", scope->is_running ? "Running" : "Idle");
+    my_printf->my_printf("Current Write Index: %u\n", scope->write_index);
+    my_printf->my_printf("Trigger Index: %u\n", scope->trigger_index);
+    my_printf->my_printf("Trigger Counter: %u\n", scope->trigger_counter);
+    my_printf->my_printf("In Trigger State: %s\n", scope->in_trigger ? "Yes" : "No");
+    my_printf->my_printf("Buffer Size: %u\n", scope->buffer_size);
+    my_printf->my_printf("Trigger Post Count: %u\n", scope->trigger_post_cnt);
 }
 
 /**
@@ -181,10 +185,10 @@ void scope_printf_data(scope_t *scope, DEC_MY_PRINTF)
     uint32_t trig_idx = scope->trigger_index;
 
     // 打印表头
-    my_printf("\t");
+    my_printf->my_printf("\t");
     for (uint32_t v = 0; v < var_count; ++v)
-        my_printf("%s\t", (var_names && var_names[v]) ? var_names[v] : "var");
-    my_printf("\r\n");
+        my_printf->my_printf("%s\t", (var_names && var_names[v]) ? var_names[v] : "var");
+    my_printf->my_printf("\r\n");
 
     // 预计算起始索引，避免循环内重复计算
     int32_t start = (int32_t)trig_idx - (int32_t)trig_post_cnt;
@@ -198,23 +202,23 @@ void scope_printf_data(scope_t *scope, DEC_MY_PRINTF)
 
     for (int32_t i = start; i < end; ++i)
     {
-        int32_t rel = i - (int32_t)trig_idx;
+        // int32_t rel = i - (int32_t)trig_idx;
         uint32_t idx;
         if (use_mask)
             idx = (uint32_t)i & mask;
         else
             idx = ((i % (int32_t)buf_size) + buf_size) % buf_size;
 
-        my_printf("%d\t", rel);
+        // my_printf->my_printf("%d\t", rel);
 
         // 优化：减少乘法，提前计算每变量的基址
         float *row = buffer + idx;
         for (uint32_t v = 0; v < var_count; ++v)
-            my_printf("%f\t", row[v * buf_size]);
+            my_printf->my_printf("%s=%f,", var_names[v], row[v * buf_size]);
         if (i != end - 1)
-            my_printf("\r\n");
+            my_printf->my_printf("\r\n");
     }
-    my_printf("\r\n");
+    my_printf->my_printf("\r\n");
 }
 
 /**
@@ -223,7 +227,7 @@ void scope_printf_data(scope_t *scope, DEC_MY_PRINTF)
 typedef struct
 {
     scope_t *scope;
-    void (*my_printf)(const char *__format, ...);
+    DEC_MY_PRINTF;
     int32_t cur;
     int32_t start;
     int32_t end;
@@ -255,10 +259,10 @@ void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF)
     g_scope_print_ctx.active = 1;
 
     // 打印表头
-    my_printf("\t");
-    for (uint32_t v = 0; v < scope->var_count; ++v)
-        my_printf("%s\t", (scope->var_names && scope->var_names[v]) ? scope->var_names[v] : "var");
-    my_printf("\r\n");
+    // my_printf->my_printf("\t");
+    // for (uint32_t v = 0; v < scope->var_count; ++v)
+    // my_printf->my_printf("%s\t", (scope->var_names && scope->var_names[v]) ? scope->var_names[v] : "var");
+    // my_printf->my_printf("\r\n");
 }
 
 /**
@@ -271,23 +275,23 @@ int scope_printf_data_step(void)
         return 0;
 
     scope_t *scope = g_scope_print_ctx.scope;
-    void (*my_printf)(const char *__format, ...) = g_scope_print_ctx.my_printf;
+    DEC_MY_PRINTF = g_scope_print_ctx.my_printf;
     const uint32_t buf_size = scope->buffer_size;
     const uint32_t var_count = scope->var_count;
     float *buffer = scope->buffer;
 
-    int32_t rel_start = (int32_t)scope->trigger_post_cnt - (int32_t)buf_size;
+    // int32_t rel_start = (int32_t)scope->trigger_post_cnt - (int32_t)buf_size;
     int32_t rel_offset = g_scope_print_ctx.cur - g_scope_print_ctx.start;
     if (rel_offset < 0)
         rel_offset += buf_size; // 确保相对位置为正
-    int32_t rel = rel_start + rel_offset;
+    // int32_t rel = rel_start + rel_offset;
     uint32_t idx = g_scope_print_ctx.cur % buf_size;
 
-    my_printf("%d\t", rel);
+    // my_printf->my_printf("%d\t", rel);
     float *row = buffer + idx;
     for (uint32_t v = 0; v < var_count; ++v)
-        my_printf("%f\t", row[v * buf_size]);
-    my_printf("\r\n");
+        my_printf->my_printf("%s=%f,", scope->var_names[v], row[v * buf_size]);
+    my_printf->my_printf("\r\n");
 
     g_scope_print_ctx.cur = (g_scope_print_ctx.cur + 1) % buf_size;
     if (g_scope_print_ctx.cur == g_scope_print_ctx.start)
@@ -312,4 +316,6 @@ void scope_print_data(void)
     SCOPE_DATA_STEP_RUN();
 }
 
-REG_TASK_MS(1, scope_print_data);
+REG_TASK_MS(1, scope_print_data)
+
+#pragma GCC diagnostic pop

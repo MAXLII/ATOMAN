@@ -86,21 +86,21 @@ typedef struct
     {                                                  \
         scope_printf_status(&scope_##name, my_printf); \
     }                                                  \
-    REG_SHELL_CMD(scope_status_##name, scope_status_##name)
+    REG_SHELL_CMD(scp_sta_##name, scope_status_##name)
 
-#define REG_SCOPE_START_CMD(name)                 \
-    static void scope_start_##name(DEC_MY_PRINTF) \
-    {                                             \
-        scope_start(&scope_##name);               \
-        my_printf("Scope started\r\n");           \
-    }                                             \
-    REG_SHELL_CMD(scope_start_##name, scope_start_##name)
+#define REG_SCOPE_START_CMD(name)                  \
+    static void scope_start_##name(DEC_MY_PRINTF)  \
+    {                                              \
+        scope_start(&scope_##name);                \
+        my_printf->my_printf("Scope started\r\n"); \
+    }                                              \
+    REG_SHELL_CMD(scp_start_##name, scope_start_##name)
 
 #define SCOPE_DATA_STEP_START(name, my_printf) scope_printf_data_start(&scope_##name, my_printf)
 
 #define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
     static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
-    REG_SHELL_CMD(scope_data_step_##name, scope_data_step_##name)
+    REG_SHELL_CMD(scp_pf_##name, scope_data_step_##name)
 
 //================= Scope对象注册宏 =================
 
