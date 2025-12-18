@@ -117,6 +117,7 @@ C_SOURCES =  \
 ../code/app/zero_player.c \
 ../code/dbg/scope.c \
 ../code/interface/gpio.c \
+../code/interface/usart.c \
 ../code/section/section.c \
 
 # ASM sources
