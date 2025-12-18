@@ -10,6 +10,7 @@
         "code/interface",
         "code/section",
         "gd32g553c/inc",
+        "gd32g553c/bsp",
         "gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
         "gd32g553c/Firmware/CMSIS",
         "gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include",
