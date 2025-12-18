@@ -1,0 +1,15 @@
+#ifndef __PFC_HARDWARE_H
+#define __PFC_HARDWARE_H
+
+#define L_PFC_VALUE 3.8e-3f
+#define CAP_BUS_VALUE 200e-6f
+#define CAP_INV_VALUE 2.0e-6f
+
+#define TF_TURNS_RATIO 64.0f
+
+#define INPUT_ACTIVE_POWER_MAX 500.0f
+#define INPUT_REACTIVE_POWER_MAX 500.0f
+#define OUTPUT_ACTIVE_POWER_MAX 500.0f
+#define OUTPUT_REACTIVE_POWER_MAX 500.0f
+
+#endif
