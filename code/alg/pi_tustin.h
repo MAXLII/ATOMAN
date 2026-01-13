@@ -1,6 +1,8 @@
 #ifndef __PI_TUSTIN_H
 #define __PI_TUSTIN_H
 
+#include <stdbool.h>
+
 typedef struct
 {
     float *p_act;
@@ -31,7 +33,7 @@ typedef struct
     pi_tustin_output_t output;
 } pi_tustin_t;
 
-void pi_tustin_init(pi_tustin_t *p_str,
+bool pi_tustin_init(pi_tustin_t *p_str,
                     float kp,
                     float ki,
                     float ts,
@@ -40,9 +42,9 @@ void pi_tustin_init(pi_tustin_t *p_str,
                     float *p_ref,
                     float *p_act);
 
-void pi_tustin_cal(pi_tustin_t *p_str);
+bool pi_tustin_cal(pi_tustin_t *p_str);
 
-void pi_tustin_update(pi_tustin_t *p_str, float kp, float ki, float ts);
+bool pi_tustin_update(pi_tustin_t *p_str, float kp, float ki, float ts);
 
 static inline void pi_tustin_update_b0(pi_tustin_t *p_str, float b0)
 {
