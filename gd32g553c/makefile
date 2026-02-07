@@ -119,6 +119,8 @@ C_SOURCES =  \
 ../code/interface/gpio.c \
 ../code/interface/usart.c \
 ../code/section/section.c \
+../code/section/comm.c \
+../code/section/shell.c \
 
 # ASM sources
 ASM_SOURCES =  \

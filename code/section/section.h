@@ -727,9 +727,6 @@ typedef struct
     uint8_t eop_flag : 1; ///< 结束符标志位
     uint8_t is_route : 1; ///< 需要路由
     uint8_t link_id;      ///< 记录当前的链路
-
-    /* shell专用，在此借个位置 */
-    shell_ctx_t shell_ctx;
 } comm_ctx_t;
 
 /*
@@ -751,6 +748,36 @@ typedef struct
  * - 推荐在高并发场景下仅在中断内收集数据，在主循环中做完整解析和回调。
  */
 
+#define DECLARE_COMM_CTX(name, payload_size, _src, _link_id)         \
+    static uint8_t name##_payload_buf[(payload_size)] = {0};         \
+    static comm_ctx_t name = {                                       \
+        .p_data_buffer = (const uint8_t (*)[]) & name##_payload_buf, \
+        .buffer_size = sizeof(name##_payload_buf),                   \
+        .index = 0,                                                  \
+        .status = SECTION_PACKFORM_STA_SOP,                          \
+        .crc = 0,                                                    \
+        .pack = {0},                                                 \
+        .func = NULL,                                                \
+        .len = 0,                                                    \
+        .src = (_src),                                               \
+        .d_src = 0,                                                  \
+        .src_flag = 0,                                               \
+        .dst_flag = 0,                                               \
+        .cmd_flag = 0,                                               \
+        .len_flag = 0,                                               \
+        .eop_flag = 0,                                               \
+        .is_route = 0,                                               \
+        .link_id = (_link_id),                                       \
+    }
+
+typedef void (*section_link_handler_f)(uint8_t data, DEC_MY_PRINTF, void *ctx);
+
+typedef struct
+{
+    section_link_handler_f func;
+    void *ctx; // 每个handler独立上下文
+} section_link_handler_item_t;
+
 /**
  * @brief 链路处理上下文结构
  *
@@ -760,16 +787,15 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t rx_buff[128];                              ///< 接收缓冲区指针
-    uint32_t buff_size;                                ///< 缓冲区大小
-    uint32_t pos;                                      ///< 当前处理位置
-    uint32_t *dma_cnt;                                 ///< DMA计数器指针
-    DEC_MY_PRINTF;                                     ///< 打印函数指针
-    void(*p_next);                                     ///< 链表下一个节点指针
-    void (**func_arr)(uint8_t, DEC_MY_PRINTF, void *); ///< 数据处理函数数组
-    uint32_t func_num;                                 ///< 处理函数数量
-    comm_ctx_t *p_comm_ctx;                            ///< 处理数据用的变量
-    uint8_t link_id;                                   ///< 链路ID
+    uint8_t rx_buff[128]; ///< 接收缓冲区指针
+    uint32_t buff_size;   ///< 缓冲区大小
+    uint32_t pos;         ///< 当前处理位置
+    uint32_t *dma_cnt;    ///< DMA计数器指针
+    DEC_MY_PRINTF;        ///< 打印函数指针
+    void(*p_next);        ///< 链表下一个节点指针
+    const section_link_handler_item_t *handler_arr;
+    uint32_t handler_num;
+    uint8_t link_id; ///< 链路ID
 } section_link_t;
 
 /*
@@ -807,39 +833,22 @@ typedef struct
  * REG_LINK(uart, 256, printf, &uart_dma_cnt, uart_handlers, 1);
  * @endcode
  */
-#define REG_LINK(link,                                               \
-                 size, print,                                        \
-                 _dma_cnt,                                           \
-                 _func_arr,                                          \
-                 _func_num,                                          \
-                 _src)                                               \
-    uint8_t link##_rx_buff[size];                                    \
-    comm_ctx_t link##_comm_ctx = {                                   \
-        .p_data_buffer = (const uint8_t (*)[size]) & link##_rx_buff, \
-        .buffer_size = sizeof(link##_rx_buff),                       \
-        .index = 0,                                                  \
-        .status = SECTION_PACKFORM_STA_SOP,                          \
-        .crc = 0,                                                    \
-        .pack = {0},                                                 \
-        .func = NULL,                                                \
-        .len = 0,                                                    \
-        .src = _src,                                                 \
-        .len_flag = 0,                                               \
-        .eop_flag = 0,                                               \
-        .link_id = link,                                             \
-    };                                                               \
-    section_link_t section_link_##link = {                           \
-        .rx_buff = {0},                                              \
-        .buff_size = sizeof(section_link_##link.rx_buff),            \
-        .pos = 0,                                                    \
-        .dma_cnt = _dma_cnt,                                         \
-        .my_printf = &print,                                         \
-        .p_next = NULL,                                              \
-        .func_arr = _func_arr,                                       \
-        .func_num = _func_num,                                       \
-        .p_comm_ctx = &link##_comm_ctx,                              \
-        .link_id = link,                                             \
-    };                                                               \
+#define REG_LINK(link,                                       \
+                 print,                                      \
+                 _dma_cnt,                                   \
+                 _handler_arr,                               \
+                 _handler_num)                               \
+    section_link_t section_link_##link = {                   \
+        .rx_buff = {0},                                      \
+        .buff_size = sizeof(((section_link_t *)0)->rx_buff), \
+        .pos = 0,                                            \
+        .dma_cnt = (_dma_cnt),                               \
+        .my_printf = &(print),                               \
+        .p_next = NULL,                                      \
+        .handler_arr = (_handler_arr),                       \
+        .handler_num = (uint32_t)(_handler_num),             \
+        .link_id = (uint8_t)(link),                          \
+    };                                                       \
     REG_SECTION_FUNC(SECTION_LINK, section_link_##link)
 
 #define EXT_LINK(link) extern section_link_t section_link_##link
