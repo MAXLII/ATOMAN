@@ -225,294 +225,364 @@ static int parse_integer(const char *param, int32_t *out)
     return 0;
 }
 
+/* ------------------------ 小工具：字符串修剪/选项解析 ------------------------ */
+static inline char *ltrim(char *s)
+{
+    while (s && *s && isspace((unsigned char)*s))
+        s++;
+    return s;
+}
+
+static inline void rtrim_inplace(char *s)
+{
+    if (!s)
+        return;
+    size_t n = strlen(s);
+    while (n > 0 && isspace((unsigned char)s[n - 1]))
+    {
+        s[n - 1] = '\0';
+        n--;
+    }
+}
+
+/* 从 param 中解析可选的 "-s[ N]"，并把值表达式部分（可能含空格）截出来
+ * - value_begin/value_end: 指向 param 内部（会就地写 '\0' 分割），调用前确保 param 可写
+ * - status_set: -1 表示未指定；>=0 表示用户指定的状态值
+ */
+static void parse_param_value_and_status(char *param, char **value_str, int32_t *status_set)
+{
+    *value_str = NULL;
+    *status_set = -1;
+    if (!param)
+        return;
+
+    char *p = ltrim(param);
+
+    /* 找到 token 边界上的 "-s" */
+    char *opt = strstr(p, "-s");
+    while (opt)
+    {
+        if (opt == p || isspace((unsigned char)opt[-1]))
+            break;
+        opt = strstr(opt + 2, "-s");
+    }
+
+    if (opt)
+    {
+        /* value 部分：p ... opt-1 */
+        *opt = '\0';
+        char *v = ltrim(p);
+        rtrim_inplace(v);
+        *value_str = (*v) ? v : NULL;
+
+        /* status 部分：从 opt+2 开始 */
+        char *ps = opt + 2;
+        ps = ltrim(ps);
+        if (*ps == '\0')
+        {
+            *status_set = 0; /* 仅 "-s"：默认关 */
+        }
+        else
+        {
+            char *endp = NULL;
+            long s = strtol(ps, &endp, 10);
+            if (endp != ps)
+                *status_set = (int32_t)s;
+            else
+                *status_set = 0;
+        }
+        return;
+    }
+
+    /* 没有 -s：整个 param 当 value（允许空格，右侧修剪） */
+    char *v = ltrim(p);
+    rtrim_inplace(v);
+    *value_str = (*v) ? v : NULL;
+}
+
+/* ------------------------ 小工具：按类型打印/写入 ------------------------ */
+static void shell_print_item(section_shell_t *p, DEC_MY_PRINTF)
+{
+    if (!p || !my_printf || !my_printf->my_printf)
+        return;
+
+    switch (p->type)
+    {
+    case SHELL_CMD:
+        my_printf->my_printf("%s\tCMD\r\n", p->p_name);
+        break;
+    case SHELL_UINT8:
+        my_printf->my_printf("%s = %u\r\n", p->p_name, (unsigned)(*(uint8_t *)p->p_var));
+        break;
+    case SHELL_INT8:
+        my_printf->my_printf("%s = %d\r\n", p->p_name, (int)(*(int8_t *)p->p_var));
+        break;
+    case SHELL_UINT16:
+        my_printf->my_printf("%s = %u\r\n", p->p_name, (unsigned)(*(uint16_t *)p->p_var));
+        break;
+    case SHELL_INT16:
+        my_printf->my_printf("%s = %d\r\n", p->p_name, (int)(*(int16_t *)p->p_var));
+        break;
+    case SHELL_UINT32:
+        my_printf->my_printf("%s = %lu\r\n", p->p_name, (unsigned long)(*(uint32_t *)p->p_var));
+        break;
+    case SHELL_INT32:
+        my_printf->my_printf("%s = %ld\r\n", p->p_name, (long)(*(int32_t *)p->p_var));
+        break;
+    case SHELL_FP32:
+        my_printf->my_printf("%s = %f\r\n", p->p_name, (double)(*(float *)p->p_var));
+        break;
+    default:
+        break;
+    }
+}
+
+static void shell_write_item_if_needed(section_shell_t *p, const char *value_str, DEC_MY_PRINTF)
+{
+    if (!p || !value_str)
+        return;
+
+    int32_t intval = 0;
+
+    switch (p->type)
+    {
+    case SHELL_CMD:
+        /* CMD 不写入 */
+        break;
+
+    case SHELL_UINT8:
+    {
+        uint8_t val = *(uint8_t *)p->p_var;
+        if (parse_integer(value_str, &intval))
+        {
+            val = (uint8_t)intval;
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    case SHELL_INT8:
+    {
+        int8_t val = *(int8_t *)p->p_var;
+        if (parse_integer(value_str, &intval))
+        {
+            val = (int8_t)intval;
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    case SHELL_UINT16:
+    {
+        uint16_t val = *(uint16_t *)p->p_var;
+        if (parse_integer(value_str, &intval))
+        {
+            val = (uint16_t)intval;
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    case SHELL_INT16:
+    {
+        int16_t val = *(int16_t *)p->p_var;
+        if (parse_integer(value_str, &intval))
+        {
+            val = (int16_t)intval;
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    case SHELL_UINT32:
+    {
+        uint32_t val = *(uint32_t *)p->p_var;
+        if (parse_integer(value_str, &intval))
+        {
+            val = (uint32_t)intval;
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    case SHELL_INT32:
+    {
+        int32_t val = *(int32_t *)p->p_var;
+        if (parse_integer(value_str, &intval))
+        {
+            val = (int32_t)intval;
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    case SHELL_FP32:
+    {
+        float val = *(float *)p->p_var;
+        if (is_string_number(value_str))
+        {
+            val = eval_expr(value_str);
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+            memcpy(p->p_var, &val, sizeof(val));
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    if (p->func)
+        p->func(my_printf);
+}
+
 // ------------------------ 你原来的 shell_run 迁入 ------------------------
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 {
-    shell_ctx_t *p_shell_ctx = (shell_ctx_t *)p_ctx;
+    if (!my_printf || !my_printf->my_printf)
+        return;
+    if (!p_ctx)
+        return;
 
-    // 溢出保护
-    if (p_shell_ctx->shell_index >= sizeof(p_shell_ctx->shell_buffer) - 1)
+    shell_ctx_t *ctx = (shell_ctx_t *)p_ctx;
+
+    /* 溢出保护：永远预留 '\0' */
+    if (ctx->shell_index >= (uint8_t)(sizeof(ctx->shell_buffer) - 1u))
     {
-        p_shell_ctx->shell_index = 0;
+        ctx->shell_index = 0;
     }
-    p_shell_ctx->shell_buffer[p_shell_ctx->shell_index++] = data;
 
-    // 检测命令结束（兼容 '\n' 或 "\r\n"）
-    if ((data == '\n' && p_shell_ctx->shell_index > 1 && p_shell_ctx->shell_buffer[p_shell_ctx->shell_index - 2] == '\r') ||
-        (data == '\n' && p_shell_ctx->shell_index > 0))
+    ctx->shell_buffer[ctx->shell_index++] = data;
+
+    /* 仅在 '\n' 触发解析（兼容 "\r\n" 和 "\n"） */
+    if (data != '\n')
+        return;
+
+    /* 计算有效长度并补 '\0' */
+    uint8_t end = ctx->shell_index;
+    if (end >= 2u && ctx->shell_buffer[end - 2u] == '\r')
+        end = (uint8_t)(end - 2u);
+    else
+        end = (uint8_t)(end - 1u);
+
+    ctx->shell_buffer[end] = '\0';
+
+    char *line = (char *)ctx->shell_buffer;
+    line = ltrim(line);
+    rtrim_inplace(line);
+
+    if (*line == '\0')
+        goto shell_done;
+
+    /* ---- 内置命令 ---- */
+    if (strcmp(line, "time") == 0)
     {
-        // 计算有效命令长度
-        uint8_t end = p_shell_ctx->shell_index;
-        if (p_shell_ctx->shell_index > 1 && p_shell_ctx->shell_buffer[p_shell_ctx->shell_index - 2] == '\r')
-            end = p_shell_ctx->shell_index - 2;
-        else
-            end = p_shell_ctx->shell_index - 1;
-        p_shell_ctx->shell_buffer[end] = '\0';
+        my_printf->my_printf("time = %us.%03ums\r\n",
+                             (unsigned)(SECTION_SYS_TICK / 10000u),
+                             (unsigned)((SECTION_SYS_TICK % 10000u) / 10u));
+        goto shell_done;
+    }
+    if (strcmp(line, "reset") == 0)
+    {
+        SYSTEM_RESET;
+        goto shell_done;
+    }
+    if (strcmp(line, "help") == 0)
+    {
+        for (section_shell_t *s = p_shell_first; s; s = s->p_next)
+        {
+            my_printf->my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
+        }
+        goto shell_done;
+    }
 
-        // 处理内置命令
-        if (strcmp((char *)p_shell_ctx->shell_buffer, "time") == 0)
+    /* ---- 查找命令/变量 ---- */
+    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    {
+        if (strncmp(line, p->p_name, p->p_name_size) != 0)
+            continue;
+
+        char c = line[p->p_name_size];
+        if (!(c == ':' || c == '\0'))
+            continue;
+
+        char *param = NULL;
+        if (c == ':')
+            param = (char *)&line[p->p_name_size + 1u];
+
+        /* 参数可写：在 buffer 内就地分割 */
+        char *value_str = NULL;
+        int32_t status_set = -1;
+        if (param)
         {
-            // 显示系统时间
-            my_printf->my_printf("time = %us.%03ums\r\n",
-                                 SECTION_SYS_TICK / 10000,
-                                 SECTION_SYS_TICK % 10000 / 10);
-            goto shell_done;
+            parse_param_value_and_status(param, &value_str, &status_set);
         }
-        else if (strcmp((char *)p_shell_ctx->shell_buffer, "reset") == 0)
+
+        /* 1) CMD：有参数也忽略；直接执行 */
+        if (p->type == SHELL_CMD)
         {
-            // 系统复位
-            SYSTEM_RESET;
-            goto shell_done;
-        }
-        else if (strcmp((char *)p_shell_ctx->shell_buffer, "help") == 0)
-        {
-            // 显示帮助信息
-            section_shell_t *s = p_shell_first;
-            while (s)
+            if (p->func)
+                p->func(my_printf);
+
+            /* 允许用 "CMD:-s 3" 绑定状态输出/回调（如果你希望支持） */
+            if (status_set >= 0)
             {
-                my_printf->my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
-                s = s->p_next;
+                p->status = (uint32_t)status_set;
+                p->my_printf = my_printf;
             }
             goto shell_done;
         }
 
-        // 查找匹配的Shell命令或变量
-        section_shell_t *p = p_shell_first;
-        while (p)
+        /* 2) VAR：若给了 value_str 则写入；不带 value 仅打印 */
+        if (value_str)
         {
-            if (strncmp((char *)p_shell_ctx->shell_buffer, p->p_name, p->p_name_size) == 0 &&
-                (p_shell_ctx->shell_buffer[p->p_name_size] == ':' || p_shell_ctx->shell_buffer[p->p_name_size] == '\0'))
-            {
-                char *param = NULL;
-                if (p_shell_ctx->shell_buffer[p->p_name_size] == ':')
-                {
-                    // 提取参数
-                    param = (char *)&p_shell_ctx->shell_buffer[p->p_name_size + 1];
-                    while (*param == ' ')
-                        param++;
-                }
-
-                int32_t intval = 0;
-
-                // 根据变量类型进行处理
-                switch (p->type)
-                {
-                case SHELL_CMD:
-                    // 执行命令
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                case SHELL_UINT8:
-                {
-                    uint8_t val = *(uint8_t *)p->p_var;
-                    if (param && parse_integer(param, &intval))
-                    {
-                        val = (uint8_t)intval;
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %u\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                case SHELL_INT8:
-                {
-                    int8_t val = *(int8_t *)p->p_var;
-                    if (param && parse_integer(param, &intval))
-                    {
-                        val = (int8_t)intval;
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %d\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                case SHELL_UINT16:
-                {
-                    uint16_t val = *(uint16_t *)p->p_var;
-                    if (param && parse_integer(param, &intval))
-                    {
-                        val = (uint16_t)intval;
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %u\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                case SHELL_INT16:
-                {
-                    int16_t val = *(int16_t *)p->p_var;
-                    if (param && parse_integer(param, &intval))
-                    {
-                        val = (int16_t)intval;
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %d\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                case SHELL_UINT32:
-                {
-                    uint32_t val = *(uint32_t *)p->p_var;
-                    if (param && parse_integer(param, &intval))
-                    {
-                        val = (uint32_t)intval;
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %lu\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                case SHELL_INT32:
-                {
-                    int32_t val = *(int32_t *)p->p_var;
-                    if (param && parse_integer(param, &intval))
-                    {
-                        val = (int32_t)intval;
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %ld\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                case SHELL_FP32:
-                {
-                    float val = *(float *)p->p_var;
-                    if (param && is_string_number(param))
-                    {
-                        val = eval_expr(param);
-                        SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
-                    }
-                    memcpy(p->p_var, &val, sizeof(val));
-                    my_printf->my_printf("%s = %f\r\n", p->p_name, val);
-                    if (p->func)
-                        p->func(my_printf);
-                    break;
-                }
-                }
-
-                int status_set = -1; // -1:未指定, 0:仅-s, 1:有-s 1
-                if (param)
-                {
-                    // 查找-s
-                    char *ps = strstr(param, "-s");
-                    if (ps)
-                    {
-                        // 判断-s后是否有数字
-                        char *ps_num = ps + 2;
-                        while (*ps_num == ' ')
-                            ps_num++;
-                        if (isdigit((unsigned char)*ps_num))
-                        {
-                            status_set = atoi(ps_num);
-                        }
-                        else
-                        {
-                            status_set = 0;
-                        }
-                    }
-                    if (status_set == -1)
-                    {
-                        // 仅-s，不改变status
-                    }
-                    else
-                    {
-                        p->status = status_set;
-                        p->my_printf = my_printf; // 更新打印函数指针
-                    }
-                }
-
-                goto shell_done;
-            }
-            p = p->p_next;
+            shell_write_item_if_needed(p, value_str, my_printf);
         }
 
-    shell_done:
-        // 清空缓冲区
-        memset(p_shell_ctx->shell_buffer, 0, sizeof(p_shell_ctx->shell_buffer));
-        p_shell_ctx->shell_index = 0;
+        shell_print_item(p, my_printf);
+
+        /* 3) 解析 -s：解决 "VAR: 123 -s 3" 这种之前无法设置的问题 */
+        if (status_set >= 0)
+        {
+            p->status = (uint32_t)status_set;
+            p->my_printf = my_printf;
+        }
+
+        goto shell_done;
     }
+
+shell_done:
+    /* 只清索引即可（避免每次 memset 128 字节） */
+    ctx->shell_index = 0;
+    ctx->shell_buffer[0] = 0;
 }
 
 // ------------------------ shell 状态轮询（你原来的迁入） ------------------------
 void shell_status_run(void)
 {
-    // 遍历所有Shell命令，打印状态
-    section_shell_t *p = p_shell_first;
-    while (p)
+    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
-        if (p->status)
+        if (!p->status)
+            continue;
+
+        /* 没有绑定输出接口则跳过，避免空指针 */
+        if (!p->my_printf || !p->my_printf->my_printf)
+            continue;
+
+        if (p->status & (1u << 0))
         {
-            if (p->status & (1 << 0))
+            /* bit0：打印变量/值 */
+            if (p->type != SHELL_CMD)
             {
-                switch (p->type)
-                {
-                case SHELL_CMD:
-                    // 执行命令
-                    break;
-                case SHELL_UINT8:
-                {
-                    uint8_t val = *(uint8_t *)p->p_var;
-                    p->my_printf->my_printf("%s = %u\r\n", p->p_name, val);
-                    break;
-                }
-                case SHELL_INT8:
-                {
-                    int8_t val = *(int8_t *)p->p_var;
-                    p->my_printf->my_printf("%s = %d\r\n", p->p_name, val);
-                    break;
-                }
-                case SHELL_UINT16:
-                {
-                    uint16_t val = *(uint16_t *)p->p_var;
-                    p->my_printf->my_printf("%s = %u\r\n", p->p_name, val);
-                    break;
-                }
-                case SHELL_INT16:
-                {
-                    int16_t val = *(int16_t *)p->p_var;
-                    p->my_printf->my_printf("%s = %d\r\n", p->p_name, val);
-                    break;
-                }
-                case SHELL_UINT32:
-                {
-                    uint32_t val = *(uint32_t *)p->p_var;
-                    p->my_printf->my_printf("%s = %lu\r\n", p->p_name, val);
-                    break;
-                }
-                case SHELL_INT32:
-                {
-                    int32_t val = *(int32_t *)p->p_var;
-                    p->my_printf->my_printf("%s = %ld\r\n", p->p_name, val);
-                    break;
-                }
-                case SHELL_FP32:
-                {
-                    float val = *(float *)p->p_var;
-                    p->my_printf->my_printf("%s = %f\r\n", p->p_name, val);
-                    break;
-                }
-                }
-            }
-            if (p->status & (1 << 1))
-            {
-                // 执行状态更新函数
-                if (p->func)
-                    p->func(p->my_printf);
+                shell_print_item(p, p->my_printf);
             }
         }
-        p = p->p_next;
+
+        if (p->status & (1u << 1))
+        {
+            /* bit1：执行回调（通常用于采样/刷新/额外输出） */
+            if (p->func)
+                p->func(p->my_printf);
+        }
     }
 }
 
@@ -553,12 +623,11 @@ REG_SHELL_CMD(list, list_print_start)
 
 int list_print_step(void)
 {
-    static uint8_t print_flag = 0; // 0: 打印数据, 1: 打印分隔线
+    static uint8_t print_flag = 0; /* 0: data, 1: separator */
 
-    if (!g_list_print_ctx.active)
+    if (!g_list_print_ctx.active || !g_list_print_ctx.my_printf || !g_list_print_ctx.my_printf->my_printf)
         return 0;
 
-    // 打印数据行
     if (print_flag == 0)
     {
         section_shell_t *s = g_list_print_ctx.cur;
@@ -569,76 +638,79 @@ int list_print_step(void)
             return 0;
         }
 
-        // g_list_print_ctx.my_printf->my_printf("%s", s->p_name);
-        // for (int i = 0; i < g_list_print_ctx.tab_count; i++)
-        //     g_list_print_ctx.my_printf->my_printf("\t");
-
         switch (s->type)
         {
         case SHELL_CMD:
             g_list_print_ctx.my_printf->my_printf("%s\tCMD\r\n", s->p_name);
             break;
+
         case SHELL_UINT8:
-            g_list_print_ctx.my_printf->my_printf("%s\tU8\t(%d)\t(%d)\t%d\r\n",
+            g_list_print_ctx.my_printf->my_printf("%s\tU8\t(%u)\t(%u)\t%u\r\n",
                                                   s->p_name,
-                                                  *(uint8_t *)s->p_max,
-                                                  *(uint8_t *)s->p_min,
-                                                  *(uint8_t *)s->p_var);
+                                                  (unsigned)(*(uint8_t *)s->p_max),
+                                                  (unsigned)(*(uint8_t *)s->p_min),
+                                                  (unsigned)(*(uint8_t *)s->p_var));
             break;
+
         case SHELL_UINT16:
-            g_list_print_ctx.my_printf->my_printf("%s\tU16\t(%d)\t(%d)\t%d\r\n",
+            g_list_print_ctx.my_printf->my_printf("%s\tU16\t(%u)\t(%u)\t%u\r\n",
                                                   s->p_name,
-                                                  *(uint16_t *)s->p_max,
-                                                  *(uint16_t *)s->p_min,
-                                                  *(uint16_t *)s->p_var);
+                                                  (unsigned)(*(uint16_t *)s->p_max),
+                                                  (unsigned)(*(uint16_t *)s->p_min),
+                                                  (unsigned)(*(uint16_t *)s->p_var));
             break;
+
         case SHELL_UINT32:
-            g_list_print_ctx.my_printf->my_printf("%s\tU32\t(%u)\t(%u)\t%u\r\n",
+            g_list_print_ctx.my_printf->my_printf("%s\tU32\t(%lu)\t(%lu)\t%lu\r\n",
                                                   s->p_name,
-                                                  *(uint32_t *)s->p_max,
-                                                  *(uint32_t *)s->p_min,
-                                                  *(uint32_t *)s->p_var);
+                                                  (unsigned long)(*(uint32_t *)s->p_max),
+                                                  (unsigned long)(*(uint32_t *)s->p_min),
+                                                  (unsigned long)(*(uint32_t *)s->p_var));
             break;
+
         case SHELL_INT8:
             g_list_print_ctx.my_printf->my_printf("%s\tI8\t(%d)\t(%d)\t%d\r\n",
                                                   s->p_name,
-                                                  *(int8_t *)s->p_max,
-                                                  *(int8_t *)s->p_min,
-                                                  *(int8_t *)s->p_var);
+                                                  (int)(*(int8_t *)s->p_max),
+                                                  (int)(*(int8_t *)s->p_min),
+                                                  (int)(*(int8_t *)s->p_var));
             break;
+
         case SHELL_INT16:
             g_list_print_ctx.my_printf->my_printf("%s\tI16\t(%d)\t(%d)\t%d\r\n",
                                                   s->p_name,
-                                                  *(int16_t *)s->p_max,
-                                                  *(int16_t *)s->p_min,
-                                                  *(int16_t *)s->p_var);
+                                                  (int)(*(int16_t *)s->p_max),
+                                                  (int)(*(int16_t *)s->p_min),
+                                                  (int)(*(int16_t *)s->p_var));
             break;
+
         case SHELL_INT32:
-            g_list_print_ctx.my_printf->my_printf("%s\tI32\t(%d)\t(%d)\t%d\r\n",
+            g_list_print_ctx.my_printf->my_printf("%s\tI32\t(%ld)\t(%ld)\t%ld\r\n",
                                                   s->p_name,
-                                                  *(int32_t *)s->p_max,
-                                                  *(int32_t *)s->p_min,
-                                                  *(int32_t *)s->p_var);
+                                                  (long)(*(int32_t *)s->p_max),
+                                                  (long)(*(int32_t *)s->p_min),
+                                                  (long)(*(int32_t *)s->p_var));
             break;
+
         case SHELL_FP32:
             g_list_print_ctx.my_printf->my_printf("%s\tFP32\t(%f)\t(%f)\t%f\r\n",
                                                   s->p_name,
-                                                  *(float *)s->p_max,
-                                                  *(float *)s->p_min,
-                                                  *(float *)s->p_var);
+                                                  (double)(*(float *)s->p_max),
+                                                  (double)(*(float *)s->p_min),
+                                                  (double)(*(float *)s->p_var));
+            break;
+        default:
             break;
         }
+
         g_list_print_ctx.cur = s->p_next;
         print_flag = 1;
         return 1;
     }
-    // 打印分隔线
-    else
-    {
-        g_list_print_ctx.my_printf->my_printf("-----------------------------------------\r\n");
-        print_flag = 0;
-        return 1;
-    }
+
+    g_list_print_ctx.my_printf->my_printf("-----------------------------------------\r\n");
+    print_flag = 0;
+    return 1;
 }
 
 static void list_print_task(void)
