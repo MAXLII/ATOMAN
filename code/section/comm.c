@@ -259,7 +259,7 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
             p_comm_ctx->status = SECTION_PACKFORM_STA_DATA;                 // 切换到数据接收状态
             p_comm_ctx->index = 0;                                          // 重置索引
             p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);          // 累加CRC
-            p_comm_ctx->pack.p_data = (uint8_t *)p_comm_ctx->p_data_buffer; // 指向数据缓冲区
+            p_comm_ctx->pack.p_data = p_comm_ctx->p_data_buffer; // 指向数据缓冲区
             // 检查长度是否超出缓冲区
             if (p_comm_ctx->len > p_comm_ctx->buffer_size)
             {
@@ -272,7 +272,7 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
         if (p_comm_ctx->len != 0)
         {
             p_comm_ctx->len--;
-            uint8_t *p_data = (uint8_t *)*p_comm_ctx->p_data_buffer + p_comm_ctx->index;
+            uint8_t *p_data = p_comm_ctx->p_data_buffer + p_comm_ctx->index;
             *p_data = data;                                        // 存储数据
             p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data); // CRC
             p_comm_ctx->index++;

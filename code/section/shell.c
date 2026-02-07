@@ -616,7 +616,23 @@ static void list_print_task(void)
 REG_TASK_MS(10, list_print_task)
 
 // ------------------------ （可选）CPU利用率命令如果你觉得属于shell，就也搬进来 ------------------------
-extern float task_metric, task_metric_max; // 如果变量在别处定义
+
+extern float task_run_time;
+float task_metric = 0.0f;
+float task_metric_max = 0.0f;
+
+static void task_metric_calculate(void)
+{
+    task_metric = task_run_time * 500e-6f;
+    if (task_metric > task_metric_max)
+    {
+        task_metric_max = task_metric;
+    }
+    task_run_time = 0.0f;
+}
+
+REG_TASK_MS(100, task_metric_calculate)
+
 static void CPU_Utilization(DEC_MY_PRINTF)
 {
     my_printf->my_printf("CPU利用率:%f%%,CPU峰值:%f%%\n", task_metric, task_metric_max);
