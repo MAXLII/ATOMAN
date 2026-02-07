@@ -119,8 +119,8 @@ C_SOURCES =  \
 ../code/interface/gpio.c \
 ../code/interface/usart.c \
 ../code/section/section.c \
-../code/section/comm.c \
-../code/section/shell.c \
+../code/comm/comm.c \
+../code/comm/shell.c \
 
 # ASM sources
 ASM_SOURCES =  \
@@ -192,6 +192,7 @@ C_INCLUDES =  \
 -I../code/dbg \
 -I../code/interface \
 -I../code/section \
+-I../code/comm \
 -I../gd32g553c/Firmware/CMSIS \
 -I../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include \
 -I../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include \
