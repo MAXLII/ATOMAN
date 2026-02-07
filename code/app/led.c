@@ -1,6 +1,7 @@
 #include "gpio.h"
 #include "section.h"
 #include "stdint.h"
+#include "shell.h"
 
 void led_task(void)
 {

@@ -3,14 +3,71 @@
  * @brief 通信协议（帧解析/CRC/路由/发送）
  */
 
+#include "comm.h"
 #include "section.h"
 #include <string.h>
 #include <stdlib.h>
 
-// 使用方案A：直接 extern 全局链表头
-extern section_com_t *p_com_first;
-extern comm_route_t *p_comm_route_first;
+section_com_t *p_com_first;
+comm_route_t *p_comm_route_first;
 extern section_link_t *p_link_first;
+
+/* ------------------------ Comm / Route 插入 ------------------------ */
+static void comm_insert(section_com_t *com)
+{
+    if (!com)
+        return;
+
+    com->p_next = NULL;
+    if (!p_com_first)
+        p_com_first = com;
+    else
+    {
+        section_com_t *curr = p_com_first;
+        while (curr->p_next)
+            curr = (section_com_t *)curr->p_next;
+        curr->p_next = com;
+    }
+}
+
+static void comm_route_insert(comm_route_t *com)
+{
+    if (!com)
+        return;
+
+    com->p_next = NULL;
+    if (!p_comm_route_first)
+        p_comm_route_first = com;
+    else
+    {
+        comm_route_t *curr = p_comm_route_first;
+        while (curr->p_next)
+            curr = curr->p_next;
+        curr->p_next = com;
+    }
+}
+
+void comm_init(void)
+{
+    for (reg_section_t *p = (reg_section_t *)&SECTION_START;
+         p < (reg_section_t *)&SECTION_STOP;
+         ++p)
+    {
+        switch (p->section_type)
+        {
+        case SECTION_COMM:
+            comm_insert((section_com_t *)p->p_str);
+            break;
+        case SECTION_COMM_ROUTE:
+            comm_route_insert((comm_route_t *)p->p_str);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+REG_INIT(0, comm_init)
 
 // ------------------------ CRC16（从原 section.c 迁入） ------------------------
 static uint16_t crc16_table[256];
@@ -253,13 +310,13 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
         }
         else
         {
-            p_comm_ctx->pack.len += (data << 8);                            // 累加长度
-            p_comm_ctx->len = p_comm_ctx->pack.len;                         // 设置数据长度
-            p_comm_ctx->len_flag = 0;                                       // 重置长度标志
-            p_comm_ctx->status = SECTION_PACKFORM_STA_DATA;                 // 切换到数据接收状态
-            p_comm_ctx->index = 0;                                          // 重置索引
-            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data);          // 累加CRC
-            p_comm_ctx->pack.p_data = p_comm_ctx->p_data_buffer; // 指向数据缓冲区
+            p_comm_ctx->pack.len += (data << 8);                   // 累加长度
+            p_comm_ctx->len = p_comm_ctx->pack.len;                // 设置数据长度
+            p_comm_ctx->len_flag = 0;                              // 重置长度标志
+            p_comm_ctx->status = SECTION_PACKFORM_STA_DATA;        // 切换到数据接收状态
+            p_comm_ctx->index = 0;                                 // 重置索引
+            p_comm_ctx->crc = crc16_update(p_comm_ctx->crc, data); // 累加CRC
+            p_comm_ctx->pack.p_data = p_comm_ctx->p_data_buffer;   // 指向数据缓冲区
             // 检查长度是否超出缓冲区
             if (p_comm_ctx->len > p_comm_ctx->buffer_size)
             {

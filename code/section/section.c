@@ -16,7 +16,6 @@
  */
 
 #include "section.h"
-#include "platform.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -34,13 +33,10 @@
  */
 reg_task_t *p_task_first = NULL;
 reg_interrupt_t *p_interrupt_first = NULL;
-section_shell_t *p_shell_first = NULL;
 section_link_t *p_link_first = NULL;
 section_perf_record_t *p_perf_record_first = NULL;
 uint32_t *p_perf_cnt = NULL;
-section_com_t *p_com_first = NULL;
 reg_init_t *p_init_first = NULL;
-comm_route_t *p_comm_route_first = NULL;
 
 /* =============================================================================
  * 各类注册对象的插入函数
@@ -97,26 +93,6 @@ static void interrupt_insert(reg_interrupt_t *intr)
         intr->p_next = prev->p_next;
         prev->p_next = intr;
     }
-}
-
-/* ------------------------ Shell 插入 ------------------------ */
-uint32_t shell_data_num = 0;
-
-static void shell_insert(section_shell_t *shell)
-{
-    if (!shell)
-        return;
-
-    /* 防止重复插入（理论上不会发生，属于防御性代码） */
-    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
-    {
-        if (p == shell)
-            return;
-    }
-
-    shell->p_next = p_shell_first;
-    p_shell_first = shell;
-    shell_data_num++;
 }
 
 /* ------------------------ Link 插入 ------------------------ */
@@ -178,41 +154,6 @@ static void perf_insert(section_perf_t *perf)
     }
 }
 
-/* ------------------------ Comm / Route 插入 ------------------------ */
-static void comm_insert(section_com_t *com)
-{
-    if (!com)
-        return;
-
-    com->p_next = NULL;
-    if (!p_com_first)
-        p_com_first = com;
-    else
-    {
-        section_com_t *curr = p_com_first;
-        while (curr->p_next)
-            curr = (section_com_t *)curr->p_next;
-        curr->p_next = com;
-    }
-}
-
-static void comm_route_insert(comm_route_t *com)
-{
-    if (!com)
-        return;
-
-    com->p_next = NULL;
-    if (!p_comm_route_first)
-        p_comm_route_first = com;
-    else
-    {
-        comm_route_t *curr = p_comm_route_first;
-        while (curr->p_next)
-            curr = curr->p_next;
-        curr->p_next = com;
-    }
-}
-
 /* ------------------------ Init 插入（按优先级） ------------------------ */
 static void init_insert(reg_init_t *init)
 {
@@ -259,15 +200,23 @@ void section_init(void)
     {
         switch (p->section_type)
         {
-        case SECTION_INIT:       init_insert((reg_init_t *)p->p_str); break;
-        case SECTION_TASK:       task_insert((reg_task_t *)p->p_str); break;
-        case SECTION_INTERRUPT:  interrupt_insert((reg_interrupt_t *)p->p_str); break;
-        case SECTION_SHELL:      shell_insert((section_shell_t *)p->p_str); break;
-        case SECTION_LINK:       link_insert((section_link_t *)p->p_str); break;
-        case SECTION_PERF:       perf_insert((section_perf_t *)p->p_str); break;
-        case SECTION_COMM:       comm_insert((section_com_t *)p->p_str); break;
-        case SECTION_COMM_ROUTE: comm_route_insert((comm_route_t *)p->p_str); break;
-        default: break;
+        case SECTION_INIT:
+            init_insert((reg_init_t *)p->p_str);
+            break;
+        case SECTION_TASK:
+            task_insert((reg_task_t *)p->p_str);
+            break;
+        case SECTION_INTERRUPT:
+            interrupt_insert((reg_interrupt_t *)p->p_str);
+            break;
+        case SECTION_LINK:
+            link_insert((section_link_t *)p->p_str);
+            break;
+        case SECTION_PERF:
+            perf_insert((section_perf_t *)p->p_str);
+            break;
+        default:
+            break;
         }
     }
 
@@ -317,6 +266,14 @@ void run_task(void)
             else
                 t->time_last = now;
         }
+    }
+}
+
+void section_interrupt(void)
+{
+    for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = (reg_interrupt_t *)p->p_next)
+    {
+        p->p_func();
     }
 }
 

@@ -3,6 +3,9 @@
 #include "section.h"
 #include <stdarg.h>
 #include "gd32g5x3.h"
+#include "comm.h"
+#include "shell.h"
+#include <stdio.h>
 
 USART_LINK_E usart_link = USART0_LINK;
 

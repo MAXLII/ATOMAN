@@ -14,6 +14,7 @@
 
 #include "stdint.h"
 #include "section.h"
+#include "shell.h"
 
 //================= 类型定义 =================
 
