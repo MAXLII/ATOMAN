@@ -1,6 +1,18 @@
 /**
  * @file section.c
- * @brief 段管理系统实现文件（框架层）
+ * @brief 自动注册段（section）管理框架实现
+ *
+ * 本文件是整个“段式注册框架”的运行时核心实现，负责：
+ *  - 扫描链接器 section，构建各类运行时链表
+ *  - 驱动 task / interrupt / link / shell / comm / perf / FSM 等子系统
+ *
+ * 设计定位：
+ *  - 这是“框架层（framework layer）”，不包含任何具体业务逻辑
+ *  - 所有具体功能均通过 section 自动注册机制接入
+ *
+ * 重要约定：
+ *  - 本文件中所有 insert / process 函数均只操作链表和调度
+ *  - 不负责协议、不负责业务、不负责硬件初始化
  */
 
 #include "section.h"
@@ -9,7 +21,17 @@
 #include <stddef.h>
 #include <string.h>
 
-// ------------------------ 全局链表头（保留在 section.c） ------------------------
+/* =============================================================================
+ * 全局链表头（框架私有）
+ *
+ * 这些指针是 section 自动注册机制的“运行时锚点”，
+ * 在 section_init() 中由段扫描阶段统一构建。
+ *
+ * 生命周期：
+ *  - 启动阶段初始化
+ *  - 运行期只追加、不删除
+ * =============================================================================
+ */
 reg_task_t *p_task_first = NULL;
 reg_interrupt_t *p_interrupt_first = NULL;
 section_shell_t *p_shell_first = NULL;
@@ -20,7 +42,20 @@ section_com_t *p_com_first = NULL;
 reg_init_t *p_init_first = NULL;
 comm_route_t *p_comm_route_first = NULL;
 
-// ------------------------ insert函数（从原 section.c 保留） ------------------------
+/* =============================================================================
+ * 各类注册对象的插入函数
+ *
+ * 职责：
+ *  - 将“编译期注册对象”转换为“运行期链表”
+ *  - 维持必要的顺序（如 priority）
+ *
+ * 注意：
+ *  - 这些函数只在 section_init() 中被调用
+ *  - 不考虑并发、不考虑删除
+ * =============================================================================
+ */
+
+/* ------------------------ Task 插入 ------------------------ */
 static void task_insert(reg_task_t *task)
 {
     task->time_last = SECTION_SYS_TICK;
@@ -38,6 +73,8 @@ static void task_insert(reg_task_t *task)
         curr->p_next = task;
     }
 }
+
+/* ------------------------ Interrupt 插入（按优先级） ------------------------ */
 static void interrupt_insert(reg_interrupt_t *intr)
 {
     if (!intr)
@@ -45,7 +82,6 @@ static void interrupt_insert(reg_interrupt_t *intr)
 
     intr->p_next = NULL;
 
-    // 插入到链表头或按优先级顺序插入
     if (!p_interrupt_first || intr->priority < p_interrupt_first->priority)
     {
         intr->p_next = p_interrupt_first;
@@ -63,6 +99,7 @@ static void interrupt_insert(reg_interrupt_t *intr)
     }
 }
 
+/* ------------------------ Shell 插入 ------------------------ */
 uint32_t shell_data_num = 0;
 
 static void shell_insert(section_shell_t *shell)
@@ -70,26 +107,19 @@ static void shell_insert(section_shell_t *shell)
     if (!shell)
         return;
 
-    // 防止重复插入
+    /* 防止重复插入（理论上不会发生，属于防御性代码） */
     for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
         if (p == shell)
             return;
     }
 
-    shell->p_next = NULL;
-    if (p_shell_first)
-    {
-        shell->p_next = p_shell_first;
-        p_shell_first = shell;
-        shell_data_num++;
-    }
-    else
-    {
-        p_shell_first = shell;
-        shell_data_num++;
-    }
+    shell->p_next = p_shell_first;
+    p_shell_first = shell;
+    shell_data_num++;
 }
+
+/* ------------------------ Link 插入 ------------------------ */
 static void link_insert(section_link_t *link)
 {
     link->p_next = NULL;
@@ -104,27 +134,33 @@ static void link_insert(section_link_t *link)
         curr->p_next = link;
     }
 }
+
+/* ------------------------ Performance 插入 ------------------------ */
 static void perf_insert(section_perf_t *perf)
 {
     if (!perf)
         return;
+
     section_perf_base_t *base;
     section_perf_record_t *rec;
+
     switch (perf->perf_type)
     {
     case SECTION_PERF_BASE:
-        // 性能计数器基地址注册
+        /* 注册系统级性能计数器（如定时器） */
         base = (section_perf_base_t *)perf->p_perf;
         if (base && base->p_cnt)
             p_perf_cnt = base->p_cnt;
         break;
+
     case SECTION_PERF_RECORD:
-        // 性能记录注册，链表管理
+        /* 注册单个性能记录节点 */
         rec = (section_perf_record_t *)perf->p_perf;
         if (rec)
         {
-            rec->p_cnt = &p_perf_cnt; // 赋值为一级指针的地址
+            rec->p_cnt = &p_perf_cnt;
             rec->p_next = NULL;
+
             if (!p_perf_record_first)
                 p_perf_record_first = rec;
             else
@@ -136,14 +172,18 @@ static void perf_insert(section_perf_t *perf)
             }
         }
         break;
+
     default:
         break;
     }
 }
+
+/* ------------------------ Comm / Route 插入 ------------------------ */
 static void comm_insert(section_com_t *com)
 {
     if (!com)
         return;
+
     com->p_next = NULL;
     if (!p_com_first)
         p_com_first = com;
@@ -155,6 +195,7 @@ static void comm_insert(section_com_t *com)
         curr->p_next = com;
     }
 }
+
 static void comm_route_insert(comm_route_t *com)
 {
     if (!com)
@@ -162,9 +203,7 @@ static void comm_route_insert(comm_route_t *com)
 
     com->p_next = NULL;
     if (!p_comm_route_first)
-    {
         p_comm_route_first = com;
-    }
     else
     {
         comm_route_t *curr = p_comm_route_first;
@@ -173,6 +212,8 @@ static void comm_route_insert(comm_route_t *com)
         curr->p_next = com;
     }
 }
+
+/* ------------------------ Init 插入（按优先级） ------------------------ */
 static void init_insert(reg_init_t *init)
 {
     if (!init)
@@ -180,7 +221,6 @@ static void init_insert(reg_init_t *init)
 
     init->p_next = NULL;
 
-    // 插入到链表头或按优先级顺序插入
     if (!p_init_first || init->priority < p_init_first->priority)
     {
         init->p_next = p_init_first;
@@ -198,7 +238,19 @@ static void init_insert(reg_init_t *init)
     }
 }
 
-// ------------------------ 段扫描初始化（从原 section.c 保留） ------------------------
+/* =============================================================================
+ * section_init
+ *
+ * 框架入口函数：
+ *  - 扫描链接器 section
+ *  - 将所有注册对象分发到对应链表
+ *  - 执行所有 INIT 函数
+ *
+ * 调用时机：
+ *  - 系统启动早期
+ *  - main() 或 OS 启动前
+ * =============================================================================
+ */
 void section_init(void)
 {
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
@@ -207,35 +259,19 @@ void section_init(void)
     {
         switch (p->section_type)
         {
-        case SECTION_INIT:
-            init_insert((reg_init_t *)p->p_str);
-            break;
-        case SECTION_TASK:
-            task_insert((reg_task_t *)p->p_str);
-            break;
-        case SECTION_INTERRUPT:
-            interrupt_insert((reg_interrupt_t *)p->p_str);
-            break;
-        case SECTION_SHELL:
-            shell_insert((section_shell_t *)p->p_str);
-            break;
-        case SECTION_LINK:
-            link_insert((section_link_t *)p->p_str);
-            break;
-        case SECTION_PERF:
-            perf_insert((section_perf_t *)p->p_str);
-            break;
-        case SECTION_COMM:
-            comm_insert((section_com_t *)p->p_str);
-            break;
-        case SECTION_COMM_ROUTE:
-            comm_route_insert((comm_route_t *)p->p_str);
-            break;
-        default:
-            break;
+        case SECTION_INIT:       init_insert((reg_init_t *)p->p_str); break;
+        case SECTION_TASK:       task_insert((reg_task_t *)p->p_str); break;
+        case SECTION_INTERRUPT:  interrupt_insert((reg_interrupt_t *)p->p_str); break;
+        case SECTION_SHELL:      shell_insert((section_shell_t *)p->p_str); break;
+        case SECTION_LINK:       link_insert((section_link_t *)p->p_str); break;
+        case SECTION_PERF:       perf_insert((section_perf_t *)p->p_str); break;
+        case SECTION_COMM:       comm_insert((section_com_t *)p->p_str); break;
+        case SECTION_COMM_ROUTE: comm_route_insert((comm_route_t *)p->p_str); break;
+        default: break;
         }
     }
 
+    /* 执行所有注册的初始化函数 */
     for (reg_init_t *init = p_init_first; init != NULL; init = (reg_init_t *)init->p_next)
     {
         if (init->p_func)
@@ -243,100 +279,78 @@ void section_init(void)
     }
 }
 
-// ------------------------ Task系统（从原 section.c 保留） ------------------------
-static float task_run_time = 0.0f;
+/* =============================================================================
+ * Task 调度系统
+ * =============================================================================
+ */
+
+float task_run_time = 0.0f;
 
 void run_task(void)
 {
     uint32_t now = SECTION_SYS_TICK;
 
-    // 遍历任务链表，检查是否到期
     for (reg_task_t *t = p_task_first; t != NULL; t = (reg_task_t *)t->p_next)
     {
         if (now - t->time_last >= t->t_period)
         {
-            if ((t->p_perf_record == NULL) ||
-                (*t->p_perf_record->p_cnt == NULL)) // 如果没有性能记录或计数器
+            if (!t->p_perf_record || !*t->p_perf_record->p_cnt)
             {
-                t->p_func(); // 执行任务函数
+                t->p_func();
             }
             else
             {
-                t->p_perf_record->start = **t->p_perf_record->p_cnt;                      // 记录开始时间
-                t->p_func();                                                              // 执行任务函数
-                t->p_perf_record->end = **t->p_perf_record->p_cnt;                        // 记录结束时间
-                t->p_perf_record->time = t->p_perf_record->end - t->p_perf_record->start; // 计算执行时间
+                t->p_perf_record->start = **t->p_perf_record->p_cnt;
+                t->p_func();
+                t->p_perf_record->end = **t->p_perf_record->p_cnt;
+                t->p_perf_record->time =
+                    t->p_perf_record->end - t->p_perf_record->start;
+
                 if (t->p_perf_record->time > t->p_perf_record->max_time)
-                    t->p_perf_record->max_time = t->p_perf_record->time; // 更新最大时间
+                    t->p_perf_record->max_time = t->p_perf_record->time;
+
                 task_run_time += t->p_perf_record->time;
             }
+
             if (likely((now - t->time_last) < (t->t_period << 2)))
-            {
-                t->time_last += t->t_period; // 更新最后执行时间
-            }
+                t->time_last += t->t_period;
             else
-            {
-                t->time_last = now; // 要是上次时间与当前时间间隔太大直接更新为当前时间
-            }
+                t->time_last = now;
         }
     }
 }
 
-float task_metric = 0.0f;
-float task_metric_max = 0.0f;
-
-static void task_metric_calculate(void)
-{
-    task_metric = task_run_time * 500e-6f;
-    if (task_metric > task_metric_max)
-    {
-        task_metric_max = task_metric;
-    }
-    task_run_time = 0.0f;
-}
-
-REG_TASK_MS(100, task_metric_calculate)
-
-// ------------------------ 中断回调（从原 section.c 保留） ------------------------
-void section_interrupt(void)
-{
-    for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = (reg_interrupt_t *)p->p_next)
-    {
-        p->p_func();
-    }
-}
-
-// ------------------------ Link字节分发（从原 section.c 保留） ------------------------
+/* =============================================================================
+ * Link 字节分发系统
+ *
+ * 职责：
+ *  - 从 DMA 环形缓冲中取出新字节
+ *  - 按 handler_arr 顺序分发给上层处理器
+ *
+ * 设计约定：
+ *  - link 层只处理“字节流”
+ *  - 不理解协议、不缓存 payload
+ * =============================================================================
+ */
 static void link_process(section_link_t *link)
 {
     if (!link || !link->dma_cnt || !link->handler_arr)
         return;
 
     uint32_t buff_size = link->buff_size;
-    uint32_t dma_cnt = *link->dma_cnt;
-    uint32_t cnt = buff_size - dma_cnt;
+    uint32_t cnt = buff_size - *link->dma_cnt;
 
-    // 处理缓冲区中的新数据
     while (link->pos != cnt)
     {
         uint8_t data = link->rx_buff[link->pos];
 
-        // 调用所有注册的处理函数
         for (uint32_t i = 0; i < link->handler_num; ++i)
         {
             const section_link_handler_item_t *it = &link->handler_arr[i];
             if (it->func)
-            {
-                // 如果 ctx 是 comm_ctx_t，并且你想在路由里用 link_id，可选做一个约定：
-                // 约定：当 handler 是 comm_run 时，ctx 指向 comm_ctx_t
-                // 那么可以：
-                // ((comm_ctx_t*)it->ctx)->link_id = link->link_id;
-
                 it->func(data, link->my_printf, it->ctx);
-            }
         }
 
-        // 更新位置指针（环形缓冲区）
         link->pos = (link->pos + 1) % buff_size;
     }
 }
@@ -349,22 +363,23 @@ void section_link_task(void)
     }
 }
 
-// 保留你原来的任务注册
+/* 周期性调度 link 处理 */
 REG_TASK(10, section_link_task)
 
-// ------------------------ FSM（若你认为属于框架，可保留） ------------------------
+/* =============================================================================
+ * FSM 调度框架
+ * =============================================================================
+ */
 void section_fsm_func(reg_fsm_t *fsm)
 {
     if (!fsm->p_fsm_func_table || !fsm->p_fsm_ev)
         return;
 
-    // 查找当前状态对应的处理函数
     for (uint32_t i = 0; i < fsm->fsm_table_size; ++i)
     {
         reg_fsm_func_t *entry = &fsm->p_fsm_func_table[i];
         if (fsm->fsm_sta == entry->fsm_sta)
         {
-            // 状态刚切换时执行入口函数
             if (fsm->fsm_sta_is_change)
             {
                 fsm->fsm_sta_is_change = 0;
@@ -372,21 +387,17 @@ void section_fsm_func(reg_fsm_t *fsm)
                 entry->func_in();
             }
 
-            // 执行状态处理函数
             entry->func_exe();
 
-            // 检查是否有事件需要处理
             if (*fsm->p_fsm_ev)
             {
                 uint32_t next = entry->func_chk(*fsm->p_fsm_ev);
-
-                // 状态切换
                 if (next && next != entry->fsm_sta)
                 {
                     PLECS_LOG("%s-chk_ev:%d\n", entry->p_name, *fsm->p_fsm_ev);
-                    entry->func_out();          // 执行出口函数
-                    fsm->fsm_sta = next;        // 切换状态
-                    fsm->fsm_sta_is_change = 1; // 标记状态已改变
+                    entry->func_out();
+                    fsm->fsm_sta = next;
+                    fsm->fsm_sta_is_change = 1;
                 }
                 *fsm->p_fsm_ev = 0;
             }
