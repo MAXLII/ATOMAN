@@ -3,6 +3,7 @@
  * @brief Shell 命令系统（协议/具体实现层）
  */
 
+#include "shell.h"
 #include "section.h"
 #include "platform.h"
 
@@ -15,11 +16,46 @@
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 
-// 使用方案A：直接 extern 全局链表头
-extern section_shell_t *p_shell_first;
+section_shell_t *p_shell_first;
 
-// ------------------------ 原 section.c 的 shell 相关静态变量/工具函数迁入 ------------------------
-extern uint32_t shell_data_num;
+/* ------------------------ Shell 插入 ------------------------ */
+uint32_t shell_data_num = 0;
+
+static void shell_insert(section_shell_t *shell)
+{
+    if (!shell)
+        return;
+
+    /* 防止重复插入（理论上不会发生，属于防御性代码） */
+    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    {
+        if (p == shell)
+            return;
+    }
+
+    shell->p_next = p_shell_first;
+    p_shell_first = shell;
+    shell_data_num++;
+}
+
+void shell_init(void)
+{
+    for (reg_section_t *p = (reg_section_t *)&SECTION_START;
+         p < (reg_section_t *)&SECTION_STOP;
+         ++p)
+    {
+        switch (p->section_type)
+        {
+        case SECTION_SHELL:
+            shell_insert((section_shell_t *)p->p_str);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+REG_INIT(0, shell_init)
 
 // 你原来的：is_string_number / eval_expr / eval_expr_inner / parse_integer
 static int is_string_number(const char *str)

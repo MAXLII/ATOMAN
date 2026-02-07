@@ -13,6 +13,8 @@
 #include "scope.h"
 #include "math.h"
 #include "section.h"
+#include "comm.h"
+#include "shell.h"
 
 // 注册Scope采集对象：采集sin_data和cos_data两个变量，缓冲区256，触发点100
 REG_SCOPE(tsm, 256, 128, sin_data, cos_data, sin_cos_data)

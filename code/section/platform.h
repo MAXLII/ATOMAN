@@ -13,6 +13,8 @@ extern size_t __stop_section;
 #define SECTION_START __start_section ///< 段起始地址
 #define SECTION_STOP __stop_section   ///< 段结束地址
 #define SYSTEM_RESET ;                ///< 系统复位（PLECS中为空）
+#define AUTO_REG_SECTION __attribute__((__section__("section")))
+#define FUNC_RAM
 #else
 #include "systick.h"
 #include "gd32g5x3.h"
@@ -25,4 +27,6 @@ extern uint32_t __section_end;
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
+#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
+#define FUNC_RAM __attribute__((section(".func_ram")))
 #endif

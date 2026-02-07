@@ -3,6 +3,7 @@
 #include <string.h>
 #include "section.h"
 #include "systick.h"
+#include "shell.h"
 
 static int last_grid[ROWS][COLS] = {0};
 static int grid[ROWS][COLS] = {0};
