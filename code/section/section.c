@@ -54,19 +54,24 @@ reg_init_t *p_init_first = NULL;
 /* ------------------------ Task 插入 ------------------------ */
 static void task_insert(reg_task_t *task)
 {
+    if (!task)
+        return;
+
+    static reg_task_t *s_task_tail = NULL;
+
     task->time_last = SECTION_SYS_TICK;
     task->p_next = NULL;
 
     if (p_task_first == NULL)
     {
         p_task_first = task;
+        s_task_tail = task;
     }
     else
     {
-        reg_task_t *curr = p_task_first;
-        while (curr->p_next)
-            curr = curr->p_next;
-        curr->p_next = task;
+        /* 只追加，不删除：用 tail 保证 O(1) */
+        s_task_tail->p_next = task;
+        s_task_tail = task;
     }
 }
 
@@ -98,16 +103,22 @@ static void interrupt_insert(reg_interrupt_t *intr)
 /* ------------------------ Link 插入 ------------------------ */
 static void link_insert(section_link_t *link)
 {
+    if (!link)
+        return;
+
+    static section_link_t *s_link_tail = NULL;
+
     link->p_next = NULL;
 
     if (!p_link_first)
+    {
         p_link_first = link;
+        s_link_tail = link;
+    }
     else
     {
-        section_link_t *curr = p_link_first;
-        while (curr->p_next)
-            curr = (section_link_t *)curr->p_next;
-        curr->p_next = link;
+        s_link_tail->p_next = link;
+        s_link_tail = link;
     }
 }
 
@@ -120,6 +131,8 @@ static void perf_insert(section_perf_t *perf)
     section_perf_base_t *base;
     section_perf_record_t *rec;
 
+    static section_perf_record_t *s_perf_record_tail = NULL;
+
     switch (perf->perf_type)
     {
     case SECTION_PERF_BASE:
@@ -130,7 +143,6 @@ static void perf_insert(section_perf_t *perf)
         break;
 
     case SECTION_PERF_RECORD:
-        /* 注册单个性能记录节点 */
         rec = (section_perf_record_t *)perf->p_perf;
         if (rec)
         {
@@ -138,13 +150,14 @@ static void perf_insert(section_perf_t *perf)
             rec->p_next = NULL;
 
             if (!p_perf_record_first)
+            {
                 p_perf_record_first = rec;
+                s_perf_record_tail = rec;
+            }
             else
             {
-                section_perf_record_t *cur = p_perf_record_first;
-                while (cur->p_next)
-                    cur = (section_perf_record_t *)cur->p_next;
-                cur->p_next = rec;
+                s_perf_record_tail->p_next = rec;
+                s_perf_record_tail = rec;
             }
         }
         break;
@@ -235,36 +248,72 @@ void section_init(void)
 
 float task_run_time = 0.0f;
 
+static inline uint32_t perf_cnt_read(uint32_t *const *pp_cnt)
+{
+    /* pp_cnt 指向全局计数器指针(p_perf_cnt)；任何一级为 NULL 都认为不可用 */
+    if (!pp_cnt || !*pp_cnt)
+        return 0u;
+    return **pp_cnt;
+}
+
 void run_task(void)
 {
-    uint32_t now = SECTION_SYS_TICK;
+    const uint32_t now = SECTION_SYS_TICK;
 
-    for (reg_task_t *t = p_task_first; t != NULL; t = (reg_task_t *)t->p_next)
+    for (reg_task_t *task = p_task_first; task; task = task->p_next)
     {
-        if (now - t->time_last >= t->t_period)
+        if (!task->p_func)
+            continue;
+
+        const uint32_t period = task->t_period;
+        if (period == 0u)
+            continue;
+
+        /* tick 回绕安全：无符号减法 */
+        const uint32_t elapsed = (uint32_t)(now - task->time_last);
+        if (elapsed < period)
         {
-            if (!t->p_perf_record || !*t->p_perf_record->p_cnt)
-            {
-                t->p_func();
-            }
-            else
-            {
-                t->p_perf_record->start = **t->p_perf_record->p_cnt;
-                t->p_func();
-                t->p_perf_record->end = **t->p_perf_record->p_cnt;
-                t->p_perf_record->time =
-                    t->p_perf_record->end - t->p_perf_record->start;
+            continue;
+        }
 
-                if (t->p_perf_record->time > t->p_perf_record->max_time)
-                    t->p_perf_record->max_time = t->p_perf_record->time;
+        /* --- perf start --- */
+        uint32_t perf_start = 0u;
+        section_perf_record_t *rec = task->p_perf_record; /* 如果你是别的字段名，改这里 */
+        if (rec)
+        {
+            perf_start = perf_cnt_read(rec->p_cnt);
+        }
 
-                task_run_time += t->p_perf_record->time;
-            }
+        /* --- do task --- */
+        task->p_func();
 
-            if (likely((now - t->time_last) < (t->t_period << 2)))
-                t->time_last += t->t_period;
-            else
-                t->time_last = now;
+        /* --- perf end + update --- */
+        if (rec)
+        {
+            const uint32_t perf_end = perf_cnt_read(rec->p_cnt);
+            const uint32_t delta = (uint32_t)(perf_end - perf_start);
+
+            /* 你原来如果是 16bit 存储，这里会截断；建议用 32bit */
+            rec->time = delta;
+            rec->max_time = (delta > rec->max_time) ? delta : rec->max_time;
+            task_run_time += delta;
+        }
+
+        /* --- update scheduling --- */
+        if (0)
+        {
+            /* 不追赶：避免 CPU 忙时多次连跑 */
+            task->time_last = now;
+        }
+        else
+        {
+            /* 追赶/对齐：把 time_last 推进到“最近一次理论触发点” */
+            const uint32_t k = elapsed / period; /* 至少 1 */
+            task->time_last += k * period;
+
+            /* 极端情况下（period 很小 + now 跳变），保证不会越界滞后太多 */
+            /* 可选：若你希望强制 time_last 不超过 now */
+            /* if ((uint32_t)(now - task->time_last) > period) task->time_last = now; */
         }
     }
 }
@@ -294,12 +343,13 @@ static void link_process(section_link_t *link)
     if (!link || !link->dma_cnt || !link->handler_arr)
         return;
 
-    uint32_t buff_size = link->buff_size;
-    uint32_t cnt = buff_size - *link->dma_cnt;
+    const uint32_t buff_size = link->buff_size;
+    const uint32_t cnt = buff_size - *link->dma_cnt; /* DMA NDTR 风格：剩余计数 */
 
-    while (link->pos != cnt)
+    uint32_t pos = link->pos;
+    while (pos != cnt)
     {
-        uint8_t data = link->rx_buff[link->pos];
+        const uint8_t data = link->rx_buff[pos];
 
         for (uint32_t i = 0; i < link->handler_num; ++i)
         {
@@ -308,8 +358,11 @@ static void link_process(section_link_t *link)
                 it->func(data, link->my_printf, it->ctx);
         }
 
-        link->pos = (link->pos + 1) % buff_size;
+        ++pos;
+        if (pos >= buff_size)
+            pos = 0;
     }
+    link->pos = pos;
 }
 
 void section_link_task(void)
