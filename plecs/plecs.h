@@ -22,7 +22,7 @@ typedef enum
 #define PLECS_OUTPUT_NUM PLECS_OUTPUT_MAX
 
 float plecs_get_input(PLECS_INPUT_E num);
-void plecs_set_output(PLECS_INPUT_E num, float val);
+void plecs_set_output(PLECS_OUTPUT_E num, float val);
 
 void plecs_printf(const char *file, int line, const char *format, ...);
 
