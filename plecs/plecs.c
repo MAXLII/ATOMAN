@@ -23,7 +23,7 @@ float plecs_get_input(PLECS_INPUT_E num)
     }
 }
 
-void plecs_set_output(PLECS_INPUT_E num, float val)
+void plecs_set_output(PLECS_OUTPUT_E num, float val)
 {
     if (num < PLECS_OUTPUT_MAX)
     {
