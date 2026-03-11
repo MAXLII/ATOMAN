@@ -7,10 +7,10 @@ REM 配置区域 - 根据你的实际环境修改以下变量
 REM ========================================
 
 REM 1. J-Link 安装路径
-SET JLINK_PATH=C:\Program Files\SEGGER\JLink_V868
+SET JLINK_PATH=C:\Program Files\SEGGER\JLink
 
 REM 2. 目标设备型号 (使用 J-Link 支持的设备名称，例如：STM32F103RC, nRF52832_xxaa, LPC1768)
-SET DEVICE=APM32F402RB
+SET DEVICE=GD32G553RCT6
 
 REM 3. 接口类型 (JTAG / SWD)
 SET IF=SWD

@@ -6,6 +6,8 @@
 #include "shell.h"
 #include "section.h"
 #include "platform.h"
+#include "comm.h"
+#include "my_math.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -750,3 +752,431 @@ REG_SHELL_VAR(TASK_METRIC, task_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_ST
 REG_SHELL_VAR(TASK_METRIC_MAX, task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 
 #pragma GCC diagnostic pop
+
+
+static shell_report_ctx_t shell_report_ctx = {0};
+
+void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if ((p_pack->is_ack == 1) ||
+        (shell_report_ctx.active == 1))
+    {
+        return;
+    }
+    section_packform_t pack_ret = {0};
+    pack_ret.src = p_pack->dst;
+    pack_ret.d_src = p_pack->d_dst;
+    pack_ret.dst = p_pack->src;
+    pack_ret.d_dst = p_pack->d_src;
+    pack_ret.cmd_set = CMD_SET_SHELL_DATA_NUM;
+    pack_ret.cmd_word = CMD_WORD_SHELL_DATA_NUM;
+    pack_ret.is_ack = 1;
+    pack_ret.len = sizeof(uint32_t);
+    pack_ret.p_data = (uint8_t *)&shell_data_num;
+
+    shell_report_ctx.active = 1;
+    shell_report_ctx.my_printf = my_printf;
+    shell_report_ctx.p_shell = p_shell_first;
+    shell_report_ctx.src = pack_ret.src;
+    shell_report_ctx.d_src = pack_ret.d_src;
+    shell_report_ctx.dst = pack_ret.dst;
+    shell_report_ctx.d_dst = pack_ret.d_dst;
+
+    comm_send_data(&pack_ret, my_printf);
+}
+
+REG_COMM(CMD_SET_SHELL_DATA_NUM, CMD_WORD_SHELL_DATA_NUM, shell_data_num_act)
+
+static void shell_data_report_act(void)
+{
+    if (shell_report_ctx.active == 1)
+    {
+        if (shell_report_ctx.p_shell == NULL)
+        {
+            shell_report_ctx.active = 0;
+        }
+        else
+        {
+            section_packform_t packform = {0};
+
+            shell_report_list_t shell_report_list;
+            shell_report_list.name_len = shell_report_ctx.p_shell->p_name_size;
+            shell_report_list.type = shell_report_ctx.p_shell->type;
+            shell_report_list.data = *(uint32_t *)shell_report_ctx.p_shell->p_var;
+            shell_report_list.data_max = *(uint32_t *)shell_report_ctx.p_shell->p_max;
+            shell_report_list.data_min = *(uint32_t *)shell_report_ctx.p_shell->p_min;
+            memcpy(shell_report_list.name, shell_report_ctx.p_shell->p_name, shell_report_ctx.p_shell->p_name_size);
+            shell_report_list.auto_report = (shell_report_ctx.p_shell->status & (1 << 2)) ? 1 : 0;
+
+            packform.src = shell_report_ctx.src;
+            packform.d_src = shell_report_ctx.d_src;
+            packform.dst = shell_report_ctx.dst;
+            packform.d_dst = shell_report_ctx.d_dst;
+            packform.cmd_set = CMD_SET_SHELL_REPORT_LIST;
+            packform.cmd_word = CMD_WORD_SHELL_REPORT_LIST;
+            packform.is_ack = 0;
+            packform.len = sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + shell_report_ctx.p_shell->p_name_size;
+            packform.p_data = (uint8_t *)&shell_report_list;
+            comm_send_data(&packform, shell_report_ctx.my_printf);
+            shell_report_ctx.p_shell = shell_report_ctx.p_shell->p_next;
+        }
+    }
+}
+
+REG_TASK_MS(50, shell_data_report_act)
+
+static section_shell_t *find_shell(char *p_name, uint8_t len)
+{
+    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    {
+        if (p->p_name_size != len)
+        {
+            continue;
+        }
+        if (memcmp(p->p_name, p_name, len) == 0)
+        {
+            return p;
+        }
+    }
+    return NULL;
+}
+
+static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    shell_read_data_t *p_shell_read_data;
+    p_shell_read_data = (shell_read_data_t *)p_pack->p_data;
+    if (p_pack->len != sizeof(shell_read_data_t) - SHELL_STR_SIZE_MAX + p_shell_read_data->name_len)
+    {
+        return;
+    }
+    section_shell_t *p = find_shell(p_shell_read_data->name, p_shell_read_data->name_len);
+    if (p)
+    {
+        if (p->func)
+        {
+            p->func(my_printf);
+        }
+        shell_read_data_ret_t shell_read_data_ret = {0};
+        shell_read_data_ret.name_len = p->p_name_size;
+        shell_read_data_ret.type = p->type;
+        shell_read_data_ret.data = *(uint32_t *)p->p_var;
+        memcpy(shell_read_data_ret.name, p->p_name, p->p_name_size);
+
+        section_packform_t packform = {0};
+        packform.src = p_pack->dst;
+        packform.d_src = p_pack->d_dst;
+        packform.dst = p_pack->src;
+        packform.d_dst = p_pack->d_src;
+        packform.cmd_set = CMD_SET_SHELL_READ_DATA;
+        packform.cmd_word = CMD_WORD_SHELL_READ_DATA;
+        packform.is_ack = 1;
+        packform.len = sizeof(shell_read_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size;
+        packform.p_data = (uint8_t *)&shell_read_data_ret;
+
+        comm_send_data(&packform, my_printf);
+    }
+}
+
+REG_COMM(CMD_SET_SHELL_READ_DATA, CMD_WORD_SHELL_READ_DATA, shell_read_data_act)
+
+static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    shell_write_data_t *p_shell_write_data;
+    p_shell_write_data = (shell_write_data_t *)p_pack->p_data;
+    section_shell_t *p;
+    p = find_shell(p_shell_write_data->name, p_shell_write_data->name_len);
+    if (p)
+    {
+        // 根据变量类型进行处理
+        switch (p->type)
+        {
+        case SHELL_CMD:
+            // 执行命令
+
+            break;
+        case SHELL_UINT8:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(uint8_t));
+            uint8_t val = *(uint8_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint8_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint8_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_INT8:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(int8_t));
+            int8_t val = *(int8_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(int8_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(int8_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_UINT16:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(uint16_t));
+            uint16_t val = *(uint16_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint16_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint16_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_INT16:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(int16_t));
+            int16_t val = *(int16_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(int16_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(int16_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_UINT32:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(uint32_t));
+            uint32_t val = *(uint32_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint32_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint32_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_INT32:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(int32_t));
+            int32_t val = *(int32_t *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(int32_t));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(int32_t));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        case SHELL_FP32:
+        {
+            memcpy(p->p_var, (uint8_t *)&p_shell_write_data->data, sizeof(float));
+            float val = *(float *)p->p_var;
+            memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(float));
+            memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(float));
+            SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
+
+            break;
+        }
+        }
+        shell_write_data_ret_t shell_write_data_ret = {0};
+        shell_write_data_ret.data = *(uint32_t *)p->p_var;
+        shell_write_data_ret.data_max = *(uint32_t *)p->p_max;
+        shell_write_data_ret.data_min = *(uint32_t *)p->p_min;
+        memcpy(shell_write_data_ret.name, p->p_name, p->p_name_size);
+        shell_write_data_ret.name_len = p->p_name_size;
+        shell_write_data_ret.type = p->type;
+
+        section_packform_t packform = {0};
+        packform.src = p_pack->dst;
+        packform.d_src = p_pack->d_dst;
+        packform.dst = p_pack->src;
+        packform.d_dst = p_pack->d_src;
+        packform.cmd_set = CMD_SET_SHELL_WRITE_DATA;
+        packform.cmd_word = CMD_WORD_SHELL_WRITE_DATA;
+        packform.is_ack = 1;
+        packform.len = sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size;
+        packform.p_data = (uint8_t *)&shell_write_data_ret;
+
+        comm_send_data(&packform, my_printf);
+
+        if (p->func)
+            p->func(my_printf);
+    }
+}
+
+REG_COMM(CMD_SET_SHELL_WRITE_DATA, CMD_WORD_SHELL_WRITE_DATA, shell_write_data_act)
+
+static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    shell_wave_enable_param_t *p_shell_wave_enable_param;
+    p_shell_wave_enable_param = (shell_wave_enable_param_t *)p_pack->p_data;
+    if (p_pack->len != sizeof(shell_wave_enable_param_t) - SHELL_STR_SIZE_MAX + p_shell_wave_enable_param->name_len)
+    {
+        return;
+    }
+    section_shell_t *p = find_shell(p_shell_wave_enable_param->name, p_shell_wave_enable_param->name_len);
+
+    shell_wave_enable_param_ack_t shell_wave_enable_param_ack;
+
+    if (p)
+    {
+        shell_wave_enable_param_ack.ok = 1;
+        if (p_shell_wave_enable_param->auto_report == 1)
+        {
+            p->status |= 1 << 2;
+        }
+        else
+        {
+            p->status &= ~(1 << 2);
+        }
+    }
+
+    section_packform_t packform = {0};
+    packform.cmd_set = CMD_SET_SHELL_WAVE_ENABLE_PARAM;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_ENABLE_PARAM;
+    packform.src = p_pack->dst;
+    packform.dst = p_pack->src;
+    packform.is_ack = 1;
+    packform.len = sizeof(shell_wave_enable_param_ack_t);
+    packform.p_data = (uint8_t *)&shell_wave_enable_param_ack;
+    comm_send_data(&packform, my_printf);
+}
+
+REG_COMM(CMD_SET_SHELL_WAVE_ENABLE_PARAM, CMD_WORD_SHELL_WAVE_ENABLE_PARAM, shell_wave_param_enable_act)
+
+static uint8_t shell_wave_report_flg = 0;
+static uint32_t shell_wave_report_period = 300;
+static uint32_t shell_wave_report_dn_cnt = 0;
+static section_link_tx_func_t *p_shell_wave_report_printf;
+static uint8_t shell_wave_src = 0;
+static uint8_t shell_wave_dst = 0;
+
+static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if (p_pack->len != sizeof(shell_wave_start_t))
+    {
+        return;
+    }
+    shell_wave_start_t *p_shell_wave_start = (shell_wave_start_t *)p_pack->p_data;
+    shell_wave_report_flg = p_shell_wave_start->start_report;
+
+    section_packform_t packform = {0};
+    packform.cmd_set = CMD_SET_SHELL_WAVE_START;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_START;
+    packform.src = p_pack->dst;
+    packform.dst = p_pack->src;
+    packform.is_ack = 1;
+    packform.len = 0;
+    packform.p_data = NULL;
+    comm_send_data(&packform, my_printf);
+    p_shell_wave_report_printf = my_printf;
+    shell_wave_src = packform.src;
+    shell_wave_dst = packform.dst;
+}
+REG_COMM(CMD_SET_SHELL_WAVE_START, CMD_WORD_SHELL_WAVE_START, shell_wave_start_act)
+
+static void shell_wave_period_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    if (p_pack->len != sizeof(shell_wave_period_t))
+    {
+        return;
+    }
+    shell_wave_period_t *p_shell_wave_period = (shell_wave_period_t *)p_pack->p_data;
+    shell_wave_report_period = p_shell_wave_period->reprot_period;
+
+    shell_wave_period_ack_t shell_wave_period_ack = {.reprot_period = shell_wave_report_period};
+
+    section_packform_t packform = {0};
+    packform.cmd_set = CMD_SET_SHELL_WAVE_PERIOD;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_PERIOD;
+    packform.src = p_pack->dst;
+    packform.dst = p_pack->src;
+    packform.is_ack = 1;
+    packform.len = sizeof(shell_wave_period_ack_t);
+    packform.p_data = (uint8_t *)&shell_wave_period_ack;
+    comm_send_data(&packform, my_printf);
+}
+REG_COMM(CMD_SET_SHELL_WAVE_PERIOD, CMD_WORD_SHELL_WAVE_PERIOD, shell_wave_period_act)
+
+static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
+{
+    section_packform_t packform = {0};
+
+    packform.cmd_set = CMD_SET_SHELL_WAVE_PARAM;
+    packform.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
+    packform.src = shell_wave_src;
+    packform.dst = shell_wave_dst;
+    packform.len = sizeof(shell_wave_param_t) - SHELL_STR_SIZE_MAX + p->name_len;
+    packform.p_data = (uint8_t *)p;
+
+    comm_send_data(&packform, my_printf);
+}
+
+typedef enum
+{
+    SHELL_WAVE_FSM_IDLE,
+    SHELL_WAVE_FSM_START,
+    SHELL_WAVE_FSM_DATA,
+    SHELL_WAVE_FSM_END,
+    SHELL_WAVE_FSM_WAIT,
+} SHELL_WAVE_FSM_E;
+
+static SHELL_WAVE_FSM_E shell_wave_fsm = 0;
+
+static void shell_wave_report_task(void)
+{
+    static uint8_t delay_cnt = 0;
+    shell_wave_param_t shell_wave_param = {0};
+    static section_shell_t *p = NULL;
+    switch (shell_wave_fsm)
+    {
+    case SHELL_WAVE_FSM_IDLE:
+        if (shell_wave_report_flg == 1)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_START;
+        }
+        break;
+    case SHELL_WAVE_FSM_START:
+        shell_wave_param.data = 0x55555555;
+        shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
+        p = p_shell_first;
+        shell_wave_fsm = SHELL_WAVE_FSM_DATA;
+        delay_cnt = 10;
+        break;
+    case SHELL_WAVE_FSM_DATA:
+        if (delay_cnt)
+        {
+            delay_cnt--;
+            break;
+        }
+        else
+        {
+            delay_cnt = 10;
+        }
+        while (p)
+        {
+            if (p->status & (1 << 2))
+            {
+                shell_wave_param.data = (uint32_t)*(uint32_t *)p->p_var;
+                shell_wave_param.name_len = p->p_name_size;
+                shell_wave_param.type = p->type;
+                memcpy((uint8_t *)shell_wave_param.name, (uint8_t *)p->p_name, shell_wave_param.name_len);
+                p = p->p_next;
+                shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
+                break;
+            }
+            p = p->p_next;
+        }
+        if (p == NULL)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_END;
+        }
+        break;
+    case SHELL_WAVE_FSM_END:
+        shell_wave_param.data = 0xAAAAAAAA;
+        shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
+        shell_wave_fsm = SHELL_WAVE_FSM_WAIT;
+        shell_wave_report_dn_cnt = shell_wave_report_period;
+        break;
+    case SHELL_WAVE_FSM_WAIT:
+        DN_CNT(shell_wave_report_dn_cnt);
+        if (shell_wave_report_dn_cnt == 0)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_START;
+        }
+        if (shell_wave_report_flg == 0)
+        {
+            shell_wave_fsm = SHELL_WAVE_FSM_IDLE;
+        }
+        break;
+    }
+}
+
+REG_TASK_MS(1, shell_wave_report_task)
