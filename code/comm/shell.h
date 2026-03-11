@@ -144,4 +144,184 @@ typedef struct section_shell_t
  */
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
 
+#define CMD_SET_SHELL_DATA_NUM 0x01
+#define CMD_WORD_SHELL_DATA_NUM 0x01
+
+#define CMD_SET_SHELL_REPORT_LIST 0x01
+#define CMD_WORD_SHELL_REPORT_LIST 0x04
+
+#define CMD_SET_SHELL_READ_DATA 0x01
+#define CMD_WORD_SHELL_READ_DATA 0x02
+
+#define CMD_SET_SHELL_WRITE_DATA 0x01
+#define CMD_WORD_SHELL_WRITE_DATA 0x03
+
+#define CMD_SET_SHELL_WAVE_ENABLE_PARAM 0x01
+#define CMD_WORD_SHELL_WAVE_ENABLE_PARAM 0x05
+
+#define CMD_SET_SHELL_WAVE_START 0x01
+#define CMD_WORD_SHELL_WAVE_START 0x0C
+
+#define CMD_SET_SHELL_WAVE_PERIOD 0x01
+#define CMD_WORD_SHELL_WAVE_PERIOD 0x06
+
+#define CMD_SET_SHELL_WAVE_PARAM 0x01
+#define CMD_WORD_SHELL_WAVE_PARAM 0x07
+
+typedef struct
+{
+    uint8_t active;
+    DEC_MY_PRINTF;
+    uint8_t src;
+    uint8_t d_src;
+    uint8_t dst;
+    uint8_t d_dst;
+    section_shell_t *p_shell;
+} shell_report_ctx_t;
+
+#pragma pack(1)
+/* 下位机发送 */
+// CMD_SET:0x01
+// CMD_WORD:0x04
+// IS_ACK:0
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    uint8_t type;                  // 数据类型
+    uint32_t data;                 // 数据，固定4byte
+    uint32_t data_max;             // 数据最大值
+    uint32_t data_min;             // 数据最小值
+    uint8_t auto_report;           // 波形打印
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_report_list_t;
+
+/* 上位机发送 */
+// CMD_SET:0x01
+// CMD_WORD:0x02
+// IS_ACK:0
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_read_data_t;
+
+/* 下位机返回 */
+// CMD_SET:0x01
+// CMD_WORD:0x02
+// IS_ACK:1
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    uint8_t type;                  // 数据类型
+    uint32_t data;                 // 数据
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_read_data_ret_t;
+
+/* 上位机发送 */
+// CMD_SET:0x01
+// CMD_WORD:0x03
+// IS_ACK:0
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    uint32_t data;                 // 数据
+    uint32_t data_max;             // 数据最大值
+    uint32_t data_min;             // 数据最小值
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_write_data_t;
+
+/* 下位机返回 */
+// CMD_SET:0x01
+// CMD_WORD:0x03
+// IS_ACK:1
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    uint8_t type;                  // 数据类型
+    uint32_t data;                 // 数据
+    uint32_t data_max;             // 数据最大值
+    uint32_t data_min;             // 数据最小值
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_write_data_ret_t;
+
+/* 上位机发送 */
+// CMD_SET:0x01
+// CMD_WORD:0x05
+// IS_ACK:0
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    uint8_t auto_report;           // 自动上报，1：打开自动上报，0：关闭自动上报
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_wave_enable_param_t;
+
+/* 下位机返回 */
+// CMD_SET:0x01
+// CMD_WORD:0x05
+// IS_ACK:1
+// 数据
+typedef struct
+{
+    uint8_t ok; // 1:设置有效 其他:设置无效
+} shell_wave_enable_param_ack_t;
+
+/* 下位机自动上报 */
+// CMD_SET:0x01
+// CMD_WORD:0x07
+// IS_ACK:1
+// 数据
+typedef struct
+{
+    uint8_t name_len;              // 名称长度
+    uint8_t type;                  // 数据类型
+    uint32_t data;                 // 数据
+    char name[SHELL_STR_SIZE_MAX]; // 名称
+} shell_wave_param_t;
+// 当name_len = 0x00,type = 0x00,data = 0x55555555,name空时，表示一组数据的开始
+// 当name_len = 0x00,type = 0x00,data = 0xAAAAAAAA,name空时，表示一组数据的结束
+
+/* 上位机发送 */
+// CMD_SET:0x01
+// CMD_WORD:0x0C
+// IS_ACK:0
+// 数据
+typedef struct
+{
+    uint8_t start_report; // 1:开始自动上报，0:停止自动上报
+} shell_wave_start_t;
+
+/* 下位机返回 */
+// CMD_SET:0x01
+// CMD_WORD:0x0C
+// IS_ACK:1
+// 数据NULL
+
+/* 上位机发送 */
+// CMD_SET:0x01
+// CMD_WORD:0x06
+// IS_ACK:0
+// 数据
+typedef struct
+{
+    uint32_t reprot_period; // 单位为ms
+} shell_wave_period_t;
+
+/* 下位机返回 */
+// CMD_SET:0x01
+// CMD_WORD:0x06
+// IS_ACK:1
+// 数据
+typedef struct
+{
+    uint32_t reprot_period; // 单位为ms
+} shell_wave_period_ack_t;
+
+#pragma pack()
+
 #endif /* __SHELL_H__ */

@@ -20,7 +20,7 @@ void usart0_printf(const char *__format, ...)
 
 section_link_tx_func_t ut1_printf = {
     .my_printf = usart0_printf,
-    .tx_by_dma = NULL,
+    .tx_by_dma = usart0_tx_by_dma_cb,
 };
 
 /* ===================== ctx（由本文件显式持有） ===================== */
