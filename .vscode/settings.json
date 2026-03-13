@@ -9,6 +9,7 @@
         "code/dbg",
         "code/interface",
         "code/section",
+        "code/comm",
         "gd32g553c/inc",
         "gd32g553c/bsp",
         "gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
