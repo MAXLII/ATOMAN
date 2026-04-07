@@ -1,0 +1,12 @@
+#ifndef __HW_PARAMS_H
+#define __HW_PARAMS_H
+
+#define HW_DC_BUS_CAP_VALUE 1300e-6f
+#define HW_AC_SIDE_IND_VALUE 440e-6f
+#define HW_AC_SIDE_CAP_VALUE 12e-6f
+
+#define HW_BUCK_BOOST_INPUT_CAP_VALUE 0.0f
+#define HW_BUCK_BOOST_OUTPUT_CAP_VALUE 0.0f
+#define HW_BUCK_BOOST_IND_VALUE 0.0f
+
+#endif
