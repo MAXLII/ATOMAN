@@ -5,17 +5,19 @@ PFC module porting checklist
 - Confirm pfc_ctrl_init, pfc_ctrl_isr, pfc_ctrl_task, and pfc_fsm are scheduled at the intended rates.
 - Confirm CTRL_FREQ and CTRL_TS match the real control interrupt frequency.
 
-2. HAL signal mapping in pfc_hal.c
-- Map pfc_ctrl_hal.p_v_g to the instantaneous grid voltage signal.
-- Map pfc_ctrl_hal.p_v_rms to the grid RMS voltage signal.
-- Map pfc_ctrl_hal.p_i_l to the PFC inductor current signal.
-- Map pfc_ctrl_hal.p_v_cap to the PFC capacitor voltage signal.
-- Map pfc_ctrl_hal.p_v_bus to the DC bus voltage signal.
-- Map pfc_ctrl_hal.p_set_pwm_func to the PFC PWM command function.
-- Map pfc_ctrl_hal.p_pwm_enable and pfc_ctrl_hal.p_pwm_disable to valid PWM control functions.
-- Map pfc_fsm_hal.p_vbus_sta to the bus-voltage state classification signal.
-- Map pfc_fsm_hal.p_enter_run_func and pfc_fsm_hal.p_exit_run_func if run-entry sequencing is required.
-- Map pfc_fsm_hal relay callbacks to the correct soft-start and main-relay functions.
+2. HAL interface binding
+- Bind pfc HAL pointers and callbacks from the upper app layer instead of inside pfc_hal.c.
+- Confirm the app task calls pfc_hal_set_v_g_ptr with the instantaneous grid voltage signal.
+- Confirm the app task calls pfc_hal_set_v_rms_ptr with the grid RMS voltage signal.
+- Confirm the app task calls pfc_hal_set_i_l_ptr with the PFC inductor current signal.
+- Confirm the app task calls pfc_hal_set_v_cap_ptr with the PFC capacitor voltage signal.
+- Confirm the app task calls pfc_hal_set_v_bus_ptr with the DC bus voltage signal.
+- Confirm the app task calls pfc_hal_set_main_rly_is_closed_ptr with the relay feedback signal.
+- Confirm the app task calls pfc_hal_set_pwm_setter, pfc_hal_set_pwm_enable, and pfc_hal_set_pwm_disable with valid PWM hooks.
+- Confirm the app task calls pfc_hal_set_main_rly_on_func and pfc_hal_set_main_rly_off_func with the intended relay drive hooks.
+- Confirm pfc_hal_set_vbus_sta_ptr is bound if the FSM soft-start path depends on vbus state classification.
+- Confirm pfc_hal_is_ready returns 1 only when all required ctrl and fsm pointers are valid.
+- Confirm pfc_hal_unlock_binding is only active during FSM idle-in to idle-out.
 
 3. Signal semantics
 - Confirm all mapped voltages use the same unit as the current implementation.
@@ -50,7 +52,11 @@ PFC module porting checklist
 - Confirm pwm_enable and pwm_disable leave the power stage in a safe state.
 
 8. Run sequencing
+- Confirm idle-in unlocks HAL binding updates.
+- Confirm start in idle first checks pfc_hal_is_ready.
+- Confirm start is rejected when any HAL pointer or callback remains NULL.
 - Confirm entering RUN performs controller preparation before run_allowed is asserted.
+- Confirm idle-out locks HAL binding updates before leaving idle.
 - Confirm exiting RUN clears run_allowed as expected.
 - Confirm relay timing and bus precharge behavior are correct on the new hardware.
 
@@ -61,6 +67,9 @@ PFC module porting checklist
 
 10. Bring-up verification
 - Verify FSM can transition init -> idle -> soft_start -> main_rly -> run.
+- Verify HAL pointers can be updated only while FSM stays in idle.
+- Verify HAL pointer writes are ignored after idle-out locks binding.
+- Verify start is blocked when any required HAL pointer or callback is missing.
 - Verify controller can start with zero unexpected PWM jump.
 - Verify bus-voltage loop regulates to the target.
 - Verify inductor-current loop tracks reference with correct polarity.

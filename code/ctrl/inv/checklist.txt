@@ -5,12 +5,16 @@ INV module porting checklist
 - Confirm inv_ctrl_init, inv_ctrl_cal_theta, and inv_ctrl_isr are scheduled at the intended rates.
 - Confirm CTRL_FREQ and CTRL_TS match the real control interrupt frequency.
 
-2. HAL signal mapping in inv_hal.c
-- Map inv_ctrl_hal.p_v_cap to the inverter capacitor voltage signal.
-- Map inv_ctrl_hal.p_i_l to the inverter inductor current signal.
-- Map inv_ctrl_hal.p_v_bus to the DC bus voltage signal.
-- Map inv_ctrl_hal.p_set_pwm_func to the inverter PWM command function.
-- Map inv_ctrl_hal.p_pwm_disable to a valid PWM shutdown function.
+2. HAL interface binding
+- Bind inv HAL pointers and callbacks from the upper app layer instead of inside inv_hal.c.
+- Confirm the app task calls inv_hal_set_v_cap_ptr with the inverter capacitor voltage signal.
+- Confirm the app task calls inv_hal_set_i_l_ptr with the inverter inductor current signal.
+- Confirm the app task calls inv_hal_set_v_bus_ptr with the DC bus voltage signal.
+- Confirm the app task calls inv_hal_set_pwm_setter with the inverter PWM command function.
+- Confirm the app task calls inv_hal_set_pwm_enable and inv_hal_set_pwm_disable with valid PWM control functions.
+- Confirm the app task calls inv_hal_set_inv_rly_on_func and inv_hal_set_inv_rly_off_func with the inverter output relay hooks.
+- Confirm inv_hal_is_ready returns 1 only when all required ctrl and fsm pointers are valid.
+- Confirm inv_hal_unlock_binding is only active during FSM idle-in to idle-out.
 
 3. Signal semantics
 - Confirm all mapped voltages use the same unit as the current implementation.
@@ -43,6 +47,8 @@ INV module porting checklist
 - Confirm rms_ref_v, rms_slew_vps, freq_hz, and freq_slew_hzps have valid bounds.
 - Confirm run_allowed gates PWM output as intended.
 - Confirm prepare_run reinitializes controller states before enabling power stage operation.
+- Confirm idle start checks inv_hal_is_ready before entering relay_on.
+- Confirm idle-in unlocks HAL binding updates and idle-out locks them again.
 
 8. ADC and sensing chain
 - Confirm sensing scale and offset are calibrated before enabling the controller.
@@ -57,6 +63,8 @@ INV module porting checklist
 - Confirm stop, fault, and restart behavior are safe and repeatable.
 
 10. Bring-up verification
+- Verify HAL pointers can be updated only while FSM stays in idle.
+- Verify start is blocked when any required HAL pointer or callback is missing.
 - Verify controller can start with zero unexpected PWM jump.
 - Verify output frequency ramps to the target correctly.
 - Verify output RMS reference ramps to the target correctly.

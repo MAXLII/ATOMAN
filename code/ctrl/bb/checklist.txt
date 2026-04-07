@@ -6,16 +6,18 @@ BB module porting checklist
 - Confirm CTRL_FREQ and CTRL_TS match the real control interrupt frequency.
 - Confirm the 1 ms task period is correct for power-limit to current-limit conversion.
 
-2. HAL signal mapping in bb_hal.c
-- Map bb_ctrl_hal.p_v_in to the buck-boost input voltage signal.
-- Map bb_ctrl_hal.p_i_in to the buck-boost input current signal.
-- Map bb_ctrl_hal.p_v_out to the buck-boost output voltage signal.
-- Map bb_ctrl_hal.p_i_out to the buck-boost output current signal.
-- Map bb_ctrl_hal.p_i_l to the buck-boost inductor current signal.
-- Map bb_ctrl_hal.p_set_pwm_func to the buck-boost PWM command function.
-- Map bb_ctrl_hal.p_pwm_disable to a valid PWM shutdown function.
-- Fill bb_ctrl_hal in bb_hal.c with real platform variables and callbacks.
-- Confirm bb_fsm_hal enter/exit callbacks match the intended run sequencing.
+2. HAL interface binding
+- Bind bb HAL pointers and callbacks from the upper app layer instead of inside bb_hal.c.
+- Confirm the app task calls bb_hal_set_v_in_ptr with the buck-boost input voltage signal.
+- Confirm the app task calls bb_hal_set_i_in_ptr with the buck-boost input current signal.
+- Confirm the app task calls bb_hal_set_v_out_ptr with the buck-boost output voltage signal.
+- Confirm the app task calls bb_hal_set_i_out_ptr with the buck-boost output current signal.
+- Confirm the app task calls bb_hal_set_i_l_ptr with the buck-boost inductor current signal.
+- Confirm the app task calls bb_hal_set_pwm_setter with the buck-boost PWM command function.
+- Confirm the app task calls bb_hal_set_pwm_disable with a valid PWM shutdown function.
+- Confirm any custom run-entry or run-exit hook is assigned through bb_hal_set_enter_run_func and bb_hal_set_exit_run_func.
+- Confirm bb_hal_is_ready returns 1 only when all required ctrl and fsm pointers are valid.
+- Confirm bb_hal_unlock_binding is only active during FSM idle-in to idle-out.
 
 3. Signal semantics
 - Confirm all mapped voltages use the same unit as the current implementation.
@@ -65,8 +67,11 @@ BB module porting checklist
 
 8. Run gating and FSM behavior
 - Confirm bb_fsm transitions init -> idle -> run as intended.
-- Confirm bb_fsm only leaves init after enter/exit callbacks are valid.
+- Confirm bb_fsm idle-in unlocks HAL binding updates.
+- Confirm bb_fsm start command in idle first checks bb_hal_is_ready.
+- Confirm bb_fsm start is rejected when any HAL pointer remains NULL.
 - Confirm entering RUN calls bb_ctrl_prepare_run before run_allowed is published.
+- Confirm idle-out locks HAL binding updates before leaving idle.
 - Confirm exiting RUN disables PWM and clears run_allowed.
 - Confirm bb_ctrl respects run_allowed and shuts PWM down when run is revoked.
 - Confirm run_allowed ownership between bb_fsm, bb_hal, and upper-layer commands is well-defined.
@@ -91,6 +96,9 @@ BB module porting checklist
 
 12. Bring-up verification
 - Verify FSM can transition init -> idle -> run -> idle.
+- Verify HAL pointers can be updated only while FSM stays in idle.
+- Verify HAL pointer writes are ignored after idle-out locks binding.
+- Verify start is blocked when any required HAL pointer or callback is missing.
 - Verify controller can start with zero unexpected PWM jump.
 - Verify run_allowed gating prevents PWM output when control is not allowed.
 - Verify CCM path runs:

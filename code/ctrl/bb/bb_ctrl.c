@@ -11,24 +11,24 @@
 #include "section.h"
 #include "my_math.h"
 
-static bb_ctrl_hal_t *p_hal = NULL; /* p_hal: bound HAL snapshot for control-side IO */
+#define p_hal (bb_hal_get_ctrl())
 
-static pi_tustin_t out_volt_loop = {0};   /* out_volt_loop: outer output-voltage controller */
+static pi_tustin_t out_volt_loop = {0};    /* out_volt_loop: outer output-voltage controller */
 static pi_tustin_t in_volt_lmt_loop = {0}; /* in_volt_lmt_loop: input-voltage limiting controller */
-static pi_tustin_t in_curr_loop = {0};    /* in_curr_loop: input-current limiting controller */
-static pi_tustin_t out_curr_loop = {0};   /* out_curr_loop: output-current limiting controller */
-static pi_tustin_t ind_curr_loop = {0};   /* ind_curr_loop: inner inductor-current controller */
+static pi_tustin_t in_curr_loop = {0};     /* in_curr_loop: input-current limiting controller */
+static pi_tustin_t out_curr_loop = {0};    /* out_curr_loop: output-current limiting controller */
+static pi_tustin_t ind_curr_loop = {0};    /* ind_curr_loop: inner inductor-current controller */
 
-static float out_volt_loop_lmt = 0.0f; /* out_volt_loop_lmt: active upper clamp for the outer voltage loop */
-static float in_curr_lmt = 0.0f;       /* in_curr_lmt: runtime input-current limit after power derating */
-static float ind_curr_ref = 0.0f;      /* ind_curr_ref: inductor-current reference driven by outer loops */
-static float bb_pwm_ts = CTRL_TS;      /* bb_pwm_ts: PWM period used by open-loop DCM duty calculation */
-static float bb_open_loop_l = 5.8e-6f; /* bb_open_loop_l: open-loop equivalent inductance placeholder */
-static bb_mode_t bb_mode = {0};        /* bb_mode: CCM modulation solver fed by inductor-voltage command */
+static float out_volt_loop_lmt = 0.0f;         /* out_volt_loop_lmt: active upper clamp for the outer voltage loop */
+static float in_curr_lmt = 0.0f;               /* in_curr_lmt: runtime input-current limit after power derating */
+static float ind_curr_ref = 0.0f;              /* ind_curr_ref: inductor-current reference driven by outer loops */
+static float bb_pwm_ts = CTRL_TS;              /* bb_pwm_ts: PWM period used by open-loop DCM duty calculation */
+static float bb_open_loop_l = 5.8e-6f;         /* bb_open_loop_l: open-loop equivalent inductance placeholder */
+static bb_mode_t bb_mode = {0};                /* bb_mode: CCM modulation solver fed by inductor-voltage command */
 static bb_ol_mode_e ol_mode = BB_OL_MODE_BUCK; /* ol_mode: DCM/open-loop mode state with hysteresis */
-static bb_ol_t bb_ol = {0};            /* bb_ol: DCM open-loop duty generator */
-static uint8_t bb_ctrl_is_dcm = 0U;    /* bb_ctrl_is_dcm: latched DCM/CCM operating region flag */
-static uint8_t bb_ctrl_run_active = 0U; /* bb_ctrl_run_active: latched run gate for safe PWM shutdown */
+static bb_ol_t bb_ol = {0};                    /* bb_ol: DCM open-loop duty generator */
+static uint8_t bb_ctrl_is_dcm = 0U;            /* bb_ctrl_is_dcm: latched DCM/CCM operating region flag */
+static uint8_t bb_ctrl_run_active = 0U;        /* bb_ctrl_run_active: latched run gate for safe PWM shutdown */
 
 #define BB_CTRL_DCM_ENTER_PWR_W (30.0f)
 #define BB_CTRL_DCM_EXIT_PWR_W (50.0f)
@@ -64,8 +64,8 @@ static void bb_ctrl_is_in_dcm(float pwr_in_w)
  */
 static void bb_ctrl_cal_ol_mode(void)
 {
-    float gain = 0.0f; /* gain: instantaneous buck-boost voltage gain */
-    float v_in = 0.0f; /* v_in: sampled input voltage */
+    float gain = 0.0f;  /* gain: instantaneous buck-boost voltage gain */
+    float v_in = 0.0f;  /* v_in: sampled input voltage */
     float v_out = 0.0f; /* v_out: sampled output voltage */
 
     if ((p_hal == NULL) ||
@@ -214,8 +214,6 @@ static void bb_ctrl_init(void)
     bb_ctrl_reinit_states();
 }
 
-REG_INIT(1, bb_ctrl_init)
-
 /**
  * @brief Main fast control interrupt for the buck-boost controller.
  * @param None. HAL samples and active setpoint are read internally.
@@ -240,12 +238,12 @@ static void bb_ctrl_isr(void)
 
     bb_cfg_sync_building_to_active();
 
-    const float v_in = *p_hal->p_v_in;      /* v_in: ISR input-voltage snapshot */
-    const float i_in = *p_hal->p_i_in;      /* i_in: ISR input-current snapshot */
-    const float v_out = *p_hal->p_v_out;    /* v_out: ISR output-voltage snapshot */
-    const float i_out = *p_hal->p_i_out;    /* i_out: ISR output-current snapshot */
-    const float i_l = *p_hal->p_i_l;        /* i_l: ISR inductor-current snapshot */
-    const float pwr_in_w = v_in * i_in;     /* pwr_in_w: instantaneous input power estimate */
+    const float v_in = *p_hal->p_v_in;   /* v_in: ISR input-voltage snapshot */
+    const float i_in = *p_hal->p_i_in;   /* i_in: ISR input-current snapshot */
+    const float v_out = *p_hal->p_v_out; /* v_out: ISR output-voltage snapshot */
+    const float i_out = *p_hal->p_i_out; /* i_out: ISR output-current snapshot */
+    const float i_l = *p_hal->p_i_l;     /* i_l: ISR inductor-current snapshot */
+    const float pwr_in_w = v_in * i_in;  /* pwr_in_w: instantaneous input power estimate */
 
     (void)v_out;
     (void)i_out;
@@ -354,8 +352,8 @@ REG_TASK(1, bb_ctrl_task)
 static void bb_ctrl_in_curr_lmt_task(void)
 {
     bb_ctrl_setpoint_t *p_active_setpoint = bb_cfg_get_p_active(); /* p_active_setpoint: active setpoint sampled by 1 ms task */
-    float vin_for_lmt = 0.0f;    /* vin_for_lmt: guarded input voltage used for power-to-current conversion */
-    float pwr_to_curr_lmt = 0.0f; /* pwr_to_curr_lmt: current limit derived from input power limit */
+    float vin_for_lmt = 0.0f;                                      /* vin_for_lmt: guarded input voltage used for power-to-current conversion */
+    float pwr_to_curr_lmt = 0.0f;                                  /* pwr_to_curr_lmt: current limit derived from input power limit */
 
     if ((p_hal == NULL) ||
         (p_active_setpoint == NULL) ||
@@ -380,7 +378,7 @@ REG_TASK_MS(1, bb_ctrl_in_curr_lmt_task)
  */
 void bb_ctrl_set_p_hal(bb_ctrl_hal_t *p)
 {
-    p_hal = p;
+    (void)p;
 }
 
 /**

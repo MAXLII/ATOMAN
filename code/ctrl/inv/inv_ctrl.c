@@ -4,7 +4,7 @@
 #include "pi_tustin.h"
 #include "string.h"
 
-static inv_ctrl_hal_t *p_hal = NULL;
+#define p_hal (inv_hal_get_ctrl())
 
 static pi_tustin_t volt_loop_d = {0};
 static pi_tustin_t volt_loop_q = {0};
@@ -152,8 +152,6 @@ static void inv_ctrl_init(void)
     inv_ctrl_reinit_states();
 }
 
-REG_INIT(1, inv_ctrl_init)
-
 static void inv_ctrl_cal_theta(void)
 {
     if (freq_hz_ramped <= 0.0f)
@@ -271,16 +269,7 @@ REG_INTERRUPT(3, inv_ctrl_isr)
 
 void inv_ctrl_set_p_hal(inv_ctrl_hal_t *p)
 {
-    p_hal = p;
-
-    if (p != NULL)
-    {
-        PLECS_LOG("inv_ctrl bind hal\n");
-    }
-    else
-    {
-        PLECS_LOG("inv_ctrl unbind hal\n");
-    }
+    (void)p;
 }
 
 void inv_ctrl_prepare_run(void)

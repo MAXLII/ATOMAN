@@ -2,7 +2,7 @@
 #include "inv_cfg.h"
 #include "my_math.h"
 
-static inv_fsm_hal_t *p_hal = NULL;
+#define p_hal (inv_hal_get_fsm())
 static inv_fsm_cmd_e fsm_cmd = inv_fsm_cmd_null;
 static uint32_t init_dly = 0U;
 static uint32_t inv_rly_on_dly = 0U;
@@ -15,7 +15,7 @@ void inv_fsm_set_cmd(inv_fsm_cmd_e cmd)
 
 void inv_fsm_set_p_hal(inv_fsm_hal_t *p)
 {
-    p_hal = p;
+    (void)p;
 }
 
 static inv_fsm_cmd_e inv_fsm_get_cmd(void)
@@ -69,6 +69,7 @@ static void inv_fsm_init_out(void)
 
 static void inv_fsm_idle_in(void)
 {
+    inv_hal_unlock_binding();
     PLECS_LOG("inv_fsm enter idle\n");
 
     if ((p_hal != NULL) &&
@@ -83,6 +84,12 @@ static void inv_fsm_idle_exe(void)
 {
     if (inv_fsm_get_cmd() == inv_fsm_cmd_start)
     {
+        if (inv_hal_is_ready() == 0U)
+        {
+            PLECS_LOG("inv_fsm start rejected by hal binding invalid\n");
+            return;
+        }
+
         if (*p_hal->p_latched == 1)
         {
             PLECS_LOG("inv_fsm start rejected by hard protect latch\n");
@@ -106,6 +113,7 @@ static uint32_t inv_fsm_idle_chk(uint32_t event)
 
 static void inv_fsm_idle_out(void)
 {
+    inv_hal_lock_binding();
     PLECS_LOG("inv_fsm leave idle\n");
 }
 

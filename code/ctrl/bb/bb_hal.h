@@ -30,7 +30,27 @@ typedef struct
     uint8_t *p_latched;             /* p_latched: hard-protect latch shared with FSM */
 } bb_fsm_hal_t;
 
+bb_ctrl_hal_t *bb_hal_get_ctrl(void);
+bb_fsm_hal_t *bb_hal_get_fsm(void);
 void bb_hal_hard_protect_trip(void);
 void bb_hal_hard_protect_clear(void);
+uint8_t bb_hal_is_ready(void);
+void bb_hal_lock_binding(void);
+void bb_hal_unlock_binding(void);
+void bb_hal_set_v_in_ptr(float *p);
+void bb_hal_set_i_in_ptr(float *p);
+void bb_hal_set_v_out_ptr(float *p);
+void bb_hal_set_i_out_ptr(float *p);
+void bb_hal_set_i_l_ptr(float *p);
+void bb_hal_set_pwm_setter(void (*p)(float buck_duty,
+                                     uint8_t buck_up_en,
+                                     uint8_t buck_dn_en,
+                                     float boost_duty,
+                                     uint8_t boost_up_en,
+                                     uint8_t boost_dn_en));
+void bb_hal_set_pwm_disable(void (*p)(void));
+void bb_hal_set_enter_run_func(void (*p)(void));
+void bb_hal_set_exit_run_func(void (*p)(void));
+void bb_hal_set_latched_ptr(uint8_t *p);
 
 #endif

@@ -10,7 +10,7 @@
 #include "hw_params.h"
 
 /* HAL view of measured signals and hardware actuation hooks. */
-static pfc_ctrl_hal_t *p_hal = NULL; /* p_hal: control-side HAL pointer */
+#define p_hal (pfc_hal_get_ctrl()) /* p_hal: control-side HAL pointer */
 
 /* Bus-voltage conditioning and outer voltage-loop regulator. */
 static notch_t vbus_notch_filter = {0};  /* vbus_notch_filter: bus-voltage notch filter */
@@ -258,8 +258,6 @@ static void pfc_ctrl_init(void)
     pfc_ctrl_reinit_states();
 }
 
-REG_INIT(1, pfc_ctrl_init)
-
 static void pfc_ctrl_isr(void)
 {
     pfc_ctrl_setpoint_t *p_active_setpoint = pfc_cfg_get_p_active(); /* p_active_setpoint: active PFC setpoint */
@@ -349,7 +347,7 @@ REG_TASK(1, pfc_ctrl_task)
 
 void pfc_ctrl_set_p_hal(pfc_ctrl_hal_t *p)
 {
-    p_hal = p;
+    (void)p;
 }
 
 void pfc_ctrl_prepare_run(void)
