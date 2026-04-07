@@ -34,7 +34,7 @@ exit /b 1
 
 REM Create bin directory
 echo Creating bin directory...
-mkdir bin
+if not exist "bin" mkdir bin
 
 REM Run Make
 echo Running Make...

@@ -1,25 +1,4 @@
 {
-    "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.3 rel1/bin/arm-none-eabi-gcc.exe",
-    "C_Cpp.default.cStandard": "c11",
-    "C_Cpp.default.cppStandard": "c++17",
-    "C_Cpp.default.intelliSenseMode": "gcc-arm",
-    "C_Cpp.default.includePath": [
-        "code/alg",
-        "code/app",
-        "code/dbg",
-        "code/interface",
-        "code/section",
-        "code/comm",
-        "gd32g553c/inc",
-        "gd32g553c/bsp",
-        "gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
-        "gd32g553c/Firmware/CMSIS",
-        "gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include",
-        "plecs",
-    ],
-    "C_Cpp.default.defines": [
-        "GD32G5X3",
-    ],
     "files.associations": {
         "*.bat": "bat",
         "my_math.h": "c",
