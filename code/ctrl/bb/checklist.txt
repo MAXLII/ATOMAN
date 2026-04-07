@@ -1,0 +1,102 @@
+BB module porting checklist
+
+1. Scheduler integration
+- Confirm REG_INIT, REG_INTERRUPT, REG_TASK, and REG_TASK_MS are available on the new platform.
+- Confirm bb_ctrl_init, bb_ctrl_isr, bb_ctrl_task, bb_ctrl_in_curr_lmt_task, and bb_fsm are scheduled at the intended rates.
+- Confirm CTRL_FREQ and CTRL_TS match the real control interrupt frequency.
+- Confirm the 1 ms task period is correct for power-limit to current-limit conversion.
+
+2. HAL signal mapping in bb_hal.c
+- Map bb_ctrl_hal.p_v_in to the buck-boost input voltage signal.
+- Map bb_ctrl_hal.p_i_in to the buck-boost input current signal.
+- Map bb_ctrl_hal.p_v_out to the buck-boost output voltage signal.
+- Map bb_ctrl_hal.p_i_out to the buck-boost output current signal.
+- Map bb_ctrl_hal.p_i_l to the buck-boost inductor current signal.
+- Map bb_ctrl_hal.p_set_pwm_func to the buck-boost PWM command function.
+- Map bb_ctrl_hal.p_pwm_disable to a valid PWM shutdown function.
+- Fill bb_ctrl_hal in bb_hal.c with real platform variables and callbacks.
+- Confirm bb_fsm_hal enter/exit callbacks match the intended run sequencing.
+
+3. Signal semantics
+- Confirm all mapped voltages use the same unit as the current implementation.
+- Confirm all mapped currents use the same unit as the current implementation.
+- Confirm signal polarity is consistent with controller assumptions.
+- Confirm p_i_l polarity matches the inductor-current-loop sign convention.
+- Confirm p_v_in, p_i_in, p_v_out, and p_i_out correspond to the same power-flow direction convention.
+- Confirm p_set_pwm_func parameter meaning matches:
+  buck_duty, buck_up_en, buck_dn_en, boost_duty, boost_up_en, boost_dn_en.
+
+4. Hardware parameters
+- Check bb_open_loop_l and update it to the real hardware inductance or the intended open-loop equivalent.
+- Confirm bb_pwm_ts matches the real PWM period used by the hardware.
+- Confirm sensing range and scaling support the configured power and current limits.
+- Confirm the power stage can safely support the configured duty clamp ranges.
+
+5. Control parameters
+- Check code/ctrl/bb/bb_ctrl.h for loop bandwidth, gain, and limiter settings.
+- Fill BB_CTRL_OUT_VOLT_LOOP_KP/KI/UP_LMT/DN_LMT.
+- Fill BB_CTRL_IN_VOLT_LMT_LOOP_KP/KI/UP_LMT/DN_LMT.
+- Fill BB_CTRL_IN_CURR_LOOP_KP/KI/UP_LMT/DN_LMT.
+- Fill BB_CTRL_OUT_CURR_LOOP_KP/KI/UP_LMT/DN_LMT.
+- Fill BB_CTRL_IND_CURR_LOOP_KP/KI/UP_LMT/DN_LMT.
+- Fill BB_CTRL_BUCK_TO_BUCK_BOOST_THR.
+- Fill BB_CTRL_BUCK_BOOST_TO_BUCK_THR.
+- Fill BB_CTRL_BUCK_BOOST_TO_BOOST_THR.
+- Fill BB_CTRL_BOOST_TO_BUCK_BOOST_THR.
+- Review DCM hysteresis thresholds:
+  enter < 30 W, exit > 50 W.
+
+6. Mode and duty generation
+- Verify bb_mode equations match the intended CCM modulation law.
+- Verify bb_ol equations match the intended DCM/open-loop duty law.
+- Confirm ol_mode hysteresis logic matches the target buck/boost transition points.
+- Confirm bb_mode and bb_ol use the same mode semantics where synchronization is required.
+- Decide the final CCM PWM enable pattern for BUCK, BOOST, and BUCK_BOOST operation.
+- Confirm DCM PWM enable pattern is safe for BUCK, BOOST, and BUCK_BOOST operation.
+
+7. Cascade and limiter behavior
+- Verify in_volt_lmt_loop, in_curr_loop, and out_curr_loop are the intended upstream limiting loops.
+- Verify the minimum of those three loop outputs is the intended outer-voltage-loop upper clamp.
+- Verify out_volt_loop output is the intended ind_curr_ref source.
+- Verify ind_curr_ref sign and scaling are correct for both forward power flow and startup.
+- Confirm the fixed outer-voltage-loop lower clamp is safe and intentionally not updated in ISR.
+- Confirm the 1 ms power-limit task computes:
+  in_curr_lmt = min(pwr_lmt / v_in, configured in_curr_lmt).
+
+8. Run gating and FSM behavior
+- Confirm bb_fsm transitions init -> idle -> run as intended.
+- Confirm bb_fsm only leaves init after enter/exit callbacks are valid.
+- Confirm entering RUN calls bb_ctrl_prepare_run before run_allowed is published.
+- Confirm exiting RUN disables PWM and clears run_allowed.
+- Confirm bb_ctrl respects run_allowed and shuts PWM down when run is revoked.
+- Confirm run_allowed ownership between bb_fsm, bb_hal, and upper-layer commands is well-defined.
+
+9. ADC and sensing chain
+- Confirm sensing scale and offset are calibrated before enabling the controller.
+- Confirm sampled signals are updated before bb_ctrl_isr runs.
+- Confirm voltage and current samples are synchronized closely enough for the configured loop bandwidths.
+- Confirm sensing delay and noise are acceptable for the inductor-current loop and limiter loops.
+
+10. PWM behavior and safety
+- Confirm p_pwm_disable leaves the buck-boost stage in a safe state.
+- Confirm stop, fault, and restart behavior are safe and repeatable.
+- Confirm PWM commands remain bounded when any loop saturates or references collapse.
+- Confirm DCM/CCM switching does not create unsafe duty or enable glitches.
+
+11. Dependencies
+- Bring over required alg modules:
+  pi_tustin, bb_mode, bb_ol.
+- Bring over required framework support from section.
+- Confirm math helpers from my_math.h are available and consistent.
+
+12. Bring-up verification
+- Verify FSM can transition init -> idle -> run -> idle.
+- Verify controller can start with zero unexpected PWM jump.
+- Verify run_allowed gating prevents PWM output when control is not allowed.
+- Verify CCM path runs:
+  limiter loops -> outer voltage loop -> inductor current loop -> bb_mode -> PWM.
+- Verify DCM path runs:
+  limiter loops -> outer voltage loop -> bb_ol -> PWM.
+- Verify DCM enter/exit hysteresis behaves correctly around 30 W / 50 W.
+- Verify ol_mode switching hysteresis behaves correctly across buck, buck-boost, and boost regions.
+- Verify output-voltage regulation, input-current limiting, output-current limiting, and input-voltage limiting all act with correct polarity.
