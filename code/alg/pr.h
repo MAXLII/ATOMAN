@@ -1,9 +1,12 @@
 #ifndef __PR_H
 #define __PR_H
 
+#include <stdbool.h>
+
 typedef struct
 {
-    float err;
+    float *p_act;
+    float *p_ref;
 } pr_input_t;
 
 typedef struct
@@ -13,16 +16,13 @@ typedef struct
     float w0;
     float wc;
     float ts;
-    float lmt;
-} pr_cfg_t;
-
-typedef struct
-{
     float a1;
     float a2;
     float b0;
     float b1;
     float b2;
+    float up_lmt;
+    float dn_lmt;
 
     float e[3];
     float u[3];
@@ -30,21 +30,34 @@ typedef struct
 
 typedef struct
 {
+    float raw;
+    float sat;
     float val;
+    bool is_saturated;
 } pr_output_t;
 
 typedef struct
 {
     pr_input_t input;
-    pr_cfg_t cfg;
     pr_inter_t inter;
     pr_output_t output;
 } pr_t;
 
-void pr_init(pr_t *p_str, pr_cfg_t *p_cfg);
+bool pr_init(pr_t *p_str,
+             float kp,
+             float kr,
+             float w0,
+             float wc,
+             float ts,
+             float up_lmt,
+             float dn_lmt,
+             float *p_ref,
+             float *p_act);
 
-void pr_cal(pr_t *p_str);
+bool pr_cal(pr_t *p_str);
 
-void pr_update_freq(pr_t *p_str, float omega);
+bool pr_update_freq(pr_t *p_str, float omega);
+
+void pr_reset(pr_t *p_str);
 
 #endif
