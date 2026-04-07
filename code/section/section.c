@@ -365,7 +365,7 @@ static void link_process(section_link_t *link)
     link->pos = pos;
 }
 
-void section_link_task(void)
+static void section_link_task(void)
 {
     for (section_link_t *p = p_link_first; p != NULL; p = (section_link_t *)p->p_next)
     {

@@ -325,7 +325,7 @@ typedef struct
         .p_fsm_func_table = reg_fsm_func_##name##_table,                                \
         .fsm_table_size = sizeof(reg_fsm_func_##name##_table) / sizeof(reg_fsm_func_t), \
         .fsm_sta_is_change = 1,                                                         \
-        .p_fsm_ev = &(fsm_ev),                                                          \
+        .p_fsm_ev = (uint32_t *)&(fsm_ev),                                              \
     };                                                                                  \
     static void fsm_##name##_run(void)                                                  \
     {                                                                                   \
@@ -334,6 +334,7 @@ typedef struct
     REG_TASK_MS(1, fsm_##name##_run)
 
 #define FSM_GET_STATE(name) (reg_fsm_##name.fsm_sta)
+#define FSM_EXTERN_VAR(name) extern reg_fsm_t reg_fsm_##name;
 
 void section_fsm_func(reg_fsm_t *str);
 

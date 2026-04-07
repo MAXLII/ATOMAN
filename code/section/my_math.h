@@ -7,22 +7,27 @@
 #include "math.h"
 #endif
 
+/* Common control frequencies and derived sampling periods. */
 #define BUCK_PWM_FREQ 60.0e3f
 #define PFC_PWM_FREQ 30.0e3f
 #define CTRL_FREQ 30.0e3f
 #define BUCK_PWM_TS (1.0f / BUCK_PWM_FREQ)
 #define CTRL_TS (1.0f / CTRL_FREQ)
 
+/* In-place clamp helpers. */
 #define UP_LMT(in, lmt) (in = ((in > (lmt)) ? (lmt) : in))
 #define DN_LMT(in, lmt) (in = ((in < (lmt)) ? (lmt) : in))
 #define UP_DN_LMT(in, up_lmt, dn_lmt) (in = ((in > (up_lmt)) ? (up_lmt) : ((in < (dn_lmt)) ? (dn_lmt) : in)))
 
+/* Assign the smaller value of a and b to val. */
 #define MIN(val, a, b) (val) = ((a) < (b)) ? (a) : (b)
 
+/* First-order high-pass filter in discrete form. */
 #define HPF(in, in_last, out, Ts, wc) out = 2.0f / (Ts * wc + 2.0f) * in -      \
                                             2.0f / (Ts * wc + 2.0f) * in_last - \
                                             (Ts * wc - 2) / (Ts * wc + 2) * out
 
+/* First-order low-pass filter in discrete form; updates in_last internally. */
 #define LPF(in, in_last, out, Ts, wc)                   \
     do                                                  \
     {                                                   \
@@ -35,10 +40,12 @@
         in_last = in;                                   \
     } while (0)
 
+/* Alpha-beta to dq transform. */
 #define DQ_CAL(a, b, sintheta, costheta, d, q) \
     d = costheta * a + sintheta * b;           \
     q = sintheta * a - costheta * b;
 
+/* Increment a counter and wrap it into [0, max_value). */
 #define INC_AND_WRAP(count, max_value) \
     do                                 \
     {                                  \
@@ -49,12 +56,13 @@
         }                              \
     } while (0)
 
+/* Safe down-counter: decrement only when cnt is non-zero. */
 #define DN_CNT(cnt) \
     do              \
     {               \
         if (cnt)    \
         {           \
-            cnt--;  \
+            (cnt)--; \
         }           \
     } while (0)
 
@@ -128,6 +136,7 @@
 #endif
 #define M_2PI (2.0f * M_PI)
 
+/* Symmetric ramp: move act toward tag with the same step in both directions. */
 #define RAMP(act, tag, step)            \
     do                                  \
     {                                   \
@@ -139,6 +148,7 @@
                    : (act = tag));      \
     } while (0)
 
+/* Asymmetric ramp: independent rising and falling slew limits. */
 #define RAMP_UP_DN(act, tag, up_step, dn_step) \
     do                                         \
     {                                          \
@@ -151,8 +161,29 @@
                    : (act = tag));             \
     } while (0)
 
+/* Number of elements in a static array. */
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+/* Check whether every member in a pointer-only struct is non-NULL. */
+#define STRUCT_ALL_PTR_VALID(obj)                                    \
+    ({                                                               \
+        uint8_t _ok = 1;                                             \
+        const uint32_t *const *_p = (const uint32_t *const *)&(obj); \
+        uint16_t _cnt = sizeof(obj) / sizeof(uint32_t *);            \
+                                                                     \
+        for (uint16_t _i = 0; _i < _cnt; _i++)                       \
+        {                                                            \
+            if (_p[_i] == NULL)                                      \
+            {                                                        \
+                _ok = 0;                                             \
+                break;                                               \
+            }                                                        \
+        }                                                            \
+                                                                     \
+        _ok;                                                         \
+    })
+
+/* Time constants expressed in 1 ms task ticks. */
 #define TIME_CNT_1MS_IN_1MS (1)
 #define TIME_CNT_5MS_IN_1MS (5 * TIME_CNT_1MS_IN_1MS)
 #define TIME_CNT_10MS_IN_1MS (10 * TIME_CNT_1MS_IN_1MS)
@@ -169,9 +200,16 @@
 #define TIME_CNT_5S_IN_1MS (5 * TIME_CNT_1S_IN_1MS)
 #define TIME_CNT_10S_IN_1MS (10 * TIME_CNT_1S_IN_1MS)
 
+/* Time constants expressed in control ISR ticks. */
 #define TIME_CNT_1MS_IN_CTRL ((uint32_t)(0.001f * CTRL_FREQ))
 #define TIME_CNT_10MS_IN_CTRL (10 * TIME_CNT_1MS_IN_CTRL)
 #define TIME_CNT_50MS_IN_CTRL (50 * TIME_CNT_1MS_IN_CTRL)
 #define TIME_CNT_100MS_IN_CTRL (100 * TIME_CNT_1MS_IN_CTRL)
+
+/* Time constants expressed in 100 us base ticks. */
+#define TIME_CNT_100US_IN_100US (1)
+#define TIME_CNT_1MS_IN_100US (10 * TIME_CNT_100US_IN_100US)
+#define TIME_CNT_10MS_IN_100US (10 * TIME_CNT_1MS_IN_100US)
+#define TIME_CNT_500MS_IN_100US (500 * TIME_CNT_1MS_IN_100US)
 
 #endif
