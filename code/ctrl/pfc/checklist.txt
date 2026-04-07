@@ -1,0 +1,68 @@
+PFC module porting checklist
+
+1. Scheduler integration
+- Confirm REG_INIT, REG_INTERRUPT, and REG_TASK are available on the new platform.
+- Confirm pfc_ctrl_init, pfc_ctrl_isr, pfc_ctrl_task, and pfc_fsm are scheduled at the intended rates.
+- Confirm CTRL_FREQ and CTRL_TS match the real control interrupt frequency.
+
+2. HAL signal mapping in pfc_hal.c
+- Map pfc_ctrl_hal.p_v_g to the instantaneous grid voltage signal.
+- Map pfc_ctrl_hal.p_v_rms to the grid RMS voltage signal.
+- Map pfc_ctrl_hal.p_i_l to the PFC inductor current signal.
+- Map pfc_ctrl_hal.p_v_cap to the PFC capacitor voltage signal.
+- Map pfc_ctrl_hal.p_v_bus to the DC bus voltage signal.
+- Map pfc_ctrl_hal.p_set_pwm_func to the PFC PWM command function.
+- Map pfc_ctrl_hal.p_pwm_enable and pfc_ctrl_hal.p_pwm_disable to valid PWM control functions.
+- Map pfc_fsm_hal.p_vbus_sta to the bus-voltage state classification signal.
+- Map pfc_fsm_hal.p_enter_run_func and pfc_fsm_hal.p_exit_run_func if run-entry sequencing is required.
+- Map pfc_fsm_hal relay callbacks to the correct soft-start and main-relay functions.
+
+3. Signal semantics
+- Confirm all mapped voltages use the same unit as the current implementation.
+- Confirm all mapped currents use the same unit as the current implementation.
+- Confirm signal polarity is consistent with controller assumptions.
+- Confirm p_i_l polarity matches the inner-loop sign convention.
+- Confirm p_v_rms is the RMS value of the same grid signal used by p_v_g.
+
+4. Hardware parameters
+- Check code/ctrl/hw_params.h and update all hardware constants for the new power stage.
+- Confirm DC bus capacitance matches HW_DC_BUS_CAP_VALUE.
+- Confirm AC-side inductance matches HW_AC_SIDE_IND_VALUE.
+- Confirm AC-side capacitance matches HW_AC_SIDE_CAP_VALUE.
+
+5. Control parameters
+- Check code/ctrl/pfc/pfc_ctrl.h for loop bandwidth, phase margin, and limit settings.
+- Review outer voltage-loop parameters.
+- Review inner inductor-current-loop parameters.
+- Review notch filter center frequency and bandwidth.
+- Review SOGI and FLL parameters.
+- Review nominal grid RMS parameter used in current-reference shaping.
+
+6. ADC and sensing chain
+- Confirm sensing scale and offset are calibrated before enabling the controller.
+- Confirm sampled signals are updated before the control ISR runs.
+- Confirm RMS calculation is valid and stable on the new platform.
+- Confirm bus-voltage state detection thresholds are still appropriate.
+
+7. PWM behavior
+- Confirm p_set_pwm_func(v_pwm, v_bus) uses the same interface meaning as the current project.
+- Confirm PWM modulation range and saturation behavior are safe.
+- Confirm pwm_enable and pwm_disable leave the power stage in a safe state.
+
+8. Run sequencing
+- Confirm entering RUN performs controller preparation before run_allowed is asserted.
+- Confirm exiting RUN clears run_allowed as expected.
+- Confirm relay timing and bus precharge behavior are correct on the new hardware.
+
+9. Dependencies
+- Bring over required alg modules: pi_tustin, notch, sogi, fll.
+- Bring over required framework support from section.
+- Confirm math helpers from my_math.h are available and consistent.
+
+10. Bring-up verification
+- Verify FSM can transition init -> idle -> soft_start -> main_rly -> run.
+- Verify controller can start with zero unexpected PWM jump.
+- Verify bus-voltage loop regulates to the target.
+- Verify inductor-current loop tracks reference with correct polarity.
+- Verify SOGI and FLL lock to the grid correctly.
+- Verify stop, fault, and restart behavior are safe.
