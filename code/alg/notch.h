@@ -37,8 +37,11 @@ typedef struct
     notch_output_t output;
 } notch_t;
 
-void notch_init(notch_t *p_str, notch_cfg_t *p_cfg, float *p_val);
-
+void notch_init(notch_t *p_str,
+                float w0,
+                float wb,
+                float ts,
+                float *p_val);
 void notch_update_freq(notch_t *p_str, float omega);
 
 void notch_cal(notch_t *p_str);

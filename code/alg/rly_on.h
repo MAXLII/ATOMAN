@@ -31,8 +31,15 @@ typedef struct
 {
     uint32_t dly_cnt;
     uint32_t dly;
+    uint32_t on_cnt;
+    uint32_t on_confirm;
     uint8_t sta;
 } rly_on_inter_t;
+
+typedef struct
+{
+    uint8_t is_closed;
+} rly_on_output_t;
 
 typedef struct
 {
@@ -46,6 +53,7 @@ typedef struct
     rly_on_cfg_t cfg;
     rly_on_inter_t inter;
     rly_on_func_t func;
+    rly_on_output_t output;
 } rly_on_t;
 
 void rly_on_init(rly_on_t *p_str, uint8_t *p_rly_on_trig, uint8_t *p_rly_off_trig, uint8_t *p_is_equal, float *p_freq, float ctrl_freq, float rly_on_time_def, void (*rly_on)(void), void (*rly_off)(void));

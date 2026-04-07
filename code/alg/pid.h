@@ -1,13 +1,7 @@
 #ifndef __PID_H
 #define __PID_H
 
-#include <stdbool.h>
-
-typedef struct
-{
-    float *p_act;
-    float *p_ref;
-} pid_input_t;
+#include "stdint.h"
 
 typedef struct
 {
@@ -15,10 +9,25 @@ typedef struct
     float ki;
     float ki_inv;
     float kd;
-    float up_lmt;
-    float dn_lmt;
-    float i_err_up_lmt;
-    float i_err_dn_lmt;
+    float i_err_lmt_max;
+    float i_err_lmt_min;
+    float output_lmt_max;
+    float output_lmt_min;
+} pid_cfg_t;
+
+typedef struct
+{
+    float ref;
+    float act;
+} pid_input_t;
+
+typedef struct
+{
+    float output;
+} pid_output_t;
+
+typedef struct
+{
     float err;
     float err_last;
     float err_diff;
@@ -27,29 +36,13 @@ typedef struct
 
 typedef struct
 {
-    float val;
-} pid_output_t;
-
-typedef struct
-{
-    pid_input_t input;
+    pid_cfg_t cfg;
     pid_inter_t inter;
+    pid_input_t input;
     pid_output_t output;
-} pid_t;
+} pid_param_t;
 
-bool pid_init(pid_t *p_str,
-              float kp,
-              float ki,
-              float kd,
-              float up_lmt,
-              float dn_lmt,
-              float *p_ref,
-              float *p_act);
-
-bool pid_cal(pid_t *p_str);
-
-bool pid_update(pid_t *p_str, float kp, float ki, float kd);
-
-void pid_reset(pid_t *p_str);
+void pid_reset(pid_param_t *pid_param);
+float pid_cal(pid_param_t *pid_param, float ref, float act);
 
 #endif
