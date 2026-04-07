@@ -33,10 +33,11 @@ void plecs_set_output(PLECS_OUTPUT_E num, float val)
 
 void plecs_printf(const char *file, int line, const char *format, ...)
 {
+    (void)file;
     if (fp_plecs)
     {
         double time = plecs_astate->time; // unit: seconds
-        fprintf(fp_plecs, "[%8.4f] [%s:%d] ", time, file, line);
+        fprintf(fp_plecs, "[%8.4f] ", time, line);
         va_list args;
         va_start(args, format);
         vfprintf(fp_plecs, format, args);

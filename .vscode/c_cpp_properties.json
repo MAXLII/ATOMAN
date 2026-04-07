@@ -1,0 +1,126 @@
+{
+    "configurations": [
+        {
+            "name": "gd32_ac",
+            "compilerPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.3 rel1/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/ac",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/bb",
+                "${workspaceFolder}/code/ctrl/pfc",
+                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/gd32g553c/ac/bsp",
+                "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
+                "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
+                "${workspaceFolder}/gd32g553c/inc",
+                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include"
+            ],
+            "defines": [
+                "GD32G5X3",
+                "IS_AC"
+            ]
+        },
+        {
+            "name": "gd32_dc",
+            "compilerPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.3 rel1/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/bb",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/gd32g553c/dc/bsp",
+                "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
+                "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
+                "${workspaceFolder}/gd32g553c/inc",
+                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include"
+            ],
+            "defines": [
+                "GD32G5X3",
+                "IS_DC"
+            ]
+        },
+        {
+            "name": "plecs_ac",
+            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/plecs/common",
+                "${workspaceFolder}/plecs/ac",
+                "${workspaceFolder}/plecs/ac/app",
+                "${workspaceFolder}/plecs/ac/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/ac",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/pfc",
+                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_AC"
+            ]
+        },
+        {
+            "name": "plecs_dc",
+            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/plecs/common",
+                "${workspaceFolder}/plecs/dc",
+                "${workspaceFolder}/plecs/dc/app",
+                "${workspaceFolder}/plecs/dc/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/ac",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/pfc",
+                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_DC"
+            ]
+        }
+    ],
+    "version": 4
+}
