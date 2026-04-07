@@ -7,7 +7,7 @@ static uint32_t init_dly = 0;
 static uint32_t soft_start_dly = 0;
 static uint32_t main_rly_dly = 0;
 static pfc_fsm_ev_e fsm_ev = pfc_fsm_ev_null;
-static pfc_fsm_hal_t *p_hal = NULL;
+#define p_hal (pfc_hal_get_fsm())
 static pfc_fsm_cmd_e fsm_cmd = pfc_fsm_cmd_null;
 
 void pfc_fsm_set_cmd(pfc_fsm_cmd_e cmd)
@@ -17,7 +17,7 @@ void pfc_fsm_set_cmd(pfc_fsm_cmd_e cmd)
 
 void pfc_fsm_set_p_hal(pfc_fsm_hal_t *p)
 {
-    p_hal = p;
+    (void)p;
 }
 
 static pfc_fsm_cmd_e get_fsm_cmd(void)
@@ -70,9 +70,18 @@ static void pfc_fsm_init_out(void)
 
 static void pfc_fsm_idle_in(void)
 {
+    pfc_hal_unlock_binding();
     PLECS_LOG("pfc_fsm enter idle\n");
 
-    if (p_hal != NULL)
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("pfc_fsm main relay off skipped: fsm hal is null\n");
+    }
+    else if (p_hal->p_main_rly_off_func == NULL)
+    {
+        PLECS_LOG("pfc_fsm main relay off skipped: off hook is null\n");
+    }
+    else
     {
         p_hal->p_main_rly_off_func();
         PLECS_LOG("pfc_fsm main relay off\n");
@@ -83,6 +92,12 @@ static void pfc_fsm_idle_exe(void)
 {
     if (get_fsm_cmd() == pfc_fsm_cmd_start)
     {
+        if (pfc_hal_is_ready() == 0U)
+        {
+            PLECS_LOG("pfc_fsm start rejected by hal binding invalid\n");
+            return;
+        }
+
         if (*p_hal->p_latched == 1)
         {
             PLECS_LOG("pfc_fsm start rejected by hard protect latch\n");
@@ -105,6 +120,7 @@ static uint32_t pfc_fsm_idle_chk(uint32_t fsm_ev)
 
 static void pfc_fsm_idle_out(void)
 {
+    pfc_hal_lock_binding();
     PLECS_LOG("pfc_fsm leave idle\n");
 }
 
@@ -171,7 +187,15 @@ static void pfc_fsm_main_rly_in(void)
     main_rly_dly = 0;
     PLECS_LOG("pfc_fsm enter main_rly\n");
 
-    if (p_hal != NULL)
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("pfc_fsm main relay on skipped: fsm hal is null\n");
+    }
+    else if (p_hal->p_main_rly_on_func == NULL)
+    {
+        PLECS_LOG("pfc_fsm main relay on skipped: on hook is null\n");
+    }
+    else
     {
         p_hal->p_main_rly_on_func();
         PLECS_LOG("pfc_fsm main relay on\n");
@@ -234,15 +258,30 @@ static void pfc_fsm_run_in(void)
 {
     PLECS_LOG("pfc_fsm enter run\n");
 
-    if (p_hal != NULL)
+    if (p_hal == NULL)
     {
-        if (p_hal->p_enter_run_func != NULL)
-        {
-            p_hal->p_enter_run_func();
-            PLECS_LOG("pfc_fsm control enabled\n");
-        }
+        PLECS_LOG("pfc_fsm run entry skipped: fsm hal is null\n");
+        return;
+    }
+
+    if (p_hal->p_enter_run_func != NULL)
+    {
+        p_hal->p_enter_run_func();
+        PLECS_LOG("pfc_fsm control enabled\n");
+    }
+    else
+    {
+        PLECS_LOG("pfc_fsm run entry skipped: enter_run hook is null\n");
+    }
+
+    if (p_hal->p_main_rly_on_func != NULL)
+    {
         p_hal->p_main_rly_on_func();
         PLECS_LOG("pfc_fsm main relay on\n");
+    }
+    else
+    {
+        PLECS_LOG("pfc_fsm run entry skipped: main relay on hook is null\n");
     }
 }
 
@@ -274,11 +313,30 @@ static void pfc_fsm_run_out(void)
 {
     PLECS_LOG("pfc_fsm leave run\n");
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("pfc_fsm run exit skipped: fsm hal is null\n");
+        return;
+    }
+
+    if (p_hal->p_exit_run_func != NULL)
     {
         p_hal->p_exit_run_func();
         PLECS_LOG("pfc_fsm control disabled\n");
+    }
+    else
+    {
+        PLECS_LOG("pfc_fsm run exit skipped: exit_run hook is null\n");
+    }
+
+    if (p_hal->p_main_rly_off_func != NULL)
+    {
+        p_hal->p_main_rly_off_func();
+        PLECS_LOG("pfc_fsm main relay off\n");
+    }
+    else
+    {
+        PLECS_LOG("pfc_fsm run exit skipped: main relay off hook is null\n");
     }
 }
 

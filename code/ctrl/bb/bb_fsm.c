@@ -6,7 +6,7 @@
 
 static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null; /* fsm_ev: pending transition event consumed by REG_FSM */
 static bb_fsm_cmd_e fsm_cmd = bb_fsm_cmd_null; /* fsm_cmd: latched external command */
-static bb_fsm_hal_t *p_hal = NULL; /* p_hal: bound FSM HAL hooks */
+#define p_hal (bb_hal_get_fsm())
 
 /**
  * @brief Latch an external command for the FSM.
@@ -25,7 +25,7 @@ void bb_fsm_set_cmd(bb_fsm_cmd_e cmd)
  */
 void bb_fsm_set_p_hal(bb_fsm_hal_t *p)
 {
-    p_hal = p;
+    (void)p;
 }
 
 /**
@@ -97,6 +97,7 @@ static void bb_fsm_init_out(void)
  */
 static void bb_fsm_idle_in(void)
 {
+    bb_hal_unlock_binding();
     PLECS_LOG("bb_fsm enter idle\n");
 }
 
@@ -109,6 +110,12 @@ static void bb_fsm_idle_exe(void)
 {
     if (bb_fsm_get_cmd() == bb_fsm_cmd_start)
     {
+        if (bb_hal_is_ready() == 0U)
+        {
+            PLECS_LOG("bb_fsm start rejected by hal binding invalid\n");
+            return;
+        }
+
         if (*p_hal->p_latched == 1)
         {
             PLECS_LOG("bb_fsm start rejected by hard protect latch\n");
@@ -141,6 +148,7 @@ static uint32_t bb_fsm_idle_chk(uint32_t event)
  */
 static void bb_fsm_idle_out(void)
 {
+    bb_hal_lock_binding();
     PLECS_LOG("bb_fsm leave idle\n");
 }
 
