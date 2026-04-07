@@ -1,0 +1,67 @@
+INV module porting checklist
+
+1. Scheduler integration
+- Confirm REG_INIT and REG_INTERRUPT are available on the new platform.
+- Confirm inv_ctrl_init, inv_ctrl_cal_theta, and inv_ctrl_isr are scheduled at the intended rates.
+- Confirm CTRL_FREQ and CTRL_TS match the real control interrupt frequency.
+
+2. HAL signal mapping in inv_hal.c
+- Map inv_ctrl_hal.p_v_cap to the inverter capacitor voltage signal.
+- Map inv_ctrl_hal.p_i_l to the inverter inductor current signal.
+- Map inv_ctrl_hal.p_v_bus to the DC bus voltage signal.
+- Map inv_ctrl_hal.p_set_pwm_func to the inverter PWM command function.
+- Map inv_ctrl_hal.p_pwm_disable to a valid PWM shutdown function.
+
+3. Signal semantics
+- Confirm all mapped voltages use the same unit as the current implementation.
+- Confirm all mapped currents use the same unit as the current implementation.
+- Confirm p_v_cap and p_i_l polarity match the dq transform convention used by inv_ctrl.
+- Confirm sampled voltage and current correspond to the same physical phase used by the controller.
+- Confirm p_set_pwm_func(v_pwm, v_bus) uses the same interface meaning as the current project.
+
+4. Timing and phase generation
+- Confirm the commanded frequency range is compatible with inv_ctrl_limit_freq_hz.
+- Confirm period and period_quarter remain valid for the supported frequency range.
+- Confirm the sampling/update order keeps theta, sampled buffers, and dq conversion aligned.
+- Confirm startup phase initialization does not introduce an output jump.
+
+5. Hardware parameters
+- Check code/ctrl/pfc_hardware.h and update all hardware constants for the new power stage.
+- Confirm CAP_INV_VALUE matches the inverter output capacitor.
+- Confirm L_PFC_VALUE matches the controlled series inductance used by the current-loop model.
+- Confirm DC-bus range is compatible with the commanded PWM voltage.
+
+6. Control parameters
+- Check code/ctrl/inv/inv_ctrl.h for loop bandwidth, phase margin, and limit settings.
+- Review d-axis and q-axis voltage-loop parameters.
+- Review d-axis and q-axis current-loop parameters.
+- Confirm the selected current-loop structure still matches the plant model.
+- Confirm controller output limits are safe for the hardware.
+
+7. Setpoint and run control
+- Confirm inv_cfg active/building synchronization is called before control uses new setpoints.
+- Confirm rms_ref_v, rms_slew_vps, freq_hz, and freq_slew_hzps have valid bounds.
+- Confirm run_allowed gates PWM output as intended.
+- Confirm prepare_run reinitializes controller states before enabling power stage operation.
+
+8. ADC and sensing chain
+- Confirm sensing scale and offset are calibrated before enabling the controller.
+- Confirm sampled signals are updated before the control ISR runs.
+- Confirm voltage and current samples are synchronized closely enough for dq conversion.
+- Confirm noise and delay in the sensing chain are acceptable for the configured loop bandwidths.
+
+9. PWM behavior and safety
+- Confirm p_pwm_disable leaves the inverter in a safe state.
+- Confirm PWM modulation range and saturation behavior are safe.
+- Confirm vpwm command polarity matches the hardware driver convention.
+- Confirm stop, fault, and restart behavior are safe and repeatable.
+
+10. Bring-up verification
+- Verify controller can start with zero unexpected PWM jump.
+- Verify output frequency ramps to the target correctly.
+- Verify output RMS reference ramps to the target correctly.
+- Verify d-axis voltage loop regulates to the commanded magnitude.
+- Verify q-axis voltage loop converges near zero in steady state.
+- Verify d-axis and q-axis current loops track their references with correct polarity.
+- Verify dq reconstruction from buffered samples is consistent across the full frequency range.
+- Verify no buffer overrun or period underflow occurs at frequency limits.
