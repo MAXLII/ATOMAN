@@ -13,12 +13,16 @@
 # 从环境变量获取参数
 FW_TYPE ?= IAP
 OUTPUT_NAME ?= firmware
-DEFINES ?= -DFIRMWARE_TYPE_IAP
+DEFINES ?= -DFIRMWARE_TYPE_IAP -DIS_AC
 
 # 根据类型设置不同的编译选项
 ifeq ($(FW_TYPE),IAP)
     DEFINES += -DFIRMWARE_TYPE_IAP -DAPP_START_ADDR=0x08006000
-    LD_SCRIPT = ./ldscripts/gd32g5x3_flash_iap.ld
+    ifeq ($(wildcard ./ldscripts/gd32g5x3_flash_iap.ld),)
+        LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
+    else
+        LD_SCRIPT = ./ldscripts/gd32g5x3_flash_iap.ld
+    endif
 else
     DEFINES += -DFIRMWARE_TYPE_ISP -DAPP_START_ADDR=0x08000000
     LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
@@ -27,7 +31,7 @@ endif
 ######################################
 # target
 ######################################
-TARGET = test
+TARGET = demo
 
 
 ######################################
@@ -98,26 +102,10 @@ C_SOURCES =  \
 ../gd32g553c/src/gd32g5x3_it.c \
 ../gd32g553c/src/main.c \
 ../gd32g553c/src/systick.c \
-../code/alg/ac_loss_det.c \
-../code/alg/cal_rms.c \
-../code/alg/chk_grid.c \
-../code/alg/fll.c \
-../code/alg/linear.c \
-../code/alg/mppt.c \
-../code/alg/notch.c \
-../code/alg/pi_tustin.c \
-../code/alg/pid_inc.c \
-../code/alg/pid.c \
-../code/alg/pr.c \
-../code/alg/rly_on.c \
-../code/alg/sogi.c \
-../code/alg/z2p2.c \
-../code/app/led.c \
-../code/app/test.c \
-../code/app/zero_player.c \
+../code/app/demo/demo.c \
+../code/dbg/perf.c \
 ../code/dbg/scope.c \
-../code/dbg/trace.c \
-../code/interface/gpio.c \
+../code/interface/ac/gpio.c \
 ../code/interface/usart.c \
 ../code/section/section.c \
 ../code/comm/comm.c \
@@ -188,10 +176,12 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
--I../code/alg \
 -I../code/app \
+-I../code/app/demo \
 -I../code/dbg \
+-I../code/interface/ac \
 -I../code/interface \
+-I../code/interface/common \
 -I../code/section \
 -I../code/comm \
 -I../gd32g553c/Firmware/CMSIS \
@@ -268,7 +258,7 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(BIN) $< $@	
 	
 $(BUILD_DIR):
-	mkdir $@		
+	if not exist $@ mkdir $@		
 
 #######################################
 # clean up
