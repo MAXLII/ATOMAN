@@ -1,31 +1,46 @@
 #include "bsp_timer.h"
+
 #include "gd32g5x3.h"
 #include "section.h"
 
-REG_PERF_BASE_CNT(TIMER_CNT(TIMER5))
+REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x00000024u))
 
-void bsp_timer5_init(void)
+#define BSP_TIMER_CNT_FREQ_HZ 2000000u
+
+void bsp_timer_init(void)
 {
     timer_parameter_struct timer_initpara;
+    uint32_t timer_clk_hz;
 
-    // 1. 使能TIMER5时钟
-    rcu_periph_clock_enable(RCU_TIMER5);
-
-    // 2. 初始化结构体为默认值
+    rcu_periph_clock_enable(RCU_TIMER1);
+    timer_deinit(TIMER1);
     timer_struct_para_init(&timer_initpara);
 
-    timer_initpara.prescaler = 20; // (215+1)/216MHz = 1us
+    /*
+     * In this project APB1 follows HCLK, so TIMER1 clock is derived from
+     * SystemCoreClock. Set the prescaler so one counter step equals 0.5us.
+     */
+    timer_clk_hz = SystemCoreClock;
+    if (timer_clk_hz < BSP_TIMER_CNT_FREQ_HZ)
+    {
+        timer_clk_hz = BSP_TIMER_CNT_FREQ_HZ;
+    }
+
+    timer_initpara.prescaler = (uint16_t)((timer_clk_hz / BSP_TIMER_CNT_FREQ_HZ) - 1u);
     timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection = TIMER_COUNTER_UP;
-    timer_initpara.period = 0xFFFF; // 每计数一次溢出
+    timer_initpara.period = 0xFFFFFFFFu;
     timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
-    timer_initpara.repetitioncounter = 0;
+    timer_initpara.repetitioncounter = 0u;
 
-    // 4. 初始化TIMER5
-    timer_init(TIMER5, &timer_initpara);
-
-    // 5. 启动TIMER5
-    timer_enable(TIMER5);
+    timer_init(TIMER1, &timer_initpara);
+    timer_counter_value_config(TIMER1, 0u);
+    timer_enable(TIMER1);
 }
 
-REG_INIT(0, bsp_timer5_init);
+uint32_t bsp_timer_cnt_get(void)
+{
+    return TIMER_CNT(TIMER1);
+}
+
+REG_INIT(0, bsp_timer_init)
