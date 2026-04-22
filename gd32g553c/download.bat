@@ -1,166 +1,193 @@
 @echo off
-chcp 65001 > nul
-REM ========================================
-REM 高级 J-Link 下载脚本
-REM ========================================
-REM 配置区域 - 根据你的实际环境修改以下变量
-REM ========================================
+chcp 65001 >nul
+setlocal EnableDelayedExpansion
+cd /d "%~dp0"
 
-REM 1. J-Link 安装路径
-SET JLINK_PATH=C:\Program Files\SEGGER\JLink
+set "MCU=GD32G553RCT6"
+set "JLINK_DEVICE=GD32G553RCT6"
+set "IF=SWD"
+set "SPEED=4000"
+set "BIN_ADDR=0x08000000"
+set "DEFAULT_FIRMWARE=build\demo.bin"
+set "LOG_FILE=JLink_demo.log"
 
-REM 2. 目标设备型号 (使用 J-Link 支持的设备名称，例如：STM32F103RC, nRF52832_xxaa, LPC1768)
-SET DEVICE=GD32G553RCT6
+if not defined RUN_AFTER_DOWNLOAD (
+    set "RUN_AFTER_DOWNLOAD=1"
+) else if /I "%RUN_AFTER_DOWNLOAD%"=="0" (
+    set "RUN_AFTER_DOWNLOAD=0"
+) else if /I "%RUN_AFTER_DOWNLOAD%"=="false" (
+    set "RUN_AFTER_DOWNLOAD=0"
+) else (
+    set "RUN_AFTER_DOWNLOAD=1"
+)
 
-REM 3. 接口类型 (JTAG / SWD)
-SET IF=SWD
+if "%RUN_AFTER_DOWNLOAD%"=="1" (
+    set "RUN_AFTER_DOWNLOAD_TEXT=Enabled"
+) else (
+    set "RUN_AFTER_DOWNLOAD_TEXT=Disabled"
+)
 
-REM 4. 调试器速度 (kHz)
-SET SPEED=4000
+title J-Link Download Tool
 
-REM 5. Bin文件的默认起始地址 (HEX文件不需要)
-SET BIN_ADDR=0x08000000
-
-REM 6. 日志文件名称
-SET LOG_FILE=JLink_Flash.log
-
-REM 7. ★★★ 添加固定的文件路径 ★★★
-SET FIXED_FIRMWARE_PATH=build\test.bin
-
-REM ========================================
-REM 脚本主体 - 通常无需修改以下内容
-REM ========================================
-
-setlocal enabledelayedexpansion
-
-REM 设置窗口标题
-title J-Link 下载工具 - %DEVICE%
-
-echo.
 echo ========================================
-echo          J-Link 程序下载工具
+echo         J-Link Download Tool
 echo ========================================
-echo 设备: %DEVICE%
-echo 接口: %IF%
-echo 速度: %SPEED% kHz
+echo Device: %JLINK_DEVICE%
+echo Interface: %IF%
+echo Speed: %SPEED% kHz
 echo ========================================
 echo.
 
-REM ★★★ 检查是否提供了文件参数，如果没有则使用固定路径 ★★★
+call :find_jlink
+if errorlevel 1 goto end
+
+echo J-Link: %JLINK_EXE%
+echo Run after download: %RUN_AFTER_DOWNLOAD_TEXT%
+echo.
+
 if "%~1"=="" (
-    echo [信息] 未提供文件参数，使用固定路径: %FIXED_FIRMWARE_PATH%
-    set "FILE_PATH=%FIXED_FIRMWARE_PATH%"
-    goto :check_fixed_file
+    echo [INFO] No firmware argument provided, use default path: %DEFAULT_FIRMWARE%
+    set "FILE_PATH=%DEFAULT_FIRMWARE%"
+    goto check_default_file
 )
 
-REM 检查拖拽的文件是否存在
+if /I "%~1"=="-h" goto show_usage
+if /I "%~1"=="/?" goto show_usage
+
 if not exist "%~1" (
-    echo [错误] 文件 "%~1" 不存在！
-    goto :end
+    echo [ERROR] File "%~1" does not exist.
+    goto end
 )
 
-REM 获取拖拽的文件信息
 set "FILE_PATH=%~f1"
+set "JLINK_FILE_PATH=%FILE_PATH:\=/%"
 set "FILE_NAME=%~nx1"
 set "FILE_EXT=%~x1"
-goto :process_file
+goto process_file
 
-:check_fixed_file
-REM 检查固定文件是否存在
-if not exist "%FIXED_FIRMWARE_PATH%" (
-    echo [错误] 固定固件文件不存在！
-    echo 请检查路径: %FIXED_FIRMWARE_PATH%
+:check_default_file
+if not exist "%DEFAULT_FIRMWARE%" (
+    echo [ERROR] Default firmware file does not exist.
+    echo Check path: %DEFAULT_FIRMWARE%
     call :show_usage
-    goto :end
+    goto end
 )
 
-REM 获取固定文件信息
-for %%F in ("%FIXED_FIRMWARE_PATH%") do (
+for %%F in ("%DEFAULT_FIRMWARE%") do (
+    set "FILE_PATH=%%~fF"
+    set "JLINK_FILE_PATH=%%~fF"
     set "FILE_NAME=%%~nxF"
     set "FILE_EXT=%%~xF"
 )
+set "JLINK_FILE_PATH=!JLINK_FILE_PATH:\=/!"
 
 :process_file
-REM 验证文件格式并构建加载命令
 call :get_load_command
-if !ERRORLEVEL! neq 0 goto :end
+if errorlevel 1 goto end
 
-REM 创建J-Link脚本
-set "JLINK_SCRIPT=%TEMP%\jlink_script.tmp"
-echo device %DEVICE%        >  "%JLINK_SCRIPT%"
-echo si %IF%                >> "%JLINK_SCRIPT%"
-echo speed %SPEED%          >> "%JLINK_SCRIPT%"
-echo halt                   >> "%JLINK_SCRIPT%"
-echo r                      >> "%JLINK_SCRIPT%"
-echo !LOAD_CMD!             >> "%JLINK_SCRIPT%"
-echo r                      >> "%JLINK_SCRIPT%"
-echo g                      >> "%JLINK_SCRIPT%"
-echo exit                   >> "%JLINK_SCRIPT%"
+set "JLINK_SCRIPT=%TEMP%\jlink_script_demo.tmp"
+(
+echo device %JLINK_DEVICE%
+echo si %IF%
+echo speed %SPEED%
+echo halt
+echo r
+echo !LOAD_CMD!
+echo r
+if "%RUN_AFTER_DOWNLOAD%"=="1" echo g
+echo exit
+) > "%JLINK_SCRIPT%"
 
-REM 执行下载
-echo.
-echo 正在下载: !FILE_NAME!
-echo 文件路径: %FILE_PATH%
-echo 目标设备: %DEVICE%
-echo ========================================
+echo Start download: !FILE_NAME!
+echo File path: %FILE_PATH%
 echo.
 
-"%JLINK_PATH%\JLink.exe" -CommanderScript "%JLINK_SCRIPT%" -Log "%LOG_FILE%"
+"%JLINK_EXE%" -CommanderScript "%JLINK_SCRIPT%" -Log "%LOG_FILE%"
 
-REM 检查执行结果
-if !ERRORLEVEL! equ 0 (
+if errorlevel 1 (
     echo.
-    echo ========================================
-    echo [成功] 程序下载完成
-    echo 日志已保存到: %LOG_FILE%
+    echo Download failed.
+    echo Check log: %LOG_FILE%
 ) else (
     echo.
-    echo ========================================
-    echo [错误] 下载过程中出现错误！
-    echo 请检查日志文件: %LOG_FILE%
+    echo Download completed successfully.
+    if "%RUN_AFTER_DOWNLOAD%"=="1" (
+        echo MCU is now running.
+    ) else (
+        echo MCU remains halted.
+    )
+    echo Log file: %LOG_FILE%
 )
 
-REM 清理临时文件
 if exist "%JLINK_SCRIPT%" del "%JLINK_SCRIPT%"
 
 :end
-echo.
-@REM pause
 exit /b
 
-REM ========================================
-REM 子程序：显示使用方法
-REM ========================================
 :show_usage
 echo.
-echo 使用方法：
-echo 1. 直接将 .hex/.bin/.s19 文件拖拽到此批处理文件上
-echo 2. 或者：%0 ^<固件文件路径^>
-echo 3. 直接双击运行使用固定路径: %FIXED_FIRMWARE_PATH%
+echo Usage:
+echo 1. Run directly to download the default firmware: %DEFAULT_FIRMWARE%
+echo 2. Or use: %~nx0 ^<firmware_file_path^>
 echo.
-echo 支持的格式：.hex, .bin (需指定地址), .s19
-goto :eof
+echo Supported formats: .hex, .bin, .s19
+echo Environment:
+echo   RUN_AFTER_DOWNLOAD=0  keep MCU halted after download
+echo   RUN_AFTER_DOWNLOAD=1  run MCU after download
+exit /b 0
 
-REM ========================================
-REM 子程序：根据文件类型构建加载命令
-REM ========================================
+:find_jlink
+set "JLINK_EXE="
+
+if exist "%ProgramFiles%\SEGGER\JLink\JLink.exe" (
+    set "JLINK_EXE=%ProgramFiles%\SEGGER\JLink\JLink.exe"
+    exit /b 0
+)
+
+if defined ProgramFiles(x86) (
+    if exist "%ProgramFiles(x86)%\SEGGER\JLink\JLink.exe" (
+        set "JLINK_EXE=%ProgramFiles(x86)%\SEGGER\JLink\JLink.exe"
+        exit /b 0
+    )
+)
+
+for /d %%D in ("%ProgramFiles%\SEGGER\JLink*") do (
+    if exist "%%~fD\JLink.exe" (
+        set "JLINK_EXE=%%~fD\JLink.exe"
+        exit /b 0
+    )
+)
+
+if defined ProgramFiles(x86) (
+    for /d %%D in ("%ProgramFiles(x86)%\SEGGER\JLink*") do (
+        if exist "%%~fD\JLink.exe" (
+            set "JLINK_EXE=%%~fD\JLink.exe"
+            exit /b 0
+        )
+    )
+)
+
+echo [ERROR] JLink.exe not found.
+echo Expected under "%ProgramFiles%\SEGGER" or "%ProgramFiles(x86)%\SEGGER".
+exit /b 1
+
 :get_load_command
-if /i "!FILE_EXT!"==".hex" (
-    set "LOAD_CMD=loadfile "%FILE_PATH%""
+if /I "!FILE_EXT!"==".hex" (
+    set "LOAD_CMD=loadfile !JLINK_FILE_PATH!"
     exit /b 0
 )
 
-if /i "!FILE_EXT!"==".bin" (
-    echo [信息] 检测到 .bin 文件，使用默认地址: %BIN_ADDR%
-    set "LOAD_CMD=loadfile "%FILE_PATH%" %BIN_ADDR%"
+if /I "!FILE_EXT!"==".bin" (
+    echo [INFO] .bin file detected, use address: %BIN_ADDR%
+    set "LOAD_CMD=loadfile !JLINK_FILE_PATH! %BIN_ADDR%"
     exit /b 0
 )
 
-if /i "!FILE_EXT!"==".s19" (
-    set "LOAD_CMD=loadfile "%FILE_PATH%""
+if /I "!FILE_EXT!"==".s19" (
+    set "LOAD_CMD=loadfile !JLINK_FILE_PATH!"
     exit /b 0
 )
 
-echo [错误] 不支持的文件格式: !FILE_EXT!
-echo        支持格式: .hex, .bin, .s19
+echo [ERROR] Unsupported file extension: !FILE_EXT!
+echo Supported formats: .hex, .bin, .s19
 exit /b 1

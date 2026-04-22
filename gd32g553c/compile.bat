@@ -1,221 +1,282 @@
 @echo off
 chcp 65001 >nul
-title 智能固件构建工具
-
-echo 🏗️ ========================================
-echo       智能固件构建工具
-echo 🏗️ ========================================
-echo.
-
 setlocal enabledelayedexpansion
+cd /d "%~dp0"
 
-set /p BUILD_TYPE=请输入构建类型 (1=IAP, 2=ISP): 
+title Firmware Build Tool
 
-if "%BUILD_TYPE%"=="1" (
-    echo 构建 IAP 版本...
-    set FW_TYPE=IAP
-    set OUTPUT_NAME=iap_firmware
-    set FW_TYPE_DEFINE=-DFIRMWARE_TYPE_IAP
-) else if "%BUILD_TYPE%"=="2" (
-    echo 构建 ISP 版本...
-    set FW_TYPE=ISP
-    set OUTPUT_NAME=isp_firmware
-    set FW_TYPE_DEFINE=-DFIRMWARE_TYPE_ISP
-) else (
-    echo 错误: 无效的构建类型
-    exit /b 1
+echo ========================================
+echo       Firmware Build Tool
+echo ========================================
+echo.
+
+set "FW_TYPE=ISP"
+set "OUTPUT_NAME=isp_firmware"
+set "FW_TYPE_DEFINE=-DFIRMWARE_TYPE_ISP"
+set "CUSTOM_NAME="
+set "BUILD_MODE=build"
+set "BUILD_MODE_NAME=Incremental Build"
+set "PROMPT_CUSTOM_NAME=0"
+
+call :parse_args %*
+if errorlevel 2 goto end
+if errorlevel 1 exit /b 1
+
+echo.
+echo Build configuration:
+echo   Type: %FW_TYPE%
+echo   Mode: %BUILD_MODE_NAME%
+echo.
+
+if /I "%BUILD_MODE%"=="clean" goto clean_only
+
+if "%PROMPT_CUSTOM_NAME%"=="1" (
+    set "CUSTOM_NAME="
+    set /p "CUSTOM_NAME=Enter version name (press Enter to skip): "
+    call :trim_value CUSTOM_NAME
+    if "!CUSTOM_NAME!"=="" (
+        echo No custom name entered
+    ) else (
+        echo Using name: !CUSTOM_NAME!
+    )
+    echo.
 )
 
-echo.
-echo 构建配置:
-echo   类型: %FW_TYPE%
-echo.
+for /f %%i in ('powershell -command "Get-Date -Format yyyyMMddHHmmss"') do set "datetime=%%i"
 
-:: 1. 输入自定义名称
-set /p "custom_name=Enter version name (press Enter to skip): "
-if "%custom_name%"=="" (echo No custom name entered) else echo Using name: %custom_name%
-echo.
-
-:: 2. 使用 PowerShell 获取标准日期时间
-for /f %%i in ('powershell -command "Get-Date -Format 'yyyyMMddHHmmss'"') do set "datetime=%%i"
-
-:: 3. 设置目标目录
 set "target_dir=..\..\..\builds\pfc\!datetime!"
-if defined custom_name set "target_dir=!target_dir!_!custom_name!"
+if defined CUSTOM_NAME set "target_dir=!target_dir!_!CUSTOM_NAME!"
 
-:: 4. 设置文件名（与目录名保持一致）
 set "bin_name=!datetime!.bin"
-if defined custom_name set "bin_name=!custom_name!_!datetime!.bin"
+if defined CUSTOM_NAME set "bin_name=!CUSTOM_NAME!_!datetime!.bin"
 
-echo 📊 构建信息:
-if defined custom_name (
-    echo   项目名称: !custom_name!
+echo Build info:
+if defined CUSTOM_NAME (
+    echo   Name: !CUSTOM_NAME!
 ) else (
-    echo   项目名称: 纯日期模式
+    echo   Name: date-only
 )
-echo   构建时间: !datetime!
-echo   输出目录: !target_dir!
-echo   固件文件: !bin_name!
+echo   Timestamp: !datetime!
+echo   Output dir: !target_dir!
+echo   Firmware file: !bin_name!
 echo.
 
-:: 5. 创建输出目录
-echo 🔄 步骤1: 创建输出目录...
-if not exist "!target_dir!" mkdir "!target_dir!"
-if !errorlevel! neq 0 (
-    echo ❌ 创建目录失败!
-    goto error
-)
-echo ✅ 目录创建成功: !target_dir!
-
-:: 6. 编译fw_info工具
-echo 🔄 步骤2: 编译fw_info工具...
-if exist fw_info.exe del fw_info.exe
-gcc %FW_TYPE_DEFINE% -o fw_info.exe fw_info.c -DIS_PFC
-if !errorlevel! neq 0 (
-    echo ❌ fw_info编译失败!
-    goto error
-)
-echo ✅ fw_info工具编译成功
-
-:: 7. 编译固件（这里替换为你的实际编译命令）
-echo 🔄 步骤3: 编译固件...
-echo ⚠️  执行固件编译命令...
-
-
-:: Delete old build directory
-echo Deleting old build directory...
-rmdir /s /q "build"
-
-:: Run make to compile the project
-echo Running make to configure and build the project...
-mingw32-make.exe -s -j10 FW_TYPE=%FW_TYPE% OUTPUT_NAME=%OUTPUT_NAME% DEFINES="%FW_TYPE_DEFINE%"
-
-:: Check if the build was successful
-if %ERRORLEVEL% NEQ 0 (
-    echo Build failed!
-    exit /b %ERRORLEVEL%
-)
-
-echo ✅ 固件编译完成
-
-:: 8. 获取Git信息
-echo 🔄 步骤4: 获取Git信息...
-set GIT_COMMIT=unknown
-set GIT_BRANCH=unknown
-set GIT_STATUS=clean
-
-:: 获取commit ID (16位)
-git rev-parse --short=16 HEAD >nul 2>&1
-if !errorlevel! equ 0 (
-    for /f "tokens=*" %%i in ('git rev-parse --short=16 HEAD') do set GIT_COMMIT=%%i
+if /I "%BUILD_MODE%"=="rebuild" (
+    echo Step 1: clean build directory...
+    call :clean_build_dir
+    if errorlevel 1 goto error
 ) else (
-    for /f "tokens=*" %%i in ('git rev-parse HEAD') do set GIT_COMMIT=%%i
-    set GIT_COMMIT=!GIT_COMMIT:~0,16!
+    echo Step 1: skip clean build directory...
 )
 
-:: 获取分支名称
-git branch --show-current >nul 2>&1
-if !errorlevel! equ 0 (
-    for /f "tokens=*" %%i in ('git branch --show-current') do set GIT_BRANCH=%%i
+echo Step 2: create output directory...
+if not exist "!target_dir!" mkdir "!target_dir!"
+if errorlevel 1 (
+    echo Error: failed to create output directory.
+    goto error
+)
+echo Output directory ready.
+
+echo Step 3: build fw_info tool...
+if exist fw_info.exe del /f /q fw_info.exe
+gcc %FW_TYPE_DEFINE% -o fw_info.exe fw_info.c -DIS_PFC
+if errorlevel 1 (
+    echo Error: failed to build fw_info.exe.
+    goto error
+)
+echo fw_info.exe built successfully.
+
+echo Step 4: build firmware...
+mingw32-make.exe -s -j10 FW_TYPE=%FW_TYPE% OUTPUT_NAME=%OUTPUT_NAME% DEFINES="%FW_TYPE_DEFINE%"
+if errorlevel 1 (
+    echo Error: firmware build failed.
+    goto error
+)
+echo Firmware build completed.
+
+set "BUILD_BIN=.\build\demo.bin"
+if not exist "%BUILD_BIN%" (
+    echo Error: expected output file not found: %BUILD_BIN%
+    goto error
 )
 
-:: 检查是否有未提交的更改
-git diff-index --quiet HEAD --
-if !errorlevel! neq 0 set GIT_STATUS=dirty
+echo Step 5: collect Git info...
+set "GIT_COMMIT=unknown"
+set "GIT_BRANCH=unknown"
+set "GIT_STATUS=clean"
 
-echo ✅ Git信息获取完成
+for /f "delims=" %%i in ('git rev-parse --verify --short=16 HEAD 2^>nul') do set "GIT_COMMIT=%%i"
+for /f "delims=" %%i in ('git branch --show-current 2^>nul') do set "GIT_BRANCH=%%i"
+git diff-index --quiet HEAD -- 2>nul
+if errorlevel 1 set "GIT_STATUS=dirty"
+echo Git info collected.
 
-:: 9. 生成详细Git报告
-echo 🔄 步骤5: 生成Git详细报告...
+echo Step 6: write Git report...
 (
 echo ========================================
-echo           Git详细变更报告
+echo Git Detailed Report
 echo ========================================
 echo.
-if defined custom_name (
-    echo 项目名称: !custom_name!
+if defined CUSTOM_NAME (
+echo Name: !CUSTOM_NAME!
 ) else (
-    echo 项目名称: 纯日期模式
+echo Name: date-only
 )
-echo 构建时间: !datetime!
+echo Timestamp: !datetime!
+echo Build mode: %BUILD_MODE_NAME%
 echo.
-echo 仓库状态: !GIT_STATUS!
-echo 当前分支: !GIT_BRANCH!
-echo 最新提交: !GIT_COMMIT!
+echo Repo status: !GIT_STATUS!
+echo Branch: !GIT_BRANCH!
+echo Commit: !GIT_COMMIT!
 echo.
 ) > "!target_dir!\git_detailed_report.txt"
 
-:: 添加提交历史和详细差异
-git log -5 --pretty=format:"提交ID: %%H%%n作者: %%an <%%ae>%%n日期: %%ad%%n描述: %%s%%n" --date=short >> "!target_dir!\git_detailed_report.txt"
-echo. >> "!target_dir!\git_detailed_report.txt"
-git log -3 -p --pretty=format:"%%n=== 提交: %%H ===%%n作者: %%an%%n日期: %%ad%%n描述: %%s%%n" --date=short >> "!target_dir!\git_detailed_report.txt"
+git --no-pager log -5 --pretty=format:"Commit: %%H%%nAuthor: %%an <%%ae>%%nDate: %%ad%%nSubject: %%s%%n" --date=short >> "!target_dir!\git_detailed_report.txt" 2>nul
+echo.>> "!target_dir!\git_detailed_report.txt"
+git --no-pager log -3 -p --pretty=format:"%%n=== Commit: %%H ===%%nAuthor: %%an%%nDate: %%ad%%nSubject: %%s%%n" --date=short >> "!target_dir!\git_detailed_report.txt" 2>nul
+echo Git report written.
 
-echo ✅ Git报告生成完成
-
-:: 10. 添加文件尾信息
-echo 🔄 步骤6: 添加文件尾信息...
-fw_info.exe .\build\test.bin "!target_dir!\!bin_name!"
-if !errorlevel! neq 0 (
-    echo ❌ 添加文件尾信息失败!
+echo Step 7: append footer...
+fw_info.exe "%BUILD_BIN%" "!target_dir!\!bin_name!" "!GIT_COMMIT!"
+if errorlevel 1 (
+    echo Error: failed to append footer.
     goto error
 )
-echo ✅ 文件尾信息添加成功
+echo Footer appended successfully.
 
-:: 11. 生成构建报告
-echo 🔄 步骤7: 生成构建报告...
+echo Step 8: write build report...
 (
-echo 构建报告
-echo ===========
+echo Build Report
+echo ============
 echo.
-if defined custom_name (
-    echo 项目名称: !custom_name!
+if defined CUSTOM_NAME (
+echo Name: !CUSTOM_NAME!
 ) else (
-    echo 项目名称: 纯日期模式
+echo Name: date-only
 )
-echo 构建时间: !datetime!
+echo Timestamp: !datetime!
+echo Build mode: %BUILD_MODE_NAME%
+echo Firmware type: %FW_TYPE%
 echo.
-echo Git信息:
-echo   提交: !GIT_COMMIT!
-echo   分支: !GIT_BRANCH!
-echo   状态: !GIT_STATUS!
+echo Git:
+echo   Commit: !GIT_COMMIT!
+echo   Branch: !GIT_BRANCH!
+echo   Status: !GIT_STATUS!
 echo.
-echo 输出文件:
+echo Output:
 echo   !bin_name!
 echo.
-echo 文件位置:
+echo Location:
 echo   !target_dir!\!bin_name!
 ) > "!target_dir!\build_report.txt"
 
-echo ✅ 构建报告生成完成
-
-:: 12. 显示最终结果
 echo.
-echo 📊 构建结果:
-echo   📁 输出目录: !target_dir!
-echo   📄 固件文件: !bin_name!
-echo   📋 构建报告: build_report.txt
-echo   📝 Git报告: git_detailed_report.txt
+echo Build result:
+echo   Output dir: !target_dir!
+echo   Firmware: !bin_name!
+echo   Build report: build_report.txt
+echo   Git report: git_detailed_report.txt
+echo   Debug ELF: build\demo.elf
+for %%I in ("!target_dir!\!bin_name!") do echo   File size: %%~zI bytes
 echo.
-echo   🔍 Git状态: !GIT_COMMIT! [!GIT_BRANCH!] - !GIT_STATUS!
+echo Build finished successfully.
+goto end
 
-:: 13. 计算文件大小
-for %%I in ("!target_dir!\!bin_name!") do (
-    echo   📏 固件大小: %%~zI 字节
-)
-
+:clean_only
+echo Step 1: clean build directory...
+call :clean_build_dir
+if errorlevel 1 goto error
 echo.
-echo 🎉 ========================================
-echo       构建成功完成! ✓
-echo 🎉 ========================================
-
+echo Clean completed successfully.
+echo Clean dir: build
 goto end
 
 :error
 echo.
-echo ❌ ========================================
-echo       构建过程出现错误! ✗
-echo ❌ ========================================
+echo Build failed.
 exit /b 1
+
+:parse_args
+if "%~1"=="" exit /b 0
+
+if /I "%~1"=="ISP" (
+    shift
+    goto parse_args
+)
+
+if /I "%~1"=="-r" (
+    set "BUILD_MODE=rebuild"
+    set "BUILD_MODE_NAME=Rebuild"
+    shift
+    goto parse_args
+)
+
+if /I "%~1"=="-c" (
+    set "BUILD_MODE=clean"
+    set "BUILD_MODE_NAME=Clean Only"
+    shift
+    goto parse_args
+)
+
+if /I "%~1"=="-b" (
+    set "BUILD_MODE=build"
+    set "BUILD_MODE_NAME=Incremental Build"
+    shift
+    goto parse_args
+)
+
+if /I "%~1"=="-n" (
+    set "BUILD_MODE=rebuild"
+    set "BUILD_MODE_NAME=Named Rebuild"
+    set "PROMPT_CUSTOM_NAME=1"
+    shift
+    goto parse_args
+)
+
+if /I "%~1"=="-h" goto show_help
+if /I "%~1"=="/?" goto show_help
+
+if not defined CUSTOM_NAME (
+    set "CUSTOM_NAME=%~1"
+    shift
+    goto parse_args
+)
+
+echo Error: unsupported argument "%~1"
+exit /b 1
+
+:show_help
+echo Usage:
+echo   compile.bat [-r^|-c^|-b^|-n] [name]
+echo.
+echo Options:
+echo   -r    clean build directory and then build
+echo   -c    only clean build directory
+echo   -b    incremental build
+echo   -n    clean build, then prompt for version name
+echo.
+echo Examples:
+echo   compile.bat
+echo   compile.bat -r
+echo   compile.bat demo_v1
+echo   compile.bat -n
+exit /b 2
+
+:clean_build_dir
+if exist "build" rmdir /s /q "build"
+exit /b 0
+
+:trim_value
+setlocal EnableDelayedExpansion
+set "value=!%~1!"
+for /f "tokens=* delims= " %%A in ("!value!") do set "value=%%A"
+:trim_value_loop
+if defined value if "!value:~-1!"==" " (
+    set "value=!value:~0,-1!"
+    goto trim_value_loop
+)
+endlocal & set "%~1=%value%"
+exit /b 0
 
 :end
 endlocal
