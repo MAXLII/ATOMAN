@@ -13,7 +13,8 @@
 # 从环境变量获取参数
 FW_TYPE ?= IAP
 OUTPUT_NAME ?= firmware
-DEFINES ?= -DFIRMWARE_TYPE_IAP -DIS_AC
+DEFINES ?=
+PLATFORM_DEFINES = -DIS_DC
 
 # 根据类型设置不同的编译选项
 ifeq ($(FW_TYPE),IAP)
@@ -168,7 +169,7 @@ AS_DEFS =
 C_DEFS =  \
 -DGD32G5X3
 
-C_DEFS += $(DEFINES)
+C_DEFS += $(PLATFORM_DEFINES) $(DEFINES)
 
 
 # AS includes

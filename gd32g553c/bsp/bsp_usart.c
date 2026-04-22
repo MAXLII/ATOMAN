@@ -203,7 +203,7 @@ void bsp_usart_init(void)
     usart_fifo_disable(USART0);
     usart_dma_receive_config(USART0, USART_RECEIVE_DMA_ENABLE);
     usart_dma_transmit_config(USART0, USART_TRANSMIT_DMA_ENABLE);
-    usart_baudrate_set(USART0, 921600U);
+    usart_baudrate_set(USART0, 115200U);
 
     dma_deinit(DMA0, DMA_CH0);
     dma_parameter.periph_addr = (uint32_t)(uint32_t *)&USART_RDATA(USART0);
