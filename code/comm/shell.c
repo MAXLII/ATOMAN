@@ -1,8 +1,3 @@
-/**
- * @file shell.c
- * @brief Shell 命令系统（协议/具体实现层）
- */
-
 #include "shell.h"
 #include "section.h"
 #include "platform.h"
@@ -18,23 +13,26 @@
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 
+/* Head of the runtime shell registration list built from SECTION_SHELL items. */
 section_shell_t *p_shell_first;
 
-/* ------------------------ Shell 插入 ------------------------ */
+/* Number of shell entries inserted into the runtime list. */
 uint32_t shell_data_num = 0;
 
 static void shell_insert(section_shell_t *shell)
 {
+    /* Reject NULL input so the caller can scan sections without extra guards. */
     if (!shell)
         return;
 
-    /* 防止重复插入（理论上不会发生，属于防御性代码） */
+    /* Avoid inserting the same registration twice if init is called again. */
     for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
         if (p == shell)
             return;
     }
 
+    /* Insert at the head because ordering is not performance critical here. */
     shell->p_next = p_shell_first;
     p_shell_first = shell;
     shell_data_num++;
@@ -42,6 +40,7 @@ static void shell_insert(section_shell_t *shell)
 
 void shell_init(void)
 {
+    /* Scan the linker section and collect every shell command/variable entry. */
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
          p < (reg_section_t *)&SECTION_STOP;
          ++p)
@@ -59,13 +58,12 @@ void shell_init(void)
 
 REG_INIT(0, shell_init)
 
-// 你原来的：is_string_number / eval_expr / eval_expr_inner / parse_integer
 static int is_string_number(const char *str)
 {
+    /* Accept plain numbers and simple expressions such as "1+2*3" or "-0.5". */
     if (!str || !*str)
         return 0;
 
-    // 处理正负号
     if (*str == '-' || *str == '+')
         str++;
 
@@ -82,7 +80,6 @@ static int is_string_number(const char *str)
         }
         else if (*str == '*' || *str == '/' || *str == '+' || *str == '-')
         {
-            // 允许表达式字符
         }
         else
         {
@@ -102,11 +99,11 @@ static float eval_expr_inner(const char **p)
 
     while (*expr)
     {
-        // 跳过空格
+        /* Skip whitespace between tokens so the parser is user friendly. */
         while (*expr == ' ')
             expr++;
 
-        // 处理连续的正负号
+        /* Collapse repeated leading +/- signs into a final sign. */
         int sign = 1;
         while (*expr == '+' || *expr == '-')
         {
@@ -119,22 +116,21 @@ static float eval_expr_inner(const char **p)
 
         float number = 0;
 
-        // 处理括号
         if (*expr == '(')
         {
-            expr++; // 跳过 '('
+            /* Parentheses recurse into the same precedence parser. */
+            expr++;
             number = eval_expr_inner(&expr);
             if (*expr == ')')
-                expr++; // 跳过 ')'
+                expr++;
         }
         else
         {
-            // 解析数字
+            /* strtof advances expr to the first non-numeric character. */
             number = strtof(expr, (char **)&expr);
         }
         number *= sign;
 
-        // 处理连续的乘除运算（优先级高）
         while (1)
         {
             while (*expr == ' ')
@@ -149,7 +145,6 @@ static float eval_expr_inner(const char **p)
             float next = 0;
             int next_sign = 1;
 
-            // 处理乘除运算后的正负号
             while (*expr == '+' || *expr == '-')
             {
                 if (*expr == '-')
@@ -159,7 +154,6 @@ static float eval_expr_inner(const char **p)
             while (*expr == ' ')
                 expr++;
 
-            // 处理括号或数字
             if (*expr == '(')
             {
                 expr++;
@@ -173,20 +167,18 @@ static float eval_expr_inner(const char **p)
             }
             next *= next_sign;
 
-            // 执行乘除运算
             if (muldiv == '*')
                 number *= next;
             else if (muldiv == '/' && next != 0)
                 number /= next;
         }
 
-        // 执行加减运算
+        /* Merge the resolved term into the accumulated result. */
         if (op == '+')
             result += number;
         else if (op == '-')
             result -= number;
 
-        // 获取下一个运算符
         while (*expr == ' ')
             expr++;
         if (*expr == '+' || *expr == '-')
@@ -196,7 +188,7 @@ static float eval_expr_inner(const char **p)
         else if (*expr == '\0')
             break;
         else
-            op = '+'; // 容错处理
+            op = '+';
     }
     *p = expr;
     return result;
@@ -208,26 +200,25 @@ static int parse_integer(const char *param, int32_t *out)
 
     if (strncmp(param, "0x", 2) == 0)
     {
-        // 十六进制
+        /* Hex format: 0x1234 */
         *out = (int32_t)strtol(param, NULL, 16);
         return 1;
     }
     else if (strncmp(param, "0b", 2) == 0)
     {
-        // 二进制
+        /* Binary format: 0b1010 */
         *out = (int32_t)strtol(param + 2, NULL, 2);
         return 1;
     }
     else if (is_string_number(param))
     {
-        // 十进制或表达式
+        /* Decimal and simple expression format. */
         *out = (int32_t)eval_expr(param);
         return 1;
     }
     return 0;
 }
 
-/* ------------------------ 小工具：字符串修剪/选项解析 ------------------------ */
 static inline char *ltrim(char *s)
 {
     while (s && *s && isspace((unsigned char)*s))
@@ -247,12 +238,9 @@ static inline void rtrim_inplace(char *s)
     }
 }
 
-/* 从 param 中解析可选的 "-s[ N]"，并把值表达式部分（可能含空格）截出来
- * - value_begin/value_end: 指向 param 内部（会就地写 '\0' 分割），调用前确保 param 可写
- * - status_set: -1 表示未指定；>=0 表示用户指定的状态值
- */
 static void parse_param_value_and_status(char *param, char **value_str, int32_t *status_set)
 {
+    /* Parse "value -s N" from one buffer in place to avoid extra allocation. */
     *value_str = NULL;
     *status_set = -1;
     if (!param)
@@ -260,7 +248,6 @@ static void parse_param_value_and_status(char *param, char **value_str, int32_t 
 
     char *p = ltrim(param);
 
-    /* 找到 token 边界上的 "-s" */
     char *opt = strstr(p, "-s");
     while (opt)
     {
@@ -271,18 +258,17 @@ static void parse_param_value_and_status(char *param, char **value_str, int32_t 
 
     if (opt)
     {
-        /* value 部分：p ... opt-1 */
+        /* Split the original string into payload part and optional status part. */
         *opt = '\0';
         char *v = ltrim(p);
         rtrim_inplace(v);
         *value_str = (*v) ? v : NULL;
 
-        /* status 部分：从 opt+2 开始 */
         char *ps = opt + 2;
         ps = ltrim(ps);
         if (*ps == '\0')
         {
-            *status_set = 0; /* 仅 "-s"：默认关 */
+            *status_set = 0;
         }
         else
         {
@@ -296,18 +282,17 @@ static void parse_param_value_and_status(char *param, char **value_str, int32_t 
         return;
     }
 
-    /* 没有 -s：整个 param 当 value（允许空格，右侧修剪） */
     char *v = ltrim(p);
     rtrim_inplace(v);
     *value_str = (*v) ? v : NULL;
 }
 
-/* ------------------------ 小工具：按类型打印/写入 ------------------------ */
 static void shell_print_item(section_shell_t *p, DEC_MY_PRINTF)
 {
     if (!p || !my_printf || !my_printf->my_printf)
         return;
 
+    /* Print every shell item with a type-specific formatter. */
     switch (p->type)
     {
     case SHELL_CMD:
@@ -349,7 +334,7 @@ static void shell_write_item_if_needed(section_shell_t *p, const char *value_str
     switch (p->type)
     {
     case SHELL_CMD:
-        /* CMD 不写入 */
+        /* Commands do not own writable storage, so nothing is updated here. */
         break;
 
     case SHELL_UINT8:
@@ -358,6 +343,7 @@ static void shell_write_item_if_needed(section_shell_t *p, const char *value_str
         if (parse_integer(value_str, &intval))
         {
             val = (uint8_t)intval;
+            /* Clamp the requested value to the registered shell limits. */
             SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
             memcpy(p->p_var, &val, sizeof(val));
         }
@@ -424,6 +410,7 @@ static void shell_write_item_if_needed(section_shell_t *p, const char *value_str
         if (is_string_number(value_str))
         {
             val = eval_expr(value_str);
+            /* Float shell variables reuse the same limit mechanism. */
             SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
             memcpy(p->p_var, &val, sizeof(val));
         }
@@ -434,10 +421,10 @@ static void shell_write_item_if_needed(section_shell_t *p, const char *value_str
     }
 
     if (p->func)
+        /* Notify the owner after the value is updated. */
         p->func(my_printf);
 }
 
-// ------------------------ 你原来的 shell_run 迁入 ------------------------
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 {
     if (!my_printf || !my_printf->my_printf)
@@ -447,7 +434,7 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 
     shell_ctx_t *ctx = (shell_ctx_t *)p_ctx;
 
-    /* 溢出保护：永远预留 '\0' */
+    /* Reset on overflow so a malformed stream cannot overrun the line buffer. */
     if (ctx->shell_index >= (uint8_t)(sizeof(ctx->shell_buffer) - 1u))
     {
         ctx->shell_index = 0;
@@ -455,11 +442,10 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 
     ctx->shell_buffer[ctx->shell_index++] = data;
 
-    /* 仅在 '\n' 触发解析（兼容 "\r\n" 和 "\n"） */
     if (data != '\n')
         return;
 
-    /* 计算有效长度并补 '\0' */
+    /* Convert CRLF or LF line endings into one C string in place. */
     uint8_t end = ctx->shell_index;
     if (end >= 2u && ctx->shell_buffer[end - 2u] == '\r')
         end = (uint8_t)(end - 2u);
@@ -475,7 +461,7 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
     if (*line == '\0')
         goto shell_done;
 
-    /* ---- 内置命令 ---- */
+    /* Handle built-in commands first before walking the registered shell list. */
     if (strcmp(line, "time") == 0)
     {
         my_printf->my_printf("time = %us.%03ums\r\n",
@@ -497,9 +483,9 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
         goto shell_done;
     }
 
-    /* ---- 查找命令/变量 ---- */
     for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
+        /* Match exact command/variable name, then accept optional ":payload". */
         if (strncmp(line, p->p_name, p->p_name_size) != 0)
             continue;
 
@@ -511,7 +497,6 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
         if (c == ':')
             param = (char *)&line[p->p_name_size + 1u];
 
-        /* 参数可写：在 buffer 内就地分割 */
         char *value_str = NULL;
         int32_t status_set = -1;
         if (param)
@@ -519,13 +504,12 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
             parse_param_value_and_status(param, &value_str, &status_set);
         }
 
-        /* 1) CMD：有参数也忽略；直接执行 */
         if (p->type == SHELL_CMD)
         {
+            /* Commands execute immediately; "-s" only affects periodic follow-up. */
             if (p->func)
                 p->func(my_printf);
 
-            /* 允许用 "CMD:-s 3" 绑定状态输出/回调（如果你希望支持） */
             if (status_set >= 0)
             {
                 p->status = (uint32_t)status_set;
@@ -534,15 +518,14 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
             goto shell_done;
         }
 
-        /* 2) VAR：若给了 value_str 则写入；不带 value 仅打印 */
         if (value_str)
         {
+            /* Variables optionally accept a write value before the echo print. */
             shell_write_item_if_needed(p, value_str, my_printf);
         }
 
         shell_print_item(p, my_printf);
 
-        /* 3) 解析 -s：解决 "VAR: 123 -s 3" 这种之前无法设置的问题 */
         if (status_set >= 0)
         {
             p->status = (uint32_t)status_set;
@@ -553,26 +536,25 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
     }
 
 shell_done:
-    /* 只清索引即可（避免每次 memset 128 字节） */
+    /* Always reset the line parser so the next command starts from a clean state. */
     ctx->shell_index = 0;
     ctx->shell_buffer[0] = 0;
 }
 
-// ------------------------ shell 状态轮询（你原来的迁入） ------------------------
 void shell_status_run(void)
 {
+    /* Periodically service status-triggered shell items. */
     for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
         if (!p->status)
             continue;
 
-        /* 没有绑定输出接口则跳过，避免空指针 */
         if (!p->my_printf || !p->my_printf->my_printf)
             continue;
 
         if (p->status & (1u << 0))
         {
-            /* bit0：打印变量/值 */
+            /* Bit0 means "print me periodically" for variable-style entries. */
             if (p->type != SHELL_CMD)
             {
                 shell_print_item(p, p->my_printf);
@@ -581,32 +563,34 @@ void shell_status_run(void)
 
         if (p->status & (1u << 1))
         {
-            /* bit1：执行回调（通常用于采样/刷新/额外输出） */
+            /* Bit1 means "run callback periodically". */
             if (p->func)
                 p->func(p->my_printf);
         }
     }
 }
 
-// 原来的定时注册也搬到这里
 REG_TASK_MS(1000, shell_status_run)
 
-// ------------------------ list 分时打印（你原来的迁入） ------------------------
 typedef struct
 {
+    /* Current shell item being printed by the non-blocking list command. */
     section_shell_t *cur;
     DEC_MY_PRINTF;
+    /* Active flag lets the task print one item per tick instead of blocking. */
     uint8_t active;
     int max_name_len;
     int tab_count;
 } list_print_ctx_t;
 
+/* Shared context for the staged "list" output task. */
 static list_print_ctx_t g_list_print_ctx = {0};
 
 void list_print_start(DEC_MY_PRINTF)
 {
     if (!my_printf || g_list_print_ctx.active)
         return;
+    /* Prime the asynchronous printer so a long list does not block the shell. */
     g_list_print_ctx.cur = p_shell_first;
     g_list_print_ctx.my_printf = my_printf;
     g_list_print_ctx.active = 1;
@@ -625,7 +609,8 @@ REG_SHELL_CMD(list, list_print_start)
 
 int list_print_step(void)
 {
-    static uint8_t print_flag = 0; /* 0: data, 1: separator */
+    /* print_flag inserts a separator line between two consecutive entries. */
+    static uint8_t print_flag = 0;
 
     if (!g_list_print_ctx.active || !g_list_print_ctx.my_printf || !g_list_print_ctx.my_printf->my_printf)
         return 0;
@@ -635,6 +620,7 @@ int list_print_step(void)
         section_shell_t *s = g_list_print_ctx.cur;
         if (!s)
         {
+            /* The whole list has been drained. */
             g_list_print_ctx.active = 0;
             print_flag = 0;
             return 0;
@@ -717,6 +703,7 @@ int list_print_step(void)
 
 static void list_print_task(void)
 {
+    /* Service at most one slice per task tick to keep timing predictable. */
     if (g_list_print_ctx.active)
     {
         list_print_step();
@@ -725,39 +712,41 @@ static void list_print_task(void)
 
 REG_TASK_MS(10, list_print_task)
 
-// ------------------------ （可选）CPU利用率命令如果你觉得属于shell，就也搬进来 ------------------------
-
 extern float task_run_time;
+/* Latest coarse CPU utilization estimation derived from accumulated task time. */
 float task_metric = 0.0f;
+/* Peak CPU utilization estimation since boot or last reset. */
 float task_metric_max = 0.0f;
 
 static void task_metric_calculate(void)
 {
+    /* task_run_time is accumulated in 0.5 us ticks, so scale it to percent here. */
     task_metric = task_run_time * 500e-6f;
     if (task_metric > task_metric_max)
     {
         task_metric_max = task_metric;
     }
     task_run_time = 0.0f;
+    task_metric /= 100.0f;
+    task_metric_max /= 100.0f;
 }
 
 REG_TASK_MS(100, task_metric_calculate)
 
 static void CPU_Utilization(DEC_MY_PRINTF)
 {
-    my_printf->my_printf("CPU利用率:%f%%,CPU峰值:%f%%\n", task_metric, task_metric_max);
+    my_printf->my_printf("CPU Load:%f%%,CPU Peak:%f%%\n", task_metric * 100.0f, task_metric_max * 100.0f);
 }
 REG_SHELL_CMD(CPU_Utilization, CPU_Utilization)
 REG_SHELL_VAR(TASK_METRIC, task_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TASK_METRIC_MAX, task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 
-#pragma GCC diagnostic pop
-
-
+/* Context used when a remote peer requests a full shell item enumeration. */
 static shell_report_ctx_t shell_report_ctx = {0};
 
 void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
+    /* Ignore replies and refuse a new dump while a previous report is active. */
     if ((p_pack->is_ack == 1) ||
         (shell_report_ctx.active == 1))
     {
@@ -774,6 +763,7 @@ void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     pack_ret.len = sizeof(uint32_t);
     pack_ret.p_data = (uint8_t *)&shell_data_num;
 
+    /* Save the routing information so the follow-up report task can stream data. */
     shell_report_ctx.active = 1;
     shell_report_ctx.my_printf = my_printf;
     shell_report_ctx.p_shell = p_shell_first;
@@ -793,12 +783,14 @@ static void shell_data_report_act(void)
     {
         if (shell_report_ctx.p_shell == NULL)
         {
+            /* End the report session when every shell item has been emitted. */
             shell_report_ctx.active = 0;
         }
         else
         {
             section_packform_t packform = {0};
 
+            /* Convert the current shell entry into one compact report frame. */
             shell_report_list_t shell_report_list;
             shell_report_list.name_len = shell_report_ctx.p_shell->p_name_size;
             shell_report_list.type = shell_report_ctx.p_shell->type;
@@ -827,6 +819,7 @@ REG_TASK_MS(50, shell_data_report_act)
 
 static section_shell_t *find_shell(char *p_name, uint8_t len)
 {
+    /* Name lookup is linear because the shell registry is expected to stay small. */
     for (section_shell_t *p = p_shell_first; p; p = p->p_next)
     {
         if (p->p_name_size != len)
@@ -845,6 +838,7 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     shell_read_data_t *p_shell_read_data;
     p_shell_read_data = (shell_read_data_t *)p_pack->p_data;
+    /* Validate the variable-length payload before dereferencing its name field. */
     if (p_pack->len != sizeof(shell_read_data_t) - SHELL_STR_SIZE_MAX + p_shell_read_data->name_len)
     {
         return;
@@ -854,6 +848,7 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     {
         if (p->func)
         {
+            /* Let the owner refresh its value before it is reported. */
             p->func(my_printf);
         }
         shell_read_data_ret_t shell_read_data_ret = {0};
@@ -887,12 +882,11 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     p = find_shell(p_shell_write_data->name, p_shell_write_data->name_len);
     if (p)
     {
-        // 根据变量类型进行处理
+        /* Remote write shares the same data model as the local shell entry. */
         switch (p->type)
         {
         case SHELL_CMD:
-            // 执行命令
-
+            /* Commands are not writable via the generic write-data path. */
             break;
         case SHELL_UINT8:
         {
@@ -900,6 +894,7 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
             uint8_t val = *(uint8_t *)p->p_var;
             memcpy(p->p_max, (uint8_t *)&p_shell_write_data->data_max, sizeof(uint8_t));
             memcpy(p->p_min, (uint8_t *)&p_shell_write_data->data_min, sizeof(uint8_t));
+            /* Re-apply range clamp after the new remote limits are installed. */
             SHELL_UP_DN_LMT(val, p->p_max, p->p_min);
 
             break;
@@ -987,6 +982,7 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         comm_send_data(&packform, my_printf);
 
         if (p->func)
+            /* Notify the owner after a successful remote update. */
             p->func(my_printf);
     }
 }
@@ -997,6 +993,7 @@ static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINT
 {
     shell_wave_enable_param_t *p_shell_wave_enable_param;
     p_shell_wave_enable_param = (shell_wave_enable_param_t *)p_pack->p_data;
+    /* Validate variable-length payload before touching the embedded name field. */
     if (p_pack->len != sizeof(shell_wave_enable_param_t) - SHELL_STR_SIZE_MAX + p_shell_wave_enable_param->name_len)
     {
         return;
@@ -1008,6 +1005,7 @@ static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINT
     if (p)
     {
         shell_wave_enable_param_ack.ok = 1;
+        /* Bit2 is reserved for wave auto-report selection. */
         if (p_shell_wave_enable_param->auto_report == 1)
         {
             p->status |= 1 << 2;
@@ -1031,11 +1029,17 @@ static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINT
 
 REG_COMM(CMD_SET_SHELL_WAVE_ENABLE_PARAM, CMD_WORD_SHELL_WAVE_ENABLE_PARAM, shell_wave_param_enable_act)
 
+/* Global enable for the wave streaming state machine. */
 static uint8_t shell_wave_report_flg = 0;
+/* Delay between two wave frames, expressed in shell task ticks. */
 static uint32_t shell_wave_report_period = 300;
+/* Down-counter used by the WAIT state. */
 static uint32_t shell_wave_report_dn_cnt = 0;
+/* Cached output path used to send wave data back to the requester. */
 static section_link_tx_func_t *p_shell_wave_report_printf;
+/* Cached source address for wave packets. */
 static uint8_t shell_wave_src = 0;
+/* Cached destination address for wave packets. */
 static uint8_t shell_wave_dst = 0;
 
 static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
@@ -1056,6 +1060,7 @@ static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     packform.len = 0;
     packform.p_data = NULL;
     comm_send_data(&packform, my_printf);
+    /* Cache the response route so the periodic task can keep streaming later. */
     p_shell_wave_report_printf = my_printf;
     shell_wave_src = packform.src;
     shell_wave_dst = packform.dst;
@@ -1089,6 +1094,7 @@ static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
 {
     section_packform_t packform = {0};
 
+    /* Send one wave sample or one frame marker packet. */
     packform.cmd_set = CMD_SET_SHELL_WAVE_PARAM;
     packform.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
     packform.src = shell_wave_src;
@@ -1101,19 +1107,27 @@ static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
 
 typedef enum
 {
+    /* Idle until a remote peer enables wave streaming. */
     SHELL_WAVE_FSM_IDLE,
+    /* Emit the start marker of one wave frame. */
     SHELL_WAVE_FSM_START,
+    /* Walk through all auto-report shell variables. */
     SHELL_WAVE_FSM_DATA,
+    /* Emit the end marker of one wave frame. */
     SHELL_WAVE_FSM_END,
+    /* Wait the requested inter-frame gap before the next round. */
     SHELL_WAVE_FSM_WAIT,
 } SHELL_WAVE_FSM_E;
 
+/* Current state of the shell wave report finite-state machine. */
 static SHELL_WAVE_FSM_E shell_wave_fsm = 0;
 
 static void shell_wave_report_task(void)
 {
+    /* delay_cnt throttles packet rate inside the DATA state. */
     static uint8_t delay_cnt = 0;
     shell_wave_param_t shell_wave_param = {0};
+    /* Cursor used to resume variable scanning across task ticks. */
     static section_shell_t *p = NULL;
     switch (shell_wave_fsm)
     {
@@ -1124,6 +1138,7 @@ static void shell_wave_report_task(void)
         }
         break;
     case SHELL_WAVE_FSM_START:
+        /* 0x55555555 marks the beginning of one streamed frame. */
         shell_wave_param.data = 0x55555555;
         shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
         p = p_shell_first;
@@ -1144,6 +1159,7 @@ static void shell_wave_report_task(void)
         {
             if (p->status & (1 << 2))
             {
+                /* Bit2-selected shell variables are streamed one by one. */
                 shell_wave_param.data = (uint32_t)*(uint32_t *)p->p_var;
                 shell_wave_param.name_len = p->p_name_size;
                 shell_wave_param.type = p->type;
@@ -1160,6 +1176,7 @@ static void shell_wave_report_task(void)
         }
         break;
     case SHELL_WAVE_FSM_END:
+        /* 0xAAAAAAAA marks the end of one streamed frame. */
         shell_wave_param.data = 0xAAAAAAAA;
         shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
         shell_wave_fsm = SHELL_WAVE_FSM_WAIT;
@@ -1180,3 +1197,5 @@ static void shell_wave_report_task(void)
 }
 
 REG_TASK_MS(1, shell_wave_report_task)
+
+#pragma GCC diagnostic pop
