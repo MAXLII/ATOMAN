@@ -14,7 +14,11 @@
 
 #include "stdint.h"
 #include "section.h"
-#include "shell.h"
+#include "my_math.h"
+
+#ifndef SCOPE_ENABLE_PRINTF
+#define SCOPE_ENABLE_PRINTF 0
+#endif
 
 //================= 类型定义 =================
 
@@ -47,6 +51,132 @@ typedef struct
     const char **var_names;    ///< 采集变量名指针数组
     scope_state_e state;       ///< 当前状态
 } scope_t;
+
+typedef struct scope_service_obj_t
+{
+    uint8_t scope_id;
+    const char *p_name;
+    scope_t *p_scope;
+    uint32_t sample_period_us;
+    uint32_t capture_tag;
+    uint8_t data_ready;
+    scope_state_e last_state;
+    struct scope_service_obj_t *p_next;
+} scope_service_obj_t;
+
+#define CMD_SET_SCOPE 0x01
+
+#define CMD_WORD_SCOPE_LIST_QUERY 0x18
+#define CMD_WORD_SCOPE_INFO_QUERY 0x19
+#define CMD_WORD_SCOPE_VAR_QUERY 0x1A
+#define CMD_WORD_SCOPE_START 0x1B
+#define CMD_WORD_SCOPE_TRIGGER 0x1C
+#define CMD_WORD_SCOPE_STOP 0x1D
+#define CMD_WORD_SCOPE_RESET 0x1E
+#define CMD_WORD_SCOPE_SAMPLE_QUERY 0x1F
+
+typedef enum
+{
+    SCOPE_READ_MODE_NORMAL = 0,
+    SCOPE_READ_MODE_FORCE = 1,
+} scope_read_mode_e;
+
+typedef enum
+{
+    SCOPE_TOOL_STATUS_OK = 0,
+    SCOPE_TOOL_STATUS_SCOPE_ID_INVALID = 1,
+    SCOPE_TOOL_STATUS_VAR_INDEX_INVALID = 2,
+    SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID = 3,
+    SCOPE_TOOL_STATUS_RUNNING_DENIED = 4,
+    SCOPE_TOOL_STATUS_DATA_NOT_READY = 5,
+    SCOPE_TOOL_STATUS_BUSY = 6,
+    SCOPE_TOOL_STATUS_CAPTURE_CHANGED = 7,
+} scope_tool_status_e;
+
+#pragma pack(1)
+typedef struct
+{
+    uint8_t reserved;
+} scope_list_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t is_last;
+    uint8_t name_len;
+    uint8_t reserved;
+} scope_list_item_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t reserved[3];
+} scope_info_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t state;
+    uint8_t data_ready;
+    uint8_t var_count;
+    uint8_t reserved[3];
+    uint32_t sample_count;
+    uint32_t write_index;
+    uint32_t trigger_index;
+    uint32_t trigger_post_cnt;
+    uint32_t trigger_display_index;
+    uint32_t sample_period_us;
+    uint32_t capture_tag;
+} scope_info_ack_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t var_index;
+    uint8_t reserved[2];
+} scope_var_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t var_index;
+    uint8_t is_last;
+    uint8_t name_len;
+    uint8_t reserved[3];
+} scope_var_ack_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t state;
+    uint8_t data_ready;
+    uint32_t capture_tag;
+} scope_ctrl_ack_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t read_mode;
+    uint8_t reserved[2];
+    uint32_t sample_index;
+    uint32_t expected_capture_tag;
+} scope_sample_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t read_mode;
+    uint8_t var_count;
+    uint32_t sample_index;
+    uint32_t capture_tag;
+    uint8_t is_last_sample;
+    uint8_t reserved[3];
+} scope_sample_ack_t;
+#pragma pack()
 
 //================= 宏工具 =================
 
@@ -82,6 +212,7 @@ typedef struct
 
 //================= Shell命令注册宏 =================
 
+#if SCOPE_ENABLE_PRINTF
 #define REG_SCOPE_STATUS_CMD(name)                     \
     static void scope_status_##name(DEC_MY_PRINTF)     \
     {                                                  \
@@ -102,6 +233,12 @@ typedef struct
 #define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
     static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
     REG_SHELL_CMD(scp_pf_##name, scope_data_step_##name)
+#else
+#define REG_SCOPE_STATUS_CMD(name)
+#define REG_SCOPE_START_CMD(name)
+#define SCOPE_DATA_STEP_START(name, my_printf) ((void)0)
+#define REG_SCOPE_DATA_STEP_CMD(name)
+#endif
 
 //================= Scope对象注册宏 =================
 
@@ -113,7 +250,7 @@ typedef struct
  * @param ... 采集变量列表（float类型变量名）
  * @note 自动注册Scope对象及其状态、启动、分时打印Shell命令
  */
-#define REG_SCOPE(name, buf_size, trig_post_cnt, ...)                                                               \
+#define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...)                                         \
     float scope_##name##_buffer[SCOPE_COUNT_ARGS(__VA_ARGS__)][buf_size];                                           \
     float __VA_ARGS__;                                                                                              \
     float *scope_##name##_var_ptrs[SCOPE_COUNT_ARGS(__VA_ARGS__)] = {SCOPE_FOR_EACH(SCOPE_ADDR, __VA_ARGS__)};      \
@@ -133,9 +270,27 @@ typedef struct
         .in_trigger = 0,                                                                                            \
         .state = SCOPE_STATE_IDLE,                                                                                  \
     };                                                                                                              \
+    scope_service_obj_t scope_service_obj_##name = {                                                                \
+        .scope_id = 0u,                                                                                             \
+        .p_name = #name,                                                                                            \
+        .p_scope = &scope_##name,                                                                                   \
+        .sample_period_us = (_sample_period_us),                                                                    \
+        .capture_tag = 0u,                                                                                          \
+        .data_ready = 0u,                                                                                           \
+        .last_state = SCOPE_STATE_IDLE,                                                                             \
+        .p_next = NULL,                                                                                             \
+    };                                                                                                              \
+    static void scope_service_auto_reg_##name(void)                                                                 \
+    {                                                                                                               \
+        scope_service_register(&scope_service_obj_##name);                                                          \
+    }                                                                                                               \
+    REG_INIT(1, scope_service_auto_reg_##name)                                                                      \
     REG_SCOPE_STATUS_CMD(name)                                                                                      \
     REG_SCOPE_START_CMD(name)                                                                                       \
     REG_SCOPE_DATA_STEP_CMD(name)
+
+#define REG_SCOPE(name, buf_size, trig_post_cnt, ...) \
+    REG_SCOPE_EX(name, buf_size, trig_post_cnt, (uint32_t)(CTRL_TS * 1000000.0f + 0.5f), __VA_ARGS__)
 
 //================= Scope接口函数声明 =================
 
@@ -148,41 +303,16 @@ void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
 void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
 int scope_printf_data_step(void);
 int scope_printf_data_is_active(void);
-void scope_func(scope_t *restrict p_str);
+void scope_service_register(scope_service_obj_t *p_obj);
 //================= Scope接口宏 =================
 
 #define SCOPE_RUN(name) scope_run(&scope_##name)
+#define SCOPE(name) scope_run(&scope_##name)
 #define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
-#define SCOPE(name) scope_func(&scope_##name)
 #define SCOPE_GET_BUFFER(name) (scope_##name.p_buffer)
 #define SCOPE_GET_BUFFER_SIZE(name) (scope_##name.buffer_size)
 #define SCOPE_GET_VAR_NUM(name) (scope_##name.var_num)
 #define SCOPE_GET_VAR_PTRS(name) (scope_##name.p_var)
-#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
-
-/**
- * @brief 分时打印Scope数据（宏，每次调用打印一行）
- */
-#define SCOPE_DATA_STEP_RUN()              \
-    do                                     \
-    {                                      \
-        if (scope_printf_data_is_active()) \
-        {                                  \
-            scope_printf_data_step();      \
-        }                                  \
-    } while (0)
-/*
- * @brief 运行Scope采集对象
- * @param name 采集对象名称
- * @note 等价于 scope_func(&scope_##name)
- */
-#define SCOPE(name) scope_func(&scope_##name)
-/**
- * @brief 触发Scope采集（宏）
- * @param name 采集对象名称
- * @note 等价于 scope_trigger(&scope_##name)
- */
-#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
 
 /**
  * @brief 分时打印Scope数据（宏，每次调用打印一行）
