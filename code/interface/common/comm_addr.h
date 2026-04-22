@@ -17,4 +17,8 @@
 #define LOCAL_ADDR DC_ADDR
 #endif
 
+#ifndef LOCAL_ADDR
+#define LOCAL_ADDR AC_ADDR
+#endif
+
 #endif
