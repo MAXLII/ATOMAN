@@ -10,9 +10,7 @@ echo       Firmware Build Tool
 echo ========================================
 echo.
 
-set "FW_TYPE=ISP"
 set "OUTPUT_NAME=isp_firmware"
-set "FW_TYPE_DEFINE=-DFIRMWARE_TYPE_ISP"
 set "CUSTOM_NAME="
 set "BUILD_MODE=build"
 set "BUILD_MODE_NAME=Incremental Build"
@@ -24,7 +22,8 @@ if errorlevel 1 exit /b 1
 
 echo.
 echo Build configuration:
-echo   Type: %FW_TYPE%
+echo   Type: ISP
+echo   Platform: IS_DC
 echo   Mode: %BUILD_MODE_NAME%
 echo.
 
@@ -79,7 +78,7 @@ echo Output directory ready.
 
 echo Step 3: build fw_info tool...
 if exist fw_info.exe del /f /q fw_info.exe
-gcc %FW_TYPE_DEFINE% -o fw_info.exe fw_info.c -DIS_PFC
+gcc -DFIRMWARE_TYPE_ISP -o fw_info.exe fw_info.c -DIS_PFC
 if errorlevel 1 (
     echo Error: failed to build fw_info.exe.
     goto error
@@ -87,7 +86,7 @@ if errorlevel 1 (
 echo fw_info.exe built successfully.
 
 echo Step 4: build firmware...
-mingw32-make.exe -s -j10 FW_TYPE=%FW_TYPE% OUTPUT_NAME=%OUTPUT_NAME% DEFINES="%FW_TYPE_DEFINE%"
+mingw32-make.exe -s -j10 OUTPUT_NAME=%OUTPUT_NAME%
 if errorlevel 1 (
     echo Error: firmware build failed.
     goto error
@@ -156,7 +155,8 @@ echo Name: date-only
 )
 echo Timestamp: !datetime!
 echo Build mode: %BUILD_MODE_NAME%
-echo Firmware type: %FW_TYPE%
+echo Firmware type: ISP
+echo Platform macro: IS_DC
 echo.
 echo Git:
 echo   Commit: !GIT_COMMIT!

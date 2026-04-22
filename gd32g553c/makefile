@@ -11,24 +11,23 @@
 # ------------------------------------------------
 
 # 从环境变量获取参数
-FW_TYPE ?= IAP
-OUTPUT_NAME ?= firmware
+PROJECT_FW_TYPE = ISP
+PROJECT_OUTPUT_NAME = isp_firmware
+PROJECT_PLATFORM_DEFINE = -DIS_DC
+PROJECT_FW_DEFINE = -DFIRMWARE_TYPE_ISP
+PROJECT_APP_START_ADDR = 0x08000000
+PROJECT_LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
+
+OUTPUT_NAME ?= $(PROJECT_OUTPUT_NAME)
 DEFINES ?=
-PLATFORM_DEFINES = -DIS_DC
+# Fixed project identity macros:
+#   $(PROJECT_PLATFORM_DEFINE) -> -DIS_DC
+#   $(PROJECT_FW_DEFINE)       -> -DFIRMWARE_TYPE_ISP
+#   -DAPP_START_ADDR=...       -> fixed ISP application start address
+PROJECT_DEFINES = $(PROJECT_PLATFORM_DEFINE) $(PROJECT_FW_DEFINE) -DAPP_START_ADDR=$(PROJECT_APP_START_ADDR)
+LD_SCRIPT = $(PROJECT_LD_SCRIPT)
 
 # 根据类型设置不同的编译选项
-ifeq ($(FW_TYPE),IAP)
-    DEFINES += -DFIRMWARE_TYPE_IAP -DAPP_START_ADDR=0x08006000
-    ifeq ($(wildcard ./ldscripts/gd32g5x3_flash_iap.ld),)
-        LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
-    else
-        LD_SCRIPT = ./ldscripts/gd32g5x3_flash_iap.ld
-    endif
-else
-    DEFINES += -DFIRMWARE_TYPE_ISP -DAPP_START_ADDR=0x08000000
-    LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
-endif
-
 ######################################
 # target
 ######################################
@@ -169,7 +168,10 @@ AS_DEFS =
 C_DEFS =  \
 -DGD32G5X3
 
-C_DEFS += $(PLATFORM_DEFINES) $(DEFINES)
+# Final compile-time macro set:
+#   $(PROJECT_DEFINES) -> fixed macros for this workspace's ISP + IS_DC project identity
+#   $(DEFINES)         -> optional extra macros appended from external make arguments if needed
+C_DEFS += $(PROJECT_DEFINES) $(DEFINES)
 
 
 # AS includes
