@@ -12,6 +12,8 @@ reg_task_t *p_task_first = NULL;
 reg_interrupt_t *p_interrupt_first = NULL;
 section_link_t *p_link_first = NULL;
 reg_init_t *p_init_first = NULL;
+static volatile section_perf_record_t *s_running_task_perf_record = NULL;
+static volatile uint32_t s_running_task_interrupt_time = 0u;
 
 static void task_insert(reg_task_t *task)
 {
@@ -136,8 +138,6 @@ void section_init(void)
     }
 }
 
-float task_run_time = 0.0f;
-
 static inline uint32_t perf_cnt_read(uint32_t *const *pp_cnt)
 {
     if (!pp_cnt || !*pp_cnt)
@@ -169,6 +169,10 @@ void run_task(void)
         if (rec)
         {
             perf_start = perf_cnt_read(rec->p_cnt);
+#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+            s_running_task_interrupt_time = 0u;
+            s_running_task_perf_record = rec;
+#endif
         }
 
         task->p_func();
@@ -176,11 +180,25 @@ void run_task(void)
         if (rec)
         {
             const uint32_t perf_end = perf_cnt_read(rec->p_cnt);
-            const uint32_t delta = (uint32_t)(perf_end - perf_start);
+            uint32_t delta = (uint32_t)(perf_end - perf_start);
+#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+            uint32_t interrupt_time = s_running_task_interrupt_time;
+
+            s_running_task_perf_record = NULL;
+            s_running_task_interrupt_time = 0u;
+            if (delta > interrupt_time)
+            {
+                delta -= interrupt_time;
+            }
+            else
+            {
+                delta = 0u;
+            }
+#endif
 
             rec->time = delta;
             rec->max_time = (delta > rec->max_time) ? delta : rec->max_time;
-            task_run_time += delta;
+            rec->run_time += delta;
         }
 
         if (0)
@@ -199,7 +217,33 @@ void section_interrupt(void)
 {
     for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = (reg_interrupt_t *)p->p_next)
     {
+#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+        uint32_t perf_start = 0u;
+        section_perf_record_t *rec = p->p_perf_record;
+
+        if (rec)
+        {
+            perf_start = perf_cnt_read(rec->p_cnt);
+        }
+
         p->p_func();
+
+        if (rec)
+        {
+            const uint32_t perf_end = perf_cnt_read(rec->p_cnt);
+            const uint32_t delta = (uint32_t)(perf_end - perf_start);
+
+            rec->time = delta;
+            rec->max_time = (delta > rec->max_time) ? delta : rec->max_time;
+            rec->run_time += delta;
+            if (s_running_task_perf_record != NULL)
+            {
+                s_running_task_interrupt_time += delta;
+            }
+        }
+#else
+        p->p_func();
+#endif
     }
 }
 

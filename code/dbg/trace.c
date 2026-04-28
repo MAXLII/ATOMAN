@@ -17,9 +17,6 @@
 
 #include "section.h"
 #include "shell.h"
-#include "usart.h"
-
-EXT_LINK(USART0_LINK);
 
 typedef struct
 {
@@ -30,8 +27,9 @@ typedef struct
 
 typedef struct
 {
-    uint8_t active;      /* Deferred print enable flag. */
-    uint32_t read_index; /* Next trace record index to print. */
+    uint8_t active;                     /* Deferred print enable flag. */
+    uint32_t read_index;                /* Next trace record index to print. */
+    DEC_MY_PRINTF;  /* Output link captured when printing starts. */
 } dbg_trace_print_ctx_t;
 
 static dbg_trace_item_t g_dbg_trace_buffer[DBG_TRACE_BUFFER_SIZE] = {0}; /* Fixed trace storage buffer. */
@@ -85,12 +83,13 @@ void dbg_trace_clear(void)
     g_dbg_trace_ctx.is_full = 0U;
     g_dbg_trace_print_ctx.active = 0U;
     g_dbg_trace_print_ctx.read_index = 0U;
+    g_dbg_trace_print_ctx.my_printf = NULL;
 }
 
 static void dbg_trace_print_start(DEC_MY_PRINTF)
 {
-    (void)my_printf;
     /* The actual output is handled by the periodic task to avoid burst printing. */
+    g_dbg_trace_print_ctx.my_printf = my_printf;
     g_dbg_trace_print_ctx.active = 1U;
     g_dbg_trace_print_ctx.read_index = 0U;
 }
@@ -104,7 +103,7 @@ static void dbg_trace_clear_cmd(DEC_MY_PRINTF)
 static void dbg_trace_print_task(void)
 {
     dbg_trace_item_t *p_item = NULL;                                  /* Current record to print. */
-    section_link_tx_func_t *p_link_printf = LINK_PRINTF(USART0_LINK); /* UART print interface used for shell output. */
+    section_link_tx_func_t *p_link_printf = g_dbg_trace_print_ctx.my_printf;
 
     if (g_dbg_trace_print_ctx.active == 0U)
     {
@@ -114,6 +113,7 @@ static void dbg_trace_print_task(void)
     if (g_dbg_trace_print_ctx.read_index >= DBG_TRACE_BUFFER_SIZE)
     {
         g_dbg_trace_print_ctx.active = 0U;
+        g_dbg_trace_print_ctx.my_printf = NULL;
         return;
     }
 
@@ -122,6 +122,7 @@ static void dbg_trace_print_task(void)
     if ((p_item->line == 0U) && (p_item->time == 0U))
     {
         g_dbg_trace_print_ctx.active = 0U;
+        g_dbg_trace_print_ctx.my_printf = NULL;
         return;
     }
 
