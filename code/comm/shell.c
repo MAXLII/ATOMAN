@@ -712,35 +712,6 @@ static void list_print_task(void)
 
 REG_TASK_MS(10, list_print_task)
 
-extern float task_run_time;
-/* Latest coarse CPU utilization estimation derived from accumulated task time. */
-float task_metric = 0.0f;
-/* Peak CPU utilization estimation since boot or last reset. */
-float task_metric_max = 0.0f;
-
-static void task_metric_calculate(void)
-{
-    /* task_run_time is accumulated in 0.5 us ticks, so scale it to percent here. */
-    task_metric = task_run_time * 500e-6f;
-    if (task_metric > task_metric_max)
-    {
-        task_metric_max = task_metric;
-    }
-    task_run_time = 0.0f;
-    task_metric /= 100.0f;
-    task_metric_max /= 100.0f;
-}
-
-REG_TASK_MS(100, task_metric_calculate)
-
-static void CPU_Utilization(DEC_MY_PRINTF)
-{
-    my_printf->my_printf("CPU Load:%f%%,CPU Peak:%f%%\n", task_metric * 100.0f, task_metric_max * 100.0f);
-}
-REG_SHELL_CMD(CPU_Utilization, CPU_Utilization)
-REG_SHELL_VAR(TASK_METRIC, task_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(TASK_METRIC_MAX, task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
-
 /* Context used when a remote peer requests a full shell item enumeration. */
 static shell_report_ctx_t shell_report_ctx = {0};
 

@@ -45,6 +45,8 @@ static uint32_t s_demo_perf_acc = 0u;
 static uint32_t s_demo_period_counter = 0u;
 static uint32_t s_demo_scope_fast_tick = 0u;
 static uint32_t s_demo_scope_slow_tick = 0u;
+static uint32_t s_demo_aux_counter = 0u;
+static uint32_t s_demo_interrupt_counter = 0u;
 extern section_perf_record_t section_perf_record_demo_task;
 static demo_comm_frame_t s_demo_last_frame = {
     .counter = 0u,
@@ -55,6 +57,7 @@ static demo_comm_frame_t s_demo_last_frame = {
 
 REG_PERF_RECORD(demo_manual_perf);
 REG_PERF_RECORD(demo_period_perf);
+REG_PERF_RECORD(demo_background_code_perf);
 
 #if defined(IS_HC32)
 #define DEMO_SCOPE_FAST_BUF_SIZE 64
@@ -327,6 +330,53 @@ static void demo_period_task(void)
     s_period_started = 1u;
 }
 
+static void demo_busy_delay(uint32_t loop_cnt)
+{
+    volatile uint32_t delay;
+
+    for (delay = 0u; delay < loop_cnt; ++delay)
+    {
+        __NOP();
+    }
+}
+
+static void demo_aux_fast_task(void)
+{
+    s_demo_aux_counter++;
+    demo_busy_delay(16u);
+}
+
+static void demo_aux_mid_task(void)
+{
+    s_demo_aux_counter += 3u;
+    demo_busy_delay(48u);
+}
+
+static void demo_code_perf_task(void)
+{
+    PERF_START(demo_background_code_perf);
+    s_demo_aux_counter += 7u;
+    demo_busy_delay(96u);
+    PERF_END(demo_background_code_perf);
+}
+
+static void demo_interrupt_trigger_task(void)
+{
+    section_interrupt();
+}
+
+static void demo_fast_interrupt(void)
+{
+    s_demo_interrupt_counter++;
+    demo_busy_delay(24u);
+}
+
+static void demo_slow_interrupt(void)
+{
+    s_demo_interrupt_counter += 2u;
+    demo_busy_delay(80u);
+}
+
 /*
  * Fast scope example:
  * - REG_TASK(1, ...) means one scheduler tick, which is 100 us in this project.
@@ -518,5 +568,11 @@ REG_COMM(DEMO_CMD_SET_CONTROL, DEMO_CMD_WORD_CONTROL, demo_control_comm)
  */
 REG_TASK_MS(10, demo_task)
 REG_TASK_MS(20, demo_period_task)
+REG_TASK_MS(2, demo_aux_fast_task)
+REG_TASK_MS(5, demo_aux_mid_task)
+REG_TASK_MS(10, demo_code_perf_task)
+REG_TASK_MS(5, demo_interrupt_trigger_task)
 REG_TASK(1, demo_scope_fast_task)
 REG_TASK_MS(1, demo_scope_slow_task)
+REG_INTERRUPT(6, demo_fast_interrupt)
+REG_INTERRUPT(7, demo_slow_interrupt)

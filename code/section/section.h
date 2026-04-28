@@ -24,6 +24,14 @@
 #define REG_PERF_RECORD(name)
 #endif
 
+#ifndef REG_TASK_PERF_RECORD
+#define REG_TASK_PERF_RECORD(name)
+#endif
+
+#ifndef REG_INTERRUPT_PERF_RECORD
+#define REG_INTERRUPT_PERF_RECORD(name)
+#endif
+
 typedef struct
 {
     void (*my_printf)(const char *__format, ...);
@@ -101,11 +109,11 @@ typedef struct reg_task_t
 #define TASK_RECORD_PERF_ENABLE 1
 
 #if (TASK_RECORD_PERF_ENABLE == 1)
-#define REG_TASK_PERF_RECORD(name) REG_PERF_RECORD(name)
 #define TASK_RECORD_PERF(name) P_RECORD_PERF(name)
 #else
-#define REG_TASK_PERF_RECORD(name)
 #define TASK_RECORD_PERF(name) NULL
+#undef REG_TASK_PERF_RECORD
+#define REG_TASK_PERF_RECORD(name)
 #endif
 
 #define REG_TASK(period, func)                   \
@@ -125,19 +133,32 @@ void run_task(void);
 
 #define PRIORITY_NUM_MAX 16
 
+#define INTERRUPT_RECORD_PERF_ENABLE 1
+
+#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+#define INTERRUPT_RECORD_PERF(name) P_RECORD_PERF(name)
+#else
+#define INTERRUPT_RECORD_PERF(name) NULL
+#undef REG_INTERRUPT_PERF_RECORD
+#define REG_INTERRUPT_PERF_RECORD(name)
+#endif
+
 typedef struct reg_interrupt
 {
     uint8_t priority;
     void (*p_func)(void);
+    section_perf_record_t *p_perf_record;
     struct reg_interrupt *p_next;
 } reg_interrupt_t;
 
-#define REG_INTERRUPT(priority_num, func)    \
-    reg_interrupt_t reg_interrupt_##func = { \
-        .priority = (priority_num),          \
-        .p_func = (func),                    \
-        .p_next = NULL,                      \
-    };                                       \
+#define REG_INTERRUPT(priority_num, func)             \
+    REG_INTERRUPT_PERF_RECORD(func)                   \
+    reg_interrupt_t reg_interrupt_##func = {          \
+        .priority = (priority_num),                   \
+        .p_func = (func),                             \
+        .p_perf_record = INTERRUPT_RECORD_PERF(func), \
+        .p_next = NULL,                               \
+    };                                                \
     REG_SECTION_FUNC(SECTION_INTERRUPT, reg_interrupt_##func)
 
 void section_interrupt(void);

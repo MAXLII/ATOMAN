@@ -9,6 +9,13 @@ typedef enum
     SECTION_PERF_BASE,
 } SECTION_PERF_E;
 
+typedef enum
+{
+    SECTION_PERF_RECORD_CODE = 0,
+    SECTION_PERF_RECORD_TASK,
+    SECTION_PERF_RECORD_INTERRUPT,
+} SECTION_PERF_RECORD_E;
+
 typedef struct
 {
     uint32_t *p_cnt;
@@ -28,11 +35,19 @@ typedef struct
     uint16_t time;
     uint16_t reserved;
     uint32_t max_time;
+    uint32_t run_time;
+    float load;
+    float load_max;
+    uint8_t record_type;
     uint32_t **p_cnt;
     void *p_next;
 } section_perf_record_t;
 
 uint32_t perf_base_cnt_get(void);
+float perf_task_metric_get(void);
+float perf_task_metric_max_get(void);
+float perf_interrupt_metric_get(void);
+float perf_interrupt_metric_max_get(void);
 
 #define REG_PERF_BASE_CNT(timer_cnt)                \
     section_perf_base_t section_perf_base_timer = { \
@@ -81,6 +96,52 @@ uint32_t perf_base_cnt_get(void);
         .time = 0,                                       \
         .reserved = 0,                                   \
         .max_time = 0,                                   \
+        .run_time = 0,                                   \
+        .load = 0.0f,                                    \
+        .load_max = 0.0f,                                \
+        .record_type = SECTION_PERF_RECORD_CODE,         \
+        .p_cnt = NULL,                                   \
+        .p_next = NULL,                                  \
+    };                                                   \
+    section_perf_t section_perf_record_##name##_perf = { \
+        .perf_type = SECTION_PERF_RECORD,                \
+        .p_perf = (void *)&section_perf_record_##name,   \
+    };                                                   \
+    REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
+
+#define REG_TASK_PERF_RECORD(name)                       \
+    section_perf_record_t section_perf_record_##name = { \
+        .p_name = #name,                                 \
+        .start = 0,                                      \
+        .end = 0,                                        \
+        .time = 0,                                       \
+        .reserved = 0,                                   \
+        .max_time = 0,                                   \
+        .run_time = 0,                                   \
+        .load = 0.0f,                                    \
+        .load_max = 0.0f,                                \
+        .record_type = SECTION_PERF_RECORD_TASK,         \
+        .p_cnt = NULL,                                   \
+        .p_next = NULL,                                  \
+    };                                                   \
+    section_perf_t section_perf_record_##name##_perf = { \
+        .perf_type = SECTION_PERF_RECORD,                \
+        .p_perf = (void *)&section_perf_record_##name,   \
+    };                                                   \
+    REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
+
+#define REG_INTERRUPT_PERF_RECORD(name)                  \
+    section_perf_record_t section_perf_record_##name = { \
+        .p_name = #name,                                 \
+        .start = 0,                                      \
+        .end = 0,                                        \
+        .time = 0,                                       \
+        .reserved = 0,                                   \
+        .max_time = 0,                                   \
+        .run_time = 0,                                   \
+        .load = 0.0f,                                    \
+        .load_max = 0.0f,                                \
+        .record_type = SECTION_PERF_RECORD_INTERRUPT,    \
         .p_cnt = NULL,                                   \
         .p_next = NULL,                                  \
     };                                                   \
@@ -96,6 +157,8 @@ uint32_t perf_base_cnt_get(void);
 #define PERF_END(name)
 #define P_RECORD_PERF(name) NULL
 #define REG_PERF_RECORD(name)
+#define REG_TASK_PERF_RECORD(name)
+#define REG_INTERRUPT_PERF_RECORD(name)
 
 #endif
 
