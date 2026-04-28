@@ -746,9 +746,8 @@ static shell_report_ctx_t shell_report_ctx = {0};
 
 void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    /* Ignore replies and refuse a new dump while a previous report is active. */
-    if ((p_pack->is_ack == 1) ||
-        (shell_report_ctx.active == 1))
+    /* Ignore replies. A fresh host request always restarts the report cursor. */
+    if (p_pack->is_ack == 1)
     {
         return;
     }

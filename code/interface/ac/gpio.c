@@ -19,3 +19,12 @@ void gpio_set_main_rly_sta(uint8_t sta)
 {
     bsp_gpio_set_bit(LED1, sta);
 }
+
+void gpio_set_test1(uint8_t sta)
+{
+#if defined(BSP_GPIO_TEST1)
+    bsp_gpio_set_bit(BSP_GPIO_TEST1, sta);
+#else
+    (void)sta;
+#endif
+}

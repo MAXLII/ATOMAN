@@ -10,3 +10,26 @@ gd32g553c/fw_info.exe
 *plecs.autosave
 plecs/ac/plecs_log_file_path.c
 *.log
+
+# Keil local/build artifacts
+**/output/
+**/Listings/
+**/Objects/
+*.uvguix.*
+*.uvgui.*
+*.uvoptx
+*.jdebug.user
+JLinkLog.txt
+EventRecorderStub.scvd
+*.crf
+*.d
+*.o
+*.axf
+*.hex
+*.lnp
+*.map
+*.dep
+*.build_log.htm
+
+# HC32 download-only wrapper project and generated input image
+hc32f334/keil_flash/

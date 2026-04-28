@@ -12,4 +12,6 @@ void gpio_set_ac_in_rly_sta(uint8_t sta);
 
 void gpio_set_ac_out_rly_sta(uint8_t sta);
 
+void gpio_set_test1(uint8_t sta);
+
 #endif

@@ -7,8 +7,10 @@ typedef enum
     USART1_LINK,
     USART2_LINK,
     USART_DBG_LINK,
+    USART_ISO_LINK,
     USART4_LINK,
     UART4_LINK = USART4_LINK,
+    CAN_DBG_LINK,
 } USART_LINK_E;
 
 #endif

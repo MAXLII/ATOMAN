@@ -3,12 +3,11 @@
 #include "comm.h"
 #include "comm_addr.h"
 #include "gpio.h"
+#include "perf.h"
 #include "scope.h"
 #include "section.h"
 #include "shell.h"
 #include "usart.h"
-#include "bsp_timer.h"
-#include "bsp_usart.h"
 
 #include <math.h>
 #include <string.h>
@@ -57,8 +56,20 @@ static demo_comm_frame_t s_demo_last_frame = {
 REG_PERF_RECORD(demo_manual_perf);
 REG_PERF_RECORD(demo_period_perf);
 
+#if defined(IS_HC32)
+#define DEMO_SCOPE_FAST_BUF_SIZE 64
+#define DEMO_SCOPE_FAST_TRIG_POST_CNT 32
+#define DEMO_SCOPE_SLOW_BUF_SIZE 64
+#define DEMO_SCOPE_SLOW_TRIG_POST_CNT 32
+#else
+#define DEMO_SCOPE_FAST_BUF_SIZE 500
+#define DEMO_SCOPE_FAST_TRIG_POST_CNT 250
+#define DEMO_SCOPE_SLOW_BUF_SIZE 200
+#define DEMO_SCOPE_SLOW_TRIG_POST_CNT 100
+#endif
+
 /* 100 us scope example: 500 samples and 10 signal channels. */
-REG_SCOPE_EX(demo_scope_fast, 500, 250, 100u,
+REG_SCOPE_EX(demo_scope_fast, DEMO_SCOPE_FAST_BUF_SIZE, DEMO_SCOPE_FAST_TRIG_POST_CNT, 100u,
           scope_sin,
           scope_cos,
           scope_sin2,
@@ -71,7 +82,7 @@ REG_SCOPE_EX(demo_scope_fast, 500, 250, 100u,
           scope_index)
 
 /* 1 ms scope example: 200 samples and 3 signal channels. */
-REG_SCOPE_EX(demo_scope_slow, 200, 100, 1000u,
+REG_SCOPE_EX(demo_scope_slow, DEMO_SCOPE_SLOW_BUF_SIZE, DEMO_SCOPE_SLOW_TRIG_POST_CNT, 1000u,
              scope_slow_sin,
              scope_slow_cos,
              scope_slow_mix)
@@ -114,11 +125,17 @@ static void demo_init_defaults(void)
  */
 static void demo_init_banner(void)
 {
+    section_link_tx_func_t *p_link_printf = LINK_PRINTF(USART0_LINK);
+
     s_demo_boot_ready = 1u;
     s_demo_init_count++;
-    bsp_usart_dbg_printf("demo init done: init_count=%u led_mask=0x%02X\r\n",
-                         (unsigned)s_demo_init_count,
-                         s_demo_led_mask);
+
+    if ((p_link_printf != NULL) && (p_link_printf->my_printf != NULL))
+    {
+        p_link_printf->my_printf("demo init done: init_count=%u led_mask=0x%02X\r\n",
+                                 (unsigned)s_demo_init_count,
+                                 s_demo_led_mask);
+    }
 }
 
 static void demo_led_mask_changed(DEC_MY_PRINTF)
@@ -225,7 +242,7 @@ static void demo_perf_cmd(DEC_MY_PRINTF)
  */
 static void demo_tick_cmd(DEC_MY_PRINTF)
 {
-    s_demo_last_tick = bsp_timer_cnt_get();
+    s_demo_last_tick = perf_base_cnt_get();
 
     if (my_printf && my_printf->my_printf)
     {
@@ -270,7 +287,7 @@ static void demo_task(void)
     static uint8_t led_phase = 0u;
 
     s_demo_counter++;
-    s_demo_last_tick = bsp_timer_cnt_get();
+    s_demo_last_tick = perf_base_cnt_get();
 
     if ((s_demo_counter % 500u) == 0u)
     {
