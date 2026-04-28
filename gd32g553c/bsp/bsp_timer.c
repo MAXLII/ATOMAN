@@ -38,9 +38,4 @@ void bsp_timer_init(void)
     timer_enable(TIMER1);
 }
 
-uint32_t bsp_timer_cnt_get(void)
-{
-    return TIMER_CNT(TIMER1);
-}
-
 REG_INIT(0, bsp_timer_init)

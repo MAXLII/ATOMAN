@@ -70,6 +70,11 @@ static void perf_init(void)
     }
 }
 
+uint32_t perf_base_cnt_get(void)
+{
+    return (s_perf_cnt != NULL) ? *s_perf_cnt : 0u;
+}
+
 void print_perf_record(DEC_MY_PRINTF)
 {
     if (!my_printf)

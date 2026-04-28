@@ -6,6 +6,23 @@
 #include <stdint.h>
 
 #include "platform.h"
+#include "perf.h"
+
+#ifndef PERF_START
+#define PERF_START(name)
+#endif
+
+#ifndef PERF_END
+#define PERF_END(name)
+#endif
+
+#ifndef P_RECORD_PERF
+#define P_RECORD_PERF(name) NULL
+#endif
+
+#ifndef REG_PERF_RECORD
+#define REG_PERF_RECORD(name)
+#endif
 
 typedef struct
 {
@@ -71,8 +88,6 @@ typedef struct reg_init
     REG_SECTION_FUNC(SECTION_INIT, reg_init_##func)
 
 void section_init(void);
-
-#include "perf.h"
 
 typedef struct reg_task_t
 {
