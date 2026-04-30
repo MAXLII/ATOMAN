@@ -27,7 +27,8 @@
  *
  * SECTION_INTERRUPT
  *   Macro: REG_INTERRUPT(priority, func)
- *   Purpose: software-managed interrupt callback chain.
+ *   Purpose: software-managed interrupt callback chain dispatched by
+ *            section_interrupt().
  *   Parameters:
  *     priority : smaller value runs earlier in section_interrupt().
  *     func     : void func(void), interrupt-side callback.
@@ -64,6 +65,14 @@
  *     timer_cnt : uint32_t * counter base used by PERF_START/END.
  *     name      : record symbol name used by P_RECORD_PERF(name).
  *
+ * SECTION_SCOPE
+ *   Macro: REG_SCOPE_EX(...)
+ *   Purpose: register variables that can be sampled and uploaded as waveforms.
+ *
+ * SECTION_TRACE
+ *   Macro: DBG_TRACE_BIND_TIME(...) / DBG_TRACE_MARK()
+ *   Purpose: bind a time base, then mark source lines for binary Trace upload.
+ *
  * SECTION_COMM
  *   Macro: REG_COMM(...)
  *   Purpose: dispatch a decoded protocol frame to a command handler.
@@ -81,10 +90,9 @@
  *     _dst_link_id : destination link id.
  *     _dst_addr    : destination device address.
  *
- * This demo mainly exercises INIT/TASK/SHELL/COMM.
+ * This demo mainly exercises INIT/TASK/SHELL/COMM/PERF/SCOPE/TRACE/INTERRUPT.
  * LINK is provided by interface/usart.c.
- * PERF is also exercised in demo.c.
- * INTERRUPT/COMM_ROUTE are described here as extension points.
+ * COMM_ROUTE is described here as an extension point.
  */
 
 typedef struct

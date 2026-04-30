@@ -7,6 +7,7 @@
 #include "scope.h"
 #include "section.h"
 #include "shell.h"
+#include "trace.h"
 #include "usart.h"
 
 #include <math.h>
@@ -21,8 +22,10 @@
  * - SECTION_SHELL      -> REG_SHELL_VAR / REG_SHELL_CMD
  * - SECTION_COMM       -> REG_COMM
  * - SECTION_LINK       -> provided by interface/usart.c
- * - SECTION_INTERRUPT  -> extension point, not used in this demo
+ * - SECTION_INTERRUPT  -> REG_INTERRUPT + section_interrupt()
  * - SECTION_PERF       -> REG_PERF_RECORD / PERF_START / PERF_END
+ * - SECTION_SCOPE      -> REG_SCOPE_EX / SCOPE_RUN
+ * - SECTION_TRACE      -> DBG_TRACE_BIND_TIME / DBG_TRACE_MARK
  * - SECTION_COMM_ROUTE -> extension point, not used in this demo
  *
  * Runtime path:
@@ -43,11 +46,13 @@ static uint32_t s_demo_perf_spin = 2000u;
 static uint32_t s_demo_last_tick = 0u;
 static uint32_t s_demo_perf_acc = 0u;
 static uint32_t s_demo_period_counter = 0u;
+static uint32_t s_demo_scope_basic_tick = 0u;
 static uint32_t s_demo_scope_fast_tick = 0u;
 static uint32_t s_demo_scope_slow_tick = 0u;
 static uint32_t s_demo_aux_counter = 0u;
 static uint32_t s_demo_interrupt_counter = 0u;
 extern section_perf_record_t section_perf_record_demo_task;
+extern volatile uint32_t sys_tick_100us;
 static demo_comm_frame_t s_demo_last_frame = {
     .counter = 0u,
     .led_mask = 0x01u,
@@ -55,34 +60,56 @@ static demo_comm_frame_t s_demo_last_frame = {
     .reserved = 0u,
 };
 
+/*
+ * PERF example step 1:
+ * Create named records for code sections that are not automatically registered
+ * by REG_TASK/REG_TASK_MS.
+ */
 REG_PERF_RECORD(demo_manual_perf);
-REG_PERF_RECORD(demo_period_perf);
-REG_PERF_RECORD(demo_background_code_perf);
+REG_PERF_RECORD(demo_task_period_perf);
+REG_PERF_RECORD(demo_code_section_perf);
 
 #if defined(IS_HC32)
+#define DEMO_SCOPE_BASIC_BUF_SIZE 64
+#define DEMO_SCOPE_BASIC_TRIG_POST_CNT 32
 #define DEMO_SCOPE_FAST_BUF_SIZE 64
 #define DEMO_SCOPE_FAST_TRIG_POST_CNT 32
 #define DEMO_SCOPE_SLOW_BUF_SIZE 64
 #define DEMO_SCOPE_SLOW_TRIG_POST_CNT 32
 #else
+#define DEMO_SCOPE_BASIC_BUF_SIZE 100
+#define DEMO_SCOPE_BASIC_TRIG_POST_CNT 50
 #define DEMO_SCOPE_FAST_BUF_SIZE 500
 #define DEMO_SCOPE_FAST_TRIG_POST_CNT 250
 #define DEMO_SCOPE_SLOW_BUF_SIZE 200
 #define DEMO_SCOPE_SLOW_TRIG_POST_CNT 100
 #endif
 
+/*
+ * SCOPE example step 1:
+ * Register the variables that will be sampled by SCOPE_RUN().
+ *
+ * Minimal example:
+ * - REG_SCOPE_EX creates float variables: scope_basic_ramp/scope_basic_toggle
+ * - The service registers this scope with name "demo_scope_basic"
+ * - demo_scope_basic_task updates those variables and calls SCOPE_RUN()
+ */
+REG_SCOPE_EX(demo_scope_basic, DEMO_SCOPE_BASIC_BUF_SIZE, DEMO_SCOPE_BASIC_TRIG_POST_CNT, 10000u,
+             scope_basic_ramp,
+             scope_basic_toggle)
+
 /* 100 us scope example: 500 samples and 10 signal channels. */
 REG_SCOPE_EX(demo_scope_fast, DEMO_SCOPE_FAST_BUF_SIZE, DEMO_SCOPE_FAST_TRIG_POST_CNT, 100u,
-          scope_sin,
-          scope_cos,
-          scope_sin2,
-          scope_cos2,
-          scope_ramp,
-          scope_triangle,
-          scope_square,
-          scope_mix,
-          scope_saw,
-          scope_index)
+             scope_sin,
+             scope_cos,
+             scope_sin2,
+             scope_cos2,
+             scope_ramp,
+             scope_triangle,
+             scope_square,
+             scope_mix,
+             scope_saw,
+             scope_index)
 
 /* 1 ms scope example: 200 samples and 3 signal channels. */
 REG_SCOPE_EX(demo_scope_slow, DEMO_SCOPE_SLOW_BUF_SIZE, DEMO_SCOPE_SLOW_TRIG_POST_CNT, 1000u,
@@ -101,9 +128,15 @@ static void demo_apply_led_mask(uint8_t led_mask)
 /*
  * SECTION_INIT / REG_INIT example 1:
  * Register an early boot callback. Smaller priority runs earlier.
+ *
+ * DBG_TRACE example step 1:
+ * Bind the trace time base once before calling DBG_TRACE_MARK().
+ * The demo uses sys_tick_100us, so one trace tick is 100 us.
  */
 static void demo_init_defaults(void)
 {
+    DBG_TRACE_BIND_TIME(&sys_tick_100us);
+
     s_demo_counter = 0u;
     s_demo_last_cmd = 0;
     s_demo_gain = 1.0f;
@@ -112,6 +145,7 @@ static void demo_init_defaults(void)
     s_demo_perf_spin = 2000u;
     s_demo_last_tick = 0u;
     s_demo_perf_acc = 0u;
+    s_demo_scope_basic_tick = 0u;
     s_demo_scope_fast_tick = 0u;
     s_demo_scope_slow_tick = 0u;
     s_demo_last_frame.counter = 0u;
@@ -143,6 +177,7 @@ static void demo_init_banner(void)
 
 static void demo_led_mask_changed(DEC_MY_PRINTF)
 {
+
     demo_apply_led_mask(s_demo_led_mask);
 
     if (my_printf && my_printf->my_printf)
@@ -153,6 +188,7 @@ static void demo_led_mask_changed(DEC_MY_PRINTF)
 
 static void demo_ping_cmd(DEC_MY_PRINTF)
 {
+
     if (my_printf && my_printf->my_printf)
     {
         my_printf->my_printf("demo ping ok\r\n");
@@ -173,6 +209,7 @@ static void demo_ping_cmd(DEC_MY_PRINTF)
  */
 static void demo_help_cmd(DEC_MY_PRINTF)
 {
+
     if (my_printf && my_printf->my_printf)
     {
         my_printf->my_printf("SECTION_E guide:\r\n");
@@ -184,10 +221,14 @@ static void demo_help_cmd(DEC_MY_PRINTF)
         my_printf->my_printf("PERF       -> REG_PERF_BASE_CNT / REG_PERF_RECORD\r\n");
         my_printf->my_printf("COMM       -> REG_COMM(cmd_set, cmd_word, func)\r\n");
         my_printf->my_printf("COMM_ROUTE -> REG_COMM_ROUTE(src_link, dst_link, dst_addr)\r\n");
-        my_printf->my_printf("demo uses  -> INIT TASK SHELL PERF COMM; LINK in interface/usart.c\r\n");
+        my_printf->my_printf("demo uses  -> INIT TASK SHELL COMM PERF SCOPE TRACE INTERRUPT\r\n");
+        my_printf->my_printf("LINK       -> interface/usart.c provides USART0_LINK\r\n");
         my_printf->my_printf("PERF use 1 -> REG_PERF_RECORD(demo_manual_perf) + PERF_START/END\r\n");
         my_printf->my_printf("PERF use 2 -> REG_TASK_MS(10, demo_task) auto record when TASK_RECORD_PERF_ENABLE=1\r\n");
-        my_printf->my_printf("PERF use 3 -> demo_period_task ends perf at entry, starts perf at exit\r\n");
+        my_printf->my_printf("PERF use 3 -> demo_task_period_20ms measures entry-to-entry task period\r\n");
+        my_printf->my_printf("TRACE use  -> bind sys_tick_100us, then mark in 100/500/1000 ms tasks\r\n");
+        my_printf->my_printf("INT use    -> REG_TASK_MS(5, demo_interrupt_trigger_5ms_task) calls section_interrupt\r\n");
+        my_printf->my_printf("SCOPE basic-> REG_SCOPE_EX(demo_scope_basic, ...2 vars) + REG_TASK_MS(10, demo_scope_basic_task)\r\n");
         my_printf->my_printf("SCOPE fast -> REG_SCOPE_EX(demo_scope_fast, 500, 250, 100, ...10 vars)\r\n");
         my_printf->my_printf("SCOPE slow -> REG_SCOPE_EX(demo_scope_slow, 200, 100, 1000, ...3 vars)\r\n");
         my_printf->my_printf("SCOPE run  -> REG_TASK(1, demo_scope_fast_task) and REG_TASK_MS(1, demo_scope_slow_task)\r\n");
@@ -205,7 +246,7 @@ static void demo_perf_cmd(DEC_MY_PRINTF)
 {
     section_perf_record_t *manual_rec = P_RECORD_PERF(demo_manual_perf);
     section_perf_record_t *task_rec = P_RECORD_PERF(demo_task);
-    section_perf_record_t *period_rec = P_RECORD_PERF(demo_period_perf);
+    section_perf_record_t *period_rec = P_RECORD_PERF(demo_task_period_perf);
     volatile uint32_t acc = 0u;
     uint32_t i;
 
@@ -245,6 +286,7 @@ static void demo_perf_cmd(DEC_MY_PRINTF)
  */
 static void demo_tick_cmd(DEC_MY_PRINTF)
 {
+
     s_demo_last_tick = perf_base_cnt_get();
 
     if (my_printf && my_printf->my_printf)
@@ -294,6 +336,7 @@ static void demo_task(void)
 
     if ((s_demo_counter % 500u) == 0u)
     {
+
         led_phase = (uint8_t)((led_phase + 1u) & 0x03u);
         s_demo_led_mask = (uint8_t)(1u << led_phase);
         s_demo_last_frame.counter = s_demo_counter;
@@ -304,20 +347,22 @@ static void demo_task(void)
 
 /*
  * SECTION_PERF / REG_TASK_MS period example:
- * End the performance record at task entry and start it again at task exit.
- * This measures the interval between the end of the previous execution and the
- * beginning of the current execution, which is useful for observing scheduler
- * cadence.
+ * End and restart the performance record at task entry.
+ * This measures the interval between two adjacent entries of this 20 ms task,
+ * which is useful for observing scheduler cadence.
  */
-static void demo_period_task(void)
+static void demo_task_period_20ms(void)
 {
     static uint8_t s_period_started = 0u;
     volatile uint32_t delay = 0u;
 
     if (s_period_started != 0u)
     {
-        PERF_END(demo_period_perf);
+        PERF_END(demo_task_period_perf);
     }
+
+    PERF_START(demo_task_period_perf);
+    s_period_started = 1u;
 
     s_demo_period_counter++;
 
@@ -325,9 +370,6 @@ static void demo_period_task(void)
     {
         __NOP();
     }
-
-    PERF_START(demo_period_perf);
-    s_period_started = 1u;
 }
 
 static void demo_busy_delay(uint32_t loop_cnt)
@@ -340,31 +382,56 @@ static void demo_busy_delay(uint32_t loop_cnt)
     }
 }
 
-static void demo_aux_fast_task(void)
+/*
+ * PERF task-load example:
+ * These tasks do a small amount of work at different periods. When
+ * TASK_RECORD_PERF_ENABLE is enabled, REG_TASK_MS automatically creates one
+ * perf record for each task, so the Perf viewer can show task time and load.
+ */
+static void demo_perf_load_2ms_task(void)
 {
+
     s_demo_aux_counter++;
     demo_busy_delay(16u);
 }
 
-static void demo_aux_mid_task(void)
+static void demo_perf_load_5ms_task(void)
 {
+
     s_demo_aux_counter += 3u;
     demo_busy_delay(48u);
 }
 
-static void demo_code_perf_task(void)
+/*
+ * PERF code-section example:
+ * Use PERF_START/PERF_END around any normal code block that is not a task or
+ * interrupt callback.
+ */
+static void demo_perf_code_section_10ms_task(void)
 {
-    PERF_START(demo_background_code_perf);
+
+    PERF_START(demo_code_section_perf);
     s_demo_aux_counter += 7u;
     demo_busy_delay(96u);
-    PERF_END(demo_background_code_perf);
+    PERF_END(demo_code_section_perf);
 }
 
-static void demo_interrupt_trigger_task(void)
+/*
+ * INTERRUPT example step 1:
+ * Call section_interrupt() from the place that should dispatch registered
+ * interrupt callbacks. In a real project this can be called from the hardware
+ * ISR wrapper or another interrupt event source.
+ */
+static void demo_interrupt_trigger_5ms_task(void)
 {
+
     section_interrupt();
 }
 
+/*
+ * INTERRUPT example step 2:
+ * Register callbacks with REG_INTERRUPT() near the bottom of this file.
+ */
 static void demo_fast_interrupt(void)
 {
     s_demo_interrupt_counter++;
@@ -375,6 +442,42 @@ static void demo_slow_interrupt(void)
 {
     s_demo_interrupt_counter += 2u;
     demo_busy_delay(80u);
+}
+
+/*
+ * DBG_TRACE example step 2:
+ * Put DBG_TRACE_MARK() directly at the point you want to observe.
+ * The three tasks below intentionally contain only DBG_TRACE_MARK(), so the
+ * line number shown by the Trace viewer maps directly to this demo usage.
+ */
+static void demo_trace_mark_100ms_task(void)
+{
+    DBG_TRACE_MARK();
+}
+
+static void demo_trace_mark_500ms_task(void)
+{
+    DBG_TRACE_MARK();
+}
+
+static void demo_trace_mark_1000ms_task(void)
+{
+    DBG_TRACE_MARK();
+}
+
+/*
+ * Basic scope example:
+ * - Update the registered float variables.
+ * - Call SCOPE_RUN(demo_scope_basic) once after the variables are updated.
+ * - REG_TASK_MS(10, demo_scope_basic_task) below makes this a 10 ms scope.
+ */
+static void demo_scope_basic_task(void)
+{
+    scope_basic_ramp = (float)(s_demo_scope_basic_tick % 100u);
+    scope_basic_toggle = ((s_demo_scope_basic_tick / 10u) & 0x01u) ? 1.0f : 0.0f;
+
+    SCOPE_RUN(demo_scope_basic);
+    s_demo_scope_basic_tick++;
 }
 
 /*
@@ -476,6 +579,7 @@ static void demo_control_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     if ((p_pack == NULL) || (p_pack->len < 2u))
     {
+
         return;
     }
 
@@ -521,7 +625,7 @@ REG_INIT(10, demo_init_banner)
  *   _func   : optional callback after value changes
  *   _status : flag bits, commonly SHELL_STA_NULL
  *
- * Typical usage:
+ * Example below:
  *   REG_SHELL_VAR(DEMO_GAIN, s_demo_gain, SHELL_FP32, 10.0f, 0.1f, NULL, SHELL_STA_NULL)
  */
 REG_SHELL_VAR(DEMO_LED_MASK, s_demo_led_mask, SHELL_UINT8, 0x0F, 0, demo_led_mask_changed, SHELL_STA_NULL)
@@ -535,7 +639,7 @@ REG_SHELL_VAR(DEMO_PERF_SPIN, s_demo_perf_spin, SHELL_UINT32, 200000u, 1u, NULL,
  *   _name : shell command name string generated from token
  *   _func : command handler, signature is void func(DEC_MY_PRINTF)
  *
- * Typical usage:
+ * Example below:
  *   REG_SHELL_CMD(DEMO_PERF, demo_perf_cmd)
  */
 REG_SHELL_CMD(DEMO_PING, demo_ping_cmd)
@@ -551,7 +655,7 @@ REG_SHELL_CMD(DEMO_TICK, demo_tick_cmd)
  *   _func     : handler, signature is
  *               void func(section_packform_t *p_pack, DEC_MY_PRINTF)
  *
- * Typical usage:
+ * Example below:
  *   REG_COMM(0x30, 0x01, demo_loopback_comm)
  */
 REG_COMM(DEMO_CMD_SET_LOOPBACK, DEMO_CMD_WORD_LOOPBACK, demo_loopback_comm)
@@ -567,12 +671,32 @@ REG_COMM(DEMO_CMD_SET_CONTROL, DEMO_CMD_WORD_CONTROL, demo_control_comm)
  * P_RECORD_PERF(func).
  */
 REG_TASK_MS(10, demo_task)
-REG_TASK_MS(20, demo_period_task)
-REG_TASK_MS(2, demo_aux_fast_task)
-REG_TASK_MS(5, demo_aux_mid_task)
-REG_TASK_MS(10, demo_code_perf_task)
-REG_TASK_MS(5, demo_interrupt_trigger_task)
+REG_TASK_MS(20, demo_task_period_20ms)
+REG_TASK_MS(2, demo_perf_load_2ms_task)
+REG_TASK_MS(5, demo_perf_load_5ms_task)
+REG_TASK_MS(10, demo_perf_code_section_10ms_task)
+REG_TASK_MS(5, demo_interrupt_trigger_5ms_task)
+
+/*
+ * DBG_TRACE example step 3:
+ * Register periodic tasks that call DBG_TRACE_MARK() directly.
+ * The Trace viewer should show these three source lines at 100/500/1000 ms.
+ */
+REG_TASK_MS(100, demo_trace_mark_100ms_task)
+REG_TASK_MS(500, demo_trace_mark_500ms_task)
+REG_TASK_MS(1000, demo_trace_mark_1000ms_task)
+
+/*
+ * SCOPE example step 2:
+ * Update the sampled variables first, then call SCOPE_RUN(scope_name).
+ */
+REG_TASK_MS(10, demo_scope_basic_task)
 REG_TASK(1, demo_scope_fast_task)
 REG_TASK_MS(1, demo_scope_slow_task)
+
+/*
+ * INTERRUPT example step 3:
+ * Smaller priority number runs earlier when section_interrupt() is called.
+ */
 REG_INTERRUPT(6, demo_fast_interrupt)
 REG_INTERRUPT(7, demo_slow_interrupt)
