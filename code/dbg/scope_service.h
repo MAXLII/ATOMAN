@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define scope communication payloads and command ids
- *          - Provide scope service registration helpers
- *          - Provide shell-facing scope registration macros
+ *          - Define scope service command words, payload layouts, read modes, and status codes
+ *          - Define the service-side scope object that binds names, ids, sample periods, and capture metadata
+ *          - Provide REG_SCOPE macros that combine core scope storage with service registration
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #ifndef __SCOPE_SERVICE_H__
 #define __SCOPE_SERVICE_H__
 

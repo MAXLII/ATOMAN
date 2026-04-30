@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    inv_fsm.c
+ * @brief   inv_fsm control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Implement the inverter init, idle, run, and fault state machine
+ *          - Latch start/stop/reset commands and drive run/fault transitions through REG_FSM
+ *          - Coordinate inverter run entry, run exit, and fault recovery through HAL callbacks
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #include "inv_fsm.h"
 #include "inv_cfg.h"
 #include "my_math.h"

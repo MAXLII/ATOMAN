@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Record source line marks with a bound time counter
- *          - Store trace records in fixed-size static storage
- *          - Provide readback access for the trace service layer
+ *          - Record source-line trace marks with timestamps from a bound system-time counter
+ *          - Store trace records in a fixed static buffer and stop when the buffer is full
+ *          - Expose clear and read-only buffer access APIs for trace_service.c
  *
  *          Design notes:
  *          - C11 compatible

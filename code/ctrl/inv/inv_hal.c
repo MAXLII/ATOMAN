@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    inv_hal.c
+ * @brief   inv_hal control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Hold inverter controller and FSM HAL binding objects for platform callbacks
+ *          - Manage run permission, PWM disable, and hard-protection latch state
+ *          - Lock and validate inverter HAL bindings before allowing state-machine run transitions
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #include "inv_hal.h"
 #include "inv_ctrl.h"
 #include "inv_fsm.h"

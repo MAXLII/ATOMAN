@@ -1,7 +1,31 @@
-/* bb_cfg.c
- * Buck-boost controller setpoint buffering and publish/sync utilities.
+// SPDX-License-Identifier: MIT
+/**
+ * @file    bb_cfg.c
+ * @brief   bb_cfg control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Maintain active/building buck-boost setpoint buffers with versioned publishing
+ *          - Provide setters for run permission, voltage/current references, and power limits
+ *          - Keep configuration updates caller-owned and allocation-free for control-loop use
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #include "bb_cfg.h"
 #include <stddef.h>
 

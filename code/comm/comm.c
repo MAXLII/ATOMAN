@@ -1,13 +1,31 @@
+// SPDX-License-Identifier: MIT
 /**
- * @file comm_optimized.c
- * @brief COMM 协议（帧解析/CRC/路由/发送）工程化优化版
+ * @file    comm.c
+ * @brief   comm communication module.
+ * @details
+ *          This file is part of the digital power framework project.
  *
- * 设计目标：
- * - 不改 section 框架、不改对外 API（comm_run / comm_send_data）。
- * - 修复路由帧 EOP 校验缺失、comm_send_data 忽略传入 my_printf 等问题。
- * - 初始化/注册插入 O(1)；发送缓冲区溢出可检测；解析状态机更健壮。
+ *          Module responsibilities:
+ *          - Implement the 0xE8 framed protocol parser as a byte-by-byte state machine
+ *          - Build and send frames with address fields, command set/word, ACK flag, payload length, and CRC16
+ *          - Dispatch local registered commands or route frames across registered communication links
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #include "comm.h"
 #include "section.h"
 

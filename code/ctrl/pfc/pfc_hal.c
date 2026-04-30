@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    pfc_hal.c
+ * @brief   pfc_hal control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Hold PFC controller and FSM HAL binding objects for platform callbacks
+ *          - Manage run-entry/run-exit actions, PWM disable, and hard-protection latch handling
+ *          - Lock and validate PFC HAL binding state before the FSM allows operation
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #include "pfc_hal.h"
 #include "my_math.h"
 #include "pfc_ctrl.h"

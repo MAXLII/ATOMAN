@@ -1,20 +1,31 @@
+// SPDX-License-Identifier: MIT
 /**
- ******************************************************************************
- * @file           : xxx_module.c
- * @brief          : 双扰动MPPT追踪主流程，
- * @author         : ss
- * @date           : 2025-10-18
- * @version        : v1.0.0
- * @par 参考文件:
- *      《双扰动MPPT算法研究》
+ * @file    mppt.c
+ * @brief   mppt library module.
+ * @details
+ *          This file is part of the digital power framework project.
  *
- * @par 修改历史:
- * | 版本号 | 日期       | 作者     | 说明                |
- * | :-----: | :--------- | :-------- | :------------------ |
- * | v1.0.0  | 2025-10-18 | ss       | 初版创建            |
- ******************************************************************************
- **/
-
+ *          Module responsibilities:
+ *          - Implement MPPT reference tracking for photovoltaic input control
+ *          - Adjust voltage reference direction and step size from power and voltage feedback
+ *          - Provide enable, pause, limit, and reference management APIs for MPPT operation
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #include "mppt.h"
 #include "math.h"
 

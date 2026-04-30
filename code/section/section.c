@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Build runtime lists from linker section registrations
- *          - Schedule init, task, interrupt, FSM, and link callbacks
- *          - Track task and interrupt performance records
+ *          - Discover AUTO_REG_SECTION records emitted by the linker
+ *          - Build ordered runtime lists for init, task, interrupt, link, and FSM callbacks
+ *          - Execute registered callbacks and update task/interrupt timing records
  *
  *          Design notes:
  *          - C11 compatible

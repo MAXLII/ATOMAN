@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Capture multi-variable debug waveforms into a ring buffer
- *          - Manage scope capture state transitions
- *          - Provide start, stop, trigger, and reset controls
+ *          - Sample registered floating-point variables into a column-major circular buffer
+ *          - Run the idle, running, and triggered capture state machine used by waveform capture
+ *          - Provide core start, stop, trigger, and reset controls without shell or communication dependencies
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #include "scope.h"
 
 __attribute__((always_inline, hot)) inline void scope_run(scope_t *scope)

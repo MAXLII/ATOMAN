@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    pfc_fsm.c
+ * @brief   pfc_fsm control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Implement the PFC init, idle, run, and fault state machine
+ *          - Latch external commands and translate readiness/protection state into REG_FSM transitions
+ *          - Coordinate PFC run entry, run exit, and fault handling through HAL callbacks
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #include "pfc_fsm.h"
 #include "pfc_cfg.h"
 #include "section.h"

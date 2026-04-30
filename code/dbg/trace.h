@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define trace record data structures
- *          - Expose APIs for time binding, record insertion, clearing, and readback
- *          - Provide macros for binding time and recording source line marks
+ *          - Define trace record layout and trace buffer capacity
+ *          - Expose APIs for time binding, trace insertion, clearing, and readback
+ *          - Provide lightweight macros for binding a time source and marking the current source line
  *
  *          Design notes:
  *          - C11 compatible

@@ -1,7 +1,31 @@
-/* bb_fsm.c
- * Minimal buck-boost run-state machine: init, idle, and run transitions.
+// SPDX-License-Identifier: MIT
+/**
+ * @file    bb_fsm.c
+ * @brief   bb_fsm control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Implement the buck-boost init, idle, run, and fault state machine
+ *          - Latch external start/stop/reset commands and translate them into REG_FSM events
+ *          - Coordinate run entry, run exit, and fault handling through the buck-boost HAL callbacks
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #include "bb_fsm.h"
 
 static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null; /* fsm_ev: pending transition event consumed by REG_FSM */

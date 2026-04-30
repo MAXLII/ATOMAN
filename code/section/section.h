@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define section registration types and public runtime APIs
- *          - Provide registration macros for init, task, interrupt, FSM, link, and comm hooks
- *          - Provide platform abstraction points used by the section runtime
+ *          - Define the shared descriptors stored in the linker-managed section table
+ *          - Provide REG_INIT, REG_TASK, REG_INTERRUPT, REG_FSM, link, perf, and comm registration macros
+ *          - Expose runtime dispatch APIs used by the main loop, interrupt path, and service modules
  *
  *          Design notes:
  *          - C11 compatible

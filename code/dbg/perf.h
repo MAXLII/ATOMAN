@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define perf base and perf record data structures
- *          - Provide perf registration macros for code, task, and interrupt records
- *          - Expose runtime metrics used by shell and binary services
+ *          - Define perf base and record objects shared by code, task, and interrupt instrumentation
+ *          - Provide registration macros that bind perf records into linker sections
+ *          - Expose backend metrics, record ids, dictionary version, and peak-reset APIs to service layers
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #ifndef __PERF_H__
 #define __PERF_H__
 

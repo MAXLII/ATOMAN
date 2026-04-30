@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define Perf binary command ids and protocol-facing types
- *          - Define the Perf pull service object and callbacks
- *          - Expose service initialization for the runtime task
+ *          - Define Perf Viewer command words, protocol record types, reject reasons, and transfer limits
+ *          - Define the active dictionary/sample pull context used by perf_service.c
+ *          - Expose the service initializer while keeping protocol details out of perf.c
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #ifndef __PERF_SERVICE_H__
 #define __PERF_SERVICE_H__
 
