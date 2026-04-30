@@ -117,7 +117,25 @@ Related commands:
 
 ### 5. Scope Examples
 
-The demo includes two scope examples.
+The demo includes three scope examples.
+
+#### Basic scope
+
+- name: `demo_scope_basic`
+- sample period: `10 ms`
+- channel count: `2`
+- task: `REG_TASK_MS(10, demo_scope_basic_task)`
+
+This is the smallest usage example:
+
+- register variables with `REG_SCOPE_EX`
+- update the float variables in the periodic task
+- call `SCOPE_RUN(demo_scope_basic)` once after updating the variables
+
+Signals include:
+
+- `scope_basic_ramp`
+- `scope_basic_toggle`
 
 #### Fast scope
 
