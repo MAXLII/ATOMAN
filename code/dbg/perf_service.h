@@ -53,6 +53,7 @@
 #define PERF_OPT_CMD_SAMPLE_QUERY 0x29u
 #define PERF_OPT_CMD_SAMPLE_BATCH_REPORT 0x2Au
 #define PERF_OPT_CMD_SAMPLE_END 0x2Bu
+#define PERF_OPT_CMD_REPORT_CONTROL 0x2Eu
 
 #define PERF_OPT_TYPE_ALL 0u
 #define PERF_OPT_TYPE_TASK 1u
@@ -71,7 +72,8 @@
 #define PERF_OPT_END_OVERFLOW 2u
 #define PERF_OPT_END_INTERNAL_ERROR 3u
 
-#define PERF_OPT_MAX_PAYLOAD_SIZE 480u
+#define PERF_OPT_MAX_PAYLOAD_SIZE 160u
+#define PERF_OPT_MAX_SAMPLE_ITEMS_PER_POLL 4u
 
 typedef enum
 {
@@ -100,6 +102,7 @@ struct perf_opt_service
     uint32_t sequence;
     uint32_t dict_version;
     section_perf_record_t *cur;
+    uint8_t pending_end;
     DEC_MY_PRINTF;
     uint8_t src;
     uint8_t d_src;

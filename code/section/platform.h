@@ -35,6 +35,7 @@
 #include "plecs.h"
 extern uint32_t plecs_time_100us;
 #define SECTION_SYS_TICK plecs_time_100us
+#define SECTION_SYS_TICK_UNIT_US 100u
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
@@ -47,6 +48,7 @@ extern size_t __stop_section;
 #include "systick.h"
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
@@ -62,6 +64,7 @@ extern uint32_t __section_end;
 #include "systick.h"
 #include "hc32f3xx.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
 #if defined(TOOLCHAIN_KEIL)
 extern uint32_t Load$$SECTION$$Base;
 extern uint32_t Load$$SECTION$$Limit;
@@ -84,6 +87,7 @@ extern uint32_t __section_end;
 #include "systick.h"
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
