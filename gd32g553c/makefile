@@ -107,6 +107,9 @@ C_SOURCES =  \
 ../code/dbg/perf.c \
 ../code/dbg/perf_service.c \
 ../code/dbg/scope.c \
+../code/dbg/scope_service.c \
+../code/dbg/trace.c \
+../code/dbg/trace_service.c \
 ../code/interface/ac/gpio.c \
 ../code/interface/usart.c \
 ../code/section/section.c \

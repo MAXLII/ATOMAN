@@ -1,22 +1,34 @@
+// SPDX-License-Identifier: MIT
 /**
- * Copyright (c) 2026
+ * @file    trace.c
+ * @brief   Execution trace module.
+ * @details
+ *          This file is part of the digital power framework project.
  *
- * @file trace.c
- * @brief Execution trace implementation for recording, step-printing, and clearing trace data.
- * @author Max.Li
- * @date 2026-03-28
+ *          Module responsibilities:
+ *          - Record source line marks with a bound time counter
+ *          - Store trace records in fixed-size static storage
+ *          - Provide readback access for the trace service layer
  *
- * @par Revision History
- * 2026-03-28 Max.Li
- * - Created the execution trace module and added record, print, and clear support.
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-04-30
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #include "trace.h"
 
 #include <string.h>
-
-#include "section.h"
-#include "shell.h"
 
 typedef struct
 {
@@ -25,26 +37,8 @@ typedef struct
     uint8_t is_full;                  /* Recording stop flag after the buffer is filled once. */
 } dbg_trace_ctx_t;
 
-typedef struct
-{
-    uint8_t active;                     /* Deferred print enable flag. */
-    uint32_t read_index;                /* Next trace record index to print. */
-    DEC_MY_PRINTF;  /* Output link captured when printing starts. */
-} dbg_trace_print_ctx_t;
-
 static dbg_trace_item_t g_dbg_trace_buffer[DBG_TRACE_BUFFER_SIZE] = {0}; /* Fixed trace storage buffer. */
 static dbg_trace_ctx_t g_dbg_trace_ctx = {0};                            /* Runtime state for trace recording. */
-static dbg_trace_print_ctx_t g_dbg_trace_print_ctx = {0};                /* Runtime state for deferred printing. */
-
-/* Print one trace item in the required "time\tline" format. */
-#define DBG_TRACE_PRINT_ITEM(p_link_printf, p_item)                                                                        \
-    do                                                                                                                     \
-    {                                                                                                                      \
-        if (((p_link_printf) != NULL) && ((p_link_printf)->my_printf != NULL))                                             \
-        {                                                                                                                  \
-            (p_link_printf)->my_printf("%lu\t%lu \r\n", (unsigned long)((p_item)->time), (unsigned long)((p_item)->line)); \
-        }                                                                                                                  \
-    } while (0)
 
 void dbg_trace_bind_time(volatile uint32_t *p_system_time)
 {
@@ -77,62 +71,17 @@ void dbg_trace_record(uint32_t line)
 
 void dbg_trace_clear(void)
 {
-    /* Clearing the buffer also stops any ongoing deferred print session. */
     memset(g_dbg_trace_buffer, 0, sizeof(g_dbg_trace_buffer));
     g_dbg_trace_ctx.write_index = 0U;
     g_dbg_trace_ctx.is_full = 0U;
-    g_dbg_trace_print_ctx.active = 0U;
-    g_dbg_trace_print_ctx.read_index = 0U;
-    g_dbg_trace_print_ctx.my_printf = NULL;
 }
 
-static void dbg_trace_print_start(DEC_MY_PRINTF)
+const dbg_trace_item_t *dbg_trace_buffer_get(void)
 {
-    /* The actual output is handled by the periodic task to avoid burst printing. */
-    g_dbg_trace_print_ctx.my_printf = my_printf;
-    g_dbg_trace_print_ctx.active = 1U;
-    g_dbg_trace_print_ctx.read_index = 0U;
+    return g_dbg_trace_buffer;
 }
 
-static void dbg_trace_clear_cmd(DEC_MY_PRINTF)
+uint32_t dbg_trace_buffer_size_get(void)
 {
-    (void)my_printf;
-    dbg_trace_clear();
+    return DBG_TRACE_BUFFER_SIZE;
 }
-
-static void dbg_trace_print_task(void)
-{
-    dbg_trace_item_t *p_item = NULL;                                  /* Current record to print. */
-    section_link_tx_func_t *p_link_printf = g_dbg_trace_print_ctx.my_printf;
-
-    if (g_dbg_trace_print_ctx.active == 0U)
-    {
-        return;
-    }
-
-    if (g_dbg_trace_print_ctx.read_index >= DBG_TRACE_BUFFER_SIZE)
-    {
-        g_dbg_trace_print_ctx.active = 0U;
-        g_dbg_trace_print_ctx.my_printf = NULL;
-        return;
-    }
-
-    p_item = &g_dbg_trace_buffer[g_dbg_trace_print_ctx.read_index];
-    /* A zeroed record is treated as the end of valid trace data. */
-    if ((p_item->line == 0U) && (p_item->time == 0U))
-    {
-        g_dbg_trace_print_ctx.active = 0U;
-        g_dbg_trace_print_ctx.my_printf = NULL;
-        return;
-    }
-
-    DBG_TRACE_PRINT_ITEM(p_link_printf, p_item);
-    g_dbg_trace_print_ctx.read_index++;
-}
-
-/* Shell command: start deferred trace printing. */
-REG_SHELL_CMD(dbg_trace_print, dbg_trace_print_start)
-/* Shell command: clear all trace records. */
-REG_SHELL_CMD(dbg_trace_clear, dbg_trace_clear_cmd)
-/* Print one trace record every 50 ms after the shell command is triggered. */
-REG_TASK_MS(50, dbg_trace_print_task)
