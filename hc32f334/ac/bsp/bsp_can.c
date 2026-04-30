@@ -407,7 +407,6 @@ static int32_t bsp_can_init(void)
 static void bsp_can_write(const uint8_t *p_data, uint16_t len)
 {
     uint16_t u16Offset;
-    uint32_t u32Timeout;
 
     if (NULL == p_data)
     {
@@ -415,18 +414,11 @@ static void bsp_can_write(const uint8_t *p_data, uint16_t len)
     }
 
     u16Offset = 0U;
-    u32Timeout = BSP_CAN_TX_WAIT_TIMEOUT;
     while (u16Offset < len)
     {
         if (0U == bsp_can_tx_ring_free())
         {
-            bsp_can_tx_service();
-            if (0U == u32Timeout)
-            {
-                break;
-            }
-            u32Timeout--;
-            continue;
+            break;
         }
 
         if (0U == bsp_can_tx_ring_push_byte(p_data[u16Offset]))
@@ -435,13 +427,8 @@ static void bsp_can_write(const uint8_t *p_data, uint16_t len)
         }
 
         u16Offset++;
-        if (BSP_CAN_TX_FRAME_SIZE <= bsp_can_tx_ring_used())
-        {
-            bsp_can_tx_service();
-        }
     }
 
-    bsp_can_tx_service();
     if (u16Offset < len)
     {
         bsp_can_tx_overflow_count += (uint32_t)(len - u16Offset);
