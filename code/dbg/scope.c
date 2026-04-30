@@ -318,4 +318,131 @@ void scope_printf_data(scope_t *scope, DEC_MY_PRINTF)
     my_printf->my_printf("\r\n");
 
     int32_t start = (int32_t)trig_idx - (int32_t)trig_post_cnt;
-    int32_t end = (int32_t)trig_idx + (int32_t)(buf_siz
+    int32_t end = (int32_t)trig_idx + (int32_t)(buf_size - trig_post_cnt);
+
+    uint32_t mask = 0;
+    for (uint32_t t = buf_size; t; t >>= 1)
+        mask = (mask << 1) | 1;
+    int use_mask = ((mask + 1u) == buf_size);
+
+    for (int32_t i = start; i < end; ++i)
+    {
+        uint32_t idx;
+        if (use_mask)
+            idx = (uint32_t)i & mask;
+        else
+            idx = (uint32_t)(((i % (int32_t)buf_size) + (int32_t)buf_size) % (int32_t)buf_size);
+
+        float *row = buffer + idx;
+        for (uint32_t v = 0; v < var_count; ++v)
+            my_printf->my_printf("%s=%f,", var_names[v], row[v * buf_size]);
+        if (i != (end - 1))
+            my_printf->my_printf("\r\n");
+    }
+    my_printf->my_printf("\r\n");
+}
+
+typedef struct
+{
+    scope_t *scope;
+    DEC_MY_PRINTF;
+    int32_t cur;
+    int32_t start;
+    uint8_t active;
+} scope_print_ctx_t;
+
+static scope_print_ctx_t g_scope_print_ctx = {0};
+
+void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF)
+{
+    if (!scope || !my_printf || g_scope_print_ctx.active || (scope->buffer_size == 0u))
+        return;
+
+    const uint32_t buf_size = scope->buffer_size;
+    const uint32_t trig_post_cnt = scope->trigger_post_cnt;
+    const uint32_t trig_idx = scope->trigger_index;
+
+    g_scope_print_ctx.scope = scope;
+    g_scope_print_ctx.my_printf = my_printf;
+    g_scope_print_ctx.start = ((int32_t)trig_idx + (int32_t)trig_post_cnt + 1) % (int32_t)buf_size;
+    g_scope_print_ctx.cur = g_scope_print_ctx.start;
+    g_scope_print_ctx.active = 1u;
+}
+
+int scope_printf_data_step(void)
+{
+    if (!g_scope_print_ctx.active)
+        return 0;
+
+    scope_t *scope = g_scope_print_ctx.scope;
+    DEC_MY_PRINTF = g_scope_print_ctx.my_printf;
+    const uint32_t buf_size = scope->buffer_size;
+    const uint32_t var_count = scope->var_count;
+    float *buffer = scope->buffer;
+    uint32_t idx = (uint32_t)g_scope_print_ctx.cur % buf_size;
+
+    float *row = buffer + idx;
+    for (uint32_t v = 0; v < var_count; ++v)
+    {
+        if (v == (var_count - 1u))
+            my_printf->my_printf("%f\n", row[v * buf_size]);
+        else
+            my_printf->my_printf("%f,", row[v * buf_size]);
+    }
+
+    g_scope_print_ctx.cur = (g_scope_print_ctx.cur + 1) % (int32_t)buf_size;
+    if (g_scope_print_ctx.cur == g_scope_print_ctx.start)
+    {
+        g_scope_print_ctx.active = 0u;
+        return 0;
+    }
+    return 1;
+}
+
+int scope_printf_data_is_active(void)
+{
+    return g_scope_print_ctx.active;
+}
+
+void scope_print_data(void)
+{
+    SCOPE_DATA_STEP_RUN();
+}
+
+REG_TASK_MS(1, scope_print_data)
+#else
+void scope_printf_status(scope_t *scope, DEC_MY_PRINTF)
+{
+    (void)scope;
+    (void)my_printf;
+}
+
+void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF)
+{
+    (void)scope;
+    (void)my_printf;
+}
+
+int scope_printf_data_step(void)
+{
+    return 0;
+}
+
+int scope_printf_data_is_active(void)
+{
+    return 0;
+}
+#endif
+
+static void scope_service_keep_helpers(void)
+{
+    (void)scope_service_find_by_id;
+    (void)scope_service_get_trigger_display_index;
+    (void)scope_service_logical_to_physical_index;
+    (void)scope_service_fill_ctrl_ack;
+    (void)scope_service_reply;
+}
+
+REG_INIT(0, scope_service_keep_helpers)
+
+#pragma GCC diagnostic pop
