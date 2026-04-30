@@ -103,7 +103,9 @@ C_SOURCES =  \
 ../gd32g553c/src/main.c \
 ../gd32g553c/src/systick.c \
 ../code/app/demo/demo.c \
+../code/lib/record_dict.c \
 ../code/dbg/perf.c \
+../code/dbg/perf_service.c \
 ../code/dbg/scope.c \
 ../code/interface/ac/gpio.c \
 ../code/interface/usart.c \
@@ -181,6 +183,7 @@ AS_INCLUDES =
 C_INCLUDES =  \
 -I../code/app \
 -I../code/app/demo \
+-I../code/lib \
 -I../code/dbg \
 -I../code/interface/ac \
 -I../code/interface \
