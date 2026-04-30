@@ -12,6 +12,12 @@
 - Each commit should group related changes by feature, module, or behavior instead of blindly committing every modified file together.
 - Use Chinese commit messages unless the user explicitly requests another language.
 
+## Workspace Boundaries
+
+- Before editing code outside the current workspace/repository, ask the user for confirmation again.
+- Treat requests that appear to target another repository or working directory as potentially caused by the user forgetting to switch process or context.
+- Do not modify external workspaces just because a path is discoverable on disk; confirm the intended target first.
+
 ## C/H File Header Template
 
 When creating a new `.c` or `.h` file, add the following header at the top of the file.
