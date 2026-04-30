@@ -1,8 +1,31 @@
-/* bb_ctrl.c
- * Buck-boost control core: loop initialization, ISR execution, mode selection,
- * DCM/CCM path switching, and PWM command generation.
+// SPDX-License-Identifier: MIT
+/**
+ * @file    bb_ctrl.c
+ * @brief   bb_ctrl control module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Implement buck-boost voltage, current, power-limit, and open-loop control paths
+ *          - Prepare and reset PI controllers and slew-limited references before entering run state
+ *          - Consume HAL measurements and setpoints to generate PWM compare outputs without allocation
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #include "bb_ctrl.h"
 #include "bb_cfg.h"
 #include "bb_mode.h"

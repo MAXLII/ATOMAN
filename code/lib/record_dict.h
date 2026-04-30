@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    record_dict.h
+ * @brief   record_dict library public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Assign stable record ids within a dictionary version
+ *          - Count and find records through caller-provided list and type callbacks
+ *          - Provide reusable filtering helpers for dictionary-based reporting services
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #ifndef __RECORD_DICT_H__
 #define __RECORD_DICT_H__
 

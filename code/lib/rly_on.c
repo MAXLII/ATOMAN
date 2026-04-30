@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    rly_on.c
+ * @brief   rly_on library module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Manage relay on/off sequencing from trigger and synchronization inputs
+ *          - Delay relay actions until configured timing and equality conditions are satisfied
+ *          - Call caller-provided relay control callbacks when state transitions are ready
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #include "rly_on.h"
 #include "my_math.h"
 #include <math.h>

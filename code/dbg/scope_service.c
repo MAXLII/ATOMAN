@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Register scope objects for shell and communication access
- *          - Provide deferred scope data printing
- *          - Provide helpers for scope binary reporting services
+ *          - Maintain the registered scope-object list and assign scope ids for host access
+ *          - Translate scope state, variables, and sample indices into shell or binary service responses
+ *          - Own deferred scope data printing and communication helper code outside the capture core
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #include "scope_service.h"
 
 #include "comm.h"

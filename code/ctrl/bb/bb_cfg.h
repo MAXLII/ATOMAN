@@ -1,7 +1,31 @@
-/* bb_cfg.h
- * Buck-boost controller runtime setpoint definitions and configuration API.
+// SPDX-License-Identifier: MIT
+/**
+ * @file    bb_cfg.h
+ * @brief   bb_cfg control public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Declare buck-boost setpoint data structures and manager handles
+ *          - Expose APIs for staging, publishing, and reading buck-boost control references
+ *          - Define the configuration contract used by the controller, FSM, and HAL glue
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #ifndef __BB_CFG_H
 #define __BB_CFG_H
 

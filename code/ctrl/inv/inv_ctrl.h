@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    inv_ctrl.h
+ * @brief   inv_ctrl control public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Define inverter controller HAL signals, references, and loop-control structures
+ *          - Expose controller preparation, stepping, and output-generation APIs
+ *          - Provide the public interface between inverter control logic and platform HAL callbacks
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #ifndef __INV_CTRL_H
 #define __INV_CTRL_H
 

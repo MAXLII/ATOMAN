@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Handle Perf binary commands on the existing communication frame
- *          - Report perf dictionary and sample batches to the host
- *          - Provide shell commands for local perf inspection
+ *          - Handle Perf Viewer binary commands on cmd_set 0x01 using the existing 0xE8 frame protocol
+ *          - Send record dictionaries and packed sample batches without exposing backend enum values directly
+ *          - Provide shell commands for local task, interrupt, code, summary, info, and peak-reset inspection
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #include "perf_service.h"
 
 #include "record_dict.h"

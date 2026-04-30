@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Provide deferred shell printing for trace records
- *          - Provide shell command handling for trace clear
- *          - Keep output and command registration outside the trace core
+ *          - Register shell commands for deferred trace printing and trace buffer clearing
+ *          - Print one trace record per scheduled service tick to avoid burst output
+ *          - Keep shell, section task registration, and output formatting outside trace.c
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #include "trace_service.h"
 
 #include "section.h"

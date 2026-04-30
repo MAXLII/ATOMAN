@@ -1,7 +1,31 @@
-/* bb_hal.h
- * Buck-boost controller and FSM HAL binding definitions.
+// SPDX-License-Identifier: MIT
+/**
+ * @file    bb_hal.h
+ * @brief   bb_hal control public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Declare buck-boost HAL binding accessors and protection-control APIs
+ *          - Expose binding lock, unlock, and readiness checks for platform integration
+ *          - Provide the bridge between hardware callbacks and buck-boost control/FSM modules
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
  */
-
 #ifndef __BB_HAL_H
 #define __BB_HAL_H
 

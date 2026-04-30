@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    volt_mt.h
+ * @brief   volt_mt library public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Monitor voltage thresholds and timing conditions
+ *          - Track configured over-voltage or under-voltage state transitions
+ *          - Expose pointer update and periodic monitoring APIs for protection logic
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #ifndef VOLT_MT_H
 #define VOLT_MT_H
 

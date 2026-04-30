@@ -1,3 +1,31 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    time_share.h
+ * @brief   time_share library public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Provide cooperative time-sharing for a table of periodic callbacks
+ *          - Track per-callback counters and execute due functions in round-robin order
+ *          - Throttle callback dispatch with an idle countdown to spread workload
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-05-01
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
 #ifndef __TIME_SHARE_H
 #define __TIME_SHARE_H
 

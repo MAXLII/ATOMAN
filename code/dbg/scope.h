@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define scope capture state and core data structures
- *          - Provide compile-time helpers for scope instance construction
- *          - Expose APIs for capture control
+ *          - Define the scope capture state and circular-buffer object used by the core sampler
+ *          - Provide macro helpers that build variable pointer and name tables at compile time
+ *          - Expose core capture APIs while including scope_service.h only for registration compatibility
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #ifndef __SCOPE_H
 #define __SCOPE_H
 

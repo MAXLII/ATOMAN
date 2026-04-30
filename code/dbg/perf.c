@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Collect registered perf records from linker sections
- *          - Assign stable record ids for the current dictionary version
- *          - Calculate task and interrupt CPU load metrics
+ *          - Collect perf base counters and perf records registered through linker sections
+ *          - Assign stable record ids and maintain the static dictionary version used by Perf Viewer
+ *          - Calculate 500 ms task and interrupt CPU-load windows from accumulated run time
  *
  *          Design notes:
  *          - C11 compatible
@@ -26,7 +26,6 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-
 #include "perf.h"
 
 #include "record_dict.h"
