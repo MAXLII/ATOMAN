@@ -38,16 +38,39 @@ typedef struct
     uint32_t run_time;
     float load;
     float load_max;
+    uint16_t record_id;
     uint8_t record_type;
     uint32_t **p_cnt;
     void *p_next;
 } section_perf_record_t;
 
+extern section_perf_record_t *p_perf_record_first;
+extern uint32_t perf_dict_version;
+
+#ifndef PERF_CNT_PER_SECTION_SYS_TICK
+#define PERF_CNT_PER_SECTION_SYS_TICK 200UL
+#endif
+
+#ifndef PERF_CPU_LOAD_PERIOD_MS
+#define PERF_CPU_LOAD_PERIOD_MS 500UL
+#endif
+
+#ifndef PERF_COUNT_UNIT_US
+#define PERF_COUNT_UNIT_US 0.5f
+#endif
+
 uint32_t perf_base_cnt_get(void);
+uint8_t perf_base_is_ready(void);
 float perf_task_metric_get(void);
 float perf_task_metric_max_get(void);
 float perf_interrupt_metric_get(void);
 float perf_interrupt_metric_max_get(void);
+uint32_t perf_dict_version_get(void);
+uint16_t perf_record_count_get(void);
+uint16_t perf_record_count_by_type(uint8_t record_type);
+uint32_t perf_count_to_us(uint32_t count);
+uint32_t perf_task_period_us_get(section_perf_record_t *record);
+void perf_reset_peak_value(void);
 
 #define REG_PERF_BASE_CNT(timer_cnt)                \
     section_perf_base_t section_perf_base_timer = { \
@@ -99,6 +122,7 @@ float perf_interrupt_metric_max_get(void);
         .run_time = 0,                                   \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
+        .record_id = 0,                                  \
         .record_type = SECTION_PERF_RECORD_CODE,         \
         .p_cnt = NULL,                                   \
         .p_next = NULL,                                  \
@@ -120,6 +144,7 @@ float perf_interrupt_metric_max_get(void);
         .run_time = 0,                                   \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
+        .record_id = 0,                                  \
         .record_type = SECTION_PERF_RECORD_TASK,         \
         .p_cnt = NULL,                                   \
         .p_next = NULL,                                  \
@@ -141,6 +166,7 @@ float perf_interrupt_metric_max_get(void);
         .run_time = 0,                                   \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
+        .record_id = 0,                                  \
         .record_type = SECTION_PERF_RECORD_INTERRUPT,    \
         .p_cnt = NULL,                                   \
         .p_next = NULL,                                  \

@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F334,USE_DDL_DRIVER,IS_HC32,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x00000000,VECT_TAB_OFFSET=0x00000000,TOOLCHAIN_KEIL,IS_AC</Define>
               <Undefine></Undefine>
-              <IncludePath>..\ac\src;..\ac\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\code\section;..\..\code\comm;..\..\code\interface\ac;..\..\code\interface\common;..\..\code\dbg;..\..\code\app\demo</IncludePath>
+              <IncludePath>..\ac\src;..\ac\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\code\section;..\..\code\comm;..\..\code\interface\ac;..\..\code\interface\common;..\..\code\lib;..\..\code\dbg;..\..\code\app\demo</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -497,6 +497,16 @@
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\comm\shell.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>lib</GroupName>
+          <Files>
+            <File>
+              <FileName>record_dict.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\lib\record_dict.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -717,6 +727,11 @@
               <FileName>perf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\perf.c</FilePath>
+            </File>
+            <File>
+              <FileName>perf_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\perf_service.c</FilePath>
             </File>
             <File>
               <FileName>trace.c</FileName>
