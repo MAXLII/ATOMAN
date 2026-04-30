@@ -41,7 +41,7 @@
 #define BSP_USART2_RX_PIN (GPIO_PIN_05)
 #define BSP_USART2_PORT_FUNC (GPIO_FUNC_36)
 
-#define BSP_USART2_BAUDRATE (115200UL)
+#define BSP_USART2_BAUDRATE (921600UL)
 #define BSP_USART2_CLK_DIV (USART_CLK_DIV4)
 
 #define BSP_USART2_RX_DMA_UNIT (CM_DMA)
@@ -311,6 +311,47 @@ static uint16_t bsp_usart_rx_dma_get_write_idx(bsp_usart_port_ctx_t *ctx, const 
     return (uint16_t)(u32Addr - (uint32_t)(&ctx->rx_dma_buf[0]));
 }
 
+static uint8_t bsp_usart_rx_has_error(const bsp_usart_port_cfg_t *cfg)
+{
+    return (uint8_t)((SET == USART_GetStatus(cfg->unit, USART_FLAG_OVERRUN)) ||
+                     (SET == USART_GetStatus(cfg->unit, USART_FLAG_FRAME_ERR)) ||
+                     (SET == USART_GetStatus(cfg->unit, USART_FLAG_PARITY_ERR)) ||
+                     (SET == USART_GetStatus(cfg->unit, USART_FLAG_RX_TIMEOUT)));
+}
+
+static void bsp_usart_rx_recover_if_error(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg)
+{
+    uint16_t i;
+    volatile uint16_t u16Dummy;
+
+    if (0U == bsp_usart_rx_has_error(cfg))
+    {
+        return;
+    }
+
+    DMA_MxChCmd(cfg->rx_dma_unit, cfg->rx_dma_mx_ch, DISABLE);
+    (void)DMA_ChCmd(cfg->rx_dma_unit, cfg->rx_dma_ch, DISABLE);
+
+    if (SET == USART_GetStatus(cfg->unit, USART_FLAG_RX_FULL))
+    {
+        u16Dummy = cfg->unit->RDR;
+        (void)u16Dummy;
+    }
+
+    USART_ClearStatus(cfg->unit,
+                      USART_FLAG_OVERRUN |
+                          USART_FLAG_FRAME_ERR |
+                          USART_FLAG_PARITY_ERR |
+                          USART_FLAG_RX_TIMEOUT);
+
+    ctx->rx_read_idx = 0U;
+    for (i = 0U; i < cfg->rx_dma_buf_size; i++)
+    {
+        ctx->rx_dma_buf[i] = 0U;
+    }
+    bsp_usart_rx_dma_init(ctx, cfg);
+}
+
 static void bsp_usart_tx_dma_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg)
 {
     stc_dma_init_t stcDmaInit;
@@ -568,6 +609,8 @@ static int32_t bsp_usart_read_byte(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
 
     /* RX has no copy step. The DMA write index is compared with rx_read_idx and
      * software consumes one byte at a time from the circular DMA buffer. */
+    bsp_usart_rx_recover_if_error(ctx, cfg);
+
     u16WriteIdx = bsp_usart_rx_dma_get_write_idx(ctx, cfg);
     if (u16WriteIdx >= cfg->rx_dma_buf_size)
     {

@@ -116,6 +116,7 @@ typedef struct
     uint16_t len;            ///< 剩余 payload 字节数
     const uint8_t src;       ///< 本机地址
     uint8_t d_src;           ///< 动态源地址
+    uint32_t last_rx_tick;   ///< Last byte time for parser timeout recovery
 
     uint8_t src_flag : 1;
     uint8_t dst_flag : 1;
@@ -143,6 +144,7 @@ typedef struct
         .len           = 0,                                  \
         .src           = (uint8_t)(_src),                    \
         .d_src         = 0,                                  \
+        .last_rx_tick  = 0,                                  \
         .src_flag      = 0,                                  \
         .dst_flag      = 0,                                  \
         .cmd_flag      = 0,                                  \

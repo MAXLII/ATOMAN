@@ -41,6 +41,40 @@ static bsp_usart_dbg_dma_tx_t s_usart_dbg_tx = {
 static uint8_t s_usart_dbg_rx_ring[BSP_USART_DBG_RX_RING_SIZE] = {0};
 static volatile uint16_t s_usart_dbg_rx_pos = 0U;
 
+static uint8_t bsp_usart_dbg_rx_has_error(void)
+{
+    return (uint8_t)((usart_flag_get(USART0, USART_FLAG_ORERR) == SET) ||
+                     (usart_flag_get(USART0, USART_FLAG_NERR) == SET) ||
+                     (usart_flag_get(USART0, USART_FLAG_FERR) == SET) ||
+                     (usart_flag_get(USART0, USART_FLAG_PERR) == SET));
+}
+
+static void bsp_usart_dbg_rx_recover_if_error(void)
+{
+    volatile uint32_t dummy;
+
+    if (bsp_usart_dbg_rx_has_error() == 0U)
+    {
+        return;
+    }
+
+    dma_channel_disable(DMA0, DMA_CH0);
+    dummy = USART_RDATA(USART0);
+    (void)dummy;
+
+    usart_flag_clear(USART0, USART_FLAG_ORERR);
+    usart_flag_clear(USART0, USART_FLAG_NERR);
+    usart_flag_clear(USART0, USART_FLAG_FERR);
+    usart_flag_clear(USART0, USART_FLAG_PERR);
+
+    dma_flag_clear(DMA0, DMA_CH0, DMA_FLAG_G);
+    dma_memory_address_config(DMA0, DMA_CH0, (uint32_t)s_usart_dbg_rx_ring);
+    dma_transfer_number_config(DMA0, DMA_CH0, BSP_USART_DBG_RX_RING_SIZE);
+    memset(s_usart_dbg_rx_ring, 0, sizeof(s_usart_dbg_rx_ring));
+    s_usart_dbg_rx_pos = 0U;
+    dma_channel_enable(DMA0, DMA_CH0);
+}
+
 static uint32_t bsp_usart_irq_lock(void)
 {
     uint32_t primask = __get_PRIMASK();
@@ -281,6 +315,8 @@ uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data)
     {
         return 0U;
     }
+
+    bsp_usart_dbg_rx_recover_if_error();
 
     write_pos = (uint16_t)(BSP_USART_DBG_RX_RING_SIZE - DMA_CHCNT(DMA0, DMA_CH0));
     if (write_pos >= BSP_USART_DBG_RX_RING_SIZE)

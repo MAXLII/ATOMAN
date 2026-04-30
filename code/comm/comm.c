@@ -254,6 +254,7 @@ static void comm_route_run(comm_ctx_t *ctx)
 #define COMM_SOP_BYTE 0xE8u
 #define COMM_VER_1 0x01u
 #define COMM_EOP_WORD 0x0A0Du
+#define COMM_FRAME_TIMEOUT_TICK (1000u)
 
 /* 对 dst/d_dst 的“本机接收”判定 */
 static inline uint8_t is_addr_match(uint8_t addr, uint8_t local)
@@ -281,8 +282,17 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
     (void)my_printf;
 
     comm_ctx_t *ctx = (comm_ctx_t *)p;
+    uint32_t now;
     if (!ctx)
         return;
+
+    now = SECTION_SYS_TICK;
+    if ((ctx->status != SECTION_PACKFORM_STA_SOP) &&
+        ((uint32_t)(now - ctx->last_rx_tick) > COMM_FRAME_TIMEOUT_TICK))
+    {
+        comm_reset_ctx(ctx);
+    }
+    ctx->last_rx_tick = now;
 
     switch (ctx->status)
     {
