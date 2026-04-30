@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Expose the scheduled trace service print task
- *          - Document the service boundary between trace storage and shell output
- *          - Provide a place for future trace communication reporting APIs
+ *          - Define Trace binary command words and payload timing constants
+ *          - Expose the scheduled trace service task used by shell and binary reporting
+ *          - Keep protocol reporting declarations outside the trace storage module
  *
  *          Design notes:
  *          - C11 compatible
@@ -29,6 +29,13 @@
 #ifndef __TRACE_SERVICE_H__
 #define __TRACE_SERVICE_H__
 
+#define TRACE_SERVICE_CMD_SET 0x01u
+#define TRACE_SERVICE_CMD_CONTROL 0x2Cu
+#define TRACE_SERVICE_CMD_RECORD_REPORT 0x2Du
+
+#define TRACE_SERVICE_TIME_UNIT_US 100u
+
 void dbg_trace_service_print_task(void);
+void dbg_trace_service_binary_task(void);
 
 #endif

@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Define trace record layout and trace buffer capacity
  *          - Expose APIs for time binding, trace insertion, clearing, and readback
- *          - Provide lightweight macros for binding a time source and marking the current source line
+ *          - Provide lightweight macros for binding a time source and writing into the FIFO trace buffer
  *
  *          Design notes:
  *          - C11 compatible
@@ -44,6 +44,9 @@ void dbg_trace_record(uint32_t line);
 void dbg_trace_clear(void);
 const dbg_trace_item_t *dbg_trace_buffer_get(void);
 uint32_t dbg_trace_buffer_size_get(void);
+uint32_t dbg_trace_record_count_get(void);
+const dbg_trace_item_t *dbg_trace_item_get(uint32_t index);
+uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
 
 /* Bind the external system time counter used by all trace records. */
 #define DBG_TRACE_BIND_TIME(p_system_time) \
