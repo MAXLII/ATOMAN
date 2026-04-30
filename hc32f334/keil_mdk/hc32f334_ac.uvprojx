@@ -493,11 +493,6 @@
               <FileType>1</FileType>
               <FilePath>..\..\code\comm\comm.c</FilePath>
             </File>
-            <File>
-              <FileName>shell.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\code\comm\shell.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -747,6 +742,16 @@
               <FileName>trace_service.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\trace_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\shell.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\shell_service.c</FilePath>
             </File>
           </Files>
         </Group>

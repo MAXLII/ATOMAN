@@ -110,11 +110,12 @@ C_SOURCES =  \
 ../code/dbg/scope_service.c \
 ../code/dbg/trace.c \
 ../code/dbg/trace_service.c \
+../code/dbg/shell.c \
+../code/dbg/shell_service.c \
 ../code/interface/ac/gpio.c \
 ../code/interface/usart.c \
 ../code/section/section.c \
 ../code/comm/comm.c \
-../code/comm/shell.c \
 
 # ASM sources
 ASM_SOURCES =  \
