@@ -64,6 +64,11 @@ typedef struct
 
 typedef struct
 {
+    uint8_t success;
+} perf_report_control_ack_t;
+
+typedef struct
+{
     uint8_t type_filter;
     uint8_t reserved[3];
     uint32_t known_dict_version;
@@ -247,11 +252,16 @@ static uint32_t perf_opt_task_period_us_get(section_perf_record_t *record)
         return 0u;
     }
 
+    if (record->period_us != 0u)
+    {
+        return record->period_us;
+    }
+
     for (reg_task_t *task = p_task_first; task != NULL; task = (reg_task_t *)task->p_next)
     {
         if (task->p_perf_record == record)
         {
-            return (uint32_t)((float)(task->t_period * PERF_CNT_PER_SECTION_SYS_TICK) * PERF_COUNT_UNIT_US);
+            return task->t_period * SECTION_SYS_TICK_UNIT_US;
         }
     }
 
@@ -362,6 +372,7 @@ static uint8_t perf_opt_start_common(perf_opt_service_t *self,
     self->dict_version = perf_dict_version_get();
     self->cur = p_perf_record_first;
     self->status = PERF_OPT_END_OK;
+    self->pending_end = 0u;
     perf_opt_capture_route(self, p_pack, my_printf);
     *reject_reason = PERF_OPT_REJECT_OK;
     return 1u;
@@ -545,7 +556,17 @@ static void perf_opt_poll_sample(perf_opt_service_t *self)
     payload_len = (uint16_t)sizeof(header);
     item_count = 0u;
 
-    while (self->index < self->record_count)
+    if (self->pending_end != 0u)
+    {
+        perf_opt_send_sample_end(self, self->status);
+        self->active = 0u;
+        self->pull_type = PERF_OPT_PULL_IDLE;
+        self->pending_end = 0u;
+        return;
+    }
+
+    while ((self->index < self->record_count) &&
+           (item_count < PERF_OPT_MAX_SAMPLE_ITEMS_PER_POLL))
     {
         uint16_t item_size;
 
@@ -582,9 +603,8 @@ static void perf_opt_poll_sample(perf_opt_service_t *self)
 
     if (self->index >= self->record_count)
     {
-        perf_opt_send_sample_end(self, PERF_OPT_END_OK);
-        self->active = 0u;
-        self->pull_type = PERF_OPT_PULL_IDLE;
+        self->status = PERF_OPT_END_OK;
+        self->pending_end = 1u;
         return;
     }
 
@@ -969,13 +989,55 @@ static void perf_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_opt_send_response(p_pack, PERF_OPT_CMD_SAMPLE_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);
 }
 
+static void perf_report_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    perf_report_control_ack_t ack = {0};
+    uint8_t enable = 0u;
+
+    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    {
+        return;
+    }
+
+    if ((p_pack->p_data != NULL) && (p_pack->len >= 1u))
+    {
+        enable = p_pack->p_data[0];
+    }
+
+    if (enable == 0u)
+    {
+        s_perf_opt_service.active = 0u;
+        s_perf_opt_service.pull_type = PERF_OPT_PULL_IDLE;
+        s_perf_opt_service.pending_end = 0u;
+        s_perf_text_print_ctx.active = 0u;
+        ack.success = 1u;
+    }
+    else
+    {
+        ack.success = 0u;
+    }
+
+    if ((p_pack->dst == 0u) && (p_pack->d_dst == 0u))
+    {
+        return;
+    }
+
+    perf_opt_send_response(p_pack,
+                           PERF_OPT_CMD_REPORT_CONTROL,
+                           1u,
+                           (uint8_t *)&ack,
+                           (uint16_t)sizeof(ack),
+                           my_printf);
+}
+
 REG_INIT(0, perf_opt_init_task)
-REG_TASK_MS(1, perf_opt_poll_task)
+REG_TASK_MS(10, perf_opt_poll_task)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_INFO_QUERY, perf_info_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_SUMMARY_QUERY, perf_summary_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_RESET_PEAK, perf_reset_peak_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_DICT_QUERY, perf_dict_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_SAMPLE_QUERY, perf_sample_query_act)
+REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_REPORT_CONTROL, perf_report_control_act)
 REG_SHELL_CMD(perf_print_record, perf_service_print_start)
 REG_SHELL_CMD(perf_print_task, perf_service_print_task)
 REG_SHELL_CMD(perf_print_interrupt, perf_service_print_interrupt)

@@ -48,6 +48,10 @@ static void task_insert(reg_task_t *task)
 
     task->time_last = SECTION_SYS_TICK;
     task->p_next = NULL;
+    if (task->p_perf_record != NULL)
+    {
+        task->p_perf_record->period_us = task->t_period * SECTION_SYS_TICK_UNIT_US;
+    }
 
     if (p_task_first == NULL)
     {

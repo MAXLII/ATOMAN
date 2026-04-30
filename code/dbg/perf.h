@@ -64,6 +64,7 @@ typedef struct
     uint16_t reserved;
     uint32_t max_time;
     uint32_t run_time;
+    uint32_t period_us;
     float load;
     float load_max;
     uint16_t record_id;
@@ -75,16 +76,24 @@ typedef struct
 extern section_perf_record_t *p_perf_record_first;
 extern uint32_t perf_dict_version;
 
-#ifndef PERF_CNT_PER_SECTION_SYS_TICK
-#define PERF_CNT_PER_SECTION_SYS_TICK 200UL
-#endif
-
 #ifndef PERF_CPU_LOAD_PERIOD_MS
 #define PERF_CPU_LOAD_PERIOD_MS 500UL
 #endif
 
+#if defined(IS_HC32)
+#ifndef PERF_COUNT_UNIT_US
+#define PERF_COUNT_UNIT_US (8.0f / 15.0f)
+#endif
+#ifndef PERF_CNT_PER_SECTION_SYS_TICK
+#define PERF_CNT_PER_SECTION_SYS_TICK 188UL
+#endif
+#else
 #ifndef PERF_COUNT_UNIT_US
 #define PERF_COUNT_UNIT_US 0.5f
+#endif
+#ifndef PERF_CNT_PER_SECTION_SYS_TICK
+#define PERF_CNT_PER_SECTION_SYS_TICK 200UL
+#endif
 #endif
 
 uint32_t perf_base_cnt_get(void);
@@ -148,6 +157,7 @@ void perf_reset_peak_value(void);
         .reserved = 0,                                   \
         .max_time = 0,                                   \
         .run_time = 0,                                   \
+        .period_us = 0,                                  \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
         .record_id = 0,                                  \
@@ -170,6 +180,7 @@ void perf_reset_peak_value(void);
         .reserved = 0,                                   \
         .max_time = 0,                                   \
         .run_time = 0,                                   \
+        .period_us = 0,                                  \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
         .record_id = 0,                                  \
@@ -192,6 +203,7 @@ void perf_reset_peak_value(void);
         .reserved = 0,                                   \
         .max_time = 0,                                   \
         .run_time = 0,                                   \
+        .period_us = 0,                                  \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
         .record_id = 0,                                  \

@@ -193,11 +193,16 @@ uint32_t perf_task_period_us_get(section_perf_record_t *record)
         return 0u;
     }
 
+    if (record->period_us != 0u)
+    {
+        return record->period_us;
+    }
+
     for (reg_task_t *task = p_task_first; task != NULL; task = (reg_task_t *)task->p_next)
     {
         if (task->p_perf_record == record)
         {
-            return (uint32_t)((float)(task->t_period * PERF_CNT_PER_SECTION_SYS_TICK) * PERF_COUNT_UNIT_US);
+            return task->t_period * SECTION_SYS_TICK_UNIT_US;
         }
     }
 
