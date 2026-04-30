@@ -345,3 +345,11 @@ base
 它通过 `section` 统一调度框架，把初始化、任务、中断、状态机、通信和调试机制组织成一个可扩展的整体；再通过 `cfg + hal + ctrl + fsm` 的模块拆分方式，把功率控制模块做成可复用、可移植、可扩展的独立单元。
 
 因此，这套框架真正的价值不在于某个具体平台，而在于它提供了一套可以长期沉淀、跨项目复用、跨平台兼容的数字电源软件架构。
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+Third-party components, including vendor SDKs, chip vendor libraries, Keil/JLink related files, and other bundled external materials, are not automatically covered by this project's MIT License. They remain subject to their respective licenses.
