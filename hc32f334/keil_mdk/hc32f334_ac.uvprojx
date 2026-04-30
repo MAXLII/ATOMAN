@@ -724,6 +724,11 @@
               <FilePath>..\..\code\dbg\scope.c</FilePath>
             </File>
             <File>
+              <FileName>scope_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\scope_service.c</FilePath>
+            </File>
+            <File>
               <FileName>perf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\perf.c</FilePath>
@@ -737,6 +742,11 @@
               <FileName>trace.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\trace.c</FilePath>
+            </File>
+            <File>
+              <FileName>trace_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\trace_service.c</FilePath>
             </File>
           </Files>
         </Group>
