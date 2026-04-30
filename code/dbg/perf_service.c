@@ -1,3 +1,32 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    perf_service.c
+ * @brief   Perf communication service module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Handle Perf binary commands on the existing communication frame
+ *          - Report perf dictionary and sample batches to the host
+ *          - Provide shell commands for local perf inspection
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-04-30
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
+
 #include "perf_service.h"
 
 #include "record_dict.h"
