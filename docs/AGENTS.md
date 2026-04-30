@@ -6,6 +6,12 @@
 - Put new Markdown documentation files under `docs/`.
 - Engineering design notes, module descriptions, protocol documents, operation manuals, and AI-facing instructions should live in `docs/`.
 
+## Git Commit Workflow
+
+- When the user says to commit code, inspect the actual current code changes and split them into meaningful batches before committing.
+- Each commit should group related changes by feature, module, or behavior instead of blindly committing every modified file together.
+- Use Chinese commit messages unless the user explicitly requests another language.
+
 ## C/H File Header Template
 
 When creating a new `.c` or `.h` file, add the following header at the top of the file.
