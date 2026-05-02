@@ -66,7 +66,7 @@ typedef struct
     section_shell_t *p_shell;
 } shell_report_ctx_t;
 
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct
 {
     uint8_t name_len;
@@ -145,10 +145,12 @@ typedef struct
 {
     uint32_t reprot_period;
 } shell_wave_period_ack_t;
-#pragma pack()
+#pragma pack(pop)
 
 void shell_status_run(void);
+#ifdef SHELL_STRING_PARSE
 void list_print_start(DEC_MY_PRINTF);
 int list_print_step(void);
+#endif
 
 #endif /* __SHELL_SERVICE_H__ */
