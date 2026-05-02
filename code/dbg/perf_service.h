@@ -35,6 +35,10 @@
 
 #include <stdint.h>
 
+#ifndef PERF_SERVICE_PRINTF
+#define PERF_SERVICE_PRINTF 0
+#endif
+
 #ifndef PERF_CNT_PER_SECTION_SYS_TICK
 #define PERF_CNT_PER_SECTION_SYS_TICK 200UL
 #endif

@@ -168,21 +168,222 @@ typedef struct
 static perf_opt_service_t s_perf_opt_service;
 static uint32_t s_perf_opt_sequence = 0u;
 
-typedef struct
-{
-    section_perf_record_t *cur;
-    DEC_MY_PRINTF;
-    uint8_t active;
-    uint32_t perf_max_name_len;
-} perf_text_print_ctx_t;
-
-static perf_text_print_ctx_t s_perf_text_print_ctx = {0};
 static float s_perf_service_task_metric = 0.0f;
 static float s_perf_service_task_metric_max = 0.0f;
 static float s_perf_service_interrupt_metric = 0.0f;
 static float s_perf_service_interrupt_metric_max = 0.0f;
 
-static void perf_service_print_step(void);
+/* --- printf / shell command helpers (gated by PERF_SERVICE_PRINTF) -------- */
+
+#if PERF_SERVICE_PRINTF == 1
+
+typedef struct
+{
+    section_perf_record_t *cur;
+    DEC_MY_PRINTF;
+    uint8_t active;
+} perf_text_print_ctx_t;
+
+static perf_text_print_ctx_t s_perf_text_print_ctx = {0};
+
+static const char *perf_service_record_type_name(uint8_t record_type)
+{
+    switch (record_type)
+    {
+    case SECTION_PERF_RECORD_TASK:
+        return "TASK";
+    case SECTION_PERF_RECORD_INTERRUPT:
+        return "INT";
+    case SECTION_PERF_RECORD_CODE:
+        return "CODE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+static void perf_service_print_record_item(section_perf_record_t *record, DEC_MY_PRINTF)
+{
+    if ((record == NULL) || (my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
+        return;
+    }
+
+    if (record->record_type == SECTION_PERF_RECORD_CODE)
+    {
+        my_printf->my_printf("%s\t%s\t%lu\t%lu\t-\t-\r\n",
+                             perf_service_record_type_name(record->record_type),
+                             record->p_name,
+                             (unsigned long)perf_count_to_us(record->time),
+                             (unsigned long)perf_count_to_us(record->max_time));
+    }
+    else
+    {
+        my_printf->my_printf("%s\t%s\t%lu\t%lu\t%f\t%f\r\n",
+                             perf_service_record_type_name(record->record_type),
+                             record->p_name,
+                             (unsigned long)perf_count_to_us(record->time),
+                             (unsigned long)perf_count_to_us(record->max_time),
+                             (double)(record->load * 100.0f),
+                             (double)(record->load_max * 100.0f));
+    }
+}
+
+static void perf_service_print_by_type(uint8_t record_type, DEC_MY_PRINTF)
+{
+    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
+        return;
+    }
+
+    my_printf->my_printf("PERF_BEGIN type=%s count=%u unit_us=%f\r\n",
+                         perf_service_record_type_name(record_type),
+                         (unsigned)perf_record_count_by_type(record_type),
+                         (double)PERF_COUNT_UNIT_US);
+    my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
+    for (section_perf_record_t *record = p_perf_record_first; record != NULL; record = (section_perf_record_t *)record->p_next)
+    {
+        if (record->record_type == record_type)
+        {
+            perf_service_print_record_item(record, my_printf);
+        }
+    }
+    my_printf->my_printf("PERF_END\r\n");
+}
+
+static void perf_service_print_task(DEC_MY_PRINTF)
+{
+    perf_service_print_by_type(SECTION_PERF_RECORD_TASK, my_printf);
+}
+
+static void perf_service_print_interrupt(DEC_MY_PRINTF)
+{
+    perf_service_print_by_type(SECTION_PERF_RECORD_INTERRUPT, my_printf);
+}
+
+static void perf_service_print_code(DEC_MY_PRINTF)
+{
+    perf_service_print_by_type(SECTION_PERF_RECORD_CODE, my_printf);
+}
+
+static void perf_service_cpu_utilization(DEC_MY_PRINTF)
+{
+    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
+        return;
+    }
+
+    my_printf->my_printf("TASK CPU Load:%f%%,TASK CPU Peak:%f%%\r\n",
+                         (double)(perf_task_metric_get() * 100.0f),
+                         (double)(perf_task_metric_max_get() * 100.0f));
+    my_printf->my_printf("INT CPU Load:%f%%,INT CPU Peak:%f%%\r\n",
+                         (double)(perf_interrupt_metric_get() * 100.0f),
+                         (double)(perf_interrupt_metric_max_get() * 100.0f));
+}
+
+static void perf_service_summary(DEC_MY_PRINTF)
+{
+    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
+        return;
+    }
+
+    my_printf->my_printf("PERF_SUMMARY task_load=%f task_peak=%f int_load=%f int_peak=%f\r\n",
+                         (double)(perf_task_metric_get() * 100.0f),
+                         (double)(perf_task_metric_max_get() * 100.0f),
+                         (double)(perf_interrupt_metric_get() * 100.0f),
+                         (double)(perf_interrupt_metric_max_get() * 100.0f));
+}
+
+static void perf_service_info(DEC_MY_PRINTF)
+{
+    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
+        return;
+    }
+
+    my_printf->my_printf("PERF_INFO unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu record_count=%u\r\n",
+                         (double)PERF_COUNT_UNIT_US,
+                         (unsigned long)PERF_CNT_PER_SECTION_SYS_TICK,
+                         (unsigned long)PERF_CPU_LOAD_PERIOD_MS,
+                         (unsigned)perf_record_count_get());
+}
+
+static void perf_service_reset_peak(DEC_MY_PRINTF)
+{
+    perf_reset_peak_value();
+
+    if ((my_printf != NULL) && (my_printf->my_printf != NULL))
+    {
+        my_printf->my_printf("PERF_RESET_OK\r\n");
+    }
+}
+
+static void perf_service_print_start(DEC_MY_PRINTF)
+{
+    if ((my_printf == NULL) || (my_printf->my_printf == NULL) || (s_perf_text_print_ctx.active != 0u))
+    {
+        return;
+    }
+
+    s_perf_text_print_ctx.cur = p_perf_record_first;
+    s_perf_text_print_ctx.my_printf = my_printf;
+    s_perf_text_print_ctx.active = 1u;
+
+    my_printf->my_printf("PERF_BEGIN type=ALL count=%u unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu\r\n",
+                         (unsigned)perf_record_count_get(),
+                         (double)PERF_COUNT_UNIT_US,
+                         (unsigned long)PERF_CNT_PER_SECTION_SYS_TICK,
+                         (unsigned long)PERF_CPU_LOAD_PERIOD_MS);
+    my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
+}
+
+static void perf_service_print_step(void)
+{
+    if (s_perf_text_print_ctx.active == 0u)
+    {
+        return;
+    }
+
+    if (s_perf_text_print_ctx.cur == NULL)
+    {
+        if ((s_perf_text_print_ctx.my_printf != NULL) && (s_perf_text_print_ctx.my_printf->my_printf != NULL))
+        {
+            s_perf_text_print_ctx.my_printf->my_printf("PERF_END\r\n");
+        }
+        s_perf_text_print_ctx.active = 0u;
+        return;
+    }
+
+    perf_service_print_record_item(s_perf_text_print_ctx.cur, s_perf_text_print_ctx.my_printf);
+    s_perf_text_print_ctx.cur = (section_perf_record_t *)s_perf_text_print_ctx.cur->p_next;
+}
+
+static void perf_service_print_cancel(void)
+{
+    s_perf_text_print_ctx.active = 0u;
+}
+
+REG_SHELL_CMD(perf_print_record, perf_service_print_start)
+REG_SHELL_CMD(perf_print_task, perf_service_print_task)
+REG_SHELL_CMD(perf_print_interrupt, perf_service_print_interrupt)
+REG_SHELL_CMD(perf_print_code, perf_service_print_code)
+REG_SHELL_CMD(CPU_Utilization, perf_service_cpu_utilization)
+REG_SHELL_CMD(perf_summary, perf_service_summary)
+REG_SHELL_CMD(perf_info, perf_service_info)
+REG_SHELL_CMD(perf_reset_peak, perf_service_reset_peak)
+REG_SHELL_VAR(TASK_METRIC, s_perf_service_task_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(TASK_METRIC_MAX, s_perf_service_task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(INTERRUPT_METRIC, s_perf_service_interrupt_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(INTERRUPT_METRIC_MAX, s_perf_service_interrupt_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
+
+#else /* !PERF_SERVICE_PRINTF — stubs */
+
+static void perf_service_print_step(void) { }
+static void perf_service_print_cancel(void) { }
+
+#endif /* PERF_SERVICE_PRINTF */
+
+/* --- binary protocol constants and helpers --------------------------------- */
 
 #define PERF_SERVICE_PROTOCOL_VERSION 0x0001u
 #define PERF_SERVICE_INFO_FLAGS ((uint8_t)((1u << 0) | (1u << 1)))
@@ -243,34 +444,6 @@ static section_perf_record_t *perf_opt_find_next(section_perf_record_t *record, 
                                                           PERF_OPT_TYPE_ALL,
                                                           perf_opt_record_next_get,
                                                           perf_opt_record_protocol_type_get);
-}
-
-static uint32_t perf_opt_task_period_us_get(section_perf_record_t *record)
-{
-    if (record == NULL)
-    {
-        return 0u;
-    }
-
-    if (record->period_us != 0u)
-    {
-        return record->period_us;
-    }
-
-    for (reg_task_t *task = p_task_first; task != NULL; task = (reg_task_t *)task->p_next)
-    {
-        if (task->p_perf_record == record)
-        {
-            return task->t_period * SECTION_SYS_TICK_UNIT_US;
-        }
-    }
-
-    return 0u;
-}
-
-static uint32_t perf_opt_time_us(uint32_t count)
-{
-    return (uint32_t)((float)count * PERF_COUNT_UNIT_US);
 }
 
 static void perf_opt_send_response(section_packform_t *p_req,
@@ -507,9 +680,9 @@ static uint16_t perf_opt_fill_sample_item(section_perf_record_t *record, uint8_t
     {
         perf_sample_task_item_t item = {0};
         item.record_id = record->record_id;
-        item.time_us = perf_opt_time_us(record->time);
-        item.max_time_us = perf_opt_time_us(record->max_time);
-        item.period_us = perf_opt_task_period_us_get(record);
+        item.time_us = perf_count_to_us(record->time);
+        item.max_time_us = perf_count_to_us(record->max_time);
+        item.period_us = perf_task_period_us_get(record);
         item.load_percent = record->load * 100.0f;
         item.peak_percent = record->load_max * 100.0f;
         (void)memcpy(payload, &item, sizeof(item));
@@ -520,8 +693,8 @@ static uint16_t perf_opt_fill_sample_item(section_perf_record_t *record, uint8_t
     {
         perf_sample_interrupt_item_t item = {0};
         item.record_id = record->record_id;
-        item.time_us = perf_opt_time_us(record->time);
-        item.max_time_us = perf_opt_time_us(record->max_time);
+        item.time_us = perf_count_to_us(record->time);
+        item.max_time_us = perf_count_to_us(record->max_time);
         item.load_percent = record->load * 100.0f;
         item.peak_percent = record->load_max * 100.0f;
         (void)memcpy(payload, &item, sizeof(item));
@@ -532,8 +705,8 @@ static uint16_t perf_opt_fill_sample_item(section_perf_record_t *record, uint8_t
     {
         perf_sample_code_item_t item = {0};
         item.record_id = record->record_id;
-        item.time_us = perf_opt_time_us(record->time);
-        item.max_time_us = perf_opt_time_us(record->max_time);
+        item.time_us = perf_count_to_us(record->time);
+        item.max_time_us = perf_count_to_us(record->max_time);
         (void)memcpy(payload, &item, sizeof(item));
         return (uint16_t)sizeof(item);
     }
@@ -669,193 +842,13 @@ static void perf_opt_poll_task(void)
     perf_service_print_step();
 }
 
-static const char *perf_service_record_type_name(uint8_t record_type)
-{
-    switch (record_type)
-    {
-    case SECTION_PERF_RECORD_TASK:
-        return "TASK";
-    case SECTION_PERF_RECORD_INTERRUPT:
-        return "INT";
-    case SECTION_PERF_RECORD_CODE:
-        return "CODE";
-    default:
-        return "UNKNOWN";
-    }
-}
-
-static void perf_service_print_record_item(section_perf_record_t *record, DEC_MY_PRINTF)
-{
-    if ((record == NULL) || (my_printf == NULL) || (my_printf->my_printf == NULL))
-    {
-        return;
-    }
-
-    if (record->record_type == SECTION_PERF_RECORD_CODE)
-    {
-        my_printf->my_printf("%s\t%s\t%lu\t%lu\t-\t-\r\n",
-                             perf_service_record_type_name(record->record_type),
-                             record->p_name,
-                             (unsigned long)perf_count_to_us(record->time),
-                             (unsigned long)perf_count_to_us(record->max_time));
-    }
-    else
-    {
-        my_printf->my_printf("%s\t%s\t%lu\t%lu\t%f\t%f\r\n",
-                             perf_service_record_type_name(record->record_type),
-                             record->p_name,
-                             (unsigned long)perf_count_to_us(record->time),
-                             (unsigned long)perf_count_to_us(record->max_time),
-                             (double)(record->load * 100.0f),
-                             (double)(record->load_max * 100.0f));
-    }
-}
-
-static void perf_service_print_by_type(uint8_t record_type, DEC_MY_PRINTF)
-{
-    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
-    {
-        return;
-    }
-
-    my_printf->my_printf("PERF_BEGIN type=%s count=%u unit_us=%f\r\n",
-                         perf_service_record_type_name(record_type),
-                         (unsigned)perf_record_count_by_type(record_type),
-                         (double)PERF_COUNT_UNIT_US);
-    my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
-    for (section_perf_record_t *record = p_perf_record_first; record != NULL; record = (section_perf_record_t *)record->p_next)
-    {
-        if (record->record_type == record_type)
-        {
-            perf_service_print_record_item(record, my_printf);
-        }
-    }
-    my_printf->my_printf("PERF_END\r\n");
-}
-
-static void perf_service_print_task(DEC_MY_PRINTF)
-{
-    perf_service_print_by_type(SECTION_PERF_RECORD_TASK, my_printf);
-}
-
-static void perf_service_print_interrupt(DEC_MY_PRINTF)
-{
-    perf_service_print_by_type(SECTION_PERF_RECORD_INTERRUPT, my_printf);
-}
-
-static void perf_service_print_code(DEC_MY_PRINTF)
-{
-    perf_service_print_by_type(SECTION_PERF_RECORD_CODE, my_printf);
-}
-
-static void perf_service_cpu_utilization(DEC_MY_PRINTF)
-{
-    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
-    {
-        return;
-    }
-
-    my_printf->my_printf("TASK CPU Load:%f%%,TASK CPU Peak:%f%%\r\n",
-                         (double)(perf_task_metric_get() * 100.0f),
-                         (double)(perf_task_metric_max_get() * 100.0f));
-    my_printf->my_printf("INT CPU Load:%f%%,INT CPU Peak:%f%%\r\n",
-                         (double)(perf_interrupt_metric_get() * 100.0f),
-                         (double)(perf_interrupt_metric_max_get() * 100.0f));
-}
-
-static void perf_service_summary(DEC_MY_PRINTF)
-{
-    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
-    {
-        return;
-    }
-
-    my_printf->my_printf("PERF_SUMMARY task_load=%f task_peak=%f int_load=%f int_peak=%f\r\n",
-                         (double)(perf_task_metric_get() * 100.0f),
-                         (double)(perf_task_metric_max_get() * 100.0f),
-                         (double)(perf_interrupt_metric_get() * 100.0f),
-                         (double)(perf_interrupt_metric_max_get() * 100.0f));
-}
-
-static void perf_service_info(DEC_MY_PRINTF)
-{
-    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
-    {
-        return;
-    }
-
-    my_printf->my_printf("PERF_INFO unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu record_count=%u\r\n",
-                         (double)PERF_COUNT_UNIT_US,
-                         (unsigned long)PERF_CNT_PER_SECTION_SYS_TICK,
-                         (unsigned long)PERF_CPU_LOAD_PERIOD_MS,
-                         (unsigned)perf_record_count_get());
-}
-
-static void perf_service_reset_peak(DEC_MY_PRINTF)
-{
-    perf_reset_peak_value();
-
-    if ((my_printf != NULL) && (my_printf->my_printf != NULL))
-    {
-        my_printf->my_printf("PERF_RESET_OK\r\n");
-    }
-}
-
-static void perf_service_print_start(DEC_MY_PRINTF)
-{
-    if ((my_printf == NULL) || (my_printf->my_printf == NULL) || (s_perf_text_print_ctx.active != 0u))
-    {
-        return;
-    }
-
-    s_perf_text_print_ctx.cur = p_perf_record_first;
-    s_perf_text_print_ctx.my_printf = my_printf;
-    s_perf_text_print_ctx.active = 1u;
-    s_perf_text_print_ctx.perf_max_name_len = 0u;
-
-    for (section_perf_record_t *record = p_perf_record_first; record != NULL; record = (section_perf_record_t *)record->p_next)
-    {
-        uint32_t len = (record->p_name != NULL) ? (uint32_t)strlen(record->p_name) : 0u;
-        if (len > s_perf_text_print_ctx.perf_max_name_len)
-        {
-            s_perf_text_print_ctx.perf_max_name_len = len;
-        }
-    }
-
-    my_printf->my_printf("PERF_BEGIN type=ALL count=%u unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu\r\n",
-                         (unsigned)perf_record_count_get(),
-                         (double)PERF_COUNT_UNIT_US,
-                         (unsigned long)PERF_CNT_PER_SECTION_SYS_TICK,
-                         (unsigned long)PERF_CPU_LOAD_PERIOD_MS);
-    my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
-}
-
-static void perf_service_print_step(void)
-{
-    if (s_perf_text_print_ctx.active == 0u)
-    {
-        return;
-    }
-
-    if (s_perf_text_print_ctx.cur == NULL)
-    {
-        if ((s_perf_text_print_ctx.my_printf != NULL) && (s_perf_text_print_ctx.my_printf->my_printf != NULL))
-        {
-            s_perf_text_print_ctx.my_printf->my_printf("PERF_END\r\n");
-        }
-        s_perf_text_print_ctx.active = 0u;
-        return;
-    }
-
-    perf_service_print_record_item(s_perf_text_print_ctx.cur, s_perf_text_print_ctx.my_printf);
-    s_perf_text_print_ctx.cur = (section_perf_record_t *)s_perf_text_print_ctx.cur->p_next;
-}
+/* --- binary protocol command handlers ------------------------------------- */
 
 static void perf_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     perf_info_ack_t ack = {0};
 
-    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
     }
@@ -873,7 +866,7 @@ static void perf_summary_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     perf_summary_ack_t ack = {0};
 
-    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
     }
@@ -889,7 +882,7 @@ static void perf_reset_peak_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     perf_reset_peak_ack_t ack = {0};
 
-    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
     }
@@ -905,7 +898,7 @@ static void perf_dict_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     uint8_t reject_reason = PERF_OPT_REJECT_OK;
     uint8_t type_filter = 0xFFu;
 
-    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
     }
@@ -942,7 +935,7 @@ static void perf_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     uint8_t type_filter = 0xFFu;
     uint32_t query_dict_version = 0u;
 
-    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
     }
@@ -994,7 +987,7 @@ static void perf_report_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_report_control_ack_t ack = {0};
     uint8_t enable = 0u;
 
-    if ((p_pack == NULL) || (p_pack->is_ack == 1u))
+    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
     }
@@ -1009,7 +1002,7 @@ static void perf_report_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         s_perf_opt_service.active = 0u;
         s_perf_opt_service.pull_type = PERF_OPT_PULL_IDLE;
         s_perf_opt_service.pending_end = 0u;
-        s_perf_text_print_ctx.active = 0u;
+        perf_service_print_cancel();
         ack.success = 1u;
     }
     else
@@ -1030,6 +1023,8 @@ static void perf_report_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                            my_printf);
 }
 
+/* --- registrations -------------------------------------------------------- */
+
 REG_INIT(0, perf_opt_init_task)
 REG_TASK_MS(10, perf_opt_poll_task)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_INFO_QUERY, perf_info_query_act)
@@ -1038,15 +1033,3 @@ REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_RESET_PEAK, perf_reset_peak_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_DICT_QUERY, perf_dict_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_SAMPLE_QUERY, perf_sample_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_REPORT_CONTROL, perf_report_control_act)
-REG_SHELL_CMD(perf_print_record, perf_service_print_start)
-REG_SHELL_CMD(perf_print_task, perf_service_print_task)
-REG_SHELL_CMD(perf_print_interrupt, perf_service_print_interrupt)
-REG_SHELL_CMD(perf_print_code, perf_service_print_code)
-REG_SHELL_CMD(CPU_Utilization, perf_service_cpu_utilization)
-REG_SHELL_CMD(perf_summary, perf_service_summary)
-REG_SHELL_CMD(perf_info, perf_service_info)
-REG_SHELL_CMD(perf_reset_peak, perf_service_reset_peak)
-REG_SHELL_VAR(TASK_METRIC, s_perf_service_task_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(TASK_METRIC_MAX, s_perf_service_task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(INTERRUPT_METRIC, s_perf_service_interrupt_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(INTERRUPT_METRIC_MAX, s_perf_service_interrupt_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
