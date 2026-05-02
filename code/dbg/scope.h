@@ -6,15 +6,15 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define the scope capture state and circular-buffer object used by the core sampler
- *          - Provide macro helpers that build variable pointer and name tables at compile time
- *          - Expose core capture APIs while including scope_service.h only for registration compatibility
+ *          - Define the scope capture state and circular-buffer object
+ *          - Provide SCOPE_DEFINE / REG_SCOPE macros for scope instance creation
+ *          - Define scope_service_obj_t and scope_service_register() for the service layer
+ *          - Expose core capture APIs (scope_run / start / stop / trigger / reset)
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - ISR-safe path should be explicitly documented
- *          - Hardware access should be abstracted through HAL / BSP
+ *          - scope.h does NOT depend on scope_service.h (no circular include)
  *
  * @author  Max.Li
  * @date    2026-04-30
@@ -117,6 +117,45 @@ void scope_reset(scope_t *scope);
 #define SCOPE_GET_VAR_NUM(name) (scope_##name.var_count)
 #define SCOPE_GET_VAR_PTRS(name) (scope_##name.var_ptrs)
 
-#include "scope_service.h"
+/* =========================================================================
+ * Service object — binds a scope_t instance into the service registry
+ * ========================================================================= */
+typedef struct scope_service_obj_t
+{
+    uint8_t scope_id;
+    const char *p_name;
+    scope_t *p_scope;
+    uint32_t sample_period_us;
+    uint32_t capture_tag;
+    uint8_t data_ready;
+    scope_state_e last_state;
+    struct scope_service_obj_t *p_next;
+} scope_service_obj_t;
+
+void scope_service_register(scope_service_obj_t *p_obj);
+
+/* =========================================================================
+ * REG_SCOPE — combines SCOPE_DEFINE with service registration
+ * ========================================================================= */
+#define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...) \
+    SCOPE_DEFINE(name, buf_size, trig_post_cnt, __VA_ARGS__);               \
+    scope_service_obj_t scope_service_obj_##name = {                        \
+        .scope_id = 0u,                                                      \
+        .p_name = #name,                                                     \
+        .p_scope = &scope_##name,                                            \
+        .sample_period_us = (_sample_period_us),                             \
+        .capture_tag = 0u,                                                   \
+        .data_ready = 0u,                                                    \
+        .last_state = SCOPE_STATE_IDLE,                                      \
+        .p_next = NULL,                                                      \
+    };                                                                       \
+    static void scope_service_auto_reg_##name(void)                          \
+    {                                                                        \
+        scope_service_register(&scope_service_obj_##name);                   \
+    }                                                                        \
+    REG_INIT(1, scope_service_auto_reg_##name)
+
+#define REG_SCOPE(name, buf_size, trig_post_cnt, ...) \
+    REG_SCOPE_EX(name, buf_size, trig_post_cnt, (uint32_t)(CTRL_TS * 1000000.0f + 0.5f), __VA_ARGS__)
 
 #endif

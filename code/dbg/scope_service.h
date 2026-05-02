@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    scope_service.h
- * @brief   Scope service public interface.
+ * @brief   Scope service public interface (protocol layer).
  * @details
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
  *          - Define scope service command words, payload layouts, read modes, and status codes
- *          - Define the service-side scope object that binds names, ids, sample periods, and capture metadata
- *          - Provide REG_SCOPE macros that combine core scope storage with service registration
+ *          - Keep comm protocol definitions separate from the scope core (scope.h)
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - ISR-safe path should be explicitly documented
- *          - Hardware access should be abstracted through HAL / BSP
+ *          - scope_service.h includes scope.h (one-way dependency, no circular include)
  *
  * @author  Max.Li
  * @date    2026-04-30
@@ -30,6 +28,56 @@
 #define __SCOPE_SERVICE_H__
 
 #include "scope.h"
+#include "shell.h"
+
+/* =========================================================================
+ * Printf helpers (gated by SCOPE_ENABLE_PRINTF)
+ * ========================================================================= */
+#ifndef SCOPE_ENABLE_PRINTF
+#define SCOPE_ENABLE_PRINTF 0
+#endif
+
+#if SCOPE_ENABLE_PRINTF
+void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
+void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
+int scope_printf_data_step(void);
+int scope_printf_data_is_active(void);
+
+#define REG_SCOPE_STATUS_CMD(name)                     \
+    static void scope_status_##name(DEC_MY_PRINTF)     \
+    {                                                  \
+        scope_printf_status(&scope_##name, my_printf); \
+    }                                                  \
+    REG_SHELL_CMD(scp_sta_##name, scope_status_##name)
+
+#define REG_SCOPE_START_CMD(name)                  \
+    static void scope_start_##name(DEC_MY_PRINTF)  \
+    {                                              \
+        scope_start(&scope_##name);                \
+        my_printf->my_printf("Scope started\r\n"); \
+    }                                              \
+    REG_SHELL_CMD(scp_start_##name, scope_start_##name)
+
+#define SCOPE_DATA_STEP_START(name, my_printf) scope_printf_data_start(&scope_##name, my_printf)
+
+#define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
+    static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
+    REG_SHELL_CMD(scp_pf_##name, scope_data_step_##name)
+#else
+#define REG_SCOPE_STATUS_CMD(name)
+#define REG_SCOPE_START_CMD(name)
+#define SCOPE_DATA_STEP_START(name, my_printf) ((void)0)
+#define REG_SCOPE_DATA_STEP_CMD(name)
+#endif
+
+#define SCOPE_DATA_STEP_RUN()              \
+    do                                     \
+    {                                      \
+        if (scope_printf_data_is_active()) \
+        {                                  \
+            (void)scope_printf_data_step();\
+        }                                  \
+    } while (0)
 
 #define CMD_SET_SCOPE 0x01u
 
@@ -41,22 +89,6 @@
 #define CMD_WORD_SCOPE_STOP 0x1Du
 #define CMD_WORD_SCOPE_RESET 0x1Eu
 #define CMD_WORD_SCOPE_SAMPLE_QUERY 0x1Fu
-
-#ifndef SCOPE_ENABLE_PRINTF
-#define SCOPE_ENABLE_PRINTF 0
-#endif
-
-typedef struct scope_service_obj_t
-{
-    uint8_t scope_id;
-    const char *p_name;
-    scope_t *p_scope;
-    uint32_t sample_period_us;
-    uint32_t capture_tag;
-    uint8_t data_ready;
-    scope_state_e last_state;
-    struct scope_service_obj_t *p_next;
-} scope_service_obj_t;
 
 typedef enum
 {
@@ -160,72 +192,5 @@ typedef struct
     uint8_t reserved[3];
 } scope_sample_ack_t;
 #pragma pack(pop)
-
-void scope_service_register(scope_service_obj_t *p_obj);
-void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
-void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
-int scope_printf_data_step(void);
-int scope_printf_data_is_active(void);
-
-#if SCOPE_ENABLE_PRINTF
-#define REG_SCOPE_STATUS_CMD(name)                     \
-    static void scope_status_##name(DEC_MY_PRINTF)     \
-    {                                                  \
-        scope_printf_status(&scope_##name, my_printf); \
-    }                                                  \
-    REG_SHELL_CMD(scp_sta_##name, scope_status_##name)
-
-#define REG_SCOPE_START_CMD(name)                  \
-    static void scope_start_##name(DEC_MY_PRINTF)  \
-    {                                              \
-        scope_start(&scope_##name);                \
-        my_printf->my_printf("Scope started\r\n"); \
-    }                                              \
-    REG_SHELL_CMD(scp_start_##name, scope_start_##name)
-
-#define SCOPE_DATA_STEP_START(name, my_printf) scope_printf_data_start(&scope_##name, my_printf)
-
-#define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
-    static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
-    REG_SHELL_CMD(scp_pf_##name, scope_data_step_##name)
-#else
-#define REG_SCOPE_STATUS_CMD(name)
-#define REG_SCOPE_START_CMD(name)
-#define SCOPE_DATA_STEP_START(name, my_printf) ((void)0)
-#define REG_SCOPE_DATA_STEP_CMD(name)
-#endif
-
-#define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...) \
-    SCOPE_DEFINE(name, buf_size, trig_post_cnt, __VA_ARGS__);               \
-    scope_service_obj_t scope_service_obj_##name = {                        \
-        .scope_id = 0u,                                                      \
-        .p_name = #name,                                                     \
-        .p_scope = &scope_##name,                                            \
-        .sample_period_us = (_sample_period_us),                             \
-        .capture_tag = 0u,                                                   \
-        .data_ready = 0u,                                                    \
-        .last_state = SCOPE_STATE_IDLE,                                      \
-        .p_next = NULL,                                                      \
-    };                                                                       \
-    static void scope_service_auto_reg_##name(void)                          \
-    {                                                                        \
-        scope_service_register(&scope_service_obj_##name);                   \
-    }                                                                        \
-    REG_INIT(1, scope_service_auto_reg_##name)                               \
-    REG_SCOPE_STATUS_CMD(name)                                               \
-    REG_SCOPE_START_CMD(name)                                                \
-    REG_SCOPE_DATA_STEP_CMD(name)
-
-#define REG_SCOPE(name, buf_size, trig_post_cnt, ...) \
-    REG_SCOPE_EX(name, buf_size, trig_post_cnt, (uint32_t)(CTRL_TS * 1000000.0f + 0.5f), __VA_ARGS__)
-
-#define SCOPE_DATA_STEP_RUN()              \
-    do                                     \
-    {                                      \
-        if (scope_printf_data_is_active()) \
-        {                                  \
-            (void)scope_printf_data_step();\
-        }                                  \
-    } while (0)
 
 #endif
