@@ -79,6 +79,7 @@ typedef enum
     SECTION_PERF,
     SECTION_COMM,
     SECTION_COMM_ROUTE,
+    SECTION_SCOPE,
 } SECTION_E;
 
 typedef struct

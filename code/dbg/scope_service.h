@@ -12,7 +12,7 @@
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - scope_service.h includes scope.h (one-way dependency, no circular include)
+ *          - scope_service.h depends on scope.h + shell.h (one-way, no circular)
  *
  * @author  Max.Li
  * @date    2026-04-30
@@ -30,14 +30,12 @@
 #include "scope.h"
 #include "shell.h"
 
-/* =========================================================================
- * Printf helpers (gated by SCOPE_ENABLE_PRINTF)
- * ========================================================================= */
+/* Printf helpers (gated by SCOPE_ENABLE_PRINTF) */
 #ifndef SCOPE_ENABLE_PRINTF
 #define SCOPE_ENABLE_PRINTF 0
 #endif
 
-#if SCOPE_ENABLE_PRINTF
+#if SCOPE_ENABLE_PRINTF == 1
 void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
 void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
 int scope_printf_data_step(void);
@@ -79,6 +77,7 @@ int scope_printf_data_is_active(void);
         }                                  \
     } while (0)
 
+/* Protocol command words and payload layouts */
 #define CMD_SET_SCOPE 0x01u
 
 #define CMD_WORD_SCOPE_LIST_QUERY 0x18u
