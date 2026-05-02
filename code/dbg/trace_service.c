@@ -55,12 +55,7 @@ typedef struct
 } dbg_trace_record_report_t;
 #pragma pack(pop)
 
-typedef struct
-{
-    uint8_t active;
-    DEC_MY_PRINTF;
-} dbg_trace_print_ctx_t;
-
+/* Binary transport context — always available */
 typedef struct
 {
     uint8_t running;
@@ -71,10 +66,20 @@ typedef struct
     uint8_t d_dst;
 } dbg_trace_binary_ctx_t;
 
-static dbg_trace_print_ctx_t g_dbg_trace_print_ctx = {0};
 static dbg_trace_binary_ctx_t g_dbg_trace_binary_ctx = {0};
 
 #define DBG_TRACE_BINARY_MAX_REPORT_PER_TASK 3u
+
+/* Printf helpers (gated by TRACE_SERVICE_PRINTF) */
+#if TRACE_SERVICE_PRINTF == 1
+
+typedef struct
+{
+    uint8_t active;
+    DEC_MY_PRINTF;
+} dbg_trace_print_ctx_t;
+
+static dbg_trace_print_ctx_t g_dbg_trace_print_ctx = {0};
 
 #define DBG_TRACE_PRINT_VALUE(p_link_printf, time_value, line_value)                                               \
     do                                                                                                            \
@@ -120,6 +125,19 @@ void dbg_trace_service_print_task(void)
     DBG_TRACE_PRINT_VALUE(p_link_printf, time_value, line_value);
 }
 
+REG_SHELL_CMD(dbg_trace_print, dbg_trace_print_start)
+REG_SHELL_CMD(dbg_trace_clear, dbg_trace_clear_cmd)
+REG_TASK_MS(50, dbg_trace_service_print_task)
+
+#else
+
+void dbg_trace_service_print_task(void)
+{
+}
+
+#endif /* TRACE_SERVICE_PRINTF */
+
+/* Binary protocol handlers */
 static void dbg_trace_binary_capture_route(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     if (p_pack == NULL)
@@ -205,8 +223,6 @@ void dbg_trace_service_binary_task(void)
     }
 }
 
-REG_SHELL_CMD(dbg_trace_print, dbg_trace_print_start)
-REG_SHELL_CMD(dbg_trace_clear, dbg_trace_clear_cmd)
-REG_TASK_MS(50, dbg_trace_service_print_task)
+/* Registrations */
 REG_TASK_MS(1, dbg_trace_service_binary_task)
 REG_COMM(TRACE_SERVICE_CMD_SET, TRACE_SERVICE_CMD_CONTROL, dbg_trace_control_act)
