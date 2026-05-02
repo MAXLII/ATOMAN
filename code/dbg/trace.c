@@ -55,14 +55,14 @@ void dbg_trace_record(uint32_t line)
         return;
     }
 
-    write_index = g_dbg_trace_ctx.write_count % DBG_TRACE_BUFFER_SIZE;
+    write_index = g_dbg_trace_ctx.write_count & (DBG_TRACE_BUFFER_SIZE - 1u);
     p_item = &g_dbg_trace_buffer[write_index];
     p_item->line = line;
     p_item->time = *(g_dbg_trace_ctx.p_system_time);
 
     g_dbg_trace_ctx.write_count++;
 
-    if ((g_dbg_trace_ctx.write_count - g_dbg_trace_ctx.read_count) > DBG_TRACE_BUFFER_SIZE)
+    if (g_dbg_trace_ctx.write_count > g_dbg_trace_ctx.read_count + DBG_TRACE_BUFFER_SIZE)
     {
         g_dbg_trace_ctx.read_count = g_dbg_trace_ctx.write_count - DBG_TRACE_BUFFER_SIZE;
     }
@@ -71,8 +71,8 @@ void dbg_trace_record(uint32_t line)
 void dbg_trace_clear(void)
 {
     memset(g_dbg_trace_buffer, 0, sizeof(g_dbg_trace_buffer));
-    g_dbg_trace_ctx.write_count = 0U;
-    g_dbg_trace_ctx.read_count = 0U;
+    g_dbg_trace_ctx.write_count = 0u;
+    g_dbg_trace_ctx.read_count = 0u;
 }
 
 const dbg_trace_item_t *dbg_trace_buffer_get(void)
@@ -112,24 +112,24 @@ uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line)
 
     if ((p_time == NULL) || (p_line == NULL))
     {
-        return 0U;
+        return 0u;
     }
 
     if (g_dbg_trace_ctx.read_count == g_dbg_trace_ctx.write_count)
     {
-        return 0U;
+        return 0u;
     }
 
-    if ((g_dbg_trace_ctx.write_count - g_dbg_trace_ctx.read_count) > DBG_TRACE_BUFFER_SIZE)
+    if (g_dbg_trace_ctx.write_count > g_dbg_trace_ctx.read_count + DBG_TRACE_BUFFER_SIZE)
     {
         g_dbg_trace_ctx.read_count = g_dbg_trace_ctx.write_count - DBG_TRACE_BUFFER_SIZE;
     }
 
-    read_index = g_dbg_trace_ctx.read_count % DBG_TRACE_BUFFER_SIZE;
+    read_index = g_dbg_trace_ctx.read_count & (DBG_TRACE_BUFFER_SIZE - 1u);
     p_item = &g_dbg_trace_buffer[read_index];
     *p_time = p_item->time;
     *p_line = p_item->line;
     g_dbg_trace_ctx.read_count++;
 
-    return 1U;
+    return 1u;
 }

@@ -29,13 +29,19 @@
 #ifndef __TRACE_SERVICE_H__
 #define __TRACE_SERVICE_H__
 
+#ifndef TRACE_SERVICE_PRINTF
+#define TRACE_SERVICE_PRINTF 0
+#endif
+
 #define TRACE_SERVICE_CMD_SET 0x01u
 #define TRACE_SERVICE_CMD_CONTROL 0x2Cu
 #define TRACE_SERVICE_CMD_RECORD_REPORT 0x2Du
 
 #define TRACE_SERVICE_TIME_UNIT_US 100u
 
+#if TRACE_SERVICE_PRINTF == 1
 void dbg_trace_service_print_task(void);
+#endif
 void dbg_trace_service_binary_task(void);
 
 #endif
