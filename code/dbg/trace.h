@@ -37,7 +37,7 @@ typedef struct
     uint32_t time; /* Snapshot of the bound system time counter. */
 } dbg_trace_item_t;
 
-#define DBG_TRACE_BUFFER_SIZE 500u
+#define DBG_TRACE_BUFFER_SIZE 64u
 
 void dbg_trace_bind_time(volatile uint32_t *p_system_time);
 void dbg_trace_record(uint32_t line);
