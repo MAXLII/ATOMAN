@@ -10,8 +10,8 @@
       <TargetName>hc32f334_ac</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pArmCC>6230000::V6.23::ARMCLANG</pArmCC>
-      <pCCUsed>6230000::V6.23::ARMCLANG</pCCUsed>
+      <pArmCC>6240000::V6.24::ARMCLANG</pArmCC>
+      <pCCUsed>6240000::V6.24::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -168,8 +168,8 @@
             <AdsLmap>1</AdsLmap>
             <AdsLcgr>0</AdsLcgr>
             <AdsLsym>0</AdsLsym>
-            <AdsLszi>0</AdsLszi>
-            <AdsLtoi>0</AdsLtoi>
+            <AdsLszi>1</AdsLszi>
+            <AdsLtoi>1</AdsLtoi>
             <AdsLsun>0</AdsLsun>
             <AdsLven>0</AdsLven>
             <AdsLsxf>0</AdsLsxf>
@@ -184,7 +184,7 @@
             <hadIRAM>0</hadIRAM>
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
-            <RvdsVP>1</RvdsVP>
+            <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
             <nBranchProt>0</nBranchProt>
@@ -719,19 +719,9 @@
               <FilePath>..\..\code\dbg\scope.c</FilePath>
             </File>
             <File>
-              <FileName>scope_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\scope_service.c</FilePath>
-            </File>
-            <File>
               <FileName>perf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\perf.c</FilePath>
-            </File>
-            <File>
-              <FileName>perf_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\perf_service.c</FilePath>
             </File>
             <File>
               <FileName>trace.c</FileName>
@@ -739,19 +729,29 @@
               <FilePath>..\..\code\dbg\trace.c</FilePath>
             </File>
             <File>
-              <FileName>trace_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\trace_service.c</FilePath>
-            </File>
-            <File>
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\shell.c</FilePath>
             </File>
             <File>
+              <FileName>perf_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\perf_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>scope_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\scope_service.c</FilePath>
+            </File>
+            <File>
               <FileName>shell_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\shell_service.c</FilePath>
+              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\shell_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>trace_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\trace_service.c</FilePath>
             </File>
           </Files>
         </Group>

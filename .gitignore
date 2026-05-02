@@ -33,3 +33,4 @@ EventRecorderStub.scvd
 
 # HC32 download-only wrapper project and generated input image
 hc32f334/keil_flash/
+_final.py
