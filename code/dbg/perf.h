@@ -148,7 +148,7 @@ void perf_reset_peak_value(void);
 
 #define P_RECORD_PERF(name) ((section_perf_record_t *)&section_perf_record_##name)
 
-#define REG_PERF_RECORD(name)                            \
+#define REG_PERF_RECORD_EX(name, _record_type)            \
     section_perf_record_t section_perf_record_##name = { \
         .p_name = #name,                                 \
         .start = 0,                                      \
@@ -161,7 +161,7 @@ void perf_reset_peak_value(void);
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
         .record_id = 0,                                  \
-        .record_type = SECTION_PERF_RECORD_CODE,         \
+        .record_type = (_record_type),                   \
         .p_cnt = NULL,                                   \
         .p_next = NULL,                                  \
     };                                                   \
@@ -171,51 +171,9 @@ void perf_reset_peak_value(void);
     };                                                   \
     REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
 
-#define REG_TASK_PERF_RECORD(name)                       \
-    section_perf_record_t section_perf_record_##name = { \
-        .p_name = #name,                                 \
-        .start = 0,                                      \
-        .end = 0,                                        \
-        .time = 0,                                       \
-        .reserved = 0,                                   \
-        .max_time = 0,                                   \
-        .run_time = 0,                                   \
-        .period_us = 0,                                  \
-        .load = 0.0f,                                    \
-        .load_max = 0.0f,                                \
-        .record_id = 0,                                  \
-        .record_type = SECTION_PERF_RECORD_TASK,         \
-        .p_cnt = NULL,                                   \
-        .p_next = NULL,                                  \
-    };                                                   \
-    section_perf_t section_perf_record_##name##_perf = { \
-        .perf_type = SECTION_PERF_RECORD,                \
-        .p_perf = (void *)&section_perf_record_##name,   \
-    };                                                   \
-    REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
-
-#define REG_INTERRUPT_PERF_RECORD(name)                  \
-    section_perf_record_t section_perf_record_##name = { \
-        .p_name = #name,                                 \
-        .start = 0,                                      \
-        .end = 0,                                        \
-        .time = 0,                                       \
-        .reserved = 0,                                   \
-        .max_time = 0,                                   \
-        .run_time = 0,                                   \
-        .period_us = 0,                                  \
-        .load = 0.0f,                                    \
-        .load_max = 0.0f,                                \
-        .record_id = 0,                                  \
-        .record_type = SECTION_PERF_RECORD_INTERRUPT,    \
-        .p_cnt = NULL,                                   \
-        .p_next = NULL,                                  \
-    };                                                   \
-    section_perf_t section_perf_record_##name##_perf = { \
-        .perf_type = SECTION_PERF_RECORD,                \
-        .p_perf = (void *)&section_perf_record_##name,   \
-    };                                                   \
-    REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
+#define REG_PERF_RECORD(name)           REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_CODE)
+#define REG_TASK_PERF_RECORD(name)      REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_TASK)
+#define REG_INTERRUPT_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_INTERRUPT)
 
 #else
 

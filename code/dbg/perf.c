@@ -49,26 +49,30 @@ static void perf_insert(section_perf_t *perf)
     section_perf_record_t *rec;
     static section_perf_record_t *s_perf_record_tail = NULL;
 
-    if (!perf)
+    if (perf == NULL)
+    {
         return;
+    }
 
     switch (perf->perf_type)
     {
     case SECTION_PERF_BASE:
         base = (section_perf_base_t *)perf->p_perf;
-        if (base && base->p_cnt)
+        if ((base != NULL) && (base->p_cnt != NULL))
+        {
             s_perf_cnt = base->p_cnt;
+        }
         break;
 
     case SECTION_PERF_RECORD:
         rec = (section_perf_record_t *)perf->p_perf;
-        if (rec)
+        if (rec != NULL)
         {
             rec->p_cnt = &s_perf_cnt;
             rec->p_next = NULL;
             rec->record_id = record_dict_alloc_id(&s_perf_dict);
 
-            if (!p_perf_record_first)
+            if (p_perf_record_first == NULL)
             {
                 p_perf_record_first = rec;
                 s_perf_record_tail = rec;
@@ -249,31 +253,26 @@ static void perf_cpu_load_calculate(void)
 
     for (section_perf_record_t *p = p_perf_record_first; p != NULL; p = (section_perf_record_t *)p->p_next)
     {
+        p->load = (float)p->run_time / (float)elapsed_perf_cnt;
+        if (p->load > p->load_max)
+        {
+            p->load_max = p->load;
+        }
+
         switch (p->record_type)
         {
         case SECTION_PERF_RECORD_TASK:
-            p->load = (float)p->run_time / (float)elapsed_perf_cnt;
-            if (p->load > p->load_max)
-            {
-                p->load_max = p->load;
-            }
             task_run_time += p->run_time;
-            p->run_time = 0u;
             break;
 
         case SECTION_PERF_RECORD_INTERRUPT:
-            p->load = (float)p->run_time / (float)elapsed_perf_cnt;
-            if (p->load > p->load_max)
-            {
-                p->load_max = p->load;
-            }
             interrupt_run_time += p->run_time;
-            p->run_time = 0u;
             break;
 
         default:
             break;
         }
+        p->run_time = 0u;
     }
 
     s_perf_task_metric = (float)task_run_time / (float)elapsed_perf_cnt;
