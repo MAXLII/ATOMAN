@@ -315,7 +315,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>7</Optim>
             <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -714,19 +714,24 @@
           <GroupName>dbg</GroupName>
           <Files>
             <File>
-              <FileName>scope.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\scope.c</FilePath>
-            </File>
-            <File>
               <FileName>perf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\perf.c</FilePath>
             </File>
             <File>
-              <FileName>trace.c</FileName>
+              <FileName>perf_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\trace.c</FilePath>
+              <FilePath>..\..\code\dbg\perf_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>scope.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\scope.c</FilePath>
+            </File>
+            <File>
+              <FileName>scope_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\scope_service.c</FilePath>
             </File>
             <File>
               <FileName>shell.c</FileName>
@@ -734,24 +739,19 @@
               <FilePath>..\..\code\dbg\shell.c</FilePath>
             </File>
             <File>
-              <FileName>perf_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\perf_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>scope_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\scope_service.c</FilePath>
-            </File>
-            <File>
               <FileName>shell_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\shell_service.c</FilePath>
+              <FilePath>..\..\code\dbg\shell_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>trace.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\trace.c</FilePath>
             </File>
             <File>
               <FileName>trace_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\XXC\BDPCS\ws\PFC_CLLLC_SW\code\dbg\trace_service.c</FilePath>
+              <FilePath>..\..\code\dbg\trace_service.c</FilePath>
             </File>
           </Files>
         </Group>
