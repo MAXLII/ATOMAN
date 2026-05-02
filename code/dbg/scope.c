@@ -28,6 +28,8 @@
  */
 #include "scope.h"
 
+#include <stddef.h>
+
 __attribute__((always_inline, hot)) inline void scope_run(scope_t *scope)
 {
     float *buffer;
