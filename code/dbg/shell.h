@@ -34,9 +34,20 @@
 
 #include "section.h"
 
-/* =============================================================================
- * Shell: input parsing context (used by shell_run only)
- * =============================================================================
+/**
+ * @brief Define this macro to enable string expression parsing and variable writing.
+ *
+ * When defined, the shell supports:
+ * - Value assignment to variables (e.g., "gain:3.5")
+ * - Arithmetic expressions (e.g., "1+2*3")
+ * - Hex/binary literals (0x1A, 0b1010)
+ * - Status flag parsing (-s N)
+ *
+ * When not defined, the shell is read-only: variables can be printed but not written.
+ */
+#define SHELL_STRING_PARSE 0
+
+/* Shell: input parsing context (used by shell_run only)
  *
  * - shell_ctx_t is the private per-link, per-handler context for shell_run.
  * - The link layer passes ctx as void* transparently and does not inspect it.
@@ -54,13 +65,11 @@ typedef struct
 #define DECLARE_SHELL_CTX(name) \
     static shell_ctx_t name = {0}
 
-/* =============================================================================
- * Shell: variable / command registration
+/* Shell: variable / command registration
  *
  * Items are placed in the SECTION_SHELL linker section.
  * At runtime section_init() scans the section and inserts each item
  * into the p_shell_first linked list.
- * =============================================================================
  */
 
 typedef enum
@@ -75,7 +84,7 @@ typedef enum
     SHELL_CMD,
 } SHELL_TYPE_E;
 
-#define SHELL_STR_SIZE_MAX 40
+#define SHELL_STR_SIZE_MAX 40u
 
 #define SHELL_STA_NULL (0u)
 #define SHELL_STA_AUTO (1u << 2)
@@ -167,11 +176,9 @@ typedef struct section_shell_t
     static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 
-/* =============================================================================
- * Shell: handler interface (for LINK dispatch)
+/* Shell: handler interface (for LINK dispatch)
  *
  * ctx convention: ctx points to a shell_ctx_t created by DECLARE_SHELL_CTX.
- * =============================================================================
  */
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
 

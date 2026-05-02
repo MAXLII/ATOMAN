@@ -32,7 +32,6 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
 
 #pragma GCC diagnostic push
@@ -43,19 +42,23 @@
 section_shell_t *p_shell_first;
 
 /* Number of shell entries inserted into the runtime list. */
-uint32_t shell_data_num = 0;
+uint32_t shell_data_num = 0u;
 
 static void shell_insert(section_shell_t *shell)
 {
     /* Reject NULL input so the caller can scan sections without extra guards. */
-    if (!shell)
+    if (shell == NULL)
+    {
         return;
+    }
 
     /* Avoid inserting the same registration twice if init is called again. */
-    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    for (section_shell_t *p = p_shell_first; p != NULL; p = p->p_next)
     {
         if (p == shell)
+        {
             return;
+        }
     }
 
     /* Insert at the head because ordering is not performance critical here. */
@@ -84,166 +87,11 @@ void shell_init(void)
 
 REG_INIT(0, shell_init)
 
-static int is_string_number(const char *str)
-{
-    /* Accept plain numbers and simple expressions such as "1+2*3" or "-0.5". */
-    if (!str || !*str)
-        return 0;
+/* --- string parsing & variable writing (gated by SHELL_STRING_PARSE) ------ */
 
-    if (*str == '-' || *str == '+')
-        str++;
+#if SHELL_STRING_PARSE == 1
 
-    int has_digit = 0, has_dot = 0;
-    while (*str)
-    {
-        if (isdigit((unsigned char)*str))
-        {
-            has_digit = 1;
-        }
-        else if (*str == '.' && !has_dot)
-        {
-            has_dot = 1;
-        }
-        else if (*str == '*' || *str == '/' || *str == '+' || *str == '-')
-        {
-        }
-        else
-        {
-            return 0;
-        }
-        str++;
-    }
-    return has_digit;
-}
-static float eval_expr_inner(const char **p);
-static float eval_expr(const char *expr) { return eval_expr_inner(&expr); }
-static float eval_expr_inner(const char **p)
-{
-    const char *expr = *p;
-    float result = 0;
-    char op = '+';
-
-    while (*expr)
-    {
-        /* Skip whitespace between tokens so the parser is user friendly. */
-        while (*expr == ' ')
-            expr++;
-
-        /* Collapse repeated leading +/- signs into a final sign. */
-        int sign = 1;
-        while (*expr == '+' || *expr == '-')
-        {
-            if (*expr == '-')
-                sign *= -1;
-            expr++;
-        }
-        while (*expr == ' ')
-            expr++;
-
-        float number = 0;
-
-        if (*expr == '(')
-        {
-            /* Parentheses recurse into the same precedence parser. */
-            expr++;
-            number = eval_expr_inner(&expr);
-            if (*expr == ')')
-                expr++;
-        }
-        else
-        {
-            /* strtof advances expr to the first non-numeric character. */
-            number = strtof(expr, (char **)&expr);
-        }
-        number *= sign;
-
-        while (1)
-        {
-            while (*expr == ' ')
-                expr++;
-            if (*expr != '*' && *expr != '/')
-                break;
-
-            char muldiv = *expr++;
-            while (*expr == ' ')
-                expr++;
-
-            float next = 0;
-            int next_sign = 1;
-
-            while (*expr == '+' || *expr == '-')
-            {
-                if (*expr == '-')
-                    next_sign *= -1;
-                expr++;
-            }
-            while (*expr == ' ')
-                expr++;
-
-            if (*expr == '(')
-            {
-                expr++;
-                next = eval_expr_inner(&expr);
-                if (*expr == ')')
-                    expr++;
-            }
-            else
-            {
-                next = strtof(expr, (char **)&expr);
-            }
-            next *= next_sign;
-
-            if (muldiv == '*')
-                number *= next;
-            else if (muldiv == '/' && next != 0)
-                number /= next;
-        }
-
-        /* Merge the resolved term into the accumulated result. */
-        if (op == '+')
-            result += number;
-        else if (op == '-')
-            result -= number;
-
-        while (*expr == ' ')
-            expr++;
-        if (*expr == '+' || *expr == '-')
-            op = *expr++;
-        else if (*expr == ')')
-            break;
-        else if (*expr == '\0')
-            break;
-        else
-            op = '+';
-    }
-    *p = expr;
-    return result;
-}
-static int parse_integer(const char *param, int32_t *out)
-{
-    if (param == NULL)
-        return 0;
-
-    if (strncmp(param, "0x", 2) == 0)
-    {
-        /* Hex format: 0x1234 */
-        *out = (int32_t)strtol(param, NULL, 16);
-        return 1;
-    }
-    else if (strncmp(param, "0b", 2) == 0)
-    {
-        /* Binary format: 0b1010 */
-        *out = (int32_t)strtol(param + 2, NULL, 2);
-        return 1;
-    }
-    else if (is_string_number(param))
-    {
-        /* Decimal and simple expression format. */
-        *out = (int32_t)eval_expr(param);
-        return 1;
-    }
-    return 0;
-}
+/* --- string helpers (always available) ----------------------------------- */
 
 static inline char *ltrim(char *s)
 {
@@ -254,7 +102,7 @@ static inline char *ltrim(char *s)
 
 static inline void rtrim_inplace(char *s)
 {
-    if (!s)
+    if (s == NULL)
         return;
     size_t n = strlen(s);
     while (n > 0 && isspace((unsigned char)s[n - 1]))
@@ -264,59 +112,14 @@ static inline void rtrim_inplace(char *s)
     }
 }
 
-static void parse_param_value_and_status(char *param, char **value_str, int32_t *status_set)
-{
-    /* Parse "value -s N" from one buffer in place to avoid extra allocation. */
-    *value_str = NULL;
-    *status_set = -1;
-    if (!param)
-        return;
-
-    char *p = ltrim(param);
-
-    char *opt = strstr(p, "-s");
-    while (opt)
-    {
-        if (opt == p || isspace((unsigned char)opt[-1]))
-            break;
-        opt = strstr(opt + 2, "-s");
-    }
-
-    if (opt)
-    {
-        /* Split the original string into payload part and optional status part. */
-        *opt = '\0';
-        char *v = ltrim(p);
-        rtrim_inplace(v);
-        *value_str = (*v) ? v : NULL;
-
-        char *ps = opt + 2;
-        ps = ltrim(ps);
-        if (*ps == '\0')
-        {
-            *status_set = 0;
-        }
-        else
-        {
-            char *endp = NULL;
-            long s = strtol(ps, &endp, 10);
-            if (endp != ps)
-                *status_set = (int32_t)s;
-            else
-                *status_set = 0;
-        }
-        return;
-    }
-
-    char *v = ltrim(p);
-    rtrim_inplace(v);
-    *value_str = (*v) ? v : NULL;
-}
+/* --- shell item print (always available) --------------------------------- */
 
 void shell_item_print(section_shell_t *p, DEC_MY_PRINTF)
 {
-    if (!p || !my_printf || !my_printf->my_printf)
+    if ((p == NULL) || (my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
         return;
+    }
 
     /* Print every shell item with a type-specific formatter. */
     switch (p->type)
@@ -350,10 +153,231 @@ void shell_item_print(section_shell_t *p, DEC_MY_PRINTF)
     }
 }
 
+
+#include <stdlib.h>
+
+static int is_string_number(const char *str)
+{
+    /* Accept plain numbers and simple expressions such as "1+2*3" or "-0.5". */
+    if ((str == NULL) || (*str == '\0'))
+        return 0;
+
+    if ((*str == '-') || (*str == '+'))
+    {
+        str++;
+    }
+
+    int has_digit = 0, has_dot = 0;
+    while (*str != '\0')
+    {
+        if (isdigit((unsigned char)*str))
+        {
+            has_digit = 1;
+        }
+        else if (*str == '.' && !has_dot)
+        {
+            has_dot = 1;
+        }
+        else if (*str == '*' || *str == '/' || *str == '+' || *str == '-')
+        {
+        }
+        else
+        {
+            return 0;
+        }
+        str++;
+    }
+    return has_digit;
+}
+
+static float eval_expr_inner(const char **p);
+static float eval_expr(const char *expr) { return eval_expr_inner(&expr); }
+static float eval_expr_inner(const char **p)
+{
+    const char *expr = *p;
+    float result = 0.0f;
+    char op = '+';
+
+    while (*expr != '\0')
+    {
+        /* Skip whitespace between tokens so the parser is user friendly. */
+        while (*expr == ' ')
+            expr++;
+
+        /* Collapse repeated leading +/- signs into a final sign. */
+        int sign = 1;
+        while (*expr == '+' || *expr == '-')
+        {
+            if (*expr == '-')
+                sign *= -1;
+            expr++;
+        }
+        while (*expr == ' ')
+            expr++;
+
+        float number = 0.0f;
+
+        if (*expr == '(')
+        {
+            /* Parentheses recurse into the same precedence parser. */
+            expr++;
+            number = eval_expr_inner(&expr);
+            if (*expr == ')')
+                expr++;
+        }
+        else
+        {
+            /* strtof advances expr to the first non-numeric character. */
+            number = strtof(expr, (char **)&expr);
+        }
+        number *= sign;
+
+        while (1u)
+        {
+            while (*expr == ' ')
+                expr++;
+            if (*expr != '*' && *expr != '/')
+                break;
+
+            char muldiv = *expr++;
+            while (*expr == ' ')
+                expr++;
+
+            float next = 0.0f;
+            int next_sign = 1;
+
+            while (*expr == '+' || *expr == '-')
+            {
+                if (*expr == '-')
+                    next_sign *= -1;
+                expr++;
+            }
+            while (*expr == ' ')
+                expr++;
+
+            if (*expr == '(')
+            {
+                expr++;
+                next = eval_expr_inner(&expr);
+                if (*expr == ')')
+                    expr++;
+            }
+            else
+            {
+                next = strtof(expr, (char **)&expr);
+            }
+            next *= next_sign;
+
+            if (muldiv == '*')
+                number *= next;
+            else if (muldiv == '/' && next != 0.0f)
+                number /= next;
+        }
+
+        /* Merge the resolved term into the accumulated result. */
+        if (op == '+')
+            result += number;
+        else if (op == '-')
+            result -= number;
+
+        while (*expr == ' ')
+            expr++;
+        if (*expr == '+' || *expr == '-')
+            op = *expr++;
+        else if (*expr == ')')
+            break;
+        else if (*expr == '\0')
+            break;
+        else
+            op = '+';
+    }
+    *p = expr;
+    return result;
+}
+
+static int parse_integer(const char *param, int32_t *out)
+{
+    if (param == NULL)
+        return 0;
+
+    if (strncmp(param, "0x", 2) == 0)
+    {
+        /* Hex format: 0x1234 */
+        *out = (int32_t)strtol(param, NULL, 16);
+        return 1;
+    }
+    else if (strncmp(param, "0b", 2) == 0)
+    {
+        /* Binary format: 0b1010 */
+        *out = (int32_t)strtol(param + 2, NULL, 2);
+        return 1;
+    }
+    else if (is_string_number(param))
+    {
+        /* Decimal and simple expression format. */
+        *out = (int32_t)eval_expr(param);
+        return 1;
+    }
+    return 0;
+}
+
+static void parse_param_value_and_status(char *param, char **value_str, int32_t *status_set)
+{
+    /* Parse "value -s N" from one buffer in place to avoid extra allocation. */
+    *value_str = NULL;
+    *status_set = -1;
+    if (param == NULL)
+        return;
+
+    char *p = ltrim(param);
+
+    char *opt = strstr(p, "-s");
+    while (opt != NULL)
+    {
+        if ((opt == p) || isspace((unsigned char)opt[-1]))
+        {
+            break;
+        }
+        opt = strstr(opt + 2, "-s");
+    }
+
+    if (opt != NULL)
+    {
+        /* Split the original string into payload part and optional status part. */
+        *opt = '\0';
+        char *v = ltrim(p);
+        rtrim_inplace(v);
+        *value_str = (*v) ? v : NULL;
+
+        char *ps = opt + 2;
+        ps = ltrim(ps);
+        if (*ps == '\0')
+        {
+            *status_set = 0;
+        }
+        else
+        {
+            char *endp = NULL;
+            long s = strtol(ps, &endp, 10);
+            if (endp != ps)
+                *status_set = (int32_t)s;
+            else
+                *status_set = 0;
+        }
+        return;
+    }
+
+    char *v = ltrim(p);
+    rtrim_inplace(v);
+    *value_str = (*v) ? v : NULL;
+}
+
 static void shell_write_item_if_needed(section_shell_t *p, const char *value_str, DEC_MY_PRINTF)
 {
-    if (!p || !value_str)
+    if ((p == NULL) || (value_str == NULL))
+    {
         return;
+    }
 
     int32_t intval = 0;
 
@@ -451,19 +475,73 @@ static void shell_write_item_if_needed(section_shell_t *p, const char *value_str
         p->func(my_printf);
 }
 
+/**
+ * @brief Handle parameter parsing, value writing, and status update after a
+ *        command/variable name match in shell_run.
+ *
+ * When SHELL_STRING_PARSE is defined this is the full implementation.
+ * Otherwise a minimal stub dispatches commands and prints variables read-only.
+ */
+static void shell_handle_param(section_shell_t *p, char c, char *line, DEC_MY_PRINTF)
+{
+    char *param = NULL;
+    if (c == ':')
+        param = (char *)&line[p->p_name_size + 1u];
+
+    char *value_str = NULL;
+    int32_t status_set = -1;
+    if (param != NULL)
+    {
+        parse_param_value_and_status(param, &value_str, &status_set);
+    }
+
+    if (p->type == SHELL_CMD)
+    {
+        if (p->func)
+            p->func(my_printf);
+
+        if (status_set >= 0)
+        {
+            p->status = (uint32_t)status_set;
+            p->my_printf = my_printf;
+        }
+    }
+    else
+    {
+        if (value_str != NULL)
+        {
+            shell_write_item_if_needed(p, value_str, my_printf);
+        }
+
+        shell_item_print(p, my_printf);
+
+        if (status_set >= 0)
+        {
+            p->status = (uint32_t)status_set;
+            p->my_printf = my_printf;
+        }
+    }
+}
+
+/* --- shell line dispatcher ------------------------------------------------ */
+
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 {
-    if (!my_printf || !my_printf->my_printf)
+    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
+    {
         return;
-    if (!p_ctx)
+    }
+    if (p_ctx == NULL)
+    {
         return;
+    }
 
     shell_ctx_t *ctx = (shell_ctx_t *)p_ctx;
 
     /* Reset on overflow so a malformed stream cannot overrun the line buffer. */
     if (ctx->shell_index >= (uint8_t)(sizeof(ctx->shell_buffer) - 1u))
     {
-        ctx->shell_index = 0;
+        ctx->shell_index = 0u;
     }
 
     ctx->shell_buffer[ctx->shell_index++] = data;
@@ -502,70 +580,43 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
     }
     if (strcmp(line, "help") == 0)
     {
-        for (section_shell_t *s = p_shell_first; s; s = s->p_next)
+        for (section_shell_t *s = p_shell_first; s != NULL; s = s->p_next)
         {
             my_printf->my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
         }
         goto shell_done;
     }
 
-    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    for (section_shell_t *p = p_shell_first; p != NULL; p = p->p_next)
     {
         /* Match exact command/variable name, then accept optional ":payload". */
         if (strncmp(line, p->p_name, p->p_name_size) != 0)
             continue;
 
         char c = line[p->p_name_size];
-        if (!(c == ':' || c == '\0'))
+        if (c != ':' && c != '\0')
             continue;
 
-        char *param = NULL;
-        if (c == ':')
-            param = (char *)&line[p->p_name_size + 1u];
-
-        char *value_str = NULL;
-        int32_t status_set = -1;
-        if (param)
-        {
-            parse_param_value_and_status(param, &value_str, &status_set);
-        }
-
-        if (p->type == SHELL_CMD)
-        {
-            /* Commands execute immediately; "-s" only affects periodic follow-up. */
-            if (p->func)
-                p->func(my_printf);
-
-            if (status_set >= 0)
-            {
-                p->status = (uint32_t)status_set;
-                p->my_printf = my_printf;
-            }
-            goto shell_done;
-        }
-
-        if (value_str)
-        {
-            /* Variables optionally accept a write value before the echo print. */
-            shell_write_item_if_needed(p, value_str, my_printf);
-        }
-
-        shell_item_print(p, my_printf);
-
-        if (status_set >= 0)
-        {
-            p->status = (uint32_t)status_set;
-            p->my_printf = my_printf;
-        }
-
+        shell_handle_param(p, c, line, my_printf);
         goto shell_done;
     }
 
 shell_done:
     /* Always reset the line parser so the next command starts from a clean state. */
-    ctx->shell_index = 0;
-    ctx->shell_buffer[0] = 0;
+    ctx->shell_index = 0u;
+    ctx->shell_buffer[0] = 0u;
 }
+
+#else /* !SHELL_STRING_PARSE — minimal stubs */
+
+void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
+{
+    (void)data;
+    (void)my_printf;
+    (void)p_ctx;
+}
+
+#endif /* SHELL_STRING_PARSE */
 
 section_shell_t *shell_first_get(void)
 {
@@ -584,7 +635,7 @@ section_shell_t *shell_find(const char *p_name, uint8_t len)
         return NULL;
     }
 
-    for (section_shell_t *p = p_shell_first; p; p = p->p_next)
+    for (section_shell_t *p = p_shell_first; p != NULL; p = p->p_next)
     {
         if (p->p_name_size != len)
         {
