@@ -95,6 +95,7 @@ C_SOURCES =  \
 ../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.c \
 ../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.c \
 ../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.c \
+../gd32g553c/bsp/bsp_can.c \
 ../gd32g553c/bsp/bsp_gpio.c \
 ../gd32g553c/bsp/bsp_init.c \
 ../gd32g553c/bsp/bsp_timer.c \
@@ -113,7 +114,7 @@ C_SOURCES =  \
 ../code/dbg/shell.c \
 ../code/dbg/shell_service.c \
 ../code/interface/ac/gpio.c \
-../code/interface/usart.c \
+../code/interface/ac/comm_link.c \
 ../code/section/section.c \
 ../code/comm/comm.c \
 

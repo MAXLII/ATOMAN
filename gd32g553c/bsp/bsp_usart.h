@@ -3,17 +3,13 @@
 
 #include <stdint.h>
 
-#define USART0_GPIO_RCU RCU_GPIOA
-
-#define USART0_TX_PORT GPIOA
-#define USART0_TX_PIN GPIO_PIN_9
-
-#define USART0_RX_PORT GPIOA
-#define USART0_RX_PIN GPIO_PIN_10
-
+void bsp_usart_dbg_printf(const char *__format, ...);
+void bsp_usart_dbg_tx(char *ptr, int len);
 int bsp_usart_dbg_tx_dma(const uint8_t *p_data, uint32_t len);
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data);
-void bsp_usart_dbg_printf(const char *__format, ...);
+
+void bsp_usart_iso_printf(const char *__format, ...);
+void bsp_usart_iso_tx(char *ptr, int len);
+uint8_t bsp_usart_iso_rx_get_byte(uint8_t *p_data);
 
 #endif
-
