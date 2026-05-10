@@ -20,6 +20,7 @@ plecs/ac/plecs_log_file_path.c
 *.uvoptx
 *.jdebug.user
 JLinkLog.txt
+JLinkSettings.ini
 EventRecorderStub.scvd
 *.crf
 *.d
