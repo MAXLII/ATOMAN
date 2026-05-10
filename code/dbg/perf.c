@@ -34,14 +34,14 @@
 section_perf_record_t *p_perf_record_first = NULL;
 uint32_t perf_dict_version = 1u;
 static record_dict_t s_perf_dict;
-static uint32_t *s_perf_cnt = NULL;
+static volatile uint32_t *s_perf_cnt = NULL;
 static float s_perf_task_metric = 0.0f;
 static float s_perf_task_metric_max = 0.0f;
 static float s_perf_interrupt_metric = 0.0f;
 static float s_perf_interrupt_metric_max = 0.0f;
 static uint32_t s_perf_metric_last_sys_tick = 0u;
-
-extern reg_task_t *p_task_first;
+static volatile section_perf_record_t *s_running_task_perf_record = NULL;
+static volatile uint32_t s_running_task_interrupt_time = 0u;
 
 static void perf_insert(section_perf_t *perf)
 {
@@ -99,6 +99,8 @@ static void perf_init(void)
     s_perf_interrupt_metric = 0.0f;
     s_perf_interrupt_metric_max = 0.0f;
     s_perf_metric_last_sys_tick = SECTION_SYS_TICK;
+    s_running_task_perf_record = NULL;
+    s_running_task_interrupt_time = 0u;
     perf_dict_version = 1u;
     record_dict_init(&s_perf_dict, perf_dict_version);
 
@@ -125,6 +127,96 @@ uint32_t perf_base_cnt_get(void)
 uint8_t perf_base_is_ready(void)
 {
     return (s_perf_cnt != NULL) ? 1u : 0u;
+}
+
+static inline uint32_t perf_cnt_read(volatile uint32_t *const *pp_cnt)
+{
+    if ((pp_cnt == NULL) || (*pp_cnt == NULL))
+    {
+        return 0u;
+    }
+
+    return **pp_cnt;
+}
+
+uint32_t section_perf_task_begin(section_perf_record_t *record)
+{
+    if (record == NULL)
+    {
+        return 0u;
+    }
+
+    s_running_task_interrupt_time = 0u;
+    s_running_task_perf_record = record;
+
+    return perf_cnt_read(record->p_cnt);
+}
+
+void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt)
+{
+    uint32_t delta;
+    uint32_t interrupt_time;
+
+    if (record == NULL)
+    {
+        return;
+    }
+
+    delta = (uint32_t)(perf_cnt_read(record->p_cnt) - start_cnt);
+    interrupt_time = s_running_task_interrupt_time;
+    s_running_task_perf_record = NULL;
+    s_running_task_interrupt_time = 0u;
+
+    if (delta > interrupt_time)
+    {
+        delta -= interrupt_time;
+    }
+    else
+    {
+        delta = 0u;
+    }
+
+    record->time = delta;
+    record->max_time = (delta > record->max_time) ? delta : record->max_time;
+    record->run_time += delta;
+}
+
+void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us)
+{
+    if (record != NULL)
+    {
+        record->period_us = period_us;
+    }
+}
+
+uint32_t section_perf_interrupt_begin(section_perf_record_t *record)
+{
+    if (record == NULL)
+    {
+        return 0u;
+    }
+
+    return perf_cnt_read(record->p_cnt);
+}
+
+void section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
+{
+    uint32_t delta;
+
+    if (record == NULL)
+    {
+        return;
+    }
+
+    delta = (uint32_t)(perf_cnt_read(record->p_cnt) - start_cnt);
+    record->time = delta;
+    record->max_time = (delta > record->max_time) ? delta : record->max_time;
+    record->run_time += delta;
+
+    if (s_running_task_perf_record != NULL)
+    {
+        s_running_task_interrupt_time += delta;
+    }
 }
 
 float perf_task_metric_get(void)
@@ -200,14 +292,6 @@ uint32_t perf_task_period_us_get(section_perf_record_t *record)
     if (record->period_us != 0u)
     {
         return record->period_us;
-    }
-
-    for (reg_task_t *task = p_task_first; task != NULL; task = (reg_task_t *)task->p_next)
-    {
-        if (task->p_perf_record == record)
-        {
-            return task->t_period * SECTION_SYS_TICK_UNIT_US;
-        }
     }
 
     return 0u;

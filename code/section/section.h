@@ -7,8 +7,9 @@
  *
  *          Module responsibilities:
  *          - Define the shared descriptors stored in the linker-managed section table
- *          - Provide REG_INIT, REG_TASK, REG_INTERRUPT, REG_FSM, link, perf, and comm registration macros
+ *          - Provide REG_INIT, REG_TASK, REG_INTERRUPT, REG_FSM, and link registration macros
  *          - Expose runtime dispatch APIs used by the main loop, interrupt path, and service modules
+ *          - Offer optional instrumentation hook points without depending on the dbg/perf module
  *
  *          Design notes:
  *          - C11 compatible
@@ -35,7 +36,8 @@
 #include <stdint.h>
 
 #include "platform.h"
-#include "perf.h"
+
+typedef struct section_perf_record section_perf_record_t;
 
 #ifndef PERF_START
 #define PERF_START(name)
@@ -88,14 +90,6 @@ typedef struct
     void *p_str;
 } reg_section_t;
 
-#ifdef IS_PLECS
-#define AUTO_REG_SECTION __attribute__((__section__("section")))
-#define FUNC_RAM
-#else
-#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
-#define FUNC_RAM __attribute__((section(".func_ram")))
-#endif
-
 #define REG_SECTION_FUNC(_section_type, _p_str)                   \
     const reg_section_t reg_section_##_p_str AUTO_REG_SECTION = { \
         .section_type = (uint32_t)(_section_type),                \
@@ -127,6 +121,12 @@ typedef struct reg_init
 
 void section_init(void);
 
+uint32_t section_perf_task_begin(section_perf_record_t *record);
+void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
+void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us);
+uint32_t section_perf_interrupt_begin(section_perf_record_t *record);
+void section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
+
 typedef struct reg_task_t
 {
     uint32_t t_period;
@@ -136,7 +136,9 @@ typedef struct reg_task_t
     struct reg_task_t *p_next;
 } reg_task_t;
 
+#ifndef TASK_RECORD_PERF_ENABLE
 #define TASK_RECORD_PERF_ENABLE 1
+#endif
 
 #if (TASK_RECORD_PERF_ENABLE == 1)
 #define TASK_RECORD_PERF(name) P_RECORD_PERF(name)
@@ -163,7 +165,9 @@ void run_task(void);
 
 #define PRIORITY_NUM_MAX 16
 
+#ifndef INTERRUPT_RECORD_PERF_ENABLE
 #define INTERRUPT_RECORD_PERF_ENABLE 1
+#endif
 
 #if (INTERRUPT_RECORD_PERF_ENABLE == 1)
 #define INTERRUPT_RECORD_PERF(name) P_RECORD_PERF(name)

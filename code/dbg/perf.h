@@ -31,6 +31,8 @@
 
 #include <stdint.h>
 
+#include "section.h"
+
 typedef enum
 {
     SECTION_PERF_RECORD = 0,
@@ -46,7 +48,7 @@ typedef enum
 
 typedef struct
 {
-    uint32_t *p_cnt;
+    volatile uint32_t *p_cnt;
 } section_perf_base_t;
 
 typedef struct
@@ -55,13 +57,12 @@ typedef struct
     void *p_perf;
 } section_perf_t;
 
-typedef struct
+struct section_perf_record
 {
     const char *p_name;
-    uint16_t start;
-    uint16_t end;
-    uint16_t time;
-    uint16_t reserved;
+    uint32_t start;
+    uint32_t end;
+    uint32_t time;
     uint32_t max_time;
     uint32_t run_time;
     uint32_t period_us;
@@ -69,9 +70,9 @@ typedef struct
     float load_max;
     uint16_t record_id;
     uint8_t record_type;
-    uint32_t **p_cnt;
+    volatile uint32_t **p_cnt;
     void *p_next;
-} section_perf_record_t;
+};
 
 extern section_perf_record_t *p_perf_record_first;
 extern uint32_t perf_dict_version;
@@ -111,7 +112,7 @@ void perf_reset_peak_value(void);
 
 #define REG_PERF_BASE_CNT(timer_cnt)                \
     section_perf_base_t section_perf_base_timer = { \
-        .p_cnt = (timer_cnt),                       \
+        .p_cnt = (volatile uint32_t *)(timer_cnt),  \
     };                                              \
     section_perf_t section_timer_cnt_perf = {       \
         .perf_type = SECTION_PERF_BASE,             \
@@ -123,27 +124,39 @@ void perf_reset_peak_value(void);
 
 #if (PERF_RECORD_ENABLE == 1)
 
+#undef PERF_START
+#undef PERF_END
+#undef P_RECORD_PERF
+#undef REG_PERF_RECORD
+#undef REG_TASK_PERF_RECORD
+#undef REG_INTERRUPT_PERF_RECORD
+
 #define PERF_START(name)                                                           \
     do                                                                             \
     {                                                                              \
-        if (*section_perf_record_##name.p_cnt != NULL)                             \
+        if ((section_perf_record_##name.p_cnt != NULL) &&                          \
+            (*section_perf_record_##name.p_cnt != NULL))                           \
         {                                                                          \
             section_perf_record_##name.start = **section_perf_record_##name.p_cnt; \
         }                                                                          \
     } while (0)
 
-#define PERF_END(name)                                                                                                       \
-    do                                                                                                                       \
-    {                                                                                                                        \
-        if (*section_perf_record_##name.p_cnt != NULL)                                                                       \
-        {                                                                                                                    \
-            section_perf_record_##name.end = **section_perf_record_##name.p_cnt;                                             \
-            section_perf_record_##name.time = (uint16_t)(section_perf_record_##name.end - section_perf_record_##name.start); \
-            if (section_perf_record_##name.time > section_perf_record_##name.max_time)                                       \
-            {                                                                                                                \
-                section_perf_record_##name.max_time = section_perf_record_##name.time;                                       \
-            }                                                                                                                \
-        }                                                                                                                    \
+#define PERF_END(name)                                                                                 \
+    do                                                                                                  \
+    {                                                                                                   \
+        if ((section_perf_record_##name.p_cnt != NULL) &&                                               \
+            (*section_perf_record_##name.p_cnt != NULL))                                                \
+        {                                                                                               \
+            uint32_t perf_delta;                                                                        \
+            section_perf_record_##name.end = **section_perf_record_##name.p_cnt;                        \
+            perf_delta = (uint32_t)(section_perf_record_##name.end - section_perf_record_##name.start); \
+            section_perf_record_##name.time = perf_delta;                                               \
+            if (perf_delta > section_perf_record_##name.max_time)                                       \
+            {                                                                                           \
+                section_perf_record_##name.max_time = perf_delta;                                       \
+            }                                                                                           \
+            section_perf_record_##name.run_time += perf_delta;                                          \
+        }                                                                                               \
     } while (0)
 
 #define P_RECORD_PERF(name) ((section_perf_record_t *)&section_perf_record_##name)
@@ -154,7 +167,6 @@ void perf_reset_peak_value(void);
         .start = 0,                                      \
         .end = 0,                                        \
         .time = 0,                                       \
-        .reserved = 0,                                   \
         .max_time = 0,                                   \
         .run_time = 0,                                   \
         .period_us = 0,                                  \
@@ -176,6 +188,13 @@ void perf_reset_peak_value(void);
 #define REG_INTERRUPT_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_INTERRUPT)
 
 #else
+
+#undef PERF_START
+#undef PERF_END
+#undef P_RECORD_PERF
+#undef REG_PERF_RECORD
+#undef REG_TASK_PERF_RECORD
+#undef REG_INTERRUPT_PERF_RECORD
 
 #define PERF_START(name)
 #define PERF_END(name)

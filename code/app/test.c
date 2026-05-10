@@ -10,6 +10,7 @@
  */
 
 #include "test.h"
+#include "perf.h"
 #include "scope.h"
 #include "math.h"
 #include "section.h"
