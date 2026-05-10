@@ -120,10 +120,7 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct)
 */
 ErrStatus spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
 {
-    uint32_t reg1, reg2, reg3 = 0U;
-
-    reg1 = SPI_CTL0(spi_periph);
-    reg1 &= SPI_INIT_MASK;
+    uint32_t reg2, reg3 = 0U;
 
     reg2 = SPI_CTL0(spi_periph);
     reg2 &= SPI_FIFO_INIT_MASK1;

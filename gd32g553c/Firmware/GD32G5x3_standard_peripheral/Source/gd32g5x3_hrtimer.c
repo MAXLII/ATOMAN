@@ -2918,7 +2918,7 @@ void hrtimer_slavetimer_capture_software(uint32_t hrtimer_periph, uint32_t timer
 hrtimer_capture_value_struct hrtimer_slavetimer_capture_value_read(uint32_t hrtimer_periph, uint32_t timer_id, uint32_t capturex)
 {
     uint32_t cap_val = 0U;
-    hrtimer_capture_value_struct captured;
+    hrtimer_capture_value_struct captured = {0U, 0U};
     
     switch (capturex)
     {
