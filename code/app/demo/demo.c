@@ -36,6 +36,8 @@
 
 EXT_LINK(USART0_LINK);
 
+#define DEMO_MATH_LOOP_COUNT (960u)
+
 static uint8_t s_demo_led_mask = 0x01u;
 static uint32_t s_demo_counter = 0u;
 static int32_t s_demo_last_cmd = 0;
@@ -45,6 +47,8 @@ static uint8_t s_demo_boot_ready = 0u;
 static uint32_t s_demo_perf_spin = 2000u;
 static uint32_t s_demo_last_tick = 0u;
 static uint32_t s_demo_perf_acc = 0u;
+static volatile uint32_t s_demo_flash_math_result = 0u;
+static volatile uint32_t s_demo_ram_math_result = 0u;
 static uint32_t s_demo_period_counter = 0u;
 static uint32_t s_demo_scope_basic_tick = 0u;
 static uint32_t s_demo_scope_fast_tick = 0u;
@@ -68,6 +72,8 @@ static demo_comm_frame_t s_demo_last_frame = {
 REG_PERF_RECORD(demo_manual_perf);
 REG_PERF_RECORD(demo_task_period_perf);
 REG_PERF_RECORD(demo_code_section_perf);
+REG_PERF_RECORD(demo_flash_math_perf);
+REG_PERF_RECORD(demo_ram_math_perf);
 
 #if defined(IS_HC32)
 #define DEMO_SCOPE_BASIC_BUF_SIZE 64
@@ -228,6 +234,7 @@ static void demo_help_cmd(DEC_MY_PRINTF)
         my_printf->my_printf("PERF use 3 -> demo_task_period_20ms measures entry-to-entry task period\r\n");
         my_printf->my_printf("TRACE use  -> bind sys_tick_100us, then mark in 100/500/1000 ms tasks\r\n");
         my_printf->my_printf("INT use    -> REG_TASK_MS(5, demo_interrupt_trigger_5ms_task) calls section_interrupt\r\n");
+        my_printf->my_printf("RAM func   -> compare demo_flash_math_calc and demo_ram_math_calc perf records\r\n");
         my_printf->my_printf("SCOPE basic-> REG_SCOPE_EX(demo_scope_basic, ...2 vars) + REG_TASK_MS(10, demo_scope_basic_task)\r\n");
         my_printf->my_printf("SCOPE fast -> REG_SCOPE_EX(demo_scope_fast, 500, 250, 100, ...10 vars)\r\n");
         my_printf->my_printf("SCOPE slow -> REG_SCOPE_EX(demo_scope_slow, 200, 100, 1000, ...3 vars)\r\n");
@@ -383,6 +390,53 @@ static void demo_busy_delay(uint32_t loop_cnt)
 }
 
 /*
+ * FUNC_RAM example:
+ * Keep two functions with the same math body:
+ * - demo_flash_math_calc() runs from normal flash.
+ * - demo_ram_math_calc() is placed in .func_ram by FUNC_RAM.
+ *
+ * The 10 ms task below wraps each call with a different perf record so the
+ * Perf viewer can compare Flash and RAM execution time directly.
+ */
+static uint32_t demo_flash_math_calc(uint32_t seed)
+{
+    uint32_t x = seed | 1u;
+    uint32_t y = seed ^ 0x9E3779B9u;
+    uint32_t acc = 0xA5A5A5A5u;
+    uint32_t i;
+
+    for (i = 0u; i < DEMO_MATH_LOOP_COUNT; ++i)
+    {
+        x = (x * 1664525u) + 1013904223u + i;
+        y ^= (x << 5) | (x >> 27);
+        acc += ((x ^ y) * 33u) + ((acc >> 3) ^ (y << 2));
+        acc = (acc << 7) | (acc >> 25);
+        x += (acc / 17u) ^ (y >> 11);
+    }
+
+    return acc ^ x ^ y;
+}
+
+static FUNC_RAM uint32_t demo_ram_math_calc(uint32_t seed)
+{
+    uint32_t x = seed | 1u;
+    uint32_t y = seed ^ 0x9E3779B9u;
+    uint32_t acc = 0xA5A5A5A5u;
+    uint32_t i;
+
+    for (i = 0u; i < DEMO_MATH_LOOP_COUNT; ++i)
+    {
+        x = (x * 1664525u) + 1013904223u + i;
+        y ^= (x << 5) | (x >> 27);
+        acc += ((x ^ y) * 33u) + ((acc >> 3) ^ (y << 2));
+        acc = (acc << 7) | (acc >> 25);
+        x += (acc / 17u) ^ (y >> 11);
+    }
+
+    return acc ^ x ^ y;
+}
+
+/*
  * PERF task-load example:
  * These tasks do a small amount of work at different periods. When
  * TASK_RECORD_PERF_ENABLE is enabled, REG_TASK_MS automatically creates one
@@ -409,11 +463,20 @@ static void demo_perf_load_5ms_task(void)
  */
 static void demo_perf_code_section_10ms_task(void)
 {
+    const uint32_t seed = s_demo_aux_counter + s_demo_counter;
 
     PERF_START(demo_code_section_perf);
     s_demo_aux_counter += 7u;
     demo_busy_delay(96u);
     PERF_END(demo_code_section_perf);
+
+    PERF_START(demo_flash_math_perf);
+    s_demo_flash_math_result = demo_flash_math_calc(seed);
+    PERF_END(demo_flash_math_perf);
+
+    PERF_START(demo_ram_math_perf);
+    s_demo_ram_math_result = demo_ram_math_calc(seed);
+    PERF_END(demo_ram_math_perf);
 }
 
 /*
