@@ -241,6 +241,9 @@ void SystemInit (void)
 
     /* configure the system clock source */
     system_clock_config();
+
+    /* enable flash prefetch and I/D bus cache after flash wait state setup */
+    FMC_WS |= (FMC_WS_PFEN | FMC_WS_ICEN | FMC_WS_DCEN);
     
 #ifdef VECT_TAB_SRAM
     nvic_vector_table_set(NVIC_VECTTAB_RAM, VECT_TAB_OFFSET);
