@@ -157,7 +157,7 @@ typedef struct section_shell_t
         .status = (uint32_t)(_status),                                                     \
         .p_next = NULL,                                                                    \
     };                                                                                     \
-    static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
+    _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 
 /**
@@ -173,7 +173,7 @@ typedef struct section_shell_t
         .status = 0,                                                                       \
         .p_next = NULL,                                                                    \
     };                                                                                     \
-    static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
+    _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 
 /* Shell: handler interface (for LINK dispatch)

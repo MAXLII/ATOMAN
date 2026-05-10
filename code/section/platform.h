@@ -49,10 +49,17 @@ extern size_t __stop_section;
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#if defined(TOOLCHAIN_KEIL)
+extern uint32_t Image$$SECTION$$Base;
+extern uint32_t Image$$SECTION$$Limit;
+#define SECTION_START Image$$SECTION$$Base
+#define SECTION_STOP Image$$SECTION$$Limit
+#else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
 #define SECTION_STOP __section_end
+#endif
 #define SYSTEM_RESET NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
