@@ -227,23 +227,24 @@ Reset_Handler   PROC
                 EXPORT  Reset_Handler                     [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
-                IMPORT |Image$$RW_IRAM1$$RW$$Base|
-
-                LDR     r0, =0x1FFFB3E0
-                LDR     r2, [r0]
-                LDR     r0, = 0xFFFF0000
-                AND     r2, r2, r0
-                LSR     r2, r2, #16
-                LSL     r2, r2, #10
-                LDR     r0, =|Image$$RW_IRAM1$$RW$$Base|
-                ADD     r1, r0, r2
-                LDR     r2, =0x0
-MEM_INIT        STRD    r2, r2, [ r0 ] , #8
-                CMP     r0, r1
-                BNE     MEM_INIT
 
                 LDR     r0, =SystemInit
                 BLX     r0
+
+                IMPORT  |Load$$RW_IRAM1$$Base|
+                IMPORT  |Image$$RW_IRAM1$$Base|
+                IMPORT  |Image$$RW_IRAM1$$Limit|
+                LDR     r0, =|Load$$RW_IRAM1$$Base|
+                LDR     r1, =|Image$$RW_IRAM1$$Base|
+                LDR     r2, =|Image$$RW_IRAM1$$Limit|
+                CMP     r1, r2
+                BEQ     FUNC_RAM_COPY_DONE
+FUNC_RAM_COPY   LDRD    r3, r4, [r0], #8
+                STRD    r3, r4, [r1], #8
+                CMP     r1, r2
+                BNE     FUNC_RAM_COPY
+FUNC_RAM_COPY_DONE
+
                 LDR     r0, =__main
                 BX      r0
                 ENDP

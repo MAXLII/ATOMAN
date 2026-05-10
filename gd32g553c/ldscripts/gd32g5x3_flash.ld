@@ -121,6 +121,18 @@ SECTIONS
     _edata = .;
   } > RAM AT> FLASH :ram
 
+  /* RAM-executed functions */
+  _sifunc_ram = LOADADDR(.func_ram);
+  .func_ram :
+  {
+    . = ALIGN(4);
+    _sfunc_ram = .;
+    *(.func_ram)
+    *(.func_ram*)
+    . = ALIGN(4);
+    _efunc_ram = .;
+  } > RAM AT> FLASH :ram
+
   /* provide some necessary symbols for uninitialized data */
   . = ALIGN(4);
   .bss (NOLOAD) :
