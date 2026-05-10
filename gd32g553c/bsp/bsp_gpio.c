@@ -1,4 +1,5 @@
 #include "bsp_gpio.h"
+#include "section.h"
 
 const bsp_gpio_parm_t bsp_gpio_parm_table[] = {
     GPIO_REG_PARM(LED1, GPIOB, 7, OUTPUT, PP, NONE, _60MHZ),
@@ -29,6 +30,8 @@ void bsp_gpio_init(void)
         }
     }
 }
+
+REG_INIT(0, bsp_gpio_init)
 
 void bsp_gpio_set_bit(bsp_gpio_table_e num, uint8_t val)
 {
