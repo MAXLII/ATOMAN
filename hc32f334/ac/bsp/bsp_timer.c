@@ -1,5 +1,6 @@
 #include "bsp_timer.h"
 #include "section.h"
+#include "perf.h"
 
 #define BSP_TIMER_PERF_UNIT              (CM_TMRA_1)
 #define BSP_TIMER_PERF_FCG               (FCG2_PERIPH_TMRA_1)

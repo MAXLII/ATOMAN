@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Discover AUTO_REG_SECTION records emitted by the linker
  *          - Build ordered runtime lists for init, task, interrupt, link, and FSM callbacks
- *          - Execute registered callbacks and update task/interrupt timing records
+ *          - Execute registered callbacks and call optional instrumentation hooks around task/interrupt work
  *
  *          Design notes:
  *          - C11 compatible
@@ -30,14 +30,49 @@
 #include "section.h"
 
 #include <stddef.h>
-#include <string.h>
 
 reg_task_t *p_task_first = NULL;
 reg_interrupt_t *p_interrupt_first = NULL;
 section_link_t *p_link_first = NULL;
 reg_init_t *p_init_first = NULL;
-static volatile section_perf_record_t *s_running_task_perf_record = NULL;
-static volatile uint32_t s_running_task_interrupt_time = 0u;
+
+#if defined(__GNUC__)
+#define SECTION_WEAK __attribute__((weak))
+#elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
+#define SECTION_WEAK __weak
+#else
+#define SECTION_WEAK
+#endif
+
+SECTION_WEAK uint32_t section_perf_task_begin(section_perf_record_t *record)
+{
+    (void)record;
+    return 0u;
+}
+
+SECTION_WEAK void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt)
+{
+    (void)record;
+    (void)start_cnt;
+}
+
+SECTION_WEAK void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us)
+{
+    (void)record;
+    (void)period_us;
+}
+
+SECTION_WEAK uint32_t section_perf_interrupt_begin(section_perf_record_t *record)
+{
+    (void)record;
+    return 0u;
+}
+
+SECTION_WEAK void section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
+{
+    (void)record;
+    (void)start_cnt;
+}
 
 static void task_insert(reg_task_t *task)
 {
@@ -48,10 +83,7 @@ static void task_insert(reg_task_t *task)
 
     task->time_last = SECTION_SYS_TICK;
     task->p_next = NULL;
-    if (task->p_perf_record != NULL)
-    {
-        task->p_perf_record->period_us = task->t_period * SECTION_SYS_TICK_UNIT_US;
-    }
+    section_perf_task_period_set(task->p_perf_record, task->t_period * SECTION_SYS_TICK_UNIT_US);
 
     if (p_task_first == NULL)
     {
@@ -166,11 +198,11 @@ void section_init(void)
     }
 }
 
-static inline uint32_t perf_cnt_read(uint32_t *const *pp_cnt)
+static void task_schedule_next(reg_task_t *task, uint32_t elapsed)
 {
-    if (!pp_cnt || !*pp_cnt)
-        return 0u;
-    return **pp_cnt;
+    const uint32_t periods_elapsed = elapsed / task->t_period;
+
+    task->time_last += periods_elapsed * task->t_period;
 }
 
 void run_task(void)
@@ -192,52 +224,14 @@ void run_task(void)
             continue;
         }
 
-        uint32_t perf_start = 0u;
         section_perf_record_t *rec = task->p_perf_record;
-        if (rec)
-        {
-            perf_start = perf_cnt_read(rec->p_cnt);
-#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
-            s_running_task_interrupt_time = 0u;
-            s_running_task_perf_record = rec;
-#endif
-        }
+        uint32_t perf_start = section_perf_task_begin(rec);
 
         task->p_func();
 
-        if (rec)
-        {
-            const uint32_t perf_end = perf_cnt_read(rec->p_cnt);
-            uint32_t delta = (uint32_t)(perf_end - perf_start);
-#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
-            uint32_t interrupt_time = s_running_task_interrupt_time;
+        section_perf_task_end(rec, perf_start);
 
-            s_running_task_perf_record = NULL;
-            s_running_task_interrupt_time = 0u;
-            if (delta > interrupt_time)
-            {
-                delta -= interrupt_time;
-            }
-            else
-            {
-                delta = 0u;
-            }
-#endif
-
-            rec->time = delta;
-            rec->max_time = (delta > rec->max_time) ? delta : rec->max_time;
-            rec->run_time += delta;
-        }
-
-        if (0)
-        {
-            task->time_last = now;
-        }
-        else
-        {
-            const uint32_t k = elapsed / period;
-            task->time_last += k * period;
-        }
+        task_schedule_next(task, elapsed);
     }
 }
 
@@ -245,33 +239,17 @@ void section_interrupt(void)
 {
     for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = (reg_interrupt_t *)p->p_next)
     {
-#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
-        uint32_t perf_start = 0u;
+        if (p->p_func == NULL)
+        {
+            continue;
+        }
+
         section_perf_record_t *rec = p->p_perf_record;
-
-        if (rec)
-        {
-            perf_start = perf_cnt_read(rec->p_cnt);
-        }
+        uint32_t perf_start = section_perf_interrupt_begin(rec);
 
         p->p_func();
 
-        if (rec)
-        {
-            const uint32_t perf_end = perf_cnt_read(rec->p_cnt);
-            const uint32_t delta = (uint32_t)(perf_end - perf_start);
-
-            rec->time = delta;
-            rec->max_time = (delta > rec->max_time) ? delta : rec->max_time;
-            rec->run_time += delta;
-            if (s_running_task_perf_record != NULL)
-            {
-                s_running_task_interrupt_time += delta;
-            }
-        }
-#else
-        p->p_func();
-#endif
+        section_perf_interrupt_end(rec, perf_start);
     }
 }
 
