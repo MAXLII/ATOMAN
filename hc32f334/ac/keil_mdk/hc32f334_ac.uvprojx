@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F334,USE_DDL_DRIVER,IS_HC32,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x00000000,VECT_TAB_OFFSET=0x00000000,TOOLCHAIN_KEIL,IS_AC</Define>
               <Undefine></Undefine>
-              <IncludePath>..\ac\src;..\ac\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\code\section;..\..\code\comm;..\..\code\interface\ac;..\..\code\interface\common;..\..\code\lib;..\..\code\dbg;..\..\code\app\demo</IncludePath>
+              <IncludePath>..\src;..\bsp;..\..\inc;..\..\src;..\..\Firmware\CMSIS\Include;..\..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -396,7 +396,7 @@
             <File>
               <FileName>system_hc32f334.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\CMSIS\HDSC\hc32f3xx\Source\system_hc32f334.c</FilePath>
+              <FilePath>..\..\Firmware\CMSIS\HDSC\hc32f3xx\Source\system_hc32f334.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -406,7 +406,7 @@
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\src\main.c</FilePath>
+              <FilePath>..\src\main.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -416,7 +416,7 @@
             <File>
               <FileName>demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -426,32 +426,32 @@
             <File>
               <FileName>bsp_clk.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\bsp\bsp_clk.c</FilePath>
+              <FilePath>..\bsp\bsp_clk.c</FilePath>
             </File>
             <File>
               <FileName>bsp_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\bsp\bsp_gpio.c</FilePath>
+              <FilePath>..\bsp\bsp_gpio.c</FilePath>
             </File>
             <File>
               <FileName>bsp_pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\bsp\bsp_pwm.c</FilePath>
+              <FilePath>..\bsp\bsp_pwm.c</FilePath>
             </File>
             <File>
               <FileName>bsp_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\bsp\bsp_usart.c</FilePath>
+              <FilePath>..\bsp\bsp_usart.c</FilePath>
             </File>
             <File>
               <FileName>bsp_can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\bsp\bsp_can.c</FilePath>
+              <FilePath>..\bsp\bsp_can.c</FilePath>
             </File>
             <File>
               <FileName>bsp_timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\ac\bsp\bsp_timer.c</FilePath>
+              <FilePath>..\bsp\bsp_timer.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -461,17 +461,17 @@
             <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\interface\ac\gpio.c</FilePath>
+              <FilePath>..\..\..\code\interface\ac\gpio.c</FilePath>
             </File>
             <File>
               <FileName>pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\interface\ac\pwm.c</FilePath>
+              <FilePath>..\..\..\code\interface\ac\pwm.c</FilePath>
             </File>
             <File>
               <FileName>comm_link.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\interface\ac\comm_link.c</FilePath>
+              <FilePath>..\..\..\code\interface\ac\comm_link.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -481,7 +481,7 @@
             <File>
               <FileName>section.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\section\section.c</FilePath>
+              <FilePath>..\..\..\code\section\section.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -491,7 +491,7 @@
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\comm\comm.c</FilePath>
+              <FilePath>..\..\..\code\comm\comm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -501,7 +501,7 @@
             <File>
               <FileName>record_dict.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\lib\record_dict.c</FilePath>
+              <FilePath>..\..\..\code\lib\record_dict.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -511,17 +511,17 @@
             <File>
               <FileName>hc32f334_it.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\hc32f334_it.c</FilePath>
+              <FilePath>..\..\src\hc32f334_it.c</FilePath>
             </File>
             <File>
               <FileName>syscalls.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\syscalls.c</FilePath>
+              <FilePath>..\..\src\syscalls.c</FilePath>
             </File>
             <File>
               <FileName>systick.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\systick.c</FilePath>
+              <FilePath>..\..\src\systick.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -531,182 +531,182 @@
             <File>
               <FileName>hc32_ll.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_adc.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_adc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_aos.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_aos.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_aos.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_clk.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_clk.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_clk.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_cmp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_cmp.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_cmp.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_crc.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_crc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_ctc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_ctc.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_ctc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_dac.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_dac.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_dac.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_dbgc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_dbgc.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_dbgc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_dma.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_dma.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_efm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_efm.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_efm.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_emb.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_emb.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_emb.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_event_port.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_event_port.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_event_port.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_fcg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_fcg.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_fcg.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_fcm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_fcm.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_fcm.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_gpio.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_gpio.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_hrpwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_hrpwm.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_hrpwm.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_i2c.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_i2c.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_icg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_icg.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_icg.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_interrupts.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_interrupts.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_interrupts.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_mcan.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_mcan.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_mcan.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_mpu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_mpu.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_mpu.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_pla.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_pla.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_pla.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_pwc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_pwc.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_pwc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_rmu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_rmu.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_rmu.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_rtc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_rtc.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_rtc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_spi.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_spi.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_sram.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_sram.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_sram.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_swdt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_swdt.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_swdt.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_tmr0.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr0.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr0.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_tmr4.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr4.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr4.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_tmr6.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr6.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr6.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_tmra.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmra.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_tmra.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_usart.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_usart.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_utility.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_utility.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_utility.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_wdt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_wdt.c</FilePath>
+              <FilePath>..\..\Firmware\HC32_LL_Driver\src\hc32_ll_wdt.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -716,42 +716,42 @@
             <File>
               <FileName>perf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\perf.c</FilePath>
+              <FilePath>..\..\..\code\dbg\perf.c</FilePath>
             </File>
             <File>
               <FileName>perf_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\perf_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\perf_service.c</FilePath>
             </File>
             <File>
               <FileName>scope.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\scope.c</FilePath>
+              <FilePath>..\..\..\code\dbg\scope.c</FilePath>
             </File>
             <File>
               <FileName>scope_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\scope_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\scope_service.c</FilePath>
             </File>
             <File>
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\shell.c</FilePath>
+              <FilePath>..\..\..\code\dbg\shell.c</FilePath>
             </File>
             <File>
               <FileName>shell_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\shell_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\shell_service.c</FilePath>
             </File>
             <File>
               <FileName>trace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\trace.c</FilePath>
+              <FilePath>..\..\..\code\dbg\trace.c</FilePath>
             </File>
             <File>
               <FileName>trace_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\trace_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\trace_service.c</FilePath>
             </File>
           </Files>
         </Group>
