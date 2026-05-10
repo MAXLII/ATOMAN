@@ -13,7 +13,7 @@
 # 从环境变量获取参数
 PROJECT_FW_TYPE = ISP
 PROJECT_OUTPUT_NAME = isp_firmware
-PROJECT_PLATFORM_DEFINE = -DIS_DC
+PROJECT_PLATFORM_DEFINE = -DGD32G5X3
 PROJECT_FW_DEFINE = -DFIRMWARE_TYPE_ISP
 PROJECT_APP_START_ADDR = 0x08000000
 PROJECT_LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
@@ -268,7 +268,7 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(BIN) $< $@	
 	
 $(BUILD_DIR):
-	if not exist $@ mkdir $@		
+	-mkdir -p $@
 
 #######################################
 # clean up
