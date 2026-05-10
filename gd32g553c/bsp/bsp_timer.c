@@ -2,6 +2,7 @@
 
 #include "gd32g5x3.h"
 #include "section.h"
+#include "perf.h"
 
 REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x00000024u))
 
