@@ -73,16 +73,18 @@ void _exit (int status)
 	while (1) {}
 }
 
-// int _write(int file, char *ptr, int len)
-// {
-// 	int DataIdx;
+int _write(int file, char *ptr, int len)
+{
+    (void)file;
 
-// 		for (DataIdx = 0; DataIdx < len; DataIdx++)
-// 		{
-// 		   __io_putchar( *ptr++ );
-// 		}
-// 	return len;
-// }
+    if (__io_putchar != NULL) {
+        for (int data_idx = 0; data_idx < len; data_idx++) {
+            (void)__io_putchar((int)*ptr++);
+        }
+    }
+
+    return len;
+}
 
 int _close(int file)
 {

@@ -5,6 +5,12 @@ MEMORY
   RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
+PHDRS
+{
+  flash PT_LOAD FLAGS(5);
+  ram PT_LOAD FLAGS(6);
+}
+
 ENTRY(Reset_Handler)
 
 SECTIONS
@@ -20,7 +26,7 @@ SECTIONS
     . = ALIGN(4);
     __Vectors_End = .;
     __Vectors_Size = __Vectors_End - __gVectors;
-  } >FLASH
+  } >FLASH :flash
 
   /* text section, such as program code */
   .text :
@@ -36,7 +42,7 @@ SECTIONS
     . = ALIGN(4);
     /* the symbol '_etext' will be defined at the end of code section */
     _etext = .;
-  } >FLASH
+  } >FLASH :flash
 
   /* Custom section for AUTO_REG_SECTION */
   .section :
@@ -47,7 +53,7 @@ SECTIONS
     KEEP(*(section*))
     __section_end = .; /* 定义 section 结束地址 */
     . = ALIGN(4);
-  } >FLASH
+  } >FLASH :flash
 
   /* ro-data section, such as constant data */
   .rodata :
@@ -56,13 +62,13 @@ SECTIONS
     *(.rodata)
     *(.rodata*)
     . = ALIGN(4);
-  } >FLASH
+  } >FLASH :flash
 
   /* exception process table */
   .ARM.extab :
   {
     *(.ARM.extab* .gnu.linkonce.armextab.*)
-  } >FLASH
+  } >FLASH :flash
 
   /* exception process table index */
   .ARM :
@@ -70,20 +76,20 @@ SECTIONS
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
-  } >FLASH
+  } >FLASH :flash
 
   /* ARM attributes */
   .ARM.attributes :
   {
    *(.ARM.attributes)
-  } >FLASH
+  } >FLASH :flash
 
   .preinit_array :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >FLASH
+  } >FLASH :flash
 
   .init_array :
   {
@@ -91,7 +97,7 @@ SECTIONS
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } >FLASH
+  } >FLASH :flash
 
   .fini_array :
   {
@@ -99,7 +105,7 @@ SECTIONS
     KEEP (*(.fini_array*))
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } >FLASH
+  } >FLASH :flash
 
   /* provide some necessary symbols for initialized data */
   _sidata = LOADADDR(.data);
@@ -113,11 +119,11 @@ SECTIONS
     . = ALIGN(4);
     /* the symbol '_edata' will be defined at the data section end */
     _edata = .;
-  } > RAM AT> FLASH
+  } > RAM AT> FLASH :ram
 
   /* provide some necessary symbols for uninitialized data */
   . = ALIGN(4);
-  .bss :
+  .bss (NOLOAD) :
   {
     . = ALIGN(4);
     /* the symbol '_sbss' will be defined at the bss section start */
@@ -130,10 +136,10 @@ SECTIONS
     /* the symbol '_ebss' will be defined at the bss section end */
     _ebss = .;
     __bss_end__ = _ebss;
-  } > RAM
+  } > RAM :NONE
 
   /* heap and stack space */
-  .heap_stack :
+  .heap_stack (NOLOAD) :
   {
     . = ALIGN(8);
     PROVIDE ( end = _ebss );
@@ -143,7 +149,7 @@ SECTIONS
     . = . + __stack_size;
     PROVIDE( _sp = . ); 
     . = ALIGN(8);
-  } > RAM
+  } > RAM :NONE
 }
 
 /* input sections */
