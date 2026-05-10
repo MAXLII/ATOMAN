@@ -65,7 +65,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define AUTO_REG_SECTION __attribute__((used, __section__("section")))
-#define FUNC_RAM __attribute__((section(".func_ram")))
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 
 #elif defined(IS_HC32)
 #include "systick.h"
@@ -88,7 +88,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define AUTO_REG_SECTION __attribute__((used, __section__("section")))
-#define FUNC_RAM __attribute__((section(".func_ram")))
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 
 #else
 #include "systick.h"
@@ -104,5 +104,5 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define AUTO_REG_SECTION __attribute__((used, __section__("section")))
-#define FUNC_RAM __attribute__((section(".func_ram")))
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 #endif

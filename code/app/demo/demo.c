@@ -398,7 +398,7 @@ static void demo_busy_delay(uint32_t loop_cnt)
  * The 10 ms task below wraps each call with a different perf record so the
  * Perf viewer can compare Flash and RAM execution time directly.
  */
-static uint32_t demo_flash_math_calc(uint32_t seed)
+static __attribute__((noinline, used)) uint32_t demo_flash_math_calc(uint32_t seed)
 {
     uint32_t x = seed | 1u;
     uint32_t y = seed ^ 0x9E3779B9u;
