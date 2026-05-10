@@ -9,6 +9,9 @@
 .word  _sidata
 .word  _sdata
 .word  _edata
+.word  _sifunc_ram
+.word  _sfunc_ram
+.word  _efunc_ram
 .word  _sbss
 .word  _ebss
 
@@ -42,6 +45,23 @@ DataInit:
   adds r2, r0, r1
   cmp r2, r3
   bcc CopyData
+
+  movs r1, #0
+  b FuncRamInit
+
+CopyFuncRam:
+  ldr r3, =_sifunc_ram
+  ldr r3, [r3, r1]
+  str r3, [r0, r1]
+  adds r1, r1, #4
+
+FuncRamInit:
+  ldr r0, =_sfunc_ram
+  ldr r3, =_efunc_ram
+  adds r2, r0, r1
+  cmp r2, r3
+  bcc CopyFuncRam
+
   ldr r2, =_sbss
   b Zerobss
 

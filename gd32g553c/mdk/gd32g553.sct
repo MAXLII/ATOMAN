@@ -11,11 +11,9 @@ LR_IROM1 0x08000000 0x00080000  {
   }
   SECTION +0 {
    *(section)
-   *(section*)
   }
   RW_IRAM1 0x20000000 0x00018000  {
    *(.func_ram)
-   *(RAMCODE)
    .ANY (+RW +ZI)
   }
 }
