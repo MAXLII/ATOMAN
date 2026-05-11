@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32,TOOLCHAIN_KEIL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp</IncludePath>
+              <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -358,7 +358,7 @@
               <MiscControls></MiscControls>
               <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32,TOOLCHAIN_KEIL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp</IncludePath>
+              <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -627,27 +627,27 @@
             <File>
               <FileName>bsp_can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_can.c</FilePath>
+              <FilePath>..\bsp\src\bsp_can.c</FilePath>
             </File>
             <File>
               <FileName>bsp_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_gpio.c</FilePath>
+              <FilePath>..\bsp\src\bsp_gpio.c</FilePath>
             </File>
             <File>
               <FileName>bsp_init.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_init.c</FilePath>
+              <FilePath>..\bsp\src\bsp_init.c</FilePath>
             </File>
             <File>
               <FileName>bsp_timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_timer.c</FilePath>
+              <FilePath>..\bsp\src\bsp_timer.c</FilePath>
             </File>
             <File>
               <FileName>bsp_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_usart.c</FilePath>
+              <FilePath>..\bsp\src\bsp_usart.c</FilePath>
             </File>
           </Files>
         </Group>

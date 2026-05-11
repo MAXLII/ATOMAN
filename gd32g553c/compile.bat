@@ -29,13 +29,13 @@ if /I "%BUILD_MODE%"=="rebuild" (
 )
 
 echo Step 2: build fw_info tool...
-if exist fw_info.exe del /f /q fw_info.exe
-gcc -o fw_info.exe fw_info.c -DIS_PFC
+if exist tools\fw_info\fw_info.exe del /f /q tools\fw_info\fw_info.exe
+gcc -o tools\fw_info\fw_info.exe tools\fw_info\fw_info.c -Itools\fw_info -DIS_PFC
 if errorlevel 1 (
-    echo Error: failed to build fw_info.exe.
+    echo Error: failed to build tools\fw_info\fw_info.exe.
     goto error
 )
-echo fw_info.exe built.
+echo tools\fw_info\fw_info.exe built.
 
 echo Step 3: build firmware...
 mingw32-make.exe -s -j10 OUTPUT_NAME=isp_firmware
@@ -99,7 +99,7 @@ if exist "build" rmdir /s /q "build"
 exit /b 0
 
 :run_fw_info
-.\fw_info.exe build\demo.bin !target_dir!\demo.bin
+.\tools\fw_info\fw_info.exe build\demo.bin !target_dir!\demo.bin
 exit /b 0
 
 :end
