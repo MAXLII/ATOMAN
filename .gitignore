@@ -7,6 +7,8 @@ plecs/plecs_log_file_path.c
 plecs/plecs_log.txt
 plecs/ac/plecs_log.txt
 gd32g553c/fw_info.exe
+gd32g553c/tools/fw_info/fw_info
+gd32g553c/tools/fw_info/fw_info.exe
 *plecs.autosave
 plecs/ac/plecs_log_file_path.c
 *.log
@@ -37,3 +39,7 @@ hc32f334/keil_flash/
 _final.py
 .claude/settings.local.json
 gd32g553c/builds
+gd32g553c/build/
+gd32g553c/gcc_build/
+gd32g553c/gcc/Makefile.tmp.*
+gd32g553c/-p/
