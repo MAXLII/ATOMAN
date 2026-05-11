@@ -10,7 +10,7 @@
 #   2015-07-22 - first version
 # ------------------------------------------------
 
-# 从环境变量获取参数
+# 从环境变量获取参�?
 PROJECT_FW_TYPE = ISP
 PROJECT_OUTPUT_NAME = isp_firmware
 PROJECT_PLATFORM_DEFINE = -DGD32G5X3
@@ -48,6 +48,13 @@ OPT = -O2
 #######################################
 # Build path
 BUILD_DIR = build
+GENERATE_LISTING ?= 0
+
+ifeq ($(OS),Windows_NT)
+MKDIR_P = if not exist "$(subst /,\,$@)" mkdir "$(subst /,\,$@)"
+else
+MKDIR_P = mkdir -p "$@"
+endif
 
 ######################################
 # source
@@ -95,11 +102,11 @@ C_SOURCES =  \
 ../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.c \
 ../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.c \
 ../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.c \
-../gd32g553c/bsp/bsp_can.c \
-../gd32g553c/bsp/bsp_gpio.c \
-../gd32g553c/bsp/bsp_init.c \
-../gd32g553c/bsp/bsp_timer.c \
-../gd32g553c/bsp/bsp_usart.c \
+../gd32g553c/bsp/src/bsp_can.c \
+../gd32g553c/bsp/src/bsp_gpio.c \
+../gd32g553c/bsp/src/bsp_init.c \
+../gd32g553c/bsp/src/bsp_timer.c \
+../gd32g553c/bsp/src/bsp_usart.c \
 ../gd32g553c/src/gd32g5x3_it.c \
 ../gd32g553c/src/main.c \
 ../gd32g553c/src/systick.c \
@@ -199,7 +206,7 @@ C_INCLUDES =  \
 -I../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include \
 -I../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include \
 -I../gd32g553c/inc \
--I../gd32g553c/bsp \
+-I../gd32g553c/bsp/inc \
 
 
 # compile gcc flags
@@ -218,6 +225,12 @@ endif
 
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
+
+ifeq ($(GENERATE_LISTING),1)
+C_LISTING_FLAG = -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst))
+else
+C_LISTING_FLAG =
+endif
 
 
 #######################################
@@ -250,15 +263,15 @@ vpath %.S $(sort $(dir $(ASMM_SOURCES)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASMMC_SOURCES:.c=.o)))
 vpath %.S $(sort $(dir $(ASMMC_SOURCES)))
 
-$(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR) 
-	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+$(BUILD_DIR)/%.o: %.c $(lastword $(MAKEFILE_LIST)) | $(BUILD_DIR)
+	$(CC) -c $(CFLAGS) $(C_LISTING_FLAG) $< -o $@
 
-$(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.s $(lastword $(MAKEFILE_LIST)) | $(BUILD_DIR)
 	$(AS) -c $(CFLAGS) $< -o $@
-$(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.S $(lastword $(MAKEFILE_LIST)) | $(BUILD_DIR)
 	$(AS) -c $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
+$(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) $(lastword $(MAKEFILE_LIST))
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 	$(SZ) $@
 
@@ -269,7 +282,7 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(BIN) $< $@	
 	
 $(BUILD_DIR):
-	@if not exist "$@" mkdir "$@"
+	@$(MKDIR_P)
 
 #######################################
 # clean up
