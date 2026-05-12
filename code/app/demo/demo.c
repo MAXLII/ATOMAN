@@ -4,9 +4,12 @@
 #include "comm_addr.h"
 #include "gpio.h"
 #include "perf.h"
+#include "pi_tustin.h"
+#include "pr.h"
 #include "scope.h"
 #include "section.h"
 #include "shell.h"
+#include "sfra.h"
 #include "trace.h"
 #include "usart.h"
 
@@ -38,6 +41,22 @@ EXT_LINK(USART0_LINK);
 
 #define DEMO_MATH_LOOP_COUNT (960u)
 
+#define DEMO_SFRA_ISR_FREQ_HZ       (10000.0f)
+#define DEMO_SFRA_SAMPLE_PERIOD_S   (1.0f / DEMO_SFRA_ISR_FREQ_HZ)
+#define DEMO_SFRA_INJECT_AMPLITUDE  (1.0f)
+#define DEMO_SFRA_FREQ_START_HZ     (10.0f)
+#define DEMO_SFRA_FREQ_END_HZ       (5000.0f)
+#define DEMO_SFRA_PI_KP             (1.0f)
+#define DEMO_SFRA_PI_KI             (400.0f)
+#define DEMO_SFRA_PI_UP_LMT         (100.0f)
+#define DEMO_SFRA_PI_DN_LMT         (-100.0f)
+#define DEMO_SFRA_PR_W0             (2.0f * 3.14159265358979323846f * 50.0f)
+#define DEMO_SFRA_PR_WC             (2.0f * 3.14159265358979323846f * 1.0f)
+#define DEMO_SFRA_PR_KP             (1.0f)
+#define DEMO_SFRA_PR_KR             (20.0f)
+#define DEMO_SFRA_PR_UP_LMT         (100.0f)
+#define DEMO_SFRA_PR_DN_LMT         (-100.0f)
+
 static uint8_t s_demo_led_mask = 0x01u;
 static uint32_t s_demo_counter = 0u;
 static int32_t s_demo_last_cmd = 0;
@@ -55,6 +74,12 @@ static uint32_t s_demo_scope_fast_tick = 0u;
 static uint32_t s_demo_scope_slow_tick = 0u;
 static uint32_t s_demo_aux_counter = 0u;
 static uint32_t s_demo_interrupt_counter = 0u;
+static float s_demo_sfra_pi_ref = 0.0f;
+static float s_demo_sfra_pi_act = 0.0f;
+static float s_demo_sfra_pi_out = 0.0f;
+static float s_demo_sfra_pr_ref = 0.0f;
+static float s_demo_sfra_pr_act = 0.0f;
+static float s_demo_sfra_pr_out = 0.0f;
 extern section_perf_record_t section_perf_record_demo_task;
 extern volatile uint32_t sys_tick_100us;
 static demo_comm_frame_t s_demo_last_frame = {
@@ -123,12 +148,104 @@ REG_SCOPE_EX(demo_scope_slow, DEMO_SCOPE_SLOW_BUF_SIZE, DEMO_SCOPE_SLOW_TRIG_POS
              scope_slow_cos,
              scope_slow_mix)
 
+REG_SFRA(demo_sfra,
+         0U,
+         DEMO_SFRA_SAMPLE_PERIOD_S,
+         DEMO_SFRA_INJECT_AMPLITUDE,
+         DEMO_SFRA_FREQ_START_HZ,
+         DEMO_SFRA_FREQ_END_HZ)
+
+REG_SFRA(demo_pr_sfra,
+         0U,
+         DEMO_SFRA_SAMPLE_PERIOD_S,
+         DEMO_SFRA_INJECT_AMPLITUDE,
+         DEMO_SFRA_FREQ_START_HZ,
+         DEMO_SFRA_FREQ_END_HZ)
+
+typedef struct
+{
+    pi_tustin_t *p_pi;
+    float *p_sfra_collect;
+    float *p_pi_out;
+} demo_sfra_ctx_t;
+
+static pi_tustin_t s_demo_sfra_pi;
+static demo_sfra_ctx_t s_demo_sfra_ctx = {
+    .p_pi = &s_demo_sfra_pi,
+    .p_sfra_collect = &demo_sfra_collect,
+    .p_pi_out = &s_demo_sfra_pi_out,
+};
+
+typedef struct
+{
+    pr_t *p_pr;
+    float *p_sfra_collect;
+    float *p_pr_out;
+} demo_pr_sfra_ctx_t;
+
+static pr_t s_demo_sfra_pr;
+static demo_pr_sfra_ctx_t s_demo_pr_sfra_ctx = {
+    .p_pr = &s_demo_sfra_pr,
+    .p_sfra_collect = &demo_pr_sfra_collect,
+    .p_pr_out = &s_demo_sfra_pr_out,
+};
+
 static void demo_apply_led_mask(uint8_t led_mask)
 {
     gpio_set_main_rly_sta((uint8_t)((led_mask >> 0) & 0x01u));
     gpio_set_ss_rly_sta((uint8_t)((led_mask >> 1) & 0x01u));
     gpio_set_ac_in_rly_sta((uint8_t)((led_mask >> 2) & 0x01u));
     gpio_set_ac_out_rly_sta((uint8_t)((led_mask >> 3) & 0x01u));
+}
+
+static void demo_sfra_prepare_freq(void *p_ctx)
+{
+    demo_sfra_ctx_t *p_ctx_sfra = (demo_sfra_ctx_t *)p_ctx;
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_pi != NULL)
+    {
+        pi_tustin_reset(p_ctx_sfra->p_pi);
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_pi_out != NULL)
+    {
+        *(p_ctx_sfra->p_pi_out) = 0.0f;
+    }
+}
+
+static void demo_pr_sfra_prepare_freq(void *p_ctx)
+{
+    demo_pr_sfra_ctx_t *p_ctx_sfra = (demo_pr_sfra_ctx_t *)p_ctx;
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_pr != NULL)
+    {
+        pr_reset(p_ctx_sfra->p_pr);
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_pr_out != NULL)
+    {
+        *(p_ctx_sfra->p_pr_out) = 0.0f;
+    }
 }
 
 /*
@@ -179,6 +296,35 @@ static void demo_init_banner(void)
                                  (unsigned)s_demo_init_count,
                                  s_demo_led_mask);
     }
+}
+
+static void demo_sfra_model_init(void)
+{
+    (void)pi_tustin_init(&s_demo_sfra_pi,
+                         DEMO_SFRA_PI_KP,
+                         DEMO_SFRA_PI_KI,
+                         DEMO_SFRA_SAMPLE_PERIOD_S,
+                         DEMO_SFRA_PI_UP_LMT,
+                         DEMO_SFRA_PI_DN_LMT,
+                         &s_demo_sfra_pi_ref,
+                         &s_demo_sfra_pi_act);
+    (void)sfra_set_freq_prepare_cb(&demo_sfra,
+                                   demo_sfra_prepare_freq,
+                                   &s_demo_sfra_ctx);
+
+    (void)pr_init(&s_demo_sfra_pr,
+                  DEMO_SFRA_PR_KP,
+                  DEMO_SFRA_PR_KR,
+                  DEMO_SFRA_PR_W0,
+                  DEMO_SFRA_PR_WC,
+                  DEMO_SFRA_SAMPLE_PERIOD_S,
+                  DEMO_SFRA_PR_UP_LMT,
+                  DEMO_SFRA_PR_DN_LMT,
+                  &s_demo_sfra_pr_ref,
+                  &s_demo_sfra_pr_act);
+    (void)sfra_set_freq_prepare_cb(&demo_pr_sfra,
+                                   demo_pr_sfra_prepare_freq,
+                                   &s_demo_pr_sfra_ctx);
 }
 
 static void demo_led_mask_changed(DEC_MY_PRINTF)
@@ -596,6 +742,44 @@ static void demo_scope_slow_task(void)
     s_demo_scope_slow_tick++;
 }
 
+static void demo_sfra_isr_10k_task(void)
+{
+    sfra_isr_pre_sample(&demo_sfra);
+
+    s_demo_sfra_pi_ref = demo_sfra_inject;
+    s_demo_sfra_pi_act = 0.0f;
+    (void)pi_tustin_cal(&s_demo_sfra_pi);
+
+    s_demo_sfra_pi_out = s_demo_sfra_pi.output.val;
+    demo_sfra_collect = s_demo_sfra_pi_out;
+
+    sfra_isr_post_sample(&demo_sfra);
+}
+
+static void demo_sfra_task_1ms(void)
+{
+    (void)sfra_task(&demo_sfra);
+}
+
+static void demo_pr_sfra_isr_10k_task(void)
+{
+    sfra_isr_pre_sample(&demo_pr_sfra);
+
+    s_demo_sfra_pr_ref = demo_pr_sfra_inject;
+    s_demo_sfra_pr_act = 0.0f;
+    (void)pr_cal(&s_demo_sfra_pr);
+
+    s_demo_sfra_pr_out = s_demo_sfra_pr.output.val;
+    demo_pr_sfra_collect = s_demo_sfra_pr_out;
+
+    sfra_isr_post_sample(&demo_pr_sfra);
+}
+
+static void demo_pr_sfra_task_1ms(void)
+{
+    (void)sfra_task(&demo_pr_sfra);
+}
+
 /*
  * SECTION_COMM / REG_COMM example 1:
  * Handle one decoded loopback frame and send an ACK.
@@ -677,6 +861,7 @@ static void demo_control_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
  */
 REG_INIT(-10, demo_init_defaults)
 REG_INIT(10, demo_init_banner)
+REG_INIT(5, demo_sfra_model_init)
 
 /*
  * REG_SHELL_VAR(_name, _var, _type, _max, _min, _func, _status)
@@ -756,6 +941,10 @@ REG_TASK_MS(1000, demo_trace_mark_1000ms_task)
 REG_TASK_MS(10, demo_scope_basic_task)
 REG_TASK(1, demo_scope_fast_task)
 REG_TASK_MS(1, demo_scope_slow_task)
+REG_TASK(1, demo_sfra_isr_10k_task)
+REG_TASK_MS(1, demo_sfra_task_1ms)
+REG_TASK(1, demo_pr_sfra_isr_10k_task)
+REG_TASK_MS(1, demo_pr_sfra_task_1ms)
 
 /*
  * INTERRUPT example step 3:
