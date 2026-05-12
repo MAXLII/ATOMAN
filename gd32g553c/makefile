@@ -111,11 +111,16 @@ C_SOURCES =  \
 ../gd32g553c/src/main.c \
 ../gd32g553c/src/systick.c \
 ../code/app/demo/demo.c \
+../code/lib/dft.c \
+../code/lib/pi_tustin.c \
+../code/lib/pr.c \
 ../code/lib/record_dict.c \
 ../code/dbg/perf.c \
 ../code/dbg/perf_service.c \
 ../code/dbg/scope.c \
 ../code/dbg/scope_service.c \
+../code/dbg/sfra.c \
+../code/dbg/sfra_service.c \
 ../code/dbg/trace.c \
 ../code/dbg/trace_service.c \
 ../code/dbg/shell.c \
