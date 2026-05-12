@@ -665,6 +665,21 @@
           <GroupName>lib</GroupName>
           <Files>
             <File>
+              <FileName>dft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\lib\dft.c</FilePath>
+            </File>
+            <File>
+              <FileName>pi_tustin.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\lib\pi_tustin.c</FilePath>
+            </File>
+            <File>
+              <FileName>pr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\lib\pr.c</FilePath>
+            </File>
+            <File>
               <FileName>record_dict.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\lib\record_dict.c</FilePath>
@@ -693,6 +708,16 @@
               <FileName>scope_service.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\code\dbg\scope_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>sfra.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\sfra.c</FilePath>
+            </File>
+            <File>
+              <FileName>sfra_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\dbg\sfra_service.c</FilePath>
             </File>
             <File>
               <FileName>trace.c</FileName>

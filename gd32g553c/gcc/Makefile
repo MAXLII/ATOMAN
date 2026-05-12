@@ -133,11 +133,16 @@ $(FW_DIR)/src/gd32g5x3_it.c \
 $(FW_DIR)/src/main.c \
 $(FW_DIR)/src/systick.c \
 $(CODEDIR)/app/demo/demo.c \
+$(CODEDIR)/lib/dft.c \
+$(CODEDIR)/lib/pi_tustin.c \
+$(CODEDIR)/lib/pr.c \
 $(CODEDIR)/lib/record_dict.c \
 $(CODEDIR)/dbg/perf.c \
 $(CODEDIR)/dbg/perf_service.c \
 $(CODEDIR)/dbg/scope.c \
 $(CODEDIR)/dbg/scope_service.c \
+$(CODEDIR)/dbg/sfra.c \
+$(CODEDIR)/dbg/sfra_service.c \
 $(CODEDIR)/dbg/trace.c \
 $(CODEDIR)/dbg/trace_service.c \
 $(CODEDIR)/dbg/shell.c \
