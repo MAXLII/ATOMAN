@@ -39,7 +39,7 @@ extern "C" {
 
 #include <stdint.h>
 
-#define SFRA_FREQ_TABLE_SIZE          (64U)
+#define SFRA_FREQ_TABLE_SIZE          (300U)
 #define SFRA_DEFAULT_SETTLE_CYCLES    (2.0f)
 #define SFRA_DEFAULT_COLLECT_CYCLES   (5.0f)
 #define SFRA_MAX_INJECT_DELAY_TICK    (2U)

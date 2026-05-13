@@ -28,8 +28,7 @@
  */
 
 #include "sfra.h"
-
-#include <math.h>
+#include "my_math.h"
 
 #define SFRA_TWO_PI       (6.28318530717958647692f)
 #define SFRA_RAD_TO_DEG   (57.2957795130823208768f)
@@ -109,7 +108,7 @@ static void sfra_sample_buffer_clear(sfra_t *sfra)
     sfra->isr.sample_overflow = 0U;
 }
 
-static void sfra_sample_buffer_push(sfra_t *sfra,
+static inline void sfra_sample_buffer_push(sfra_t *sfra,
                                     float inject_sample,
                                     float collect_sample)
 {
