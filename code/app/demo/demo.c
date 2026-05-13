@@ -10,6 +10,7 @@
 #include "section.h"
 #include "shell.h"
 #include "sfra.h"
+#include "sogi.h"
 #include "trace.h"
 #include "usart.h"
 
@@ -35,85 +36,249 @@
  * main() -> section_init() -> REG_INIT callbacks
  * main() loop -> run_task() -> registered tasks
  * USART RX -> section link task -> shell_run()/comm_run()
+ *
+ * File layout:
+ * - Configuration / Runtime State
+ * - Section Objects / SFRA Model Contexts
+ * - Local Helpers / Initialization
+ * - Shell, Perf, Task, Interrupt, Trace, Scope, SFRA, Comm handlers
+ * - Section Registration Table
+ *
+ * How to read this demo:
+ * This file is intentionally written like an executable manual.  The goal is
+ * not to hide the section framework behind compact abstractions, but to show
+ * where each type of framework object is declared, initialized, updated, and
+ * finally registered into its section.
+ *
+ * The demo contains several independent feature slices:
+ * - shell variables and shell commands
+ * - command-frame receive and reply examples
+ * - task scheduling and task-period measurement
+ * - software performance records
+ * - software scope capture
+ * - debug trace marks
+ * - software interrupt dispatch
+ * - SFRA examples for PI, PR, SOGI, PI+L open loop, and PI+L closed loop
+ *
+ * Most examples keep their state in file-scope static variables because this
+ * is a board-level integration demo.  Real product modules should usually move
+ * their state into their own module files and expose only the required public
+ * interface.
  */
 
-EXT_LINK(USART0_LINK);
+EXT_LINK(USART0_LINK); /* Imports the USART0 link object registered by the board/interface layer. */
 
-#define DEMO_MATH_LOOP_COUNT (960u)
+/* -------------------------------------------------------------------------- */
+/* Configuration                                                              */
+/* -------------------------------------------------------------------------- */
 
-#define DEMO_SFRA_ISR_FREQ_HZ       (10000.0f)
-#define DEMO_SFRA_SAMPLE_PERIOD_S   (1.0f / DEMO_SFRA_ISR_FREQ_HZ)
-#define DEMO_SFRA_INJECT_AMPLITUDE  (1.0f)
-#define DEMO_SFRA_FREQ_START_HZ     (10.0f)
-#define DEMO_SFRA_FREQ_END_HZ       (5000.0f)
-#define DEMO_SFRA_PI_KP             (1.0f)
-#define DEMO_SFRA_PI_KI             (400.0f)
-#define DEMO_SFRA_PI_UP_LMT         (100.0f)
-#define DEMO_SFRA_PI_DN_LMT         (-100.0f)
-#define DEMO_SFRA_PR_W0             (2.0f * 3.14159265358979323846f * 50.0f)
-#define DEMO_SFRA_PR_WC             (2.0f * 3.14159265358979323846f * 1.0f)
-#define DEMO_SFRA_PR_KP             (1.0f)
-#define DEMO_SFRA_PR_KR             (20.0f)
-#define DEMO_SFRA_PR_UP_LMT         (100.0f)
-#define DEMO_SFRA_PR_DN_LMT         (-100.0f)
+/*
+ * This block collects the compile-time parameters used by the demo.
+ *
+ * Keep constants here when they describe the demonstration scenario itself:
+ * loop count, SFRA sampling frequency, default sweep range, controller gains,
+ * and synthetic plant parameters.
+ *
+ * In an actual product project, constants like current-loop bandwidth,
+ * inductance, PWM frequency, and controller limits normally belong to the
+ * power-stage or control-loop module rather than to a demo file.
+ */
+#define DEMO_MATH_LOOP_COUNT (960u) /* Number of inner iterations used by Flash/RAM math workload demos. */
 
-static uint8_t s_demo_led_mask = 0x01u;
-static uint32_t s_demo_counter = 0u;
-static int32_t s_demo_last_cmd = 0;
-static float s_demo_gain = 1.0f;
-static uint8_t s_demo_init_count = 0u;
-static uint8_t s_demo_boot_ready = 0u;
-static uint32_t s_demo_perf_spin = 2000u;
-static uint32_t s_demo_last_tick = 0u;
-static uint32_t s_demo_perf_acc = 0u;
-static volatile uint32_t s_demo_flash_math_result = 0u;
-static volatile uint32_t s_demo_ram_math_result = 0u;
-static uint32_t s_demo_period_counter = 0u;
-static uint32_t s_demo_scope_basic_tick = 0u;
-static uint32_t s_demo_scope_fast_tick = 0u;
-static uint32_t s_demo_scope_slow_tick = 0u;
-static uint32_t s_demo_aux_counter = 0u;
-static uint32_t s_demo_interrupt_counter = 0u;
-static float s_demo_sfra_pi_ref = 0.0f;
-static float s_demo_sfra_pi_act = 0.0f;
-static float s_demo_sfra_pi_out = 0.0f;
-static float s_demo_sfra_pr_ref = 0.0f;
-static float s_demo_sfra_pr_act = 0.0f;
-static float s_demo_sfra_pr_out = 0.0f;
-extern section_perf_record_t section_perf_record_demo_task;
-extern volatile uint32_t sys_tick_100us;
+/*
+ * SFRA sampling settings.
+ *
+ * REG_TASK(1, ...) in this project runs once per 100 us scheduler tick, so the
+ * corresponding SFRA ISR-model task is treated as a 10 kHz sampling path.
+ * The 1 ms SFRA task drains the sample FIFO and calculates magnitude/phase in
+ * the background.
+ */
+#define DEMO_SFRA_ISR_FREQ_HZ      (10000.0f)                       /* SFRA fast-path sampling frequency, in Hz. */
+#define DEMO_SFRA_SAMPLE_PERIOD_S  (1.0f / DEMO_SFRA_ISR_FREQ_HZ)   /* SFRA fast-path sample period, in seconds. */
+#define DEMO_SFRA_INJECT_AMPLITUDE (1.0f)                           /* Default injected sine amplitude for every demo loop. */
+#define DEMO_SFRA_FREQ_START_HZ    (10.0f)                          /* Default first sweep frequency shown in the SFRA UI. */
+#define DEMO_SFRA_FREQ_END_HZ      (5000.0f)                        /* Default last sweep frequency shown in the SFRA UI. */
+
+/*
+ * Plain PI demonstration parameters.
+ *
+ * demo_sfra measures only the PI controller body.  It is useful for checking
+ * whether the SFRA service and plotting path are alive before connecting a
+ * plant model.
+ */
+#define DEMO_SFRA_PI_KP     (1.0f)    /* Proportional gain for the plain PI-only scan. */
+#define DEMO_SFRA_PI_KI     (400.0f)  /* Integral gain for the plain PI-only scan. */
+#define DEMO_SFRA_PI_UP_LMT (100.0f)  /* Upper output saturation for the plain PI controller. */
+#define DEMO_SFRA_PI_DN_LMT (-100.0f) /* Lower output saturation for the plain PI controller. */
+
+/*
+ * PI + inductor demonstration parameters.
+ *
+ * The PI gains are designed from an ideal current-loop plant 1/(sL):
+ *   kp = sin(PM) * wc * L
+ *   ki = kp * wc / tan(PM)
+ *
+ * These values are used by both:
+ * - demo_pi_l_sfra: open-loop PI * 1/(sL) steady-state response
+ * - demo_pi_l_closed_sfra: closed-loop current response simulation
+ */
+#define DEMO_SFRA_PI_L_INDUCTANCE_H (5.0e-6f)                                                    /* Simulated current-loop inductor value, in henry. */
+#define DEMO_SFRA_PI_L_BW_HZ        (800.0f)                                                      /* Target current-loop bandwidth used for PI design. */
+#define DEMO_SFRA_PI_L_PM_RAD       (3.14159265358979323846f / 3.0f)                              /* Target phase margin, 60 degrees expressed in radians. */
+#define DEMO_SFRA_PI_L_WC_RAD_S     (2.0f * 3.14159265358979323846f * DEMO_SFRA_PI_L_BW_HZ)       /* Target crossover angular frequency. */
+#define DEMO_SFRA_PI_L_KP           (sinf(DEMO_SFRA_PI_L_PM_RAD) * DEMO_SFRA_PI_L_WC_RAD_S * DEMO_SFRA_PI_L_INDUCTANCE_H) /* Designed PI proportional gain for PI+L demos. */
+#define DEMO_SFRA_PI_L_KI           (DEMO_SFRA_PI_L_KP * DEMO_SFRA_PI_L_WC_RAD_S / tanf(DEMO_SFRA_PI_L_PM_RAD))            /* Designed PI integral gain for PI+L demos. */
+#define DEMO_SFRA_PI_L_UP_LMT       (100.0f)                                                      /* Upper voltage command limit for PI+L demos. */
+#define DEMO_SFRA_PI_L_DN_LMT       (-100.0f)                                                     /* Lower voltage command limit for PI+L demos. */
+
+/*
+ * PR and SOGI demonstration parameters.
+ *
+ * These examples are present so that SFRA can scan reusable algorithm modules,
+ * not only PI loops.  The demo keeps them small and fixed so that the focus
+ * stays on the framework usage.
+ */
+#define DEMO_SFRA_PR_W0     (2.0f * 3.14159265358979323846f * 50.0f) /* PR resonant angular frequency, 50 Hz. */
+#define DEMO_SFRA_PR_WC     (2.0f * 3.14159265358979323846f * 1.0f)  /* PR resonant bandwidth angular frequency. */
+#define DEMO_SFRA_PR_KP     (1.0f)                                   /* PR proportional gain. */
+#define DEMO_SFRA_PR_KR     (20.0f)                                  /* PR resonant gain. */
+#define DEMO_SFRA_PR_UP_LMT (100.0f)                                 /* Upper PR output saturation. */
+#define DEMO_SFRA_PR_DN_LMT (-100.0f)                                /* Lower PR output saturation. */
+#define DEMO_SFRA_SOGI_W    (2.0f * 3.14159265358979323846f * 50.0f) /* SOGI nominal angular frequency, 50 Hz. */
+#define DEMO_SFRA_SOGI_K    (1.41421356237f)                         /* SOGI damping/coefficient setting, sqrt(2). */
+
+/* -------------------------------------------------------------------------- */
+/* Runtime State                                                              */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * General demo state.
+ *
+ * These variables back shell commands, command-frame examples, periodic tasks,
+ * and simple board-visible behavior such as relay/LED state.  They are kept
+ * file-local so the demo remains self-contained.
+ */
+static uint8_t s_demo_led_mask = 0x01u;              /* Bit mask mirrored to the demo relay/GPIO outputs. */
+static uint32_t s_demo_counter = 0u;                 /* 10 ms heartbeat counter exposed through shell and COMM examples. */
+static int32_t s_demo_last_cmd = 0;                  /* Last accepted demo command encoded as cmd_set << 8 | cmd_word. */
+static float s_demo_gain = 1.0f;                     /* Editable shell float used as a simple variable-registration example. */
+static uint8_t s_demo_init_count = 0u;               /* Number of demo init callbacks that have completed. */
+static uint8_t s_demo_boot_ready = 0u;               /* Flag set by the late init banner to show boot sequencing. */
+static uint32_t s_demo_perf_spin = 2000u;            /* Loop count used by DEMO_PERF manual timing command. */
+static uint32_t s_demo_last_tick = 0u;               /* Last raw performance-counter value sampled by demo tasks/commands. */
+static uint32_t s_demo_perf_acc = 0u;                /* Accumulator result from the manual performance workload. */
+static volatile uint32_t s_demo_flash_math_result = 0u; /* Flash workload result kept volatile so the compiler keeps the work. */
+static volatile uint32_t s_demo_ram_math_result = 0u;   /* RAM workload result kept volatile so the compiler keeps the work. */
+static uint32_t s_demo_period_counter = 0u;          /* Number of times the 20 ms period-measurement task has run. */
+static uint32_t s_demo_scope_basic_tick = 0u;        /* Sample index for the 10 ms two-channel scope demo. */
+static uint32_t s_demo_scope_fast_tick = 0u;         /* Sample index for the 100 us multi-channel scope demo. */
+static uint32_t s_demo_scope_slow_tick = 0u;         /* Sample index for the 1 ms three-channel scope demo. */
+static uint32_t s_demo_aux_counter = 0u;             /* Shared counter touched by perf-load tasks to create visible activity. */
+static uint32_t s_demo_interrupt_counter = 0u;       /* Counter incremented by registered interrupt callbacks. */
+
+/*
+ * SFRA signal state.
+ *
+ * Each REG_SFRA object creates two global float ports:
+ *   <name>_inject
+ *   <name>_collect
+ *
+ * The static variables below are the local model/controller signals that feed
+ * those ports.  Keeping them explicit is useful during debugging: they can be
+ * watched in a debugger or temporarily connected to Scope/Trace without
+ * unpacking a large context object.
+ */
+static float s_demo_sfra_pi_ref = 0.0f;              /* Plain PI reference input driven by demo_sfra_inject. */
+static float s_demo_sfra_pi_act = 0.0f;              /* Plain PI feedback input, held at zero for open-loop controller scan. */
+static float s_demo_sfra_pi_out = 0.0f;              /* Plain PI output copied into demo_sfra_collect. */
+static float s_demo_sfra_pi_l_ref = 0.0f;            /* Open-loop PI+L reference signal used for visibility/debugging. */
+static float s_demo_sfra_pi_l_act = 0.0f;            /* Open-loop PI+L feedback signal, held at zero. */
+static float s_demo_sfra_pi_l_voltage = 0.0f;        /* Open-loop PI voltage command generated from analytic PI response. */
+static float s_demo_sfra_pi_l_closed_ref = 0.0f;     /* Closed-loop PI+L reference driven by demo_pi_l_closed_sfra_inject. */
+static float s_demo_sfra_pi_l_closed_act = 0.0f;     /* Closed-loop PI+L feedback current sampled from the plant model. */
+static float s_demo_sfra_pi_l_closed_voltage = 0.0f; /* Closed-loop PI voltage command applied to the delayed inductor model. */
+static float s_demo_sfra_pr_ref = 0.0f;              /* PR reference input driven by demo_pr_sfra_inject. */
+static float s_demo_sfra_pr_act = 0.0f;              /* PR feedback input, held at zero for controller-only scan. */
+static float s_demo_sfra_pr_out = 0.0f;              /* PR output copied into demo_pr_sfra_collect. */
+static float s_demo_sfra_sogi_d_in = 0.0f;           /* SOGI-D scan input driven by demo_sogi_d_sfra_inject. */
+static float s_demo_sfra_sogi_d_out = 0.0f;          /* SOGI D-path output copied into demo_sogi_d_sfra_collect. */
+static float s_demo_sfra_sogi_q_in = 0.0f;           /* SOGI-Q scan input driven by demo_sogi_q_sfra_inject. */
+static float s_demo_sfra_sogi_q_out = 0.0f;          /* SOGI Q-path output copied into demo_sogi_q_sfra_collect. */
+
+/*
+ * Symbols owned by other modules.
+ *
+ * section_perf_record_demo_task is generated by REG_TASK_MS when task
+ * performance recording is enabled.  sys_tick_100us is the time base used by
+ * the trace demo.
+ */
+extern section_perf_record_t section_perf_record_demo_task; /* Auto-generated perf record for demo_task when task perf is enabled. */
+extern volatile uint32_t sys_tick_100us;                    /* System 100 us tick used as the debug trace time base. */
+
+/*
+ * Last received or transmitted loopback frame.
+ *
+ * The loopback command handler copies inbound payload into this object and
+ * sends it back as an ACK payload.  The shell send command also reuses it as a
+ * convenient frame template.
+ */
 static demo_comm_frame_t s_demo_last_frame = {
-    .counter = 0u,
-    .led_mask = 0x01u,
-    .temperature_x10 = 250,
-    .reserved = 0u,
+    .counter = 0u,          /* Last frame counter value accepted or transmitted by loopback demo. */
+    .led_mask = 0x01u,      /* Last frame output mask used by shell send and COMM loopback. */
+    .temperature_x10 = 250, /* Example temperature payload, stored in 0.1 degree units. */
+    .reserved = 0u,         /* Compatibility filler for the demo frame layout. */
 };
+
+/* -------------------------------------------------------------------------- */
+/* Section Objects                                                            */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Section objects are declared near the top so the file reads like a map of
+ * all demo resources.
+ *
+ * The REG_* macros do two things:
+ * - allocate or bind the object used at runtime
+ * - place a pointer/function into a linker section
+ *
+ * At boot, section_init() walks the linker sections and calls the registered
+ * init functions.  During runtime, run_task(), shell_run(), comm_run(), and
+ * other services use their own sections to discover registered objects.
+ */
 
 /*
  * PERF example step 1:
  * Create named records for code sections that are not automatically registered
  * by REG_TASK/REG_TASK_MS.
  */
-REG_PERF_RECORD(demo_manual_perf);
-REG_PERF_RECORD(demo_task_period_perf);
-REG_PERF_RECORD(demo_code_section_perf);
-REG_PERF_RECORD(demo_flash_math_perf);
-REG_PERF_RECORD(demo_ram_math_perf);
+REG_PERF_RECORD(demo_manual_perf);      /* Perf record for DEMO_PERF command's manual workload. */
+REG_PERF_RECORD(demo_task_period_perf); /* Perf record for entry-to-entry timing of demo_task_period_20ms(). */
+REG_PERF_RECORD(demo_code_section_perf); /* Perf record for a normal code section inside a task. */
+REG_PERF_RECORD(demo_flash_math_perf);  /* Perf record for the flash-resident math workload. */
+REG_PERF_RECORD(demo_ram_math_perf);    /* Perf record for the RAM-resident math workload. */
 
+/*
+ * Scope buffer sizing is split by target.
+ *
+ * HC32 uses smaller buffers here, while the default configuration keeps larger
+ * buffers for richer desktop visualization.  These are demonstration buffers;
+ * product code should size scope buffers from RAM budget and required capture
+ * depth.
+ */
 #if defined(IS_HC32)
-#define DEMO_SCOPE_BASIC_BUF_SIZE 64
-#define DEMO_SCOPE_BASIC_TRIG_POST_CNT 32
-#define DEMO_SCOPE_FAST_BUF_SIZE 64
-#define DEMO_SCOPE_FAST_TRIG_POST_CNT 32
-#define DEMO_SCOPE_SLOW_BUF_SIZE 64
-#define DEMO_SCOPE_SLOW_TRIG_POST_CNT 32
+#define DEMO_SCOPE_BASIC_BUF_SIZE      64 /* Basic scope sample buffer depth for smaller HC32 RAM targets. */
+#define DEMO_SCOPE_BASIC_TRIG_POST_CNT 32 /* Basic scope samples retained after trigger on HC32 targets. */
+#define DEMO_SCOPE_FAST_BUF_SIZE       64 /* Fast scope sample buffer depth for smaller HC32 RAM targets. */
+#define DEMO_SCOPE_FAST_TRIG_POST_CNT  32 /* Fast scope samples retained after trigger on HC32 targets. */
+#define DEMO_SCOPE_SLOW_BUF_SIZE       64 /* Slow scope sample buffer depth for smaller HC32 RAM targets. */
+#define DEMO_SCOPE_SLOW_TRIG_POST_CNT  32 /* Slow scope samples retained after trigger on HC32 targets. */
 #else
-#define DEMO_SCOPE_BASIC_BUF_SIZE 100
-#define DEMO_SCOPE_BASIC_TRIG_POST_CNT 50
-#define DEMO_SCOPE_FAST_BUF_SIZE 500
-#define DEMO_SCOPE_FAST_TRIG_POST_CNT 250
-#define DEMO_SCOPE_SLOW_BUF_SIZE 200
-#define DEMO_SCOPE_SLOW_TRIG_POST_CNT 100
+#define DEMO_SCOPE_BASIC_BUF_SIZE      100 /* Basic scope sample buffer depth for default demo builds. */
+#define DEMO_SCOPE_BASIC_TRIG_POST_CNT 50  /* Basic scope samples retained after trigger in default builds. */
+#define DEMO_SCOPE_FAST_BUF_SIZE       500 /* Fast scope sample buffer depth for default demo builds. */
+#define DEMO_SCOPE_FAST_TRIG_POST_CNT  250 /* Fast scope samples retained after trigger in default builds. */
+#define DEMO_SCOPE_SLOW_BUF_SIZE       200 /* Slow scope sample buffer depth for default demo builds. */
+#define DEMO_SCOPE_SLOW_TRIG_POST_CNT  100 /* Slow scope samples retained after trigger in default builds. */
 #endif
 
 /*
@@ -126,70 +291,259 @@ REG_PERF_RECORD(demo_ram_math_perf);
  * - demo_scope_basic_task updates those variables and calls SCOPE_RUN()
  */
 REG_SCOPE_EX(demo_scope_basic, DEMO_SCOPE_BASIC_BUF_SIZE, DEMO_SCOPE_BASIC_TRIG_POST_CNT, 10000u,
-             scope_basic_ramp,
-             scope_basic_toggle)
+             scope_basic_ramp,   /* Generated float: slow ramp sampled by the basic scope. */
+             scope_basic_toggle) /* Generated float: binary toggle sampled by the basic scope. */
 
 /* 100 us scope example: 500 samples and 10 signal channels. */
 REG_SCOPE_EX(demo_scope_fast, DEMO_SCOPE_FAST_BUF_SIZE, DEMO_SCOPE_FAST_TRIG_POST_CNT, 100u,
-             scope_sin,
-             scope_cos,
-             scope_sin2,
-             scope_cos2,
-             scope_ramp,
-             scope_triangle,
-             scope_square,
-             scope_mix,
-             scope_saw,
-             scope_index)
+             scope_sin,      /* Generated float: main sine waveform. */
+             scope_cos,      /* Generated float: main cosine waveform. */
+             scope_sin2,     /* Generated float: faster secondary sine waveform. */
+             scope_cos2,     /* Generated float: faster secondary cosine waveform. */
+             scope_ramp,     /* Generated float: normalized ramp waveform. */
+             scope_triangle, /* Generated float: normalized triangle waveform. */
+             scope_square,   /* Generated float: sign waveform derived from scope_sin. */
+             scope_mix,      /* Generated float: weighted mixture of several channels. */
+             scope_saw,      /* Generated float: sawtooth waveform. */
+             scope_index)    /* Generated float: monotonically wrapping sample index. */
 
 /* 1 ms scope example: 200 samples and 3 signal channels. */
 REG_SCOPE_EX(demo_scope_slow, DEMO_SCOPE_SLOW_BUF_SIZE, DEMO_SCOPE_SLOW_TRIG_POST_CNT, 1000u,
-             scope_slow_sin,
-             scope_slow_cos,
-             scope_slow_mix)
+             scope_slow_sin, /* Generated float: slow sine waveform. */
+             scope_slow_cos, /* Generated float: slow cosine waveform. */
+             scope_slow_mix) /* Generated float: slow mixed waveform. */
 
+/*
+ * SFRA delay_tick aligns the DFT denominator with the collected response:
+ * - 0U: collect[n] is the response to inject[n].
+ * - 1U: collect[n] is the response to inject[n - 1], such as PWM/ADC or z1 plant paths.
+ *
+ * Every REG_SFRA below creates:
+ * - an sfra_t object named by the first argument
+ * - a float injection port named <name>_inject
+ * - a float collection port named <name>_collect
+ * - a section entry so sfra_service can list and control it from the host UI
+ */
 REG_SFRA(demo_sfra,
-         0U,
-         DEMO_SFRA_SAMPLE_PERIOD_S,
-         DEMO_SFRA_INJECT_AMPLITUDE,
-         DEMO_SFRA_FREQ_START_HZ,
-         DEMO_SFRA_FREQ_END_HZ)
+         0U,                         /* delay_tick: PI-only collect[n] responds to inject[n]. */
+         DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
+         DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
+         DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
+         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+
+REG_SFRA(demo_pi_l_sfra,
+         1U,                         /* delay_tick: open-loop PI+L collect is generated one sample behind inject. */
+         DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
+         DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
+         DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
+         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+
+REG_SFRA(demo_pi_l_closed_sfra,
+         1U,                         /* delay_tick: closed-loop current plant has one-tick command/sample delay. */
+         DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
+         DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
+         DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
+         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
 
 REG_SFRA(demo_pr_sfra,
-         0U,
-         DEMO_SFRA_SAMPLE_PERIOD_S,
-         DEMO_SFRA_INJECT_AMPLITUDE,
-         DEMO_SFRA_FREQ_START_HZ,
-         DEMO_SFRA_FREQ_END_HZ)
+         0U,                         /* delay_tick: PR-only collect[n] responds to inject[n]. */
+         DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
+         DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
+         DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
+         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
 
+REG_SFRA(demo_sogi_d_sfra,
+         0U,                         /* delay_tick: SOGI D output is collected in the same sample slot. */
+         DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
+         DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
+         DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
+         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+
+REG_SFRA(demo_sogi_q_sfra,
+         0U,                         /* delay_tick: SOGI Q output is collected in the same sample slot. */
+         DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
+         DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
+         DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
+         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+
+/* -------------------------------------------------------------------------- */
+/* SFRA Model Contexts                                                        */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Context objects bind reusable algorithms to one SFRA loop.
+ *
+ * The SFRA core itself only knows about two float ports: inject and collect.
+ * The demo context records which controller instance, plant state, and local
+ * signal variables belong to a particular loop.  Frequency-prepare callbacks
+ * receive these contexts so each sweep point can start from a clean state.
+ */
+
+/*
+ * Plain PI context:
+ * inject -> PI reference, feedback forced to zero, collect <- PI output.
+ */
 typedef struct
 {
-    pi_tustin_t *p_pi;
-    float *p_sfra_collect;
-    float *p_pi_out;
+    pi_tustin_t *p_pi;      /* PI instance reset and executed by this SFRA loop. */
+    float *p_sfra_collect;  /* Address of the REG_SFRA collect port to clear per frequency. */
+    float *p_pi_out;        /* Visible PI output variable to clear per frequency. */
 } demo_sfra_ctx_t;
 
-static pi_tustin_t s_demo_sfra_pi;
+static pi_tustin_t s_demo_sfra_pi; /* Plain PI controller object measured by demo_sfra. */
 static demo_sfra_ctx_t s_demo_sfra_ctx = {
-    .p_pi = &s_demo_sfra_pi,
-    .p_sfra_collect = &demo_sfra_collect,
-    .p_pi_out = &s_demo_sfra_pi_out,
+    .p_pi = &s_demo_sfra_pi,          /* Controller instance used by the plain PI scan. */
+    .p_sfra_collect = &demo_sfra_collect, /* SFRA output port generated by REG_SFRA(demo_sfra). */
+    .p_pi_out = &s_demo_sfra_pi_out,  /* Demo-visible PI output signal. */
 };
+
+/*
+ * Inductor model state.
+ *
+ * current_a is the simulated plant output.
+ * voltage_cmd_z1 is the previous tick's voltage command.  It models the common
+ * one-sample delay between controller calculation and plant response.
+ */
+typedef struct
+{
+    float current_a;      /* Simulated inductor current, in ampere. */
+    float voltage_cmd_z1; /* Previous-sample voltage command used to model one-tick delay. */
+} demo_sfra_inductor_t;
+
+/* Tiny complex type used only by the analytic open-loop PI+L example. */
+typedef struct
+{
+    float real; /* Real component of a small local complex value. */
+    float imag; /* Imaginary component of a small local complex value. */
+} demo_sfra_complex_t;
+
+/*
+ * PI + inductor context.
+ *
+ * The same context type is used by open-loop and closed-loop PI+L examples:
+ * - open-loop uses analytic steady-state response for collect
+ * - closed-loop uses the time-domain inductor state and PI feedback
+ */
+typedef struct
+{
+    pi_tustin_t *p_pi;                 /* PI controller object bound to this PI+L scan. */
+    demo_sfra_inductor_t *p_inductor;  /* Simulated inductor state bound to this scan. */
+    float *p_sfra_collect;             /* Address of the REG_SFRA collect port. */
+    float *p_voltage;                  /* Visible PI voltage command signal. */
+    float *p_ref;                      /* Visible PI reference signal. */
+    float *p_act;                      /* Visible PI feedback/current signal. */
+} demo_pi_l_sfra_ctx_t;
+
+/*
+ * Open-loop PI+L SFRA state.
+ *
+ * This loop measures the intended open-loop transfer function.  The output is
+ * generated as a steady-state response so that the ideal integrators do not
+ * inject large zero-state transient terms into the finite DFT window.
+ */
+static pi_tustin_t s_demo_sfra_pi_l; /* PI controller object used by the open-loop PI+L scan. */
+static demo_sfra_inductor_t s_demo_sfra_pi_l_inductor = {
+    .current_a = 0.0f,      /* Open-loop model current starts at zero before scanning. */
+    .voltage_cmd_z1 = 0.0f, /* Open-loop delayed command starts at zero before scanning. */
+};
+static demo_pi_l_sfra_ctx_t s_demo_pi_l_sfra_ctx = {
+    .p_pi = &s_demo_sfra_pi_l,                 /* Open-loop PI controller. */
+    .p_inductor = &s_demo_sfra_pi_l_inductor,  /* Open-loop plant state. */
+    .p_sfra_collect = &demo_pi_l_sfra_collect, /* Open-loop SFRA collect port. */
+    .p_voltage = &s_demo_sfra_pi_l_voltage,    /* Open-loop voltage command monitor. */
+    .p_ref = &s_demo_sfra_pi_l_ref,            /* Open-loop reference monitor. */
+    .p_act = &s_demo_sfra_pi_l_act,            /* Open-loop feedback monitor. */
+};
+
+/*
+ * Closed-loop PI+L SFRA state.
+ *
+ * This loop simulates a practical current loop: reference is the SFRA injection
+ * signal, feedback is the simulated current, and the PI voltage command reaches
+ * the inductor on the next 10 kHz tick.
+ */
+static pi_tustin_t s_demo_sfra_pi_l_closed; /* PI controller object used by the closed-loop PI+L scan. */
+static demo_sfra_inductor_t s_demo_sfra_pi_l_closed_inductor = {
+    .current_a = 0.0f,      /* Closed-loop model current starts at zero before scanning. */
+    .voltage_cmd_z1 = 0.0f, /* Closed-loop delayed command starts at zero before scanning. */
+};
+static demo_pi_l_sfra_ctx_t s_demo_pi_l_closed_sfra_ctx = {
+    .p_pi = &s_demo_sfra_pi_l_closed,                 /* Closed-loop PI controller. */
+    .p_inductor = &s_demo_sfra_pi_l_closed_inductor,  /* Closed-loop plant state. */
+    .p_sfra_collect = &demo_pi_l_closed_sfra_collect, /* Closed-loop SFRA collect port. */
+    .p_voltage = &s_demo_sfra_pi_l_closed_voltage,    /* Closed-loop voltage command monitor. */
+    .p_ref = &s_demo_sfra_pi_l_closed_ref,            /* Closed-loop reference monitor. */
+    .p_act = &s_demo_sfra_pi_l_closed_act,            /* Closed-loop feedback/current monitor. */
+};
+
+/* PR context: inject -> PR reference, feedback forced to zero, collect <- PR output. */
+typedef struct
+{
+    pr_t *p_pr;          /* PR controller instance reset and executed by this scan. */
+    float *p_sfra_collect; /* Address of the REG_SFRA collect port for the PR scan. */
+    float *p_pr_out;     /* Visible PR output variable to clear per frequency. */
+} demo_pr_sfra_ctx_t;
+
+static pr_t s_demo_sfra_pr; /* PR controller object measured by demo_pr_sfra. */
+static demo_pr_sfra_ctx_t s_demo_pr_sfra_ctx = {
+    .p_pr = &s_demo_sfra_pr,             /* Controller instance used by the PR scan. */
+    .p_sfra_collect = &demo_pr_sfra_collect, /* SFRA output port generated by REG_SFRA(demo_pr_sfra). */
+    .p_pr_out = &s_demo_sfra_pr_out,     /* Demo-visible PR output signal. */
+};
+
+/*
+ * SOGI context.
+ *
+ * The same ISR helper scans either the D path or Q path by selecting which
+ * SOGI output array is copied into the SFRA collect port.
+ */
+typedef enum
+{
+    DEMO_SOGI_OUTPUT_D = 0, /* Select the in-phase SOGI output osg_u[0]. */
+    DEMO_SOGI_OUTPUT_Q = 1, /* Select the quadrature SOGI output osg_qu[0]. */
+} demo_sogi_output_e;
 
 typedef struct
 {
-    pr_t *p_pr;
-    float *p_sfra_collect;
-    float *p_pr_out;
-} demo_pr_sfra_ctx_t;
+    sogi_t *p_sogi;                 /* SOGI filter instance bound to this scan. */
+    demo_sogi_output_e output_sel;  /* Which SOGI output is routed to SFRA collect. */
+    float *p_input;                 /* Visible input signal driven by the SFRA inject port. */
+    float *p_sfra_collect;          /* Address of the REG_SFRA collect port. */
+    float *p_output;                /* Visible output signal for debugger/scope inspection. */
+} demo_sogi_sfra_ctx_t;
 
-static pr_t s_demo_sfra_pr;
-static demo_pr_sfra_ctx_t s_demo_pr_sfra_ctx = {
-    .p_pr = &s_demo_sfra_pr,
-    .p_sfra_collect = &demo_pr_sfra_collect,
-    .p_pr_out = &s_demo_sfra_pr_out,
+static sogi_t s_demo_sogi_d; /* SOGI instance used when scanning the D/in-phase output. */
+static sogi_t s_demo_sogi_q; /* SOGI instance used when scanning the Q/quadrature output. */
+static demo_sogi_sfra_ctx_t s_demo_sogi_d_sfra_ctx = {
+    .p_sogi = &s_demo_sogi_d,                    /* SOGI object for the D-path scan. */
+    .output_sel = DEMO_SOGI_OUTPUT_D,            /* Route osg_u[0] to collect. */
+    .p_input = &s_demo_sfra_sogi_d_in,           /* D-path input monitor. */
+    .p_sfra_collect = &demo_sogi_d_sfra_collect, /* D-path SFRA collect port. */
+    .p_output = &s_demo_sfra_sogi_d_out,         /* D-path output monitor. */
+};
+static demo_sogi_sfra_ctx_t s_demo_sogi_q_sfra_ctx = {
+    .p_sogi = &s_demo_sogi_q,                    /* SOGI object for the Q-path scan. */
+    .output_sel = DEMO_SOGI_OUTPUT_Q,            /* Route osg_qu[0] to collect. */
+    .p_input = &s_demo_sfra_sogi_q_in,           /* Q-path input monitor. */
+    .p_sfra_collect = &demo_sogi_q_sfra_collect, /* Q-path SFRA collect port. */
+    .p_output = &s_demo_sfra_sogi_q_out,         /* Q-path output monitor. */
 };
 
+/* -------------------------------------------------------------------------- */
+/* Local Helpers                                                              */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Apply the shell/comm controlled bit mask to board output pins.
+ *
+ * This helper deliberately keeps the mapping visible:
+ * bit0 -> main relay
+ * bit1 -> soft-start relay
+ * bit2 -> AC input relay
+ * bit3 -> AC output relay
+ *
+ * The demo uses this as a simple observable output for shell and comm tests.
+ */
 static void demo_apply_led_mask(uint8_t led_mask)
 {
     gpio_set_main_rly_sta((uint8_t)((led_mask >> 0) & 0x01u));
@@ -198,9 +552,28 @@ static void demo_apply_led_mask(uint8_t led_mask)
     gpio_set_ac_out_rly_sta((uint8_t)((led_mask >> 3) & 0x01u));
 }
 
+/* -------------------------------------------------------------------------- */
+/* SFRA Frequency Prepare And Model Helpers                                   */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Frequency-prepare callbacks run once before each sweep point.
+ *
+ * They are not called from the 10 kHz ISR path; they are called by sfra_task()
+ * when the SFRA state machine enters SFRA_STATE_PREPARE_FREQ.  This makes them
+ * a safe place to clear algorithm state, plant state, and output variables
+ * without adding extra work to every sample.
+ */
+
+/*
+ * Reset the plain PI scan before each frequency point.
+ *
+ * This guarantees every point starts from the same controller state and avoids
+ * history leaking from the previous frequency into the next one.
+ */
 static void demo_sfra_prepare_freq(void *p_ctx)
 {
-    demo_sfra_ctx_t *p_ctx_sfra = (demo_sfra_ctx_t *)p_ctx;
+    demo_sfra_ctx_t *p_ctx_sfra = (demo_sfra_ctx_t *)p_ctx; /* Typed PI-only context passed from sfra_set_freq_prepare_cb(). */
 
     if (p_ctx_sfra == NULL)
     {
@@ -223,9 +596,170 @@ static void demo_sfra_prepare_freq(void *p_ctx)
     }
 }
 
+/*
+ * Reset PI+L open-loop or closed-loop state before each frequency point.
+ *
+ * The same callback is used for both loops because both need the same reset:
+ * - PI internal history is cleared
+ * - inductor current is set to zero
+ * - previous voltage command is set to zero
+ * - SFRA collect and visible model signals are cleared
+ */
+static void demo_pi_l_sfra_prepare_freq(void *p_ctx)
+{
+    demo_pi_l_sfra_ctx_t *p_ctx_sfra = (demo_pi_l_sfra_ctx_t *)p_ctx; /* Typed PI+L context for open-loop or closed-loop reset. */
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_pi != NULL)
+    {
+        pi_tustin_reset(p_ctx_sfra->p_pi);
+    }
+
+    if (p_ctx_sfra->p_inductor != NULL)
+    {
+        p_ctx_sfra->p_inductor->current_a = 0.0f;
+        p_ctx_sfra->p_inductor->voltage_cmd_z1 = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_voltage != NULL)
+    {
+        *(p_ctx_sfra->p_voltage) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_ref != NULL)
+    {
+        *(p_ctx_sfra->p_ref) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_act != NULL)
+    {
+        *(p_ctx_sfra->p_act) = 0.0f;
+    }
+}
+
+/*
+ * One-tick delayed inductor update.
+ *
+ * This mirrors the style used in the standalone fft/main.c reference:
+ * current[n+1] = current[n] + voltage_cmd_z1 / L * Ts
+ * voltage_cmd_z1 = voltage_cmd[n]
+ *
+ * The current tick's PI voltage command is stored and affects the inductor on
+ * the next tick.  This is the reason closed-loop PI+L SFRA uses delay_tick=1.
+ */
+static void demo_pi_l_sfra_inductor_step(demo_sfra_inductor_t *p_inductor,
+                                         float voltage_cmd)
+{
+    if (p_inductor == NULL)
+    {
+        return;
+    }
+
+    p_inductor->current_a +=
+        (p_inductor->voltage_cmd_z1 / DEMO_SFRA_PI_L_INDUCTANCE_H) *
+        DEMO_SFRA_SAMPLE_PERIOD_S;
+    p_inductor->voltage_cmd_z1 = voltage_cmd;
+}
+
+/* Complex divide helper for analytic transfer-function calculation. */
+static demo_sfra_complex_t demo_sfra_complex_div(demo_sfra_complex_t numerator,
+                                                 demo_sfra_complex_t denominator)
+{
+    demo_sfra_complex_t result = {0.0f, 0.0f}; /* Division result initialized to zero for divide-by-zero protection. */
+    float den;                                 /* Squared magnitude of the complex denominator. */
+
+    den = (denominator.real * denominator.real) + (denominator.imag * denominator.imag);
+    if (den <= 0.0f)
+    {
+        return result;
+    }
+
+    result.real = ((numerator.real * denominator.real) +
+                   (numerator.imag * denominator.imag)) /
+                  den;
+    result.imag = ((numerator.imag * denominator.real) -
+                   (numerator.real * denominator.imag)) /
+                  den;
+
+    return result;
+}
+
+/* Complex multiply helper for PI(s/z) times plant response. */
+static demo_sfra_complex_t demo_sfra_complex_mul(demo_sfra_complex_t a,
+                                                 demo_sfra_complex_t b)
+{
+    demo_sfra_complex_t result; /* Product of the two local complex operands. */
+
+    result.real = (a.real * b.real) - (a.imag * b.imag);
+    result.imag = (a.real * b.imag) + (a.imag * b.real);
+
+    return result;
+}
+
+/*
+ * Calculate the discrete PI frequency response at the current SFRA point.
+ *
+ * pi_tustin_cal() implements:
+ *   U(z) / E(z) = (b0 + b1*z^-1) / (1 + a1*z^-1)
+ *
+ * The open-loop SFRA example uses this helper to generate the steady-state
+ * output directly instead of running the PI integrator from zero for each
+ * point.
+ */
+static demo_sfra_complex_t demo_pi_l_sfra_pi_response(const pi_tustin_t *p_pi,
+                                                      float phase_step_rad)
+{
+    demo_sfra_complex_t numerator;   /* PI transfer-function numerator evaluated on the unit circle. */
+    demo_sfra_complex_t denominator; /* PI transfer-function denominator evaluated on the unit circle. */
+    demo_sfra_complex_t z_inv;       /* z^-1 value for the current frequency point. */
+
+    z_inv.real = cosf(phase_step_rad);
+    z_inv.imag = -sinf(phase_step_rad);
+
+    numerator.real = p_pi->inter.b0 + (p_pi->inter.b1 * z_inv.real);
+    numerator.imag = p_pi->inter.b1 * z_inv.imag;
+    denominator.real = 1.0f + (p_pi->inter.a1 * z_inv.real);
+    denominator.imag = p_pi->inter.a1 * z_inv.imag;
+
+    return demo_sfra_complex_div(numerator, denominator);
+}
+
+/*
+ * Calculate open-loop PI * 1/(sL) frequency response.
+ *
+ * The inductor is treated as the continuous plant 1/(sL) for this open-loop
+ * curve.  The PI part is discrete because the controller under test is the
+ * actual pi_tustin implementation.
+ */
+static demo_sfra_complex_t demo_pi_l_sfra_open_loop_response(const pi_tustin_t *p_pi,
+                                                             float freq_hz,
+                                                             float phase_step_rad)
+{
+    demo_sfra_complex_t pi_response;       /* Discrete PI response at the current frequency. */
+    demo_sfra_complex_t inductor_response; /* Continuous 1/(sL) response at the current frequency. */
+
+    pi_response = demo_pi_l_sfra_pi_response(p_pi, phase_step_rad);
+
+    inductor_response.real = 0.0f;
+    inductor_response.imag =
+        -1.0f / (2.0f * 3.14159265358979323846f * freq_hz * DEMO_SFRA_PI_L_INDUCTANCE_H);
+
+    return demo_sfra_complex_mul(pi_response, inductor_response);
+}
+
+/* Reset the PR scan before each frequency point. */
 static void demo_pr_sfra_prepare_freq(void *p_ctx)
 {
-    demo_pr_sfra_ctx_t *p_ctx_sfra = (demo_pr_sfra_ctx_t *)p_ctx;
+    demo_pr_sfra_ctx_t *p_ctx_sfra = (demo_pr_sfra_ctx_t *)p_ctx; /* Typed PR context passed from sfra_set_freq_prepare_cb(). */
 
     if (p_ctx_sfra == NULL)
     {
@@ -249,6 +783,50 @@ static void demo_pr_sfra_prepare_freq(void *p_ctx)
 }
 
 /*
+ * Reset the SOGI scan before each frequency point.
+ *
+ * SOGI has internal delay states, so reinitializing it per point keeps each
+ * measured point independent.
+ */
+static void demo_sogi_sfra_prepare_freq(void *p_ctx)
+{
+    demo_sogi_sfra_ctx_t *p_ctx_sfra = (demo_sogi_sfra_ctx_t *)p_ctx; /* Typed SOGI context passed from sfra_set_freq_prepare_cb(). */
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_sogi != NULL)
+    {
+        sogi_init(p_ctx_sfra->p_sogi,
+                  DEMO_SFRA_SAMPLE_PERIOD_S,
+                  DEMO_SFRA_SOGI_W,
+                  DEMO_SFRA_SOGI_K,
+                  p_ctx_sfra->p_input);
+    }
+
+    if (p_ctx_sfra->p_input != NULL)
+    {
+        *(p_ctx_sfra->p_input) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_output != NULL)
+    {
+        *(p_ctx_sfra->p_output) = 0.0f;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Initialization                                                             */
+/* -------------------------------------------------------------------------- */
+
+/*
  * SECTION_INIT / REG_INIT example 1:
  * Register an early boot callback. Smaller priority runs earlier.
  *
@@ -258,6 +836,10 @@ static void demo_pr_sfra_prepare_freq(void *p_ctx)
  */
 static void demo_init_defaults(void)
 {
+    /*
+     * This init item runs early.  It prepares predictable default values before
+     * shell variables, tasks, or communication handlers observe the demo state.
+     */
     DBG_TRACE_BIND_TIME(&sys_tick_100us);
 
     s_demo_counter = 0u;
@@ -285,7 +867,12 @@ static void demo_init_defaults(void)
  */
 static void demo_init_banner(void)
 {
-    section_link_tx_func_t *p_link_printf = LINK_PRINTF(USART0_LINK);
+    /*
+     * This init item runs after defaults.  It demonstrates that later init
+     * callbacks can use state initialized by earlier callbacks and can also use
+     * the registered link printing function.
+     */
+    section_link_tx_func_t *p_link_printf = LINK_PRINTF(USART0_LINK); /* USART0 printf route discovered from the link section. */
 
     s_demo_boot_ready = 1u;
     s_demo_init_count++;
@@ -300,6 +887,13 @@ static void demo_init_banner(void)
 
 static void demo_sfra_model_init(void)
 {
+    /*
+     * This init item binds controller/plant objects to SFRA loops.
+     *
+     * REG_SFRA creates the sfra_t objects and their inject/collect ports.  This
+     * function initializes the actual algorithm objects and attaches the
+     * per-frequency reset callbacks.
+     */
     (void)pi_tustin_init(&s_demo_sfra_pi,
                          DEMO_SFRA_PI_KP,
                          DEMO_SFRA_PI_KI,
@@ -311,6 +905,30 @@ static void demo_sfra_model_init(void)
     (void)sfra_set_freq_prepare_cb(&demo_sfra,
                                    demo_sfra_prepare_freq,
                                    &s_demo_sfra_ctx);
+
+    (void)pi_tustin_init(&s_demo_sfra_pi_l,
+                         DEMO_SFRA_PI_L_KP,
+                         DEMO_SFRA_PI_L_KI,
+                         DEMO_SFRA_SAMPLE_PERIOD_S,
+                         DEMO_SFRA_PI_L_UP_LMT,
+                         DEMO_SFRA_PI_L_DN_LMT,
+                         &s_demo_sfra_pi_l_ref,
+                         &s_demo_sfra_pi_l_act);
+    (void)sfra_set_freq_prepare_cb(&demo_pi_l_sfra,
+                                   demo_pi_l_sfra_prepare_freq,
+                                   &s_demo_pi_l_sfra_ctx);
+
+    (void)pi_tustin_init(&s_demo_sfra_pi_l_closed,
+                         DEMO_SFRA_PI_L_KP,
+                         DEMO_SFRA_PI_L_KI,
+                         DEMO_SFRA_SAMPLE_PERIOD_S,
+                         DEMO_SFRA_PI_L_UP_LMT,
+                         DEMO_SFRA_PI_L_DN_LMT,
+                         &s_demo_sfra_pi_l_closed_ref,
+                         &s_demo_sfra_pi_l_closed_act);
+    (void)sfra_set_freq_prepare_cb(&demo_pi_l_closed_sfra,
+                                   demo_pi_l_sfra_prepare_freq,
+                                   &s_demo_pi_l_closed_sfra_ctx);
 
     (void)pr_init(&s_demo_sfra_pr,
                   DEMO_SFRA_PR_KP,
@@ -325,10 +943,38 @@ static void demo_sfra_model_init(void)
     (void)sfra_set_freq_prepare_cb(&demo_pr_sfra,
                                    demo_pr_sfra_prepare_freq,
                                    &s_demo_pr_sfra_ctx);
+
+    sogi_init(&s_demo_sogi_d,
+              DEMO_SFRA_SAMPLE_PERIOD_S,
+              DEMO_SFRA_SOGI_W,
+              DEMO_SFRA_SOGI_K,
+              &s_demo_sfra_sogi_d_in);
+    sogi_init(&s_demo_sogi_q,
+              DEMO_SFRA_SAMPLE_PERIOD_S,
+              DEMO_SFRA_SOGI_W,
+              DEMO_SFRA_SOGI_K,
+              &s_demo_sfra_sogi_q_in);
+    (void)sfra_set_freq_prepare_cb(&demo_sogi_d_sfra,
+                                   demo_sogi_sfra_prepare_freq,
+                                   &s_demo_sogi_d_sfra_ctx);
+    (void)sfra_set_freq_prepare_cb(&demo_sogi_q_sfra,
+                                   demo_sogi_sfra_prepare_freq,
+                                   &s_demo_sogi_q_sfra_ctx);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Shell Command Handlers                                                     */
+/* -------------------------------------------------------------------------- */
 
 static void demo_led_mask_changed(DEC_MY_PRINTF)
 {
+    /*
+     * Shell variable callback.
+     *
+     * REG_SHELL_VAR can attach a function that runs after the variable changes.
+     * Here the backing variable is s_demo_led_mask, and the callback pushes the
+     * new mask to board outputs.
+     */
 
     demo_apply_led_mask(s_demo_led_mask);
 
@@ -340,6 +986,12 @@ static void demo_led_mask_changed(DEC_MY_PRINTF)
 
 static void demo_ping_cmd(DEC_MY_PRINTF)
 {
+    /*
+     * Minimal shell command.
+     *
+     * It prints enough state to confirm that the shell link, printf routing,
+     * scheduler counter, and demo defaults are all alive.
+     */
 
     if (my_printf && my_printf->my_printf)
     {
@@ -361,6 +1013,13 @@ static void demo_ping_cmd(DEC_MY_PRINTF)
  */
 static void demo_help_cmd(DEC_MY_PRINTF)
 {
+    /*
+     * Built-in map of this file.
+     *
+     * This command intentionally prints framework concepts rather than product
+     * help text.  It is a quick reminder of which REG_* macro corresponds to
+     * which linker section and runtime service.
+     */
 
     if (my_printf && my_printf->my_printf)
     {
@@ -391,17 +1050,28 @@ static void demo_help_cmd(DEC_MY_PRINTF)
     }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Perf Shell Handlers                                                        */
+/* -------------------------------------------------------------------------- */
+
 /*
  * SECTION_PERF / REG_PERF_RECORD example 1:
  * Manually wrap one code section with PERF_START/PERF_END to measure its cost.
  */
 static void demo_perf_cmd(DEC_MY_PRINTF)
 {
-    section_perf_record_t *manual_rec = P_RECORD_PERF(demo_manual_perf);
-    section_perf_record_t *task_rec = P_RECORD_PERF(demo_task);
-    section_perf_record_t *period_rec = P_RECORD_PERF(demo_task_period_perf);
-    volatile uint32_t acc = 0u;
-    uint32_t i;
+    /*
+     * Manual performance measurement example.
+     *
+     * PERF_START/PERF_END can wrap any code section, even if that code is not a
+     * scheduled task.  The result is stored in the named record registered near
+     * the top of this file.
+     */
+    section_perf_record_t *manual_rec = P_RECORD_PERF(demo_manual_perf);       /* Record storing the manual PERF_START/PERF_END timing. */
+    section_perf_record_t *task_rec = P_RECORD_PERF(demo_task);                /* Auto-created task record for the 10 ms demo task. */
+    section_perf_record_t *period_rec = P_RECORD_PERF(demo_task_period_perf);  /* Record measuring 20 ms task entry-to-entry period. */
+    volatile uint32_t acc = 0u;                                                /* Volatile workload accumulator kept visible to the compiler. */
+    uint32_t i;                                                                /* Loop index for the manual spin workload. */
 
     PERF_START(demo_manual_perf);
     for (i = 0u; i < s_demo_perf_spin; ++i)
@@ -439,6 +1109,12 @@ static void demo_perf_cmd(DEC_MY_PRINTF)
  */
 static void demo_tick_cmd(DEC_MY_PRINTF)
 {
+    /*
+     * Read the raw performance counter base.
+     *
+     * This is useful when bringing up a board because it verifies the timer
+     * backing perf_base_cnt_get() is running.
+     */
 
     s_demo_last_tick = perf_base_cnt_get();
 
@@ -454,8 +1130,15 @@ static void demo_tick_cmd(DEC_MY_PRINTF)
  */
 static void demo_send_loopback_cmd(DEC_MY_PRINTF)
 {
-    section_packform_t pack = {0};
-    demo_comm_frame_t frame = s_demo_last_frame;
+    /*
+     * Send one demo protocol frame from a shell command.
+     *
+     * The frame is routed through the same comm_send_data() path used by normal
+     * protocol handlers, so this checks packing, link binding, and host receive
+     * behavior without needing an external command first.
+     */
+    section_packform_t pack = {0};          /* Outbound protocol envelope for the shell-triggered loopback frame. */
+    demo_comm_frame_t frame = s_demo_last_frame; /* Payload snapshot copied from the latest loopback frame. */
 
     frame.counter = s_demo_counter;
     frame.led_mask = s_demo_led_mask;
@@ -476,13 +1159,23 @@ static void demo_send_loopback_cmd(DEC_MY_PRINTF)
     comm_send_data(&pack, LINK_PRINTF(USART0_LINK));
 }
 
+/* -------------------------------------------------------------------------- */
+/* Base Demo Tasks                                                            */
+/* -------------------------------------------------------------------------- */
+
 /*
  * SECTION_TASK / REG_TASK_MS example:
  * run_task() dispatches this periodic task in the background.
  */
 static void demo_task(void)
 {
-    static uint8_t led_phase = 0u;
+    /*
+     * Basic scheduled task.
+     *
+     * It increments a counter every 10 ms and periodically changes the relay
+     * mask.  This gives the task scheduler an easy visible heartbeat.
+     */
+    static uint8_t led_phase = 0u; /* Four-state rotating output bit used by the scheduler heartbeat. */
 
     s_demo_counter++;
     s_demo_last_tick = perf_base_cnt_get();
@@ -498,6 +1191,10 @@ static void demo_task(void)
     }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Perf Tasks And Workloads                                                   */
+/* -------------------------------------------------------------------------- */
+
 /*
  * SECTION_PERF / REG_TASK_MS period example:
  * End and restart the performance record at task entry.
@@ -506,8 +1203,14 @@ static void demo_task(void)
  */
 static void demo_task_period_20ms(void)
 {
-    static uint8_t s_period_started = 0u;
-    volatile uint32_t delay = 0u;
+    /*
+     * Task-period measurement example.
+     *
+     * The perf record is ended at the beginning of the next call, so it measures
+     * entry-to-entry period rather than only the body execution time.
+     */
+    static uint8_t s_period_started = 0u; /* Tracks whether the period perf record has a previous start point. */
+    volatile uint32_t delay = 0u;         /* Small volatile delay loop so the period task has measurable work. */
 
     if (s_period_started != 0u)
     {
@@ -527,7 +1230,8 @@ static void demo_task_period_20ms(void)
 
 static void demo_busy_delay(uint32_t loop_cnt)
 {
-    volatile uint32_t delay;
+    /* Small deterministic workload used by perf and interrupt examples. */
+    volatile uint32_t delay; /* Volatile loop index used to create deterministic busy-wait work. */
 
     for (delay = 0u; delay < loop_cnt; ++delay)
     {
@@ -546,10 +1250,16 @@ static void demo_busy_delay(uint32_t loop_cnt)
  */
 static __attribute__((noinline, used)) uint32_t demo_flash_math_calc(uint32_t seed)
 {
-    uint32_t x = seed | 1u;
-    uint32_t y = seed ^ 0x9E3779B9u;
-    uint32_t acc = 0xA5A5A5A5u;
-    uint32_t i;
+    /*
+     * Flash-resident workload.
+     *
+     * The noinline/used attributes keep the compiler from optimizing this demo
+     * away too aggressively, making flash-vs-RAM measurements easier to see.
+     */
+    uint32_t x = seed | 1u;          /* First pseudo-random state value for the flash workload. */
+    uint32_t y = seed ^ 0x9E3779B9u; /* Second pseudo-random state value for the flash workload. */
+    uint32_t acc = 0xA5A5A5A5u;      /* Accumulator mixed each iteration to keep arithmetic nontrivial. */
+    uint32_t i;                      /* Loop index for the fixed-size flash workload. */
 
     for (i = 0u; i < DEMO_MATH_LOOP_COUNT; ++i)
     {
@@ -565,10 +1275,16 @@ static __attribute__((noinline, used)) uint32_t demo_flash_math_calc(uint32_t se
 
 static FUNC_RAM uint32_t demo_ram_math_calc(uint32_t seed)
 {
-    uint32_t x = seed | 1u;
-    uint32_t y = seed ^ 0x9E3779B9u;
-    uint32_t acc = 0xA5A5A5A5u;
-    uint32_t i;
+    /*
+     * RAM-resident copy of the same workload.
+     *
+     * Keeping the algorithm body identical lets the Perf viewer compare memory
+     * placement rather than algorithm differences.
+     */
+    uint32_t x = seed | 1u;          /* First pseudo-random state value for the RAM workload. */
+    uint32_t y = seed ^ 0x9E3779B9u; /* Second pseudo-random state value for the RAM workload. */
+    uint32_t acc = 0xA5A5A5A5u;      /* Accumulator mixed each iteration to keep arithmetic nontrivial. */
+    uint32_t i;                      /* Loop index for the fixed-size RAM workload. */
 
     for (i = 0u; i < DEMO_MATH_LOOP_COUNT; ++i)
     {
@@ -590,6 +1306,10 @@ static FUNC_RAM uint32_t demo_ram_math_calc(uint32_t seed)
  */
 static void demo_perf_load_2ms_task(void)
 {
+    /*
+     * Light periodic load.  It creates a small measurable task body so the Perf
+     * page can show load distribution across multiple task periods.
+     */
 
     s_demo_aux_counter++;
     demo_busy_delay(16u);
@@ -597,6 +1317,10 @@ static void demo_perf_load_2ms_task(void)
 
 static void demo_perf_load_5ms_task(void)
 {
+    /*
+     * Heavier periodic load than demo_perf_load_2ms_task.  The different
+     * periods and loop counts make the Perf UI more interesting to inspect.
+     */
 
     s_demo_aux_counter += 3u;
     demo_busy_delay(48u);
@@ -609,7 +1333,13 @@ static void demo_perf_load_5ms_task(void)
  */
 static void demo_perf_code_section_10ms_task(void)
 {
-    const uint32_t seed = s_demo_aux_counter + s_demo_counter;
+    /*
+     * Demonstrate nested/manual code-section measurements inside a normal task.
+     *
+     * The task has its own task-level perf record from REG_TASK_MS, while the
+     * three PERF_START/PERF_END pairs below expose finer-grained sections.
+     */
+    const uint32_t seed = s_demo_aux_counter + s_demo_counter; /* Changing seed shared by flash and RAM math comparisons. */
 
     PERF_START(demo_code_section_perf);
     s_demo_aux_counter += 7u;
@@ -625,6 +1355,10 @@ static void demo_perf_code_section_10ms_task(void)
     PERF_END(demo_ram_math_perf);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Interrupt Demo                                                             */
+/* -------------------------------------------------------------------------- */
+
 /*
  * INTERRUPT example step 1:
  * Call section_interrupt() from the place that should dispatch registered
@@ -633,6 +1367,13 @@ static void demo_perf_code_section_10ms_task(void)
  */
 static void demo_interrupt_trigger_5ms_task(void)
 {
+    /*
+     * Software trigger for section interrupts.
+     *
+     * In a real BSP, section_interrupt() can be called from a hardware ISR
+     * wrapper.  The demo calls it from a periodic task so the behavior is easy
+     * to reproduce without configuring a peripheral interrupt.
+     */
 
     section_interrupt();
 }
@@ -643,15 +1384,21 @@ static void demo_interrupt_trigger_5ms_task(void)
  */
 static void demo_fast_interrupt(void)
 {
+    /* Higher-priority interrupt callback registered near the bottom. */
     s_demo_interrupt_counter++;
     demo_busy_delay(24u);
 }
 
 static void demo_slow_interrupt(void)
 {
+    /* Lower-priority interrupt callback with a heavier workload. */
     s_demo_interrupt_counter += 2u;
     demo_busy_delay(80u);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Trace Tasks                                                                */
+/* -------------------------------------------------------------------------- */
 
 /*
  * DBG_TRACE example step 2:
@@ -661,18 +1408,28 @@ static void demo_slow_interrupt(void)
  */
 static void demo_trace_mark_100ms_task(void)
 {
+    /*
+     * Trace marks are intentionally one-line tasks.  That keeps the source line
+     * shown by the Trace viewer directly tied to the call site below.
+     */
     DBG_TRACE_MARK();
 }
 
 static void demo_trace_mark_500ms_task(void)
 {
+    /* Same trace marker pattern, different period. */
     DBG_TRACE_MARK();
 }
 
 static void demo_trace_mark_1000ms_task(void)
 {
+    /* Same trace marker pattern, different period. */
     DBG_TRACE_MARK();
 }
+
+/* -------------------------------------------------------------------------- */
+/* Scope Tasks                                                                */
+/* -------------------------------------------------------------------------- */
 
 /*
  * Basic scope example:
@@ -682,6 +1439,14 @@ static void demo_trace_mark_1000ms_task(void)
  */
 static void demo_scope_basic_task(void)
 {
+    /*
+     * Basic scope signals:
+     * - a slow ramp
+     * - a binary toggle
+     *
+     * This is the smallest useful Scope example and is good for checking host
+     * plotting before moving to many-channel captures.
+     */
     scope_basic_ramp = (float)(s_demo_scope_basic_tick % 100u);
     scope_basic_toggle = ((s_demo_scope_basic_tick / 10u) & 0x01u) ? 1.0f : 0.0f;
 
@@ -697,9 +1462,17 @@ static void demo_scope_basic_task(void)
  */
 static void demo_scope_fast_task(void)
 {
-    float theta;
-    float theta_fast;
-    uint32_t phase500;
+    /*
+     * Fast 100 us scope.
+     *
+     * The signals are synthetic but deliberately varied: sine, cosine, ramp,
+     * triangle, square, mixed waveform, sawtooth, and index.  This checks that
+     * multi-channel capture, trigger, and plotting all work at the faster task
+     * rate.
+     */
+    float theta;        /* Slow waveform phase used by the main sine/cosine channels. */
+    float theta_fast;   /* Faster waveform phase used by secondary sine/cosine channels. */
+    uint32_t phase500;  /* 0..499 phase index used to build ramp and triangle signals. */
 
     theta = 2.0f * 3.1415926f * (float)(s_demo_scope_fast_tick % 200u) / 200.0f;
     theta_fast = 2.0f * 3.1415926f * (float)(s_demo_scope_fast_tick % 50u) / 50.0f;
@@ -730,7 +1503,13 @@ static void demo_scope_fast_task(void)
  */
 static void demo_scope_slow_task(void)
 {
-    float theta;
+    /*
+     * Slow 1 ms scope.
+     *
+     * It uses fewer channels and a lower sampling rate to show the same Scope
+     * service can host multiple independent capture objects.
+     */
+    float theta; /* Slow scope waveform phase for 1 ms sine/cosine channels. */
 
     theta = 2.0f * 3.1415926f * (float)(s_demo_scope_slow_tick % 100u) / 100.0f;
 
@@ -742,8 +1521,23 @@ static void demo_scope_slow_task(void)
     s_demo_scope_slow_tick++;
 }
 
+/* -------------------------------------------------------------------------- */
+/* SFRA Tasks                                                                 */
+/* -------------------------------------------------------------------------- */
+
 static void demo_sfra_isr_10k_task(void)
 {
+    /*
+     * Plain PI SFRA fast path.
+     *
+     * This path scans the controller alone:
+     *   inject -> PI reference
+     *   feedback = 0
+     *   collect <- PI output
+     *
+     * It is a quick sanity test for SFRA because the measured object is a small
+     * pure software controller.
+     */
     sfra_isr_pre_sample(&demo_sfra);
 
     s_demo_sfra_pi_ref = demo_sfra_inject;
@@ -758,11 +1552,147 @@ static void demo_sfra_isr_10k_task(void)
 
 static void demo_sfra_task_1ms(void)
 {
+    /* Background SFRA state machine for the plain PI scan. */
     (void)sfra_task(&demo_sfra);
+}
+
+static void demo_pi_l_sfra_isr_10k_task(void)
+{
+    /*
+     * Open-loop PI + 1/(sL) SFRA fast path.
+     *
+     * The requested open-loop scan should not close feedback around the
+     * inductor.  Therefore act is forced to zero and collect is generated from
+     * the intended open-loop transfer function.
+     *
+     * A direct zero-state simulation of PI integrator + ideal inductor
+     * integrator creates large finite-window transients, especially at low
+     * frequency.  For that reason this demo generates the steady-state response
+     * for the current point analytically while still using the real PI
+     * coefficients from pi_tustin.
+     */
+    demo_sfra_complex_t pi_response;        /* Discrete PI response at this sweep frequency. */
+    demo_sfra_complex_t open_loop_response; /* Combined PI * 1/(sL) response at this sweep frequency. */
+    float sample_phase_rad;                 /* Current injection phase adjusted for one-sample delayed collection. */
+    float pi_mag;                           /* Magnitude of the discrete PI response. */
+    float pi_phase_rad;                     /* Phase of the discrete PI response, in radians. */
+    float open_loop_mag;                    /* Magnitude of the combined open-loop response. */
+    float open_loop_phase_rad;              /* Phase of the combined open-loop response, in radians. */
+
+    sfra_isr_pre_sample(&demo_pi_l_sfra);
+
+    if ((demo_pi_l_sfra.task.state != SFRA_STATE_SETTLE) &&
+        (demo_pi_l_sfra.task.state != SFRA_STATE_COLLECT))
+    {
+        s_demo_sfra_pi_l_ref = 0.0f;
+        s_demo_sfra_pi_l_act = 0.0f;
+        s_demo_sfra_pi_l_voltage = 0.0f;
+        s_demo_sfra_pi_l_inductor.current_a = 0.0f;
+        demo_pi_l_sfra_collect = 0.0f;
+        sfra_isr_post_sample(&demo_pi_l_sfra);
+        return;
+    }
+
+    s_demo_sfra_pi_l_ref = demo_pi_l_sfra_inject;
+    s_demo_sfra_pi_l_act = 0.0f;
+
+    /*
+     * Open-loop PI + 1/(sL) is generated as a steady-state response.  The
+     * SFRA denominator uses inject[n - 1], so collect is generated one sample
+     * behind the current injection phase.
+     */
+    sample_phase_rad = demo_pi_l_sfra.isr.phase_rad - demo_pi_l_sfra.isr.phase_step_rad;
+    pi_response = demo_pi_l_sfra_pi_response(&s_demo_sfra_pi_l,
+                                             demo_pi_l_sfra.isr.phase_step_rad);
+    open_loop_response =
+        demo_pi_l_sfra_open_loop_response(&s_demo_sfra_pi_l,
+                                          demo_pi_l_sfra.isr.current_freq_hz,
+                                          demo_pi_l_sfra.isr.phase_step_rad);
+
+    pi_mag = sqrtf((pi_response.real * pi_response.real) +
+                   (pi_response.imag * pi_response.imag));
+    pi_phase_rad = atan2f(pi_response.imag, pi_response.real);
+    open_loop_mag = sqrtf((open_loop_response.real * open_loop_response.real) +
+                          (open_loop_response.imag * open_loop_response.imag));
+    open_loop_phase_rad = atan2f(open_loop_response.imag, open_loop_response.real);
+
+    s_demo_sfra_pi_l_voltage =
+        demo_pi_l_sfra.cfg.inject_amplitude * pi_mag * sinf(sample_phase_rad + pi_phase_rad);
+    s_demo_sfra_pi_l_inductor.current_a =
+        demo_pi_l_sfra.cfg.inject_amplitude * open_loop_mag *
+        sinf(sample_phase_rad - demo_pi_l_sfra.isr.phase_step_rad + open_loop_phase_rad);
+    demo_pi_l_sfra_collect = s_demo_sfra_pi_l_inductor.current_a;
+
+    sfra_isr_post_sample(&demo_pi_l_sfra);
+}
+
+static void demo_pi_l_sfra_task_1ms(void)
+{
+    /* Background SFRA state machine for the open-loop PI+L scan. */
+    (void)sfra_task(&demo_pi_l_sfra);
+}
+
+static void demo_pi_l_closed_sfra_isr_10k_task(void)
+{
+    /*
+     * Closed-loop PI + inductor SFRA fast path.
+     *
+     * This follows the practical sampled-control order:
+     * 1. SFRA writes the current injection.
+     * 2. The model exposes the present current as collect.
+     * 3. SFRA captures inject/collect.
+     * 4. PI calculates the next voltage command from ref and feedback current.
+     * 5. The inductor integrates using the previous voltage command.
+     *
+     * Because collect[n] corresponds to inject[n - 1] through the z1 plant
+     * path, the SFRA object is registered with delay_tick = 1U.
+     */
+    sfra_isr_pre_sample(&demo_pi_l_closed_sfra);
+
+    if ((demo_pi_l_closed_sfra.task.state != SFRA_STATE_SETTLE) &&
+        (demo_pi_l_closed_sfra.task.state != SFRA_STATE_COLLECT))
+    {
+        s_demo_sfra_pi_l_closed_ref = 0.0f;
+        s_demo_sfra_pi_l_closed_act = 0.0f;
+        s_demo_sfra_pi_l_closed_voltage = 0.0f;
+        s_demo_sfra_pi_l_closed_inductor.current_a = 0.0f;
+        s_demo_sfra_pi_l_closed_inductor.voltage_cmd_z1 = 0.0f;
+        demo_pi_l_closed_sfra_collect = 0.0f;
+        sfra_isr_post_sample(&demo_pi_l_closed_sfra);
+        return;
+    }
+
+    demo_pi_l_closed_sfra_collect = s_demo_sfra_pi_l_closed_inductor.current_a;
+    sfra_isr_post_sample(&demo_pi_l_closed_sfra);
+
+    /*
+     * Closed-loop current SFRA follows the real control timing: sample the
+     * present current first, then calculate the PI command that updates the
+     * inductor model on the next tick through voltage_cmd_z1.
+     */
+    s_demo_sfra_pi_l_closed_ref = demo_pi_l_closed_sfra_inject;
+    s_demo_sfra_pi_l_closed_act = demo_pi_l_closed_sfra_collect;
+    (void)pi_tustin_cal(&s_demo_sfra_pi_l_closed);
+
+    s_demo_sfra_pi_l_closed_voltage = s_demo_sfra_pi_l_closed.output.val;
+    demo_pi_l_sfra_inductor_step(&s_demo_sfra_pi_l_closed_inductor,
+                                 s_demo_sfra_pi_l_closed_voltage);
+}
+
+static void demo_pi_l_closed_sfra_task_1ms(void)
+{
+    /* Background SFRA state machine for the closed-loop PI+L scan. */
+    (void)sfra_task(&demo_pi_l_closed_sfra);
 }
 
 static void demo_pr_sfra_isr_10k_task(void)
 {
+    /*
+     * PR SFRA fast path.
+     *
+     * This mirrors the plain PI scan: inject drives the PR reference, feedback
+     * is zero, and the PR output is measured.
+     */
     sfra_isr_pre_sample(&demo_pr_sfra);
 
     s_demo_sfra_pr_ref = demo_pr_sfra_inject;
@@ -777,8 +1707,70 @@ static void demo_pr_sfra_isr_10k_task(void)
 
 static void demo_pr_sfra_task_1ms(void)
 {
+    /* Background SFRA state machine for the PR scan. */
     (void)sfra_task(&demo_pr_sfra);
 }
+
+static void demo_sogi_sfra_isr_10k_task(sfra_t *p_sfra, demo_sogi_sfra_ctx_t *p_ctx)
+{
+    /*
+     * Shared SOGI SFRA fast path.
+     *
+     * The D and Q scans use identical code; the context selects which SOGI
+     * output is routed to collect.  This demonstrates how one implementation
+     * can serve multiple registered SFRA loop objects.
+     */
+    if ((p_sfra == NULL) || (p_ctx == NULL) || (p_ctx->p_sogi == NULL) ||
+        (p_ctx->p_input == NULL) || (p_ctx->p_output == NULL) ||
+        (p_ctx->p_sfra_collect == NULL))
+    {
+        return;
+    }
+
+    sfra_isr_pre_sample(p_sfra);
+
+    *(p_ctx->p_input) = *(p_sfra->port.p_inject);
+    sogi_cal(p_ctx->p_sogi);
+    if (p_ctx->output_sel == DEMO_SOGI_OUTPUT_Q)
+    {
+        *(p_ctx->p_output) = p_ctx->p_sogi->osg_qu[0];
+    }
+    else
+    {
+        *(p_ctx->p_output) = p_ctx->p_sogi->osg_u[0];
+    }
+
+    *(p_ctx->p_sfra_collect) = *(p_ctx->p_output);
+    sfra_isr_post_sample(p_sfra);
+}
+
+static void demo_sogi_d_sfra_isr_10k_task(void)
+{
+    /* D-axis SOGI wrapper used by REG_TASK. */
+    demo_sogi_sfra_isr_10k_task(&demo_sogi_d_sfra, &s_demo_sogi_d_sfra_ctx);
+}
+
+static void demo_sogi_d_sfra_task_1ms(void)
+{
+    /* Background SFRA state machine for the SOGI D output scan. */
+    (void)sfra_task(&demo_sogi_d_sfra);
+}
+
+static void demo_sogi_q_sfra_isr_10k_task(void)
+{
+    /* Q-axis SOGI wrapper used by REG_TASK. */
+    demo_sogi_sfra_isr_10k_task(&demo_sogi_q_sfra, &s_demo_sogi_q_sfra_ctx);
+}
+
+static void demo_sogi_q_sfra_task_1ms(void)
+{
+    /* Background SFRA state machine for the SOGI Q output scan. */
+    (void)sfra_task(&demo_sogi_q_sfra);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Communication Handlers                                                     */
+/* -------------------------------------------------------------------------- */
 
 /*
  * SECTION_COMM / REG_COMM example 1:
@@ -786,7 +1778,14 @@ static void demo_pr_sfra_task_1ms(void)
  */
 static void demo_loopback_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    section_packform_t ack = {0};
+    /*
+     * Protocol loopback handler.
+     *
+     * A valid payload is copied into s_demo_last_frame and then returned to the
+     * sender with is_ack = 1.  This verifies receive parsing, ACK routing, and
+     * payload serialization.
+     */
+    section_packform_t ack = {0}; /* ACK envelope that mirrors source/destination and command fields from the request. */
 
     if ((p_pack == NULL) || (p_pack->len != sizeof(demo_comm_frame_t)))
     {
@@ -821,8 +1820,17 @@ static void demo_loopback_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
  */
 static void demo_control_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    uint8_t ack_data[2];
-    section_packform_t ack = {0};
+    /*
+     * Small command handler that mutates demo state.
+     *
+     * Byte 0 controls the relay/LED mask.
+     * Byte 1 controls a simple temperature field in units of 10 degrees.
+     *
+     * The ACK returns the values that were accepted, which is the pattern most
+     * small configuration commands should follow.
+     */
+    uint8_t ack_data[2];          /* Compact ACK payload: accepted LED mask and temperature byte. */
+    section_packform_t ack = {0}; /* ACK envelope that mirrors source/destination and command fields from the request. */
 
     if ((p_pack == NULL) || (p_pack->len < 2u))
     {
@@ -849,6 +1857,22 @@ static void demo_control_comm(section_packform_t *p_pack, DEC_MY_PRINTF)
     ack.p_data = ack_data;
     comm_send_data(&ack, my_printf);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Section Registration Table                                                 */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * The registration table is intentionally kept at the end.
+ *
+ * This makes the file read in two passes:
+ * 1. Define objects, state, and functions.
+ * 2. Register those functions into framework sections.
+ *
+ * The order of declarations here is also useful documentation.  It shows which
+ * functions are lifecycle callbacks, shell commands, protocol handlers,
+ * periodic tasks, and interrupt callbacks.
+ */
 
 /*
  * REG_INIT(prio, func)
@@ -943,8 +1967,16 @@ REG_TASK(1, demo_scope_fast_task)
 REG_TASK_MS(1, demo_scope_slow_task)
 REG_TASK(1, demo_sfra_isr_10k_task)
 REG_TASK_MS(1, demo_sfra_task_1ms)
+REG_TASK(1, demo_pi_l_sfra_isr_10k_task)
+REG_TASK_MS(1, demo_pi_l_sfra_task_1ms)
+REG_TASK(1, demo_pi_l_closed_sfra_isr_10k_task)
+REG_TASK_MS(1, demo_pi_l_closed_sfra_task_1ms)
 REG_TASK(1, demo_pr_sfra_isr_10k_task)
 REG_TASK_MS(1, demo_pr_sfra_task_1ms)
+REG_TASK(1, demo_sogi_d_sfra_isr_10k_task)
+REG_TASK_MS(1, demo_sogi_d_sfra_task_1ms)
+REG_TASK(1, demo_sogi_q_sfra_isr_10k_task)
+REG_TASK_MS(1, demo_sogi_q_sfra_task_1ms)
 
 /*
  * INTERRUPT example step 3:
