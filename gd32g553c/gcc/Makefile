@@ -137,6 +137,7 @@ $(CODEDIR)/lib/dft.c \
 $(CODEDIR)/lib/pi_tustin.c \
 $(CODEDIR)/lib/pr.c \
 $(CODEDIR)/lib/record_dict.c \
+$(CODEDIR)/lib/sogi.c \
 $(CODEDIR)/dbg/perf.c \
 $(CODEDIR)/dbg/perf_service.c \
 $(CODEDIR)/dbg/scope.c \

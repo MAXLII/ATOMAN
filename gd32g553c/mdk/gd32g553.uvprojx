@@ -684,6 +684,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\code\lib\record_dict.c</FilePath>
             </File>
+            <File>
+              <FileName>sogi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\code\lib\sogi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
