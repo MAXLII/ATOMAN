@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "gd32",
-            "compilerPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/arm-none-eabi-gcc.exe",
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm",
@@ -22,10 +22,11 @@
                 "${workspaceFolder}/code/ctrl/pfc",
                 "${workspaceFolder}/code/ctrl/inv",
                 "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
                 "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/gd32g553c/bsp",
+                "${workspaceFolder}/gd32g553c/bsp/inc",
                 "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
                 "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
                 "${workspaceFolder}/gd32g553c/inc",
@@ -33,16 +34,23 @@
             ],
             "defines": [
                 "GD32G5X3",
-                "GD32G5X3",
-                "IS_DC"
-            ]
+                "FIRMWARE_TYPE_ISP",
+                "APP_START_ADDR=0x08000000"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/gd32g553c"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         },
         {
             "name": "plecs_ac",
-            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64",
+            "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
                 "${workspaceFolder}/plecs/common",
                 "${workspaceFolder}/plecs/ac",
@@ -65,10 +73,10 @@
         },
         {
             "name": "plecs_dc",
-            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64",
+            "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
                 "${workspaceFolder}/plecs/common",
                 "${workspaceFolder}/plecs/dc",
