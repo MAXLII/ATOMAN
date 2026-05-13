@@ -148,7 +148,6 @@ typedef struct
     uint32_t sweep_tag;
     float freq_hz;
     float magnitude;
-    float magnitude_db;
     float phase_deg;
 } sfra_point_ack_t;
 
