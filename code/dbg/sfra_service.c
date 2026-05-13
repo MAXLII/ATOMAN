@@ -351,7 +351,6 @@ static void sfra_service_fill_point_ack(sfra_point_ack_t *p_ack,
     {
         p_ack->freq_hz = sfra->result_cache[point_index].freq_hz;
         p_ack->magnitude = sfra->result_cache[point_index].magnitude;
-        p_ack->magnitude_db = sfra->result_cache[point_index].magnitude_db;
         p_ack->phase_deg = sfra->result_cache[point_index].phase_deg;
     }
 }
@@ -375,7 +374,6 @@ static void sfra_service_cache_current_point(sfra_t *sfra)
     sfra->result_cache[point_index].point_index = point_index;
     sfra->result_cache[point_index].freq_hz = sfra->output.current_freq_hz;
     sfra->result_cache[point_index].magnitude = sfra->output.mag;
-    sfra->result_cache[point_index].magnitude_db = sfra->output.mag_db;
     sfra->result_cache[point_index].phase_deg = sfra->output.phase;
 
     if (sfra->result_count < (point_index + 1u))

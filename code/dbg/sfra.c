@@ -33,7 +33,6 @@
 #define SFRA_TWO_PI       (6.28318530717958647692f)
 #define SFRA_RAD_TO_DEG   (57.2957795130823208768f)
 #define SFRA_DIV_MIN_ABS  (1.0e-12f)
-#define SFRA_MAG_DB_MIN   (1.0e-12f)
 
 typedef struct
 {
@@ -242,8 +241,6 @@ static void sfra_calc_current_point(sfra_t *sfra)
     sfra->output.point_count = index + 1U;
     sfra->output.mag =
         sqrtf((response.real * response.real) + (response.imag * response.imag));
-    sfra->output.mag_db =
-        20.0f * log10f((sfra->output.mag > SFRA_MAG_DB_MIN) ? sfra->output.mag : SFRA_MAG_DB_MIN);
     sfra->output.phase = atan2f(response.imag, response.real) * SFRA_RAD_TO_DEG;
     sfra->output.point_done = 1U;
 }
@@ -324,7 +321,6 @@ sfra_status_t sfra_reset(sfra_t *sfra)
     sfra->output.point_index = 0U;
     sfra->output.point_count = 0U;
     sfra->output.mag = 0.0f;
-    sfra->output.mag_db = 0.0f;
     sfra->output.phase = 0.0f;
     sfra->output.point_done = 0U;
 
@@ -356,7 +352,6 @@ sfra_status_t sfra_start(sfra_t *sfra)
     sfra->output.point_index = 0U;
     sfra->output.point_count = 0U;
     sfra->output.mag = 0.0f;
-    sfra->output.mag_db = 0.0f;
     sfra->output.phase = 0.0f;
     sfra->output.point_done = 0U;
 

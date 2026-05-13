@@ -222,8 +222,6 @@ typedef struct
     uint16_t point_count;
     /** Magnitude of the latest completed frequency point. */
     float mag;
-    /** Magnitude of the latest completed frequency point, in dB. */
-    float mag_db;
     /** Phase of the latest completed frequency point, in degrees. */
     float phase;
     /** Non-zero while sweeping. */
@@ -246,8 +244,6 @@ typedef struct
     float freq_hz;
     /** True magnitude ratio of this completed point. */
     float magnitude;
-    /** Magnitude of this completed point, in dB. */
-    float magnitude_db;
     /** Phase of this completed point, in degrees. */
     float phase_deg;
 } sfra_result_t;
