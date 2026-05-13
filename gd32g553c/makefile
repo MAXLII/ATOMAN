@@ -115,6 +115,7 @@ C_SOURCES =  \
 ../code/lib/pi_tustin.c \
 ../code/lib/pr.c \
 ../code/lib/record_dict.c \
+../code/lib/sogi.c \
 ../code/dbg/perf.c \
 ../code/dbg/perf_service.c \
 ../code/dbg/scope.c \
