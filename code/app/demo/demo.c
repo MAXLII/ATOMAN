@@ -230,6 +230,252 @@ static demo_comm_frame_t s_demo_last_frame = {
 };
 
 /* -------------------------------------------------------------------------- */
+/* SFRA Model Contexts                                                        */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Context objects bind reusable algorithms to one SFRA loop.
+ *
+ * The SFRA core itself only knows about two float ports: inject and collect.
+ * The demo context records which controller instance, plant state, and local
+ * signal variables belong to a particular loop.  Frequency-prepare callbacks
+ * receive these contexts so each sweep point can start from a clean state.
+ */
+
+/*
+ * Plain PI context:
+ * inject -> PI reference, feedback forced to zero, collect <- PI output.
+ */
+typedef struct
+{
+    pi_tustin_t *p_pi;     /* PI instance reset and executed by this SFRA loop. */
+    float *p_sfra_collect; /* Address of the REG_SFRA collect port to clear per frequency. */
+    float *p_pi_out;       /* Visible PI output variable to clear per frequency. */
+} demo_sfra_ctx_t;
+
+/*
+ * Inductor model state.
+ *
+ * current_a is the simulated plant output.
+ * voltage_cmd_z1 is the previous tick's voltage command.  It models the common
+ * one-sample delay between controller calculation and plant response.
+ */
+typedef struct
+{
+    float current_a;      /* Simulated inductor current, in ampere. */
+    float voltage_cmd_z1; /* Previous-sample voltage command used to model one-tick delay. */
+} demo_sfra_inductor_t;
+
+/* Tiny complex type used only by the analytic open-loop PI+L example. */
+typedef struct
+{
+    float real; /* Real component of a small local complex value. */
+    float imag; /* Imaginary component of a small local complex value. */
+} demo_sfra_complex_t;
+
+/*
+ * PI + inductor context.
+ *
+ * The same context type is used by open-loop and closed-loop PI+L examples:
+ * - open-loop uses analytic steady-state response for collect
+ * - closed-loop uses the time-domain inductor state and PI feedback
+ */
+typedef struct
+{
+    pi_tustin_t *p_pi;                /* PI controller object bound to this PI+L scan. */
+    demo_sfra_inductor_t *p_inductor; /* Simulated inductor state bound to this scan. */
+    float *p_sfra_collect;            /* Address of the REG_SFRA collect port. */
+    float *p_voltage;                 /* Visible PI voltage command signal. */
+    float *p_ref;                     /* Visible PI reference signal. */
+    float *p_act;                     /* Visible PI feedback/current signal. */
+} demo_pi_l_sfra_ctx_t;
+
+/* PR context: inject -> PR reference, feedback forced to zero, collect <- PR output. */
+typedef struct
+{
+    pr_t *p_pr;            /* PR controller instance reset and executed by this scan. */
+    float *p_sfra_collect; /* Address of the REG_SFRA collect port for the PR scan. */
+    float *p_pr_out;       /* Visible PR output variable to clear per frequency. */
+} demo_pr_sfra_ctx_t;
+
+typedef enum
+{
+    DEMO_SOGI_OUTPUT_D = 0, /* Select the in-phase SOGI output osg_u[0]. */
+    DEMO_SOGI_OUTPUT_Q = 1, /* Select the quadrature SOGI output osg_qu[0]. */
+} demo_sogi_output_e;
+
+typedef struct
+{
+    sogi_t *p_sogi;                /* SOGI filter instance bound to this scan. */
+    demo_sogi_output_e output_sel; /* Which SOGI output is routed to SFRA collect. */
+    float *p_input;                /* Visible input signal driven by the SFRA inject port. */
+    float *p_sfra_collect;         /* Address of the REG_SFRA collect port. */
+    float *p_output;               /* Visible output signal for debugger/scope inspection. */
+} demo_sogi_sfra_ctx_t;
+
+static pi_tustin_t s_demo_sfra_pi;                    /* Plain PI controller object measured by demo_sfra. */
+static pi_tustin_t s_demo_sfra_pi_l;                  /* PI controller object used by the open-loop PI+L scan. */
+static pi_tustin_t s_demo_sfra_pi_l_closed;           /* PI controller object used by the closed-loop PI+L scan. */
+static pr_t s_demo_sfra_pr;                           /* PR controller object measured by demo_pr_sfra. */
+static sogi_t s_demo_sogi_d;                          /* SOGI instance used when scanning the D/in-phase output. */
+static sogi_t s_demo_sogi_q;                          /* SOGI instance used when scanning the Q/quadrature output. */
+static demo_sfra_inductor_t s_demo_sfra_pi_l_inductor;        /* Open-loop plant state. */
+static demo_sfra_inductor_t s_demo_sfra_pi_l_closed_inductor; /* Closed-loop plant state. */
+static demo_sfra_ctx_t s_demo_sfra_ctx;                       /* Plain PI SFRA context. */
+static demo_pi_l_sfra_ctx_t s_demo_pi_l_sfra_ctx;             /* Open-loop PI+L SFRA context. */
+static demo_pi_l_sfra_ctx_t s_demo_pi_l_closed_sfra_ctx;      /* Closed-loop PI+L SFRA context. */
+static demo_pr_sfra_ctx_t s_demo_pr_sfra_ctx;                 /* PR SFRA context. */
+static demo_sogi_sfra_ctx_t s_demo_sogi_d_sfra_ctx;           /* SOGI D-path SFRA context. */
+static demo_sogi_sfra_ctx_t s_demo_sogi_q_sfra_ctx;           /* SOGI Q-path SFRA context. */
+
+/*
+ * Reset the plain PI scan before each frequency point.
+ *
+ * This guarantees every point starts from the same controller state and avoids
+ * history leaking from the previous frequency into the next one.
+ */
+static void demo_sfra_prepare_freq(void *p_ctx)
+{
+    demo_sfra_ctx_t *p_ctx_sfra = (demo_sfra_ctx_t *)p_ctx; /* Typed PI-only context passed from REG_SFRA(). */
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_pi != NULL)
+    {
+        pi_tustin_reset(p_ctx_sfra->p_pi);
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_pi_out != NULL)
+    {
+        *(p_ctx_sfra->p_pi_out) = 0.0f;
+    }
+}
+
+/*
+ * Reset PI+L open-loop or closed-loop state before each frequency point.
+ *
+ * The same callback is used for both loops because both need the same reset:
+ * - PI internal history is cleared
+ * - inductor current is set to zero
+ * - previous voltage command is set to zero
+ * - SFRA collect and visible model signals are cleared
+ */
+static void demo_pi_l_sfra_prepare_freq(void *p_ctx)
+{
+    demo_pi_l_sfra_ctx_t *p_ctx_sfra = (demo_pi_l_sfra_ctx_t *)p_ctx; /* Typed PI+L context for open-loop or closed-loop reset. */
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_pi != NULL)
+    {
+        pi_tustin_reset(p_ctx_sfra->p_pi);
+    }
+
+    if (p_ctx_sfra->p_inductor != NULL)
+    {
+        p_ctx_sfra->p_inductor->current_a = 0.0f;
+        p_ctx_sfra->p_inductor->voltage_cmd_z1 = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_voltage != NULL)
+    {
+        *(p_ctx_sfra->p_voltage) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_ref != NULL)
+    {
+        *(p_ctx_sfra->p_ref) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_act != NULL)
+    {
+        *(p_ctx_sfra->p_act) = 0.0f;
+    }
+}
+
+/* Reset the PR scan before each frequency point. */
+static void demo_pr_sfra_prepare_freq(void *p_ctx)
+{
+    demo_pr_sfra_ctx_t *p_ctx_sfra = (demo_pr_sfra_ctx_t *)p_ctx; /* Typed PR context passed from REG_SFRA(). */
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_pr != NULL)
+    {
+        pr_reset(p_ctx_sfra->p_pr);
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_pr_out != NULL)
+    {
+        *(p_ctx_sfra->p_pr_out) = 0.0f;
+    }
+}
+
+/*
+ * Reset the SOGI scan before each frequency point.
+ *
+ * SOGI has internal delay states, so reinitializing it per point keeps each
+ * measured point independent.
+ */
+static void demo_sogi_sfra_prepare_freq(void *p_ctx)
+{
+    demo_sogi_sfra_ctx_t *p_ctx_sfra = (demo_sogi_sfra_ctx_t *)p_ctx; /* Typed SOGI context passed from REG_SFRA(). */
+
+    if (p_ctx_sfra == NULL)
+    {
+        return;
+    }
+
+    if (p_ctx_sfra->p_sogi != NULL)
+    {
+        sogi_init(p_ctx_sfra->p_sogi,
+                  DEMO_SFRA_SAMPLE_PERIOD_S,
+                  DEMO_SFRA_SOGI_W,
+                  DEMO_SFRA_SOGI_K,
+                  p_ctx_sfra->p_input);
+    }
+
+    if (p_ctx_sfra->p_input != NULL)
+    {
+        *(p_ctx_sfra->p_input) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_sfra_collect != NULL)
+    {
+        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
+    }
+
+    if (p_ctx_sfra->p_output != NULL)
+    {
+        *(p_ctx_sfra->p_output) = 0.0f;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Section Objects                                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -329,205 +575,54 @@ REG_SFRA(demo_sfra,
          DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
          DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
          DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
-         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+         DEMO_SFRA_FREQ_END_HZ,      /* freq_end_hz: default sweep end. */
+         demo_sfra_prepare_freq,     /* freq_prepare: reset PI state before each sweep point. */
+         &s_demo_sfra_ctx)           /* p_ctx: plain PI SFRA context. */
 
 REG_SFRA(demo_pi_l_sfra,
          1U,                         /* delay_tick: open-loop PI+L collect is generated one sample behind inject. */
          DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
          DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
          DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
-         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+         DEMO_SFRA_FREQ_END_HZ,      /* freq_end_hz: default sweep end. */
+         demo_pi_l_sfra_prepare_freq, /* freq_prepare: reset PI+L state before each sweep point. */
+         &s_demo_pi_l_sfra_ctx)      /* p_ctx: open-loop PI+L SFRA context. */
 
 REG_SFRA(demo_pi_l_closed_sfra,
          1U,                         /* delay_tick: closed-loop current plant has one-tick command/sample delay. */
          DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
          DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
          DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
-         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+         DEMO_SFRA_FREQ_END_HZ,      /* freq_end_hz: default sweep end. */
+         demo_pi_l_sfra_prepare_freq, /* freq_prepare: reset PI+L state before each sweep point. */
+         &s_demo_pi_l_closed_sfra_ctx) /* p_ctx: closed-loop PI+L SFRA context. */
 
 REG_SFRA(demo_pr_sfra,
          0U,                         /* delay_tick: PR-only collect[n] responds to inject[n]. */
          DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
          DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
          DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
-         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+         DEMO_SFRA_FREQ_END_HZ,      /* freq_end_hz: default sweep end. */
+         demo_pr_sfra_prepare_freq,  /* freq_prepare: reset PR state before each sweep point. */
+         &s_demo_pr_sfra_ctx)        /* p_ctx: PR SFRA context. */
 
 REG_SFRA(demo_sogi_d_sfra,
          0U,                         /* delay_tick: SOGI D output is collected in the same sample slot. */
          DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
          DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
          DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
-         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
+         DEMO_SFRA_FREQ_END_HZ,      /* freq_end_hz: default sweep end. */
+         demo_sogi_sfra_prepare_freq, /* freq_prepare: reset SOGI state before each sweep point. */
+         &s_demo_sogi_d_sfra_ctx)    /* p_ctx: SOGI D-path SFRA context. */
 
 REG_SFRA(demo_sogi_q_sfra,
          0U,                         /* delay_tick: SOGI Q output is collected in the same sample slot. */
          DEMO_SFRA_SAMPLE_PERIOD_S,  /* sample_period_s: 10 kHz software ISR period. */
          DEMO_SFRA_INJECT_AMPLITUDE, /* inject_amplitude: default host-visible sine amplitude. */
          DEMO_SFRA_FREQ_START_HZ,    /* freq_start_hz: default sweep start. */
-         DEMO_SFRA_FREQ_END_HZ)      /* freq_end_hz: default sweep end. */
-
-/* -------------------------------------------------------------------------- */
-/* SFRA Model Contexts                                                        */
-/* -------------------------------------------------------------------------- */
-
-/*
- * Context objects bind reusable algorithms to one SFRA loop.
- *
- * The SFRA core itself only knows about two float ports: inject and collect.
- * The demo context records which controller instance, plant state, and local
- * signal variables belong to a particular loop.  Frequency-prepare callbacks
- * receive these contexts so each sweep point can start from a clean state.
- */
-
-/*
- * Plain PI context:
- * inject -> PI reference, feedback forced to zero, collect <- PI output.
- */
-typedef struct
-{
-    pi_tustin_t *p_pi;      /* PI instance reset and executed by this SFRA loop. */
-    float *p_sfra_collect;  /* Address of the REG_SFRA collect port to clear per frequency. */
-    float *p_pi_out;        /* Visible PI output variable to clear per frequency. */
-} demo_sfra_ctx_t;
-
-static pi_tustin_t s_demo_sfra_pi; /* Plain PI controller object measured by demo_sfra. */
-static demo_sfra_ctx_t s_demo_sfra_ctx = {
-    .p_pi = &s_demo_sfra_pi,          /* Controller instance used by the plain PI scan. */
-    .p_sfra_collect = &demo_sfra_collect, /* SFRA output port generated by REG_SFRA(demo_sfra). */
-    .p_pi_out = &s_demo_sfra_pi_out,  /* Demo-visible PI output signal. */
-};
-
-/*
- * Inductor model state.
- *
- * current_a is the simulated plant output.
- * voltage_cmd_z1 is the previous tick's voltage command.  It models the common
- * one-sample delay between controller calculation and plant response.
- */
-typedef struct
-{
-    float current_a;      /* Simulated inductor current, in ampere. */
-    float voltage_cmd_z1; /* Previous-sample voltage command used to model one-tick delay. */
-} demo_sfra_inductor_t;
-
-/* Tiny complex type used only by the analytic open-loop PI+L example. */
-typedef struct
-{
-    float real; /* Real component of a small local complex value. */
-    float imag; /* Imaginary component of a small local complex value. */
-} demo_sfra_complex_t;
-
-/*
- * PI + inductor context.
- *
- * The same context type is used by open-loop and closed-loop PI+L examples:
- * - open-loop uses analytic steady-state response for collect
- * - closed-loop uses the time-domain inductor state and PI feedback
- */
-typedef struct
-{
-    pi_tustin_t *p_pi;                 /* PI controller object bound to this PI+L scan. */
-    demo_sfra_inductor_t *p_inductor;  /* Simulated inductor state bound to this scan. */
-    float *p_sfra_collect;             /* Address of the REG_SFRA collect port. */
-    float *p_voltage;                  /* Visible PI voltage command signal. */
-    float *p_ref;                      /* Visible PI reference signal. */
-    float *p_act;                      /* Visible PI feedback/current signal. */
-} demo_pi_l_sfra_ctx_t;
-
-/*
- * Open-loop PI+L SFRA state.
- *
- * This loop measures the intended open-loop transfer function.  The output is
- * generated as a steady-state response so that the ideal integrators do not
- * inject large zero-state transient terms into the finite DFT window.
- */
-static pi_tustin_t s_demo_sfra_pi_l; /* PI controller object used by the open-loop PI+L scan. */
-static demo_sfra_inductor_t s_demo_sfra_pi_l_inductor = {
-    .current_a = 0.0f,      /* Open-loop model current starts at zero before scanning. */
-    .voltage_cmd_z1 = 0.0f, /* Open-loop delayed command starts at zero before scanning. */
-};
-static demo_pi_l_sfra_ctx_t s_demo_pi_l_sfra_ctx = {
-    .p_pi = &s_demo_sfra_pi_l,                 /* Open-loop PI controller. */
-    .p_inductor = &s_demo_sfra_pi_l_inductor,  /* Open-loop plant state. */
-    .p_sfra_collect = &demo_pi_l_sfra_collect, /* Open-loop SFRA collect port. */
-    .p_voltage = &s_demo_sfra_pi_l_voltage,    /* Open-loop voltage command monitor. */
-    .p_ref = &s_demo_sfra_pi_l_ref,            /* Open-loop reference monitor. */
-    .p_act = &s_demo_sfra_pi_l_act,            /* Open-loop feedback monitor. */
-};
-
-/*
- * Closed-loop PI+L SFRA state.
- *
- * This loop simulates a practical current loop: reference is the SFRA injection
- * signal, feedback is the simulated current, and the PI voltage command reaches
- * the inductor on the next 10 kHz tick.
- */
-static pi_tustin_t s_demo_sfra_pi_l_closed; /* PI controller object used by the closed-loop PI+L scan. */
-static demo_sfra_inductor_t s_demo_sfra_pi_l_closed_inductor = {
-    .current_a = 0.0f,      /* Closed-loop model current starts at zero before scanning. */
-    .voltage_cmd_z1 = 0.0f, /* Closed-loop delayed command starts at zero before scanning. */
-};
-static demo_pi_l_sfra_ctx_t s_demo_pi_l_closed_sfra_ctx = {
-    .p_pi = &s_demo_sfra_pi_l_closed,                 /* Closed-loop PI controller. */
-    .p_inductor = &s_demo_sfra_pi_l_closed_inductor,  /* Closed-loop plant state. */
-    .p_sfra_collect = &demo_pi_l_closed_sfra_collect, /* Closed-loop SFRA collect port. */
-    .p_voltage = &s_demo_sfra_pi_l_closed_voltage,    /* Closed-loop voltage command monitor. */
-    .p_ref = &s_demo_sfra_pi_l_closed_ref,            /* Closed-loop reference monitor. */
-    .p_act = &s_demo_sfra_pi_l_closed_act,            /* Closed-loop feedback/current monitor. */
-};
-
-/* PR context: inject -> PR reference, feedback forced to zero, collect <- PR output. */
-typedef struct
-{
-    pr_t *p_pr;          /* PR controller instance reset and executed by this scan. */
-    float *p_sfra_collect; /* Address of the REG_SFRA collect port for the PR scan. */
-    float *p_pr_out;     /* Visible PR output variable to clear per frequency. */
-} demo_pr_sfra_ctx_t;
-
-static pr_t s_demo_sfra_pr; /* PR controller object measured by demo_pr_sfra. */
-static demo_pr_sfra_ctx_t s_demo_pr_sfra_ctx = {
-    .p_pr = &s_demo_sfra_pr,             /* Controller instance used by the PR scan. */
-    .p_sfra_collect = &demo_pr_sfra_collect, /* SFRA output port generated by REG_SFRA(demo_pr_sfra). */
-    .p_pr_out = &s_demo_sfra_pr_out,     /* Demo-visible PR output signal. */
-};
-
-/*
- * SOGI context.
- *
- * The same ISR helper scans either the D path or Q path by selecting which
- * SOGI output array is copied into the SFRA collect port.
- */
-typedef enum
-{
-    DEMO_SOGI_OUTPUT_D = 0, /* Select the in-phase SOGI output osg_u[0]. */
-    DEMO_SOGI_OUTPUT_Q = 1, /* Select the quadrature SOGI output osg_qu[0]. */
-} demo_sogi_output_e;
-
-typedef struct
-{
-    sogi_t *p_sogi;                 /* SOGI filter instance bound to this scan. */
-    demo_sogi_output_e output_sel;  /* Which SOGI output is routed to SFRA collect. */
-    float *p_input;                 /* Visible input signal driven by the SFRA inject port. */
-    float *p_sfra_collect;          /* Address of the REG_SFRA collect port. */
-    float *p_output;                /* Visible output signal for debugger/scope inspection. */
-} demo_sogi_sfra_ctx_t;
-
-static sogi_t s_demo_sogi_d; /* SOGI instance used when scanning the D/in-phase output. */
-static sogi_t s_demo_sogi_q; /* SOGI instance used when scanning the Q/quadrature output. */
-static demo_sogi_sfra_ctx_t s_demo_sogi_d_sfra_ctx = {
-    .p_sogi = &s_demo_sogi_d,                    /* SOGI object for the D-path scan. */
-    .output_sel = DEMO_SOGI_OUTPUT_D,            /* Route osg_u[0] to collect. */
-    .p_input = &s_demo_sfra_sogi_d_in,           /* D-path input monitor. */
-    .p_sfra_collect = &demo_sogi_d_sfra_collect, /* D-path SFRA collect port. */
-    .p_output = &s_demo_sfra_sogi_d_out,         /* D-path output monitor. */
-};
-static demo_sogi_sfra_ctx_t s_demo_sogi_q_sfra_ctx = {
-    .p_sogi = &s_demo_sogi_q,                    /* SOGI object for the Q-path scan. */
-    .output_sel = DEMO_SOGI_OUTPUT_Q,            /* Route osg_qu[0] to collect. */
-    .p_input = &s_demo_sfra_sogi_q_in,           /* Q-path input monitor. */
-    .p_sfra_collect = &demo_sogi_q_sfra_collect, /* Q-path SFRA collect port. */
-    .p_output = &s_demo_sfra_sogi_q_out,         /* Q-path output monitor. */
-};
+         DEMO_SFRA_FREQ_END_HZ,      /* freq_end_hz: default sweep end. */
+         demo_sogi_sfra_prepare_freq, /* freq_prepare: reset SOGI state before each sweep point. */
+         &s_demo_sogi_q_sfra_ctx)    /* p_ctx: SOGI Q-path SFRA context. */
 
 /* -------------------------------------------------------------------------- */
 /* Local Helpers                                                              */
@@ -553,98 +648,8 @@ static void demo_apply_led_mask(uint8_t led_mask)
 }
 
 /* -------------------------------------------------------------------------- */
-/* SFRA Frequency Prepare And Model Helpers                                   */
+/* SFRA Model Helpers                                                         */
 /* -------------------------------------------------------------------------- */
-
-/*
- * Frequency-prepare callbacks run once before each sweep point.
- *
- * They are not called from the 10 kHz ISR path; they are called by sfra_task()
- * when the SFRA state machine enters SFRA_STATE_PREPARE_FREQ.  This makes them
- * a safe place to clear algorithm state, plant state, and output variables
- * without adding extra work to every sample.
- */
-
-/*
- * Reset the plain PI scan before each frequency point.
- *
- * This guarantees every point starts from the same controller state and avoids
- * history leaking from the previous frequency into the next one.
- */
-static void demo_sfra_prepare_freq(void *p_ctx)
-{
-    demo_sfra_ctx_t *p_ctx_sfra = (demo_sfra_ctx_t *)p_ctx; /* Typed PI-only context passed from sfra_set_freq_prepare_cb(). */
-
-    if (p_ctx_sfra == NULL)
-    {
-        return;
-    }
-
-    if (p_ctx_sfra->p_pi != NULL)
-    {
-        pi_tustin_reset(p_ctx_sfra->p_pi);
-    }
-
-    if (p_ctx_sfra->p_sfra_collect != NULL)
-    {
-        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_pi_out != NULL)
-    {
-        *(p_ctx_sfra->p_pi_out) = 0.0f;
-    }
-}
-
-/*
- * Reset PI+L open-loop or closed-loop state before each frequency point.
- *
- * The same callback is used for both loops because both need the same reset:
- * - PI internal history is cleared
- * - inductor current is set to zero
- * - previous voltage command is set to zero
- * - SFRA collect and visible model signals are cleared
- */
-static void demo_pi_l_sfra_prepare_freq(void *p_ctx)
-{
-    demo_pi_l_sfra_ctx_t *p_ctx_sfra = (demo_pi_l_sfra_ctx_t *)p_ctx; /* Typed PI+L context for open-loop or closed-loop reset. */
-
-    if (p_ctx_sfra == NULL)
-    {
-        return;
-    }
-
-    if (p_ctx_sfra->p_pi != NULL)
-    {
-        pi_tustin_reset(p_ctx_sfra->p_pi);
-    }
-
-    if (p_ctx_sfra->p_inductor != NULL)
-    {
-        p_ctx_sfra->p_inductor->current_a = 0.0f;
-        p_ctx_sfra->p_inductor->voltage_cmd_z1 = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_sfra_collect != NULL)
-    {
-        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_voltage != NULL)
-    {
-        *(p_ctx_sfra->p_voltage) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_ref != NULL)
-    {
-        *(p_ctx_sfra->p_ref) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_act != NULL)
-    {
-        *(p_ctx_sfra->p_act) = 0.0f;
-    }
-}
 
 /*
  * One-tick delayed inductor update.
@@ -756,72 +761,6 @@ static demo_sfra_complex_t demo_pi_l_sfra_open_loop_response(const pi_tustin_t *
     return demo_sfra_complex_mul(pi_response, inductor_response);
 }
 
-/* Reset the PR scan before each frequency point. */
-static void demo_pr_sfra_prepare_freq(void *p_ctx)
-{
-    demo_pr_sfra_ctx_t *p_ctx_sfra = (demo_pr_sfra_ctx_t *)p_ctx; /* Typed PR context passed from sfra_set_freq_prepare_cb(). */
-
-    if (p_ctx_sfra == NULL)
-    {
-        return;
-    }
-
-    if (p_ctx_sfra->p_pr != NULL)
-    {
-        pr_reset(p_ctx_sfra->p_pr);
-    }
-
-    if (p_ctx_sfra->p_sfra_collect != NULL)
-    {
-        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_pr_out != NULL)
-    {
-        *(p_ctx_sfra->p_pr_out) = 0.0f;
-    }
-}
-
-/*
- * Reset the SOGI scan before each frequency point.
- *
- * SOGI has internal delay states, so reinitializing it per point keeps each
- * measured point independent.
- */
-static void demo_sogi_sfra_prepare_freq(void *p_ctx)
-{
-    demo_sogi_sfra_ctx_t *p_ctx_sfra = (demo_sogi_sfra_ctx_t *)p_ctx; /* Typed SOGI context passed from sfra_set_freq_prepare_cb(). */
-
-    if (p_ctx_sfra == NULL)
-    {
-        return;
-    }
-
-    if (p_ctx_sfra->p_sogi != NULL)
-    {
-        sogi_init(p_ctx_sfra->p_sogi,
-                  DEMO_SFRA_SAMPLE_PERIOD_S,
-                  DEMO_SFRA_SOGI_W,
-                  DEMO_SFRA_SOGI_K,
-                  p_ctx_sfra->p_input);
-    }
-
-    if (p_ctx_sfra->p_input != NULL)
-    {
-        *(p_ctx_sfra->p_input) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_sfra_collect != NULL)
-    {
-        *(p_ctx_sfra->p_sfra_collect) = 0.0f;
-    }
-
-    if (p_ctx_sfra->p_output != NULL)
-    {
-        *(p_ctx_sfra->p_output) = 0.0f;
-    }
-}
-
 /* -------------------------------------------------------------------------- */
 /* Initialization                                                             */
 /* -------------------------------------------------------------------------- */
@@ -891,9 +830,47 @@ static void demo_sfra_model_init(void)
      * This init item binds controller/plant objects to SFRA loops.
      *
      * REG_SFRA creates the sfra_t objects and their inject/collect ports.  This
-     * function initializes the actual algorithm objects and attaches the
-     * per-frequency reset callbacks.
+     * function initializes the actual algorithm objects and fills the context
+     * objects passed to the per-frequency reset callbacks.
      */
+    s_demo_sfra_ctx.p_pi = &s_demo_sfra_pi;
+    s_demo_sfra_ctx.p_sfra_collect = &demo_sfra_collect;
+    s_demo_sfra_ctx.p_pi_out = &s_demo_sfra_pi_out;
+
+    s_demo_sfra_pi_l_inductor.current_a = 0.0f;
+    s_demo_sfra_pi_l_inductor.voltage_cmd_z1 = 0.0f;
+    s_demo_pi_l_sfra_ctx.p_pi = &s_demo_sfra_pi_l;
+    s_demo_pi_l_sfra_ctx.p_inductor = &s_demo_sfra_pi_l_inductor;
+    s_demo_pi_l_sfra_ctx.p_sfra_collect = &demo_pi_l_sfra_collect;
+    s_demo_pi_l_sfra_ctx.p_voltage = &s_demo_sfra_pi_l_voltage;
+    s_demo_pi_l_sfra_ctx.p_ref = &s_demo_sfra_pi_l_ref;
+    s_demo_pi_l_sfra_ctx.p_act = &s_demo_sfra_pi_l_act;
+
+    s_demo_sfra_pi_l_closed_inductor.current_a = 0.0f;
+    s_demo_sfra_pi_l_closed_inductor.voltage_cmd_z1 = 0.0f;
+    s_demo_pi_l_closed_sfra_ctx.p_pi = &s_demo_sfra_pi_l_closed;
+    s_demo_pi_l_closed_sfra_ctx.p_inductor = &s_demo_sfra_pi_l_closed_inductor;
+    s_demo_pi_l_closed_sfra_ctx.p_sfra_collect = &demo_pi_l_closed_sfra_collect;
+    s_demo_pi_l_closed_sfra_ctx.p_voltage = &s_demo_sfra_pi_l_closed_voltage;
+    s_demo_pi_l_closed_sfra_ctx.p_ref = &s_demo_sfra_pi_l_closed_ref;
+    s_demo_pi_l_closed_sfra_ctx.p_act = &s_demo_sfra_pi_l_closed_act;
+
+    s_demo_pr_sfra_ctx.p_pr = &s_demo_sfra_pr;
+    s_demo_pr_sfra_ctx.p_sfra_collect = &demo_pr_sfra_collect;
+    s_demo_pr_sfra_ctx.p_pr_out = &s_demo_sfra_pr_out;
+
+    s_demo_sogi_d_sfra_ctx.p_sogi = &s_demo_sogi_d;
+    s_demo_sogi_d_sfra_ctx.output_sel = DEMO_SOGI_OUTPUT_D;
+    s_demo_sogi_d_sfra_ctx.p_input = &s_demo_sfra_sogi_d_in;
+    s_demo_sogi_d_sfra_ctx.p_sfra_collect = &demo_sogi_d_sfra_collect;
+    s_demo_sogi_d_sfra_ctx.p_output = &s_demo_sfra_sogi_d_out;
+
+    s_demo_sogi_q_sfra_ctx.p_sogi = &s_demo_sogi_q;
+    s_demo_sogi_q_sfra_ctx.output_sel = DEMO_SOGI_OUTPUT_Q;
+    s_demo_sogi_q_sfra_ctx.p_input = &s_demo_sfra_sogi_q_in;
+    s_demo_sogi_q_sfra_ctx.p_sfra_collect = &demo_sogi_q_sfra_collect;
+    s_demo_sogi_q_sfra_ctx.p_output = &s_demo_sfra_sogi_q_out;
+
     (void)pi_tustin_init(&s_demo_sfra_pi,
                          DEMO_SFRA_PI_KP,
                          DEMO_SFRA_PI_KI,
@@ -902,9 +879,6 @@ static void demo_sfra_model_init(void)
                          DEMO_SFRA_PI_DN_LMT,
                          &s_demo_sfra_pi_ref,
                          &s_demo_sfra_pi_act);
-    (void)sfra_set_freq_prepare_cb(&demo_sfra,
-                                   demo_sfra_prepare_freq,
-                                   &s_demo_sfra_ctx);
 
     (void)pi_tustin_init(&s_demo_sfra_pi_l,
                          DEMO_SFRA_PI_L_KP,
@@ -914,9 +888,6 @@ static void demo_sfra_model_init(void)
                          DEMO_SFRA_PI_L_DN_LMT,
                          &s_demo_sfra_pi_l_ref,
                          &s_demo_sfra_pi_l_act);
-    (void)sfra_set_freq_prepare_cb(&demo_pi_l_sfra,
-                                   demo_pi_l_sfra_prepare_freq,
-                                   &s_demo_pi_l_sfra_ctx);
 
     (void)pi_tustin_init(&s_demo_sfra_pi_l_closed,
                          DEMO_SFRA_PI_L_KP,
@@ -926,9 +897,6 @@ static void demo_sfra_model_init(void)
                          DEMO_SFRA_PI_L_DN_LMT,
                          &s_demo_sfra_pi_l_closed_ref,
                          &s_demo_sfra_pi_l_closed_act);
-    (void)sfra_set_freq_prepare_cb(&demo_pi_l_closed_sfra,
-                                   demo_pi_l_sfra_prepare_freq,
-                                   &s_demo_pi_l_closed_sfra_ctx);
 
     (void)pr_init(&s_demo_sfra_pr,
                   DEMO_SFRA_PR_KP,
@@ -940,9 +908,6 @@ static void demo_sfra_model_init(void)
                   DEMO_SFRA_PR_DN_LMT,
                   &s_demo_sfra_pr_ref,
                   &s_demo_sfra_pr_act);
-    (void)sfra_set_freq_prepare_cb(&demo_pr_sfra,
-                                   demo_pr_sfra_prepare_freq,
-                                   &s_demo_pr_sfra_ctx);
 
     sogi_init(&s_demo_sogi_d,
               DEMO_SFRA_SAMPLE_PERIOD_S,
@@ -954,12 +919,6 @@ static void demo_sfra_model_init(void)
               DEMO_SFRA_SOGI_W,
               DEMO_SFRA_SOGI_K,
               &s_demo_sfra_sogi_q_in);
-    (void)sfra_set_freq_prepare_cb(&demo_sogi_d_sfra,
-                                   demo_sogi_sfra_prepare_freq,
-                                   &s_demo_sogi_d_sfra_ctx);
-    (void)sfra_set_freq_prepare_cb(&demo_sogi_q_sfra,
-                                   demo_sogi_sfra_prepare_freq,
-                                   &s_demo_sogi_q_sfra_ctx);
 }
 
 /* -------------------------------------------------------------------------- */

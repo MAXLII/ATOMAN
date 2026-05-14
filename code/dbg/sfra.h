@@ -30,61 +30,45 @@
 #ifndef __SFRA_H
 #define __SFRA_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "dft.h"
 #include "section.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
-#define SFRA_FREQ_TABLE_SIZE          (300U)
-#define SFRA_DEFAULT_SETTLE_CYCLES    (2.0f)
-#define SFRA_DEFAULT_COLLECT_CYCLES   (5.0f)
-#define SFRA_MAX_INJECT_DELAY_TICK    (2U)
-#define SFRA_SAMPLE_BUFFER_SIZE       (32U)
+#define SFRA_FREQ_TABLE_SIZE (300U)
+#define SFRA_DEFAULT_SETTLE_CYCLES (2.0f)
+#define SFRA_DEFAULT_COLLECT_CYCLES (5.0f)
+#define SFRA_MAX_INJECT_DELAY_TICK (2U)
+#define SFRA_SAMPLE_BUFFER_SIZE (32U)
 
-#define SFRA_REG(name, delay_tick, ts, inject_amp, freq_start, freq_end)           \
-    sfra_t name = {                                                               \
-        .p_name = #name,                                                          \
-    };                                                                            \
-    float name##_inject;                                                          \
-    float name##_collect;                                                         \
-    static inline sfra_status_t name##_reg_init(void)                             \
-    {                                                                             \
-        sfra_status_t status;                                                     \
-                                                                                  \
-        name##_inject = 0.0f;                                                     \
-        name##_collect = 0.0f;                                                    \
-        status = sfra_init(&(name),                                               \
-                           &(name##_inject),                                      \
-                           &(name##_collect),                                     \
-                           1.0f / (ts),                                           \
-                           (inject_amp),                                          \
-                           (freq_start),                                          \
-                           1.1f);                                                 \
-        if (status != SFRA_STATUS_OK)                                             \
-        {                                                                         \
-            return status;                                                        \
-        }                                                                         \
-                                                                                  \
-        status = sfra_set_inject_delay(&(name), (delay_tick));                    \
-        if (status != SFRA_STATUS_OK)                                             \
-        {                                                                         \
-            return status;                                                        \
-        }                                                                         \
-                                                                                  \
-        return sfra_set_sweep_range(&(name), (freq_start), (freq_end));           \
-    }
-
-#define REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end)           \
-    SFRA_REG(name, delay_tick, ts, inject_amp, freq_start, freq_end)               \
-    static void name##_section_init(void)                                          \
-    {                                                                             \
-        (void)name##_reg_init();                                                   \
-    }                                                                             \
-    REG_INIT(0, name##_section_init)                                               \
+#define REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, \
+                 prepare_cb, prepare_ctx)                                \
+    float name##_inject;                                                 \
+    float name##_collect;                                                \
+    sfra_t name = {                                                      \
+        .port = {                                                        \
+            .p_inject = &(name##_inject),                                \
+            .p_collect = &(name##_collect),                              \
+        },                                                               \
+        .cfg = {                                                         \
+            .isr_freq_hz = 1.0f / (ts),                                  \
+            .sample_period_s = (ts),                                     \
+            .inject_amplitude = (inject_amp),                            \
+            .freq_start_hz = (freq_start),                               \
+            .freq_end_hz = (freq_end),                                   \
+            .freq_step_mul = 1.0f,                                       \
+            .settle_cycle_count = SFRA_DEFAULT_SETTLE_CYCLES,            \
+            .collect_cycle_count = SFRA_DEFAULT_COLLECT_CYCLES,          \
+            .inject_delay_tick = (delay_tick),                           \
+            .freq_length = SFRA_FREQ_TABLE_SIZE,                         \
+        },                                                               \
+        .cb = {                                                          \
+            .p_ctx = (prepare_ctx),                                      \
+            .freq_prepare = (prepare_cb),                                \
+        },                                                               \
+        .p_name = #name,                                                 \
+    };                                                                   \
     REG_SECTION_FUNC(SECTION_SFRA, name)
 
 typedef enum
@@ -294,15 +278,8 @@ sfra_status_t sfra_set_sweep_range(sfra_t *sfra,
                                    float freq_start_hz,
                                    float freq_end_hz);
 sfra_status_t sfra_set_inject_delay(sfra_t *sfra, uint16_t inject_delay_tick);
-sfra_status_t sfra_set_freq_prepare_cb(sfra_t *sfra,
-                                       sfra_freq_prepare_cb_t freq_prepare,
-                                       void *p_ctx);
 void sfra_isr_pre_sample(sfra_t *sfra);
 void sfra_isr_post_sample(sfra_t *sfra);
 sfra_status_t sfra_task(sfra_t *sfra);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __SFRA_H */

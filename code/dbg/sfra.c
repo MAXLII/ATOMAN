@@ -30,6 +30,8 @@
 #include "sfra.h"
 #include "my_math.h"
 
+#include <stddef.h>
+
 #define SFRA_TWO_PI       (6.28318530717958647692f)
 #define SFRA_RAD_TO_DEG   (57.2957795130823208768f)
 #define SFRA_DIV_MIN_ABS  (1.0e-12f)
@@ -42,12 +44,12 @@ typedef struct
 
 static sfra_status_t sfra_validate(const sfra_t *sfra)
 {
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return SFRA_STATUS_NULL;
     }
 
-    if ((sfra->port.p_inject == 0) || (sfra->port.p_collect == 0))
+    if ((sfra->port.p_inject == NULL) || (sfra->port.p_collect == NULL))
     {
         return SFRA_STATUS_NULL;
     }
@@ -57,8 +59,6 @@ static sfra_status_t sfra_validate(const sfra_t *sfra)
         (sfra->cfg.inject_amplitude <= 0.0f) ||
         (sfra->cfg.freq_start_hz <= 0.0f) ||
         (sfra->cfg.freq_end_hz < sfra->cfg.freq_start_hz) ||
-        (((sfra->cfg.freq_length > 1U) && (sfra->cfg.freq_step_mul <= 1.0f)) ||
-         ((sfra->cfg.freq_length == 1U) && (sfra->cfg.freq_step_mul != 1.0f))) ||
         (sfra->cfg.settle_cycle_count <= 0.0f) ||
         (sfra->cfg.collect_cycle_count <= 0.0f) ||
         (sfra->cfg.freq_length == 0U) ||
@@ -84,6 +84,20 @@ static uint32_t sfra_calc_sample_size(float cycle_count,
     return (uint32_t)(sample_count + 0.5f);
 }
 
+static void sfra_update_freq_step(sfra_t *sfra)
+{
+    if (sfra->cfg.freq_length <= 1U)
+    {
+        sfra->cfg.freq_step_mul = 1.0f;
+    }
+    else
+    {
+        sfra->cfg.freq_step_mul =
+            powf(sfra->cfg.freq_end_hz / sfra->cfg.freq_start_hz,
+                 1.0f / (float)(sfra->cfg.freq_length - 1U));
+    }
+}
+
 static void sfra_update_output(sfra_t *sfra, sfra_status_t status)
 {
     sfra->output.current_freq_hz = sfra->isr.current_freq_hz;
@@ -96,7 +110,7 @@ static void sfra_update_output(sfra_t *sfra, sfra_status_t status)
 
 static void sfra_sample_buffer_clear(sfra_t *sfra)
 {
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return;
     }
@@ -113,7 +127,7 @@ static inline void sfra_sample_buffer_push(sfra_t *sfra,
 {
     uint8_t write_index;
 
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return;
     }
@@ -137,7 +151,9 @@ static uint8_t sfra_sample_buffer_pop(sfra_t *sfra,
 {
     uint8_t read_index;
 
-    if ((sfra == 0) || (p_inject_sample == 0) || (p_collect_sample == 0))
+    if ((sfra == NULL) ||
+        (p_inject_sample == NULL) ||
+        (p_collect_sample == NULL))
     {
         return 0U;
     }
@@ -160,6 +176,8 @@ static void sfra_prepare_current_freq(sfra_t *sfra)
 {
     uint16_t i;
     float freq_hz;
+
+    sfra_update_freq_step(sfra);
 
     freq_hz = sfra->cfg.freq_start_hz;
     for (i = 0U; i < sfra->task.freq_index; i++)
@@ -185,18 +203,18 @@ static void sfra_prepare_current_freq(sfra_t *sfra)
     sfra_sample_buffer_clear(sfra);
     *(sfra->port.p_inject) = 0.0f;
 
-    (void)dft_init(&sfra->isr.dft.inject_dft,
-                   &sfra->isr.dft.inject_sample,
-                   &sfra->isr.dft.dft_start,
-                   freq_hz,
-                   sfra->cfg.sample_period_s);
+    dft_init(&sfra->isr.dft.inject_dft,
+             &sfra->isr.dft.inject_sample,
+             &sfra->isr.dft.dft_start,
+             freq_hz,
+             sfra->cfg.sample_period_s);
     sfra->isr.dft.inject_dft.cfg.valid_cycle_count = sfra->cfg.collect_cycle_count;
 
-    (void)dft_init(&sfra->isr.dft.collect_dft,
-                   &sfra->isr.dft.collect_sample,
-                   &sfra->isr.dft.dft_start,
-                   freq_hz,
-                   sfra->cfg.sample_period_s);
+    dft_init(&sfra->isr.dft.collect_dft,
+             &sfra->isr.dft.collect_sample,
+             &sfra->isr.dft.dft_start,
+             freq_hz,
+             sfra->cfg.sample_period_s);
     sfra->isr.dft.collect_dft.cfg.valid_cycle_count = sfra->cfg.collect_cycle_count;
 }
 
@@ -255,7 +273,7 @@ sfra_status_t sfra_init(sfra_t *sfra,
 {
     sfra_status_t status;
 
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return SFRA_STATUS_NULL;
     }
@@ -272,6 +290,8 @@ sfra_status_t sfra_init(sfra_t *sfra,
     sfra->cfg.collect_cycle_count = SFRA_DEFAULT_COLLECT_CYCLES;
     sfra->cfg.inject_delay_tick = 0U;
     sfra->cfg.freq_length = SFRA_FREQ_TABLE_SIZE;
+    sfra->cb.freq_prepare = NULL;
+    sfra->cb.p_ctx = NULL;
 
     status = sfra_reset(sfra);
     if (status != SFRA_STATUS_OK)
@@ -287,7 +307,7 @@ sfra_status_t sfra_init(sfra_t *sfra,
 
 sfra_status_t sfra_reset(sfra_t *sfra)
 {
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return SFRA_STATUS_NULL;
     }
@@ -306,7 +326,7 @@ sfra_status_t sfra_reset(sfra_t *sfra)
     sfra->isr.dft.dft_start = 0U;
     sfra_sample_buffer_clear(sfra);
 
-    if (sfra->port.p_inject != 0)
+    if (sfra->port.p_inject != NULL)
     {
         *(sfra->port.p_inject) = 0.0f;
     }
@@ -316,8 +336,6 @@ sfra_status_t sfra_reset(sfra_t *sfra)
     sfra->task.active = 0U;
     sfra->task.done = 0U;
     sfra->task.status = SFRA_STATUS_OK;
-    sfra->cb.freq_prepare = 0;
-    sfra->cb.p_ctx = 0;
     sfra->output.point_index = 0U;
     sfra->output.point_count = 0U;
     sfra->output.mag = 0.0f;
@@ -336,7 +354,7 @@ sfra_status_t sfra_start(sfra_t *sfra)
     status = sfra_validate(sfra);
     if (status != SFRA_STATUS_OK)
     {
-        if (sfra != 0)
+        if (sfra != NULL)
         {
             sfra_update_output(sfra, status);
         }
@@ -362,7 +380,7 @@ sfra_status_t sfra_start(sfra_t *sfra)
 
 sfra_status_t sfra_stop(sfra_t *sfra)
 {
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return SFRA_STATUS_NULL;
     }
@@ -377,7 +395,7 @@ sfra_status_t sfra_stop(sfra_t *sfra)
     sfra->isr.injection_delay[0] = 0.0f;
     sfra->isr.injection_delay[1] = 0.0f;
 
-    if (sfra->port.p_inject != 0)
+    if (sfra->port.p_inject != NULL)
     {
         *(sfra->port.p_inject) = 0.0f;
     }
@@ -391,7 +409,7 @@ sfra_status_t sfra_set_sweep_range(sfra_t *sfra,
                                    float freq_start_hz,
                                    float freq_end_hz)
 {
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return SFRA_STATUS_NULL;
     }
@@ -407,16 +425,7 @@ sfra_status_t sfra_set_sweep_range(sfra_t *sfra,
     sfra->cfg.freq_end_hz = freq_end_hz;
     sfra->cfg.freq_length = SFRA_FREQ_TABLE_SIZE;
 
-    if (sfra->cfg.freq_length <= 1U)
-    {
-        sfra->cfg.freq_step_mul = 1.0f;
-    }
-    else
-    {
-        sfra->cfg.freq_step_mul =
-            powf(freq_end_hz / freq_start_hz,
-                 1.0f / (float)(sfra->cfg.freq_length - 1U));
-    }
+    sfra_update_freq_step(sfra);
 
     sfra_update_output(sfra, SFRA_STATUS_OK);
 
@@ -425,7 +434,7 @@ sfra_status_t sfra_set_sweep_range(sfra_t *sfra,
 
 sfra_status_t sfra_set_inject_delay(sfra_t *sfra, uint16_t inject_delay_tick)
 {
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return SFRA_STATUS_NULL;
     }
@@ -444,25 +453,9 @@ sfra_status_t sfra_set_inject_delay(sfra_t *sfra, uint16_t inject_delay_tick)
     return SFRA_STATUS_OK;
 }
 
-sfra_status_t sfra_set_freq_prepare_cb(sfra_t *sfra,
-                                       sfra_freq_prepare_cb_t freq_prepare,
-                                       void *p_ctx)
-{
-    if (sfra == 0)
-    {
-        return SFRA_STATUS_NULL;
-    }
-
-    sfra->cb.freq_prepare = freq_prepare;
-    sfra->cb.p_ctx = p_ctx;
-    sfra_update_output(sfra, SFRA_STATUS_OK);
-
-    return SFRA_STATUS_OK;
-}
-
 void sfra_isr_pre_sample(sfra_t *sfra)
 {
-    if ((sfra == 0) || (sfra->port.p_inject == 0))
+    if ((sfra == NULL) || (sfra->port.p_inject == NULL))
     {
         return;
     }
@@ -485,7 +478,7 @@ void sfra_isr_post_sample(sfra_t *sfra)
 {
     float inject_sample;
 
-    if ((sfra == 0) || (sfra->port.p_collect == 0))
+    if ((sfra == NULL) || (sfra->port.p_collect == NULL))
     {
         return;
     }
@@ -525,7 +518,7 @@ static void sfra_task_collect_samples(sfra_t *sfra)
     float inject_sample;
     float collect_sample;
 
-    if (sfra == 0)
+    if (sfra == NULL)
     {
         return;
     }
@@ -536,8 +529,8 @@ static void sfra_task_collect_samples(sfra_t *sfra)
     {
         sfra->isr.dft.inject_sample = inject_sample;
         sfra->isr.dft.collect_sample = collect_sample;
-        (void)dft_cal(&sfra->isr.dft.inject_dft);
-        (void)dft_cal(&sfra->isr.dft.collect_dft);
+        dft_cal(&sfra->isr.dft.inject_dft);
+        dft_cal(&sfra->isr.dft.collect_dft);
 
         if ((sfra->isr.dft.inject_dft.output.valid != 0U) &&
             (sfra->isr.dft.collect_dft.output.valid != 0U))
@@ -554,7 +547,7 @@ sfra_status_t sfra_task(sfra_t *sfra)
     status = sfra_validate(sfra);
     if (status != SFRA_STATUS_OK)
     {
-        if (sfra != 0)
+        if (sfra != NULL)
         {
             sfra_update_output(sfra, status);
         }
@@ -569,7 +562,7 @@ sfra_status_t sfra_task(sfra_t *sfra)
 
     case SFRA_STATE_PREPARE_FREQ:
         sfra_prepare_current_freq(sfra);
-        if (sfra->cb.freq_prepare != 0)
+        if (sfra->cb.freq_prepare != NULL)
         {
             sfra->cb.freq_prepare(sfra->cb.p_ctx);
         }
@@ -617,7 +610,7 @@ sfra_status_t sfra_task(sfra_t *sfra)
         break;
 
     default:
-        (void)sfra_reset(sfra);
+        sfra_reset(sfra);
         status = SFRA_STATUS_INVALID_PARAM;
         break;
     }
