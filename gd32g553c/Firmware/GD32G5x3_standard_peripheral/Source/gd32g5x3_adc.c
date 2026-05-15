@@ -594,7 +594,7 @@ void adc_inserted_channel_config(uint32_t adc_periph, uint8_t rank, uint8_t adc_
 
     /* get inserted sequence length */
     inserted_length = (uint8_t)GET_BITS(ADC_ISQ0(adc_periph), 20U, 21U);
-    rankx = ADC_OFFSET_LENGTH - inserted_length + rank;
+    rankx = (uint8_t)((uint32_t)ADC_OFFSET_LENGTH - (uint32_t)inserted_length + (uint32_t)rank);
 
     /* configure ADC inserted sequence */
     if(rankx < ADC_INSERTED_CHANNEL_RANK_ONE){

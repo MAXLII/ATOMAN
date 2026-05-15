@@ -271,8 +271,8 @@ static void shell_data_report_act(void)
 
             /* Convert the current shell entry into one compact report frame. */
             shell_report_list_t shell_report_list;
-            shell_report_list.name_len = shell_report_ctx.p_shell->p_name_size;
-            shell_report_list.type = shell_report_ctx.p_shell->type;
+            shell_report_list.name_len = (uint8_t)shell_report_ctx.p_shell->p_name_size;
+            shell_report_list.type = (uint8_t)shell_report_ctx.p_shell->type;
             shell_report_list.data = *(uint32_t *)shell_report_ctx.p_shell->p_var;
             shell_report_list.data_max = *(uint32_t *)shell_report_ctx.p_shell->p_max;
             shell_report_list.data_min = *(uint32_t *)shell_report_ctx.p_shell->p_min;
@@ -286,7 +286,7 @@ static void shell_data_report_act(void)
             packform.cmd_set = CMD_SET_SHELL_REPORT_LIST;
             packform.cmd_word = CMD_WORD_SHELL_REPORT_LIST;
             packform.is_ack = 0u;
-            packform.len = sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + shell_report_ctx.p_shell->p_name_size;
+            packform.len = (uint16_t)(sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + shell_report_ctx.p_shell->p_name_size);
             packform.p_data = (uint8_t *)&shell_report_list;
             comm_send_data(&packform, shell_report_ctx.my_printf);
             shell_report_ctx.p_shell = shell_report_ctx.p_shell->p_next;
@@ -321,8 +321,8 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
             p->func(my_printf);
         }
         shell_read_data_ret_t shell_read_data_ret = {0};
-        shell_read_data_ret.name_len = p->p_name_size;
-        shell_read_data_ret.type = p->type;
+        shell_read_data_ret.name_len = (uint8_t)p->p_name_size;
+        shell_read_data_ret.type = (uint8_t)p->type;
         shell_read_data_ret.data = *(uint32_t *)p->p_var;
         memcpy(shell_read_data_ret.name, p->p_name, p->p_name_size);
 
@@ -334,7 +334,7 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         packform.cmd_set = CMD_SET_SHELL_READ_DATA;
         packform.cmd_word = CMD_WORD_SHELL_READ_DATA;
         packform.is_ack = 1u;
-        packform.len = sizeof(shell_read_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size;
+        packform.len = (uint16_t)(sizeof(shell_read_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
         packform.p_data = (uint8_t *)&shell_read_data_ret;
 
         comm_send_data(&packform, my_printf);
@@ -439,8 +439,8 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         shell_write_data_ret.data_max = *(uint32_t *)p->p_max;
         shell_write_data_ret.data_min = *(uint32_t *)p->p_min;
         memcpy(shell_write_data_ret.name, p->p_name, p->p_name_size);
-        shell_write_data_ret.name_len = p->p_name_size;
-        shell_write_data_ret.type = p->type;
+        shell_write_data_ret.name_len = (uint8_t)p->p_name_size;
+        shell_write_data_ret.type = (uint8_t)p->type;
 
         section_packform_t packform = {0};
         packform.src = p_pack->dst;
@@ -450,7 +450,7 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         packform.cmd_set = CMD_SET_SHELL_WRITE_DATA;
         packform.cmd_word = CMD_WORD_SHELL_WRITE_DATA;
         packform.is_ack = 1u;
-        packform.len = sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size;
+        packform.len = (uint16_t)(sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
         packform.p_data = (uint8_t *)&shell_write_data_ret;
 
         comm_send_data(&packform, my_printf);
@@ -640,8 +640,8 @@ static void shell_wave_report_task(void)
             {
                 /* Bit2-selected shell variables are streamed one by one. */
                 shell_wave_param.data = (uint32_t)*(uint32_t *)p->p_var;
-                shell_wave_param.name_len = p->p_name_size;
-                shell_wave_param.type = p->type;
+                shell_wave_param.name_len = (uint8_t)p->p_name_size;
+                shell_wave_param.type = (uint8_t)p->type;
                 memcpy((uint8_t *)shell_wave_param.name, (uint8_t *)p->p_name, shell_wave_param.name_len);
                 p = p->p_next;
                 shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
@@ -676,4 +676,3 @@ static void shell_wave_report_task(void)
 }
 
 REG_TASK_MS(1, shell_wave_report_task)
-

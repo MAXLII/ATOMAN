@@ -22,6 +22,26 @@ extern int errno;
 extern int __io_putchar(int ch) __attribute__((weak));
 extern int __io_getchar(void) __attribute__((weak));
 
+caddr_t _sbrk(int incr);
+int _gettimeofday(struct timeval *tp, struct timezone *tzp);
+void initialise_monitor_handles(void);
+int _getpid(void);
+int _kill(int pid, int sig);
+int _write(int file, char *ptr, int len);
+int _close(int file);
+int _fstat(int file, struct stat *st);
+int _isatty(int file);
+int _lseek(int file, int ptr, int dir);
+int _read(int file, char *ptr, int len);
+int _open(char *path, int flags, ...);
+int _wait(int *status);
+int _unlink(char *name);
+int _times(struct tms *buf);
+int _stat(char *file, struct stat *st);
+int _link(char *old, char *new);
+int _fork(void);
+int _execve(char *name, char **argv, char **env);
+
 caddr_t _sbrk(int incr)
 {
   extern char _end[];
@@ -38,11 +58,11 @@ caddr_t _sbrk(int incr)
 /*
  * _gettimeofday primitive (Stub function)
  * */
-int _gettimeofday (struct timeval * tp, struct timezone * tzp)
+int _gettimeofday(struct timeval *tp, struct timezone *tzp)
 {
 	(void)tp;
   /* Return fixed data for the timezone.  */
-  if (tzp)
+  if (tzp != NULL)
     {
       tzp->tz_minuteswest = 0;
       tzp->tz_dsttime = 0;
@@ -50,7 +70,7 @@ int _gettimeofday (struct timeval * tp, struct timezone * tzp)
 
   return 0;
 }
-void initialise_monitor_handles()
+void initialise_monitor_handles(void)
 {
 }
 
@@ -120,7 +140,7 @@ int _read(int file, char *ptr, int len)
 
 	for (DataIdx = 0; DataIdx < len; DataIdx++)
 	{
-	  *ptr++ = __io_getchar();
+	  *ptr++ = (char)__io_getchar();
 	}
 
    return len;
