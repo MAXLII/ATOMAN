@@ -216,15 +216,20 @@ C_INCLUDES =  \
 
 
 # compile gcc flags
-WARN_FLAGS = -Wall -Wextra -Werror -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wundef
+C_STANDARD_FLAGS = -std=c11 -pedantic
+COMMON_SECTION_FLAGS = -fdata-sections -ffunction-sections
+COMMON_WARN_FLAGS = -Wall -Wextra -Werror -Wpedantic
+MISRA_WARN_FLAGS = -Wconversion -Wsign-conversion -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wundef
+FP_WARN_FLAGS = -Werror=double-promotion -Wdouble-promotion
 
-ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -Wextra -Wpedantic -Werror -fdata-sections -ffunction-sections
+WARN_FLAGS = $(COMMON_WARN_FLAGS) $(MISRA_WARN_FLAGS) $(FP_WARN_FLAGS)
+AS_WARN_FLAGS = $(COMMON_WARN_FLAGS)
 
-CFLAGS += -std=c11 -pedantic
+ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) $(AS_WARN_FLAGS) $(COMMON_SECTION_FLAGS)
 
-CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) $(WARN_FLAGS) -fdata-sections -ffunction-sections
+CFLAGS += $(C_STANDARD_FLAGS)
 
-CFLAGS += -Werror=double-promotion -Wdouble-promotion
+CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) $(WARN_FLAGS) $(COMMON_SECTION_FLAGS)
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
@@ -275,9 +280,9 @@ $(BUILD_DIR)/%.o: %.c $(lastword $(MAKEFILE_LIST)) | $(BUILD_DIR)
 	$(CC) -c $(CFLAGS) $(C_LISTING_FLAG) $< -o $@
 
 $(BUILD_DIR)/%.o: %.s $(lastword $(MAKEFILE_LIST)) | $(BUILD_DIR)
-	$(AS) -c $(CFLAGS) $< -o $@
+	$(AS) -c $(ASFLAGS) $< -o $@
 $(BUILD_DIR)/%.o: %.S $(lastword $(MAKEFILE_LIST)) | $(BUILD_DIR)
-	$(AS) -c $(CFLAGS) $< -o $@
+	$(AS) -c $(ASFLAGS) $< -o $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) $(lastword $(MAKEFILE_LIST))
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
