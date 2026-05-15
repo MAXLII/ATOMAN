@@ -35,12 +35,13 @@
 #define SCOPE_ENABLE_PRINTF 0
 #endif
 
-#if SCOPE_ENABLE_PRINTF == 1
 void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
+void scope_printf_data(scope_t *scope, DEC_MY_PRINTF);
 void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
 int scope_printf_data_step(void);
 int scope_printf_data_is_active(void);
 
+#if SCOPE_ENABLE_PRINTF == 1
 #define REG_SCOPE_STATUS_CMD(name)                     \
     static void scope_status_##name(DEC_MY_PRINTF)     \
     {                                                  \

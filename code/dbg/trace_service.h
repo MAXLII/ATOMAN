@@ -39,9 +39,7 @@
 
 #define TRACE_SERVICE_TIME_UNIT_US 100u
 
-#if TRACE_SERVICE_PRINTF == 1
 void dbg_trace_service_print_task(void);
-#endif
 void dbg_trace_service_binary_task(void);
 
 #endif

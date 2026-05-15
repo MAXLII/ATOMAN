@@ -180,6 +180,7 @@ typedef struct section_shell_t
  *
  * ctx convention: ctx points to a shell_ctx_t created by DECLARE_SHELL_CTX.
  */
+void shell_init(void);
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
 
 void shell_item_print(section_shell_t *p, DEC_MY_PRINTF);

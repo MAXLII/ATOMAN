@@ -41,8 +41,10 @@ static const uint8_t dlc_to_databytes[16] = {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U,
 static uint32_t can_payload_size_compute(uint32_t mdes0);
 /* swap data to little endian */
 static void can_data_to_little_endian_swap(uint32_t dest[], uint32_t src[], uint32_t len);
-/* swap data to big endian */
-static void can_data_to_big_endian_swap(uint32_t dest[], uint32_t src[], uint32_t len);
+/* swap byte buffer data to big endian words */
+static void can_data_bytes_to_big_endian_swap(volatile uint32_t dest[], const uint8_t src[], uint32_t len);
+/* swap big endian words to byte buffer data */
+static void can_data_words_to_little_endian_bytes(uint8_t dest[], const volatile uint32_t src[], uint32_t len);
 /* computes the dlc field value, given a payload size (in bytes) */
 static uint32_t can_dlc_value_compute(uint32_t payload_size);
 
@@ -957,7 +959,7 @@ void can_mailbox_config(uint32_t can_periph, uint32_t index, can_mailbox_descrip
             if(mdpara->data_bytes < length) {
                 length = mdpara->data_bytes;
             }
-            can_data_to_big_endian_swap((uint32_t *)mdes2, (uint32_t *)mdpara->data, length);
+            can_data_bytes_to_big_endian_swap((volatile uint32_t *)mdes2, mdpara->data, length);
         }
 
         /* prepare mailbox for transmission */
@@ -1039,8 +1041,6 @@ void can_mailbox_transmit_inactive(uint32_t can_periph, uint32_t index)
 */
 ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can_mailbox_descriptor_struct *mdpara)
 {
-    uint32_t i;
-    uint32_t cnt;
     uint32_t timeout;
     uint32_t mdes = can_ram_address_get(can_periph, index);
     uint32_t *mdaddr = (uint32_t *)mdpara;
@@ -1059,14 +1059,10 @@ ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can
     *mdaddr = *(uint32_t *)mdes;
     mdes1 = *(uint32_t *)((uint32_t)(mdes + 0x04U));
     mdpara->id = (mdes1 & 0x1FFFFFFFU);
-    mdpara->prio = (mdes1 & 0xE0000000U) >> 29U;
+    mdpara->prio = (uint8_t)((mdes1 >> 29U) & 0x07U);
     mdpara->data_bytes = can_payload_size_compute(*mdaddr);
-    cnt = (mdpara->data_bytes + 3U) / 4U;
     mdes = mdes + 0x08U;
-    for(i = 0U; i < cnt; i++) {
-        *((uint32_t *)(&mdpara->data[i * 4U])) = *(uint32_t *)mdes;
-        mdes = mdes + 4U;
-    }
+    can_data_words_to_little_endian_bytes(mdpara->data, (const volatile uint32_t *)mdes, mdpara->data_bytes);
 
     /* clear mailbox status */
     CAN_STAT(can_periph) = STAT_MS(index);
@@ -1081,10 +1077,6 @@ ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can
     }
 
     /* get mailbox data */
-    if(mdpara->data_bytes) {
-        can_data_to_little_endian_swap((uint32_t *)mdpara->data, (uint32_t *)mdpara->data, mdpara->data_bytes);
-    }
-
     return SUCCESS;
 }
 
@@ -1402,7 +1394,7 @@ void can_pn_mode_data_read(uint32_t can_periph, uint32_t index, can_mailbox_desc
     *mdaddr = *(uint32_t *)pnram;
     pnram1 = *(uint32_t *)((uint32_t)(pnram + 0x04U));
     mdpara->id = (pnram1 & 0x1FFFFFFFU);
-    mdpara->prio = (pnram1 & 0xE0000000U) >> 29U;
+    mdpara->prio = (uint8_t)((pnram1 >> 29U) & 0x07U);
     /* get mailbox ID */
     if(0U != mdpara->ide) {
         mdpara->id = GET_MDES1_ID_EXD(mdpara->id);
@@ -1422,7 +1414,7 @@ void can_pn_mode_data_read(uint32_t can_periph, uint32_t index, can_mailbox_desc
         }
     }
     if(mdpara->data_bytes) {
-        can_data_to_little_endian_swap((uint32_t *)mdpara->data, (uint32_t *)((uint32_t)(pnram + 0x08U)), mdpara->data_bytes);
+        can_data_words_to_little_endian_bytes(mdpara->data, (const volatile uint32_t *)(pnram + 0x08U), mdpara->data_bytes);
     }
 }
 
@@ -1894,23 +1886,26 @@ static void can_data_to_little_endian_swap(uint32_t dest[], uint32_t src[], uint
 }
 
 /*!
-    \brief      swap data to big endian
-    \param[in]  src: data source address
+    \brief      swap byte buffer data to big endian words
+    \param[in]  src: byte data source address
     \param[in]  len: data length be byte
-    \param[out] dest: data destination address
+    \param[out] dest: word data destination address
     \retval     none
 */
-static void can_data_to_big_endian_swap(uint32_t dest[], uint32_t src[], uint32_t len)
+static void can_data_bytes_to_big_endian_swap(volatile uint32_t dest[], const uint8_t src[], uint32_t len)
 {
     volatile uint32_t i = 0U;
     uint32_t cnt;
-    uint32_t temp_src = 0U;
+    uint32_t temp_src;
+    uint32_t byte_idx;
 
-    /* get the word length of the data */
     cnt = (len + 3U) / 4U;
     for(i = 0U; i < cnt; i++) {
-        /* change each word from little endian to big endian */
-        temp_src = src[i];
+        byte_idx = i * 4U;
+        temp_src = (uint32_t)src[byte_idx] |
+                   ((uint32_t)src[byte_idx + 1U] << 8U) |
+                   ((uint32_t)src[byte_idx + 2U] << 16U) |
+                   ((uint32_t)src[byte_idx + 3U] << 24U);
         dest[i] = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) |
                   ((uint32_t)(temp_src >> 8U) & 0x0000FF00U) |
                   ((uint32_t)(temp_src << 8U) & 0x00FF0000U) |
@@ -1920,6 +1915,49 @@ static void can_data_to_big_endian_swap(uint32_t dest[], uint32_t src[], uint32_
     cnt = len % 4U;
     if(cnt) {
         dest[i - 1U] &= ~(((uint32_t)1U << ((4U - cnt) * 8U)) - 1U);
+    }
+}
+
+/*!
+    \brief      swap big endian words to byte buffer data
+    \param[in]  src: word data source address
+    \param[in]  len: data length be byte
+    \param[out] dest: byte data destination address
+    \retval     none
+*/
+static void can_data_words_to_little_endian_bytes(uint8_t dest[], const volatile uint32_t src[], uint32_t len)
+{
+    uint32_t i;
+    uint32_t cnt;
+    uint32_t temp_src;
+    uint32_t byte_idx;
+    uint32_t remain;
+
+    cnt = (len + 3U) / 4U;
+    for(i = 0U; i < cnt; i++) {
+        byte_idx = i * 4U;
+        temp_src = src[i];
+        temp_src = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) |
+                   ((uint32_t)(temp_src >> 8U) & 0x0000FF00U) |
+                   ((uint32_t)(temp_src << 8U) & 0x00FF0000U) |
+                   ((uint32_t)(temp_src << 24U) & 0xFF000000U);
+
+        remain = len - byte_idx;
+        if(remain > 4U) {
+            remain = 4U;
+        }
+        if(remain > 0U) {
+            dest[byte_idx] = (uint8_t)(temp_src & 0xFFU);
+        }
+        if(remain > 1U) {
+            dest[byte_idx + 1U] = (uint8_t)((temp_src >> 8U) & 0xFFU);
+        }
+        if(remain > 2U) {
+            dest[byte_idx + 2U] = (uint8_t)((temp_src >> 16U) & 0xFFU);
+        }
+        if(remain > 3U) {
+            dest[byte_idx + 3U] = (uint8_t)((temp_src >> 24U) & 0xFFU);
+        }
     }
 }
 
