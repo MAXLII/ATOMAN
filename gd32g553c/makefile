@@ -216,11 +216,13 @@ C_INCLUDES =  \
 
 
 # compile gcc flags
+WARN_FLAGS = -Wall -Wextra -Werror -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wundef
+
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -Wextra -Wpedantic -Werror -fdata-sections -ffunction-sections
 
 CFLAGS += -std=c11 -pedantic
 
-CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -Wextra -Wpedantic -Werror -fdata-sections -ffunction-sections
+CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) $(WARN_FLAGS) -fdata-sections -ffunction-sections
 
 CFLAGS += -Werror=double-promotion -Wdouble-promotion
 
