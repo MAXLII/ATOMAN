@@ -34,8 +34,6 @@
 #include <stddef.h>
 #include <string.h>
 
-extern reg_task_t *p_task_first;
-
 #pragma pack(push, 1)
 typedef struct
 {

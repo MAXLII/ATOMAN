@@ -40,7 +40,6 @@ section_com_t *p_com_first = NULL;
 comm_route_t *p_comm_route_first = NULL;
 
 /* section 链路表在 section.c 内维护，这里只使用其首指针 */
-extern section_link_t *p_link_first;
 
 /* 使用 tail 指针，将 insert 从 O(n) 降到 O(1) */
 static section_com_t *s_com_tail = NULL;
@@ -213,13 +212,18 @@ static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packfor
  * =============================================================================
  */
 
-static section_link_t *find_link_by_id(uint8_t link_id)
+static const section_link_t *find_link_by_id(uint8_t link_id)
 {
-    for (section_link_t *p = p_link_first; p; p = p->p_next)
+    const section_link_t *p = section_link_first_get();
+
+    for (; p != NULL; p = p->p_next)
     {
         if (p->link_id == link_id)
+        {
             return p;
+        }
     }
+
     return NULL;
 }
 
@@ -232,8 +236,8 @@ static void comm_route_run(comm_ctx_t *ctx)
     {
         if ((ctx->link_id == r->src_link_id) && (ctx->pack.dst == r->dst_addr))
         {
-            section_link_t *dst_link = find_link_by_id(r->dst_link_id);
-            if (dst_link)
+            const section_link_t *dst_link = find_link_by_id(r->dst_link_id);
+            if (dst_link != NULL)
             {
                 comm_send_data(&ctx->pack, dst_link->my_printf);
             }

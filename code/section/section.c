@@ -31,10 +31,10 @@
 
 #include <stddef.h>
 
-reg_task_t *p_task_first = NULL;
-reg_interrupt_t *p_interrupt_first = NULL;
-section_link_t *p_link_first = NULL;
-reg_init_t *p_init_first = NULL;
+static reg_task_t *p_task_first = NULL;
+static reg_interrupt_t *p_interrupt_first = NULL;
+static section_link_t *p_link_first = NULL;
+static reg_init_t *p_init_first = NULL;
 
 #if defined(__GNUC__)
 #define SECTION_WEAK __attribute__((weak))
@@ -78,8 +78,10 @@ static void task_insert(reg_task_t *task)
 {
     static reg_task_t *s_task_tail = NULL;
 
-    if (!task)
+    if (task == NULL)
+    {
         return;
+    }
 
     task->time_last = SECTION_SYS_TICK;
     task->p_next = NULL;
@@ -99,12 +101,14 @@ static void task_insert(reg_task_t *task)
 
 static void interrupt_insert(reg_interrupt_t *intr)
 {
-    if (!intr)
+    if (intr == NULL)
+    {
         return;
+    }
 
     intr->p_next = NULL;
 
-    if (!p_interrupt_first || intr->priority < p_interrupt_first->priority)
+    if ((p_interrupt_first == NULL) || (intr->priority < p_interrupt_first->priority))
     {
         intr->p_next = p_interrupt_first;
         p_interrupt_first = intr;
@@ -112,7 +116,7 @@ static void interrupt_insert(reg_interrupt_t *intr)
     else
     {
         reg_interrupt_t *prev = p_interrupt_first;
-        while (prev->p_next && prev->p_next->priority < intr->priority)
+        while ((prev->p_next != NULL) && (prev->p_next->priority < intr->priority))
         {
             prev = prev->p_next;
         }
@@ -125,12 +129,14 @@ static void link_insert(section_link_t *link)
 {
     static section_link_t *s_link_tail = NULL;
 
-    if (!link)
+    if (link == NULL)
+    {
         return;
+    }
 
     link->p_next = NULL;
 
-    if (!p_link_first)
+    if (p_link_first == NULL)
     {
         p_link_first = link;
         s_link_tail = link;
@@ -144,12 +150,14 @@ static void link_insert(section_link_t *link)
 
 static void init_insert(reg_init_t *init)
 {
-    if (!init)
+    if (init == NULL)
+    {
         return;
+    }
 
     init->p_next = NULL;
 
-    if (!p_init_first || init->priority < p_init_first->priority)
+    if ((p_init_first == NULL) || (init->priority < p_init_first->priority))
     {
         init->p_next = p_init_first;
         p_init_first = init;
@@ -157,7 +165,7 @@ static void init_insert(reg_init_t *init)
     else
     {
         reg_init_t *prev = p_init_first;
-        while (prev->p_next && prev->p_next->priority <= init->priority)
+        while ((prev->p_next != NULL) && (prev->p_next->priority <= init->priority))
         {
             prev = prev->p_next;
         }
@@ -191,11 +199,18 @@ void section_init(void)
         }
     }
 
-    for (reg_init_t *init = p_init_first; init != NULL; init = (reg_init_t *)init->p_next)
+    for (reg_init_t *init = p_init_first; init != NULL; init = init->p_next)
     {
-        if (init->p_func)
+        if (init->p_func != NULL)
+        {
             init->p_func();
+        }
     }
+}
+
+const section_link_t *section_link_first_get(void)
+{
+    return p_link_first;
 }
 
 static void task_schedule_next(reg_task_t *task, uint32_t elapsed)
@@ -209,10 +224,12 @@ void run_task(void)
 {
     const uint32_t now = SECTION_SYS_TICK;
 
-    for (reg_task_t *task = p_task_first; task; task = task->p_next)
+    for (reg_task_t *task = p_task_first; task != NULL; task = task->p_next)
     {
-        if (!task->p_func)
+        if (task->p_func == NULL)
+        {
             continue;
+        }
 
         const uint32_t period = task->t_period;
         if (period == 0u)
@@ -237,7 +254,7 @@ void run_task(void)
 
 void section_interrupt(void)
 {
-    for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = (reg_interrupt_t *)p->p_next)
+    for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = p->p_next)
     {
         if (p->p_func == NULL)
         {
@@ -257,23 +274,27 @@ static void link_process(section_link_t *link)
 {
     uint8_t data = 0u;
 
-    if (!link || !link->rx_get_byte || !link->handler_arr)
+    if ((link == NULL) || (link->rx_get_byte == NULL) || (link->handler_arr == NULL))
+    {
         return;
+    }
 
     while (link->rx_get_byte(&data) != 0u)
     {
         for (uint32_t i = 0; i < link->handler_num; ++i)
         {
             const section_link_handler_item_t *it = &link->handler_arr[i];
-            if (it->func)
+            if (it->func != NULL)
+            {
                 it->func(data, link->my_printf, it->ctx);
+            }
         }
     }
 }
 
 static void section_link_task(void)
 {
-    for (section_link_t *p = p_link_first; p != NULL; p = (section_link_t *)p->p_next)
+    for (section_link_t *p = p_link_first; p != NULL; p = p->p_next)
     {
         link_process(p);
     }
@@ -283,34 +304,51 @@ REG_TASK(10, section_link_task)
 
 void section_fsm_func(reg_fsm_t *fsm)
 {
-    if (!fsm->p_fsm_func_table || !fsm->p_fsm_ev)
+    if ((fsm == NULL) || (fsm->p_fsm_func_table == NULL) || (fsm->p_fsm_ev == NULL))
+    {
         return;
+    }
 
     for (uint32_t i = 0; i < fsm->fsm_table_size; ++i)
     {
         reg_fsm_func_t *entry = &fsm->p_fsm_func_table[i];
         if (fsm->fsm_sta == entry->fsm_sta)
         {
-            if (fsm->fsm_sta_is_change)
+            if (fsm->fsm_sta_is_change != 0u)
             {
                 fsm->fsm_sta_is_change = 0;
                 PLECS_LOG("%s\n", entry->p_name);
-                entry->func_in();
+                if (entry->func_in != NULL)
+                {
+                    entry->func_in();
+                }
             }
 
-            entry->func_exe();
-
-            if (*fsm->p_fsm_ev)
+            if (entry->func_exe != NULL)
             {
-                uint32_t next = entry->func_chk(*fsm->p_fsm_ev);
-                if (next && next != entry->fsm_sta)
+                entry->func_exe();
+            }
+
+            if (*fsm->p_fsm_ev != 0u)
+            {
+                uint32_t next = 0u;
+
+                if (entry->func_chk != NULL)
                 {
-                    PLECS_LOG("%s-chk_ev:%d\n", entry->p_name, *fsm->p_fsm_ev);
-                    entry->func_out();
-                    fsm->fsm_sta = next;
-                    fsm->fsm_sta_is_change = 1;
+                    next = entry->func_chk(*fsm->p_fsm_ev);
                 }
-                *fsm->p_fsm_ev = 0;
+
+                if ((next != 0u) && (next != entry->fsm_sta))
+                {
+                    PLECS_LOG("%s-chk_ev:%lu\n", entry->p_name, (unsigned long)*fsm->p_fsm_ev);
+                    if (entry->func_out != NULL)
+                    {
+                        entry->func_out();
+                    }
+                    fsm->fsm_sta = next;
+                    fsm->fsm_sta_is_change = 1u;
+                }
+                *fsm->p_fsm_ev = 0u;
             }
             break;
         }
