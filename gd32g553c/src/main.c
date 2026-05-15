@@ -35,6 +35,8 @@ OF SUCH DAMAGE.
 #include "gd32g5x3.h"
 #include "systick.h"
 #include "section.h"
+#include "bsp_pwm.h"
+#include "gd32g5x3_it.h"
 
 /*!
     \brief      main function
@@ -49,5 +51,14 @@ int main(void)
     while (1)
     {
         run_task();
+    }
+}
+
+void TIMER2_IRQHandler(void)
+{
+    if (timer_interrupt_flag_get(TIMER2, TIMER_INT_FLAG_UP) != RESET)
+    {
+        timer_interrupt_flag_clear(TIMER2, TIMER_INT_FLAG_UP);
+        section_interrupt();
     }
 }

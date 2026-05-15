@@ -10,7 +10,7 @@
 #   2015-07-22 - first version
 # ------------------------------------------------
 
-# 从环境变量获取参�?
+# 从环境变量获取参�?
 PROJECT_FW_TYPE = ISP
 PROJECT_OUTPUT_NAME = isp_firmware
 PROJECT_PLATFORM_DEFINE = -DGD32G5X3
@@ -105,6 +105,7 @@ C_SOURCES =  \
 ../gd32g553c/bsp/src/bsp_can.c \
 ../gd32g553c/bsp/src/bsp_gpio.c \
 ../gd32g553c/bsp/src/bsp_init.c \
+../gd32g553c/bsp/src/bsp_pwm.c \
 ../gd32g553c/bsp/src/bsp_timer.c \
 ../gd32g553c/bsp/src/bsp_usart.c \
 ../gd32g553c/src/gd32g5x3_it.c \

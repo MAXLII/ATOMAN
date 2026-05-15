@@ -56,5 +56,7 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 /* this function handles SysTick exception */
 void SysTick_Handler(void);
+/* this function handles Timer2 exception */
+void TIMER2_IRQHandler(void);
 
 #endif /* GD32G5X3_IT_H */
