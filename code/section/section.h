@@ -91,6 +91,8 @@ typedef struct
     void *p_str;
 } reg_section_t;
 
+typedef struct section_link_t section_link_t;
+
 #define REG_SECTION_FUNC(_section_type, _p_str)                   \
     const reg_section_t reg_section_##_p_str AUTO_REG_SECTION = { \
         .section_type = (uint32_t)(_section_type),                \
@@ -114,7 +116,7 @@ typedef struct reg_init
 
 #define REG_INIT(prio, func)       \
     reg_init_t reg_init_##func = { \
-        .priority = (prio),        \
+        .priority = (int8_t)(prio), \
         .p_func = (func),          \
         .p_next = NULL,            \
     };                             \
@@ -152,7 +154,7 @@ typedef struct reg_task_t
 #define REG_TASK(period, func)                   \
     REG_TASK_PERF_RECORD(func)                   \
     reg_task_t reg_task_##func = {               \
-        .t_period = (period),                    \
+        .t_period = (uint32_t)(period),          \
         .p_func = (func),                        \
         .time_last = 0,                          \
         .p_perf_record = TASK_RECORD_PERF(func), \
@@ -160,7 +162,7 @@ typedef struct reg_task_t
     };                                           \
     REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
 
-#define REG_TASK_MS(period, func) REG_TASK(((period) * 10u), func)
+#define REG_TASK_MS(period, func) REG_TASK(((uint32_t)(period) * 10u), func)
 
 void run_task(void);
 
@@ -189,7 +191,7 @@ typedef struct reg_interrupt
 #define REG_INTERRUPT(priority_num, func)             \
     REG_INTERRUPT_PERF_RECORD(func)                   \
     reg_interrupt_t reg_interrupt_##func = {          \
-        .priority = (priority_num),                   \
+        .priority = (uint8_t)(priority_num),          \
         .p_func = (func),                             \
         .p_perf_record = INTERRUPT_RECORD_PERF(func), \
         .p_next = NULL,                               \
@@ -228,12 +230,13 @@ typedef struct
     }
 
 #define REG_FSM(name, init_sta, fsm_ev, ...)                                            \
+    _Static_assert(sizeof(fsm_ev) == sizeof(uint32_t), "FSM event must be uint32_t-sized"); \
     static reg_fsm_func_t reg_fsm_func_##name##_table[] = {__VA_ARGS__};                \
     static reg_fsm_t reg_fsm_##name = {                                                 \
         .fsm_sta = (init_sta),                                                          \
         .p_fsm_func_table = reg_fsm_func_##name##_table,                                \
         .fsm_table_size = sizeof(reg_fsm_func_##name##_table) / sizeof(reg_fsm_func_t), \
-        .fsm_sta_is_change = 1,                                                         \
+        .fsm_sta_is_change = 1u,                                                        \
         .p_fsm_ev = (uint32_t *)&(fsm_ev),                                              \
     };                                                                                  \
     static void fsm_##name##_run(void)                                                  \
@@ -255,7 +258,7 @@ typedef struct
     void *ctx;
 } section_link_handler_item_t;
 
-typedef struct section_link_t
+struct section_link_t
 {
     uint8_t (*rx_get_byte)(uint8_t *p_data);
     DEC_MY_PRINTF;
@@ -263,7 +266,9 @@ typedef struct section_link_t
     const section_link_handler_item_t *handler_arr;
     uint32_t handler_num;
     uint8_t link_id;
-} section_link_t;
+};
+
+const section_link_t *section_link_first_get(void);
 
 #define REG_LINK(link, print, _rx_get_byte, _handler_arr, _handler_num) \
     section_link_t section_link_##link = {                              \
