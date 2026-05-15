@@ -17,7 +17,7 @@
 #define BSP_USART_DBG_RX_PORT (GPIOA)
 #define BSP_USART_DBG_RX_PIN (GPIO_PIN_10)
 #define BSP_USART_DBG_GPIO_AF (GPIO_AF_7)
-#define BSP_USART_DBG_BAUDRATE (115200UL)
+#define BSP_USART_DBG_BAUDRATE (921600UL)
 #define BSP_USART_DBG_RX_DMA_CH (DMA_CH0)
 #define BSP_USART_DBG_TX_DMA_CH (DMA_CH1)
 #define BSP_USART_DBG_RX_DMA_REQUEST (DMA_REQUEST_USART0_RX)
@@ -40,7 +40,7 @@
 #define BSP_USART_ISO_TX_DMA_REQUEST (DMA_REQUEST_USART2_TX)
 
 #define BSP_USART_RX_DMA_BUF_SIZE (512U)
-#define BSP_USART_TX_RING_BUF_SIZE (512U)
+#define BSP_USART_TX_RING_BUF_SIZE (1024U)
 #define BSP_USART_TX_DMA_TIMEOUT (0x00FFFFFFUL)
 #define BSP_USART_DBG_PRINTF_BUF_SIZE (256U)
 #define BSP_USART_ISO_PRINTF_BUF_SIZE (256U)
@@ -361,40 +361,46 @@ static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
 {
     uint32_t primask;
     uint32_t timeout;
-    uint16_t offset = 0U;
 
-    if ((ctx == NULL) || (cfg == NULL) || (data == NULL))
+    if ((ctx == NULL) || (cfg == NULL) || (data == NULL) || (len == 0U))
+    {
+        return 0U;
+    }
+
+    if (len >= cfg->tx_ring_buf_size)
     {
         return 0U;
     }
 
     timeout = cfg->tx_dma_timeout;
-    while (offset < len)
+    while (1)
     {
+        uint16_t free_len;
         uint16_t written;
 
+        bsp_usart_tx_dma_service(ctx, cfg);
+
         primask = bsp_usart_irq_lock();
-        written = bsp_usart_tx_ring_write(ctx, cfg, &data[offset], (uint16_t)(len - offset));
+        free_len = bsp_usart_tx_ring_free(ctx, cfg);
+        if (len <= free_len)
+        {
+            written = bsp_usart_tx_ring_write(ctx, cfg, data, len);
+            bsp_usart_tx_dma_start(ctx, cfg);
+            bsp_usart_irq_unlock(primask);
+            return written;
+        }
+
         bsp_usart_tx_dma_start(ctx, cfg);
         bsp_usart_irq_unlock(primask);
 
-        if (written != 0U)
+        if (timeout == 0U)
         {
-            offset = (uint16_t)(offset + written);
-            timeout = cfg->tx_dma_timeout;
+            break;
         }
-        else
-        {
-            bsp_usart_tx_dma_service(ctx, cfg);
-            if (timeout == 0U)
-            {
-                break;
-            }
-            timeout--;
-        }
+        timeout--;
     }
 
-    return offset;
+    return 0U;
 }
 
 static int32_t bsp_usart_read_byte(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg, uint8_t *data)
