@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo.c
- * @brief   init section demo.
+ * @file    demo_interrupt.c
+ * @brief   interrupt section demo.
  * @details
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Register startup callbacks with SECTION_INIT
- *          - Demonstrate init callback execution order
- *          - Bind the trace time base used by the trace demo
+ *          - Register callbacks with SECTION_INTERRUPT
+ *          - Demonstrate interrupt callback priority ordering
+ *          - Keep interrupt callback state local to this demo file
  *
  *          Design notes:
  *          - C11 compatible
@@ -28,24 +28,21 @@
  */
 
 #include "section.h"
-#include "trace.h"
 
 #include <stdint.h>
 
-static uint32_t s_demo_init_count = 0u;
+static uint32_t s_demo_interrupt_fast_count = 0u;
+static uint32_t s_demo_interrupt_slow_count = 0u;
 
-extern volatile uint32_t sys_tick_100us;
-
-static void demo_init_trace_time(void)
+static void demo_interrupt_fast(void)
 {
-    DBG_TRACE_BIND_TIME(&sys_tick_100us);
-    s_demo_init_count++;
+    s_demo_interrupt_fast_count++;
 }
 
-static void demo_init_runtime_state(void)
+static void demo_interrupt_slow(void)
 {
-    s_demo_init_count++;
+    s_demo_interrupt_slow_count++;
 }
 
-REG_INIT(-10, demo_init_trace_time)
-REG_INIT(10, demo_init_runtime_state)
+REG_INTERRUPT(5, demo_interrupt_fast)
+REG_INTERRUPT(10, demo_interrupt_slow)
