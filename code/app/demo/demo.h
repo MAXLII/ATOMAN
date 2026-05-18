@@ -100,7 +100,6 @@ typedef struct
     uint32_t counter;
     uint8_t led_mask;
     int16_t temperature_x10;
-    uint8_t reserved;
 } demo_comm_frame_t;
 
 #define DEMO_CMD_SET_LOOPBACK 0x30u

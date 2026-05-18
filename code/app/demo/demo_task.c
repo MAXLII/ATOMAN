@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo.c
- * @brief   init section demo.
+ * @file    demo_task.c
+ * @brief   task section demo.
  * @details
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Register startup callbacks with SECTION_INIT
- *          - Demonstrate init callback execution order
- *          - Bind the trace time base used by the trace demo
+ *          - Register periodic callbacks with SECTION_TASK
+ *          - Demonstrate millisecond and scheduler-tick task periods
+ *          - Keep task counters local to this demo file
  *
  *          Design notes:
  *          - C11 compatible
@@ -28,24 +28,21 @@
  */
 
 #include "section.h"
-#include "trace.h"
 
 #include <stdint.h>
 
-static uint32_t s_demo_init_count = 0u;
+static uint32_t s_demo_task_10ms_count = 0u;
+static uint32_t s_demo_task_tick_count = 0u;
 
-extern volatile uint32_t sys_tick_100us;
-
-static void demo_init_trace_time(void)
+static void demo_task_10ms(void)
 {
-    DBG_TRACE_BIND_TIME(&sys_tick_100us);
-    s_demo_init_count++;
+    s_demo_task_10ms_count++;
 }
 
-static void demo_init_runtime_state(void)
+static void demo_task_100us(void)
 {
-    s_demo_init_count++;
+    s_demo_task_tick_count++;
 }
 
-REG_INIT(-10, demo_init_trace_time)
-REG_INIT(10, demo_init_runtime_state)
+REG_TASK_MS(10, demo_task_10ms)
+REG_TASK(1, demo_task_100us)
