@@ -112,6 +112,14 @@ C_SOURCES =  \
 ../gd32g553c/src/main.c \
 ../gd32g553c/src/systick.c \
 ../code/app/demo/demo.c \
+../code/app/demo/demo_comm.c \
+../code/app/demo/demo_interrupt.c \
+../code/app/demo/demo_perf.c \
+../code/app/demo/demo_scope.c \
+../code/app/demo/demo_sfra.c \
+../code/app/demo/demo_shell.c \
+../code/app/demo/demo_task.c \
+../code/app/demo/demo_trace.c \
 ../code/lib/dft.c \
 ../code/lib/pi_tustin.c \
 ../code/lib/pr.c \

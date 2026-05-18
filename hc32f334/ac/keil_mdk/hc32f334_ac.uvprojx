@@ -418,6 +418,46 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_comm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_comm.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_interrupt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_interrupt.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_perf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_perf.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_scope.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_scope.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_sfra.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_sfra.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_shell.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_shell.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_trace.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_trace.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
