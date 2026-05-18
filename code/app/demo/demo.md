@@ -5,287 +5,82 @@
 This demo is a runnable example for the current GD32 workspace.
 It is built as a fixed `ISP` + `IS_DC` project and uses the section-based framework already integrated into this repository.
 
-The demo is intended to show how these parts work together:
+Each `demo_xxxx.c` file is a single, clean example for one registration area.
+The examples keep their own state as file-scope `static` variables and avoid depending on other demo files.
 
-- section registration and scheduling
-- shell variable and command registration
-- communication frame handling through `comm`
-- performance measurement through `perf`
-- scope data capture through `scope`
-- GD32 USART-based debug link integration
+## Demo Files
 
-## Device Address
+- `demo.c`: `REG_INIT`
+- `demo_task.c`: `REG_TASK`, `REG_TASK_MS`
+- `demo_shell.c`: `REG_SHELL_VAR`, `REG_SHELL_CMD`
+- `demo_comm.c`: `REG_COMM`
+- `demo_perf.c`: `REG_PERF_RECORD`, `PERF_START`, `PERF_END`
+- `demo_scope.c`: `REG_SCOPE_EX`, `SCOPE_RUN`
+- `demo_trace.c`: `DBG_TRACE_MARK`
+- `demo_interrupt.c`: `REG_INTERRUPT`
+- `demo_sfra.c`: `REG_SFRA`
+- `demo.h`: command IDs and shared communication payload type
 
-The local communication address used by this demo is:
+## Communication Example
 
-- `LOCAL_ADDR = DC_ADDR = LLC_ADDR = 0x02`
+`demo_comm.c` registers one loopback command:
 
-This comes from:
+- `cmd_set = 0x30`
+- `cmd_word = 0x01`
 
-- `../../interface/common/comm_addr.h`
-- `../../../gd32g553c/makefile`
+The handler initializes a local payload object, copies `MIN(data_len, sizeof(local_struct))` bytes from the received payload, and replies with an ACK using the same `cmd_set` and `cmd_word`.
 
-Because this project is fixed as `IS_DC`, `LOCAL_ADDR` resolves to `DC_ADDR`, and `DC_ADDR` is currently mapped to `LLC_ADDR`, which is `0x02`.
+## Shell Example
 
-## UART / Baud Rate
+`demo_shell.c` registers:
 
-The demo debug link uses:
+- `DEMO_SHELL_COUNTER`
+- `DEMO_SHELL_GAIN`
+- `DEMO_SHELL_PING`
 
-- UART peripheral: `USART0`
-- baud rate: `115200`
-- data format: `8-N-1`
+The shell example only demonstrates shell variable and command registration.
 
-This comes from:
+## Performance Example
 
-- `../../../gd32g553c/bsp/bsp_usart.c`
-- `../../interface/usart.c`
+`demo_perf.c` registers:
 
-Relevant details:
+- `DEMO_PERF_LOOP`
+- `DEMO_PERF_RUN`
+- `demo_perf_shell`
+- `demo_perf_task`
 
-- `usart_baudrate_set(USART0, 115200U);`
-- shell and comm both run on `USART0_LINK`
+The shell command measures one local workload. The periodic task measures one local workload. It does not read task records from other demo files.
 
-## Demo Features
+## Scope Example
 
-This demo currently includes the following function groups.
+`demo_scope.c` registers one scope:
 
-### 1. Section Framework Examples
-
-The demo shows how to use:
-
-- `REG_INIT`
-- `REG_TASK_MS`
-- `REG_TASK`
-- `REG_SHELL_VAR`
-- `REG_SHELL_CMD`
-- `REG_COMM`
-- `REG_PERF_RECORD`
-- `REG_SCOPE_EX`
-
-The implementation lives in:
-
-- `demo.c`
-- `demo.h`
-
-### 2. Shell Examples
-
-The demo registers shell variables:
-
-- `DEMO_LED_MASK`
-- `DEMO_COUNTER`
-- `DEMO_LAST_CMD`
-- `DEMO_GAIN`
-- `DEMO_PERF_SPIN`
-
-The demo registers shell commands:
-
-- `DEMO_PING`
-- `DEMO_HELP`
-- `DEMO_PERF`
-- `DEMO_SEND`
-- `DEMO_TICK`
-
-### 3. Communication Examples
-
-The demo registers two communication handlers:
-
-- loopback command
-  - `cmd_set = 0x30`
-  - `cmd_word = 0x01`
-- control command
-  - `cmd_set = 0x30`
-  - `cmd_word = 0x02`
-
-These are implemented with:
-
-- `REG_COMM(DEMO_CMD_SET_LOOPBACK, DEMO_CMD_WORD_LOOPBACK, demo_loopback_comm)`
-- `REG_COMM(DEMO_CMD_SET_CONTROL, DEMO_CMD_WORD_CONTROL, demo_control_comm)`
-
-### 4. Performance Examples
-
-The demo includes:
-
-- manual performance measurement using `PERF_START` / `PERF_END`
-- task execution performance records
-- task period measurement example
-- free-running timer readback example
-
-Related commands:
-
-- `DEMO_PERF`
-- `DEMO_TICK`
-
-### 5. Scope Examples
-
-The demo includes three scope examples.
-
-#### Basic scope
-
-- name: `demo_scope_basic`
+- name: `demo_scope_wave`
 - sample period: `10 ms`
 - channel count: `2`
-- task: `REG_TASK_MS(10, demo_scope_basic_task)`
 
-This is the smallest usage example:
+The task updates sine and cosine channels, then calls `SCOPE_RUN(demo_scope_wave)`.
 
-- register variables with `REG_SCOPE_EX`
-- update the float variables in the periodic task
-- call `SCOPE_RUN(demo_scope_basic)` once after updating the variables
+## SFRA Example
 
-Signals include:
+`demo_sfra.c` registers one PI-controller SFRA object:
 
-- `scope_basic_ramp`
-- `scope_basic_toggle`
-
-#### Fast scope
-
-- name: `demo_scope_fast`
+- name: `demo_sfra`
 - sample period: `100 us`
-- buffer size: `500`
-- channel count: `10`
+- sweep range: `10 Hz` to `5000 Hz`
 
-Signals include:
+The fast task samples the PI controller. The 1 ms task runs the SFRA background state machine.
 
-- `scope_sin`
-- `scope_cos`
-- `scope_sin2`
-- `scope_cos2`
-- `scope_ramp`
-- `scope_triangle`
-- `scope_square`
-- `scope_mix`
-- `scope_saw`
-- `scope_index`
+## Build
 
-#### Slow scope
-
-- name: `demo_scope_slow`
-- sample period: `1 ms`
-- buffer size: `200`
-- channel count: `3`
-
-Signals include:
-
-- `scope_slow_sin`
-- `scope_slow_cos`
-- `scope_slow_mix`
-
-## How To Use
-
-### Build
-
-Build from:
-
-- `../../../gd32g553c`
-
-Typical command:
+Build from `gd32g553c`:
 
 ```bat
 compile.bat
 ```
 
-The current workspace is fixed to:
-
-- `ISP`
-- `IS_DC`
-
-### Connect Serial Port
-
-Use a serial tool with:
-
-- baud rate: `115200`
-- data bits: `8`
-- parity: `none`
-- stop bits: `1`
-
-### Try Shell Commands
-
-Basic checks:
-
-```text
-DEMO_PING
-DEMO_HELP
-DEMO_TICK
-DEMO_PERF
-DEMO_SEND
-```
-
-Modify shell variables:
-
-```text
-DEMO_LED_MASK:3
-DEMO_GAIN:2.5
-DEMO_PERF_SPIN:5000
-```
-
-### Observe Communication
-
-The debug link is wired through `USART0_LINK`.
-Incoming bytes are dispatched to:
-
-- `shell_run`
-- `comm_run`
-
-This path is implemented in:
-
-- `../../interface/usart.c`
-
-### Observe Scope
-
-The scope service is registered through `scope`.
-The demo only updates signals and runs the scope engine in periodic tasks.
-Scope service support is implemented in:
-
-- `../../dbg/scope.h`
-- `../../dbg/scope.c`
-
-## Files Supporting This Demo
-
-### Application files
-
-- `demo.c`
-- `demo.h`
-- `demo.md`
-
-### Communication and shell
-
-- `../../comm/comm.c`
-- `../../comm/comm.h`
-- `../../comm/shell.c`
-- `../../comm/shell.h`
-
-### Section / framework
-
-- `../../section/section.c`
-- `../../section/section.h`
-- `../../section/perf.h`
-- `../../section/platform.h`
-
-### Debug tools
-
-- `../../dbg/perf.c`
-- `../../dbg/perf.h`
-- `../../dbg/scope.c`
-- `../../dbg/scope.h`
-
-### Interface / link layer
-
-- `../../interface/usart.c`
-- `../../interface/usart.h`
-- `../../interface/common/comm_addr.h`
-- `../../interface/ac/gpio.c`
-
-### GD32 BSP
-
-- `../../../gd32g553c/bsp/bsp_usart.c`
-- `../../../gd32g553c/bsp/bsp_usart.h`
-- `../../../gd32g553c/bsp/bsp_timer.c`
-- `../../../gd32g553c/bsp/bsp_timer.h`
-- `../../../gd32g553c/bsp/bsp_gpio.c`
-- `../../../gd32g553c/bsp/bsp_init.c`
-
-### Build files
+The same demo source files are also listed in:
 
 - `../../../gd32g553c/makefile`
-- `../../../gd32g553c/compile.bat`
-- `../../../gd32g553c/download.bat`
+- `../../../gd32g553c/mdk/gd32g553.uvprojx`
+- `../../../hc32f334/ac/keil_mdk/hc32f334_ac.uvprojx`
