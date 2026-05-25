@@ -36,9 +36,15 @@
 #endif
 
 /* Common control frequencies and derived sampling periods. */
+#if defined(IS_BUCK)
+#define PWM_FREQ 400.0e3f
+#define BUCK_PWM_FREQ PWM_FREQ
+#define CTRL_FREQ 100.0e3f
+#else
 #define BUCK_PWM_FREQ 60.0e3f
-#define PFC_PWM_FREQ 30.0e3f
 #define CTRL_FREQ 30.0e3f
+#endif
+#define PFC_PWM_FREQ 30.0e3f
 #define BUCK_PWM_TS (1.0f / BUCK_PWM_FREQ)
 #define CTRL_TS (1.0f / CTRL_FREQ)
 
