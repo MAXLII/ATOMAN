@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Select platform-specific tick, reset, linker-section, and RAM-function symbols
- *          - Map PLECS, GD32, HC32, and fallback builds onto the section runtime contract
+ *          - Map PLECS, GD32, HC32, APM32, and fallback builds onto the section runtime contract
  *          - Provide compile-time abstraction macros without exposing BSP calls to application code
  *
  *          Design notes:
@@ -83,6 +83,22 @@ extern uint32_t __section_end;
 #define SECTION_START __section_start
 #define SECTION_STOP __section_end
 #endif
+#define SYSTEM_RESET NVIC_SystemReset()
+#ifndef PLECS_LOG
+#define PLECS_LOG(...)
+#endif
+#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+
+#elif defined(IS_APM32)
+#include "apm32f402_403.h"
+#include "apm32f402_403_int.h"
+#define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
+extern uint32_t __section_start;
+extern uint32_t __section_end;
+#define SECTION_START __section_start
+#define SECTION_STOP __section_end
 #define SYSTEM_RESET NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
