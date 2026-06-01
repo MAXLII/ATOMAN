@@ -43,3 +43,4 @@ gd32g553c/build/
 gd32g553c/gcc_build/
 gd32g553c/gcc/Makefile.tmp.*
 gd32g553c/-p/
+apm32/build/
