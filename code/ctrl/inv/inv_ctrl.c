@@ -71,14 +71,16 @@ static uint8_t inv_ctrl_first_run_cycle = 0U;
 
 static float inv_ctrl_limit_freq_hz(float freq_hz)
 {
+    float ctrl_freq = inv_cfg_get_ctrl_freq();
+
     if (freq_hz < 1.0f)
     {
         return 1.0f;
     }
 
-    if (freq_hz > (CTRL_FREQ / 4.0f))
+    if (freq_hz > (ctrl_freq / 4.0f))
     {
-        return CTRL_FREQ / 4.0f;
+        return ctrl_freq / 4.0f;
     }
 
     return freq_hz;
@@ -88,7 +90,7 @@ static void inv_ctrl_update_timing_by_freq(float freq_hz)
 {
     float freq_hz_limited = inv_ctrl_limit_freq_hz(freq_hz);
 
-    period = (uint32_t)(CTRL_FREQ / freq_hz_limited);
+    period = (uint32_t)(inv_cfg_get_ctrl_freq() / freq_hz_limited);
     if (period < 4U)
     {
         period = 4U;
@@ -106,8 +108,10 @@ static void inv_ctrl_update_timing_by_freq(float freq_hz)
 static void inv_ctrl_reinit_states(void)
 {
     inv_ctrl_setpoint_t *p_active_setpoint = inv_cfg_get_p_active();
+    float ctrl_ts = inv_cfg_get_ctrl_ts();
 
     if ((p_hal == NULL) ||
+        (inv_cfg_is_ready() == 0U) ||
         (p_active_setpoint == NULL) ||
         (p_hal->p_v_cap == NULL) ||
         (p_hal->p_i_l == NULL) ||
@@ -120,7 +124,7 @@ static void inv_ctrl_reinit_states(void)
     pi_tustin_init(&volt_loop_d,
                    INV_CTRL_VOLT_LOOP_D_KP,
                    INV_CTRL_VOLT_LOOP_D_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    50.0f,
                    -50.0f,
                    &v_d_ref,
@@ -128,7 +132,7 @@ static void inv_ctrl_reinit_states(void)
     pi_tustin_init(&volt_loop_q,
                    INV_CTRL_VOLT_LOOP_Q_KP,
                    INV_CTRL_VOLT_LOOP_Q_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    50.0f,
                    -50.0f,
                    &v_q_ref,
@@ -137,7 +141,7 @@ static void inv_ctrl_reinit_states(void)
     pi_tustin_init(&curr_loop_d,
                    INV_CTRL_CURR_LOOP_D_KP,
                    INV_CTRL_CURR_LOOP_D_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    100.0f,
                    -100.0f,
                    &i_d_ref,
@@ -145,7 +149,7 @@ static void inv_ctrl_reinit_states(void)
     pi_tustin_init(&curr_loop_q,
                    INV_CTRL_CURR_LOOP_Q_KP,
                    INV_CTRL_CURR_LOOP_Q_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    100.0f,
                    -100.0f,
                    &i_q_ref,
@@ -240,7 +244,7 @@ static void inv_ctrl_isr(void)
     {
         RAMP(freq_hz_ramped,
              p_active_setpoint->freq_hz,
-             p_active_setpoint->freq_slew_hzps * CTRL_TS);
+             p_active_setpoint->freq_slew_hzps * inv_cfg_get_ctrl_ts());
     }
     else
     {
@@ -249,7 +253,7 @@ static void inv_ctrl_isr(void)
     freq_hz_ramped = inv_ctrl_limit_freq_hz(freq_hz_ramped);
 
     v_ref_pk_tag = p_active_setpoint->rms_ref_v * M_SQRT2;
-    RAMP(v_ref_pk, v_ref_pk_tag, p_active_setpoint->rms_slew_vps * M_SQRT2 * CTRL_TS);
+    RAMP(v_ref_pk, v_ref_pk_tag, p_active_setpoint->rms_slew_vps * M_SQRT2 * inv_cfg_get_ctrl_ts());
 
     v_ref = v_ref_pk * costheta;
 
@@ -286,7 +290,7 @@ static void inv_ctrl_isr(void)
     vpwm = v_ref + v_l;
     p_hal->p_set_pwm_func(vpwm, *p_hal->p_v_bus);
 
-    phase_pu += freq_hz_ramped * CTRL_TS;
+    phase_pu += freq_hz_ramped * inv_cfg_get_ctrl_ts();
     while (phase_pu >= 1.0f)
     {
         phase_pu -= 1.0f;

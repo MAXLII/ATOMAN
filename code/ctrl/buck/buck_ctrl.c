@@ -217,6 +217,7 @@ static void buck_ctrl_reinit_states(void)
     p_active_setpoint = buck_cfg_get_p_active();
 
     if ((p_hal == NULL) ||
+        (buck_cfg_is_ready() == 0U) ||
         (p_active_setpoint == NULL) ||
         (p_hal->p_v_in == NULL) ||
         (p_hal->p_v_out == NULL) ||

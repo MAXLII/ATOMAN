@@ -34,12 +34,15 @@
 #include "buck_hal.h"
 #include "plecs.h"
 #include "section.h"
+#include "timing.h"
 
 /* Inductor-current ADC center code used to convert offset-binary samples to signed control codes. */
 #define APP_ADC_IND_CURR_CODE_CENTER ((int32_t)0x4000)
 
 /* Tracks whether the PLECS application has already attempted HAL binding. */
 static uint8_t app_buck_hal_bound = 0U;
+
+static uint8_t app_buck_timing_bound = 0U;
 
 /* App-owned high-voltage feedback mirror supplied by the ADC interface. */
 static int32_t app_adc_hv = 0;
@@ -92,6 +95,23 @@ static void app_bind_buck_hal(void)
     app_buck_hal_bound = buck_hal_is_ready();
 }
 
+static void app_bind_buck_timing(void)
+{
+    buck_ctrl_timing_t timing = {
+        .ctrl_ts = CTRL_TS,
+        .task_ts = 100.0e-6f,
+        .pwm_cmp_max = CTRL_PWM_CMP_MAX,
+    };
+
+    if (app_buck_timing_bound != 0U)
+    {
+        return;
+    }
+
+    buck_cfg_set_timing(&timing);
+    app_buck_timing_bound = buck_cfg_is_ready();
+}
+
 static void app_update_buck_setpoint(void)
 {
     buck_cfg_set_pwr_lmt(plecs_get_input(PLECS_INPUT_PWR_LMT));
@@ -110,6 +130,7 @@ static void app_task(void)
     buck_run_sta_e run_sta = buck_run_sta_init;
 
     app_update_adc_feedback();
+    app_bind_buck_timing();
     app_update_buck_setpoint();
 
     run_cmd = (plecs_get_input(PLECS_INPUT_RUN) > 0.5f) ? 1U : 0U;
