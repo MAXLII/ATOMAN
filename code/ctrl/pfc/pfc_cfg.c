@@ -48,6 +48,34 @@ static pfc_ctrl_setpoint_mgr_t setpoint_mgr = {
     },
 };
 
+static pfc_ctrl_timing_t ctrl_timing = {0};
+
+static uint8_t pfc_cfg_timing_is_valid(const pfc_ctrl_timing_t *p_timing)
+{
+    return (p_timing != NULL) && (p_timing->ctrl_ts > 0.0f);
+}
+
+void pfc_cfg_set_timing(const pfc_ctrl_timing_t *p_timing)
+{
+    if (pfc_cfg_timing_is_valid(p_timing) == 0U)
+    {
+        ctrl_timing.ctrl_ts = 0.0f;
+        return;
+    }
+
+    ctrl_timing = *p_timing;
+}
+
+const pfc_ctrl_timing_t *pfc_cfg_get_timing(void)
+{
+    return &ctrl_timing;
+}
+
+float pfc_cfg_get_ctrl_ts(void)
+{
+    return ctrl_timing.ctrl_ts;
+}
+
 void pfc_cfg_set_p_building(pfc_ctrl_setpoint_t *p_data)
 {
     if (p_data != NULL)
@@ -136,7 +164,8 @@ void pfc_cfg_building_version_inc(void)
 uint8_t pfc_cfg_is_ready(void)
 {
     return (setpoint_mgr.active.p_data != NULL) &&
-           (setpoint_mgr.building.p_data != NULL);
+           (setpoint_mgr.building.p_data != NULL) &&
+           (pfc_cfg_timing_is_valid(&ctrl_timing) != 0U);
 }
 
 void pfc_cfg_sync_building_to_active(void)

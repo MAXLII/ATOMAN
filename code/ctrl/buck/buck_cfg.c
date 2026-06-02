@@ -39,6 +39,8 @@ static buck_ctrl_setpoint_t setpoint_building = {
     .out_curr_lmt = BUCK_CTRL_OUT_CURR_LMT_TO_CODE(BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A),
 };
 
+static buck_ctrl_timing_t ctrl_timing = {0};
+
 buck_ctrl_setpoint_mgr_t buck_cfg_setpoint_mgr = {
     .active = {
         .p_data = &setpoint_active,
@@ -49,6 +51,47 @@ buck_ctrl_setpoint_mgr_t buck_cfg_setpoint_mgr = {
         .version = 0U,
     },
 };
+
+static uint8_t buck_cfg_timing_is_valid(const buck_ctrl_timing_t *p_timing)
+{
+    return (p_timing != NULL) &&
+           (p_timing->ctrl_ts > 0.0f) &&
+           (p_timing->task_ts > 0.0f) &&
+           (p_timing->pwm_cmp_max > 0);
+}
+
+void buck_cfg_set_timing(const buck_ctrl_timing_t *p_timing)
+{
+    if (buck_cfg_timing_is_valid(p_timing) == 0U)
+    {
+        ctrl_timing.ctrl_ts = 0.0f;
+        ctrl_timing.task_ts = 0.0f;
+        ctrl_timing.pwm_cmp_max = 0;
+        return;
+    }
+
+    ctrl_timing = *p_timing;
+}
+
+const buck_ctrl_timing_t *buck_cfg_get_timing(void)
+{
+    return &ctrl_timing;
+}
+
+float buck_cfg_get_ctrl_ts(void)
+{
+    return ctrl_timing.ctrl_ts;
+}
+
+float buck_cfg_get_task_ts(void)
+{
+    return ctrl_timing.task_ts;
+}
+
+int32_t buck_cfg_get_pwm_cmp_max(void)
+{
+    return ctrl_timing.pwm_cmp_max;
+}
 
 static int32_t buck_cfg_float_to_code(float val, float val_max, int32_t code_max)
 {
@@ -209,7 +252,8 @@ void buck_cfg_building_version_inc(void)
 uint8_t buck_cfg_is_ready(void)
 {
     return (buck_cfg_setpoint_mgr.active.p_data != NULL) &&
-           (buck_cfg_setpoint_mgr.building.p_data != NULL);
+           (buck_cfg_setpoint_mgr.building.p_data != NULL) &&
+           (buck_cfg_timing_is_valid(&ctrl_timing) != 0U);
 }
 
 const buck_ctrl_setpoint_mgr_t *buck_cfg_get_mgr(void)

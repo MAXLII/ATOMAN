@@ -43,6 +43,15 @@ typedef struct
 
 typedef struct
 {
+    float ctrl_ts;
+} bb_ctrl_timing_t;
+
+void bb_cfg_set_timing(const bb_ctrl_timing_t *p_timing);
+const bb_ctrl_timing_t *bb_cfg_get_timing(void);
+float bb_cfg_get_ctrl_ts(void);
+
+typedef struct
+{
     bb_ctrl_setpoint_t *p_data; /* p_data: payload buffer pointer */
     unsigned int version;       /* version: monotonically increasing publish counter */
 } bb_ctrl_setpoint_buf_t;

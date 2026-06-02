@@ -37,6 +37,19 @@
 #include "my_math.h"
 #include "buck_hw_param.h"
 
+typedef struct
+{
+    float ctrl_ts;
+    float task_ts;
+    int32_t pwm_cmp_max;
+} buck_ctrl_timing_t;
+
+void buck_cfg_set_timing(const buck_ctrl_timing_t *p_timing);
+const buck_ctrl_timing_t *buck_cfg_get_timing(void);
+float buck_cfg_get_ctrl_ts(void);
+float buck_cfg_get_task_ts(void);
+int32_t buck_cfg_get_pwm_cmp_max(void);
+
 /* Output voltage-loop reference maximum integer code. */
 #define BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX ((int32_t)(0x1000 - 1))
 
@@ -164,11 +177,11 @@
                 (BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN / 2LL)) /   \
                BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN))
 
-/* Control-loop sample time sourced from the global math configuration. */
-#define BUCK_CTRL_TS (CTRL_TS)
+/* Control-loop sample time supplied by buck_cfg_set_timing(). */
+#define BUCK_CTRL_TS (buck_cfg_get_ctrl_ts())
 
-/* Slow control-task sample time used by voltage and limit loops. */
-#define BUCK_CTRL_TASK_TS (100.0e-6f)
+/* Slow control-task sample time supplied by buck_cfg_set_timing(). */
+#define BUCK_CTRL_TASK_TS (buck_cfg_get_task_ts())
 
 /* Common PI tuning formula: kp = sin(PM) * wcut * OBJ, ki = kp * wcut / tan(PM). */
 /* K keeps kp/ki as scaled float values before pi_tustin_i32_update generates int32_t b0/b1. */
@@ -378,7 +391,7 @@
                (int64_t)BUCK_CTRL_K4_V_OUT_FF_K))
 
 /* Maximum PWM compare command accepted by the buck controller. */
-#define BUCK_CTRL_CMP_MAX (65535)
+#define BUCK_CTRL_CMP_MAX (buck_cfg_get_pwm_cmp_max())
 
 /* Minimum PWM compare command accepted by the buck controller. */
 #define BUCK_CTRL_CMP_MIN (0)

@@ -43,6 +43,15 @@ typedef struct
 
 typedef struct
 {
+    float ctrl_ts;
+} pfc_ctrl_timing_t;
+
+void pfc_cfg_set_timing(const pfc_ctrl_timing_t *p_timing);
+const pfc_ctrl_timing_t *pfc_cfg_get_timing(void);
+float pfc_cfg_get_ctrl_ts(void);
+
+typedef struct
+{
     pfc_ctrl_setpoint_t *p_data;
     unsigned int version;
 } pfc_ctrl_setpoint_buf_t;

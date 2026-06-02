@@ -1,6 +1,7 @@
 #include "bsp_pwm.h"
 #include "hc32_ll.h"
 #include "section.h"
+#include "timing.h"
 #include "my_math.h"
 
 #define BSP_PWM_MASTER_UNIT CM_HRPWM1

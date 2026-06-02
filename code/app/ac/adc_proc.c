@@ -1,4 +1,5 @@
 #include "adc_proc.h"
+#include "timing.h"
 
 /*
  * ADC check module responsibilities:

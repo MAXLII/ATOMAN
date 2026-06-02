@@ -66,13 +66,6 @@ static uint8_t pfc_sogi_update_pending = 0U;                          /* pfc_sog
 static uint8_t pfc_pr_update_pending = 0U;                            /* pfc_pr_update_pending: deferred PR update flag */
 static uint8_t pfc_ctrl_run_active = 0U;                              /* pfc_ctrl_run_active: latched run gate state */
 
-static const fll_params_t grid_fll_params = {
-    /* grid_fll_params: FLL tuning parameters */
-    .gamma = PFC_CTRL_FLL_GAIN,
-    .omega_init = PFC_CTRL_GRID_OMEGA_INIT_RADPS,
-    .ts = CTRL_TS,
-};
-
 static inline void pfc_ctrl_request_freq_update(float omega)
 {
     pfc_sogi_omega_pending = omega;
@@ -210,7 +203,15 @@ static inline void pfc_ctrl_run_current_loop(float i_ref_abs_lmt_a)
 
 static inline void pfc_ctrl_reinit_states(void)
 {
+    float ctrl_ts = pfc_cfg_get_ctrl_ts();
+    fll_params_t grid_fll_params = {
+        .gamma = PFC_CTRL_FLL_GAIN,
+        .omega_init = PFC_CTRL_GRID_OMEGA_INIT_RADPS,
+        .ts = ctrl_ts,
+    };
+
     if ((p_hal == NULL) ||
+        (pfc_cfg_is_ready() == 0U) ||
         (p_hal->p_v_bus == NULL) ||
         (p_hal->p_v_g == NULL) ||
         (p_hal->p_v_rms == NULL) ||
@@ -225,14 +226,14 @@ static inline void pfc_ctrl_reinit_states(void)
     notch_init(&vbus_notch_filter,
                PFC_CTRL_VBUS_NOTCH_CENTER_RADPS,
                PFC_CTRL_VBUS_NOTCH_BANDWIDTH_RADPS,
-               CTRL_TS,
+               ctrl_ts,
                p_hal->p_v_bus);
 
     /* The PI output is the current-amplitude command handled downstream. */
     pi_tustin_init(&vbus_volt_loop,
                    PFC_CTRL_VOLT_LOOP_KP,
                    PFC_CTRL_VOLT_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    PFC_CTRL_VBUS_LOOP_OUT_MAX,
                    PFC_CTRL_VBUS_LOOP_OUT_MIN,
                    &vbus_ref_ramped_v,
@@ -245,7 +246,7 @@ static inline void pfc_ctrl_reinit_states(void)
     pi_tustin_init(&ind_curr_loop,
                    PFC_CTRL_CURR_LOOP_KP,
                    PFC_CTRL_CURR_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    PFC_CTRL_IND_CURR_LOOP_OUT_MAX,
                    PFC_CTRL_IND_CURR_LOOP_OUT_MIN,
                    &ind_curr_ref_act_a,
@@ -256,7 +257,7 @@ static inline void pfc_ctrl_reinit_states(void)
             PFC_CTRL_CURR_LOOP_PR_KR,
             grid_fll_params.omega_init,
             PFC_CTRL_CURR_LOOP_PR_WC,
-            CTRL_TS,
+            ctrl_ts,
             PFC_CTRL_IND_CURR_LOOP_OUT_MAX,
             PFC_CTRL_IND_CURR_LOOP_OUT_MIN,
             &ind_curr_ref_act_a,
@@ -264,7 +265,7 @@ static inline void pfc_ctrl_reinit_states(void)
 
     /* Track grid phase with SOGI, and let FLL adapt the center frequency. */
     sogi_init(&grid_sogi,
-              CTRL_TS,
+              ctrl_ts,
               grid_fll_params.omega_init,
               PFC_CTRL_SOGI_GAIN,
               p_hal->p_v_g);
@@ -339,7 +340,7 @@ static void pfc_ctrl_isr(void)
     pfc_ctrl_run_active = 1U;
 
     /* Apply a slew-rate limit to the bus-reference command. */
-    RAMP(vbus_ref_ramped_v, p_active_setpoint->vbus_ref_v, p_active_setpoint->vbus_slew_vps * CTRL_TS);
+    RAMP(vbus_ref_ramped_v, p_active_setpoint->vbus_ref_v, p_active_setpoint->vbus_slew_vps * pfc_cfg_get_ctrl_ts());
 
     pfc_ctrl_run_current_loop(PFC_CTRL_VBUS_LOOP_OUT_MAX);
 }

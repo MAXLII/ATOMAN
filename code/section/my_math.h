@@ -6,7 +6,7 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define shared control-loop frequency and sampling-period constants
+ *          - Require shared control-loop timing constants
  *          - Provide clamp, counter, filter, transform, and angle helper macros
  *          - Keep lightweight math utilities available to ISR and control paths without allocation
  *
@@ -34,19 +34,12 @@
 #else
 #include "math.h"
 #endif
+#include <stdint.h>
+#include "timing.h"
 
-/* Common control frequencies and derived sampling periods. */
-#if defined(IS_BUCK)
-#define PWM_FREQ 400.0e3f
-#define BUCK_PWM_FREQ PWM_FREQ
-#define CTRL_FREQ 100.0e3f
-#else
-#define BUCK_PWM_FREQ 60.0e3f
-#define CTRL_FREQ 30.0e3f
+#ifndef CTRL_TS
+#error "CTRL_TS is not defined. Please define the control timebase in timing.h."
 #endif
-#define PFC_PWM_FREQ 30.0e3f
-#define BUCK_PWM_TS (1.0f / BUCK_PWM_FREQ)
-#define CTRL_TS (1.0f / CTRL_FREQ)
 
 /* In-place clamp helpers. */
 #define UP_LMT(in, lmt) (in = ((in > (lmt)) ? (lmt) : in))
@@ -235,7 +228,7 @@
 #define TIME_CNT_10S_IN_1MS (10 * TIME_CNT_1S_IN_1MS)
 
 /* Time constants expressed in control ISR ticks. */
-#define TIME_CNT_1MS_IN_CTRL ((uint32_t)(0.001f * CTRL_FREQ))
+#define TIME_CNT_1MS_IN_CTRL ((uint32_t)(0.001f / CTRL_TS))
 #define TIME_CNT_10MS_IN_CTRL (10 * TIME_CNT_1MS_IN_CTRL)
 #define TIME_CNT_50MS_IN_CTRL (50 * TIME_CNT_1MS_IN_CTRL)
 #define TIME_CNT_100MS_IN_CTRL (100 * TIME_CNT_1MS_IN_CTRL)

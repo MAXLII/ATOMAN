@@ -45,7 +45,7 @@ static pi_tustin_t ind_curr_loop = {0};    /* ind_curr_loop: inner inductor-curr
 static float out_volt_loop_lmt = 0.0f;         /* out_volt_loop_lmt: active upper clamp for the outer voltage loop */
 static float in_curr_lmt = 0.0f;               /* in_curr_lmt: runtime input-current limit after power derating */
 static float ind_curr_ref = 0.0f;              /* ind_curr_ref: inductor-current reference driven by outer loops */
-static float bb_pwm_ts = CTRL_TS;              /* bb_pwm_ts: PWM period used by open-loop DCM duty calculation */
+static float bb_pwm_ts = 0.0f;                 /* bb_pwm_ts: PWM period used by open-loop DCM duty calculation */
 static float bb_open_loop_l = 5.8e-6f;         /* bb_open_loop_l: open-loop equivalent inductance placeholder */
 static bb_mode_t bb_mode = {0};                /* bb_mode: CCM modulation solver fed by inductor-voltage command */
 static bb_ol_mode_e ol_mode = BB_OL_MODE_BUCK; /* ol_mode: DCM/open-loop mode state with hysteresis */
@@ -144,8 +144,10 @@ static void bb_ctrl_cal_ol_mode(void)
 static void bb_ctrl_reinit_states(void)
 {
     bb_ctrl_setpoint_t *p_active_setpoint = bb_cfg_get_p_active(); /* p_active_setpoint: active controller setpoint image */
+    float ctrl_ts = bb_cfg_get_ctrl_ts();
 
     if ((p_hal == NULL) ||
+        (bb_cfg_is_ready() == 0U) ||
         (p_active_setpoint == NULL) ||
         (p_hal->p_v_in == NULL) ||
         (p_hal->p_i_in == NULL) ||
@@ -178,13 +180,14 @@ static void bb_ctrl_reinit_states(void)
 
     bb_ctrl_is_dcm = 0U;
     bb_ctrl_run_active = 0U;
+    bb_pwm_ts = ctrl_ts;
     out_volt_loop_lmt = 0.0f;
     in_curr_lmt = p_active_setpoint->in_curr_lmt;
 
     pi_tustin_init(&out_volt_loop,
                    BB_CTRL_OUT_VOLT_LOOP_KP,
                    BB_CTRL_OUT_VOLT_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    BB_CTRL_OUT_VOLT_LOOP_UP_LMT,
                    BB_CTRL_OUT_VOLT_LOOP_DN_LMT,
                    &p_active_setpoint->out_volt_ref,
@@ -193,7 +196,7 @@ static void bb_ctrl_reinit_states(void)
     pi_tustin_init(&in_volt_lmt_loop,
                    BB_CTRL_IN_VOLT_LMT_LOOP_KP,
                    BB_CTRL_IN_VOLT_LMT_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    BB_CTRL_IN_VOLT_LMT_LOOP_UP_LMT,
                    BB_CTRL_IN_VOLT_LMT_LOOP_DN_LMT,
                    p_hal->p_v_in,
@@ -202,7 +205,7 @@ static void bb_ctrl_reinit_states(void)
     pi_tustin_init(&in_curr_loop,
                    BB_CTRL_IN_CURR_LOOP_KP,
                    BB_CTRL_IN_CURR_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    BB_CTRL_IN_CURR_LOOP_UP_LMT,
                    BB_CTRL_IN_CURR_LOOP_DN_LMT,
                    &in_curr_lmt,
@@ -211,7 +214,7 @@ static void bb_ctrl_reinit_states(void)
     pi_tustin_init(&out_curr_loop,
                    BB_CTRL_OUT_CURR_LOOP_KP,
                    BB_CTRL_OUT_CURR_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    BB_CTRL_OUT_CURR_LOOP_UP_LMT,
                    BB_CTRL_OUT_CURR_LOOP_DN_LMT,
                    &p_active_setpoint->out_curr_lmt,
@@ -220,7 +223,7 @@ static void bb_ctrl_reinit_states(void)
     pi_tustin_init(&ind_curr_loop,
                    BB_CTRL_IND_CURR_LOOP_KP,
                    BB_CTRL_IND_CURR_LOOP_KI,
-                   CTRL_TS,
+                   ctrl_ts,
                    BB_CTRL_IND_CURR_LOOP_UP_LMT,
                    BB_CTRL_IND_CURR_LOOP_DN_LMT,
                    &ind_curr_ref,

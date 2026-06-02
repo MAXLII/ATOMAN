@@ -43,6 +43,34 @@ static bb_ctrl_setpoint_mgr_t setpoint_mgr = {
     },
 };
 
+static bb_ctrl_timing_t ctrl_timing = {0};
+
+static uint8_t bb_cfg_timing_is_valid(const bb_ctrl_timing_t *p_timing)
+{
+    return (p_timing != NULL) && (p_timing->ctrl_ts > 0.0f);
+}
+
+void bb_cfg_set_timing(const bb_ctrl_timing_t *p_timing)
+{
+    if (bb_cfg_timing_is_valid(p_timing) == 0U)
+    {
+        ctrl_timing.ctrl_ts = 0.0f;
+        return;
+    }
+
+    ctrl_timing = *p_timing;
+}
+
+const bb_ctrl_timing_t *bb_cfg_get_timing(void)
+{
+    return &ctrl_timing;
+}
+
+float bb_cfg_get_ctrl_ts(void)
+{
+    return ctrl_timing.ctrl_ts;
+}
+
 /**
  * @brief Replace the staged building buffer pointer.
  * @param p_data Pointer to the replacement building buffer.
@@ -202,7 +230,8 @@ void bb_cfg_building_version_inc(void)
 uint8_t bb_cfg_is_ready(void)
 {
     return (setpoint_mgr.active.p_data != NULL) &&
-           (setpoint_mgr.building.p_data != NULL);
+           (setpoint_mgr.building.p_data != NULL) &&
+           (bb_cfg_timing_is_valid(&ctrl_timing) != 0U);
 }
 
 /**
