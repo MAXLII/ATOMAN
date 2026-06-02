@@ -6,6 +6,7 @@ gd32g553c/gd_dbg
 plecs/plecs_log_file_path.c
 plecs/plecs_log.txt
 plecs/ac/plecs_log.txt
+plecs/*/plecs_log.txt
 gd32g553c/fw_info.exe
 gd32g553c/tools/fw_info/fw_info
 gd32g553c/tools/fw_info/fw_info.exe
