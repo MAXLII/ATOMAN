@@ -127,8 +127,8 @@ void section_init(void);
 uint32_t section_perf_task_begin(section_perf_record_t *record);
 void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
 void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us);
-uint32_t section_perf_interrupt_begin(section_perf_record_t *record);
-void section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
+uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record);
+void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
 
 typedef struct reg_task_t
 {
@@ -198,7 +198,7 @@ typedef struct reg_interrupt
     };                                                \
     REG_SECTION_FUNC(SECTION_INTERRUPT, reg_interrupt_##func)
 
-void section_interrupt(void);
+void FUNC_RAM section_interrupt(void);
 
 typedef struct
 {
