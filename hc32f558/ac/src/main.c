@@ -22,6 +22,7 @@
  * Include files
  ******************************************************************************/
 #include "main.h"
+#include "bsp_clk.h"
 #include "bsp_usart.h"
 #include "section.h"
 #include "systick.h"
@@ -67,6 +68,10 @@
  */
 int32_t main(void)
 {
+    if (LL_OK != bsp_clk_init()) {
+        for (;;) {
+        }
+    }
     systick_config();
     bsp_usart_init();
     section_init();

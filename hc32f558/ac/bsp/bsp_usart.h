@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare the debug USART initialization interface
- *          - Declare DMA TX and DMA ring-buffer RX helpers
+ *          - Declare DMA ring-buffer TX and RX helpers
  *          - Declare a fixed-buffer printf helper for debug output
  *
  *          Design notes:
