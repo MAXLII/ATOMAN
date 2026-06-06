@@ -4,9 +4,10 @@
 #include "section.h"
 #include "perf.h"
 
-REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x00000024u))
-
 #define BSP_TIMER_CNT_FREQ_HZ 2000000u
+#define BSP_TIMER_CNT_PERIOD_S (0.5e-6f)
+
+REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x00000024u), BSP_TIMER_CNT_PERIOD_S)
 
 void bsp_timer_init(void)
 {

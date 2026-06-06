@@ -63,6 +63,7 @@
  *   Purpose: performance counter and timing records.
  *   Parameters:
  *     timer_cnt : uint32_t * counter base used by PERF_START/END.
+ *     period_s  : one counter tick period in seconds.
  *     name      : record symbol name used by P_RECORD_PERF(name).
  *
  * SECTION_SCOPE
