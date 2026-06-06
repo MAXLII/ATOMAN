@@ -34,9 +34,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#if defined(__GNUC__) && !defined(__CC_ARM)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
+#endif
 
 /* Head of the runtime shell registration list built from SECTION_SHELL items. */
 section_shell_t *p_shell_first;
@@ -649,4 +651,6 @@ section_shell_t *shell_find(const char *p_name, uint8_t len)
     return NULL;
 }
 
+#if defined(__GNUC__) && !defined(__CC_ARM)
 #pragma GCC diagnostic pop
+#endif
