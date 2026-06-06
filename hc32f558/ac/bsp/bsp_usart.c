@@ -8,12 +8,12 @@
  *          Module responsibilities:
  *          - Configure USART1 GPIO alternate functions on PB6/PB7
  *          - Initialize USART1 with DMA1 channel based TX/RX paths
- *          - Provide debug printf, DMA transmit, and DMA ring-buffer receive helpers
+ *          - Provide debug printf, DMA ring-buffer transmit, and DMA ring-buffer receive helpers
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - RX DMA runs continuously; TX DMA is started per transfer
+ *          - RX DMA runs continuously; TX DMA drains a software ring buffer without blocking callers
  *          - Hardware access is abstracted through the HC32 LL driver
  *
  * @author  Max.Li
@@ -29,8 +29,11 @@
 
 #include "bsp_usart.h"
 
+#include "section.h"
+
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #define BSP_USART_UNIT                  (CM_USART1)
 #define BSP_USART_FCG                   (FCG3_PERIPH_USART1)
@@ -49,21 +52,33 @@
 #define BSP_USART_DMA_UNIT              (CM_DMA1)
 #define BSP_USART_DMA_FCG               (FCG0_PERIPH_DMA1)
 #define BSP_USART_RX_DMA_CH             (DMA_CH0)
+#define BSP_USART_RX_DMA_MX_CH          (DMA_MX_CH0)
 #define BSP_USART_RX_DMA_TRIG_SEL       (AOS_DMA1_0)
 #define BSP_USART_RX_DMA_TRIG_EVT       (EVT_SRC_USART1_RI)
 #define BSP_USART_TX_DMA_CH             (DMA_CH1)
+#define BSP_USART_TX_DMA_MX_CH          (DMA_MX_CH1)
+#define BSP_USART_TX_DMA_BUSY_FLAG      (DMA_STAT_TRANS_CH1)
+#define BSP_USART_TX_DMA_TC_FLAG        (DMA_FLAG_TC_CH1)
 #define BSP_USART_TX_DMA_TRIG_SEL       (AOS_DMA1_1)
 #define BSP_USART_TX_DMA_TRIG_EVT       (EVT_SRC_USART1_TI)
 
 #define BSP_USART_RX_BUF_SIZE           (256U)
 #define BSP_USART_RX_HALF_SIZE          (BSP_USART_RX_BUF_SIZE / 2U)
+#define BSP_USART_TX_BUF_SIZE           (2048U)
+#define BSP_USART_TX_DMA_BUF_SIZE       (128U)
 #define BSP_USART_DMA_BLOCK_SIZE        (1UL)
-#define BSP_USART_TX_DMA_MAX_LEN        (0xFFFFUL)
+#define BSP_USART_TX_WAIT_TIMEOUT       (0x00FFFFFFUL)
 
 static uint8_t s_usart_rx_buf[BSP_USART_RX_BUF_SIZE];
 static stc_dma_llp_descriptor_t s_usart_rx_llp[2];
 static uint16_t s_usart_rx_read_index;
 static uint16_t s_usart_rx_write_index;
+static uint8_t s_usart_tx_buf[BSP_USART_TX_BUF_SIZE];
+static uint8_t s_usart_tx_dma_buf[BSP_USART_TX_DMA_BUF_SIZE];
+static uint16_t s_usart_tx_read_index;
+static uint16_t s_usart_tx_write_index;
+static uint16_t s_usart_tx_dma_len;
+static uint8_t s_usart_tx_dma_active;
 
 static void bsp_usart_gpio_init(void)
 {
@@ -132,6 +147,7 @@ static void bsp_usart_rx_dma_init(void)
     s_usart_rx_write_index = 0U;
 
     AOS_SetTriggerEventSrc(BSP_USART_RX_DMA_TRIG_SEL, BSP_USART_RX_DMA_TRIG_EVT);
+    DMA_MxChCmd(BSP_USART_DMA_UNIT, BSP_USART_RX_DMA_MX_CH, ENABLE);
     (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_RX_DMA_CH, ENABLE);
 }
 
@@ -152,6 +168,135 @@ static void bsp_usart_tx_dma_init(void)
     (void)DMA_Init(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, &dma_init);
 
     AOS_SetTriggerEventSrc(BSP_USART_TX_DMA_TRIG_SEL, BSP_USART_TX_DMA_TRIG_EVT);
+    DMA_MxChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_MX_CH, ENABLE);
+
+    s_usart_tx_read_index = 0U;
+    s_usart_tx_write_index = 0U;
+    s_usart_tx_dma_len = 0U;
+    s_usart_tx_dma_active = 0U;
+}
+
+static uint16_t bsp_usart_tx_ring_used(void)
+{
+    if (s_usart_tx_write_index >= s_usart_tx_read_index) {
+        return (uint16_t)(s_usart_tx_write_index - s_usart_tx_read_index);
+    }
+
+    return (uint16_t)(BSP_USART_TX_BUF_SIZE - s_usart_tx_read_index + s_usart_tx_write_index);
+}
+
+static uint16_t bsp_usart_tx_ring_free(void)
+{
+    return (uint16_t)(BSP_USART_TX_BUF_SIZE - 1U - bsp_usart_tx_ring_used());
+}
+
+static uint8_t bsp_usart_tx_dma_is_idle(void)
+{
+    return ((BSP_USART_DMA_UNIT->CHSTAT & BSP_USART_TX_DMA_BUSY_FLAG) == 0UL) ? 1U : 0U;
+}
+
+static uint16_t bsp_usart_tx_ring_read(uint8_t *data, uint16_t len)
+{
+    uint16_t used;
+    uint16_t read_len;
+    uint16_t first_len;
+    uint16_t second_len;
+
+    if ((NULL == data) || (0U == len)) {
+        return 0U;
+    }
+
+    used = bsp_usart_tx_ring_used();
+    read_len = (len < used) ? len : used;
+    if (0U == read_len) {
+        return 0U;
+    }
+
+    first_len = (uint16_t)(BSP_USART_TX_BUF_SIZE - s_usart_tx_read_index);
+    if (first_len > read_len) {
+        first_len = read_len;
+    }
+    (void)memcpy(data, &s_usart_tx_buf[s_usart_tx_read_index], first_len);
+
+    second_len = (uint16_t)(read_len - first_len);
+    if (second_len > 0U) {
+        (void)memcpy(&data[first_len], &s_usart_tx_buf[0], second_len);
+    }
+
+    s_usart_tx_read_index = (uint16_t)((s_usart_tx_read_index + read_len) % BSP_USART_TX_BUF_SIZE);
+
+    return read_len;
+}
+
+static void bsp_usart_tx_ring_write(const uint8_t *data, uint32_t len)
+{
+    uint16_t first_len;
+    uint16_t second_len;
+
+    if ((NULL == data) || (0UL == len)) {
+        return;
+    }
+
+    first_len = (uint16_t)(BSP_USART_TX_BUF_SIZE - s_usart_tx_write_index);
+    if ((uint32_t)first_len > len) {
+        first_len = (uint16_t)len;
+    }
+    (void)memcpy(&s_usart_tx_buf[s_usart_tx_write_index], data, first_len);
+
+    second_len = (uint16_t)(len - (uint32_t)first_len);
+    if (second_len > 0U) {
+        (void)memcpy(&s_usart_tx_buf[0], &data[first_len], second_len);
+    }
+
+    s_usart_tx_write_index = (uint16_t)((s_usart_tx_write_index + (uint16_t)len) % BSP_USART_TX_BUF_SIZE);
+}
+
+static int32_t bsp_usart_tx_dma_start(void)
+{
+    uint16_t chunk_len;
+    int32_t ret = LL_OK;
+
+    chunk_len = bsp_usart_tx_ring_read(s_usart_tx_dma_buf, BSP_USART_TX_DMA_BUF_SIZE);
+    if (0U == chunk_len) {
+        ret = LL_ERR_BUF_EMPTY;
+        return ret;
+    }
+
+    (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, DISABLE);
+    DMA_ClearTransCompleteStatus(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_TC_FLAG);
+    (void)DMA_SetSrcAddr(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, (uint32_t)&s_usart_tx_dma_buf[0]);
+    (void)DMA_SetDestAddr(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, (uint32_t)&BSP_USART_UNIT->TDR);
+    (void)DMA_SetTransCount(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, chunk_len);
+    USART_ClearStatus(BSP_USART_UNIT, USART_FLAG_TX_END);
+    (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, ENABLE);
+    DMA_MxChSWTrigger(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_MX_CH);
+
+    s_usart_tx_dma_len = chunk_len;
+    s_usart_tx_dma_active = 1U;
+
+    return ret;
+}
+
+static void bsp_usart_dbg_tx_poll(void)
+{
+    if (s_usart_tx_dma_active != 0U) {
+        if (0U == bsp_usart_tx_dma_is_idle()) {
+            return;
+        }
+        if (RESET == USART_GetStatus(BSP_USART_UNIT, USART_FLAG_TX_CPLT)) {
+            return;
+        }
+
+        (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, DISABLE);
+        DMA_ClearTransCompleteStatus(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_TC_FLAG);
+        USART_ClearStatus(BSP_USART_UNIT, USART_FLAG_TX_END);
+        s_usart_tx_dma_len = 0U;
+        s_usart_tx_dma_active = 0U;
+    }
+
+    if (0U != bsp_usart_tx_dma_is_idle()) {
+        (void)bsp_usart_tx_dma_start();
+    }
 }
 
 static void bsp_usart_dma_init(void)
@@ -197,7 +342,7 @@ void bsp_usart_init(void)
     USART_ClearStatus(BSP_USART_UNIT, USART_FLAG_TX_END);
 
     bsp_usart_dma_init();
-    USART_FuncCmd(BSP_USART_UNIT, USART_RX, ENABLE);
+    USART_FuncCmd(BSP_USART_UNIT, (USART_RX | USART_TX), ENABLE);
 }
 
 void bsp_usart_dbg_tx(const char *ptr, int len)
@@ -211,37 +356,37 @@ void bsp_usart_dbg_tx(const char *ptr, int len)
 
 uint32_t bsp_usart_dbg_tx_dma(const uint8_t *data, uint32_t len)
 {
-    uint32_t send_len = len;
-    const uint32_t tx_complete_flag = DMA_FLAG_TC_CH0 << BSP_USART_TX_DMA_CH;
+    uint32_t timeout = BSP_USART_TX_WAIT_TIMEOUT;
 
     if ((NULL == data) || (0UL == len)) {
         return 0UL;
     }
-    if (send_len > BSP_USART_TX_DMA_MAX_LEN) {
-        send_len = BSP_USART_TX_DMA_MAX_LEN;
+
+    if (len >= BSP_USART_TX_BUF_SIZE) {
+        return 0UL;
     }
 
-    while (RESET == USART_GetStatus(BSP_USART_UNIT, USART_FLAG_TX_CPLT)) {
+    while (((uint32_t)bsp_usart_tx_ring_free() < len) && (timeout > 0UL)) {
+        bsp_usart_dbg_tx_poll();
+        timeout--;
     }
 
-    (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, DISABLE);
-    DMA_ClearTransCompleteStatus(BSP_USART_DMA_UNIT, tx_complete_flag);
-    (void)DMA_SetSrcAddr(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, (uint32_t)data);
-    (void)DMA_SetTransCount(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, send_len);
-    (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, ENABLE);
-
-    USART_ClearStatus(BSP_USART_UNIT, USART_FLAG_TX_CPLT);
-    USART_FuncCmd(BSP_USART_UNIT, USART_TX, DISABLE);
-    USART_FuncCmd(BSP_USART_UNIT, USART_TX, ENABLE);
-
-    while (RESET == DMA_GetTransCompleteStatus(BSP_USART_DMA_UNIT, tx_complete_flag)) {
+    if ((uint32_t)bsp_usart_tx_ring_free() < len) {
+        return 0UL;
     }
-    while (RESET == USART_GetStatus(BSP_USART_UNIT, USART_FLAG_TX_CPLT)) {
-    }
-    (void)DMA_ChCmd(BSP_USART_DMA_UNIT, BSP_USART_TX_DMA_CH, DISABLE);
 
-    return send_len;
+    bsp_usart_tx_ring_write(data, len);
+    bsp_usart_dbg_tx_poll();
+
+    return len;
 }
+
+static void bsp_usart_dbg_tx_task(void)
+{
+    bsp_usart_dbg_tx_poll();
+}
+
+REG_TASK(100, bsp_usart_dbg_tx_task)
 
 void bsp_usart_dbg_printf(const char *format, ...)
 {

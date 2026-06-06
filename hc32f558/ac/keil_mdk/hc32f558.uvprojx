@@ -138,7 +138,7 @@
             <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\CMSIS_AGDI.DLL</Flash2>
+          <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4>.\config\debug_init.ini</Flash4>
           <pFcarmOut></pFcarmOut>
@@ -501,9 +501,34 @@
           <GroupName>bsp</GroupName>
           <Files>
             <File>
+              <FileName>bsp_clk.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_clk.c</FilePath>
+            </File>
+            <File>
               <FileName>bsp_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\bsp\bsp_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_pwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_pwm.c</FilePath>
             </File>
           </Files>
         </Group>
