@@ -33,8 +33,9 @@
 #include "pi_tustin.h"
 #include "section.h"
 #include "my_math.h"
+#include <stddef.h>
 
-#define p_hal (bb_hal_get_ctrl())
+#define p_hal (p_ctrl_hal)
 
 static pi_tustin_t out_volt_loop = {0};    /* out_volt_loop: outer output-voltage controller */
 static pi_tustin_t in_volt_lmt_loop = {0}; /* in_volt_lmt_loop: input-voltage limiting controller */
@@ -42,6 +43,14 @@ static pi_tustin_t in_curr_loop = {0};     /* in_curr_loop: input-current limiti
 static pi_tustin_t out_curr_loop = {0};    /* out_curr_loop: output-current limiting controller */
 static pi_tustin_t ind_curr_loop = {0};    /* ind_curr_loop: inner inductor-current controller */
 
+static bb_ctrl_hal_t *p_ctrl_hal = NULL;
+static bb_ctrl_setpoint_t bb_ctrl_safe_setpoint = {0};
+static bb_ctrl_setpoint_t *p_ctrl_active_setpoint = &bb_ctrl_safe_setpoint;
+static float v_in_fb = 0.0f;
+static float i_in_fb = 0.0f;
+static float v_out_fb = 0.0f;
+static float i_out_fb = 0.0f;
+static float i_l_fb = 0.0f;
 static float out_volt_loop_lmt = 0.0f;         /* out_volt_loop_lmt: active upper clamp for the outer voltage loop */
 static float in_curr_lmt = 0.0f;               /* in_curr_lmt: runtime input-current limit after power derating */
 static float ind_curr_ref = 0.0f;              /* ind_curr_ref: inductor-current reference driven by outer loops */
@@ -55,6 +64,15 @@ static uint8_t bb_ctrl_run_active = 0U;        /* bb_ctrl_run_active: latched ru
 
 #define BB_CTRL_DCM_ENTER_PWR_W (30.0f)
 #define BB_CTRL_DCM_EXIT_PWR_W (50.0f)
+
+static inline void bb_ctrl_update_feedback(bb_ctrl_hal_t *p)
+{
+    v_in_fb = *p->p_v_in;
+    i_in_fb = *p->p_i_in;
+    v_out_fb = *p->p_v_out;
+    i_out_fb = *p->p_i_out;
+    i_l_fb = *p->p_i_l;
+}
 
 /**
  * @brief Update the DCM state with input-power hysteresis.
@@ -88,18 +106,9 @@ static void bb_ctrl_is_in_dcm(float pwr_in_w)
 static void bb_ctrl_cal_ol_mode(void)
 {
     float gain = 0.0f;  /* gain: instantaneous buck-boost voltage gain */
-    float v_in = 0.0f;  /* v_in: sampled input voltage */
-    float v_out = 0.0f; /* v_out: sampled output voltage */
+    float v_in = v_in_fb;   /* v_in: sampled input voltage */
+    float v_out = v_out_fb; /* v_out: sampled output voltage */
 
-    if ((p_hal == NULL) ||
-        (p_hal->p_v_in == NULL) ||
-        (p_hal->p_v_out == NULL))
-    {
-        return;
-    }
-
-    v_in = *p_hal->p_v_in;
-    v_out = *p_hal->p_v_out;
     DN_LMT(v_in, 0.001f);
     gain = v_out / v_in;
 
@@ -143,8 +152,13 @@ static void bb_ctrl_cal_ol_mode(void)
  */
 static void bb_ctrl_reinit_states(void)
 {
-    bb_ctrl_setpoint_t *p_active_setpoint = bb_cfg_get_p_active(); /* p_active_setpoint: active controller setpoint image */
+    bb_ctrl_setpoint_t *p_active_setpoint = NULL; /* p_active_setpoint: active controller setpoint image */
     float ctrl_ts = bb_cfg_get_ctrl_ts();
+
+    p_ctrl_hal = bb_hal_get_ctrl();
+    bb_ctrl_run_active = 0U;
+    bb_cfg_sync_building_to_active();
+    p_active_setpoint = bb_cfg_get_p_active();
 
     if ((p_hal == NULL) ||
         (bb_cfg_is_ready() == 0U) ||
@@ -158,15 +172,18 @@ static void bb_ctrl_reinit_states(void)
         return;
     }
 
+    p_ctrl_active_setpoint = p_active_setpoint;
+    bb_ctrl_update_feedback(p_hal);
+
     bb_mode_init(&bb_mode,
                  &ind_curr_loop.output.val,
-                 p_hal->p_v_in,
-                 p_hal->p_v_out,
-                 (*p_hal->p_v_in > *p_hal->p_v_out)
+                 &v_in_fb,
+                 &v_out_fb,
+                 (v_in_fb > v_out_fb)
                      ? BB_MODE_BUCK
                      : BB_MODE_BOOST);
 
-    ol_mode = (*p_hal->p_v_in > *p_hal->p_v_out)
+    ol_mode = (v_in_fb > v_out_fb)
                   ? BB_OL_MODE_BUCK
                   : BB_OL_MODE_BOOST;
 
@@ -174,8 +191,8 @@ static void bb_ctrl_reinit_states(void)
                &ol_mode,
                &ind_curr_ref,
                &bb_pwm_ts,
-               p_hal->p_v_in,
-               p_hal->p_v_out,
+               &v_in_fb,
+               &v_out_fb,
                &bb_open_loop_l);
 
     bb_ctrl_is_dcm = 0U;
@@ -191,7 +208,7 @@ static void bb_ctrl_reinit_states(void)
                    BB_CTRL_OUT_VOLT_LOOP_UP_LMT,
                    BB_CTRL_OUT_VOLT_LOOP_DN_LMT,
                    &p_active_setpoint->out_volt_ref,
-                   p_hal->p_v_out);
+                   &v_out_fb);
 
     pi_tustin_init(&in_volt_lmt_loop,
                    BB_CTRL_IN_VOLT_LMT_LOOP_KP,
@@ -199,7 +216,7 @@ static void bb_ctrl_reinit_states(void)
                    ctrl_ts,
                    BB_CTRL_IN_VOLT_LMT_LOOP_UP_LMT,
                    BB_CTRL_IN_VOLT_LMT_LOOP_DN_LMT,
-                   p_hal->p_v_in,
+                   &v_in_fb,
                    &p_active_setpoint->in_volt_lmt);
 
     pi_tustin_init(&in_curr_loop,
@@ -209,7 +226,7 @@ static void bb_ctrl_reinit_states(void)
                    BB_CTRL_IN_CURR_LOOP_UP_LMT,
                    BB_CTRL_IN_CURR_LOOP_DN_LMT,
                    &in_curr_lmt,
-                   p_hal->p_i_in);
+                   &i_in_fb);
 
     pi_tustin_init(&out_curr_loop,
                    BB_CTRL_OUT_CURR_LOOP_KP,
@@ -218,7 +235,7 @@ static void bb_ctrl_reinit_states(void)
                    BB_CTRL_OUT_CURR_LOOP_UP_LMT,
                    BB_CTRL_OUT_CURR_LOOP_DN_LMT,
                    &p_active_setpoint->out_curr_lmt,
-                   p_hal->p_i_out);
+                   &i_out_fb);
 
     pi_tustin_init(&ind_curr_loop,
                    BB_CTRL_IND_CURR_LOOP_KP,
@@ -227,7 +244,7 @@ static void bb_ctrl_reinit_states(void)
                    BB_CTRL_IND_CURR_LOOP_UP_LMT,
                    BB_CTRL_IND_CURR_LOOP_DN_LMT,
                    &ind_curr_ref,
-                   p_hal->p_i_l);
+                   &i_l_fb);
 }
 
 /**
@@ -240,6 +257,8 @@ static void bb_ctrl_init(void)
     bb_ctrl_reinit_states();
 }
 
+REG_INIT(0, bb_ctrl_init)
+
 /**
  * @brief Main fast control interrupt for the buck-boost controller.
  * @param None. HAL samples and active setpoint are read internally.
@@ -247,41 +266,34 @@ static void bb_ctrl_init(void)
  */
 static void bb_ctrl_isr(void)
 {
-    bb_ctrl_setpoint_t *p_active_setpoint = bb_cfg_get_p_active(); /* p_active_setpoint: active setpoint used in this ISR pass */
+    bb_ctrl_hal_t *p_hal_isr = p_hal;
+    bb_ctrl_setpoint_t *p_setpoint = p_ctrl_active_setpoint; /* p_setpoint: active setpoint used in this ISR pass */
+    float pwr_in_w = 0.0f;
 
-    if ((p_hal == NULL) ||
+    if ((p_hal_isr == NULL) ||
         (bb_cfg_is_ready() == 0U) ||
-        (p_active_setpoint == NULL) ||
-        (p_hal->p_v_in == NULL) ||
-        (p_hal->p_i_in == NULL) ||
-        (p_hal->p_v_out == NULL) ||
-        (p_hal->p_i_out == NULL) ||
-        (p_hal->p_i_l == NULL) ||
-        (p_hal->p_set_pwm_func == NULL))
+        (p_setpoint == NULL) ||
+        (p_hal_isr->p_v_in == NULL) ||
+        (p_hal_isr->p_i_in == NULL) ||
+        (p_hal_isr->p_v_out == NULL) ||
+        (p_hal_isr->p_i_out == NULL) ||
+        (p_hal_isr->p_i_l == NULL) ||
+        (p_hal_isr->p_set_pwm_func == NULL))
     {
         return;
     }
 
     bb_cfg_sync_building_to_active();
+    bb_ctrl_update_feedback(p_hal_isr);
+    pwr_in_w = v_in_fb * i_in_fb;
 
-    const float v_in = *p_hal->p_v_in;   /* v_in: ISR input-voltage snapshot */
-    const float i_in = *p_hal->p_i_in;   /* i_in: ISR input-current snapshot */
-    const float v_out = *p_hal->p_v_out; /* v_out: ISR output-voltage snapshot */
-    const float i_out = *p_hal->p_i_out; /* i_out: ISR output-current snapshot */
-    const float i_l = *p_hal->p_i_l;     /* i_l: ISR inductor-current snapshot */
-    const float pwr_in_w = v_in * i_in;  /* pwr_in_w: instantaneous input power estimate */
-
-    (void)v_out;
-    (void)i_out;
-    (void)i_l;
-
-    if (p_active_setpoint->run_allowed == 0U)
+    if (p_setpoint->run_allowed == 0U)
     {
         if (bb_ctrl_run_active != 0U)
         {
-            if (p_hal->p_pwm_disable != NULL)
+            if (p_hal_isr->p_pwm_disable != NULL)
             {
-                p_hal->p_pwm_disable();
+                p_hal_isr->p_pwm_disable();
             }
             bb_ctrl_run_active = 0U;
         }
@@ -316,12 +328,12 @@ static void bb_ctrl_isr(void)
         pi_tustin_cal(&ind_curr_loop);
         bb_mode_func(&bb_mode);
 
-        p_hal->p_set_pwm_func(bb_mode.output.buck_duty,
-                              1U,
-                              1U,
-                              bb_mode.output.boost_duty,
-                              1U,
-                              1U);
+        p_hal_isr->p_set_pwm_func(bb_mode.output.buck_duty,
+                                  1U,
+                                  1U,
+                                  bb_mode.output.boost_duty,
+                                  1U,
+                                  1U);
     }
     else
     {
@@ -348,12 +360,12 @@ static void bb_ctrl_isr(void)
 
         bb_ol_func(&bb_ol);
 
-        p_hal->p_set_pwm_func(bb_ol.output.buck_duty,
-                              bb_ol.output.buck_up_en,
-                              bb_ol.output.buck_dn_en,
-                              bb_ol.output.boost_duty,
-                              bb_ol.output.boost_up_en,
-                              bb_ol.output.boost_dn_en);
+        p_hal_isr->p_set_pwm_func(bb_ol.output.buck_duty,
+                                  bb_ol.output.buck_up_en,
+                                  bb_ol.output.buck_dn_en,
+                                  bb_ol.output.boost_duty,
+                                  bb_ol.output.boost_up_en,
+                                  bb_ol.output.boost_dn_en);
     }
 }
 
@@ -377,22 +389,28 @@ REG_TASK(1, bb_ctrl_task)
  */
 static void bb_ctrl_in_curr_lmt_task(void)
 {
-    bb_ctrl_setpoint_t *p_active_setpoint = bb_cfg_get_p_active(); /* p_active_setpoint: active setpoint sampled by 1 ms task */
+    bb_ctrl_hal_t *p_hal_task = p_hal;
+    bb_ctrl_setpoint_t *p_setpoint = p_ctrl_active_setpoint; /* p_setpoint: active setpoint sampled by 1 ms task */
     float vin_for_lmt = 0.0f;                                      /* vin_for_lmt: guarded input voltage used for power-to-current conversion */
     float pwr_to_curr_lmt = 0.0f;                                  /* pwr_to_curr_lmt: current limit derived from input power limit */
 
-    if ((p_hal == NULL) ||
-        (p_active_setpoint == NULL) ||
-        (p_hal->p_v_in == NULL))
+    if ((p_hal_task == NULL) ||
+        (p_setpoint == NULL) ||
+        (p_hal_task->p_v_in == NULL) ||
+        (p_hal_task->p_i_in == NULL) ||
+        (p_hal_task->p_v_out == NULL) ||
+        (p_hal_task->p_i_out == NULL) ||
+        (p_hal_task->p_i_l == NULL))
     {
         return;
     }
 
-    vin_for_lmt = *p_hal->p_v_in;
+    bb_ctrl_update_feedback(p_hal_task);
+    vin_for_lmt = v_in_fb;
     DN_LMT(vin_for_lmt, 0.001f);
 
-    pwr_to_curr_lmt = p_active_setpoint->pwr_lmt / vin_for_lmt;
-    MIN(in_curr_lmt, pwr_to_curr_lmt, p_active_setpoint->in_curr_lmt);
+    pwr_to_curr_lmt = p_setpoint->pwr_lmt / vin_for_lmt;
+    MIN(in_curr_lmt, pwr_to_curr_lmt, p_setpoint->in_curr_lmt);
 }
 
 REG_TASK_MS(1, bb_ctrl_in_curr_lmt_task)
