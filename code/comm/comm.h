@@ -139,7 +139,7 @@ typedef struct
         .index         = 0,                                  \
         .status        = SECTION_PACKFORM_STA_SOP,           \
         .crc           = 0,                                  \
-        .pack          = (section_packform_t){0},            \
+        .pack          = {0},                                \
         .func          = NULL,                               \
         .len           = 0,                                  \
         .src           = (uint8_t)(_src),                    \
