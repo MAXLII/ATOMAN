@@ -49,6 +49,7 @@ typedef enum
 typedef struct
 {
     volatile uint32_t *p_cnt;
+    float cnt_period_s;
 } section_perf_base_t;
 
 typedef struct
@@ -81,7 +82,14 @@ extern uint32_t perf_dict_version;
 #define PERF_CPU_LOAD_PERIOD_MS 500UL
 #endif
 
-#if defined(IS_HC32)
+#if defined(HC32F558)
+#ifndef PERF_COUNT_UNIT_US
+#define PERF_COUNT_UNIT_US 0.5f
+#endif
+#ifndef PERF_CNT_PER_SECTION_SYS_TICK
+#define PERF_CNT_PER_SECTION_SYS_TICK 200UL
+#endif
+#elif defined(IS_HC32)
 #ifndef PERF_COUNT_UNIT_US
 #define PERF_COUNT_UNIT_US (8.0f / 15.0f)
 #endif
@@ -99,6 +107,9 @@ extern uint32_t perf_dict_version;
 
 uint32_t perf_base_cnt_get(void);
 uint8_t perf_base_is_ready(void);
+float perf_count_period_s_get(void);
+float perf_count_unit_us_get(void);
+uint32_t perf_cnt_per_sys_tick_get(void);
 float perf_task_metric_get(void);
 float perf_task_metric_max_get(void);
 float perf_interrupt_metric_get(void);
@@ -110,14 +121,15 @@ uint32_t perf_count_to_us(uint32_t count);
 uint32_t perf_task_period_us_get(section_perf_record_t *record);
 void perf_reset_peak_value(void);
 
-#define REG_PERF_BASE_CNT(timer_cnt)                \
-    section_perf_base_t section_perf_base_timer = { \
-        .p_cnt = (volatile uint32_t *)(timer_cnt),  \
-    };                                              \
-    section_perf_t section_timer_cnt_perf = {       \
-        .perf_type = SECTION_PERF_BASE,             \
-        .p_perf = (void *)&section_perf_base_timer, \
-    };                                              \
+#define REG_PERF_BASE_CNT(timer_cnt, period_s)       \
+    section_perf_base_t section_perf_base_timer = {  \
+        .p_cnt = (volatile uint32_t *)(timer_cnt),   \
+        .cnt_period_s = (period_s),                  \
+    };                                               \
+    section_perf_t section_timer_cnt_perf = {        \
+        .perf_type = SECTION_PERF_BASE,              \
+        .p_perf = (void *)&section_perf_base_timer,  \
+    };                                               \
     REG_SECTION_FUNC(SECTION_PERF, section_timer_cnt_perf)
 
 #define PERF_RECORD_ENABLE 1
