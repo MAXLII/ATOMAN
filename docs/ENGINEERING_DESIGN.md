@@ -283,7 +283,7 @@ load = run_time / elapsed_perf_cnt
 
 ### 7.4 时间基准
 
-perf 需要一个硬件计数器作为时间基准，通过 `REG_PERF_BASE_CNT(timer_cnt)` 注册。HC32F334 平台使用 `PERF_COUNT_UNIT_US = 8.0/15.0 μs` 作为计数器周期（HRPWM 时基 15MHz）。
+perf 需要一个硬件计数器作为时间基准，通过 `REG_PERF_BASE_CNT(timer_cnt, period_s)` 注册。`timer_cnt` 指向硬件计数寄存器，`period_s` 表示一个计数 tick 的实际秒数。各平台按真实时钟树和分频填写该周期，perf 服务通过注册值换算时间和 CPU 占用率。
 
 ### 7.5 服务层协议
 
