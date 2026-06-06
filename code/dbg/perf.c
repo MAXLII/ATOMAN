@@ -214,7 +214,7 @@ void section_perf_task_period_set(section_perf_record_t *record, uint32_t period
     }
 }
 
-uint32_t section_perf_interrupt_begin(section_perf_record_t *record)
+uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record)
 {
     if (record == NULL)
     {
@@ -224,7 +224,7 @@ uint32_t section_perf_interrupt_begin(section_perf_record_t *record)
     return perf_cnt_read(record->p_cnt);
 }
 
-void section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
+void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
 {
     uint32_t delta;
 

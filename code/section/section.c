@@ -62,13 +62,13 @@ SECTION_WEAK void section_perf_task_period_set(section_perf_record_t *record, ui
     (void)period_us;
 }
 
-SECTION_WEAK uint32_t section_perf_interrupt_begin(section_perf_record_t *record)
+SECTION_WEAK uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record)
 {
     (void)record;
     return 0u;
 }
 
-SECTION_WEAK void section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
+SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
 {
     (void)record;
     (void)start_cnt;
@@ -252,7 +252,7 @@ void run_task(void)
     }
 }
 
-void section_interrupt(void)
+void FUNC_RAM section_interrupt(void)
 {
     for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = p->p_next)
     {
@@ -261,12 +261,16 @@ void section_interrupt(void)
             continue;
         }
 
+#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
         section_perf_record_t *rec = p->p_perf_record;
         uint32_t perf_start = section_perf_interrupt_begin(rec);
 
         p->p_func();
 
         section_perf_interrupt_end(rec, perf_start);
+#else
+        p->p_func();
+#endif
     }
 }
 
