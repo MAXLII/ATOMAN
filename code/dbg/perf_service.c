@@ -236,7 +236,7 @@ static void perf_service_print_by_type(uint8_t record_type, DEC_MY_PRINTF)
     my_printf->my_printf("PERF_BEGIN type=%s count=%u unit_us=%f\r\n",
                          perf_service_record_type_name(record_type),
                          (unsigned)perf_record_count_by_type(record_type),
-                         (double)PERF_COUNT_UNIT_US);
+                         (double)perf_count_unit_us_get());
     my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
     for (section_perf_record_t *record = p_perf_record_first; record != NULL; record = (section_perf_record_t *)record->p_next)
     {
@@ -300,8 +300,8 @@ static void perf_service_info(DEC_MY_PRINTF)
     }
 
     my_printf->my_printf("PERF_INFO unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu record_count=%u\r\n",
-                         (double)PERF_COUNT_UNIT_US,
-                         (unsigned long)PERF_CNT_PER_SECTION_SYS_TICK,
+                         (double)perf_count_unit_us_get(),
+                         (unsigned long)perf_cnt_per_sys_tick_get(),
                          (unsigned long)PERF_CPU_LOAD_PERIOD_MS,
                          (unsigned)perf_record_count_get());
 }
@@ -329,8 +329,8 @@ static void perf_service_print_start(DEC_MY_PRINTF)
 
     my_printf->my_printf("PERF_BEGIN type=ALL count=%u unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu\r\n",
                          (unsigned)perf_record_count_get(),
-                         (double)PERF_COUNT_UNIT_US,
-                         (unsigned long)PERF_CNT_PER_SECTION_SYS_TICK,
+                         (double)perf_count_unit_us_get(),
+                         (unsigned long)perf_cnt_per_sys_tick_get(),
                          (unsigned long)PERF_CPU_LOAD_PERIOD_MS);
     my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
 }
@@ -836,7 +836,9 @@ static void perf_opt_poll_task(void)
     s_perf_service_task_metric_max = perf_task_metric_max_get();
     s_perf_service_interrupt_metric = perf_interrupt_metric_get();
     s_perf_service_interrupt_metric_max = perf_interrupt_metric_max_get();
+
     s_perf_opt_service.poll(&s_perf_opt_service);
+
     perf_service_print_step();
 }
 
@@ -853,8 +855,8 @@ static void perf_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     ack.protocol_version = PERF_SERVICE_PROTOCOL_VERSION;
     ack.record_count = perf_record_count_get();
-    ack.unit_us = PERF_COUNT_UNIT_US;
-    ack.cnt_per_sys_tick = PERF_CNT_PER_SECTION_SYS_TICK;
+    ack.unit_us = perf_count_unit_us_get();
+    ack.cnt_per_sys_tick = perf_cnt_per_sys_tick_get();
     ack.cpu_window_ms = PERF_CPU_LOAD_PERIOD_MS;
     ack.flags = PERF_SERVICE_INFO_FLAGS;
     perf_opt_send_response(p_pack, PERF_OPT_CMD_INFO_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);

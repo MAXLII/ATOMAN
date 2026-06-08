@@ -1,94 +1,159 @@
-# SFRA 使用说明
+# SFRA 使用文档
 
-## 采样对齐
+## 1. 适用范围
 
-SFRA 每个采样周期分为两个调用点：
+本文档说明如何在当前工程中接入和使用 SFRA。
 
-- `sfra_isr_pre_sample()` 生成当前注入量 `inject`
-- 用户代码运行被测对象，并更新 `collect`
-- `sfra_isr_post_sample()` 采集本周期用于 DFT 的 `inject` 与 `collect`
+内部实现见 [SFRA_DESIGN.md](SFRA_DESIGN.md)。
 
-`REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end)` 中的
-`delay_tick` 用于对齐 SFRA 参与计算的注入量与响应量。
+## 2. 注册 SFRA 实例
 
-## 不需要延迟一拍
+引入头文件：
 
-当 `collect` 对应的是当前周期 `inject` 直接产生的响应时，使用
-`delay_tick = 0U`。
+```c
+#include "sfra.h"
+```
 
-典型情况：
+使用 `REG_SFRA()` 注册实例：
 
-- 纯算法模块没有额外计算延迟
-- 被测对象在同一个 ISR 周期内完成输入到输出计算
-- 当前 tick 写入输入，当前 tick 就能读取对应输出
-- 扫描对象是解析稳态模型，输出按当前注入相位直接生成
+```c
+REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, prepare_cb, prepare_ctx)
+```
 
-此时 SFRA 使用当前 `*p_inject` 作为 DFT 分母：
+参数说明：
+
+| 参数 | 说明 |
+| --- | --- |
+| `name` | SFRA 实例名称 |
+| `delay_tick` | 注入延迟 tick，用于对齐注入与采样 |
+| `ts` | 控制 ISR 周期，单位 s |
+| `inject_amp` | 注入幅值 |
+| `freq_start` | 起始频率，单位 Hz |
+| `freq_end` | 结束频率，单位 Hz |
+| `prepare_cb` | 每个频点准备时的回调，可填 `NULL` |
+| `prepare_ctx` | 传给回调的上下文 |
+
+示例：
 
 ```c
 REG_SFRA(demo_sfra,
-         0U,
-         DEMO_SFRA_SAMPLE_PERIOD_S,
-         DEMO_SFRA_INJECT_AMPLITUDE,
-         DEMO_SFRA_FREQ_START_HZ,
-         DEMO_SFRA_FREQ_END_HZ)
+         0u,
+         50.0e-6f,
+         0.01f,
+         10.0f,
+         1000.0f,
+         NULL,
+         NULL)
 ```
 
-## 需要延迟一拍
-
-当 `collect` 对应的是上一周期 `inject` 经过控制器、PWM 更新、功率级或采样链路后产生的响应时，使用
-`delay_tick = 1U`。
-
-典型情况：
-
-- 当前 tick 计算出的控制量要到下一 tick 才作用到对象
-- 控制器输出经 PWM 更新寄存器后一拍生效
-- ADC 采样值反映的是上一周期控制量造成的电流或电压
-- 仿真模型中显式使用 `z1`、`last`、`prev` 等上一拍状态
-- 代码结构为先采集当前输出，再根据当前注入计算下一拍控制量
-
-此时 SFRA 使用上一拍 `inject` 作为 DFT 分母，使注入量与当前采到的响应量对齐：
+注册后会生成：
 
 ```c
-REG_SFRA(demo_pi_l_closed_sfra,
-         1U,
-         DEMO_SFRA_SAMPLE_PERIOD_S,
-         DEMO_SFRA_INJECT_AMPLITUDE,
-         DEMO_SFRA_FREQ_START_HZ,
-         DEMO_SFRA_FREQ_END_HZ)
+demo_sfra
+demo_sfra_inject
+demo_sfra_collect
 ```
 
-闭环电流对象的一拍延迟时序为：
+## 3. 控制环接入
+
+在控制 ISR 的采样和控制计算位置接入：
 
 ```c
-sfra_isr_pre_sample(&demo_pi_l_closed_sfra);
+sfra_isr_pre_sample(&demo_sfra);
 
-demo_pi_l_closed_sfra_collect = inductor.current_a;
-sfra_isr_post_sample(&demo_pi_l_closed_sfra);
+control_ref += demo_sfra_inject;
 
-pi_ref = demo_pi_l_closed_sfra_inject;
-pi_act = demo_pi_l_closed_sfra_collect;
-pi_tustin_cal(&pi);
+/* 控制计算与硬件输出 */
 
-inductor.current_a += inductor.voltage_cmd_z1 / L * Ts;
-inductor.voltage_cmd_z1 = pi.output.val;
+demo_sfra_collect = measured_response;
+sfra_isr_post_sample(&demo_sfra);
 ```
 
-## 判断方法
+在任务中周期调用：
 
-判断 `delay_tick` 的核心是看 `collect` 与哪个时刻的 `inject` 对应。
+```c
+sfra_task(&demo_sfra);
+```
 
-- `collect[n]` 是 `inject[n]` 的响应，使用 `delay_tick = 0U`
-- `collect[n]` 是 `inject[n-1]` 的响应，使用 `delay_tick = 1U`
-- `collect[n]` 是 `inject[n-2]` 的响应，使用 `delay_tick = 2U`
+`sfra_task()` 不需要和 ISR 同频，但需要被持续调用，用于推进扫频状态和计算结果。
 
-当前 SFRA 模块支持的最大延迟为 `SFRA_MAX_INJECT_DELAY_TICK`。
+## 4. 启停控制
 
-## 实际工程建议
+代码中可直接调用：
 
-实际工程中优先按采样与控制时序确定延迟，而不是按模块名称确定延迟。
+```c
+sfra_start(&demo_sfra);
+sfra_stop(&demo_sfra);
+sfra_reset(&demo_sfra);
+```
 
-电流环、功率级、PWM 更新、ADC 采样链路通常存在一拍延迟。纯软件滤波器、控制器本体、无状态数学模型通常不需要延迟。
+设置扫频范围：
 
-如果扫频结果相位整体多出接近一个采样周期的相位滞后，检查 `delay_tick` 是否过小。
-如果扫频结果相位整体少了一个采样周期的滞后，检查 `delay_tick` 是否过大。
+```c
+sfra_set_sweep_range(&demo_sfra, 20.0f, 2000.0f);
+```
+
+设置注入延迟：
+
+```c
+sfra_set_inject_delay(&demo_sfra, 1u);
+```
+
+## 5. 上位机访问
+
+SFRA 服务通过二进制协议提供访问能力：
+
+1. 查询 SFRA 列表，获取 `sfra_id`。
+2. 查询实例信息，确认扫频范围、注入幅值、状态和 `sweep_tag`。
+3. 设置配置。
+4. 启动扫频。
+5. 等待完成上报，或主动查询频点。
+6. 按 `point_index` 读取频率、幅值和相位。
+
+二进制访问不依赖字符串 Shell。
+
+## 6. 频点准备回调
+
+如果每个频点开始前需要调整系统状态，可以提供回调：
+
+```c
+static void demo_sfra_prepare(void *p_ctx)
+{
+    (void)p_ctx;
+    /* 切换量程、清状态或等待外部逻辑 */
+}
+
+REG_SFRA(demo_sfra,
+         0u,
+         50.0e-6f,
+         0.01f,
+         10.0f,
+         1000.0f,
+         demo_sfra_prepare,
+         NULL)
+```
+
+## 7. 使用注意事项
+
+- `ts` 必须等于实际调用 `sfra_isr_pre_sample/post_sample` 的周期。
+- 注入幅值要从小幅值开始调试。
+- `demo_sfra_collect` 应写入真实被测响应。
+- SFRA 运行期间应避免外部逻辑频繁改变控制结构。
+- 如果响应过小或注入过小，幅相计算可能不稳定。
+- 扫频结果通过 `sweep_tag` 区分批次。
+
+## 8. 注入延迟选择
+
+`delay_tick` 用于对齐参与 DFT 计算的注入量和响应量。
+
+判断方法：
+
+| 对应关系 | delay_tick |
+| --- | --- |
+| `collect[n]` 是 `inject[n]` 的响应 | `0u` |
+| `collect[n]` 是 `inject[n-1]` 的响应 | `1u` |
+| `collect[n]` 是 `inject[n-2]` 的响应 | `2u` |
+
+纯软件算法、无额外延迟的数学模型，通常使用 `0u`。如果控制器输出、PWM 更新、功率级或采样链路使当前注入到下一拍才反映到响应量，通常使用 `1u`。
+
+如果扫频结果相位整体多出接近一个采样周期的滞后，检查 `delay_tick` 是否偏小。如果相位整体少了一个采样周期的滞后，检查 `delay_tick` 是否偏大。

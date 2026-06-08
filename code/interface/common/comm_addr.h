@@ -6,19 +6,12 @@
 #define PFC_ADDR 0x03
 #define APP_ADDR 0x04
 
-#define DC_ADDR LLC_ADDR
-#define AC_ADDR PFC_ADDR
-
-#ifdef IS_AC
-#define LOCAL_ADDR AC_ADDR
-#endif
-
-#ifdef IS_DC
-#define LOCAL_ADDR DC_ADDR
+#ifndef HOST_ADDR
+#define HOST_ADDR LLC_ADDR
 #endif
 
 #ifndef LOCAL_ADDR
-#define LOCAL_ADDR DC_ADDR
+#define LOCAL_ADDR HOST_ADDR
 #endif
 
 #endif

@@ -39,7 +39,7 @@ static section_link_tx_func_t s_usart_null_tx_func = {
 };
 
 DECLARE_SHELL_CTX(s_usart_dbg_shell_ctx);
-DECLARE_COMM_CTX(s_usart_dbg_comm_ctx, AC_USART_DBG_COMM_PAYLOAD_SIZE, LOCAL_ADDR, USART0_LINK);
+DECLARE_COMM_CTX(s_usart_dbg_comm_ctx, AC_USART_DBG_COMM_PAYLOAD_SIZE, HOST_ADDR, USART0_LINK);
 
 static const section_link_handler_item_t s_usart_dbg_handler_arr[] = {
     {.func = shell_run, .ctx = (void *)&s_usart_dbg_shell_ctx},
