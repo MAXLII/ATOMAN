@@ -31,8 +31,9 @@
 #include "section.h"
 #include "pi_tustin.h"
 #include "string.h"
+#include <stddef.h>
 
-#define p_hal (inv_hal_get_ctrl())
+#define p_hal (p_ctrl_hal)
 
 static pi_tustin_t volt_loop_d = {0};
 static pi_tustin_t volt_loop_q = {0};
@@ -50,6 +51,12 @@ static float i_d_act = 0.0f;
 static float i_q_ref = 0.0f;
 static float i_q_act = 0.0f;
 
+static inv_ctrl_hal_t *p_ctrl_hal = NULL;
+static inv_ctrl_setpoint_t inv_ctrl_safe_setpoint = {0};
+static inv_ctrl_setpoint_t *p_ctrl_active_setpoint = &inv_ctrl_safe_setpoint;
+static float v_cap_fb = 0.0f;
+static float i_l_fb = 0.0f;
+static float v_bus_fb = 0.0f;
 static float volt_buffer[610] = {0};
 static float curr_buffer[610] = {0};
 
@@ -68,6 +75,13 @@ static float v_l = 0.0f;
 static float vpwm = 0.0f;
 static uint8_t inv_ctrl_run_active = 0U;
 static uint8_t inv_ctrl_first_run_cycle = 0U;
+
+static inline void inv_ctrl_update_feedback(inv_ctrl_hal_t *p)
+{
+    v_cap_fb = *p->p_v_cap;
+    i_l_fb = *p->p_i_l;
+    v_bus_fb = *p->p_v_bus;
+}
 
 static float inv_ctrl_limit_freq_hz(float freq_hz)
 {
@@ -107,8 +121,14 @@ static void inv_ctrl_update_timing_by_freq(float freq_hz)
 
 static void inv_ctrl_reinit_states(void)
 {
-    inv_ctrl_setpoint_t *p_active_setpoint = inv_cfg_get_p_active();
+    inv_ctrl_setpoint_t *p_active_setpoint = NULL;
     float ctrl_ts = inv_cfg_get_ctrl_ts();
+
+    p_ctrl_hal = inv_hal_get_ctrl();
+    inv_ctrl_run_active = 0U;
+    inv_ctrl_first_run_cycle = 1U;
+    inv_cfg_sync_building_to_active();
+    p_active_setpoint = inv_cfg_get_p_active();
 
     if ((p_hal == NULL) ||
         (inv_cfg_is_ready() == 0U) ||
@@ -120,6 +140,9 @@ static void inv_ctrl_reinit_states(void)
         PLECS_LOG("inv_ctrl reinit skipped: hal invalid\n");
         return;
     }
+
+    p_ctrl_active_setpoint = p_active_setpoint;
+    inv_ctrl_update_feedback(p_hal);
 
     pi_tustin_init(&volt_loop_d,
                    INV_CTRL_VOLT_LOOP_D_KP,
@@ -179,10 +202,10 @@ static void inv_ctrl_reinit_states(void)
 static void inv_ctrl_init(void)
 {
     PLECS_LOG("inv_ctrl init\n");
-    inv_ctrl_run_active = 0U;
-    inv_ctrl_first_run_cycle = 1U;
     inv_ctrl_reinit_states();
 }
+
+REG_INIT(0, inv_ctrl_init)
 
 static void inv_ctrl_cal_theta(void)
 {
@@ -200,27 +223,29 @@ REG_INTERRUPT(0, inv_ctrl_cal_theta)
 
 static void inv_ctrl_isr(void)
 {
-    inv_ctrl_setpoint_t *p_active_setpoint = inv_cfg_get_p_active();
+    inv_ctrl_hal_t *p_hal_isr = p_hal;
+    inv_ctrl_setpoint_t *p_setpoint = p_ctrl_active_setpoint;
 
-    if ((p_hal == NULL) ||
+    if ((p_hal_isr == NULL) ||
         (inv_cfg_is_ready() == 0U) ||
-        (p_active_setpoint == NULL) ||
-        (p_hal->p_v_cap == NULL) ||
-        (p_hal->p_i_l == NULL) ||
-        (p_hal->p_v_bus == NULL) ||
-        (p_hal->p_set_pwm_func == NULL) ||
-        (p_hal->p_pwm_disable == NULL))
+        (p_setpoint == NULL) ||
+        (p_hal_isr->p_v_cap == NULL) ||
+        (p_hal_isr->p_i_l == NULL) ||
+        (p_hal_isr->p_v_bus == NULL) ||
+        (p_hal_isr->p_set_pwm_func == NULL) ||
+        (p_hal_isr->p_pwm_disable == NULL))
     {
         return;
     }
 
     inv_cfg_sync_building_to_active();
+    inv_ctrl_update_feedback(p_hal_isr);
 
-    if (p_active_setpoint->run_allowed == 0U)
+    if (p_setpoint->run_allowed == 0U)
     {
         if (inv_ctrl_run_active != 0U)
         {
-            p_hal->p_pwm_disable();
+            p_hal_isr->p_pwm_disable();
             inv_ctrl_run_active = 0U;
             inv_ctrl_first_run_cycle = 1U;
         }
@@ -236,32 +261,32 @@ static void inv_ctrl_isr(void)
 
     if (inv_ctrl_first_run_cycle != 0U)
     {
-        freq_hz_ramped = inv_ctrl_limit_freq_hz(p_active_setpoint->freq_hz);
+        freq_hz_ramped = inv_ctrl_limit_freq_hz(p_setpoint->freq_hz);
         inv_ctrl_update_timing_by_freq(freq_hz_ramped);
         inv_ctrl_first_run_cycle = 0U;
     }
-    else if (p_active_setpoint->freq_slew_hzps > 0.0f)
+    else if (p_setpoint->freq_slew_hzps > 0.0f)
     {
         RAMP(freq_hz_ramped,
-             p_active_setpoint->freq_hz,
-             p_active_setpoint->freq_slew_hzps * inv_cfg_get_ctrl_ts());
+             p_setpoint->freq_hz,
+             p_setpoint->freq_slew_hzps * inv_cfg_get_ctrl_ts());
     }
     else
     {
-        freq_hz_ramped = p_active_setpoint->freq_hz;
+        freq_hz_ramped = p_setpoint->freq_hz;
     }
     freq_hz_ramped = inv_ctrl_limit_freq_hz(freq_hz_ramped);
 
-    v_ref_pk_tag = p_active_setpoint->rms_ref_v * M_SQRT2;
-    RAMP(v_ref_pk, v_ref_pk_tag, p_active_setpoint->rms_slew_vps * M_SQRT2 * inv_cfg_get_ctrl_ts());
+    v_ref_pk_tag = p_setpoint->rms_ref_v * M_SQRT2;
+    RAMP(v_ref_pk, v_ref_pk_tag, p_setpoint->rms_slew_vps * M_SQRT2 * inv_cfg_get_ctrl_ts());
 
     v_ref = v_ref_pk * costheta;
 
     v_d_ref = v_ref_pk;
     v_q_ref = 0.0f;
 
-    volt_buffer[theta] = *p_hal->p_v_cap;
-    curr_buffer[theta] = *p_hal->p_i_l;
+    volt_buffer[theta] = v_cap_fb;
+    curr_buffer[theta] = i_l_fb;
 
     DQ_CAL(volt_buffer[theta],
            volt_buffer[theta_quarter],
@@ -288,7 +313,7 @@ static void inv_ctrl_isr(void)
 
     v_l = curr_loop_d.output.val * costheta + curr_loop_q.output.val * sintheta;
     vpwm = v_ref + v_l;
-    p_hal->p_set_pwm_func(vpwm, *p_hal->p_v_bus);
+    p_hal_isr->p_set_pwm_func(vpwm, v_bus_fb);
 
     phase_pu += freq_hz_ramped * inv_cfg_get_ctrl_ts();
     while (phase_pu >= 1.0f)

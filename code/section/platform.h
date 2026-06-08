@@ -69,7 +69,11 @@ extern uint32_t __section_end;
 
 #elif defined(IS_HC32)
 #include "systick.h"
+#if defined(HC32F558)
+#include "hc32f5xx.h"
+#else
 #include "hc32f3xx.h"
+#endif
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 #if defined(TOOLCHAIN_KEIL)

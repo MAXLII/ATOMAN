@@ -510,17 +510,25 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
 static uint8_t tx_buffer[512];
 static uint16_t tx_len = 0;
 
-static inline int tx_push(uint8_t b)
+static uint16_t crc16_update_block(uint16_t crc, const uint8_t *data, uint32_t len)
 {
-    if (tx_len >= (uint16_t)sizeof(tx_buffer))
-        return 0;
-    tx_buffer[tx_len++] = b;
-    return 1;
+    for (uint32_t i = 0u; i < len; ++i)
+    {
+        crc = crc16_update(crc, data[i]);
+    }
+
+    return crc;
 }
 
 void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
+    uint16_t crc;
+    uint32_t crc_len;
+
     if (!p_pack)
+        return;
+
+    if ((p_pack->len > 0u) && (p_pack->p_data == NULL))
         return;
 
     /* 基础帧长：15 字节（含 EOP、CRC），payload 不能超过 tx_buffer */
@@ -528,87 +536,37 @@ void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
     if (need > sizeof(tx_buffer))
         return;
 
-    tx_len = 0;
-
     p_pack->version = COMM_VER_1;
-    p_pack->crc = crc16_init();
 
-    /* SOP */
-    if (!tx_push(COMM_SOP_BYTE))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, COMM_SOP_BYTE);
-
-    /* VERSION */
-    if (!tx_push(p_pack->version))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->version);
-
-    /* SRC / D_SRC */
-    if (!tx_push(p_pack->src))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->src);
-
-    if (!tx_push(p_pack->d_src))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->d_src);
-
-    /* DST / D_DST */
-    if (!tx_push(p_pack->dst))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->dst);
-
-    if (!tx_push(p_pack->d_dst))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->d_dst);
-
-    /* CMD */
-    if (!tx_push(p_pack->cmd_set))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->cmd_set);
-
-    if (!tx_push(p_pack->cmd_word))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->cmd_word);
-
-    /* ACK */
-    if (!tx_push(p_pack->is_ack))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, p_pack->is_ack);
-
-    /* LEN (LE) */
-    const uint8_t len_lo = (uint8_t)(p_pack->len & 0xFFu);
-    const uint8_t len_hi = (uint8_t)((p_pack->len >> 8) & 0xFFu);
-    if (!tx_push(len_lo))
-        return;
-    if (!tx_push(len_hi))
-        return;
-    p_pack->crc = crc16_update(p_pack->crc, len_lo);
-    p_pack->crc = crc16_update(p_pack->crc, len_hi);
+    tx_buffer[0] = COMM_SOP_BYTE;
+    tx_buffer[1] = p_pack->version;
+    tx_buffer[2] = p_pack->src;
+    tx_buffer[3] = p_pack->d_src;
+    tx_buffer[4] = p_pack->dst;
+    tx_buffer[5] = p_pack->d_dst;
+    tx_buffer[6] = p_pack->cmd_set;
+    tx_buffer[7] = p_pack->cmd_word;
+    tx_buffer[8] = p_pack->is_ack;
+    tx_buffer[9] = (uint8_t)(p_pack->len & 0xFFu);
+    tx_buffer[10] = (uint8_t)((p_pack->len >> 8) & 0xFFu);
 
     /* DATA */
     if (p_pack->p_data && p_pack->len)
     {
-        for (uint32_t i = 0; i < (uint32_t)p_pack->len; i++)
-        {
-            const uint8_t b = p_pack->p_data[i];
-            if (!tx_push(b))
-                return;
-            p_pack->crc = crc16_update(p_pack->crc, b);
-        }
+        (void)memcpy(&tx_buffer[11], p_pack->p_data, p_pack->len);
     }
+    crc_len = 11u + (uint32_t)p_pack->len;
+    crc = crc16_update_block(crc16_init(), tx_buffer, crc_len);
+    p_pack->crc = crc16_final(crc);
 
     /* CRC (LE) */
-    const uint16_t crc = crc16_final(p_pack->crc);
-    if (!tx_push((uint8_t)(crc & 0xFFu)))
-        return;
-    if (!tx_push((uint8_t)((crc >> 8) & 0xFFu)))
-        return;
+    tx_buffer[crc_len] = (uint8_t)(p_pack->crc & 0xFFu);
+    tx_buffer[crc_len + 1u] = (uint8_t)((p_pack->crc >> 8) & 0xFFu);
 
     /* EOP 0x0D 0x0A => word 0x0A0D */
-    if (!tx_push(0x0Du))
-        return;
-    if (!tx_push(0x0Au))
-        return;
+    tx_buffer[crc_len + 2u] = 0x0Du;
+    tx_buffer[crc_len + 3u] = 0x0Au;
+    tx_len = (uint16_t)(crc_len + 4u);
 
     if (my_printf && my_printf->tx_by_dma)
     {

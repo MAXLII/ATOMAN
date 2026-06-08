@@ -46,6 +46,52 @@
             }
         },
         {
+            "name": "hc32f558",
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/hc32f558/ac/src",
+                "${workspaceFolder}/hc32f558/ac/bsp",
+                "${workspaceFolder}/hc32f558/inc",
+                "${workspaceFolder}/hc32f558/src",
+                "${workspaceFolder}/hc32f558/Firmware/CMSIS/HDSC/hc32f5xx/Include",
+                "${workspaceFolder}/hc32f558/Firmware/CMSIS/Include",
+                "${workspaceFolder}/hc32f558/Firmware/HC32_LL_Driver/inc",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib"
+            ],
+            "defines": [
+                "HC32F558",
+                "USE_DDL_DRIVER",
+                "IS_HC32",
+                "TOOLCHAIN_KEIL",
+                "HOST_ADDR=LLC_ADDR",
+                "COMM_LINK_ENABLE_ISO=0",
+                "COMM_LINK_ENABLE_CAN=0"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/hc32f558"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "plecs_ac",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
