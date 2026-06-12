@@ -8,8 +8,6 @@
 #include "fault.h"
 #include "stdint.h"
 #include "ctrl_buck.h"
-#include "ctrl_llc_chg.h"
-#include "ctrl_llc_dsg.h"
 #include "fal.h"
 #include "data_com.h"
 

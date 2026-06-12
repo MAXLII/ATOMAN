@@ -5,7 +5,6 @@
 #include "time_share.h"
 #include "my_math.h"
 #include "string.h"
-#include "llc_fsm.h"
 #include "gpio.h"
 #include "pwr_on.h"
 
