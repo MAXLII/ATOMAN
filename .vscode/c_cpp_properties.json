@@ -142,6 +142,27 @@
                 "IS_PLECS",
                 "IS_DC"
             ]
+        },
+        {
+            "name": "plecs_llc",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/plecs/common",
+                "${workspaceFolder}/plecs/llc",
+                "${workspaceFolder}/plecs/llc/app",
+                "${workspaceFolder}/plecs/llc/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/llc",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_LLC"
+            ]
         }
     ],
     "version": 4
