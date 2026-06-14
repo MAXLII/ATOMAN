@@ -6,12 +6,12 @@ Plecs {
   TimeSpan      "1.0"
   Timeout       ""
   Solver        "auto"
-  MaxStep       "1e-3"
+  MaxStep       "1e-6"
   InitStep      "-1"
   FixedStep     "1e-3"
   Refine        "1"
   ZCStepSize    "1e-9"
-  RelTol        "1e-3"
+  RelTol        "1e-6"
   AbsTol        "-1"
   TurnOnThreshold "0"
   SyncFixedStepTasks "2"
@@ -50,8 +50,8 @@ Plecs {
   ScriptsDialogSplitterPos "0"
   Schematic {
     Location      [1566, 191; 3366, 1161]
-    ZoomFactor    2.57013
-    SliderPosition [995, 1198]
+    ZoomFactor    1.49863
+    SliderPosition [317, 475]
     ShowBrowser   off
     BrowserWidth  100
     Component {
@@ -107,7 +107,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "Width"
-        Value         "3"
+        Value         "7"
         Show          off
       }
     }
@@ -1218,7 +1218,7 @@ Plecs {
       Type          Goto
       Name          "Goto3"
       Show          off
-      Position      [980, 655]
+      Position      [1055, 635]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -1237,7 +1237,7 @@ Plecs {
       Type          Goto
       Name          "Goto4"
       Show          off
-      Position      [980, 665]
+      Position      [1055, 645]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -1256,7 +1256,7 @@ Plecs {
       Type          Goto
       Name          "Goto5"
       Show          off
-      Position      [980, 675]
+      Position      [1055, 655]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -1556,24 +1556,23 @@ Plecs {
       Type          Scope
       Name          "Scope1"
       Show          on
-      Position      [915, 760]
+      Position      [940, 850]
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [1734, 587; 2084, 814]
-      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
+      Location      [0, 23; 3440, 1370]
+      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAC0AAAED/wCAAAAA/sAAAAQAFoAbwBvA"
 "G0AQQByAGUAYQAAAAAA/////wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
-"///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAAAAAAAAPw"
-"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAAAV4AAADIAAAA"
+"///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMBAAAAMQAABA8AAABmAP///wAAAAMAAA1wAAABFfw"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQBAAAAAAAADXAAAABQAP///wAADLgAAAQPAAAA"
 "BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
 "AAAAA=="
       SavedViews    "AAAAAgAAAAA="
-      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAA"
-"QAAAGQAAAACAAAAZAAAAAMAAABkAAAABAAAAGQAAAAFAAAAZAAAAAYAAABkAAAABwAAAGQAAAAIAA"
-"AAZAAAAAkAAABkAAAAdQAAAAsBAAABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAABdAAA"
-"AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
-"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
-"AAYAAAAAQAAAAAAAAPoAAAAABg="
+      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL8AMAAAAGAAAAB"
+"AAAAGQAAAAFAAAAZAAAAAYAAABkAAAABwAAAGQAAAAIAAAAZAAAAAkAAABkAAANXwAAAAsBAAABAA"
+"AAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAABdAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAA"
+"AAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
+"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAvWAAAAAQAAAAAAAAPoAAAAABg="
       PlotPalettes  "AAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       Axes          "1"
       TimeRange     "0.0"
@@ -1674,7 +1673,7 @@ Plecs {
       Type          From
       Name          "From4"
       Show          off
-      Position      [670, 770]
+      Position      [565, 855]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -1687,6 +1686,89 @@ Plecs {
         Variable      "Visibility"
         Value         "1"
         Show          off
+      }
+    }
+    Component {
+      Type          Scope
+      Name          "Scope2"
+      Show          on
+      Position      [950, 920]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Location      [1830, 266; 2818, 754]
+      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
+"G0AQQByAGUAYQAAAAAA/////wAAAFwA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
+"///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAAAAAAAAPw"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAAA9wAAAHNAAAA"
+"BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
+"AAAAA=="
+      SavedViews    "AAAAAgAAAAA="
+      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAA"
+"QAAAGQAAAACAAAAZAAAAAMAAABkAAAABAAAAGQAAAAFAAAAZAAAAAYAAABkAAAABwAAAGQAAAAIAA"
+"AAZAAAAAkAAABkAAAAxAAAAAsBAAABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAACsAAA"
+"AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
+"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
+"AAYAAAAAQAAAAAAAAPoAAAAABg="
+      PlotPalettes  "AAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAA"
+"AEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      Axes          "2"
+      TimeRange     "0"
+      ScrollingMode "1"
+      SingleTimeAxis "1"
+      Open          "1"
+      Ts            "-1"
+      SampleLimit   "0"
+      XAxisLabel    "Time / s"
+      ShowLegend    "1"
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Fourier {
+        SingleXAxis       on
+        AxisLabel         "Frequency / Hz"
+        Scaling           0
+        PhaseDisplay      0
+        ShowFourierLegend off
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
       }
     }
     Connection {
@@ -2045,8 +2127,15 @@ Plecs {
       }
       Branch {
         Points        [705, 755]
-        DstComponent  "Scope"
-        DstTerminal   1
+        Branch {
+          DstComponent  "Scope"
+          DstTerminal   1
+        }
+        Branch {
+          Points        [705, 915]
+          DstComponent  "Scope2"
+          DstTerminal   1
+        }
       }
     }
     Connection {
@@ -2060,8 +2149,16 @@ Plecs {
       }
       Branch {
         Points        [845, 760]
-        DstComponent  "Scope1"
-        DstTerminal   1
+        Branch {
+          Points        [880, 760; 880, 850]
+          DstComponent  "Scope1"
+          DstTerminal   1
+        }
+        Branch {
+          Points        [845, 925]
+          DstComponent  "Scope2"
+          DstTerminal   2
+        }
       }
     }
     Connection {
@@ -2089,7 +2186,7 @@ Plecs {
       Type          Signal
       SrcComponent  "From4"
       SrcTerminal   1
-      Points        [720, 770]
+      Points        [615, 855]
     }
     Annotation {
       Name          "<html><body>\n<p>SUM</p></body></html>"
@@ -2097,4 +2194,4 @@ Plecs {
     } 
   }
 }
-DemoSignature "wYpkGWrmrug4bDbZ/8dsjmt1BjmOv9PjoBvd5k2ar7I="
+DemoSignature "/1VV3dywb3hC9TZ3TCaeNb9828ceY0dDDGWWaXR7wqk="
