@@ -43,11 +43,13 @@ static float v_d_act = 0.0f;
 static float v_q_ref = 0.0f;
 static float v_q_act = 0.0f;
 
-static float v_ref = 0.0f;
 static float i_d_ref = 0.0f;
 static float i_d_act = 0.0f;
 static float i_q_ref = 0.0f;
 static float i_q_act = 0.0f;
+static float v_pwm_d = 0.0f;
+static float v_pwm_q = 0.0f;
+static float omega = 0.0f;
 static float curr_loop_d_out = 0.0f;
 static float curr_loop_q_out = 0.0f;
 
@@ -166,9 +168,11 @@ static void inv_ctrl_reinit_states(void)
     inv_ctrl_update_timing_by_freq(freq_hz_ramped);
     sintheta = 0.0f;
     costheta = 1.0f;
-    v_ref = 0.0f;
     v_ref_pk = 0.0f;
     v_ref_pk_tag = p_active_setpoint->rms_ref_v * M_SQRT2;
+    v_pwm_d = 0.0f;
+    v_pwm_q = 0.0f;
+    omega = 0.0f;
     curr_loop_d_out = 0.0f;
     curr_loop_q_out = 0.0f;
     v_l = 0.0f;
@@ -265,8 +269,6 @@ static void inv_ctrl_isr(void)
     v_ref_pk_tag = p_setpoint->rms_ref_v * M_SQRT2;
     RAMP(v_ref_pk, v_ref_pk_tag, p_setpoint->rms_slew_vps * M_SQRT2 * inv_cfg_get_ctrl_ts());
 
-    v_ref = v_ref_pk * costheta;
-
     v_d_ref = v_ref_pk;
     v_q_ref = 0.0f;
 
@@ -290,19 +292,21 @@ static void inv_ctrl_isr(void)
     pi_tustin_cal(&volt_loop_d);
     pi_tustin_cal(&volt_loop_q);
 
-    i_d_ref = volt_loop_d.output.val;
-    i_q_ref = volt_loop_q.output.val;
+    omega = M_2PI * freq_hz_ramped;
+    i_d_ref = volt_loop_d.output.val + omega * HW_AC_SIDE_CAP_VALUE * v_q_act;
+    i_q_ref = volt_loop_q.output.val - omega * HW_AC_SIDE_CAP_VALUE * v_d_act;
 
     curr_loop_d_out = (i_d_ref - i_d_act) * INV_CTRL_CURR_LOOP_KR;
     curr_loop_q_out = (i_q_ref - i_q_act) * INV_CTRL_CURR_LOOP_KR;
 
-    v_l = (curr_loop_d_out +
-           M_2PI * freq_hz_ramped * HW_AC_SIDE_IND_VALUE * i_q_act) *
-              costheta +
-          (curr_loop_q_out -
-           M_2PI * freq_hz_ramped * HW_AC_SIDE_IND_VALUE * i_d_act) *
-              sintheta;
-    vpwm = v_ref + v_l;
+    v_pwm_d = v_ref_pk +
+              curr_loop_d_out +
+              omega * HW_AC_SIDE_IND_VALUE * i_q_act;
+    v_pwm_q = curr_loop_q_out -
+              omega * HW_AC_SIDE_IND_VALUE * i_d_act;
+
+    v_l = v_pwm_d * costheta + v_pwm_q * sintheta;
+    vpwm = v_l;
     p_hal_isr->p_set_pwm_func(vpwm, v_bus_fb);
 
     phase_pu += freq_hz_ramped * inv_cfg_get_ctrl_ts();
