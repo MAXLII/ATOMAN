@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Hold inverter controller and FSM HAL binding objects for platform callbacks
- *          - Manage run permission, PWM disable, and hard-protection latch state
+ *          - Manage run permission, PWM disable, and hard-protection trip handling
  *          - Lock and validate inverter HAL bindings before allowing state-machine run transitions
  *
  *          Design notes:
@@ -36,7 +36,6 @@ static void inv_hal_enter_run(void);
 static void inv_hal_exit_run(void);
 static void inv_hal_rly_on(void);
 static void inv_hal_rly_off(void);
-static uint8_t hard_protect_latched;
 static uint8_t inv_hal_binding_locked = 1U;
 
 static inv_ctrl_hal_t inv_ctrl_hal = {0};
@@ -46,7 +45,6 @@ static inv_fsm_hal_t inv_fsm_hal = {
     .p_exit_run_func = inv_hal_exit_run,
     .p_inv_rly_on_func = inv_hal_rly_on,
     .p_inv_rly_off_func = inv_hal_rly_off,
-    .p_latched = &hard_protect_latched,
 };
 
 static void inv_hal_enter_run(void)
@@ -100,20 +98,8 @@ void inv_hal_hard_protect_trip(void)
         inv_ctrl_hal.p_pwm_disable();
     }
 
-    if (*inv_fsm_hal.p_latched == 0U)
-    {
-        *inv_fsm_hal.p_latched = 1U;
-        PLECS_LOG("inv_hal hard protect latched\n");
-    }
-
     inv_cfg_set_run_allowed(0U);
     inv_cfg_publish_building();
-}
-
-void inv_hal_hard_protect_clear(void)
-{
-    *inv_fsm_hal.p_latched = 0U;
-    PLECS_LOG("inv_hal hard protect cleared\n");
 }
 
 uint8_t inv_hal_is_ready(void)
@@ -220,13 +206,4 @@ void inv_hal_set_inv_rly_off_func(void (*p)(void))
         return;
     }
     inv_fsm_hal.p_inv_rly_off_func = p;
-}
-
-void inv_hal_set_latched_ptr(uint8_t *p)
-{
-    if (inv_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    inv_fsm_hal.p_latched = p;
 }
