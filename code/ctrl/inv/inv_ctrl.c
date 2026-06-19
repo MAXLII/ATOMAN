@@ -73,7 +73,6 @@ static float phase_pu = 0.0f;
 static float freq_hz_ramped = 0.0f;
 static float v_ref_pk = 0.0f;
 static float v_ref_pk_tag = 0.0f;
-static float v_l = 0.0f;
 static float vpwm = 0.0f;
 static uint8_t inv_ctrl_run_active = 0U;
 static uint8_t inv_ctrl_first_run_cycle = 0U;
@@ -175,7 +174,6 @@ static void inv_ctrl_reinit_states(void)
     omega = 0.0f;
     curr_loop_d_out = 0.0f;
     curr_loop_q_out = 0.0f;
-    v_l = 0.0f;
     vpwm = 0.0f;
 
     memset(volt_buffer, 0, sizeof(volt_buffer));
@@ -305,8 +303,7 @@ static void inv_ctrl_isr(void)
     v_pwm_q = curr_loop_q_out -
               omega * HW_AC_SIDE_IND_VALUE * i_d_act;
 
-    v_l = v_pwm_d * costheta + v_pwm_q * sintheta;
-    vpwm = v_l;
+    vpwm = v_pwm_d * costheta + v_pwm_q * sintheta;
     p_hal_isr->p_set_pwm_func(vpwm, v_bus_fb);
 
     phase_pu += freq_hz_ramped * inv_cfg_get_ctrl_ts();
