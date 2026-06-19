@@ -118,12 +118,6 @@ static void inv_fsm_idle_exe(void)
             return;
         }
 
-        if (*p_hal->p_latched == 1)
-        {
-            PLECS_LOG("inv_fsm start rejected by hard protect latch\n");
-            return;
-        }
-
         PLECS_LOG("inv_fsm idle got start, goto relay_on\n");
         fsm_ev = inv_fsm_ev_to_rly_on;
     }
