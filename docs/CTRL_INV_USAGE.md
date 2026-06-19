@@ -31,7 +31,6 @@ inv_hal_set_pwm_enable(inv_pwm_enable);
 inv_hal_set_pwm_disable(inv_pwm_disable);
 inv_hal_set_inv_rly_on_func(inv_rly_on);
 inv_hal_set_inv_rly_off_func(inv_rly_off);
-inv_hal_set_latched_ptr(&inv_latched);
 inv_hal_lock_binding();
 ```
 
