@@ -32,7 +32,6 @@ pfc_hal_set_pwm_enable(pfc_pwm_enable);
 pfc_hal_set_pwm_disable(pfc_pwm_disable);
 pfc_hal_set_main_rly_on_func(main_rly_on);
 pfc_hal_set_main_rly_off_func(main_rly_off);
-pfc_hal_set_latched_ptr(&pfc_latched);
 pfc_hal_lock_binding();
 ```
 
