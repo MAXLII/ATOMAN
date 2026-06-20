@@ -118,6 +118,28 @@
             ]
         },
         {
+            "name": "plecs_pfc",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/plecs/common",
+                "${workspaceFolder}/plecs/pfc",
+                "${workspaceFolder}/plecs/pfc/app",
+                "${workspaceFolder}/plecs/pfc/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/pfc",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_PFC",
+                "__RAM_FUNC="
+            ]
+        },
+        {
             "name": "plecs_dc",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
