@@ -38,6 +38,10 @@
 #include "hw_params.h"
 #include <stddef.h>
 
+#if defined(IS_PLECS) && defined(IS_PFC)
+#include "plecs.h"
+#endif
+
 /* HAL view of measured signals and hardware actuation hooks. */
 #define p_hal (p_ctrl_hal) /* p_hal: control-side HAL pointer */
 
@@ -64,6 +68,11 @@ static uint8_t main_rly_is_closed_fb = 0U;
 static float vbus_ref_ramped_v = 0.0f;                                /* vbus_ref_ramped_v: ramped bus-voltage reference */
 static float ind_curr_ref_cmd_a = 0.0f;                               /* ind_curr_ref_cmd_a: commanded inductor-current reference */
 static float ind_curr_ref_act_a = 0.0f;                               /* ind_curr_ref_act_a: ramped inductor-current reference */
+static float ind_curr_ref_raw_a = 0.0f;                               /* ind_curr_ref_raw_a: unclamped current reference from PFC feed-forward calculation */
+static float ind_curr_ref_power_term_a = 0.0f;                        /* ind_curr_ref_power_term_a: in-phase current reference term */
+static float ind_curr_ref_cap_term_a = 0.0f;                          /* ind_curr_ref_cap_term_a: input-capacitor compensation current term */
+static float grid_rms_dbg_v = 0.0f;                                   /* grid_rms_dbg_v: RMS value used by current-reference calculation */
+static float grid_rms_sq_dbg_v2 = 0.0f;                               /* grid_rms_sq_dbg_v2: squared RMS denominator used by current-reference calculation */
 static float ind_curr_ctrl_u_raw_v = 0.0f;                            /* ind_curr_ctrl_u_raw_v: raw PR output */
 static float ind_curr_ctrl_u_sat_v = 0.0f;                            /* ind_curr_ctrl_u_sat_v: saturated PR output */
 static float pfc_pwm_cmd_v = 0.0f;                                    /* pfc_pwm_cmd_v: PWM voltage command */
@@ -74,12 +83,15 @@ static float pfc_pr_w0_pending = PFC_CTRL_GRID_OMEGA_INIT_RADPS;      /* pfc_pr_
 static uint8_t pfc_sogi_update_pending = 0U;                          /* pfc_sogi_update_pending: deferred SOGI update flag */
 static uint8_t pfc_pr_update_pending = 0U;                            /* pfc_pr_update_pending: deferred PR update flag */
 static uint8_t pfc_ctrl_run_active = 0U;                              /* pfc_ctrl_run_active: latched run gate state */
+#if defined(IS_PLECS) && defined(IS_PFC)
+static uint32_t pfc_ctrl_dbg_count = 0U; /* pfc_ctrl_dbg_count: ISR activity counter exported through PLECS DBG */
+#endif
 
 static inline void pfc_ctrl_update_feedback(pfc_ctrl_hal_t *p)
 {
     v_g_fb = *p->p_v_g;
     v_cap_fb = *p->p_v_cap;
-    i_l_fb = -*p->p_i_l;
+    i_l_fb = *p->p_i_l;
     v_bus_fb = *p->p_v_bus;
     v_rms_fb = *p->p_v_rms;
     main_rly_is_closed_fb = *p->p_main_rly_is_closed;
@@ -115,6 +127,11 @@ static inline void pfc_ctrl_reset_loops(void)
     pr_reset(&ind_curr_loop_pr);
     ind_curr_ref_cmd_a = 0.0f;
     ind_curr_ref_act_a = 0.0f;
+    ind_curr_ref_raw_a = 0.0f;
+    ind_curr_ref_power_term_a = 0.0f;
+    ind_curr_ref_cap_term_a = 0.0f;
+    grid_rms_dbg_v = 0.0f;
+    grid_rms_sq_dbg_v2 = 0.0f;
     ind_curr_ctrl_u_raw_v = 0.0f;
     ind_curr_ctrl_u_sat_v = 0.0f;
     pfc_pwm_cmd_raw_v = 0.0f;
@@ -126,6 +143,11 @@ static inline void pfc_ctrl_force_safe_output(void)
 {
     ind_curr_ref_cmd_a = 0.0f;
     ind_curr_ref_act_a = 0.0f;
+    ind_curr_ref_raw_a = 0.0f;
+    ind_curr_ref_power_term_a = 0.0f;
+    ind_curr_ref_cap_term_a = 0.0f;
+    grid_rms_dbg_v = 0.0f;
+    grid_rms_sq_dbg_v2 = 0.0f;
     ind_curr_ctrl_u_raw_v = 0.0f;
     ind_curr_ctrl_u_sat_v = 0.0f;
     pfc_pwm_cmd_raw_v = 0.0f;
@@ -150,17 +172,22 @@ static inline float pfc_ctrl_calc_ind_curr_ref(void)
     float grid_rms_sq_v2 = grid_rms_v * grid_rms_v; /* grid_rms_sq_v2: squared grid RMS voltage */
 
     DN_LMT(grid_rms_sq_v2, 0.001f);
+    grid_rms_dbg_v = grid_rms_v;
+    grid_rms_sq_dbg_v2 = grid_rms_sq_v2;
 
     /*
      * Inductor-current reference is composed of:
      * 1) an active-power term following the in-phase SOGI output;
      * 2) an input-capacitor compensation term on the quadrature axis.
      */
-    return (vbus_volt_loop.output.val *
-            PFC_CTRL_GRID_RMS_NOMINAL_V *
-            grid_sogi.osg_u[0] /
-            grid_rms_sq_v2) -
-           (grid_sogi.osg_qu[0] * grid_fll.omega * HW_AC_SIDE_CAP_VALUE);
+    ind_curr_ref_power_term_a = (vbus_volt_loop.output.val *
+                                 PFC_CTRL_GRID_RMS_NOMINAL_V *
+                                 grid_sogi.osg_u[0] /
+                                 grid_rms_sq_v2);
+    ind_curr_ref_cap_term_a = grid_sogi.osg_qu[0] * grid_fll.omega * HW_AC_SIDE_CAP_VALUE;
+    ind_curr_ref_raw_a = ind_curr_ref_power_term_a - ind_curr_ref_cap_term_a;
+
+    return ind_curr_ref_raw_a;
 }
 
 static inline float pfc_ctrl_apply_pwm_clamp(float pwm_cmd_raw_v)
@@ -189,6 +216,33 @@ static inline void pfc_ctrl_relax_vbus_loop_hist_if_ov(void)
     }
 }
 
+#if defined(IS_PLECS) && defined(IS_PFC)
+static inline void pfc_ctrl_publish_plecs_debug(void)
+{
+    pfc_ctrl_dbg_count++;
+    plecs_set_output(PLECS_OUTPUT_DBG, (float)pfc_ctrl_dbg_count);                           /* DLL:9 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 1U), vbus_ref_ramped_v);            /* DLL:10 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 2U), vbus_notch_filter.output.val); /* DLL:11 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 3U), vbus_volt_loop.output.val);    /* DLL:12 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 4U), ind_curr_ref_act_a);           /* DLL:13 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 5U), i_l_fb);                       /* DLL:14 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 6U), ind_curr_ctrl_u_raw_v);        /* DLL:15 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 7U), ind_curr_ctrl_u_sat_v);        /* DLL:16 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 8U), grid_sogi.u[0]);               /* DLL:17 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 9U), grid_sogi.osg_u[0]);           /* DLL:18 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 10U), grid_sogi.osg_qu[0]);         /* DLL:19 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 11U), grid_sogi.err);               /* DLL:20 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 12U), grid_rms_dbg_v);              /* DLL:21 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 13U), grid_rms_sq_dbg_v2);          /* DLL:22 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 14U), PFC_CTRL_GRID_RMS_NOMINAL_V); /* DLL:23 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 15U), grid_fll.omega);              /* DLL:24 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 16U), HW_AC_SIDE_CAP_VALUE);        /* DLL:25 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 17U), ind_curr_ref_power_term_a);   /* DLL:26 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 18U), ind_curr_ref_cap_term_a);     /* DLL:27 */
+    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 19U), ind_curr_ref_raw_a);          /* DLL:28 */
+}
+#endif
+
 static inline void pfc_ctrl_run_current_loop(float i_ref_abs_lmt_a)
 {
     float target_ref_a = 0.0f;
@@ -214,6 +268,10 @@ static inline void pfc_ctrl_run_current_loop(float i_ref_abs_lmt_a)
     pfc_pwm_cmd_v = pfc_ctrl_apply_pwm_clamp(pfc_pwm_cmd_raw_v);
 
     p_hal->p_set_pwm_func(pfc_pwm_cmd_v, v_bus_fb);
+
+#if defined(IS_PLECS) && defined(IS_PFC)
+    pfc_ctrl_publish_plecs_debug();
+#endif
 }
 
 static inline void pfc_ctrl_reinit_states(void)
