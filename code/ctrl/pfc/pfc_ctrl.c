@@ -185,7 +185,7 @@ static inline float pfc_ctrl_calc_ind_curr_ref(void)
                                  grid_sogi.osg_u[0] /
                                  grid_rms_sq_v2);
     ind_curr_ref_cap_term_a = grid_sogi.osg_qu[0] * grid_fll.omega * HW_AC_SIDE_CAP_VALUE;
-    ind_curr_ref_raw_a = ind_curr_ref_power_term_a - ind_curr_ref_cap_term_a;
+    ind_curr_ref_raw_a = ind_curr_ref_power_term_a + ind_curr_ref_cap_term_a;
 
     return ind_curr_ref_raw_a;
 }
