@@ -62,13 +62,11 @@ typedef struct
     void (*p_exit_run_func)(void);
     void (*p_main_rly_on_func)(void);
     void (*p_main_rly_off_func)(void);
-    uint8_t *p_latched;
 } pfc_fsm_hal_t;
 
 pfc_ctrl_hal_t *pfc_hal_get_ctrl(void);
 pfc_fsm_hal_t *pfc_hal_get_fsm(void);
 void pfc_hal_hard_protect_trip(void);
-void pfc_hal_hard_protect_clear(void);
 uint8_t pfc_hal_is_ready(void);
 void pfc_hal_lock_binding(void);
 void pfc_hal_unlock_binding(void);
@@ -86,6 +84,5 @@ void pfc_hal_set_enter_run_func(void (*p)(void));
 void pfc_hal_set_exit_run_func(void (*p)(void));
 void pfc_hal_set_main_rly_on_func(void (*p)(void));
 void pfc_hal_set_main_rly_off_func(void (*p)(void));
-void pfc_hal_set_latched_ptr(uint8_t *p);
 
 #endif

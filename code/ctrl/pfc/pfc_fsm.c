@@ -126,12 +126,6 @@ static void pfc_fsm_idle_exe(void)
             return;
         }
 
-        if (*p_hal->p_latched == 1)
-        {
-            PLECS_LOG("pfc_fsm start rejected by hard protect latch\n");
-            return;
-        }
-
         PLECS_LOG("pfc_fsm idle got start, goto soft_start\n");
         fsm_ev = pfc_fsm_ev_to_soft_start;
     }

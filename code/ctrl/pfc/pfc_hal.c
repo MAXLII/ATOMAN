@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Hold PFC controller and FSM HAL binding objects for platform callbacks
- *          - Manage run-entry/run-exit actions, PWM disable, and hard-protection latch handling
+ *          - Manage run-entry/run-exit actions, PWM disable, and hard-protection trip handling
  *          - Lock and validate PFC HAL binding state before the FSM allows operation
  *
  *          Design notes:
@@ -34,7 +34,6 @@
 
 static void pfc_hal_enter_run(void);
 static void pfc_hal_exit_run(void);
-static uint8_t hard_protect_latched;
 static uint8_t pfc_hal_binding_locked = 1U;
 
 static pfc_ctrl_hal_t pfc_ctrl_hal = {0};
@@ -42,7 +41,6 @@ static pfc_ctrl_hal_t pfc_ctrl_hal = {0};
 static pfc_fsm_hal_t pfc_fsm_hal = {
     .p_enter_run_func = pfc_hal_enter_run,
     .p_exit_run_func = pfc_hal_exit_run,
-    .p_latched = &hard_protect_latched,
 };
 
 static void pfc_hal_enter_run(void)
@@ -77,20 +75,8 @@ void pfc_hal_hard_protect_trip(void)
         pfc_ctrl_hal.p_pwm_disable();
     }
 
-    if (*pfc_fsm_hal.p_latched == 0U)
-    {
-        *pfc_fsm_hal.p_latched = 1U;
-        PLECS_LOG("pfc_hal hard protect latched\n");
-    }
-
     pfc_cfg_set_run_allowed(0U);
     pfc_cfg_publish_building();
-}
-
-void pfc_hal_hard_protect_clear(void)
-{
-    *pfc_fsm_hal.p_latched = 0U;
-    PLECS_LOG("pfc_hal hard protect cleared\n");
 }
 
 uint8_t pfc_hal_is_ready(void)
@@ -173,12 +159,6 @@ uint8_t pfc_hal_is_ready(void)
         PLECS_LOG("pfc_hal not ready: p_main_rly_off_func is null\n");
         is_ready = 0U;
     }
-    if (pfc_fsm_hal.p_latched == NULL)
-    {
-        PLECS_LOG("pfc_hal not ready: p_latched is null\n");
-        is_ready = 0U;
-    }
-
     if (is_ready != 0U)
     {
         PLECS_LOG("pfc_hal ready\n");
@@ -322,13 +302,4 @@ void pfc_hal_set_main_rly_off_func(void (*p)(void))
         return;
     }
     pfc_fsm_hal.p_main_rly_off_func = p;
-}
-
-void pfc_hal_set_latched_ptr(uint8_t *p)
-{
-    if (pfc_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    pfc_fsm_hal.p_latched = p;
 }
