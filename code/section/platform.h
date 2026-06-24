@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Select platform-specific tick, reset, linker-section, and RAM-function symbols
- *          - Map PLECS, GD32, HC32, APM32, and fallback builds onto the section runtime contract
+ *          - Map MATLAB, PLECS, GD32, HC32, APM32, and fallback builds onto the section runtime contract
  *          - Provide compile-time abstraction macros without exposing BSP calls to application code
  *
  *          Design notes:
@@ -31,7 +31,21 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef IS_PLECS
+#ifdef IS_MATLAB
+#include "sim_sfunc.h"
+extern uint32_t sim_time_100us;
+#define SECTION_SYS_TICK sim_time_100us
+#define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
+extern size_t __start_section;
+extern size_t __stop_section;
+#define SECTION_START __start_section
+#define SECTION_STOP __stop_section
+#define SYSTEM_RESET
+#define PLECS_LOG(...) SIM_LOG(__VA_ARGS__)
+#define AUTO_REG_SECTION __attribute__((__section__("section")))
+#define FUNC_RAM
+
+#elif defined(IS_PLECS)
 #include "plecs.h"
 extern uint32_t plecs_time_100us;
 #define SECTION_SYS_TICK plecs_time_100us
