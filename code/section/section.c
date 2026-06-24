@@ -32,8 +32,10 @@
 #include <stddef.h>
 
 static reg_task_t *p_task_first = NULL;
+static reg_task_t *p_task_tail = NULL;
 static reg_interrupt_t *p_interrupt_first = NULL;
 static section_link_t *p_link_first = NULL;
+static section_link_t *p_link_tail = NULL;
 static reg_init_t *p_init_first = NULL;
 
 #if defined(__GNUC__)
@@ -76,8 +78,6 @@ SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *rec
 
 static void task_insert(reg_task_t *task)
 {
-    static reg_task_t *s_task_tail = NULL;
-
     if (task == NULL)
     {
         return;
@@ -90,12 +90,12 @@ static void task_insert(reg_task_t *task)
     if (p_task_first == NULL)
     {
         p_task_first = task;
-        s_task_tail = task;
+        p_task_tail = task;
     }
     else
     {
-        s_task_tail->p_next = task;
-        s_task_tail = task;
+        p_task_tail->p_next = task;
+        p_task_tail = task;
     }
 }
 
@@ -127,8 +127,6 @@ static void interrupt_insert(reg_interrupt_t *intr)
 
 static void link_insert(section_link_t *link)
 {
-    static section_link_t *s_link_tail = NULL;
-
     if (link == NULL)
     {
         return;
@@ -139,12 +137,12 @@ static void link_insert(section_link_t *link)
     if (p_link_first == NULL)
     {
         p_link_first = link;
-        s_link_tail = link;
+        p_link_tail = link;
     }
     else
     {
-        s_link_tail->p_next = link;
-        s_link_tail = link;
+        p_link_tail->p_next = link;
+        p_link_tail = link;
     }
 }
 
@@ -206,6 +204,16 @@ void section_init(void)
             init->p_func();
         }
     }
+}
+
+void section_runtime_reset(void)
+{
+    p_task_first = NULL;
+    p_task_tail = NULL;
+    p_interrupt_first = NULL;
+    p_link_first = NULL;
+    p_link_tail = NULL;
+    p_init_first = NULL;
 }
 
 const section_link_t *section_link_first_get(void)

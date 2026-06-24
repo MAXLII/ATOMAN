@@ -123,6 +123,7 @@ typedef struct reg_init
     REG_SECTION_FUNC(SECTION_INIT, reg_init_##func)
 
 void section_init(void);
+void section_runtime_reset(void);
 
 uint32_t section_perf_task_begin(section_perf_record_t *record);
 void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
