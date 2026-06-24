@@ -113,11 +113,11 @@ static void sim_sfunc_start(void)
 
 static void sim_sfunc_output_step(void)
 {
-    const double dt_s = s_time_s - s_time_last_s;
+    const double tick_eps_s = SIM_TICK_STEP_S * 1.0e-6;
 
-    if (dt_s >= SIM_TICK_STEP_S)
+    while ((s_time_s - s_time_last_s + tick_eps_s) >= SIM_TICK_STEP_S)
     {
-        sim_time_100us += (uint32_t)(dt_s * SIM_TICKS_PER_SECOND);
+        sim_time_100us += 1U;
         run_task();
         s_time_last_s += SIM_TICK_STEP_S;
     }
