@@ -45,3 +45,9 @@ gd32g553c/gcc_build/
 gd32g553c/gcc/Makefile.tmp.*
 gd32g553c/-p/
 apm32/build/
+
+# MATLAB local build artifacts
+matlab/inv/build/
+matlab/inv/slprj/
+matlab/inv/*.mexw64
+matlab/inv/*.slxc
