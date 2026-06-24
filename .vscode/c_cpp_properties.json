@@ -140,6 +140,63 @@
             ]
         },
         {
+            "name": "plecs_inv",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/plecs/common",
+                "${workspaceFolder}/plecs/inv",
+                "${workspaceFolder}/plecs/inv/app",
+                "${workspaceFolder}/plecs/inv/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_INV",
+                "__RAM_FUNC="
+            ]
+        },
+        {
+            "name": "matlab_inv",
+            "compilerPath": "gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/matlab/common",
+                "${workspaceFolder}/matlab/inv",
+                "${workspaceFolder}/matlab/inv/app",
+                "${workspaceFolder}/matlab/inv/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/section",
+                "${env:ProgramFiles}/MATLAB/R2024a/extern/include",
+                "${env:ProgramFiles}/MATLAB/R2024a/simulink/include"
+            ],
+            "defines": [
+                "IS_MATLAB",
+                "IS_INV",
+                "MATLAB_MEX_FILE",
+                "S_FUNCTION_NAME=sfunc",
+                "__RAM_FUNC="
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/matlab",
+                    "${workspaceFolder}/code",
+                    "${env:ProgramFiles}/MATLAB/R2024a/extern/include",
+                    "${env:ProgramFiles}/MATLAB/R2024a/simulink/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "plecs_dc",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
