@@ -33,9 +33,9 @@
 #include "my_math.h"
 
 #define SIM_SAMPLE_TIME_S CTRL_TS
-#define SIM_TICK_STEP_S (1.0e-4)
 #define SIM_TICK_UNIT_US (100U)
-#define SIM_TICKS_PER_SECOND (10000.0)
+#define SIM_TICK_STEP_S ((double)SIM_TICK_UNIT_US * 1.0e-6)
+#define SIM_TICKS_PER_SECOND (1000000.0 / (double)SIM_TICK_UNIT_US)
 
 typedef enum
 {
