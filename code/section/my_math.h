@@ -35,6 +35,7 @@
 #include "math.h"
 #endif
 #include <stdint.h>
+#include <stddef.h>
 #include "timing.h"
 
 #ifndef CTRL_TS
@@ -191,24 +192,29 @@
 /* Number of elements in a static array. */
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+static inline uint8_t struct_all_ptr_valid(const void *obj, uint16_t ptr_count)
+{
+    const uintptr_t *p = (const uintptr_t *)obj;
+
+    if (p == NULL)
+    {
+        return 0U;
+    }
+
+    for (uint16_t i = 0U; i < ptr_count; ++i)
+    {
+        if (p[i] == (uintptr_t)0U)
+        {
+            return 0U;
+        }
+    }
+
+    return 1U;
+}
+
 /* Check whether every member in a pointer-only struct is non-NULL. */
-#define STRUCT_ALL_PTR_VALID(obj)                                    \
-    ({                                                               \
-        uint8_t _ok = 1;                                             \
-        const uint32_t *const *_p = (const uint32_t *const *)&(obj); \
-        uint16_t _cnt = sizeof(obj) / sizeof(uint32_t *);            \
-                                                                     \
-        for (uint16_t _i = 0; _i < _cnt; _i++)                       \
-        {                                                            \
-            if (_p[_i] == NULL)                                      \
-            {                                                        \
-                _ok = 0;                                             \
-                break;                                               \
-            }                                                        \
-        }                                                            \
-                                                                     \
-        _ok;                                                         \
-    })
+#define STRUCT_ALL_PTR_VALID(obj) \
+    struct_all_ptr_valid(&(obj), (uint16_t)(sizeof(obj) / sizeof(uintptr_t)))
 
 /* Time constants expressed in 1 ms task ticks. */
 #define TIME_CNT_1MS_IN_1MS (1)

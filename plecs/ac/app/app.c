@@ -298,4 +298,4 @@ static void app_task(void)
     plecs_set_output(PLECS_OUTPUT_DBG, (float)mode);
 }
 
-REG_TASK_MS(1, app_task);
+REG_TASK_MS(1, app_task)
