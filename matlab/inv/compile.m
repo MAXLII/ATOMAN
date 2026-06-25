@@ -1,27 +1,16 @@
 function mexFile = compile()
-%COMPILE Build the inverter C-MEX S-Function.
+%COMPILE Build the inverter C-MEX S-Function with the selected MATLAB mex compiler.
 %
 % Run this script from MATLAB:
 %   cd <repo_root>/matlab/inv
 %   compile
 
-projectDir = fileparts(mfilename('fullpath'));
-matlabDir = fileparts(projectDir);
-repoDir = fileparts(matlabDir);
-commonDir = fullfile(matlabDir, 'common');
-codeDir = fullfile(repoDir, 'code');
-
-cfgC = mex.getCompilerConfigurations('C', 'Selected');
-if isempty(cfgC)
-    error(['No C compiler is selected for mex. Run "mex -setup C" in MATLAB ', ...
-           'and select the MinGW64 C compiler.']);
-end
-
-manufacturer = lower(cfgC.Manufacturer);
-if ~contains(manufacturer, 'gnu') && ~contains(manufacturer, 'mingw')
-    error(['This imported inverter project uses GNU section symbols. ', ...
-           'Select the MinGW64 C compiler with "mex -setup C" before building.']);
-end
+% Path layout, with the base repository root written as ./:
+projectDir = fileparts(mfilename('fullpath')); % projectDir = ./matlab/inv
+matlabDir  = fileparts(projectDir);            % matlabDir  = ./matlab
+repoDir    = fileparts(matlabDir);             % repoDir    = ./
+commonDir  = fullfile(matlabDir, 'common');    % commonDir  = ./matlab/common
+codeDir    = fullfile(repoDir, 'code');        % codeDir    = ./code
 
 includeDirs = {
     projectDir
@@ -51,33 +40,14 @@ sourceStems = {
 };
 
 sources = resolveSources(sourceStems);
-hasCpp = any(endsWith(sources, {'.cc', '.cpp', '.cxx'}, 'IgnoreCase', true));
-if hasCpp
-    cfgCpp = mex.getCompilerConfigurations('C++', 'Selected');
-    if isempty(cfgCpp)
-        error(['C++ source files are present. Run "mex -setup C++" in MATLAB ', ...
-               'and select the MinGW64 C++ compiler.']);
-    end
-
-    manufacturer = lower(cfgCpp.Manufacturer);
-    if ~contains(manufacturer, 'gnu') && ~contains(manufacturer, 'mingw')
-        error(['This imported inverter project uses GNU section symbols. ', ...
-               'Select the MinGW64 C++ compiler with "mex -setup C++" before building.']);
-    end
-end
-
 includeArgs = cellfun(@(p) ['-I', p], includeDirs, 'UniformOutput', false);
 includeArgs = reshape(includeArgs, 1, []);
 sources = reshape(sources, 1, []);
 
 mexArgs = {};
-mexArgs = [mexArgs, {'-R2018a', '-v', '-outdir', projectDir, '-output', 'sfunc'}];
-mexArgs = [mexArgs, {'-DS_FUNCTION_NAME=sfunc', '-DIS_MATLAB', '-DIS_INV', '-D__RAM_FUNC='}];
-mexArgs = [mexArgs, {'CFLAGS=$CFLAGS -std=c11 -Wall -Wextra'}];
-if hasCpp
-    mexArgs = [mexArgs, {'CXXFLAGS=$CXXFLAGS -std=c++17 -Wall -Wextra'}];
-end
-mexArgs = [mexArgs, {'LDFLAGS=$LDFLAGS -Wl,--undefined=__start_section -Wl,--undefined=__stop_section'}];
+mexArgs = [mexArgs, {'-R2018a', '-outdir', projectDir, '-output', 'sfunc'}];
+mexArgs = [mexArgs, {'-DS_FUNCTION_NAME=sfunc', '-DIS_MATLAB', '-DIS_INV', '-DTOOLCHAIN_MSVC', '-D__RAM_FUNC='}];
+mexArgs = [mexArgs, {'COMPFLAGS=$COMPFLAGS /W3'}];
 mexArgs = [mexArgs, includeArgs, sources];
 
 mex(mexArgs{:});
