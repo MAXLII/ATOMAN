@@ -24,7 +24,7 @@ set(SOURCES
 add_library(plecs SHARED ${SOURCES})
 
 target_compile_features(plecs PRIVATE c_std_11)
-target_compile_definitions(plecs PRIVATE IS_PLECS IS_LLC __RAM_FUNC=)
+target_compile_definitions(plecs PRIVATE IS_PLECS IS_LLC TOOLCHAIN_GCC __RAM_FUNC=)
 
 target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}
