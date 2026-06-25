@@ -48,13 +48,17 @@
 #error "Define exactly one section toolchain macro: TOOLCHAIN_MDK, TOOLCHAIN_GCC, or TOOLCHAIN_MSVC."
 #endif
 
+#if defined(TOOLCHAIN_MSVC) || (defined(TOOLCHAIN_GCC) && defined(_WIN32) && (defined(IS_MATLAB) || defined(IS_PLECS)))
+#define SECTION_LINKER_SENTINELS 1
+#endif
+
 /* Runtime platform contract */
 #ifdef IS_MATLAB
 #include "sim_sfunc.h"
 extern uint32_t sim_time_100us;
 #define SECTION_SYS_TICK sim_time_100us
 #define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
-#if !defined(TOOLCHAIN_MSVC)
+#if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
@@ -69,10 +73,12 @@ extern size_t __stop_section;
 extern uint32_t plecs_time_100us;
 #define SECTION_SYS_TICK plecs_time_100us
 #define SECTION_SYS_TICK_UNIT_US 100u
+#if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
 #define SECTION_STOP __stop_section
+#endif
 #define SYSTEM_RESET
 #define FUNC_RAM
 
@@ -160,11 +166,16 @@ extern uint32_t __section_end;
 #pragma section("section$a", read)
 #pragma section("section$m", read)
 #pragma section("section$z", read)
-#define SECTION_MSVC_REG_SECTION 1
+#define SECTION_SENTINEL_REG_SECTION 1
 #define SECTION_REG_ATTR_PREFIX __declspec(allocate("section$m"))
 #define SECTION_REG_START_ATTR_PREFIX __declspec(allocate("section$a"))
 #define SECTION_REG_STOP_ATTR_PREFIX __declspec(allocate("section$z"))
 #define AUTO_REG_SECTION
+#elif defined(TOOLCHAIN_GCC) && defined(_WIN32) && (defined(IS_MATLAB) || defined(IS_PLECS))
+#define SECTION_SENTINEL_REG_SECTION 1
+#define SECTION_REG_START_ATTR_PREFIX __attribute__((used, section("section$a")))
+#define SECTION_REG_STOP_ATTR_PREFIX __attribute__((used, section("section$z")))
+#define AUTO_REG_SECTION __attribute__((used, section("section$m")))
 #elif defined(TOOLCHAIN_GCC) && (defined(IS_MATLAB) || defined(IS_PLECS))
 #define AUTO_REG_SECTION __attribute__((__section__("section")))
 #elif defined(TOOLCHAIN_GCC) || defined(TOOLCHAIN_MDK)

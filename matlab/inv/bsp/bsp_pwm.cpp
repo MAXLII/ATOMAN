@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_pwm.c
+ * @file    bsp_pwm.cpp
  * @brief   MATLAB inverter PWM adapter module.
  * @details
  *          This file is part of the base project.
@@ -11,7 +11,7 @@
  *          - Provide the BSP PWM callbacks bound into the inverter HAL
  *
  *          Design notes:
- *          - C11 compatible
+ *          - C++ compatible
  *          - No dynamic memory allocation
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP

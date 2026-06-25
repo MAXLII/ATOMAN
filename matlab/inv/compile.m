@@ -1,5 +1,5 @@
 function mexFile = compile()
-%COMPILE Build the inverter C-MEX S-Function with the selected MATLAB mex compiler.
+%COMPILE Build the inverter C++ MEX S-Function with the selected MATLAB mex compiler.
 %
 % Run this script from MATLAB:
 %   cd <repo_root>/matlab/inv
@@ -44,10 +44,24 @@ includeArgs = cellfun(@(p) ['-I', p], includeDirs, 'UniformOutput', false);
 includeArgs = reshape(includeArgs, 1, []);
 sources = reshape(sources, 1, []);
 
+compiler = mex.getCompilerConfigurations('C++', 'Selected');
+if isempty(compiler)
+    error('No selected MATLAB C++ mex compiler. Run mex -setup C++ first.');
+end
+
+isMsvc = contains(compiler.Manufacturer, 'Microsoft', 'IgnoreCase', true);
+if isMsvc
+    toolchainArg = '-DTOOLCHAIN_MSVC';
+    warningArgs = {'COMPFLAGS=$COMPFLAGS /W3', 'CXXFLAGS=$CXXFLAGS /W3'};
+else
+    toolchainArg = '-DTOOLCHAIN_GCC';
+    warningArgs = {'COMPFLAGS=$COMPFLAGS -Wall', 'CXXFLAGS=$CXXFLAGS -Wall'};
+end
+
 mexArgs = {};
 mexArgs = [mexArgs, {'-R2018a', '-outdir', projectDir, '-output', 'sfunc'}];
-mexArgs = [mexArgs, {'-DS_FUNCTION_NAME=sfunc', '-DIS_MATLAB', '-DIS_INV', '-DTOOLCHAIN_MSVC', '-D__RAM_FUNC='}];
-mexArgs = [mexArgs, {'COMPFLAGS=$COMPFLAGS /W3'}];
+mexArgs = [mexArgs, {'-DS_FUNCTION_NAME=sfunc', '-DIS_MATLAB', '-DIS_INV', toolchainArg, '-D__RAM_FUNC='}];
+mexArgs = [mexArgs, warningArgs];
 mexArgs = [mexArgs, includeArgs, sources];
 
 mex(mexArgs{:});
