@@ -38,6 +38,16 @@ static section_link_t *p_link_first = NULL;
 static section_link_t *p_link_tail = NULL;
 static reg_init_t *p_init_first = NULL;
 
+#if defined(SECTION_MSVC_REG_SECTION)
+SECTION_REG_START_ATTR_PREFIX const reg_section_t section_reg_start = {0u, NULL};
+SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop = {0u, NULL};
+#define SECTION_REG_FIRST ((const reg_section_t *)(&section_reg_start + 1))
+#define SECTION_REG_LAST ((const reg_section_t *)&section_reg_stop)
+#else
+#define SECTION_REG_FIRST ((const reg_section_t *)&SECTION_START)
+#define SECTION_REG_LAST ((const reg_section_t *)&SECTION_STOP)
+#endif
+
 #if defined(__GNUC__)
 #define SECTION_WEAK __attribute__((weak))
 #elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
@@ -174,8 +184,8 @@ static void init_insert(reg_init_t *init)
 
 void section_init(void)
 {
-    for (reg_section_t *p = (reg_section_t *)&SECTION_START;
-         p < (reg_section_t *)&SECTION_STOP;
+    for (const reg_section_t *p = SECTION_REG_FIRST;
+         p < SECTION_REG_LAST;
          ++p)
     {
         switch (p->section_type)

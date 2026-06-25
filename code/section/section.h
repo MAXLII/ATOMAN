@@ -93,10 +93,20 @@ typedef struct
 
 typedef struct section_link_t section_link_t;
 
-#define REG_SECTION_FUNC(_section_type, _p_str)                   \
-    const reg_section_t reg_section_##_p_str AUTO_REG_SECTION = { \
-        .section_type = (uint32_t)(_section_type),                \
-        .p_str = (void *)&(_p_str),                               \
+#if defined(_MSC_VER) && !defined(__clang__)
+#define SECTION_STATIC_ASSERT_JOIN_(a, b) a##b
+#define SECTION_STATIC_ASSERT_JOIN(a, b) SECTION_STATIC_ASSERT_JOIN_(a, b)
+#define SECTION_STATIC_ASSERT(cond, msg) \
+    typedef char SECTION_STATIC_ASSERT_JOIN(section_static_assert_, __LINE__)[(cond) ? 1 : -1]
+#else
+#define SECTION_STATIC_ASSERT(cond, msg) _Static_assert((cond), msg)
+#endif
+
+#define REG_SECTION_FUNC(_section_type, _p_str)                      \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
+        SECTION_REG_ATTR_SUFFIX = {                                  \
+            .section_type = (uint32_t)(_section_type),               \
+            .p_str = (void *)&(_p_str),                              \
     };
 
 #ifdef __GNUC__
@@ -114,12 +124,12 @@ typedef struct reg_init
     struct reg_init *p_next;
 } reg_init_t;
 
-#define REG_INIT(prio, func)       \
-    reg_init_t reg_init_##func = { \
+#define REG_INIT(prio, func)        \
+    reg_init_t reg_init_##func = {  \
         .priority = (int8_t)(prio), \
-        .p_func = (func),          \
-        .p_next = NULL,            \
-    };                             \
+        .p_func = (func),           \
+        .p_next = NULL,             \
+    };                              \
     REG_SECTION_FUNC(SECTION_INIT, reg_init_##func)
 
 void section_init(void);
@@ -230,20 +240,20 @@ typedef struct
         .func_out = (out),                \
     }
 
-#define REG_FSM(name, init_sta, fsm_ev, ...)                                            \
-    _Static_assert(sizeof(fsm_ev) == sizeof(uint32_t), "FSM event must be uint32_t-sized"); \
-    static reg_fsm_func_t reg_fsm_func_##name##_table[] = {__VA_ARGS__};                \
-    static reg_fsm_t reg_fsm_##name = {                                                 \
-        .fsm_sta = (init_sta),                                                          \
-        .p_fsm_func_table = reg_fsm_func_##name##_table,                                \
-        .fsm_table_size = sizeof(reg_fsm_func_##name##_table) / sizeof(reg_fsm_func_t), \
-        .fsm_sta_is_change = 1u,                                                        \
-        .p_fsm_ev = (uint32_t *)&(fsm_ev),                                              \
-    };                                                                                  \
-    static void fsm_##name##_run(void)                                                  \
-    {                                                                                   \
-        section_fsm_func(&reg_fsm_##name);                                              \
-    }                                                                                   \
+#define REG_FSM(name, init_sta, fsm_ev, ...)                                                       \
+    SECTION_STATIC_ASSERT(sizeof(fsm_ev) == sizeof(uint32_t), "FSM event must be uint32_t-sized"); \
+    static reg_fsm_func_t reg_fsm_func_##name##_table[] = {__VA_ARGS__};                           \
+    static reg_fsm_t reg_fsm_##name = {                                                            \
+        .fsm_sta = (init_sta),                                                                     \
+        .p_fsm_func_table = reg_fsm_func_##name##_table,                                           \
+        .fsm_table_size = sizeof(reg_fsm_func_##name##_table) / sizeof(reg_fsm_func_t),            \
+        .fsm_sta_is_change = 1u,                                                                   \
+        .p_fsm_ev = (uint32_t *)&(fsm_ev),                                                         \
+    };                                                                                             \
+    static void fsm_##name##_run(void)                                                             \
+    {                                                                                              \
+        section_fsm_func(&reg_fsm_##name);                                                         \
+    }                                                                                              \
     REG_TASK_MS(1, fsm_##name##_run)
 
 #define FSM_GET_STATE(name) (reg_fsm_##name.fsm_sta)

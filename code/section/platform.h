@@ -31,18 +31,37 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/* Toolchain selection */
+#if !defined(TOOLCHAIN_MDK) && !defined(TOOLCHAIN_GCC) && !defined(TOOLCHAIN_MSVC)
+#if defined(__CC_ARM) || defined(__ARMCC_VERSION)
+#define TOOLCHAIN_MDK 1
+#elif defined(_MSC_VER)
+#define TOOLCHAIN_MSVC 1
+#elif defined(__GNUC__)
+#define TOOLCHAIN_GCC 1
+#else
+#error "Define one section toolchain macro: TOOLCHAIN_MDK, TOOLCHAIN_GCC, or TOOLCHAIN_MSVC."
+#endif
+#endif
+
+#if (defined(TOOLCHAIN_MDK) + defined(TOOLCHAIN_GCC) + defined(TOOLCHAIN_MSVC)) != 1
+#error "Define exactly one section toolchain macro: TOOLCHAIN_MDK, TOOLCHAIN_GCC, or TOOLCHAIN_MSVC."
+#endif
+
+/* Runtime platform contract */
 #ifdef IS_MATLAB
 #include "sim_sfunc.h"
 extern uint32_t sim_time_100us;
 #define SECTION_SYS_TICK sim_time_100us
 #define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
+#if !defined(TOOLCHAIN_MSVC)
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
 #define SECTION_STOP __stop_section
+#endif
 #define SYSTEM_RESET
 #define PLECS_LOG(...) SIM_LOG(__VA_ARGS__)
-#define AUTO_REG_SECTION __attribute__((__section__("section")))
 #define FUNC_RAM
 
 #elif defined(IS_PLECS)
@@ -55,7 +74,6 @@ extern size_t __stop_section;
 #define SECTION_START __start_section
 #define SECTION_STOP __stop_section
 #define SYSTEM_RESET
-#define AUTO_REG_SECTION __attribute__((__section__("section")))
 #define FUNC_RAM
 
 #elif defined(IS_GD32)
@@ -63,7 +81,7 @@ extern size_t __stop_section;
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#if defined(TOOLCHAIN_KEIL)
+#if defined(TOOLCHAIN_MDK)
 extern uint32_t Image$$SECTION$$Base;
 extern uint32_t Image$$SECTION$$Limit;
 #define SECTION_START Image$$SECTION$$Base
@@ -78,7 +96,6 @@ extern uint32_t __section_end;
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
-#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 
 #elif defined(IS_HC32)
@@ -90,7 +107,7 @@ extern uint32_t __section_end;
 #endif
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#if defined(TOOLCHAIN_KEIL)
+#if defined(TOOLCHAIN_MDK)
 extern uint32_t Load$$SECTION$$Base;
 extern uint32_t Load$$SECTION$$Limit;
 #define SECTION_START Load$$SECTION$$Base
@@ -105,7 +122,6 @@ extern uint32_t __section_end;
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
-#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 
 #elif defined(IS_APM32)
@@ -121,7 +137,6 @@ extern uint32_t __section_end;
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
-#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 
 #else
@@ -137,6 +152,29 @@ extern uint32_t __section_end;
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
-#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
 #endif
+
+/* Section registration attributes */
+#if defined(TOOLCHAIN_MSVC)
+#pragma section("section$a", read)
+#pragma section("section$m", read)
+#pragma section("section$z", read)
+#define SECTION_MSVC_REG_SECTION 1
+#define SECTION_REG_ATTR_PREFIX __declspec(allocate("section$m"))
+#define SECTION_REG_START_ATTR_PREFIX __declspec(allocate("section$a"))
+#define SECTION_REG_STOP_ATTR_PREFIX __declspec(allocate("section$z"))
+#define AUTO_REG_SECTION
+#elif defined(TOOLCHAIN_GCC) && (defined(IS_MATLAB) || defined(IS_PLECS))
+#define AUTO_REG_SECTION __attribute__((__section__("section")))
+#elif defined(TOOLCHAIN_GCC) || defined(TOOLCHAIN_MDK)
+#define AUTO_REG_SECTION __attribute__((used, __section__("section")))
+#else
+#error "Unsupported section toolchain macro."
+#endif
+
+#ifndef SECTION_REG_ATTR_PREFIX
+#define SECTION_REG_ATTR_PREFIX
+#endif
+
+#define SECTION_REG_ATTR_SUFFIX AUTO_REG_SECTION
