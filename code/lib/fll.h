@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+﻿// SPDX-License-Identifier: MIT
 /**
  * @file    fll.h
  * @brief   fll library public interface.
