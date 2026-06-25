@@ -20,6 +20,8 @@ call :remove_dir "hc32f334\keil_flash"
 call :remove_dir "matlab\inv\build"
 call :remove_dir "matlab\inv\slprj"
 
+call :remove_known_output_dirs
+
 call :remove_file "gd32g553c\debug_log.txt"
 call :remove_file "gd32g553c\fw_info.exe"
 call :remove_file "gd32g553c\tools\fw_info\fw_info"
@@ -28,13 +30,6 @@ call :remove_file "plecs\plecs_log_file_path.c"
 call :remove_file "plecs\plecs_log.txt"
 call :remove_file "plecs\ac\plecs_log_file_path.c"
 call :remove_file "_final.py"
-
-for /d /r %%D in (output Listings Objects) do (
-    if exist "%%D" (
-        echo Removing directory: %%D
-        rmdir /s /q "%%D"
-    )
-)
 
 for /r %%F in (*.o *.d *.crf *.axf *.hex *.lnp *.map *.dep *.build_log.htm *.log *.slxc *.mexw64 *plecs.autosave JLinkLog.txt EventRecorderStub.scvd) do (
     if exist "%%F" (
@@ -64,5 +59,13 @@ exit /b 0
 if exist "%~1" (
     echo Removing file: %~1
     del /f /q "%~1"
+)
+exit /b 0
+
+:remove_known_output_dirs
+for /d /r %%P in (keil_mdk mdk ac) do (
+    call :remove_dir "%%P\output"
+    call :remove_dir "%%P\Listings"
+    call :remove_dir "%%P\Objects"
 )
 exit /b 0
