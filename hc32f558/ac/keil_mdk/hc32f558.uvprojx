@@ -339,7 +339,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F558,USE_DDL_DRIVER,IS_HC32,TOOLCHAIN_KEIL,COMM_LINK_ENABLE_ISO=0,COMM_LINK_ENABLE_CAN=0,HOST_ADDR=LLC_ADDR,</Define>
+              <Define>HC32F558,USE_DDL_DRIVER,IS_HC32,TOOLCHAIN_MDK,COMM_LINK_ENABLE_ISO=0,COMM_LINK_ENABLE_CAN=0,HOST_ADDR=LLC_ADDR,</Define>
               <Undefine></Undefine>
               <IncludePath>..\src;..\bsp;..\..\inc;..\..\src;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\dbg;..\..\Firmware\CMSIS\HDSC\hc32f5xx\Include;..\..\Firmware\CMSIS\Include;..\..\Firmware\HC32_LL_Driver\inc;..\..\..\code\app\demo;..\..\..\code\lib</IncludePath>
             </VariousControls>

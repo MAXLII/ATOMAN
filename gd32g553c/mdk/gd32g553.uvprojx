@@ -338,7 +338,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32,TOOLCHAIN_KEIL</Define>
+              <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32,TOOLCHAIN_MDK</Define>
               <Undefine></Undefine>
               <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
@@ -356,7 +356,7 @@
             <ClangAsOpt>1</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32,TOOLCHAIN_KEIL</Define>
+              <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32,TOOLCHAIN_MDK</Define>
               <Undefine></Undefine>
               <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>

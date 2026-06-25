@@ -1,4 +1,9 @@
 {
+    "env": {
+        "MATLAB_ROOT": "${env:ProgramFiles}/MATLAB/R2024a",
+        "MSVC2017_ROOT": "${env:ProgramFiles(x86)}/Microsoft Visual Studio/2017/BuildTools",
+        "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023"
+    },
     "configurations": [
         {
             "name": "gd32",
@@ -34,6 +39,8 @@
             ],
             "defines": [
                 "GD32G5X3",
+                "IS_GD32",
+                "TOOLCHAIN_GCC",
                 "FIRMWARE_TYPE_ISP",
                 "APP_START_ADDR=0x08000000"
             ],
@@ -78,7 +85,7 @@
                 "HC32F558",
                 "USE_DDL_DRIVER",
                 "IS_HC32",
-                "TOOLCHAIN_KEIL",
+                "TOOLCHAIN_MDK",
                 "HOST_ADDR=LLC_ADDR",
                 "COMM_LINK_ENABLE_ISO=0",
                 "COMM_LINK_ENABLE_CAN=0"
@@ -114,6 +121,7 @@
             ],
             "defines": [
                 "IS_PLECS",
+                "TOOLCHAIN_GCC",
                 "IS_AC"
             ]
         },
@@ -136,6 +144,7 @@
             "defines": [
                 "IS_PLECS",
                 "IS_PFC",
+                "TOOLCHAIN_GCC",
                 "__RAM_FUNC="
             ]
         },
@@ -158,15 +167,16 @@
             "defines": [
                 "IS_PLECS",
                 "IS_INV",
+                "TOOLCHAIN_GCC",
                 "__RAM_FUNC="
             ]
         },
         {
             "name": "matlab_inv",
-            "compilerPath": "gcc",
+            "compilerPath": "${MSVC2017_TOOLS}/bin/HostX64/x64/cl.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-x64",
+            "intelliSenseMode": "windows-msvc-x64",
             "includePath": [
                 "${workspaceFolder}/matlab/common",
                 "${workspaceFolder}/matlab/inv",
@@ -176,12 +186,13 @@
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/inv",
                 "${workspaceFolder}/code/section",
-                "${env:ProgramFiles}/MATLAB/R2024a/extern/include",
-                "${env:ProgramFiles}/MATLAB/R2024a/simulink/include"
+                "${MATLAB_ROOT}/extern/include",
+                "${MATLAB_ROOT}/simulink/include"
             ],
             "defines": [
                 "IS_MATLAB",
                 "IS_INV",
+                "TOOLCHAIN_MSVC",
                 "MATLAB_MEX_FILE",
                 "S_FUNCTION_NAME=sfunc",
                 "__RAM_FUNC="
@@ -190,8 +201,8 @@
                 "path": [
                     "${workspaceFolder}/matlab",
                     "${workspaceFolder}/code",
-                    "${env:ProgramFiles}/MATLAB/R2024a/extern/include",
-                    "${env:ProgramFiles}/MATLAB/R2024a/simulink/include"
+                    "${MATLAB_ROOT}/extern/include",
+                    "${MATLAB_ROOT}/simulink/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
@@ -219,6 +230,7 @@
             ],
             "defines": [
                 "IS_PLECS",
+                "TOOLCHAIN_GCC",
                 "IS_DC"
             ]
         },
@@ -240,6 +252,7 @@
             ],
             "defines": [
                 "IS_PLECS",
+                "TOOLCHAIN_GCC",
                 "IS_LLC"
             ]
         }
