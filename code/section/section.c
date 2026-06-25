@@ -38,7 +38,7 @@ static section_link_t *p_link_first = NULL;
 static section_link_t *p_link_tail = NULL;
 static reg_init_t *p_init_first = NULL;
 
-#if defined(SECTION_MSVC_REG_SECTION)
+#if defined(SECTION_SENTINEL_REG_SECTION)
 SECTION_REG_START_ATTR_PREFIX const reg_section_t section_reg_start = {0u, NULL};
 SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop = {0u, NULL};
 #define SECTION_REG_FIRST ((const reg_section_t *)(&section_reg_start + 1))

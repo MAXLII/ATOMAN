@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Provide the application module include guard
  *          - Define the public boundary for the MATLAB inverter application glue
- *          - Keep application implementation details private to app.c
+ *          - Keep application implementation details private to app.cpp
  *
  *          Design notes:
  *          - C11 compatible

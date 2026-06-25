@@ -180,7 +180,7 @@ static void mdlStart(SimStruct *S)
 static void mdlOutputs(SimStruct *S, int_T tid)
 {
     const real_T *u = (const real_T *)ssGetInputPortSignal(S, 0);
-    real_T *y = ssGetOutputPortSignal(S, 0);
+    real_T *y = (real_T *)ssGetOutputPortSignal(S, 0);
 
     (void)tid;
 

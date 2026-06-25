@@ -31,6 +31,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define INV_CFG_DEFAULT_RUN_ALLOWED (0U)
 #define INV_CFG_DEFAULT_FREQ_HZ (50.0f)
 #define INV_CFG_DEFAULT_FREQ_SLEW_HZPS (10.0f)
@@ -87,5 +91,9 @@ uint8_t inv_cfg_is_ready(void);
 void inv_cfg_sync_building_to_active(void);
 
 const inv_ctrl_setpoint_mgr_t *inv_cfg_get_mgr(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
