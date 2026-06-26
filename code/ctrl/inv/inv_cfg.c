@@ -42,11 +42,11 @@ static inv_ctrl_setpoint_t setpoint_building = {
 static inv_ctrl_setpoint_mgr_t setpoint_mgr = {
     .active = {
         .p_data = &setpoint_active,
-        .version = 0,
+        .version = 0u,
     },
     .building = {
         .p_data = &setpoint_building,
-        .version = 0,
+        .version = 0u,
     },
 };
 
