@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.cpp
+ * @file    app.c
  * @brief   MATLAB inverter application module.
  * @details
  *          This file is part of the base project.
@@ -11,7 +11,7 @@
  *          - Publish inverter run state and output relay state back to the MATLAB output vector
  *
  *          Design notes:
- *          - C++ compatible
+ *          - C11 compatible
  *          - No dynamic memory allocation
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
@@ -29,7 +29,6 @@
 
 #include "app.h"
 
-extern "C" {
 #include "bsp_adc.h"
 #include "inv_cfg.h"
 #include "inv_fsm.h"
@@ -37,8 +36,6 @@ extern "C" {
 #include "sim_sfunc.h"
 #include "section.h"
 #include "timing.h"
-}
-
 #include "bsp_pwm.h"
 
 #define APP_INV_START_VBUS_MIN_V (380.0f)
