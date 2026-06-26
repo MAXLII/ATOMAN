@@ -32,9 +32,9 @@
 #include "stdint.h"
 
 #define TIME_SHARE_REG_FUNC(_func, _period) { \
-    .func = _func,                            \
-    .period = _period,                        \
-    .cnt = 0,                                 \
+    .func = (_func),                          \
+    .period = (_period),                      \
+    .cnt = 0u,                                \
 }
 
 typedef struct
