@@ -33,10 +33,6 @@
 #include "inv_hal.h"
 #include "section.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum
 {
     inv_fsm_sta_null = 0,
@@ -72,9 +68,5 @@ typedef enum
 void inv_fsm_set_cmd(inv_fsm_cmd_e cmd);
 inv_run_sta_e inv_fsm_get_run_sta(void);
 void inv_fsm_set_p_hal(inv_fsm_hal_t *p);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

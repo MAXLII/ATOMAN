@@ -31,10 +31,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct
 {
     float *p_v_cap;
@@ -69,9 +65,5 @@ void inv_hal_set_enter_run_func(void (*p)(void));
 void inv_hal_set_exit_run_func(void (*p)(void));
 void inv_hal_set_inv_rly_on_func(void (*p)(void));
 void inv_hal_set_inv_rly_off_func(void (*p)(void));
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
