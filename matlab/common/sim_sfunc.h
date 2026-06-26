@@ -34,10 +34,6 @@
 
 #include "sim_port.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 float sim_get_input(SIM_INPUT_E num);
 void sim_set_output(SIM_OUTPUT_E num, float val);
 void sim_printf(const char *file, int line, const char *format, ...);
@@ -45,9 +41,5 @@ void sim_printf(const char *file, int line, const char *format, ...);
 #define SIM_LOG(...) sim_printf(__FILE__, __LINE__, __VA_ARGS__)
 
 extern uint32_t sim_time_100us;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

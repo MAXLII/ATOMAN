@@ -37,10 +37,6 @@
 
 #include "platform.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct section_perf_record section_perf_record_t;
 
 #ifndef PERF_START
@@ -97,9 +93,7 @@ typedef struct
 
 typedef struct section_link_t section_link_t;
 
-#if defined(__cplusplus)
-#define SECTION_STATIC_ASSERT(cond, msg) static_assert((cond), msg)
-#elif defined(_MSC_VER) && !defined(__clang__)
+#if defined(_MSC_VER) && !defined(__clang__)
 #define SECTION_STATIC_ASSERT_JOIN_(a, b) a##b
 #define SECTION_STATIC_ASSERT_JOIN(a, b) SECTION_STATIC_ASSERT_JOIN_(a, b)
 #define SECTION_STATIC_ASSERT(cond, msg) \
@@ -108,13 +102,8 @@ typedef struct section_link_t section_link_t;
 #define SECTION_STATIC_ASSERT(cond, msg) _Static_assert((cond), msg)
 #endif
 
-#if defined(__cplusplus)
-#define REG_SECTION_INIT(_section_type, _p_str) \
-    { (uint32_t)(_section_type), (void *)&(_p_str) }
-#else
 #define REG_SECTION_INIT(_section_type, _p_str) \
     { .section_type = (uint32_t)(_section_type), .p_str = (void *)&(_p_str) }
-#endif
 
 #define REG_SECTION_FUNC(_section_type, _p_str)                      \
     SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
@@ -135,13 +124,8 @@ typedef struct reg_init
     struct reg_init *p_next;
 } reg_init_t;
 
-#if defined(__cplusplus)
-#define REG_INIT_RECORD(prio, func) \
-    { (int8_t)(prio), (func), NULL }
-#else
 #define REG_INIT_RECORD(prio, func) \
     { .priority = (int8_t)(prio), .p_func = (func), .p_next = NULL }
-#endif
 
 #define REG_INIT(prio, func)                                  \
     reg_init_t reg_init_##func = REG_INIT_RECORD(prio, func); \
@@ -177,13 +161,8 @@ typedef struct reg_task_t
 #define REG_TASK_PERF_RECORD(name)
 #endif
 
-#if defined(__cplusplus)
 #define REG_TASK_RECORD(period, func) \
-    { (uint32_t)(period), 0u, (func), TASK_RECORD_PERF(func), NULL }
-#else
-#define REG_TASK_RECORD(period, func) \
-    { .t_period = (uint32_t)(period), .time_last = 0, .p_func = (func), .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL }
-#endif
+    { .t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL }
 
 #define REG_TASK(period, func)                                  \
     REG_TASK_PERF_RECORD(func)                                  \
@@ -216,13 +195,8 @@ typedef struct reg_interrupt
     struct reg_interrupt *p_next;
 } reg_interrupt_t;
 
-#if defined(__cplusplus)
-#define REG_INTERRUPT_RECORD(priority_num, func) \
-    { (uint8_t)(priority_num), (func), INTERRUPT_RECORD_PERF(func), NULL }
-#else
 #define REG_INTERRUPT_RECORD(priority_num, func) \
     { .priority = (uint8_t)(priority_num), .p_func = (func), .p_perf_record = INTERRUPT_RECORD_PERF(func), .p_next = NULL }
-#endif
 
 #define REG_INTERRUPT(priority_num, func)                                             \
     REG_INTERRUPT_PERF_RECORD(func)                                                   \
@@ -314,9 +288,5 @@ const section_link_t *section_link_first_get(void);
 
 #define EXT_LINK(link) extern section_link_t section_link_##link
 #define LINK_PRINTF(link) section_link_##link.my_printf
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __SECTION_H__ */
