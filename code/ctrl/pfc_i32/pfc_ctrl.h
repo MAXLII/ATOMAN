@@ -26,12 +26,12 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
-#ifndef __PFC_I32_CTRL_H
-#define __PFC_I32_CTRL_H
+#ifndef __PFC_CTRL_H
+#define __PFC_CTRL_H
 
 #include "pfc_hal.h"
 
-void pfc_i32_ctrl_set_p_hal(pfc_i32_ctrl_hal_t *p);
-void pfc_i32_ctrl_prepare_run(void);
+void pfc_ctrl_set_p_hal(pfc_ctrl_hal_t *p);
+void pfc_ctrl_prepare_run(void);
 
 #endif

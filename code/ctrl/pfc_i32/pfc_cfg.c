@@ -29,14 +29,14 @@
 #include "pfc_cfg.h"
 #include <stddef.h>
 
-static pfc_i32_ctrl_setpoint_t setpoint_active = {0};
-static pfc_i32_ctrl_setpoint_t setpoint_building = {
+static pfc_ctrl_setpoint_t setpoint_active = {0};
+static pfc_ctrl_setpoint_t setpoint_building = {
     .run_allowed = 0U,
-    .vbus_ref = PFC_I32_CTRL_VBUS_REF_TO_CODE(PFC_I32_CFG_DEFAULT_VBUS_REF_V),
-    .vbus_slew_code_per_s = PFC_I32_CTRL_VBUS_SLEW_TO_CODE_PER_S(PFC_I32_CFG_DEFAULT_VBUS_SLEW_VPS),
+    .vbus_ref = PFC_CTRL_VBUS_REF_TO_CODE(PFC_CFG_DEFAULT_VBUS_REF_V),
+    .vbus_slew_code_per_s = PFC_CTRL_VBUS_SLEW_TO_CODE_PER_S(PFC_CFG_DEFAULT_VBUS_SLEW_VPS),
 };
 
-pfc_i32_ctrl_setpoint_mgr_t pfc_i32_cfg_setpoint_mgr = {
+pfc_ctrl_setpoint_mgr_t pfc_cfg_setpoint_mgr = {
     .active = {
         .p_data = &setpoint_active,
         .version = 0U,
@@ -47,18 +47,18 @@ pfc_i32_ctrl_setpoint_mgr_t pfc_i32_cfg_setpoint_mgr = {
     },
 };
 
-static pfc_i32_ctrl_timing_t ctrl_timing = {0};
+static pfc_ctrl_timing_t ctrl_timing = {0};
 
-static uint8_t pfc_i32_cfg_timing_is_valid(const pfc_i32_ctrl_timing_t *p_timing)
+static uint8_t pfc_cfg_timing_is_valid(const pfc_ctrl_timing_t *p_timing)
 {
     return (uint8_t)((p_timing != NULL) &&
                      (p_timing->ctrl_ts > 0.0f) &&
                      (p_timing->ctrl_freq_hz > 0U));
 }
 
-void pfc_i32_cfg_set_timing(const pfc_i32_ctrl_timing_t *p_timing)
+void pfc_cfg_set_timing(const pfc_ctrl_timing_t *p_timing)
 {
-    if (pfc_i32_cfg_timing_is_valid(p_timing) == 0U)
+    if (pfc_cfg_timing_is_valid(p_timing) == 0U)
     {
         ctrl_timing.ctrl_ts = 0.0f;
         ctrl_timing.ctrl_freq_hz = 0U;
@@ -68,91 +68,91 @@ void pfc_i32_cfg_set_timing(const pfc_i32_ctrl_timing_t *p_timing)
     ctrl_timing = *p_timing;
 }
 
-const pfc_i32_ctrl_timing_t *pfc_i32_cfg_get_timing(void)
+const pfc_ctrl_timing_t *pfc_cfg_get_timing(void)
 {
     return &ctrl_timing;
 }
 
-float pfc_i32_cfg_get_ctrl_ts(void)
+float pfc_cfg_get_ctrl_ts(void)
 {
     return ctrl_timing.ctrl_ts;
 }
 
-uint32_t pfc_i32_cfg_get_ctrl_freq_hz(void)
+uint32_t pfc_cfg_get_ctrl_freq_hz(void)
 {
     return ctrl_timing.ctrl_freq_hz;
 }
 
-void pfc_i32_cfg_set_p_building(pfc_i32_ctrl_setpoint_t *p_data)
+void pfc_cfg_set_p_building(pfc_ctrl_setpoint_t *p_data)
 {
     if (p_data != NULL)
     {
-        pfc_i32_cfg_setpoint_mgr.building.p_data = p_data;
+        pfc_cfg_setpoint_mgr.building.p_data = p_data;
     }
 }
 
-pfc_i32_ctrl_setpoint_t *pfc_i32_cfg_get_p_active(void)
+pfc_ctrl_setpoint_t *pfc_cfg_get_p_active(void)
 {
-    return pfc_i32_cfg_setpoint_mgr.active.p_data;
+    return pfc_cfg_setpoint_mgr.active.p_data;
 }
 
-pfc_i32_ctrl_setpoint_t *pfc_i32_cfg_get_p_building(void)
+pfc_ctrl_setpoint_t *pfc_cfg_get_p_building(void)
 {
-    return pfc_i32_cfg_setpoint_mgr.building.p_data;
+    return pfc_cfg_setpoint_mgr.building.p_data;
 }
 
-void pfc_i32_cfg_set_run_allowed(uint8_t run_allowed)
+void pfc_cfg_set_run_allowed(uint8_t run_allowed)
 {
-    if (pfc_i32_cfg_setpoint_mgr.building.p_data != NULL)
+    if (pfc_cfg_setpoint_mgr.building.p_data != NULL)
     {
-        pfc_i32_cfg_setpoint_mgr.building.p_data->run_allowed = run_allowed;
+        pfc_cfg_setpoint_mgr.building.p_data->run_allowed = run_allowed;
     }
 }
 
-void pfc_i32_cfg_set_vbus_ref_v(float vbus_ref_v)
+void pfc_cfg_set_vbus_ref_v(float vbus_ref_v)
 {
-    if (pfc_i32_cfg_setpoint_mgr.building.p_data != NULL)
+    if (pfc_cfg_setpoint_mgr.building.p_data != NULL)
     {
-        pfc_i32_cfg_setpoint_mgr.building.p_data->vbus_ref =
-            PFC_I32_CTRL_VBUS_REF_TO_CODE(vbus_ref_v);
+        pfc_cfg_setpoint_mgr.building.p_data->vbus_ref =
+            PFC_CTRL_VBUS_REF_TO_CODE(vbus_ref_v);
     }
 }
 
-void pfc_i32_cfg_set_vbus_slew_vps(float vbus_slew_vps)
+void pfc_cfg_set_vbus_slew_vps(float vbus_slew_vps)
 {
-    if (pfc_i32_cfg_setpoint_mgr.building.p_data != NULL)
+    if (pfc_cfg_setpoint_mgr.building.p_data != NULL)
     {
-        pfc_i32_cfg_setpoint_mgr.building.p_data->vbus_slew_code_per_s =
-            PFC_I32_CTRL_VBUS_SLEW_TO_CODE_PER_S(vbus_slew_vps);
+        pfc_cfg_setpoint_mgr.building.p_data->vbus_slew_code_per_s =
+            PFC_CTRL_VBUS_SLEW_TO_CODE_PER_S(vbus_slew_vps);
     }
 }
 
-void pfc_i32_cfg_publish_building(void)
+void pfc_cfg_publish_building(void)
 {
-    if ((pfc_i32_cfg_setpoint_mgr.building.p_data == NULL) ||
-        (pfc_i32_cfg_setpoint_mgr.active.p_data == NULL))
+    if ((pfc_cfg_setpoint_mgr.building.p_data == NULL) ||
+        (pfc_cfg_setpoint_mgr.active.p_data == NULL))
     {
         return;
     }
 
-    pfc_i32_cfg_setpoint_mgr.building.version++;
-    *pfc_i32_cfg_setpoint_mgr.active.p_data = *pfc_i32_cfg_setpoint_mgr.building.p_data;
-    pfc_i32_cfg_setpoint_mgr.active.version = pfc_i32_cfg_setpoint_mgr.building.version;
+    pfc_cfg_setpoint_mgr.building.version++;
+    *pfc_cfg_setpoint_mgr.active.p_data = *pfc_cfg_setpoint_mgr.building.p_data;
+    pfc_cfg_setpoint_mgr.active.version = pfc_cfg_setpoint_mgr.building.version;
 }
 
-void pfc_i32_cfg_building_version_inc(void)
+void pfc_cfg_building_version_inc(void)
 {
-    pfc_i32_cfg_setpoint_mgr.building.version++;
+    pfc_cfg_setpoint_mgr.building.version++;
 }
 
-uint8_t pfc_i32_cfg_is_ready(void)
+uint8_t pfc_cfg_is_ready(void)
 {
-    return (uint8_t)((pfc_i32_cfg_setpoint_mgr.active.p_data != NULL) &&
-                     (pfc_i32_cfg_setpoint_mgr.building.p_data != NULL) &&
-                     (pfc_i32_cfg_timing_is_valid(&ctrl_timing) != 0U));
+    return (uint8_t)((pfc_cfg_setpoint_mgr.active.p_data != NULL) &&
+                     (pfc_cfg_setpoint_mgr.building.p_data != NULL) &&
+                     (pfc_cfg_timing_is_valid(&ctrl_timing) != 0U));
 }
 
-const pfc_i32_ctrl_setpoint_mgr_t *pfc_i32_cfg_get_mgr(void)
+const pfc_ctrl_setpoint_mgr_t *pfc_cfg_get_mgr(void)
 {
-    return &pfc_i32_cfg_setpoint_mgr;
+    return &pfc_cfg_setpoint_mgr;
 }

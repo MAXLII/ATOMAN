@@ -1,0 +1,385 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    pfc_fsm.c
+ * @brief   PFC int32 FSM module.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Implement the PFC int32 init, idle, run, and fault state machine
+ *          - Latch external commands and translate readiness/protection state into REG_FSM transitions
+ *          - Coordinate PFC int32 run entry, run exit, and relay handling through HAL callbacks
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author  Max.Li
+ * @date    2026-06-27
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
+#include "pfc_fsm.h"
+#include "pfc_cfg.h"
+#include "my_math.h"
+#include "section.h"
+
+static uint32_t init_dly = 0U;
+static uint32_t soft_start_dly = 0U;
+static uint32_t main_rly_dly = 0U;
+static pfc_fsm_ev_e fsm_ev = pfc_fsm_ev_null;
+static pfc_fsm_cmd_e fsm_cmd = pfc_fsm_cmd_null;
+
+#define p_hal (pfc_hal_get_fsm())
+
+void pfc_fsm_set_cmd(pfc_fsm_cmd_e cmd)
+{
+    fsm_cmd = cmd;
+}
+
+void pfc_fsm_set_p_hal(pfc_fsm_hal_t *p)
+{
+    (void)p;
+}
+
+static pfc_fsm_cmd_e get_fsm_cmd(void)
+{
+    pfc_fsm_cmd_e temp = fsm_cmd;
+    fsm_cmd = pfc_fsm_cmd_null;
+    return temp;
+}
+
+static void pfc_fsm_init_in(void)
+{
+    init_dly = 0U;
+    PLECS_LOG("PFC_fsm enter init\n");
+}
+
+static void pfc_fsm_init_exe(void)
+{
+    if (init_dly < TIME_CNT_200MS_IN_1MS)
+    {
+        init_dly++;
+    }
+    else
+    {
+        if ((p_hal != NULL) &&
+            (pfc_cfg_is_ready() == 1U))
+        {
+            PLECS_LOG("PFC_fsm init ready, goto idle\n");
+            fsm_ev = pfc_fsm_ev_to_idle;
+        }
+        else
+        {
+            PLECS_LOG("PFC_fsm init dep invalid\n");
+        }
+    }
+}
+
+static uint32_t pfc_fsm_init_chk(uint32_t ev)
+{
+    if (ev == (uint32_t)pfc_fsm_ev_to_idle)
+    {
+        return (uint32_t)pfc_fsm_sta_idle;
+    }
+    return 0U;
+}
+
+static void pfc_fsm_init_out(void)
+{
+    PLECS_LOG("PFC_fsm leave init\n");
+}
+
+static void pfc_fsm_idle_in(void)
+{
+    pfc_hal_unlock_binding();
+    PLECS_LOG("PFC_fsm enter idle\n");
+
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("PFC_fsm main relay off skipped: fsm hal is null\n");
+    }
+    else if (p_hal->p_main_rly_off_func == NULL)
+    {
+        PLECS_LOG("PFC_fsm main relay off skipped: off hook is null\n");
+    }
+    else
+    {
+        p_hal->p_main_rly_off_func();
+        PLECS_LOG("PFC_fsm main relay off\n");
+    }
+}
+
+static void pfc_fsm_idle_exe(void)
+{
+    if (get_fsm_cmd() == pfc_fsm_cmd_start)
+    {
+        if (pfc_hal_is_ready() == 0U)
+        {
+            PLECS_LOG("PFC_fsm start rejected by hal binding invalid\n");
+            return;
+        }
+
+        PLECS_LOG("PFC_fsm idle got start, goto soft_start\n");
+        fsm_ev = pfc_fsm_ev_to_soft_start;
+    }
+}
+
+static uint32_t pfc_fsm_idle_chk(uint32_t ev)
+{
+    if (ev == (uint32_t)pfc_fsm_ev_to_soft_start)
+    {
+        return (uint32_t)pfc_fsm_sta_soft_start;
+    }
+    return 0U;
+}
+
+static void pfc_fsm_idle_out(void)
+{
+    pfc_hal_lock_binding();
+    PLECS_LOG("PFC_fsm leave idle\n");
+}
+
+static void pfc_fsm_soft_start_in(void)
+{
+    soft_start_dly = 0U;
+    PLECS_LOG("PFC_fsm enter soft_start\n");
+}
+
+static void pfc_fsm_soft_start_exe(void)
+{
+    if (p_hal == NULL)
+    {
+        return;
+    }
+
+    if (soft_start_dly < TIME_CNT_5S_IN_1MS)
+    {
+        soft_start_dly++;
+    }
+
+    if (get_fsm_cmd() == pfc_fsm_cmd_stop)
+    {
+        PLECS_LOG("PFC_fsm soft_start got stop, goto idle\n");
+        fsm_ev = pfc_fsm_ev_to_idle;
+        return;
+    }
+
+    if ((*p_hal->p_vbus_sta == pfc_vbus_sta_at_input_peak) ||
+        (*p_hal->p_vbus_sta == pfc_vbus_sta_in_regulation))
+    {
+        PLECS_LOG("PFC_fsm soft_start bus ready, goto main_rly\n");
+        fsm_ev = pfc_fsm_ev_to_main_rly;
+        return;
+    }
+
+    if (soft_start_dly >= TIME_CNT_5S_IN_1MS)
+    {
+        PLECS_LOG("PFC_fsm soft_start timeout, goto idle\n");
+        fsm_ev = pfc_fsm_ev_to_idle;
+    }
+}
+
+static uint32_t pfc_fsm_soft_start_chk(uint32_t ev)
+{
+    if (ev == (uint32_t)pfc_fsm_ev_to_main_rly)
+    {
+        return (uint32_t)pfc_fsm_sta_main_rly;
+    }
+    if (ev == (uint32_t)pfc_fsm_ev_to_idle)
+    {
+        return (uint32_t)pfc_fsm_sta_idle;
+    }
+    return 0U;
+}
+
+static void pfc_fsm_soft_start_out(void)
+{
+    PLECS_LOG("PFC_fsm leave soft_start\n");
+}
+
+static void pfc_fsm_main_rly_in(void)
+{
+    main_rly_dly = 0U;
+    PLECS_LOG("PFC_fsm enter main_rly\n");
+
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("PFC_fsm main relay on skipped: fsm hal is null\n");
+    }
+    else if (p_hal->p_main_rly_on_func == NULL)
+    {
+        PLECS_LOG("PFC_fsm main relay on skipped: on hook is null\n");
+    }
+    else
+    {
+        p_hal->p_main_rly_on_func();
+        PLECS_LOG("PFC_fsm main relay on\n");
+    }
+}
+
+static void pfc_fsm_main_rly_exe(void)
+{
+    if (p_hal == NULL)
+    {
+        return;
+    }
+
+    if (main_rly_dly < TIME_CNT_3S_IN_1MS)
+    {
+        main_rly_dly++;
+    }
+
+    if (get_fsm_cmd() == pfc_fsm_cmd_stop)
+    {
+        PLECS_LOG("PFC_fsm main_rly got stop, goto idle\n");
+        fsm_ev = pfc_fsm_ev_to_idle;
+        return;
+    }
+
+    if ((p_hal->p_main_rly_is_closed != NULL) &&
+        (*p_hal->p_main_rly_is_closed == 1U))
+    {
+        PLECS_LOG("PFC_fsm main_rly confirmed closed, goto run\n");
+        fsm_ev = pfc_fsm_ev_to_run;
+        return;
+    }
+
+    if (main_rly_dly >= TIME_CNT_3S_IN_1MS)
+    {
+        PLECS_LOG("PFC_fsm main_rly timeout, goto idle\n");
+        fsm_ev = pfc_fsm_ev_to_idle;
+    }
+}
+
+static uint32_t pfc_fsm_main_rly_chk(uint32_t ev)
+{
+    if (ev == (uint32_t)pfc_fsm_ev_to_run)
+    {
+        return (uint32_t)pfc_fsm_sta_run;
+    }
+    if (ev == (uint32_t)pfc_fsm_ev_to_idle)
+    {
+        return (uint32_t)pfc_fsm_sta_idle;
+    }
+    return 0U;
+}
+
+static void pfc_fsm_main_rly_out(void)
+{
+    PLECS_LOG("PFC_fsm leave main_rly\n");
+}
+
+static void pfc_fsm_run_in(void)
+{
+    PLECS_LOG("PFC_fsm enter run\n");
+
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("PFC_fsm run entry skipped: fsm hal is null\n");
+        return;
+    }
+
+    if (p_hal->p_enter_run_func != NULL)
+    {
+        p_hal->p_enter_run_func();
+        PLECS_LOG("PFC_fsm control enabled\n");
+    }
+    else
+    {
+        PLECS_LOG("PFC_fsm run entry skipped: enter_run hook is null\n");
+    }
+
+    if (p_hal->p_main_rly_on_func != NULL)
+    {
+        p_hal->p_main_rly_on_func();
+        PLECS_LOG("PFC_fsm main relay on\n");
+    }
+    else
+    {
+        PLECS_LOG("PFC_fsm run entry skipped: main relay on hook is null\n");
+    }
+}
+
+static void pfc_fsm_run_exe(void)
+{
+    if (p_hal == NULL)
+    {
+        return;
+    }
+
+    if (get_fsm_cmd() == pfc_fsm_cmd_stop)
+    {
+        PLECS_LOG("PFC_fsm run got stop, goto idle\n");
+        fsm_ev = pfc_fsm_ev_to_idle;
+    }
+}
+
+static uint32_t pfc_fsm_run_chk(uint32_t ev)
+{
+    if (ev == (uint32_t)pfc_fsm_ev_to_idle)
+    {
+        return (uint32_t)pfc_fsm_sta_idle;
+    }
+    return 0U;
+}
+
+static void pfc_fsm_run_out(void)
+{
+    PLECS_LOG("PFC_fsm leave run\n");
+
+    if (p_hal == NULL)
+    {
+        PLECS_LOG("PFC_fsm run exit skipped: fsm hal is null\n");
+        return;
+    }
+
+    if (p_hal->p_exit_run_func != NULL)
+    {
+        p_hal->p_exit_run_func();
+        PLECS_LOG("PFC_fsm control disabled\n");
+    }
+    else
+    {
+        PLECS_LOG("PFC_fsm run exit skipped: exit_run hook is null\n");
+    }
+
+    if (p_hal->p_main_rly_off_func != NULL)
+    {
+        p_hal->p_main_rly_off_func();
+        PLECS_LOG("PFC_fsm main relay off\n");
+    }
+    else
+    {
+        PLECS_LOG("PFC_fsm run exit skipped: main relay off hook is null\n");
+    }
+}
+
+REG_FSM(PFC_FSM, pfc_fsm_sta_init, fsm_ev,
+        FSM_ENTRY(pfc_fsm_sta_init, pfc_fsm_init_in, pfc_fsm_init_exe, pfc_fsm_init_chk, pfc_fsm_init_out),
+        FSM_ENTRY(pfc_fsm_sta_idle, pfc_fsm_idle_in, pfc_fsm_idle_exe, pfc_fsm_idle_chk, pfc_fsm_idle_out),
+        FSM_ENTRY(pfc_fsm_sta_soft_start, pfc_fsm_soft_start_in, pfc_fsm_soft_start_exe, pfc_fsm_soft_start_chk, pfc_fsm_soft_start_out),
+        FSM_ENTRY(pfc_fsm_sta_main_rly, pfc_fsm_main_rly_in, pfc_fsm_main_rly_exe, pfc_fsm_main_rly_chk, pfc_fsm_main_rly_out),
+        FSM_ENTRY(pfc_fsm_sta_run, pfc_fsm_run_in, pfc_fsm_run_exe, pfc_fsm_run_chk, pfc_fsm_run_out), )
+
+pfc_run_sta_e pfc_fsm_get_run_sta(void)
+{
+    pfc_fsm_sta_e sta = (pfc_fsm_sta_e)FSM_GET_STATE(PFC_FSM);
+
+    if (sta == pfc_fsm_sta_init)
+    {
+        return pfc_run_sta_init;
+    }
+    if (sta == pfc_fsm_sta_idle)
+    {
+        return pfc_run_sta_idle;
+    }
+    return pfc_run_sta_run;
+}
