@@ -36,9 +36,9 @@
 #define BSP_USART2_FCG (FCG3_PERIPH_USART2)
 
 #define BSP_USART2_TX_PORT (GPIO_PORT_B)
-#define BSP_USART2_TX_PIN (GPIO_PIN_04)
+#define BSP_USART2_TX_PIN (GPIO_PIN_06)
 #define BSP_USART2_RX_PORT (GPIO_PORT_B)
-#define BSP_USART2_RX_PIN (GPIO_PIN_05)
+#define BSP_USART2_RX_PIN (GPIO_PIN_07)
 #define BSP_USART2_PORT_FUNC (GPIO_FUNC_36)
 
 #define BSP_USART2_BAUDRATE (921600UL)
@@ -70,14 +70,14 @@
 /* USART RX/TX use DMA plus polling service tasks; no USART/DMA NVIC interrupt is enabled here. */
 typedef struct
 {
-    uint8_t rx_dma_buf[BSP_USART1_RX_DMA_BUF_SIZE];    /* RX circular DMA buffer. */
-    uint16_t rx_read_idx;                              /* Next byte index consumed by software. */
-    uint8_t tx_ring_buf[BSP_USART1_TX_RING_BUF_SIZE];  /* TX software ring buffer. */
-    uint8_t tx_dma_buf[BSP_USART1_TX_DMA_BUF_SIZE];    /* Linear staging buffer for one TX DMA burst. */
-    volatile uint16_t tx_ring_head;                    /* Next TX ring write index. */
-    volatile uint16_t tx_ring_tail;                    /* Next TX ring read index. */
-    volatile uint16_t tx_dma_len;                      /* Current TX DMA transfer length. */
-    volatile uint8_t tx_dma_busy;                      /* TX DMA ownership flag set while a burst is active. */
+    uint8_t rx_dma_buf[BSP_USART1_RX_DMA_BUF_SIZE];   /* RX circular DMA buffer. */
+    uint16_t rx_read_idx;                             /* Next byte index consumed by software. */
+    uint8_t tx_ring_buf[BSP_USART1_TX_RING_BUF_SIZE]; /* TX software ring buffer. */
+    uint8_t tx_dma_buf[BSP_USART1_TX_DMA_BUF_SIZE];   /* Linear staging buffer for one TX DMA burst. */
+    volatile uint16_t tx_ring_head;                   /* Next TX ring write index. */
+    volatile uint16_t tx_ring_tail;                   /* Next TX ring read index. */
+    volatile uint16_t tx_dma_len;                     /* Current TX DMA transfer length. */
+    volatile uint8_t tx_dma_busy;                     /* TX DMA ownership flag set while a burst is active. */
 } bsp_usart_port_ctx_t;
 
 static bsp_usart_port_ctx_t s_bsp_usart1_ctx = {0};
@@ -208,12 +208,12 @@ static uint16_t bsp_usart_append_hex32(uint8_t *pu8Buf, uint16_t u16Idx, uint32_
 
 typedef struct
 {
-    uint32_t req_bytes;      /* Total bytes requested by the test workload. */
-    uint32_t sent_bytes;     /* Total bytes accepted into the TX path. */
-    uint32_t drop_bytes;     /* Bytes rejected after the enqueue timeout expires. */
-    uint32_t tx_frames;      /* Short TX frame count. */
-    uint32_t printf_frames;  /* printf frame count, including long printf frames. */
-    uint32_t printf_trunc;   /* printf frames truncated by the fixed printf buffer. */
+    uint32_t req_bytes;     /* Total bytes requested by the test workload. */
+    uint32_t sent_bytes;    /* Total bytes accepted into the TX path. */
+    uint32_t drop_bytes;    /* Bytes rejected after the enqueue timeout expires. */
+    uint32_t tx_frames;     /* Short TX frame count. */
+    uint32_t printf_frames; /* printf frame count, including long printf frames. */
+    uint32_t printf_trunc;  /* printf frames truncated by the fixed printf buffer. */
 } bsp_usart_test_port_stats_t;
 
 static bsp_usart_test_port_stats_t s_bsp_usart_dbg_test_stats = {0};
