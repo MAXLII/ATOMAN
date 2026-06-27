@@ -14,9 +14,13 @@ set(SOURCES
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
     ${CODE_DIR}/section/section.c
     ${CODE_DIR}/lib/cal_rms.c
+    ${CODE_DIR}/lib/fll_i32.c
+    ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/lib/pi_tustin_i32.c
+    ${CODE_DIR}/lib/sogi_i32.c
     ${CODE_DIR}/ctrl/pfc_i32/pfc_cfg.c
     ${CODE_DIR}/ctrl/pfc_i32/pfc_ctrl.c
+    ${CODE_DIR}/ctrl/pfc_i32/pfc_fsm.c
     ${CODE_DIR}/ctrl/pfc_i32/pfc_hal.c
 )
 
