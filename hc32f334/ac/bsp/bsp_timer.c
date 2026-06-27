@@ -2,10 +2,10 @@
 #include "section.h"
 #include "perf.h"
 
-#define BSP_TIMER_PERF_UNIT              (CM_TMRA_1)
-#define BSP_TIMER_PERF_FCG               (FCG2_PERIPH_TMRA_1)
-#define BSP_TIMER_PERF_CLK_DIV           (TMRA_CLK_DIV64)
-#define BSP_TIMER_PERF_PERIOD_VALUE      (0xFFFFFFFFUL)
+#define BSP_TIMER_PERF_UNIT (CM_TMRA_1)
+#define BSP_TIMER_PERF_FCG (FCG2_PERIPH_TMRA_1)
+#define BSP_TIMER_PERF_CLK_DIV (TMRA_CLK_DIV64)
+#define BSP_TIMER_PERF_PERIOD_VALUE (0xFFFFFFFFUL)
 
 REG_PERF_BASE_CNT((uint32_t *)&BSP_TIMER_PERF_UNIT->CNTER, ((8.0f / 15.0f) * 1.0e-6f))
 

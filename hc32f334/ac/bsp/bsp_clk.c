@@ -1,8 +1,8 @@
 #include "bsp_clk.h"
 
-#define BSP_XTAL_PORT                   (GPIO_PORT_F)
-#define BSP_XTAL_IN_PIN                 (GPIO_PIN_00)
-#define BSP_XTAL_OUT_PIN                (GPIO_PIN_01)
+#define BSP_XTAL_PORT (GPIO_PORT_F)
+#define BSP_XTAL_IN_PIN (GPIO_PIN_00)
+#define BSP_XTAL_OUT_PIN (GPIO_PIN_01)
 
 void BSP_CLK_Init(void)
 {

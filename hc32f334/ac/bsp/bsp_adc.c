@@ -16,8 +16,6 @@ const bsp_adc_param_t bsp_adc_param[ADC_TABLE_MAX] = {
     [TEMP2] = {.adc_name = TEMP2, .adc_periph = CM_ADC3, .adc_ch = ADC_CH11, .gpio_periph = GPIO_PORT_B, .pin = GPIO_PIN_10, .sample_time = SAMPLE_TIME},
 };
 
-
-
 void bsp_adc_init(void)
 {
     stc_gpio_init_t stcGpioInit;
