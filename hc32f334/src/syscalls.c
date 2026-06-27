@@ -25,7 +25,8 @@ int _fstat(int file, struct stat *st)
 {
     (void)file;
 
-    if (st == NULL) {
+    if (st == NULL)
+    {
         errno = EINVAL;
         return -1;
     }
@@ -73,7 +74,8 @@ int _write(int file, char *ptr, int len)
 {
     (void)file;
 
-    if (ptr == NULL) {
+    if (ptr == NULL)
+    {
         errno = EINVAL;
         return -1;
     }

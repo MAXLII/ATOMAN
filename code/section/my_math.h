@@ -85,13 +85,13 @@
     } while (0)
 
 /* Safe down-counter: decrement only when cnt is non-zero. */
-#define DN_CNT(cnt) \
-    do              \
-    {               \
-        if (cnt)    \
-        {           \
+#define DN_CNT(cnt)  \
+    do               \
+    {                \
+        if (cnt)     \
+        {            \
             (cnt)--; \
-        }           \
+        }            \
     } while (0)
 
 #ifdef M_E
