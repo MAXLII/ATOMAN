@@ -29,6 +29,8 @@
 #include "sogi.h"
 #include <string.h>
 
+#define SOGI_NUM_GAIN (64.0f)
+
 // 内部函数：重新计算滤波器系数
 static void calculate_coefficients(sogi_t *sogi)
 {
@@ -45,8 +47,8 @@ static void calculate_coefficients(sogi_t *sogi)
 
     sogi->a1 = d1 / d0;
     sogi->a2 = d2 / d0;
-    sogi->b0 = n0 / d0;
-    sogi->b2 = n2 / d0;
+    sogi->b0 = (n0 / d0) * SOGI_NUM_GAIN;
+    sogi->b2 = (n2 / d0) * SOGI_NUM_GAIN;
 
     n0 = Ts * Ts * k * w * w;
     n1 = 2 * Ts * Ts * k * w * w;
@@ -55,9 +57,9 @@ static void calculate_coefficients(sogi_t *sogi)
     d1 = 2 * Ts * Ts * w * w - 8;
     d2 = Ts * Ts * w * w - 2 * Ts * k * w + 4;
 
-    sogi->qb0 = n0 / d0;
-    sogi->qb1 = n1 / d0;
-    sogi->qb2 = n2 / d0;
+    sogi->qb0 = (n0 / d0) * SOGI_NUM_GAIN;
+    sogi->qb1 = (n1 / d0) * SOGI_NUM_GAIN;
+    sogi->qb2 = (n2 / d0) * SOGI_NUM_GAIN;
 }
 
 void sogi_init(sogi_t *sogi,
@@ -92,16 +94,19 @@ void sogi_cal(sogi_t *sogi)
     sogi->u[0] = *sogi->p_val;
 
     // 计算正交输出
-    sogi->osg_u[0] = (sogi->b0 * (sogi->u[0] - sogi->u[2])) -
-                     (sogi->a1 * sogi->osg_u[1]) -
-                     (sogi->a2 * sogi->osg_u[2]);
+    sogi->osg_u[0] = ((sogi->b0 * sogi->u[0]) -
+                      (sogi->b0 * sogi->u[2]) -
+                      (sogi->a1 * sogi->osg_u[1] * SOGI_NUM_GAIN) -
+                      (sogi->a2 * sogi->osg_u[2] * SOGI_NUM_GAIN)) /
+                     SOGI_NUM_GAIN;
 
     // 计算正交信号输出
-    sogi->osg_qu[0] = (sogi->qb0 * sogi->u[0]) +
-                      (sogi->qb1 * sogi->u[1]) +
-                      (sogi->qb2 * sogi->u[2]) -
-                      (sogi->a1 * sogi->osg_qu[1]) -
-                      (sogi->a2 * sogi->osg_qu[2]);
+    sogi->osg_qu[0] = ((sogi->qb0 * sogi->u[0]) +
+                       (sogi->qb1 * sogi->u[1]) +
+                       (sogi->qb2 * sogi->u[2]) -
+                       (sogi->a1 * sogi->osg_qu[1] * SOGI_NUM_GAIN) -
+                       (sogi->a2 * sogi->osg_qu[2] * SOGI_NUM_GAIN)) /
+                      SOGI_NUM_GAIN;
 
     // 更新历史状态
     sogi->osg_u[2] = sogi->osg_u[1];
