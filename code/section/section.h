@@ -39,6 +39,48 @@
 
 typedef struct section_perf_record section_perf_record_t;
 
+typedef struct
+{
+    uint32_t cfsr;
+    uint32_t hfsr;
+    uint32_t bfar;
+    uint32_t mmfar;
+    uint32_t exc_return;
+    uint32_t msp;
+    uint32_t psp;
+    uint32_t stacked_lr;
+    uint32_t stacked_pc;
+    uint32_t stacked_xpsr;
+    uint32_t task_sp;
+    uint32_t task_pc;
+    uint32_t task_xpsr;
+    uint32_t task_stack_base;
+    uint32_t task_stack_words;
+    uint32_t task_frame_valid;
+    uint32_t task_name;
+    uint32_t task_stack_free_words;
+} section_fault_debug_t;
+
+extern volatile section_fault_debug_t g_section_fault_debug;
+
+#ifndef SECTION_TASK_CONTEXT_SWITCH_ENABLE
+#if defined(IS_HC32) && defined(HC32F334)
+#define SECTION_TASK_CONTEXT_SWITCH_ENABLE 1
+#else
+#define SECTION_TASK_CONTEXT_SWITCH_ENABLE 0
+#endif
+#endif
+
+#ifndef SECTION_TASK_STACK_WORDS
+#define SECTION_TASK_STACK_WORDS 128u
+#endif
+
+#if defined(__GNUC__) || defined(__ARMCC_VERSION)
+#define SECTION_TASK_STACK_ATTR __attribute__((aligned(8)))
+#else
+#define SECTION_TASK_STACK_ATTR
+#endif
+
 #ifndef PERF_START
 #define PERF_START(name)
 #endif
@@ -103,7 +145,7 @@ typedef struct section_link_t section_link_t;
 #endif
 
 #define REG_SECTION_INIT(_section_type, _p_str) \
-    { .section_type = (uint32_t)(_section_type), .p_str = (void *)&(_p_str) }
+    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_p_str)}
 
 #define REG_SECTION_FUNC(_section_type, _p_str)                      \
     SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
@@ -125,7 +167,7 @@ typedef struct reg_init
 } reg_init_t;
 
 #define REG_INIT_RECORD(prio, func) \
-    { .priority = (int8_t)(prio), .p_func = (func), .p_next = NULL }
+    {.priority = (int8_t)(prio), .p_func = (func), .p_next = NULL}
 
 #define REG_INIT(prio, func)                                  \
     reg_init_t reg_init_##func = REG_INIT_RECORD(prio, func); \
@@ -140,13 +182,33 @@ void section_perf_task_period_set(section_perf_record_t *record, uint32_t period
 uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record);
 void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
 
+typedef enum
+{
+    SECTION_TASK_DONE = 0,
+    SECTION_TASK_RUNNING = 1,
+} section_task_status_t;
+
+typedef section_task_status_t (*section_task_step_f)(void *ctx);
+
 typedef struct reg_task_t
 {
     uint32_t t_period;
     uint32_t time_last;
     void (*p_func)(void);
+    section_task_step_f p_step_func;
+    void *p_ctx;
+    const char *p_name;
     section_perf_record_t *p_perf_record;
     struct reg_task_t *p_next;
+    struct reg_task_t *p_ready_next;
+    uint8_t is_ready;
+    uint8_t is_running;
+#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+    uint32_t *p_sp;
+    uint32_t *p_stack;
+    uint32_t stack_words;
+    uint8_t state;
+#endif
 } reg_task_t;
 
 #ifndef TASK_RECORD_PERF_ENABLE
@@ -161,17 +223,100 @@ typedef struct reg_task_t
 #define REG_TASK_PERF_RECORD(name)
 #endif
 
+#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+
+#define REG_TASK_RECORD(period, func, stack, stack_size) \
+    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u, .p_sp = NULL, .p_stack = (stack), .stack_words = (uint32_t)(stack_size), .state = 0u}
+
+#define REG_TASK_STEP_RECORD(period, func, ctx, perf_name, stack, stack_size) \
+    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = NULL, .p_step_func = (func), .p_ctx = (ctx), .p_name = #perf_name, .p_perf_record = TASK_RECORD_PERF(perf_name), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u, .p_sp = NULL, .p_stack = (stack), .stack_words = (uint32_t)(stack_size), .state = 0u}
+
+#define REG_TASK(period, func)                                                                                   \
+    REG_TASK_PERF_RECORD(func)                                                                                   \
+    static uint32_t reg_task_stack_##func[SECTION_TASK_STACK_WORDS] SECTION_TASK_STACK_ATTR;                     \
+    reg_task_t reg_task_##func = REG_TASK_RECORD(period, func, reg_task_stack_##func, SECTION_TASK_STACK_WORDS); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STACK(period, func, stack_words)                                                     \
+    REG_TASK_PERF_RECORD(func)                                                                        \
+    static uint32_t reg_task_stack_##func[(stack_words)] SECTION_TASK_STACK_ATTR;                     \
+    reg_task_t reg_task_##func = REG_TASK_RECORD(period, func, reg_task_stack_##func, (stack_words)); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STEP_CTX(period, func, ctx)                                                                                     \
+    REG_TASK_PERF_RECORD(func)                                                                                                   \
+    static uint32_t reg_task_stack_##func[SECTION_TASK_STACK_WORDS] SECTION_TASK_STACK_ATTR;                                     \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, func, ctx, func, reg_task_stack_##func, SECTION_TASK_STACK_WORDS); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STEP_CTX_STACK(period, func, ctx, stack_words)                                                       \
+    REG_TASK_PERF_RECORD(func)                                                                                        \
+    static uint32_t reg_task_stack_##func[(stack_words)] SECTION_TASK_STACK_ATTR;                                     \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, func, ctx, func, reg_task_stack_##func, (stack_words)); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STEP(period, func)                                                                                                                        \
+    static section_task_status_t section_task_step_wrap_##func(void *ctx)                                                                                  \
+    {                                                                                                                                                      \
+        (void)ctx;                                                                                                                                         \
+        return func();                                                                                                                                     \
+    }                                                                                                                                                      \
+    REG_TASK_PERF_RECORD(func)                                                                                                                             \
+    static uint32_t reg_task_stack_##func[SECTION_TASK_STACK_WORDS] SECTION_TASK_STACK_ATTR;                                                               \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, section_task_step_wrap_##func, NULL, func, reg_task_stack_##func, SECTION_TASK_STACK_WORDS); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_MS(period, func) REG_TASK(((uint32_t)(period) * 10u), func)
+#define REG_TASK_STACK_MS(period, func, stack_words) REG_TASK_STACK(((uint32_t)(period) * 10u), func, stack_words)
+#define REG_TASK_STEP_MS(period, func) REG_TASK_STEP(((uint32_t)(period) * 10u), func)
+#define REG_TASK_STEP_CTX_MS(period, func, ctx) REG_TASK_STEP_CTX(((uint32_t)(period) * 10u), func, ctx)
+#define REG_TASK_STEP_CTX_STACK_MS(period, func, ctx, stack_words) REG_TASK_STEP_CTX_STACK(((uint32_t)(period) * 10u), func, ctx, stack_words)
+
+#else
+
 #define REG_TASK_RECORD(period, func) \
-    { .t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL }
+    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u}
+
+#define REG_TASK_STEP_RECORD(period, func, ctx, perf_name) \
+    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = NULL, .p_step_func = (func), .p_ctx = (ctx), .p_name = #perf_name, .p_perf_record = TASK_RECORD_PERF(perf_name), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u}
 
 #define REG_TASK(period, func)                                  \
     REG_TASK_PERF_RECORD(func)                                  \
     reg_task_t reg_task_##func = REG_TASK_RECORD(period, func); \
     REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
 
+#define REG_TASK_STEP_CTX(period, func, ctx)                                    \
+    REG_TASK_PERF_RECORD(func)                                                  \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, func, ctx, func); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STEP(period, func)                                                                       \
+    static section_task_status_t section_task_step_wrap_##func(void *ctx)                                 \
+    {                                                                                                     \
+        (void)ctx;                                                                                        \
+        return func();                                                                                    \
+    }                                                                                                     \
+    REG_TASK_PERF_RECORD(func)                                                                            \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, section_task_step_wrap_##func, NULL, func); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
 #define REG_TASK_MS(period, func) REG_TASK(((uint32_t)(period) * 10u), func)
+#define REG_TASK_STEP_MS(period, func) REG_TASK_STEP(((uint32_t)(period) * 10u), func)
+#define REG_TASK_STEP_CTX_MS(period, func, ctx) REG_TASK_STEP_CTX(((uint32_t)(period) * 10u), func, ctx)
+
+#endif
 
 void run_task(void);
+void section_task_tick(void);
+#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+void section_task_start(void);
+void section_task_yield(void);
+void section_task_complete_current(void);
+void section_task_start_request(void);
+uint32_t section_task_scheduler_started(void);
+uint32_t section_task_switch_pending(void);
+uint32_t *section_task_start_sp_get(void);
+uint32_t *section_task_switch_sp(uint32_t *sp);
+#endif
 
 #define PRIORITY_NUM_MAX 16
 
@@ -196,11 +341,11 @@ typedef struct reg_interrupt
 } reg_interrupt_t;
 
 #define REG_INTERRUPT_RECORD(priority_num, func) \
-    { .priority = (uint8_t)(priority_num), .p_func = (func), .p_perf_record = INTERRUPT_RECORD_PERF(func), .p_next = NULL }
+    {.priority = (uint8_t)(priority_num), .p_func = (func), .p_perf_record = INTERRUPT_RECORD_PERF(func), .p_next = NULL}
 
-#define REG_INTERRUPT(priority_num, func)                                             \
-    REG_INTERRUPT_PERF_RECORD(func)                                                   \
-    reg_interrupt_t reg_interrupt_##func = REG_INTERRUPT_RECORD(priority_num, func);  \
+#define REG_INTERRUPT(priority_num, func)                                            \
+    REG_INTERRUPT_PERF_RECORD(func)                                                  \
+    reg_interrupt_t reg_interrupt_##func = REG_INTERRUPT_RECORD(priority_num, func); \
     REG_SECTION_FUNC(SECTION_INTERRUPT, reg_interrupt_##func)
 
 void FUNC_RAM section_interrupt(void);
