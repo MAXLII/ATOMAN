@@ -8,19 +8,23 @@ void systick_config(void)
 {
     SystemCoreClockUpdate();
 
-    if (SysTick_Config(SystemCoreClock / 10000U)) {
-        while (1) {
+    if (SysTick_Config(SystemCoreClock / 10000U))
+    {
+        while (1)
+        {
         }
     }
 
     NVIC_SetPriority(SysTick_IRQn, 0U);
+    NVIC_SetPriority(PendSV_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL);
 }
 
 void delay_1ms(uint32_t count)
 {
     delay = count;
 
-    while (0U != delay) {
+    while (0U != delay)
+    {
     }
 }
 
@@ -28,7 +32,8 @@ void delay_decrement(void)
 {
     sys_tick_100us++;
 
-    if (0U != delay) {
+    if (0U != delay)
+    {
         delay--;
     }
 }
