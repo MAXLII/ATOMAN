@@ -14,25 +14,32 @@ void SysTick_Handler(void)
 {
     delay_decrement();
     section_task_tick();
+#if (SRTOS == 1)
     if ((section_task_scheduler_started() != 0u) &&
         (section_task_slice_elapsed() != 0u) &&
         (section_task_switch_pending() != 0u))
     {
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+        SRTOS_PENDSV_SET();
     }
+#endif
 }
 
 void HC32_EXCEPTION_NAKED SVC_Handler(void)
 {
+#if (SRTOS == 1)
     __ASM volatile(
         "push {r0, lr}                     \n"
         "bl section_task_start_request     \n"
         "pop {r0, r1}                      \n"
         "bx r1                             \n");
+#else
+    __ASM volatile("bx lr                  \n");
+#endif
 }
 
 void HC32_EXCEPTION_NAKED PendSV_Handler(void)
 {
+#if (SRTOS == 1)
 #if defined(__FPU_USED) && (__FPU_USED == 1U)
     __ASM volatile(
         "push {r0, lr}                     \n"
@@ -89,6 +96,9 @@ void HC32_EXCEPTION_NAKED PendSV_Handler(void)
         "1:                                \n"
         "pop {r0, r1}                      \n"
         "bx r1                             \n");
+#endif
+#else
+    __ASM volatile("bx lr                  \n");
 #endif
 }
 

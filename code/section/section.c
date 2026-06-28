@@ -45,7 +45,7 @@ static reg_init_t *p_init_first = NULL;
 static volatile uint8_t task_scheduler_ready = 0u;
 volatile section_fault_debug_t g_section_fault_debug;
 
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
 typedef enum
 {
     TASK_STACK_STATE_SLEEPING = 0,
@@ -69,6 +69,7 @@ static uint32_t s_task_context_pool_tail = 0u;
 static uint32_t s_task_context_pool_used = 0u;
 static uint32_t s_task_context_pool_gap_start = 0u;
 static uint32_t s_task_context_pool_gap_words = 0u;
+static uint32_t s_task_last_switch_tick = 0u;
 
 static void task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task);
 static reg_task_t *task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail);
@@ -81,6 +82,8 @@ static uint32_t *task_stack_restore(reg_task_t *task);
 static uint32_t task_stack_frame_valid(const reg_task_t *task);
 static uint32_t task_stack_free_words_get(const reg_task_t *task);
 static const uint32_t *task_hw_frame_get(const reg_task_t *task);
+static void task_slice_reset(void);
+static void task_debug_context_pool_update(void);
 #endif
 
 #if defined(SECTION_SENTINEL_REG_SECTION)
@@ -133,25 +136,15 @@ SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *rec
 
 static uint32_t section_critical_enter(void)
 {
-#if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32)
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    return primask;
-#else
-    return 0u;
-#endif
+    return SRTOS_CRITICAL_ENTER();
 }
 
 static void section_critical_exit(uint32_t primask)
 {
-#if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32)
-    __set_PRIMASK(primask);
-#else
-    (void)primask;
-#endif
+    SRTOS_CRITICAL_EXIT(primask);
 }
 
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
 static uint32_t *task_runtime_stack_low_get(void)
 {
     return &s_task_runtime_stack[0];
@@ -242,6 +235,7 @@ static uint32_t task_context_alloc(reg_task_t *task, uint32_t required_words)
     task->p_snapshot = &s_task_context_pool[offset];
     task->snapshot_capacity_words = required_words;
     s_task_context_pool_used += required_words;
+    task_debug_context_pool_update();
 
     return 1u;
 }
@@ -258,6 +252,8 @@ static void task_context_release(reg_task_t *task)
     offset = (uint32_t)(task->p_snapshot - s_task_context_pool);
     if (offset != s_task_context_pool_head)
     {
+        g_section_fault_debug.task_context_release_fail_count++;
+        task_debug_context_pool_update();
         return;
     }
 
@@ -280,6 +276,7 @@ static void task_context_release(reg_task_t *task)
     task->p_snapshot = NULL;
     task->snapshot_words = 0u;
     task->snapshot_capacity_words = 0u;
+    task_debug_context_pool_update();
 }
 
 static void task_stack_prepare_initial(reg_task_t *task)
@@ -344,6 +341,7 @@ static uint32_t task_stack_save(reg_task_t *task, uint32_t *sp)
     if ((used_words == 0u) || (task_context_alloc(task, used_words) == 0u))
     {
         g_section_fault_debug.task_context_save_fail_count++;
+        task_debug_context_pool_update();
         return 0u;
     }
 
@@ -397,7 +395,7 @@ static uint32_t task_stack_frame_valid(const reg_task_t *task)
         const uint32_t pc = frame[6u];
         const uint32_t xpsr = frame[7u];
 
-        if (((pc & 1u) != 0u) && ((xpsr & TASK_INITIAL_XPSR) == TASK_INITIAL_XPSR))
+        if ((pc != 0u) && ((xpsr & TASK_INITIAL_XPSR) == TASK_INITIAL_XPSR))
         {
             valid = 1u;
         }
@@ -422,6 +420,19 @@ static const uint32_t *task_hw_frame_get(const reg_task_t *task)
     }
 
     return frame;
+}
+
+static void task_slice_reset(void)
+{
+    s_task_last_switch_tick = SECTION_SYS_TICK;
+}
+
+static void task_debug_context_pool_update(void)
+{
+    g_section_fault_debug.task_context_pool_words = SECTION_TASK_CONTEXT_POOL_WORDS;
+    g_section_fault_debug.task_context_pool_used = s_task_context_pool_used;
+    g_section_fault_debug.task_context_pool_head = s_task_context_pool_head;
+    g_section_fault_debug.task_context_pool_tail = s_task_context_pool_tail;
 }
 
 static uint32_t task_stack_free_words_get(const reg_task_t *task)
@@ -552,7 +563,7 @@ static void task_insert(reg_task_t *task)
     task->p_ready_next = NULL;
     task->is_ready = 0u;
     task->is_running = 0u;
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
     task->p_sp = NULL;
     task->p_stack = task_runtime_stack_low_get();
     task->p_snapshot = NULL;
@@ -694,7 +705,7 @@ void section_runtime_reset(void)
     p_task_ready_tail = NULL;
     p_task_unfinished_first = NULL;
     p_task_unfinished_tail = NULL;
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
     p_task_current = NULL;
     task_scheduler_started = 0u;
     s_task_context_pool_head = 0u;
@@ -702,6 +713,7 @@ void section_runtime_reset(void)
     s_task_context_pool_used = 0u;
     s_task_context_pool_gap_start = 0u;
     s_task_context_pool_gap_words = 0u;
+    s_task_last_switch_tick = 0u;
 #endif
     p_interrupt_first = NULL;
     p_link_first = NULL;
@@ -740,7 +752,7 @@ static void task_activate_if_due(reg_task_t *task, uint32_t now)
     primask = section_critical_enter();
 
     elapsed = (uint32_t)(now - task->time_last);
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
     if ((elapsed >= task->t_period) && (task->state == (uint8_t)TASK_STACK_STATE_SLEEPING))
     {
         task_schedule_next(task, elapsed);
@@ -815,7 +827,7 @@ static void task_finish_step(reg_task_t *task, section_task_status_t status)
     section_critical_exit(primask);
 }
 
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
 uint32_t section_task_scheduler_started(void)
 {
     return (uint32_t)task_scheduler_started;
@@ -837,13 +849,11 @@ uint32_t section_task_switch_pending(void)
 
 uint32_t section_task_slice_elapsed(void)
 {
-    static uint32_t last_switch_tick = 0u;
     const uint32_t now = SECTION_SYS_TICK;
     uint32_t elapsed = 0u;
 
-    if ((uint32_t)(now - last_switch_tick) >= SECTION_TASK_SLICE_TICKS)
+    if ((uint32_t)(now - s_task_last_switch_tick) >= SECTION_TASK_SLICE_TICKS)
     {
-        last_switch_tick = now;
         elapsed = 1u;
     }
 
@@ -853,21 +863,15 @@ uint32_t section_task_slice_elapsed(void)
 void section_task_start_request(void)
 {
     task_scheduler_started = 1u;
-#if defined(FPU) && (__FPU_PRESENT == 1U)
-    FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;
-#endif
-    SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
-    __DSB();
-    __ISB();
+    SRTOS_FPU_DISABLE_LAZY_STACKING();
+    SRTOS_PENDSV_SET();
 }
 
 void section_task_yield(void)
 {
     if (task_scheduler_started != 0u)
     {
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
-        __DSB();
-        __ISB();
+        SRTOS_PENDSV_SET();
     }
 }
 
@@ -879,6 +883,20 @@ void section_task_complete_current(void)
     {
         p_task_current->state = (uint8_t)TASK_STACK_STATE_SLEEPING;
         p_task_current->is_running = 0u;
+    }
+
+    section_critical_exit(primask);
+}
+
+static void section_task_continue_current(void)
+{
+    uint32_t primask = section_critical_enter();
+
+    if (p_task_current != NULL)
+    {
+        p_task_current->state = (uint8_t)TASK_STACK_STATE_READY_NEW;
+        p_task_current->is_running = 0u;
+        task_ready_enqueue_unlocked(&p_task_unfinished_first, &p_task_unfinished_tail, p_task_current);
     }
 
     section_critical_exit(primask);
@@ -905,6 +923,7 @@ uint32_t *section_task_start_sp_get(void)
     next->state = (uint8_t)TASK_STACK_STATE_RUNNING;
     p_task_current = next;
     task_scheduler_started = 1u;
+    task_slice_reset();
     return next_sp;
 }
 
@@ -976,14 +995,14 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
             g_section_fault_debug.task_pc = frame[6u];
             g_section_fault_debug.task_xpsr = frame[7u];
         }
-    g_section_fault_debug.task_stack_base = (uint32_t)(uintptr_t)next->p_stack;
-    g_section_fault_debug.task_stack_words = SECTION_TASK_RUNTIME_STACK_WORDS;
-    g_section_fault_debug.task_frame_valid = task_stack_frame_valid(next);
-    g_section_fault_debug.task_name = (uint32_t)(uintptr_t)next->p_name;
-    g_section_fault_debug.task_stack_free_words = task_stack_free_words_get(next);
-    g_section_fault_debug.task_context_pool_words = SECTION_TASK_CONTEXT_POOL_WORDS;
-    g_section_fault_debug.task_context_pool_used = s_task_context_pool_used;
-    return next_sp;
+        g_section_fault_debug.task_stack_base = (uint32_t)(uintptr_t)next->p_stack;
+        g_section_fault_debug.task_stack_words = SECTION_TASK_RUNTIME_STACK_WORDS;
+        g_section_fault_debug.task_frame_valid = task_stack_frame_valid(next);
+        g_section_fault_debug.task_name = (uint32_t)(uintptr_t)next->p_name;
+        g_section_fault_debug.task_stack_free_words = task_stack_free_words_get(next);
+        task_debug_context_pool_update();
+        task_slice_reset();
+        return next_sp;
     }
 
     if ((sp != NULL) && (p_task_current != NULL))
@@ -1006,7 +1025,7 @@ void section_task_start(void)
     }
 }
 
-static void section_task_run_current(void)
+static section_task_status_t section_task_run_current(void)
 {
     section_task_status_t status = SECTION_TASK_DONE;
     section_perf_record_t *rec = NULL;
@@ -1014,7 +1033,7 @@ static void section_task_run_current(void)
 
     if (p_task_current == NULL)
     {
-        return;
+        return SECTION_TASK_DONE;
     }
 
     if (p_task_current->p_func != NULL)
@@ -1023,40 +1042,45 @@ static void section_task_run_current(void)
         perf_start = section_perf_task_begin(rec);
         p_task_current->p_func();
         section_perf_task_end(rec, perf_start);
+        status = SECTION_TASK_DONE;
     }
     else if (p_task_current->p_step_func != NULL)
     {
-        do
-        {
-            rec = p_task_current->p_perf_record;
-            perf_start = section_perf_task_begin(rec);
-            status = p_task_current->p_step_func(p_task_current->p_ctx);
-            section_perf_task_end(rec, perf_start);
-
-            if (status == SECTION_TASK_RUNNING)
-            {
-                section_task_yield();
-            }
-        } while (status == SECTION_TASK_RUNNING);
+        rec = p_task_current->p_perf_record;
+        perf_start = section_perf_task_begin(rec);
+        status = p_task_current->p_step_func(p_task_current->p_ctx);
+        section_perf_task_end(rec, perf_start);
     }
     else
     {
         /* Empty task descriptor. */
+        status = SECTION_TASK_DONE;
     }
+
+    return status;
 }
 
 static void section_task_entry(void)
 {
     for (;;)
     {
+        section_task_status_t status = SECTION_TASK_DONE;
+
         if ((p_task_current == NULL) || (p_task_current->state != (uint8_t)TASK_STACK_STATE_RUNNING))
         {
             section_task_yield();
             continue;
         }
 
-        section_task_run_current();
-        section_task_complete_current();
+        status = section_task_run_current();
+        if (status == SECTION_TASK_RUNNING)
+        {
+            section_task_continue_current();
+        }
+        else
+        {
+            section_task_complete_current();
+        }
         section_task_yield();
     }
 }

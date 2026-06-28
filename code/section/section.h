@@ -61,18 +61,13 @@ typedef struct
     uint32_t task_stack_free_words;
     uint32_t task_context_pool_words;
     uint32_t task_context_pool_used;
+    uint32_t task_context_pool_head;
+    uint32_t task_context_pool_tail;
     uint32_t task_context_save_fail_count;
+    uint32_t task_context_release_fail_count;
 } section_fault_debug_t;
 
 extern volatile section_fault_debug_t g_section_fault_debug;
-
-#ifndef SECTION_TASK_CONTEXT_SWITCH_ENABLE
-#if defined(IS_HC32) && defined(HC32F334)
-#define SECTION_TASK_CONTEXT_SWITCH_ENABLE 1
-#else
-#define SECTION_TASK_CONTEXT_SWITCH_ENABLE 0
-#endif
-#endif
 
 #ifndef SECTION_TASK_RUNTIME_STACK_WORDS
 #define SECTION_TASK_RUNTIME_STACK_WORDS 512u
@@ -218,7 +213,7 @@ typedef struct reg_task_t
     struct reg_task_t *p_ready_next;
     uint8_t is_ready;
     uint8_t is_running;
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
     uint32_t *p_sp;
     uint32_t *p_stack;
     uint32_t *p_snapshot;
@@ -240,7 +235,7 @@ typedef struct reg_task_t
 #define REG_TASK_PERF_RECORD(name)
 #endif
 
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
 
 #define REG_TASK_RECORD(period, func) \
     {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u, .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, .state = 0u}
@@ -307,7 +302,7 @@ typedef struct reg_task_t
 
 void run_task(void);
 void section_task_tick(void);
-#if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
+#if (SRTOS == 1)
 void section_task_start(void);
 void section_task_yield(void);
 void section_task_complete_current(void);
