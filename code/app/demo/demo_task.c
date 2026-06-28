@@ -36,7 +36,7 @@ static uint32_t s_demo_task_10ms_count = 0u;
 static uint32_t s_demo_task_tick_count = 0u;
 
 #ifndef DEMO_TASK_DEAD_LOOP_ENABLE
-#define DEMO_TASK_DEAD_LOOP_ENABLE 1
+#define DEMO_TASK_DEAD_LOOP_ENABLE SRTOS
 #endif
 
 #ifndef DEMO_TASK_SCHED_PROBE_ENABLE

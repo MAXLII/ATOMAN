@@ -58,6 +58,9 @@
 extern uint32_t sim_time_100us;
 #define SECTION_SYS_TICK sim_time_100us
 #define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
+#ifndef SRTOS
+#define SRTOS 0
+#endif
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
@@ -73,6 +76,9 @@ extern size_t __stop_section;
 extern uint32_t plecs_time_100us;
 #define SECTION_SYS_TICK plecs_time_100us
 #define SECTION_SYS_TICK_UNIT_US 100u
+#ifndef SRTOS
+#define SRTOS 0
+#endif
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
@@ -87,6 +93,9 @@ extern size_t __stop_section;
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#ifndef SRTOS
+#define SRTOS 0
+#endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t Image$$SECTION$$Base;
 extern uint32_t Image$$SECTION$$Limit;
@@ -113,6 +122,13 @@ extern uint32_t __section_end;
 #endif
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#ifndef SRTOS
+#if defined(HC32F334)
+#define SRTOS 1
+#else
+#define SRTOS 0
+#endif
+#endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t Load$$SECTION$$Base;
 extern uint32_t Load$$SECTION$$Limit;
@@ -135,6 +151,9 @@ extern uint32_t __section_end;
 #include "apm32f402_403_int.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#ifndef SRTOS
+#define SRTOS 0
+#endif
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
@@ -150,6 +169,9 @@ extern uint32_t __section_end;
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#ifndef SRTOS
+#define SRTOS 0
+#endif
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
@@ -159,6 +181,70 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#endif
+
+#if (SRTOS != 0) && (SRTOS != 1)
+#error "SRTOS must be 0 or 1."
+#endif
+
+#if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32) || (!defined(IS_MATLAB) && !defined(IS_PLECS))
+static inline uint32_t srtos_critical_enter(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    return primask;
+}
+
+static inline void srtos_critical_exit(uint32_t primask)
+{
+    __set_PRIMASK(primask);
+}
+
+#define SRTOS_CRITICAL_ENTER() srtos_critical_enter()
+#define SRTOS_CRITICAL_EXIT(primask) srtos_critical_exit(primask)
+#else
+#define SRTOS_CRITICAL_ENTER() (0u)
+#define SRTOS_CRITICAL_EXIT(primask) \
+    do                              \
+    {                               \
+        (void)(primask);            \
+    } while (0)
+#endif
+
+#if (SRTOS == 1)
+#if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32) || (!defined(IS_MATLAB) && !defined(IS_PLECS))
+#define SRTOS_PENDSV_SET()                 \
+    do                                     \
+    {                                      \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
+        __DSB();                           \
+        __ISB();                           \
+    } while (0)
+
+#if defined(FPU) && (__FPU_PRESENT == 1U)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+    } while (0)
+#else
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
+#endif
+#else
+#error "SRTOS=1 requires a hardware platform to provide Cortex-M exception interfaces."
+#endif
+#else
+#define SRTOS_PENDSV_SET() \
+    do                     \
+    {                      \
+    } while (0)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
 #endif
 
 /* Section registration attributes */
