@@ -15,6 +15,7 @@ void SysTick_Handler(void)
     delay_decrement();
     section_task_tick();
     if ((section_task_scheduler_started() != 0u) &&
+        (section_task_slice_elapsed() != 0u) &&
         (section_task_switch_pending() != 0u))
     {
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
