@@ -507,8 +507,43 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
  * =============================================================================
  */
 
-static uint8_t tx_buffer[512];
-static uint16_t tx_len = 0;
+#define COMM_TX_BUFFER_SIZE 512u
+#define COMM_TX_BUFFER_COUNT 4u
+
+typedef struct
+{
+    volatile uint8_t busy;
+    uint8_t data[COMM_TX_BUFFER_SIZE];
+} comm_tx_buffer_t;
+
+static comm_tx_buffer_t s_comm_tx_buffer[COMM_TX_BUFFER_COUNT];
+
+static comm_tx_buffer_t *comm_tx_buffer_acquire(void)
+{
+    for (;;)
+    {
+        for (uint32_t i = 0u; i < COMM_TX_BUFFER_COUNT; ++i)
+        {
+            if ((__LDREXB(&s_comm_tx_buffer[i].busy) == 0u) &&
+                (__STREXB(1u, &s_comm_tx_buffer[i].busy) == 0u))
+            {
+                __DMB();
+                return &s_comm_tx_buffer[i];
+            }
+        }
+    }
+}
+
+static void comm_tx_buffer_release(comm_tx_buffer_t *tx)
+{
+    if (tx == NULL)
+    {
+        return;
+    }
+
+    __DMB();
+    tx->busy = 0u;
+}
 
 static uint16_t crc16_update_block(uint16_t crc, const uint8_t *data, uint32_t len)
 {
@@ -522,8 +557,12 @@ static uint16_t crc16_update_block(uint16_t crc, const uint8_t *data, uint32_t l
 
 void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
+    comm_tx_buffer_t *tx;
+    uint8_t *tx_buffer;
     uint16_t crc;
+    uint16_t tx_len;
     uint32_t crc_len;
+    uint32_t need;
 
     if (!p_pack)
         return;
@@ -532,9 +571,12 @@ void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
 
     /* 基础帧长：15 字节（含 EOP、CRC），payload 不能超过 tx_buffer */
-    const uint32_t need = 15u + (uint32_t)p_pack->len;
-    if (need > sizeof(tx_buffer))
+    need = 15u + (uint32_t)p_pack->len;
+    if (need > COMM_TX_BUFFER_SIZE)
         return;
+
+    tx = comm_tx_buffer_acquire();
+    tx_buffer = tx->data;
 
     p_pack->version = COMM_VER_1;
 
@@ -572,4 +614,6 @@ void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
     {
         my_printf->tx_by_dma((char *)tx_buffer, (int)tx_len);
     }
+
+    comm_tx_buffer_release(tx);
 }
