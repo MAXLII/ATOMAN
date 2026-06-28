@@ -187,30 +187,6 @@ extern uint32_t __section_end;
 #error "SRTOS must be 0 or 1."
 #endif
 
-#if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32) || (!defined(IS_MATLAB) && !defined(IS_PLECS))
-static inline uint32_t srtos_critical_enter(void)
-{
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    return primask;
-}
-
-static inline void srtos_critical_exit(uint32_t primask)
-{
-    __set_PRIMASK(primask);
-}
-
-#define SRTOS_CRITICAL_ENTER() srtos_critical_enter()
-#define SRTOS_CRITICAL_EXIT(primask) srtos_critical_exit(primask)
-#else
-#define SRTOS_CRITICAL_ENTER() (0u)
-#define SRTOS_CRITICAL_EXIT(primask) \
-    do                              \
-    {                               \
-        (void)(primask);            \
-    } while (0)
-#endif
-
 #if (SRTOS == 1)
 #if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32) || (!defined(IS_MATLAB) && !defined(IS_PLECS))
 #define SRTOS_PENDSV_SET()                 \

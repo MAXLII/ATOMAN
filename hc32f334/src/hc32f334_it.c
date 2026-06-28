@@ -13,11 +13,9 @@ void hardfault_capture(uint32_t *stack, uint32_t exc_return);
 void SysTick_Handler(void)
 {
     delay_decrement();
-    section_task_tick();
 #if (SRTOS == 1)
     if ((section_task_scheduler_started() != 0u) &&
-        (section_task_slice_elapsed() != 0u) &&
-        (section_task_switch_pending() != 0u))
+        (section_task_slice_elapsed() != 0u))
     {
         SRTOS_PENDSV_SET();
     }
