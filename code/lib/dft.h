@@ -70,8 +70,16 @@ typedef struct
 {
     /** Phase increment between adjacent samples, in radians. */
     float phase_step_rad;
+    /** Cosine of phase_step_rad, calculated once when a DFT window starts. */
+    float phase_step_cos;
+    /** Sine of phase_step_rad, calculated once when a DFT window starts. */
+    float phase_step_sin;
     /** Current phase of the active DFT window, in radians. */
     float phase_rad;
+    /** Cosine of current phase for recurrence-based accumulation. */
+    float phase_cos;
+    /** Sine of current phase for recurrence-based accumulation. */
+    float phase_sin;
     /** Accumulated real component for the active DFT window. */
     float real_sum;
     /** Accumulated imaginary component for the active DFT window. */

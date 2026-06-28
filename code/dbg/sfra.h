@@ -40,7 +40,8 @@
 #define SFRA_DEFAULT_SETTLE_CYCLES (2.0f)
 #define SFRA_DEFAULT_COLLECT_CYCLES (5.0f)
 #define SFRA_MAX_INJECT_DELAY_TICK (2U)
-#define SFRA_SAMPLE_BUFFER_SIZE (32U)
+#define SFRA_SAMPLE_BUFFER_SIZE (384U)
+#define SFRA_TASK_SAMPLE_BUDGET (128U)
 
 #define REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, \
                  prepare_cb, prepare_ctx)                                \
@@ -171,11 +172,11 @@ typedef struct
     /** Buffered response samples collected by ISR and consumed by sfra_task. */
     float collect_sample_buf[SFRA_SAMPLE_BUFFER_SIZE];
     /** Ring-buffer write index owned by the ISR path. */
-    uint8_t sample_write_index;
+    uint16_t sample_write_index;
     /** Ring-buffer read index owned by sfra_task. */
-    uint8_t sample_read_index;
+    uint16_t sample_read_index;
     /** Number of buffered samples waiting for task-side DFT calculation. */
-    uint8_t sample_count;
+    uint16_t sample_count;
     /** Non-zero if the ISR sample buffer overflows. */
     uint8_t sample_overflow;
 } sfra_isr_t;
