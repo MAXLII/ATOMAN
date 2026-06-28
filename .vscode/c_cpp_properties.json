@@ -2,9 +2,53 @@
     "env": {
         "MATLAB_ROOT": "${env:ProgramFiles}/MATLAB/R2024a",
         "MSVC2017_ROOT": "${env:ProgramFiles(x86)}/Microsoft Visual Studio/2017/BuildTools",
-        "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023"
+        "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023",
+        "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin"
     },
     "configurations": [
+        {
+            "name": "gd32g553",
+            "compilerPath": "${ARM_GNU_ROOT}/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
+                "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
+                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include",
+                "${workspaceFolder}/gd32g553c/inc",
+                "${workspaceFolder}/gd32g553c/bsp/inc"
+            ],
+            "defines": [
+                "GD32G5X3",
+                "IS_GD32",
+                "TOOLCHAIN_GCC",
+                "FIRMWARE_TYPE_ISP",
+                "APP_START_ADDR=0x08000000"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/gd32g553c"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
         {
             "name": "gd32",
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
