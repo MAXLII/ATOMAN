@@ -28,7 +28,7 @@
  */
 #include "bb_fsm.h"
 
-static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null; /* fsm_ev: pending transition event consumed by REG_FSM */
+static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null;    /* fsm_ev: pending transition event consumed by REG_FSM */
 static bb_fsm_cmd_e fsm_cmd = bb_fsm_cmd_null; /* fsm_cmd: latched external command */
 #define p_hal (bb_hal_get_fsm())
 

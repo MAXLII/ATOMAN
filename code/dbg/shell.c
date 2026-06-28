@@ -155,7 +155,6 @@ void shell_item_print(section_shell_t *p, DEC_MY_PRINTF)
     }
 }
 
-
 #include <stdlib.h>
 
 static int is_string_number(const char *str)

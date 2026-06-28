@@ -352,7 +352,7 @@ static void pfc_fsm_dsg_exe(void)
     {
         fsm_ev = pfc_fsm_ev_ready_chg_passby;
     }
-    else if(adc_chk_get_bus_is_ok() == 0)
+    else if (adc_chk_get_bus_is_ok() == 0)
     {
         fault_set_bit(FAULT_STA_BUS_ERR);
     }
@@ -548,4 +548,3 @@ static void ctrl_gpio_grid_rly_off_test(DEC_MY_PRINTF)
 
 REG_SHELL_CMD(GPIO_GRID_RLY_ON, ctrl_gpio_grid_rly_on_test)
 REG_SHELL_CMD(GPIO_GRID_RLY_OFF, ctrl_gpio_grid_rly_off_test)
-

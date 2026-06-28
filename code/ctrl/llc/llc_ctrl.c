@@ -68,7 +68,7 @@ static inline void llc_ctrl_sample_analog(void)
     /*
      * This ISR sampling layer is the only place that converts HAL raw analog
      * bindings into the clean feedback values consumed by the control loop.
-    */
+     */
     i_out_act = *p_hal->p_i_out;
     v_bus_act = *p_hal->p_v_bus;
 

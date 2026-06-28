@@ -44,7 +44,7 @@ typedef struct
                            float boost_duty,
                            uint8_t boost_up_en,
                            uint8_t boost_dn_en); /* p_set_pwm_func: buck-boost PWM update hook */
-    void (*p_pwm_disable)(void); /* p_pwm_disable: fast PWM shutdown hook */
+    void (*p_pwm_disable)(void);                 /* p_pwm_disable: fast PWM shutdown hook */
 } bb_ctrl_hal_t;
 
 typedef struct

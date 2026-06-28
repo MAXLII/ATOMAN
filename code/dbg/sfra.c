@@ -32,9 +32,9 @@
 
 #include <stddef.h>
 
-#define SFRA_TWO_PI       (6.28318530717958647692f)
-#define SFRA_RAD_TO_DEG   (57.2957795130823208768f)
-#define SFRA_DIV_MIN_ABS  (1.0e-12f)
+#define SFRA_TWO_PI (6.28318530717958647692f)
+#define SFRA_RAD_TO_DEG (57.2957795130823208768f)
+#define SFRA_DIV_MIN_ABS (1.0e-12f)
 
 typedef struct
 {
@@ -132,8 +132,8 @@ static void sfra_sample_buffer_clear(sfra_t *sfra)
 }
 
 static inline void sfra_sample_buffer_push(sfra_t *sfra,
-                                    float inject_sample,
-                                    float collect_sample)
+                                           float inject_sample,
+                                           float collect_sample)
 {
     uint16_t write_index;
     uint16_t next_index;

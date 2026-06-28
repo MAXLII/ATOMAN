@@ -134,18 +134,18 @@ void scope_reset(scope_t *scope);
 /* Scope linked list — built at init from SECTION_SCOPE entries */
 extern scope_t *g_scope_first;
 void scope_service_init(void);
-#define REG_SCOPE(name, buf_size, trig_post_cnt, ...)         \
+#define REG_SCOPE(name, buf_size, trig_post_cnt, ...)                \
     SCOPE_DEFINE(name, buf_size, trig_post_cnt, 1000u, __VA_ARGS__); \
-    const reg_section_t reg_scope_##name AUTO_REG_SECTION = { \
-        .section_type = (uint32_t)SECTION_SCOPE,              \
-        .p_str = (void *)&scope_##name,                       \
+    const reg_section_t reg_scope_##name AUTO_REG_SECTION = {        \
+        .section_type = (uint32_t)SECTION_SCOPE,                     \
+        .p_str = (void *)&scope_##name,                              \
     };
 
-#define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...) \
+#define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...)        \
     SCOPE_DEFINE(name, buf_size, trig_post_cnt, (_sample_period_us), __VA_ARGS__); \
-    const reg_section_t reg_scope_##name AUTO_REG_SECTION = {               \
-        .section_type = (uint32_t)SECTION_SCOPE,                            \
-        .p_str = (void *)&scope_##name,                                     \
+    const reg_section_t reg_scope_##name AUTO_REG_SECTION = {                      \
+        .section_type = (uint32_t)SECTION_SCOPE,                                   \
+        .p_str = (void *)&scope_##name,                                            \
     };
 
 #endif

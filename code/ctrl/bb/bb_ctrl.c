@@ -105,7 +105,7 @@ static void bb_ctrl_is_in_dcm(float pwr_in_w)
  */
 static void bb_ctrl_cal_ol_mode(void)
 {
-    float gain = 0.0f;  /* gain: instantaneous buck-boost voltage gain */
+    float gain = 0.0f;      /* gain: instantaneous buck-boost voltage gain */
     float v_in = v_in_fb;   /* v_in: sampled input voltage */
     float v_out = v_out_fb; /* v_out: sampled output voltage */
 
@@ -391,8 +391,8 @@ static void bb_ctrl_in_curr_lmt_task(void)
 {
     bb_ctrl_hal_t *p_hal_task = p_hal;
     bb_ctrl_setpoint_t *p_setpoint = p_ctrl_active_setpoint; /* p_setpoint: active setpoint sampled by 1 ms task */
-    float vin_for_lmt = 0.0f;                                      /* vin_for_lmt: guarded input voltage used for power-to-current conversion */
-    float pwr_to_curr_lmt = 0.0f;                                  /* pwr_to_curr_lmt: current limit derived from input power limit */
+    float vin_for_lmt = 0.0f;                                /* vin_for_lmt: guarded input voltage used for power-to-current conversion */
+    float pwr_to_curr_lmt = 0.0f;                            /* pwr_to_curr_lmt: current limit derived from input power limit */
 
     if ((p_hal_task == NULL) ||
         (p_setpoint == NULL) ||

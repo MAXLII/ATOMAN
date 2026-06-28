@@ -73,7 +73,6 @@ void shell_status_run(void)
 
 REG_TASK_MS(1000, shell_status_run)
 
-
 typedef struct
 {
     section_shell_t *cur;
@@ -295,8 +294,6 @@ static void shell_data_report_act(void)
 }
 
 REG_TASK_MS(50, shell_data_report_act)
-
-
 
 static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {

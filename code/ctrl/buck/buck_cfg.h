@@ -108,9 +108,9 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
 #define BUCK_CTRL_IN_CURR_LMT_DEFAULT_A (100.0f)
 
 /* Convert an input current-limit reference to the signed path reference code domain. */
-#define BUCK_CTRL_IN_CURR_LMT_TO_CODE(val)                                      \
-    ((int32_t)(((val) / BUCK_CTRL_IN_CURR_LMT_MAX_A) *                          \
-                   (float)BUCK_CTRL_IN_CURR_LMT_CODE_MAX +                      \
+#define BUCK_CTRL_IN_CURR_LMT_TO_CODE(val)                 \
+    ((int32_t)(((val) / BUCK_CTRL_IN_CURR_LMT_MAX_A) *     \
+                   (float)BUCK_CTRL_IN_CURR_LMT_CODE_MAX + \
                ((((val) / BUCK_CTRL_IN_CURR_LMT_MAX_A) >= 0.0f) ? 0.5f : -0.5f)))
 
 /* Output current-limit path reference positive endpoint code. */
@@ -126,9 +126,9 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
 #define BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A (100.0f)
 
 /* Convert an output current-limit reference to the signed path reference code domain. */
-#define BUCK_CTRL_OUT_CURR_LMT_TO_CODE(val)                                      \
-    ((int32_t)(((val) / BUCK_CTRL_OUT_CURR_LMT_MAX_A) *                          \
-                   (float)BUCK_CTRL_OUT_CURR_LMT_CODE_MAX +                      \
+#define BUCK_CTRL_OUT_CURR_LMT_TO_CODE(val)                 \
+    ((int32_t)(((val) / BUCK_CTRL_OUT_CURR_LMT_MAX_A) *     \
+                   (float)BUCK_CTRL_OUT_CURR_LMT_CODE_MAX + \
                ((((val) / BUCK_CTRL_OUT_CURR_LMT_MAX_A) >= 0.0f) ? 0.5f : -0.5f)))
 
 /* Integer-control K2 shift used by the current-feedback domain. */
@@ -144,37 +144,37 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
 #define BUCK_CTRL_K4_V_OUT_FF_K ((int32_t)(1L << BUCK_CTRL_K4_V_OUT_FF_SHIFT))
 
 /* Integer-control K1 numerator derived from current and voltage code scales. */
-#define BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM      \
-    ((int64_t)BUCK_CTRL_K2_IND_CURR_FB_K *       \
-     (int64_t)BUCK_CTRL_IN_CURR_LMT_CODE_MAX *   \
+#define BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM    \
+    ((int64_t)BUCK_CTRL_K2_IND_CURR_FB_K *     \
+     (int64_t)BUCK_CTRL_IN_CURR_LMT_CODE_MAX * \
      (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V)
 
 /* Integer-control K1 denominator derived from current and voltage code scales. */
-#define BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN      \
-    ((int64_t)BUCK_CTRL_IN_CURR_LMT_MAX_A *      \
+#define BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN \
+    ((int64_t)BUCK_CTRL_IN_CURR_LMT_MAX_A * \
      (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX)
 
 /* Integer-control K1 used as the output-voltage PI coefficient gain. */
-#define BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K                          \
-    ((int32_t)((BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM +            \
-                (BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN / 2LL)) /   \
+#define BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K                        \
+    ((int32_t)((BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM +          \
+                (BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN / 2LL)) / \
                BUCK_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN))
 
 /* Integer-control K3 numerator for raw-current error to K4 voltage domain. */
-#define BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_NUM       \
-    ((int64_t)BUCK_CTRL_K4_V_OUT_FF_K *           \
+#define BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_NUM          \
+    ((int64_t)BUCK_CTRL_K4_V_OUT_FF_K *              \
      (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX * \
      (int64_t)BUCK_CTRL_IN_CURR_LMT_MAX_A)
 
 /* Integer-control K3 denominator for raw-current error to K4 voltage domain. */
-#define BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN      \
+#define BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN       \
     ((int64_t)BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V * \
      (int64_t)BUCK_CTRL_IN_CURR_LMT_CODE_MAX)
 
 /* Integer-control K3 used as the inductor-current PI coefficient gain. */
-#define BUCK_CTRL_K3_IND_CURR_PI_GAIN_K                          \
-    ((int32_t)((BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_NUM +            \
-                (BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN / 2LL)) /   \
+#define BUCK_CTRL_K3_IND_CURR_PI_GAIN_K                        \
+    ((int32_t)((BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_NUM +          \
+                (BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN / 2LL)) / \
                BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN))
 
 /* Control-loop sample time supplied by buck_cfg_set_timing(). */
@@ -241,13 +241,13 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
                0.5f))
 
 /* Output voltage-loop upper limit converted to the K2 current domain. */
-#define BUCK_CTRL_OUT_VOLT_LOOP_UP_LMT                         \
-    ((int32_t)((int64_t)BUCK_CTRL_OUT_VOLT_LOOP_UP_LMT_RAW *   \
+#define BUCK_CTRL_OUT_VOLT_LOOP_UP_LMT                       \
+    ((int32_t)((int64_t)BUCK_CTRL_OUT_VOLT_LOOP_UP_LMT_RAW * \
                (int64_t)BUCK_CTRL_K2_IND_CURR_FB_K))
 
 /* Output voltage-loop lower limit converted to the K2 current domain. */
-#define BUCK_CTRL_OUT_VOLT_LOOP_DN_LMT                         \
-    ((int32_t)((int64_t)BUCK_CTRL_OUT_VOLT_LOOP_DN_LMT_RAW *   \
+#define BUCK_CTRL_OUT_VOLT_LOOP_DN_LMT                       \
+    ((int32_t)((int64_t)BUCK_CTRL_OUT_VOLT_LOOP_DN_LMT_RAW * \
                (int64_t)BUCK_CTRL_K2_IND_CURR_FB_K))
 
 /* Output-voltage feedforward gain used by the compare-command calculation. */
@@ -308,13 +308,13 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
                0.5f))
 
 /* Input voltage-limit loop upper limit converted to the K2 current domain. */
-#define BUCK_CTRL_IN_VOLT_LMT_LOOP_UP_LMT                         \
-    ((int32_t)((int64_t)BUCK_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_RAW *   \
+#define BUCK_CTRL_IN_VOLT_LMT_LOOP_UP_LMT                       \
+    ((int32_t)((int64_t)BUCK_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_RAW * \
                (int64_t)BUCK_CTRL_IND_CURR_LOOP_FB_K))
 
 /* Input voltage-limit loop lower limit converted to the K2 current domain. */
-#define BUCK_CTRL_IN_VOLT_LMT_LOOP_DN_LMT                         \
-    ((int32_t)((int64_t)BUCK_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_RAW *   \
+#define BUCK_CTRL_IN_VOLT_LMT_LOOP_DN_LMT                       \
+    ((int32_t)((int64_t)BUCK_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_RAW * \
                (int64_t)BUCK_CTRL_IND_CURR_LOOP_FB_K))
 
 /* Inductor-current loop phase-margin setting. */
@@ -381,13 +381,13 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
                0.5f))
 
 /* Inductor-current loop upper limit converted to the K4 voltage domain. */
-#define BUCK_CTRL_IND_CURR_LOOP_UP_LMT                          \
-    ((int32_t)((int64_t)BUCK_CTRL_IND_CURR_LOOP_UP_LMT_RAW *    \
+#define BUCK_CTRL_IND_CURR_LOOP_UP_LMT                       \
+    ((int32_t)((int64_t)BUCK_CTRL_IND_CURR_LOOP_UP_LMT_RAW * \
                (int64_t)BUCK_CTRL_K4_V_OUT_FF_K))
 
 /* Inductor-current loop lower limit converted to the K4 voltage domain. */
-#define BUCK_CTRL_IND_CURR_LOOP_DN_LMT                          \
-    ((int32_t)((int64_t)BUCK_CTRL_IND_CURR_LOOP_DN_LMT_RAW *    \
+#define BUCK_CTRL_IND_CURR_LOOP_DN_LMT                       \
+    ((int32_t)((int64_t)BUCK_CTRL_IND_CURR_LOOP_DN_LMT_RAW * \
                (int64_t)BUCK_CTRL_K4_V_OUT_FF_K))
 
 /* Maximum PWM compare command accepted by the buck controller. */

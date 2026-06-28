@@ -67,25 +67,25 @@
 #define PFC_CTRL_K4_AC_VOLT_CMD_K ((int32_t)(1L << PFC_CTRL_K4_AC_VOLT_CMD_SHIFT))
 
 /* K1 maps bus-voltage code error to current-code command. */
-#define PFC_CTRL_K1_VBUS_PI_GAIN_K                \
-    (((float)PFC_CTRL_IND_CURR_CODE_MAX /         \
-      PFC_CTRL_IND_CURR_MAX_A) /                  \
+#define PFC_CTRL_K1_VBUS_PI_GAIN_K        \
+    (((float)PFC_CTRL_IND_CURR_CODE_MAX / \
+      PFC_CTRL_IND_CURR_MAX_A) /          \
      PFC_CTRL_BUS_VOLT_CODE_PER_V)
 
 /* K3 maps current-code error to PWM-reload-scaled AC-voltage command. */
-#define PFC_CTRL_K3_CURR_PI_GAIN_K           \
-    ((PFC_CTRL_AC_VOLT_CODE_PER_V /          \
-      ((float)PFC_CTRL_IND_CURR_CODE_MAX /   \
-       PFC_CTRL_IND_CURR_MAX_A)) *           \
+#define PFC_CTRL_K3_CURR_PI_GAIN_K         \
+    ((PFC_CTRL_AC_VOLT_CODE_PER_V /        \
+      ((float)PFC_CTRL_IND_CURR_CODE_MAX / \
+       PFC_CTRL_IND_CURR_MAX_A)) *         \
      (float)PFC_CTRL_PWM_CMP_MAX)
 
-#define PFC_CTRL_VBUS_REF_TO_CODE(val)                         \
-    ((int32_t)(((val) / PFC_CTRL_BUS_VOLT_MAX_V) *             \
-                   (float)PFC_CTRL_BUS_VOLT_CODE_MAX +         \
+#define PFC_CTRL_VBUS_REF_TO_CODE(val)                 \
+    ((int32_t)(((val) / PFC_CTRL_BUS_VOLT_MAX_V) *     \
+                   (float)PFC_CTRL_BUS_VOLT_CODE_MAX + \
                0.5f))
-#define PFC_CTRL_VBUS_SLEW_TO_CODE_PER_S(val)                  \
-    ((int32_t)(((val) / PFC_CTRL_BUS_VOLT_MAX_V) *             \
-                   (float)PFC_CTRL_BUS_VOLT_CODE_MAX +         \
+#define PFC_CTRL_VBUS_SLEW_TO_CODE_PER_S(val)          \
+    ((int32_t)(((val) / PFC_CTRL_BUS_VOLT_MAX_V) *     \
+                   (float)PFC_CTRL_BUS_VOLT_CODE_MAX + \
                0.5f))
 
 #define PFC_CTRL_TS (pfc_cfg_get_ctrl_ts())
@@ -136,15 +136,15 @@
 
 #define PFC_CTRL_VBUS_LOOP_OUT_MAX_A (60.0f)
 #define PFC_CTRL_VBUS_LOOP_OUT_MIN_A (-3.0f)
-#define PFC_CTRL_VBUS_LOOP_OUT_MAX_RAW                         \
-    ((int32_t)((PFC_CTRL_VBUS_LOOP_OUT_MAX_A /                 \
-                PFC_CTRL_IND_CURR_MAX_A) *                     \
-                   (float)PFC_CTRL_IND_CURR_CODE_MAX +         \
+#define PFC_CTRL_VBUS_LOOP_OUT_MAX_RAW                 \
+    ((int32_t)((PFC_CTRL_VBUS_LOOP_OUT_MAX_A /         \
+                PFC_CTRL_IND_CURR_MAX_A) *             \
+                   (float)PFC_CTRL_IND_CURR_CODE_MAX + \
                0.5f))
-#define PFC_CTRL_VBUS_LOOP_OUT_MIN_RAW                         \
-    ((int32_t)((PFC_CTRL_VBUS_LOOP_OUT_MIN_A /                 \
-                PFC_CTRL_IND_CURR_MAX_A) *                     \
-                   (float)PFC_CTRL_IND_CURR_CODE_MAX -         \
+#define PFC_CTRL_VBUS_LOOP_OUT_MIN_RAW                 \
+    ((int32_t)((PFC_CTRL_VBUS_LOOP_OUT_MIN_A /         \
+                PFC_CTRL_IND_CURR_MAX_A) *             \
+                   (float)PFC_CTRL_IND_CURR_CODE_MAX - \
                0.5f))
 #define PFC_CTRL_VBUS_LOOP_OUT_MAX (PFC_CTRL_VBUS_LOOP_OUT_MAX_RAW)
 #define PFC_CTRL_VBUS_LOOP_OUT_MIN (PFC_CTRL_VBUS_LOOP_OUT_MIN_RAW)
@@ -167,21 +167,21 @@
 
 #define PFC_CTRL_CURR_LOOP_OUT_MAX_V (30.0f)
 #define PFC_CTRL_CURR_LOOP_OUT_MIN_V (-30.0f)
-#define PFC_CTRL_CURR_LOOP_OUT_MAX_RAW                         \
-    ((int32_t)((PFC_CTRL_CURR_LOOP_OUT_MAX_V /                 \
-                PFC_CTRL_AC_VOLT_MAX_V) *                      \
-                   (float)PFC_CTRL_AC_VOLT_CODE_MAX +          \
+#define PFC_CTRL_CURR_LOOP_OUT_MAX_RAW                \
+    ((int32_t)((PFC_CTRL_CURR_LOOP_OUT_MAX_V /        \
+                PFC_CTRL_AC_VOLT_MAX_V) *             \
+                   (float)PFC_CTRL_AC_VOLT_CODE_MAX + \
                0.5f))
-#define PFC_CTRL_CURR_LOOP_OUT_MIN_RAW                         \
-    ((int32_t)((PFC_CTRL_CURR_LOOP_OUT_MIN_V /                 \
-                PFC_CTRL_AC_VOLT_MAX_V) *                      \
-                   (float)PFC_CTRL_AC_VOLT_CODE_MAX -          \
+#define PFC_CTRL_CURR_LOOP_OUT_MIN_RAW                \
+    ((int32_t)((PFC_CTRL_CURR_LOOP_OUT_MIN_V /        \
+                PFC_CTRL_AC_VOLT_MAX_V) *             \
+                   (float)PFC_CTRL_AC_VOLT_CODE_MAX - \
                0.5f))
-#define PFC_CTRL_CURR_LOOP_OUT_MAX                             \
-    ((int32_t)((int64_t)PFC_CTRL_CURR_LOOP_OUT_MAX_RAW *       \
+#define PFC_CTRL_CURR_LOOP_OUT_MAX                       \
+    ((int32_t)((int64_t)PFC_CTRL_CURR_LOOP_OUT_MAX_RAW * \
                (int64_t)PFC_CTRL_PWM_CMP_MAX))
-#define PFC_CTRL_CURR_LOOP_OUT_MIN                             \
-    ((int32_t)((int64_t)PFC_CTRL_CURR_LOOP_OUT_MIN_RAW *       \
+#define PFC_CTRL_CURR_LOOP_OUT_MIN                       \
+    ((int32_t)((int64_t)PFC_CTRL_CURR_LOOP_OUT_MIN_RAW * \
                (int64_t)PFC_CTRL_PWM_CMP_MAX))
 
 typedef struct

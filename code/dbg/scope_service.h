@@ -69,13 +69,13 @@ int scope_printf_data_is_active(void);
 #define REG_SCOPE_DATA_STEP_CMD(name)
 #endif
 
-#define SCOPE_DATA_STEP_RUN()              \
-    do                                     \
-    {                                      \
-        if (scope_printf_data_is_active()) \
-        {                                  \
-            (void)scope_printf_data_step();\
-        }                                  \
+#define SCOPE_DATA_STEP_RUN()               \
+    do                                      \
+    {                                       \
+        if (scope_printf_data_is_active())  \
+        {                                   \
+            (void)scope_printf_data_step(); \
+        }                                   \
     } while (0)
 
 /* Protocol command words and payload layouts */

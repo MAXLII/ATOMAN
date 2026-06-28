@@ -121,15 +121,15 @@ uint32_t perf_count_to_us(uint32_t count);
 uint32_t perf_task_period_us_get(section_perf_record_t *record);
 void perf_reset_peak_value(void);
 
-#define REG_PERF_BASE_CNT(timer_cnt, period_s)       \
-    section_perf_base_t section_perf_base_timer = {  \
-        .p_cnt = (volatile uint32_t *)(timer_cnt),   \
-        .cnt_period_s = (period_s),                  \
-    };                                               \
-    section_perf_t section_timer_cnt_perf = {        \
-        .perf_type = SECTION_PERF_BASE,              \
-        .p_perf = (void *)&section_perf_base_timer,  \
-    };                                               \
+#define REG_PERF_BASE_CNT(timer_cnt, period_s)      \
+    section_perf_base_t section_perf_base_timer = { \
+        .p_cnt = (volatile uint32_t *)(timer_cnt),  \
+        .cnt_period_s = (period_s),                 \
+    };                                              \
+    section_perf_t section_timer_cnt_perf = {       \
+        .perf_type = SECTION_PERF_BASE,             \
+        .p_perf = (void *)&section_perf_base_timer, \
+    };                                              \
     REG_SECTION_FUNC(SECTION_PERF, section_timer_cnt_perf)
 
 #define PERF_RECORD_ENABLE 1
@@ -153,7 +153,7 @@ void perf_reset_peak_value(void);
         }                                                                          \
     } while (0)
 
-#define PERF_END(name)                                                                                 \
+#define PERF_END(name)                                                                                  \
     do                                                                                                  \
     {                                                                                                   \
         if ((section_perf_record_##name.p_cnt != NULL) &&                                               \
@@ -173,7 +173,7 @@ void perf_reset_peak_value(void);
 
 #define P_RECORD_PERF(name) ((section_perf_record_t *)&section_perf_record_##name)
 
-#define REG_PERF_RECORD_EX(name, _record_type)            \
+#define REG_PERF_RECORD_EX(name, _record_type)           \
     section_perf_record_t section_perf_record_##name = { \
         .p_name = #name,                                 \
         .start = 0,                                      \
@@ -195,8 +195,8 @@ void perf_reset_peak_value(void);
     };                                                   \
     REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
 
-#define REG_PERF_RECORD(name)           REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_CODE)
-#define REG_TASK_PERF_RECORD(name)      REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_TASK)
+#define REG_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_CODE)
+#define REG_TASK_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_TASK)
 #define REG_INTERRUPT_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_INTERRUPT)
 
 #else

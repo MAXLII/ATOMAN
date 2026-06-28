@@ -62,8 +62,8 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V (12.0f)
 
 /* Convert an output voltage-loop reference to the loop reference code domain. */
-#define BOOST_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(val)                 \
-    ((int32_t)(((val) / BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V) *     \
+#define BOOST_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(val)             \
+    ((int32_t)(((val) / BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V) * \
                (float)BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX))
 
 /* Input voltage-limit loop reference maximum integer code. */
@@ -76,8 +76,8 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V (24.0f)
 
 /* Convert an input voltage-limit reference to the loop reference code domain. */
-#define BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(val)                 \
-    ((int32_t)(((val) / BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V) *     \
+#define BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(val)             \
+    ((int32_t)(((val) / BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V) * \
                (float)BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX))
 
 /* Input power-limit path reference maximum integer code. */
@@ -90,8 +90,8 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_IN_PWR_LMT_DEFAULT_W (1500.0f)
 
 /* Convert an input power-limit reference to the path reference code domain. */
-#define BOOST_CTRL_IN_PWR_LMT_TO_CODE(val)                 \
-    ((int32_t)(((val) / BOOST_CTRL_IN_PWR_LMT_MAX_W) *     \
+#define BOOST_CTRL_IN_PWR_LMT_TO_CODE(val)             \
+    ((int32_t)(((val) / BOOST_CTRL_IN_PWR_LMT_MAX_W) * \
                (float)BOOST_CTRL_IN_PWR_LMT_CODE_MAX))
 
 /* Input current-limit path reference positive endpoint code. */
@@ -107,8 +107,8 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_IN_CURR_LMT_DEFAULT_A (100.0f)
 
 /* Convert an input current-limit reference to the signed path reference code domain. */
-#define BOOST_CTRL_IN_CURR_LMT_TO_CODE(val)                                      \
-    ((int32_t)(((val) / BOOST_CTRL_IN_CURR_LMT_MAX_A) *                          \
+#define BOOST_CTRL_IN_CURR_LMT_TO_CODE(val)             \
+    ((int32_t)(((val) / BOOST_CTRL_IN_CURR_LMT_MAX_A) * \
                (float)BOOST_CTRL_IN_CURR_LMT_CODE_MAX))
 
 /* Output current-limit path reference positive endpoint code. */
@@ -124,8 +124,8 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_OUT_CURR_LMT_DEFAULT_A (100.0f)
 
 /* Convert an output current-limit reference to the signed path reference code domain. */
-#define BOOST_CTRL_OUT_CURR_LMT_TO_CODE(val)                                      \
-    ((int32_t)(((val) / BOOST_CTRL_OUT_CURR_LMT_MAX_A) *                          \
+#define BOOST_CTRL_OUT_CURR_LMT_TO_CODE(val)             \
+    ((int32_t)(((val) / BOOST_CTRL_OUT_CURR_LMT_MAX_A) * \
                (float)BOOST_CTRL_OUT_CURR_LMT_CODE_MAX))
 
 /* Integer-control K2 shift used by the current-feedback domain. */
@@ -138,35 +138,35 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_K4_V_OUT_FF_K (BOOST_CTRL_CMP_MAX)
 
 /* Integer-control K1 numerator derived from current and voltage code scales. */
-#define BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM      \
-    ((int64_t)BOOST_CTRL_K2_IND_CURR_FB_K *       \
-     (int64_t)BOOST_CTRL_IN_CURR_LMT_CODE_MAX *   \
+#define BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM    \
+    ((int64_t)BOOST_CTRL_K2_IND_CURR_FB_K *     \
+     (int64_t)BOOST_CTRL_IN_CURR_LMT_CODE_MAX * \
      (int64_t)BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V)
 
 /* Integer-control K1 denominator derived from current and voltage code scales. */
-#define BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN      \
-    ((int64_t)BOOST_CTRL_IN_CURR_LMT_MAX_A *      \
+#define BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN \
+    ((int64_t)BOOST_CTRL_IN_CURR_LMT_MAX_A * \
      (int64_t)BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX)
 
 /* Integer-control K1 used as the output-voltage PI coefficient gain. */
-#define BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K                          \
-    ((int32_t)((float)BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM /      \
+#define BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K                     \
+    ((int32_t)((float)BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_NUM / \
                (float)BOOST_CTRL_K1_OUT_VOLT_PI_GAIN_K_DEN))
 
 /* Integer-control K3 numerator for raw-current error to K4 voltage domain. */
-#define BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_NUM       \
-    ((int64_t)BOOST_CTRL_K4_V_OUT_FF_K *           \
+#define BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_NUM          \
+    ((int64_t)BOOST_CTRL_K4_V_OUT_FF_K *              \
      (int64_t)BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX * \
      (int64_t)BOOST_CTRL_IN_CURR_LMT_MAX_A)
 
 /* Integer-control K3 denominator for raw-current error to K4 voltage domain. */
-#define BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_DEN      \
+#define BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_DEN       \
     ((int64_t)BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V * \
      (int64_t)BOOST_CTRL_IN_CURR_LMT_CODE_MAX)
 
 /* Integer-control K3 used as the inductor-current PI coefficient gain. */
-#define BOOST_CTRL_K3_IND_CURR_PI_GAIN_K                          \
-    ((int32_t)((float)BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_NUM /      \
+#define BOOST_CTRL_K3_IND_CURR_PI_GAIN_K                     \
+    ((int32_t)((float)BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_NUM / \
                (float)BOOST_CTRL_K3_IND_CURR_PI_GAIN_K_DEN))
 
 /* Control-loop sample time supplied by boost_cfg_set_timing(). */
@@ -219,25 +219,25 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_A (-10.0f)
 
 /* Output voltage-loop upper limit converted to the raw current-code domain. */
-#define BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT_RAW                       \
-    ((int32_t)((BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT_A /               \
-                BOOST_CTRL_OUT_VOLT_LOOP_OUT_MAX_A) *             \
+#define BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT_RAW           \
+    ((int32_t)((BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT_A /   \
+                BOOST_CTRL_OUT_VOLT_LOOP_OUT_MAX_A) * \
                (float)BOOST_CTRL_OUT_VOLT_LOOP_OUT_CODE_MAX))
 
 /* Output voltage-loop lower limit converted to the raw current-code domain. */
-#define BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_RAW                       \
-    ((int32_t)((BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_A /               \
-                BOOST_CTRL_OUT_VOLT_LOOP_OUT_MAX_A) *             \
+#define BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_RAW           \
+    ((int32_t)((BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_A /   \
+                BOOST_CTRL_OUT_VOLT_LOOP_OUT_MAX_A) * \
                (float)BOOST_CTRL_OUT_VOLT_LOOP_OUT_CODE_MAX))
 
 /* Output voltage-loop upper limit converted to the K2 current domain. */
-#define BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT                         \
-    ((int32_t)((int64_t)BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT_RAW *   \
+#define BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT                       \
+    ((int32_t)((int64_t)BOOST_CTRL_OUT_VOLT_LOOP_UP_LMT_RAW * \
                (int64_t)BOOST_CTRL_K2_IND_CURR_FB_K))
 
 /* Output voltage-loop lower limit converted to the K2 current domain. */
-#define BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT                         \
-    ((int32_t)((int64_t)BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_RAW *   \
+#define BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT                       \
+    ((int32_t)((int64_t)BOOST_CTRL_OUT_VOLT_LOOP_DN_LMT_RAW * \
                (int64_t)BOOST_CTRL_K2_IND_CURR_FB_K))
 
 /* Output-voltage feedforward gain used by the compare-command calculation. */
@@ -284,25 +284,25 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_A (-10.0f)
 
 /* Input voltage-limit loop upper limit converted to the raw current-code domain. */
-#define BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_RAW                       \
-    ((int32_t)((BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_A /               \
-                BOOST_CTRL_IN_VOLT_LMT_LOOP_OUT_MAX_A) *             \
+#define BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_RAW           \
+    ((int32_t)((BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_A /   \
+                BOOST_CTRL_IN_VOLT_LMT_LOOP_OUT_MAX_A) * \
                (float)BOOST_CTRL_IN_VOLT_LMT_LOOP_OUT_CODE_MAX))
 
 /* Input voltage-limit loop lower limit converted to the raw current-code domain. */
-#define BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_RAW                       \
-    ((int32_t)((BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_A /               \
-                BOOST_CTRL_IN_VOLT_LMT_LOOP_OUT_MAX_A) *             \
+#define BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_RAW           \
+    ((int32_t)((BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_A /   \
+                BOOST_CTRL_IN_VOLT_LMT_LOOP_OUT_MAX_A) * \
                (float)BOOST_CTRL_IN_VOLT_LMT_LOOP_OUT_CODE_MAX))
 
 /* Input voltage-limit loop upper limit converted to the K2 current domain. */
-#define BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT                         \
-    ((int32_t)((int64_t)BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_RAW *   \
+#define BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT                       \
+    ((int32_t)((int64_t)BOOST_CTRL_IN_VOLT_LMT_LOOP_UP_LMT_RAW * \
                (int64_t)BOOST_CTRL_IND_CURR_LOOP_FB_K))
 
 /* Input voltage-limit loop lower limit converted to the K2 current domain. */
-#define BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT                         \
-    ((int32_t)((int64_t)BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_RAW *   \
+#define BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT                       \
+    ((int32_t)((int64_t)BOOST_CTRL_IN_VOLT_LMT_LOOP_DN_LMT_RAW * \
                (int64_t)BOOST_CTRL_IND_CURR_LOOP_FB_K))
 
 /* Inductor-current loop phase-margin setting. */
@@ -355,25 +355,25 @@ int32_t boost_cfg_get_pwm_cmp_max(void);
 #define BOOST_CTRL_IND_CURR_LOOP_DN_LMT_V (-60.0f)
 
 /* Inductor-current loop upper limit converted to the raw voltage-code domain. */
-#define BOOST_CTRL_IND_CURR_LOOP_UP_LMT_RAW                       \
-    ((int32_t)((BOOST_CTRL_IND_CURR_LOOP_UP_LMT_V /               \
-                BOOST_CTRL_IND_CURR_LOOP_OUT_MAX_V) *             \
+#define BOOST_CTRL_IND_CURR_LOOP_UP_LMT_RAW           \
+    ((int32_t)((BOOST_CTRL_IND_CURR_LOOP_UP_LMT_V /   \
+                BOOST_CTRL_IND_CURR_LOOP_OUT_MAX_V) * \
                (float)BOOST_CTRL_IND_CURR_LOOP_OUT_CODE_MAX))
 
 /* Inductor-current loop lower limit converted to the raw voltage-code domain. */
-#define BOOST_CTRL_IND_CURR_LOOP_DN_LMT_RAW                       \
-    ((int32_t)((BOOST_CTRL_IND_CURR_LOOP_DN_LMT_V /               \
-                BOOST_CTRL_IND_CURR_LOOP_OUT_MAX_V) *             \
+#define BOOST_CTRL_IND_CURR_LOOP_DN_LMT_RAW           \
+    ((int32_t)((BOOST_CTRL_IND_CURR_LOOP_DN_LMT_V /   \
+                BOOST_CTRL_IND_CURR_LOOP_OUT_MAX_V) * \
                (float)BOOST_CTRL_IND_CURR_LOOP_OUT_CODE_MAX))
 
 /* Inductor-current loop upper limit converted to the K4 voltage domain. */
-#define BOOST_CTRL_IND_CURR_LOOP_UP_LMT                          \
-    ((int32_t)((int64_t)BOOST_CTRL_IND_CURR_LOOP_UP_LMT_RAW *    \
+#define BOOST_CTRL_IND_CURR_LOOP_UP_LMT                       \
+    ((int32_t)((int64_t)BOOST_CTRL_IND_CURR_LOOP_UP_LMT_RAW * \
                (int64_t)BOOST_CTRL_K4_V_OUT_FF_K))
 
 /* Inductor-current loop lower limit converted to the K4 voltage domain. */
-#define BOOST_CTRL_IND_CURR_LOOP_DN_LMT                          \
-    ((int32_t)((int64_t)BOOST_CTRL_IND_CURR_LOOP_DN_LMT_RAW *    \
+#define BOOST_CTRL_IND_CURR_LOOP_DN_LMT                       \
+    ((int32_t)((int64_t)BOOST_CTRL_IND_CURR_LOOP_DN_LMT_RAW * \
                (int64_t)BOOST_CTRL_K4_V_OUT_FF_K))
 
 /* Maximum PWM compare command accepted by the BOOST controller. */
