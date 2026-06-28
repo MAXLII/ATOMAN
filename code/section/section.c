@@ -65,6 +65,11 @@ typedef enum
 #define TASK_SW_FP_FRAME_WORDS 16u
 #define TASK_HW_FP_FRAME_WORDS 18u
 
+#if (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_FAULT) && \
+    (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING)
+#error "SECTION_TASK_CONTEXT_POOL_FULL_POLICY must be SECTION_TASK_CONTEXT_POOL_FAULT or SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING."
+#endif
+
 static reg_task_t *p_srtos_task_ready_first = NULL;
 static reg_task_t *p_srtos_task_ready_tail = NULL;
 static reg_task_t *p_srtos_task_unfinished_first = NULL;
@@ -79,6 +84,7 @@ static uint32_t s_task_context_pool_used = 0u;
 static uint32_t s_task_context_pool_gap_start = 0u;
 static uint32_t s_task_context_pool_gap_words = 0u;
 static uint32_t s_task_last_switch_tick = 0u;
+static uint8_t s_task_fault_active = 0u;
 
 static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task);
 static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail);
@@ -97,6 +103,8 @@ static const uint32_t *task_hw_frame_get(const reg_task_t *task);
 static reg_task_t *task_stack_pick_next(void);
 static void task_slice_reset(void);
 static void task_debug_context_pool_update(void);
+static uint32_t task_runtime_stack_used_words_get(uint32_t *sp);
+static void task_fault_set(uint32_t reason, const reg_task_t *task, uint32_t *sp, uint32_t required_words);
 static section_task_status_t section_task_run_current(void);
 static void section_task_continue_current(void);
 
@@ -129,6 +137,9 @@ static void task_os_runtime_reset(void)
     s_task_context_pool_gap_start = 0u;
     s_task_context_pool_gap_words = 0u;
     s_task_last_switch_tick = 0u;
+    s_task_fault_active = 0u;
+    (void)memset((void *)&g_section_fault_debug, 0, sizeof(g_section_fault_debug));
+    g_section_fault_debug.task_fault_policy = SECTION_TASK_CONTEXT_POOL_FULL_POLICY;
 }
 
 static uint32_t task_os_activate_if_due(reg_task_t *task, uint32_t elapsed)
@@ -153,6 +164,50 @@ static uint32_t *task_runtime_stack_low_get(void)
 static uint32_t *task_runtime_stack_top_get(void)
 {
     return (uint32_t *)((uintptr_t)&s_task_runtime_stack[SECTION_TASK_RUNTIME_STACK_WORDS] & ~(uintptr_t)0x7u);
+}
+
+static uint32_t task_runtime_stack_used_words_get(uint32_t *sp)
+{
+    const uint32_t *low = task_runtime_stack_low_get();
+    const uint32_t *top = task_runtime_stack_top_get();
+    uint32_t used_words = 0u;
+
+    if ((sp >= low) && (sp <= top))
+    {
+        used_words = (uint32_t)(top - sp);
+    }
+
+    return used_words;
+}
+
+static void task_fault_set(uint32_t reason, const reg_task_t *task, uint32_t *sp, uint32_t required_words)
+{
+    g_section_fault_debug.task_fault_reason = reason;
+    g_section_fault_debug.task_fault_policy = SECTION_TASK_CONTEXT_POOL_FULL_POLICY;
+    g_section_fault_debug.task_context_required_words = required_words;
+    g_section_fault_debug.task_runtime_stack_used_words = task_runtime_stack_used_words_get(sp);
+    g_section_fault_debug.task_sp = (uint32_t)(uintptr_t)sp;
+    g_section_fault_debug.task_stack_base = (uint32_t)(uintptr_t)task_runtime_stack_low_get();
+    g_section_fault_debug.task_stack_words = SECTION_TASK_RUNTIME_STACK_WORDS;
+    g_section_fault_debug.task_stack_free_words = task_stack_free_words_get(task);
+
+    if (task != NULL)
+    {
+        const uint32_t *frame = task_hw_frame_get(task);
+
+        g_section_fault_debug.task_name = (uint32_t)(uintptr_t)task->p_name;
+        g_section_fault_debug.task_frame_valid = task_stack_frame_valid(task);
+        if (frame != NULL)
+        {
+            g_section_fault_debug.task_pc = frame[6u];
+            g_section_fault_debug.task_xpsr = frame[7u];
+        }
+    }
+
+    task_debug_context_pool_update();
+    s_task_fault_active = 1u;
+    task_scheduler_started = 0u;
+    SRTOS_FAULT_HOOK(reason);
 }
 
 static void srtos_task_schedule_next(reg_task_t *task, uint32_t elapsed)
@@ -260,7 +315,7 @@ static void task_context_release(reg_task_t *task)
     if (offset != s_task_context_pool_head)
     {
         g_section_fault_debug.task_context_release_fail_count++;
-        task_debug_context_pool_update();
+        task_fault_set(SECTION_TASK_FAULT_CONTEXT_RELEASE_ORDER, task, task->p_sp, task->snapshot_capacity_words);
         return;
     }
 
@@ -292,8 +347,14 @@ static void task_stack_prepare_initial(reg_task_t *task)
     uint32_t *sp = NULL;
     uint32_t *top = task_runtime_stack_top_get();
 
-    if ((task == NULL) || (SECTION_TASK_RUNTIME_STACK_WORDS < 33u))
+    if (task == NULL)
     {
+        return;
+    }
+
+    if (SECTION_TASK_RUNTIME_STACK_WORDS < 33u)
+    {
+        task_fault_set(SECTION_TASK_FAULT_RUNTIME_STACK_TOO_SMALL, task, NULL, 33u);
         return;
     }
 
@@ -341,6 +402,7 @@ static uint32_t task_stack_save(reg_task_t *task, uint32_t *sp)
 
     if ((sp < low) || (sp > top))
     {
+        task_fault_set(SECTION_TASK_FAULT_PSP_OVERFLOW, task, sp, 0u);
         return 0u;
     }
 
@@ -348,7 +410,11 @@ static uint32_t task_stack_save(reg_task_t *task, uint32_t *sp)
     if ((used_words == 0u) || (task_context_alloc(task, used_words) == 0u))
     {
         g_section_fault_debug.task_context_save_fail_count++;
+        g_section_fault_debug.task_context_required_words = used_words;
         task_debug_context_pool_update();
+#if (SECTION_TASK_CONTEXT_POOL_FULL_POLICY == SECTION_TASK_CONTEXT_POOL_FAULT)
+        task_fault_set(SECTION_TASK_FAULT_CONTEXT_POOL_FULL, task, sp, used_words);
+#endif
         return 0u;
     }
 
@@ -362,6 +428,7 @@ static uint32_t task_stack_save(reg_task_t *task, uint32_t *sp)
 
 static uint32_t *task_stack_restore(reg_task_t *task)
 {
+    uint32_t *low = task_runtime_stack_low_get();
     uint32_t *top = task_runtime_stack_top_get();
     uint32_t *sp = NULL;
 
@@ -380,10 +447,17 @@ static uint32_t *task_stack_restore(reg_task_t *task)
         (task->snapshot_words == 0u) ||
         (task->snapshot_words > SECTION_TASK_RUNTIME_STACK_WORDS))
     {
+        task_fault_set(SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW, task, task->p_sp, task->snapshot_words);
         return NULL;
     }
 
     sp = top - task->snapshot_words;
+    if ((sp < low) || (sp > top))
+    {
+        task_fault_set(SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW, task, sp, task->snapshot_words);
+        return NULL;
+    }
+
     (void)memcpy(sp, task->p_snapshot, task->snapshot_words * sizeof(uint32_t));
     task->p_sp = sp;
     task->p_stack = task_runtime_stack_low_get();
@@ -440,6 +514,7 @@ static void task_debug_context_pool_update(void)
     g_section_fault_debug.task_context_pool_used = s_task_context_pool_used;
     g_section_fault_debug.task_context_pool_head = s_task_context_pool_head;
     g_section_fault_debug.task_context_pool_tail = s_task_context_pool_tail;
+    g_section_fault_debug.task_fault_policy = SECTION_TASK_CONTEXT_POOL_FULL_POLICY;
 }
 
 static uint32_t task_stack_free_words_get(const reg_task_t *task)
@@ -569,6 +644,11 @@ uint32_t section_task_slice_elapsed(void)
 
 void section_task_start_request(void)
 {
+    if (s_task_fault_active != 0u)
+    {
+        return;
+    }
+
     task_scheduler_started = 1u;
     SRTOS_FPU_DISABLE_LAZY_STACKING();
     SRTOS_PENDSV_SET();
@@ -576,7 +656,7 @@ void section_task_start_request(void)
 
 void section_task_yield(void)
 {
-    if (task_scheduler_started != 0u)
+    if ((task_scheduler_started != 0u) && (s_task_fault_active == 0u))
     {
         SRTOS_PENDSV_SET();
     }
@@ -605,6 +685,11 @@ uint32_t *section_task_start_sp_get(void)
 {
     reg_task_t *next = NULL;
     uint32_t *next_sp = NULL;
+
+    if (s_task_fault_active != 0u)
+    {
+        return NULL;
+    }
 
     section_task_tick();
     next = task_stack_pick_next();
@@ -637,6 +722,11 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
         return sp;
     }
 
+    if (s_task_fault_active != 0u)
+    {
+        return sp;
+    }
+
     section_task_tick();
 
     if ((p_srtos_task_ready_first != NULL) || (p_srtos_task_unfinished_first != NULL))
@@ -648,6 +738,11 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
     {
         if ((sp != NULL) && (p_task_current != NULL))
         {
+            if ((sp < task_runtime_stack_low_get()) || (sp > task_runtime_stack_top_get()))
+            {
+                task_fault_set(SECTION_TASK_FAULT_PSP_OVERFLOW, p_task_current, sp, 0u);
+                return sp;
+            }
             p_task_current->p_sp = sp;
         }
         return sp;

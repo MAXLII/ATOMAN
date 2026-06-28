@@ -70,6 +70,7 @@
 /* - FUNC_RAM: optional RAM-function attribute                                */
 /* - SRTOS_PENDSV_SET: request a PendSV context switch                         */
 /* - SRTOS_FPU_DISABLE_LAZY_STACKING: optional FPU context policy              */
+/* - SRTOS_FAULT_HOOK: platform action after section records an RTOS fault     */
 /* -------------------------------------------------------------------------- */
 
 /* Simulation: MATLAB */
@@ -98,6 +99,11 @@ extern size_t __stop_section;
     do                                    \
     {                                     \
     } while (0)
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
+    } while (0)
 
 /* Simulation: PLECS */
 #elif defined(IS_PLECS)
@@ -123,6 +129,11 @@ extern size_t __stop_section;
 #define SRTOS_FPU_DISABLE_LAZY_STACKING() \
     do                                    \
     {                                     \
+    } while (0)
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
     } while (0)
 
 /* MCU: GD32G553 */
@@ -169,6 +180,15 @@ extern uint32_t __section_end;
     {                                     \
     } while (0)
 #endif
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
+        __disable_irq();         \
+        for (;;)                 \
+        {                        \
+        }                        \
+    } while (0)
 
 /* MCU: HC32F334 */
 #elif defined(IS_HC32F334)
@@ -214,6 +234,15 @@ extern uint32_t __section_end;
     {                                     \
     } while (0)
 #endif
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
+        __disable_irq();         \
+        for (;;)                 \
+        {                        \
+        }                        \
+    } while (0)
 
 /* MCU: HC32F558 */
 #elif defined(IS_HC32F558)
@@ -259,6 +288,15 @@ extern uint32_t __section_end;
     {                                     \
     } while (0)
 #endif
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
+        __disable_irq();         \
+        for (;;)                 \
+        {                        \
+        }                        \
+    } while (0)
 
 /* MCU: APM32F402 */
 #elif defined(IS_APM32F402)
@@ -297,6 +335,15 @@ extern uint32_t __section_end;
     {                                     \
     } while (0)
 #endif
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
+        __disable_irq();         \
+        for (;;)                 \
+        {                        \
+        }                        \
+    } while (0)
 
 /* Default MCU fallback */
 #else
@@ -335,6 +382,15 @@ extern uint32_t __section_end;
     {                                     \
     } while (0)
 #endif
+#define SRTOS_FAULT_HOOK(reason) \
+    do                           \
+    {                            \
+        (void)(reason);          \
+        __disable_irq();         \
+        for (;;)                 \
+        {                        \
+        }                        \
+    } while (0)
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -345,7 +401,7 @@ extern uint32_t __section_end;
 #error "SRTOS must be 0 or 1."
 #endif
 
-#if (SRTOS == 1) && (!defined(SRTOS_PENDSV_SET) || !defined(SRTOS_FPU_DISABLE_LAZY_STACKING))
+#if (SRTOS == 1) && (!defined(SRTOS_PENDSV_SET) || !defined(SRTOS_FPU_DISABLE_LAZY_STACKING) || !defined(SRTOS_FAULT_HOOK))
 #error "SRTOS=1 requires the selected platform to provide SRTOS exception interfaces."
 #endif
 
