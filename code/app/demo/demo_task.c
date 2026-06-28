@@ -28,7 +28,7 @@
  */
 
 #include "section.h"
-#include "bsp_usart.h"
+#include "comm_link.h"
 
 #include <stdint.h>
 
@@ -64,6 +64,18 @@ typedef struct
 
 volatile demo_task_dead_loop_debug_t g_demo_task_dead_loop_debug;
 
+EXT_LINK(USART_DBG_LINK);
+
+static void demo_task_link_printf(const char *fmt, unsigned long count, unsigned long task_10ms_count, unsigned long tick)
+{
+    section_link_tx_func_t *link_printf = LINK_PRINTF(USART_DBG_LINK);
+
+    if ((link_printf != NULL) && (link_printf->my_printf != NULL))
+    {
+        link_printf->my_printf(fmt, count, task_10ms_count, tick);
+    }
+}
+
 static void demo_task_wait_ticks(uint32_t ticks)
 {
     const uint32_t start_tick = SECTION_SYS_TICK;
@@ -80,10 +92,10 @@ static void demo_task_dead_loop_100ms(void)
         demo_task_wait_ticks(1000u);
         g_demo_task_dead_loop_debug.loop_100ms_delay_count++;
         g_demo_task_dead_loop_debug.loop_100ms_print_count++;
-        bsp_usart_iso_printf("TASK_DEAD_LOOP_100MS count=%lu 10ms=%lu tick=%lu\r\n",
-                             (unsigned long)g_demo_task_dead_loop_debug.loop_100ms_print_count,
-                             (unsigned long)s_demo_task_10ms_count,
-                             (unsigned long)SECTION_SYS_TICK);
+        demo_task_link_printf("TASK_DEAD_LOOP_100MS count=%lu 10ms=%lu tick=%lu\r\n",
+                              (unsigned long)g_demo_task_dead_loop_debug.loop_100ms_print_count,
+                              (unsigned long)s_demo_task_10ms_count,
+                              (unsigned long)SECTION_SYS_TICK);
     }
 }
 
@@ -94,10 +106,10 @@ static void demo_task_dead_loop_123ms(void)
         demo_task_wait_ticks(1230u);
         g_demo_task_dead_loop_debug.loop_123ms_delay_count++;
         g_demo_task_dead_loop_debug.loop_123ms_print_count++;
-        bsp_usart_iso_printf("TASK_DEAD_LOOP_123MS count=%lu 10ms=%lu tick=%lu\r\n",
-                             (unsigned long)g_demo_task_dead_loop_debug.loop_123ms_print_count,
-                             (unsigned long)s_demo_task_10ms_count,
-                             (unsigned long)SECTION_SYS_TICK);
+        demo_task_link_printf("TASK_DEAD_LOOP_123MS count=%lu 10ms=%lu tick=%lu\r\n",
+                              (unsigned long)g_demo_task_dead_loop_debug.loop_123ms_print_count,
+                              (unsigned long)s_demo_task_10ms_count,
+                              (unsigned long)SECTION_SYS_TICK);
     }
 }
 #endif
