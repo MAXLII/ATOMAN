@@ -91,6 +91,22 @@ extern volatile section_fault_debug_t g_section_fault_debug;
 #define SECTION_TASK_STACK_ATTR
 #endif
 
+#if (SRTOS == 1)
+#define SECTION_SRTOS_TASK_FIELDS     \
+    uint32_t *p_sp;                   \
+    uint32_t *p_stack;                \
+    uint32_t *p_snapshot;             \
+    uint32_t snapshot_words;          \
+    uint32_t snapshot_capacity_words; \
+    uint8_t state
+
+#define SECTION_SRTOS_TASK_INIT \
+    , .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, .state = 0u
+#else
+#define SECTION_SRTOS_TASK_FIELDS
+#define SECTION_SRTOS_TASK_INIT
+#endif
+
 #ifndef PERF_START
 #define PERF_START(name)
 #endif
@@ -213,14 +229,7 @@ typedef struct reg_task_t
     struct reg_task_t *p_ready_next;
     uint8_t is_ready;
     uint8_t is_running;
-#if (SRTOS == 1)
-    uint32_t *p_sp;
-    uint32_t *p_stack;
-    uint32_t *p_snapshot;
-    uint32_t snapshot_words;
-    uint32_t snapshot_capacity_words;
-    uint8_t state;
-#endif
+    SECTION_SRTOS_TASK_FIELDS;
 } reg_task_t;
 
 #ifndef TASK_RECORD_PERF_ENABLE
@@ -235,45 +244,11 @@ typedef struct reg_task_t
 #define REG_TASK_PERF_RECORD(name)
 #endif
 
-#if (SRTOS == 1)
-
 #define REG_TASK_RECORD(period, func) \
-    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u, .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, .state = 0u}
+    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u SECTION_SRTOS_TASK_INIT}
 
 #define REG_TASK_STEP_RECORD(period, func, ctx, perf_name) \
-    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = NULL, .p_step_func = (func), .p_ctx = (ctx), .p_name = #perf_name, .p_perf_record = TASK_RECORD_PERF(perf_name), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u, .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, .state = 0u}
-
-#define REG_TASK(period, func)                                                               \
-    REG_TASK_PERF_RECORD(func)                                                               \
-    reg_task_t reg_task_##func = REG_TASK_RECORD(period, func);                    \
-    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
-
-#define REG_TASK_STEP_CTX(period, func, ctx)                                                                  \
-    REG_TASK_PERF_RECORD(func)                                                                                \
-    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, func, ctx, func);                    \
-    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
-
-#define REG_TASK_STEP(period, func)                                                                                                                        \
-    static section_task_status_t section_task_step_wrap_##func(void *ctx)                                                                                  \
-    {                                                                                                                                                      \
-        (void)ctx;                                                                                                                                         \
-        return func();                                                                                                                                     \
-    }                                                                                                                                                      \
-    REG_TASK_PERF_RECORD(func)                                                                                                               \
-    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, section_task_step_wrap_##func, NULL, func);                                     \
-    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
-
-#define REG_TASK_MS(period, func) REG_TASK(((uint32_t)(period) * 10u), func)
-#define REG_TASK_STEP_MS(period, func) REG_TASK_STEP(((uint32_t)(period) * 10u), func)
-#define REG_TASK_STEP_CTX_MS(period, func, ctx) REG_TASK_STEP_CTX(((uint32_t)(period) * 10u), func, ctx)
-
-#else
-
-#define REG_TASK_RECORD(period, func) \
-    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u}
-
-#define REG_TASK_STEP_RECORD(period, func, ctx, perf_name) \
-    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = NULL, .p_step_func = (func), .p_ctx = (ctx), .p_name = #perf_name, .p_perf_record = TASK_RECORD_PERF(perf_name), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u}
+    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = NULL, .p_step_func = (func), .p_ctx = (ctx), .p_name = #perf_name, .p_perf_record = TASK_RECORD_PERF(perf_name), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u SECTION_SRTOS_TASK_INIT}
 
 #define REG_TASK(period, func)                                  \
     REG_TASK_PERF_RECORD(func)                                  \
@@ -294,11 +269,10 @@ typedef struct reg_task_t
     REG_TASK_PERF_RECORD(func)                                                                            \
     reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, section_task_step_wrap_##func, NULL, func); \
     REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
 #define REG_TASK_MS(period, func) REG_TASK(((uint32_t)(period) * 10u), func)
 #define REG_TASK_STEP_MS(period, func) REG_TASK_STEP(((uint32_t)(period) * 10u), func)
 #define REG_TASK_STEP_CTX_MS(period, func, ctx) REG_TASK_STEP_CTX(((uint32_t)(period) * 10u), func, ctx)
-
-#endif
 
 void run_task(void);
 void section_task_tick(void);
