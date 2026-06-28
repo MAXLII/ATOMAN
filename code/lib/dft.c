@@ -117,7 +117,11 @@ dft_status_t dft_reset(dft_t *dft)
     }
 
     dft->inter.phase_step_rad = 0.0f;
+    dft->inter.phase_step_cos = 1.0f;
+    dft->inter.phase_step_sin = 0.0f;
     dft->inter.phase_rad = 0.0f;
+    dft->inter.phase_cos = 1.0f;
+    dft->inter.phase_sin = 0.0f;
     dft->inter.real_sum = 0.0f;
     dft->inter.imag_sum = 0.0f;
     dft->inter.required_sample_size = 0U;
@@ -145,13 +149,11 @@ dft_status_t dft_cal(dft_t *dft)
         return status;
     }
 
-    dft->inter.phase_step_rad =
-        DFT_TWO_PI * dft->cfg.target_freq_hz * dft->cfg.sample_period_s;
-    dft->inter.required_sample_size = dft_calc_required_sample_size(dft);
-
     if (*(dft->input.start) == 0U)
     {
         dft->inter.phase_rad = 0.0f;
+        dft->inter.phase_cos = 1.0f;
+        dft->inter.phase_sin = 0.0f;
         dft->inter.real_sum = 0.0f;
         dft->inter.imag_sum = 0.0f;
         dft->inter.sample_count = 0U;
@@ -169,7 +171,14 @@ dft_status_t dft_cal(dft_t *dft)
 
     if (dft->inter.running == 0U)
     {
+        dft->inter.phase_step_rad =
+            DFT_TWO_PI * dft->cfg.target_freq_hz * dft->cfg.sample_period_s;
+        dft->inter.phase_step_cos = cosf(dft->inter.phase_step_rad);
+        dft->inter.phase_step_sin = sinf(dft->inter.phase_step_rad);
+        dft->inter.required_sample_size = dft_calc_required_sample_size(dft);
         dft->inter.phase_rad = 0.0f;
+        dft->inter.phase_cos = 1.0f;
+        dft->inter.phase_sin = 0.0f;
         dft->inter.real_sum = 0.0f;
         dft->inter.imag_sum = 0.0f;
         dft->inter.sample_count = 0U;
@@ -177,9 +186,20 @@ dft_status_t dft_cal(dft_t *dft)
     }
 
     /* X(f) = sum x[n] * exp(-j * 2*pi*f*n*Ts), one sample per call. */
-    dft->inter.real_sum += *(dft->input.sample) * cosf(dft->inter.phase_rad);
-    dft->inter.imag_sum -= *(dft->input.sample) * sinf(dft->inter.phase_rad);
+    dft->inter.real_sum += *(dft->input.sample) * dft->inter.phase_cos;
+    dft->inter.imag_sum -= *(dft->input.sample) * dft->inter.phase_sin;
     dft->inter.phase_rad += dft->inter.phase_step_rad;
+    {
+        const float phase_cos = dft->inter.phase_cos;
+        const float phase_sin = dft->inter.phase_sin;
+
+        dft->inter.phase_cos =
+            (phase_cos * dft->inter.phase_step_cos) -
+            (phase_sin * dft->inter.phase_step_sin);
+        dft->inter.phase_sin =
+            (phase_sin * dft->inter.phase_step_cos) +
+            (phase_cos * dft->inter.phase_step_sin);
+    }
     dft->inter.sample_count++;
 
     if (dft->inter.sample_count >= dft->inter.required_sample_size)
