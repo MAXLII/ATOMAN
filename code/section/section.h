@@ -65,6 +65,10 @@ typedef struct
     uint32_t task_context_pool_tail;
     uint32_t task_context_save_fail_count;
     uint32_t task_context_release_fail_count;
+    uint32_t task_fault_reason;
+    uint32_t task_fault_policy;
+    uint32_t task_context_required_words;
+    uint32_t task_runtime_stack_used_words;
 } section_fault_debug_t;
 
 extern volatile section_fault_debug_t g_section_fault_debug;
@@ -83,6 +87,20 @@ extern volatile section_fault_debug_t g_section_fault_debug;
 
 #ifndef SECTION_TASK_READY_BURST_MAX
 #define SECTION_TASK_READY_BURST_MAX 4u
+#endif
+
+#define SECTION_TASK_CONTEXT_POOL_FAULT 0u
+#define SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING 1u
+
+#define SECTION_TASK_FAULT_NONE 0u
+#define SECTION_TASK_FAULT_CONTEXT_POOL_FULL 1u
+#define SECTION_TASK_FAULT_PSP_OVERFLOW 2u
+#define SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW 3u
+#define SECTION_TASK_FAULT_CONTEXT_RELEASE_ORDER 4u
+#define SECTION_TASK_FAULT_RUNTIME_STACK_TOO_SMALL 5u
+
+#ifndef SECTION_TASK_CONTEXT_POOL_FULL_POLICY
+#define SECTION_TASK_CONTEXT_POOL_FULL_POLICY SECTION_TASK_CONTEXT_POOL_FAULT
 #endif
 
 #if defined(__GNUC__) || defined(__ARMCC_VERSION)
