@@ -77,7 +77,7 @@
 #endif
 
 #if defined(PWM_FREQ) && !defined(CTRL_PWM_CMP_MAX)
-#if defined(IS_HC32)
+#if defined(IS_HC32F334) || defined(IS_HC32F558)
 #ifndef CTRL_PWM_TIMER_FREQ_HZ
 #define CTRL_PWM_TIMER_FREQ_HZ (120000000UL)
 #endif
