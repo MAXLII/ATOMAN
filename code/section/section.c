@@ -136,12 +136,12 @@ SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *rec
 
 static uint32_t section_critical_enter(void)
 {
-    return SRTOS_CRITICAL_ENTER();
+    return 0u;
 }
 
 static void section_critical_exit(uint32_t primask)
 {
-    SRTOS_CRITICAL_EXIT(primask);
+    (void)primask;
 }
 
 #if (SRTOS == 1)
