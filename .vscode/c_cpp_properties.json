@@ -3,7 +3,8 @@
         "MATLAB_ROOT": "${env:ProgramFiles}/MATLAB/R2024a",
         "MSVC2017_ROOT": "${env:ProgramFiles(x86)}/Microsoft Visual Studio/2017/BuildTools",
         "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023",
-        "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin"
+        "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin",
+        "KEIL_ARMCLANG_ROOT": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/Bin"
     },
     "configurations": [
         {
@@ -28,15 +29,15 @@
                 "${workspaceFolder}/code/interface/common",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/gd32g553c/inc",
+                "${workspaceFolder}/gd32g553c/bsp/inc",
                 "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
                 "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
-                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include",
-                "${workspaceFolder}/gd32g553c/inc",
-                "${workspaceFolder}/gd32g553c/bsp/inc"
+                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include"
             ],
             "defines": [
                 "GD32G5X3",
-                "IS_GD32",
+                "IS_GD32G553",
                 "TOOLCHAIN_GCC",
                 "FIRMWARE_TYPE_ISP",
                 "APP_START_ADDR=0x08000000"
@@ -50,8 +51,8 @@
             }
         },
         {
-            "name": "gd32",
-            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "name": "hc32f334_ac",
+            "compilerPath": "${KEIL_ARMCLANG_ROOT}/armclang.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm",
@@ -62,43 +63,43 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${workspaceFolder}/code/lib",
-                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/hc32f334/ac/src",
+                "${workspaceFolder}/hc32f334/ac/bsp",
+                "${workspaceFolder}/hc32f334/inc",
+                "${workspaceFolder}/hc32f334/src",
+                "${workspaceFolder}/hc32f334/Firmware/CMSIS/Include",
+                "${workspaceFolder}/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
+                "${workspaceFolder}/hc32f334/Firmware/HC32_LL_Driver/inc",
                 "${workspaceFolder}/code/app/demo",
-                "${workspaceFolder}/code/comm",
-                "${workspaceFolder}/code/ctrl",
-                "${workspaceFolder}/code/ctrl/bb",
-                "${workspaceFolder}/code/ctrl/pfc",
-                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
-                "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/gd32g553c/bsp/inc",
-                "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
-                "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
-                "${workspaceFolder}/gd32g553c/inc",
-                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include"
+                "${workspaceFolder}/code/comm"
             ],
             "defines": [
-                "GD32G5X3",
-                "IS_GD32",
-                "TOOLCHAIN_GCC",
+                "HC32F334",
+                "USE_DDL_DRIVER",
+                "IS_HC32F334",
                 "FIRMWARE_TYPE_ISP",
-                "APP_START_ADDR=0x08000000"
+                "APP_START_ADDR=0x00000000",
+                "VECT_TAB_OFFSET=0x00000000",
+                "TOOLCHAIN_MDK",
+                "IS_AC"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/code",
-                    "${workspaceFolder}/gd32g553c"
+                    "${workspaceFolder}/hc32f334"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
         },
         {
-            "name": "hc32f558",
-            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "name": "hc32f558_ac",
+            "compilerPath": "${KEIL_ARMCLANG_ROOT}/armclang.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm",
@@ -116,19 +117,19 @@
                 "${workspaceFolder}/hc32f558/Firmware/CMSIS/HDSC/hc32f5xx/Include",
                 "${workspaceFolder}/hc32f558/Firmware/CMSIS/Include",
                 "${workspaceFolder}/hc32f558/Firmware/HC32_LL_Driver/inc",
-                "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
-                "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/app/demo",
-                "${workspaceFolder}/code/lib"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm"
             ],
             "defines": [
                 "HC32F558",
                 "USE_DDL_DRIVER",
-                "IS_HC32",
+                "IS_HC32F558",
                 "TOOLCHAIN_MDK",
                 "HOST_ADDR=LLC_ADDR",
                 "COMM_LINK_ENABLE_ISO=0",
@@ -138,6 +139,49 @@
                 "path": [
                     "${workspaceFolder}/code",
                     "${workspaceFolder}/hc32f558"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "apm32f402",
+            "compilerPath": "${ARM_GNU_ROOT}/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/apm32/src",
+                "${workspaceFolder}/apm32/bsp/inc",
+                "${workspaceFolder}/apm32/Libraries/CMSIS/Include",
+                "${workspaceFolder}/apm32/Libraries/Device/Geehy/APM32F4xx/Include",
+                "${workspaceFolder}/apm32/Libraries/APM32F402_403_StdPeriphDriver/inc",
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm"
+            ],
+            "defines": [
+                "APM32F402xx",
+                "IS_APM32F402",
+                "TOOLCHAIN_GCC",
+                "FIRMWARE_TYPE_ISP",
+                "APP_START_ADDR=0x08000000"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/apm32"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
@@ -216,42 +260,6 @@
             ]
         },
         {
-            "name": "matlab_inv",
-            "compilerPath": "${MSVC2017_TOOLS}/bin/HostX64/x64/cl.exe",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-x64",
-            "includePath": [
-                "${workspaceFolder}/matlab/common",
-                "${workspaceFolder}/matlab/inv",
-                "${workspaceFolder}/matlab/inv/app",
-                "${workspaceFolder}/matlab/inv/bsp",
-                "${workspaceFolder}/code/lib",
-                "${workspaceFolder}/code/ctrl",
-                "${workspaceFolder}/code/ctrl/inv",
-                "${workspaceFolder}/code/section",
-                "${MATLAB_ROOT}/extern/include",
-                "${MATLAB_ROOT}/simulink/include"
-            ],
-            "defines": [
-                "IS_MATLAB",
-                "IS_INV",
-                "TOOLCHAIN_MSVC",
-                "MATLAB_MEX_FILE",
-                "S_FUNCTION_NAME=sfunc",
-                "__RAM_FUNC="
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/matlab",
-                    "${workspaceFolder}/code",
-                    "${MATLAB_ROOT}/extern/include",
-                    "${MATLAB_ROOT}/simulink/include"
-                ],
-                "limitSymbolsToIncludedHeaders": true
-            }
-        },
-        {
             "name": "plecs_dc",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
@@ -299,6 +307,42 @@
                 "TOOLCHAIN_GCC",
                 "IS_LLC"
             ]
+        },
+        {
+            "name": "matlab_inv",
+            "compilerPath": "${MSVC2017_TOOLS}/bin/HostX64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64",
+            "includePath": [
+                "${workspaceFolder}/matlab/common",
+                "${workspaceFolder}/matlab/inv",
+                "${workspaceFolder}/matlab/inv/app",
+                "${workspaceFolder}/matlab/inv/bsp",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/section",
+                "${MATLAB_ROOT}/extern/include",
+                "${MATLAB_ROOT}/simulink/include"
+            ],
+            "defines": [
+                "IS_MATLAB",
+                "IS_INV",
+                "TOOLCHAIN_MSVC",
+                "MATLAB_MEX_FILE",
+                "S_FUNCTION_NAME=sfunc",
+                "__RAM_FUNC="
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/matlab",
+                    "${workspaceFolder}/code",
+                    "${MATLAB_ROOT}/extern/include",
+                    "${MATLAB_ROOT}/simulink/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         }
     ],
     "version": 4
