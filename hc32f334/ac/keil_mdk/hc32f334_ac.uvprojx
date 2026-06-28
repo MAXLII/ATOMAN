@@ -339,7 +339,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F334,USE_DDL_DRIVER,IS_HC32,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x00000000,VECT_TAB_OFFSET=0x00000000,TOOLCHAIN_MDK,IS_AC</Define>
+              <Define>HC32F334,USE_DDL_DRIVER,IS_HC32F334,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x00000000,VECT_TAB_OFFSET=0x00000000,TOOLCHAIN_MDK,IS_AC</Define>
               <Undefine></Undefine>
               <IncludePath>..\src;..\bsp;..\..\inc;..\..\src;..\..\Firmware\CMSIS\Include;..\..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo</IncludePath>
             </VariousControls>

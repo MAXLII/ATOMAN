@@ -89,7 +89,7 @@ extern uint32_t perf_dict_version;
 #ifndef PERF_CNT_PER_SECTION_SYS_TICK
 #define PERF_CNT_PER_SECTION_SYS_TICK 200UL
 #endif
-#elif defined(IS_HC32)
+#elif defined(IS_HC32F334)
 #ifndef PERF_COUNT_UNIT_US
 #define PERF_COUNT_UNIT_US (8.0f / 15.0f)
 #endif

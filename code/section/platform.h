@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Select platform-specific tick, reset, linker-section, and RAM-function symbols
- *          - Map MATLAB, PLECS, GD32, HC32, APM32, and fallback builds onto the section runtime contract
+ *          - Map MATLAB, PLECS, MCU projects, and fallback builds onto the section runtime contract
  *          - Provide compile-time abstraction macros without exposing BSP calls to application code
  *
  *          Design notes:
@@ -31,7 +31,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/* Toolchain selection */
+/* -------------------------------------------------------------------------- */
+/* Toolchain selection                                                        */
+/* -------------------------------------------------------------------------- */
 #if !defined(TOOLCHAIN_MDK) && !defined(TOOLCHAIN_GCC) && !defined(TOOLCHAIN_MSVC)
 #if defined(__CC_ARM) || defined(__ARMCC_VERSION)
 #define TOOLCHAIN_MDK 1
@@ -52,7 +54,25 @@
 #define SECTION_LINKER_SENTINELS 1
 #endif
 
-/* Runtime platform contract */
+/* -------------------------------------------------------------------------- */
+/* Runtime platform contract                                                  */
+/*                                                                            */
+/* Porting boundary: each platform block should provide the complete section   */
+/* runtime contract used by section.c/section.h. When creating a new MCU       */
+/* project, copy the closest MCU block and adjust the symbols listed below.    */
+/*                                                                            */
+/* Required contract per platform block:                                      */
+/* - SECTION_SYS_TICK: monotonic scheduler tick source                         */
+/* - SECTION_SYS_TICK_UNIT_US: tick unit in microseconds                       */
+/* - SRTOS: default RTOS enable switch, 0 or 1                                 */
+/* - SECTION_START / SECTION_STOP: REG_TASK linker section boundaries          */
+/* - SYSTEM_RESET: platform reset expression                                  */
+/* - FUNC_RAM: optional RAM-function attribute                                */
+/* - SRTOS_PENDSV_SET: request a PendSV context switch                         */
+/* - SRTOS_FPU_DISABLE_LAZY_STACKING: optional FPU context policy              */
+/* -------------------------------------------------------------------------- */
+
+/* Simulation: MATLAB */
 #ifdef IS_MATLAB
 #include "sim_sfunc.h"
 extern uint32_t sim_time_100us;
@@ -79,6 +99,7 @@ extern size_t __stop_section;
     {                                     \
     } while (0)
 
+/* Simulation: PLECS */
 #elif defined(IS_PLECS)
 #include "plecs.h"
 extern uint32_t plecs_time_100us;
@@ -104,7 +125,8 @@ extern size_t __stop_section;
     {                                     \
     } while (0)
 
-#elif defined(IS_GD32)
+/* MCU: GD32G553 */
+#elif defined(IS_GD32G553)
 #include "systick.h"
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
@@ -148,21 +170,14 @@ extern uint32_t __section_end;
     } while (0)
 #endif
 
-#elif defined(IS_HC32)
+/* MCU: HC32F334 */
+#elif defined(IS_HC32F334)
 #include "systick.h"
-#if defined(HC32F558)
-#include "hc32f5xx.h"
-#else
 #include "hc32f3xx.h"
-#endif
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 #ifndef SRTOS
-#if defined(HC32F334)
 #define SRTOS 1
-#else
-#define SRTOS 0
-#endif
 #endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t Load$$SECTION$$Base;
@@ -200,7 +215,53 @@ extern uint32_t __section_end;
     } while (0)
 #endif
 
-#elif defined(IS_APM32)
+/* MCU: HC32F558 */
+#elif defined(IS_HC32F558)
+#include "systick.h"
+#include "hc32f5xx.h"
+#define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
+#ifndef SRTOS
+#define SRTOS 0
+#endif
+#if defined(TOOLCHAIN_MDK)
+extern uint32_t Load$$SECTION$$Base;
+extern uint32_t Load$$SECTION$$Limit;
+#define SECTION_START Load$$SECTION$$Base
+#define SECTION_STOP Load$$SECTION$$Limit
+#else
+extern uint32_t __section_start;
+extern uint32_t __section_end;
+#define SECTION_START __section_start
+#define SECTION_STOP __section_end
+#endif
+#define SYSTEM_RESET NVIC_SystemReset()
+#ifndef PLECS_LOG
+#define PLECS_LOG(...)
+#endif
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#define SRTOS_PENDSV_SET()                  \
+    do                                      \
+    {                                       \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
+        __DSB();                            \
+        __ISB();                            \
+    } while (0)
+#if defined(FPU) && (__FPU_PRESENT == 1U)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+    do                                      \
+    {                                       \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+    } while (0)
+#else
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
+#endif
+
+/* MCU: APM32F402 */
+#elif defined(IS_APM32F402)
 #include "apm32f402_403.h"
 #include "apm32f402_403_int.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
@@ -237,6 +298,7 @@ extern uint32_t __section_end;
     } while (0)
 #endif
 
+/* Default MCU fallback */
 #else
 #include "systick.h"
 #include "gd32g5x3.h"
@@ -275,6 +337,10 @@ extern uint32_t __section_end;
 #endif
 #endif
 
+/* -------------------------------------------------------------------------- */
+/* Runtime contract validation                                                */
+/* -------------------------------------------------------------------------- */
+
 #if (SRTOS != 0) && (SRTOS != 1)
 #error "SRTOS must be 0 or 1."
 #endif
@@ -283,7 +349,12 @@ extern uint32_t __section_end;
 #error "SRTOS=1 requires the selected platform to provide SRTOS exception interfaces."
 #endif
 
-/* Section registration attributes */
+/* -------------------------------------------------------------------------- */
+/* Section registration attributes                                            */
+/*                                                                            */
+/* These macros place REG_TASK records into the linker-visible section range   */
+/* selected by the active runtime platform block above.                        */
+/* -------------------------------------------------------------------------- */
 #if defined(TOOLCHAIN_MSVC)
 #pragma section("section$a", read)
 #pragma section("section$m", read)
