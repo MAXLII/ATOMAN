@@ -30,6 +30,7 @@
 #include "section.h"
 
 #include <stddef.h>
+#include <string.h>
 
 static reg_task_t *p_task_first = NULL;
 static reg_task_t *p_task_tail = NULL;
@@ -61,11 +62,22 @@ typedef enum
 
 static reg_task_t *p_task_current = NULL;
 static uint8_t task_scheduler_started = 0u;
+static uint32_t s_task_runtime_stack[SECTION_TASK_RUNTIME_STACK_WORDS] SECTION_TASK_STACK_ATTR;
+static uint32_t s_task_context_pool[SECTION_TASK_CONTEXT_POOL_WORDS] SECTION_TASK_STACK_ATTR;
+static uint32_t s_task_context_pool_head = 0u;
+static uint32_t s_task_context_pool_tail = 0u;
+static uint32_t s_task_context_pool_used = 0u;
+static uint32_t s_task_context_pool_gap_start = 0u;
+static uint32_t s_task_context_pool_gap_words = 0u;
 
 static void task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task);
 static reg_task_t *task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail);
 static void section_task_entry(void);
-static void task_stack_init(reg_task_t *task);
+static uint32_t task_context_alloc(reg_task_t *task, uint32_t required_words);
+static void task_context_release(reg_task_t *task);
+static void task_stack_prepare_initial(reg_task_t *task);
+static uint32_t task_stack_save(reg_task_t *task, uint32_t *sp);
+static uint32_t *task_stack_restore(reg_task_t *task);
 static uint32_t task_stack_frame_valid(const reg_task_t *task);
 static uint32_t task_stack_free_words_get(const reg_task_t *task);
 static const uint32_t *task_hw_frame_get(const reg_task_t *task);
@@ -140,22 +152,153 @@ static void section_critical_exit(uint32_t primask)
 }
 
 #if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
-static void task_stack_init(reg_task_t *task)
+static uint32_t *task_runtime_stack_low_get(void)
 {
-    uint32_t *hw_frame = NULL;
-    uint32_t *sp = NULL;
+    return &s_task_runtime_stack[0];
+}
 
-    if ((task == NULL) || (task->p_stack == NULL) || (task->stack_words < 33u))
+static uint32_t *task_runtime_stack_top_get(void)
+{
+    return (uint32_t *)((uintptr_t)&s_task_runtime_stack[SECTION_TASK_RUNTIME_STACK_WORDS] & ~(uintptr_t)0x7u);
+}
+
+static uint32_t task_context_alloc(reg_task_t *task, uint32_t required_words)
+{
+    uint32_t offset;
+    uint32_t free_words;
+
+    if (task == NULL)
+    {
+        return 0u;
+    }
+
+    if (required_words == 0u)
+    {
+        return 1u;
+    }
+
+    if (required_words > SECTION_TASK_RUNTIME_STACK_WORDS)
+    {
+        return 0u;
+    }
+
+    if (task->p_snapshot != NULL)
+    {
+        return (task->snapshot_capacity_words >= required_words) ? 1u : 0u;
+    }
+
+    if (s_task_context_pool_used >= SECTION_TASK_CONTEXT_POOL_WORDS)
+    {
+        return 0u;
+    }
+
+    free_words = SECTION_TASK_CONTEXT_POOL_WORDS - s_task_context_pool_used;
+    if (required_words > free_words)
+    {
+        return 0u;
+    }
+
+    if (s_task_context_pool_tail >= s_task_context_pool_head)
+    {
+        if ((s_task_context_pool_tail + required_words) <= SECTION_TASK_CONTEXT_POOL_WORDS)
+        {
+            offset = s_task_context_pool_tail;
+            s_task_context_pool_tail += required_words;
+            if (s_task_context_pool_tail >= SECTION_TASK_CONTEXT_POOL_WORDS)
+            {
+                s_task_context_pool_tail = 0u;
+            }
+        }
+        else
+        {
+            const uint32_t gap_words = SECTION_TASK_CONTEXT_POOL_WORDS - s_task_context_pool_tail;
+
+            if ((required_words > s_task_context_pool_head) ||
+                ((s_task_context_pool_used + gap_words + required_words) > SECTION_TASK_CONTEXT_POOL_WORDS))
+            {
+                return 0u;
+            }
+
+            s_task_context_pool_gap_start = s_task_context_pool_tail;
+            s_task_context_pool_gap_words = gap_words;
+            s_task_context_pool_used += gap_words;
+            s_task_context_pool_tail = 0u;
+
+            offset = 0u;
+            s_task_context_pool_tail = required_words;
+        }
+    }
+    else
+    {
+        if ((s_task_context_pool_tail + required_words) > s_task_context_pool_head)
+        {
+            return 0u;
+        }
+
+        offset = s_task_context_pool_tail;
+        s_task_context_pool_tail += required_words;
+    }
+
+    task->p_snapshot = &s_task_context_pool[offset];
+    task->snapshot_capacity_words = required_words;
+    s_task_context_pool_used += required_words;
+
+    return 1u;
+}
+
+static void task_context_release(reg_task_t *task)
+{
+    uint32_t offset;
+
+    if ((task == NULL) || (task->p_snapshot == NULL) || (task->snapshot_capacity_words == 0u))
     {
         return;
     }
 
-    for (uint32_t i = 0u; i < task->stack_words; ++i)
+    offset = (uint32_t)(task->p_snapshot - s_task_context_pool);
+    if (offset != s_task_context_pool_head)
     {
-        task->p_stack[i] = TASK_STACK_FILL_WORD;
+        return;
     }
 
-    hw_frame = (uint32_t *)((uintptr_t)&task->p_stack[task->stack_words - 8u] & ~(uintptr_t)0x7u);
+    s_task_context_pool_head += task->snapshot_capacity_words;
+    s_task_context_pool_used -= task->snapshot_capacity_words;
+    if (s_task_context_pool_head >= SECTION_TASK_CONTEXT_POOL_WORDS)
+    {
+        s_task_context_pool_head = 0u;
+    }
+
+    if ((s_task_context_pool_gap_words != 0u) &&
+        (s_task_context_pool_head == s_task_context_pool_gap_start))
+    {
+        s_task_context_pool_head = 0u;
+        s_task_context_pool_used -= s_task_context_pool_gap_words;
+        s_task_context_pool_gap_start = 0u;
+        s_task_context_pool_gap_words = 0u;
+    }
+
+    task->p_snapshot = NULL;
+    task->snapshot_words = 0u;
+    task->snapshot_capacity_words = 0u;
+}
+
+static void task_stack_prepare_initial(reg_task_t *task)
+{
+    uint32_t *hw_frame = NULL;
+    uint32_t *sp = NULL;
+    uint32_t *top = task_runtime_stack_top_get();
+
+    if ((task == NULL) || (SECTION_TASK_RUNTIME_STACK_WORDS < 33u))
+    {
+        return;
+    }
+
+    for (uint32_t i = 0u; i < SECTION_TASK_RUNTIME_STACK_WORDS; ++i)
+    {
+        s_task_runtime_stack[i] = TASK_STACK_FILL_WORD;
+    }
+
+    hw_frame = &top[-8];
     sp = &hw_frame[-9];
 
     sp[0] = 0u;
@@ -178,7 +321,70 @@ static void task_stack_init(reg_task_t *task)
     hw_frame[7] = TASK_INITIAL_XPSR;
 
     task->p_sp = sp;
-    task->state = (uint8_t)TASK_STACK_STATE_SLEEPING;
+    task->p_stack = task_runtime_stack_low_get();
+}
+
+static uint32_t task_stack_save(reg_task_t *task, uint32_t *sp)
+{
+    uint32_t *low = task_runtime_stack_low_get();
+    uint32_t *top = task_runtime_stack_top_get();
+    uint32_t used_words;
+
+    if ((task == NULL) || (sp == NULL))
+    {
+        return 0u;
+    }
+
+    if ((sp < low) || (sp > top))
+    {
+        return 0u;
+    }
+
+    used_words = (uint32_t)(top - sp);
+    if ((used_words == 0u) || (task_context_alloc(task, used_words) == 0u))
+    {
+        g_section_fault_debug.task_context_save_fail_count++;
+        return 0u;
+    }
+
+    (void)memcpy(task->p_snapshot, sp, used_words * sizeof(uint32_t));
+    task->snapshot_words = used_words;
+    task->p_sp = top - used_words;
+    task->p_stack = low;
+
+    return 1u;
+}
+
+static uint32_t *task_stack_restore(reg_task_t *task)
+{
+    uint32_t *top = task_runtime_stack_top_get();
+    uint32_t *sp;
+
+    if (task == NULL)
+    {
+        return NULL;
+    }
+
+    if (task->state == (uint8_t)TASK_STACK_STATE_READY_NEW)
+    {
+        task_stack_prepare_initial(task);
+        return task->p_sp;
+    }
+
+    if ((task->p_snapshot == NULL) ||
+        (task->snapshot_words == 0u) ||
+        (task->snapshot_words > SECTION_TASK_RUNTIME_STACK_WORDS))
+    {
+        return NULL;
+    }
+
+    sp = top - task->snapshot_words;
+    (void)memcpy(sp, task->p_snapshot, task->snapshot_words * sizeof(uint32_t));
+    task->p_sp = sp;
+    task->p_stack = task_runtime_stack_low_get();
+    task_context_release(task);
+
+    return sp;
 }
 
 static uint32_t task_stack_frame_valid(const reg_task_t *task)
@@ -222,12 +428,13 @@ static uint32_t task_stack_free_words_get(const reg_task_t *task)
 {
     uint32_t free_words = 0u;
 
-    if ((task == NULL) || (task->p_stack == NULL))
+    if (task == NULL)
     {
         return 0u;
     }
 
-    while ((free_words < task->stack_words) && (task->p_stack[free_words] == TASK_STACK_FILL_WORD))
+    while ((free_words < SECTION_TASK_RUNTIME_STACK_WORDS) &&
+           (s_task_runtime_stack[free_words] == TASK_STACK_FILL_WORD))
     {
         ++free_words;
     }
@@ -238,11 +445,31 @@ static uint32_t task_stack_free_words_get(const reg_task_t *task)
 static reg_task_t *task_stack_pick_next(void)
 {
     reg_task_t *candidate = NULL;
+    static uint32_t ready_pick_count = 0u;
 
-    candidate = task_ready_pop_unlocked(&p_task_ready_first, &p_task_ready_tail);
-    if (candidate == NULL)
+    if ((p_task_unfinished_first != NULL) &&
+        ((p_task_ready_first == NULL) || (ready_pick_count >= SECTION_TASK_READY_BURST_MAX)))
     {
         candidate = task_ready_pop_unlocked(&p_task_unfinished_first, &p_task_unfinished_tail);
+        ready_pick_count = 0u;
+    }
+    else
+    {
+        candidate = task_ready_pop_unlocked(&p_task_ready_first, &p_task_ready_tail);
+        if (candidate != NULL)
+        {
+            ready_pick_count++;
+        }
+        else
+        {
+            candidate = task_ready_pop_unlocked(&p_task_unfinished_first, &p_task_unfinished_tail);
+            ready_pick_count = 0u;
+        }
+    }
+
+    if (candidate != NULL)
+    {
+        candidate->is_running = 1u;
     }
 
     return candidate;
@@ -326,7 +553,12 @@ static void task_insert(reg_task_t *task)
     task->is_ready = 0u;
     task->is_running = 0u;
 #if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
-    task_stack_init(task);
+    task->p_sp = NULL;
+    task->p_stack = task_runtime_stack_low_get();
+    task->p_snapshot = NULL;
+    task->snapshot_words = 0u;
+    task->snapshot_capacity_words = 0u;
+    task->state = (uint8_t)TASK_STACK_STATE_SLEEPING;
 #endif
     section_perf_task_period_set(task->p_perf_record, task->t_period * SECTION_SYS_TICK_UNIT_US);
 
@@ -465,6 +697,11 @@ void section_runtime_reset(void)
 #if (SECTION_TASK_CONTEXT_SWITCH_ENABLE == 1)
     p_task_current = NULL;
     task_scheduler_started = 0u;
+    s_task_context_pool_head = 0u;
+    s_task_context_pool_tail = 0u;
+    s_task_context_pool_used = 0u;
+    s_task_context_pool_gap_start = 0u;
+    s_task_context_pool_gap_words = 0u;
 #endif
     p_interrupt_first = NULL;
     p_link_first = NULL;
@@ -524,20 +761,11 @@ static void task_activate_if_due(reg_task_t *task, uint32_t now)
 void section_task_tick(void)
 {
     const uint32_t now = SECTION_SYS_TICK;
-    uint32_t primask;
 
     if (task_scheduler_ready == 0u)
     {
         return;
     }
-
-    primask = section_critical_enter();
-    if (p_task_ready_first != NULL)
-    {
-        section_critical_exit(primask);
-        return;
-    }
-    section_critical_exit(primask);
 
     for (reg_task_t *task = p_task_first; task != NULL; task = task->p_next)
     {
@@ -607,6 +835,21 @@ uint32_t section_task_switch_pending(void)
     return pending;
 }
 
+uint32_t section_task_slice_elapsed(void)
+{
+    static uint32_t last_switch_tick = 0u;
+    const uint32_t now = SECTION_SYS_TICK;
+    uint32_t elapsed = 0u;
+
+    if ((uint32_t)(now - last_switch_tick) >= SECTION_TASK_SLICE_TICKS)
+    {
+        last_switch_tick = now;
+        elapsed = 1u;
+    }
+
+    return elapsed;
+}
+
 void section_task_start_request(void)
 {
     task_scheduler_started = 1u;
@@ -635,6 +878,7 @@ void section_task_complete_current(void)
     if (p_task_current != NULL)
     {
         p_task_current->state = (uint8_t)TASK_STACK_STATE_SLEEPING;
+        p_task_current->is_running = 0u;
     }
 
     section_critical_exit(primask);
@@ -643,6 +887,7 @@ void section_task_complete_current(void)
 uint32_t *section_task_start_sp_get(void)
 {
     reg_task_t *next = NULL;
+    uint32_t *next_sp = NULL;
 
     section_task_tick();
     next = task_stack_pick_next();
@@ -651,60 +896,94 @@ uint32_t *section_task_start_sp_get(void)
         return NULL;
     }
 
-    if (next->state == (uint8_t)TASK_STACK_STATE_READY_NEW)
+    next_sp = task_stack_restore(next);
+    if (next_sp == NULL)
     {
-        task_stack_init(next);
+        return NULL;
     }
+
     next->state = (uint8_t)TASK_STACK_STATE_RUNNING;
     p_task_current = next;
     task_scheduler_started = 1u;
-    return next->p_sp;
+    return next_sp;
 }
 
 uint32_t *section_task_switch_sp(uint32_t *sp)
 {
     reg_task_t *next = NULL;
+    uint32_t *next_sp = NULL;
+    uint32_t has_switch_target = 0u;
+    uint32_t primask = 0u;
 
     if (task_scheduler_started == 0u)
     {
         return sp;
     }
 
+    section_task_tick();
+
+    primask = section_critical_enter();
+    if ((p_task_ready_first != NULL) || (p_task_unfinished_first != NULL))
+    {
+        has_switch_target = 1u;
+    }
+    section_critical_exit(primask);
+
+    if (has_switch_target == 0u)
+    {
+        if ((sp != NULL) && (p_task_current != NULL))
+        {
+            p_task_current->p_sp = sp;
+        }
+        return sp;
+    }
+
     if ((sp != NULL) && (p_task_current != NULL))
     {
-        p_task_current->p_sp = sp;
         if (p_task_current->state == (uint8_t)TASK_STACK_STATE_RUNNING)
         {
+            if (task_stack_save(p_task_current, sp) == 0u)
+            {
+                return sp;
+            }
             p_task_current->state = (uint8_t)TASK_STACK_STATE_READY_OLD;
+            p_task_current->is_running = 0u;
             task_ready_enqueue_unlocked(&p_task_unfinished_first, &p_task_unfinished_tail, p_task_current);
+        }
+        else
+        {
+            p_task_current->p_sp = sp;
         }
     }
 
-    section_task_tick();
     next = task_stack_pick_next();
     if (next != NULL)
     {
         const uint32_t *frame = NULL;
 
-        if (next->state == (uint8_t)TASK_STACK_STATE_READY_NEW)
+        next_sp = task_stack_restore(next);
+        if (next_sp == NULL)
         {
-            task_stack_init(next);
+            return sp;
         }
 
         next->state = (uint8_t)TASK_STACK_STATE_RUNNING;
         frame = task_hw_frame_get(next);
         p_task_current = next;
-        g_section_fault_debug.task_sp = (uint32_t)(uintptr_t)next->p_sp;
+        g_section_fault_debug.task_sp = (uint32_t)(uintptr_t)next_sp;
         if (frame != NULL)
         {
             g_section_fault_debug.task_pc = frame[6u];
             g_section_fault_debug.task_xpsr = frame[7u];
         }
-        g_section_fault_debug.task_stack_base = (uint32_t)(uintptr_t)next->p_stack;
-        g_section_fault_debug.task_stack_words = next->stack_words;
-        g_section_fault_debug.task_frame_valid = task_stack_frame_valid(next);
-        g_section_fault_debug.task_name = (uint32_t)(uintptr_t)next->p_name;
-        return next->p_sp;
+    g_section_fault_debug.task_stack_base = (uint32_t)(uintptr_t)next->p_stack;
+    g_section_fault_debug.task_stack_words = SECTION_TASK_RUNTIME_STACK_WORDS;
+    g_section_fault_debug.task_frame_valid = task_stack_frame_valid(next);
+    g_section_fault_debug.task_name = (uint32_t)(uintptr_t)next->p_name;
+    g_section_fault_debug.task_stack_free_words = task_stack_free_words_get(next);
+    g_section_fault_debug.task_context_pool_words = SECTION_TASK_CONTEXT_POOL_WORDS;
+    g_section_fault_debug.task_context_pool_used = s_task_context_pool_used;
+    return next_sp;
     }
 
     if ((sp != NULL) && (p_task_current != NULL))
@@ -870,7 +1149,7 @@ static void section_link_task(void)
     }
 }
 
-REG_TASK_STACK(10, section_link_task, 256u)
+REG_TASK(10, section_link_task)
 
 void section_fsm_func(reg_fsm_t *fsm)
 {

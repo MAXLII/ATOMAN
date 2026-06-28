@@ -64,23 +64,20 @@ typedef struct
 
 volatile demo_task_dead_loop_debug_t g_demo_task_dead_loop_debug;
 
-static void demo_task_busy_delay(uint32_t rounds)
+static void demo_task_wait_ticks(uint32_t ticks)
 {
-    volatile uint32_t sink = 0u;
+    const uint32_t start_tick = SECTION_SYS_TICK;
 
-    for (uint32_t i = 0u; i < rounds; ++i)
+    while ((uint32_t)(SECTION_SYS_TICK - start_tick) < ticks)
     {
-        sink += (i ^ 0x5A5A5A5Au);
     }
-
-    (void)sink;
 }
 
 static void demo_task_dead_loop_100ms(void)
 {
     while (1)
     {
-        demo_task_busy_delay(900000u);
+        demo_task_wait_ticks(1000u);
         g_demo_task_dead_loop_debug.loop_100ms_delay_count++;
         g_demo_task_dead_loop_debug.loop_100ms_print_count++;
         bsp_usart_iso_printf("TASK_DEAD_LOOP_100MS count=%lu 10ms=%lu tick=%lu\r\n",
@@ -94,7 +91,7 @@ static void demo_task_dead_loop_123ms(void)
 {
     while (1)
     {
-        demo_task_busy_delay(1107000u);
+        demo_task_wait_ticks(1230u);
         g_demo_task_dead_loop_debug.loop_123ms_delay_count++;
         g_demo_task_dead_loop_debug.loop_123ms_print_count++;
         bsp_usart_iso_printf("TASK_DEAD_LOOP_123MS count=%lu 10ms=%lu tick=%lu\r\n",
@@ -234,13 +231,13 @@ static void demo_sched_probe_ultra_long(void)
 REG_TASK_MS(10, demo_task_10ms)
 REG_TASK(1, demo_task_100us)
 #if (DEMO_TASK_DEAD_LOOP_ENABLE == 1)
-REG_TASK_STACK_MS(1, demo_task_dead_loop_100ms, 512u)
-REG_TASK_STACK_MS(1, demo_task_dead_loop_123ms, 512u)
+REG_TASK_MS(1, demo_task_dead_loop_100ms)
+REG_TASK_MS(1, demo_task_dead_loop_123ms)
 #endif
 #if (DEMO_TASK_SCHED_PROBE_ENABLE == 1)
-REG_TASK_STACK(1, demo_sched_probe_fast, 128u)
-REG_TASK_STACK(2, demo_sched_probe_mid, 128u)
-REG_TASK_STACK(3, demo_sched_probe_float, 128u)
-REG_TASK_STACK(5, demo_sched_probe_long, 128u)
-REG_TASK_STACK(7, demo_sched_probe_ultra_long, 192u)
+REG_TASK(1, demo_sched_probe_fast)
+REG_TASK(2, demo_sched_probe_mid)
+REG_TASK(3, demo_sched_probe_float)
+REG_TASK(5, demo_sched_probe_long)
+REG_TASK(7, demo_sched_probe_ultra_long)
 #endif
