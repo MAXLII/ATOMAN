@@ -83,7 +83,7 @@ static void demo_task_dead_loop_100ms(void)
         bsp_usart_iso_printf("TASK_DEAD_LOOP_100MS count=%lu 10ms=%lu tick=%lu\r\n",
                              (unsigned long)g_demo_task_dead_loop_debug.loop_100ms_print_count,
                              (unsigned long)s_demo_task_10ms_count,
-                             (unsigned long)s_demo_task_tick_count);
+                             (unsigned long)SECTION_SYS_TICK);
     }
 }
 
@@ -97,7 +97,7 @@ static void demo_task_dead_loop_123ms(void)
         bsp_usart_iso_printf("TASK_DEAD_LOOP_123MS count=%lu 10ms=%lu tick=%lu\r\n",
                              (unsigned long)g_demo_task_dead_loop_debug.loop_123ms_print_count,
                              (unsigned long)s_demo_task_10ms_count,
-                             (unsigned long)s_demo_task_tick_count);
+                             (unsigned long)SECTION_SYS_TICK);
     }
 }
 #endif
