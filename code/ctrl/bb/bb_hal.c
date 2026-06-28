@@ -70,7 +70,8 @@ static void bb_hal_exit_run(void)
     bb_cfg_publish_building();
 }
 
-static bb_fsm_hal_t bb_fsm_hal = { /* bb_fsm_hal: FSM callbacks for run enter/exit */
+static bb_fsm_hal_t bb_fsm_hal = {
+    /* bb_fsm_hal: FSM callbacks for run enter/exit */
     .p_enter_run_func = bb_hal_enter_run,
     .p_exit_run_func = bb_hal_exit_run,
     .p_latched = &hard_protect_latched,

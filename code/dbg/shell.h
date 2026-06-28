@@ -112,7 +112,7 @@ typedef struct section_shell_t
     void (*func)(DEC_MY_PRINTF); ///< Callback (command exec, variable-changed notification, etc.).
     uint32_t status;
 
-    DEC_MY_PRINTF;               ///< Optional: cached / forwarded output interface at runtime.
+    DEC_MY_PRINTF; ///< Optional: cached / forwarded output interface at runtime.
     struct section_shell_t *p_next;
 } section_shell_t;
 
@@ -143,36 +143,36 @@ typedef struct section_shell_t
  * @param _func   Optional callback (triggered after the variable is written).
  * @param _status Status bits (e.g. SHELL_STA_AUTO).
  */
-#define REG_SHELL_VAR(_name, _var, _type, _max, _min, _func, _status)                      \
-    static __typeof__(_var) _name##_##max = (__typeof__(_var))(_max);                      \
-    static __typeof__(_var) _name##_##min = (__typeof__(_var))(_min);                      \
-    section_shell_t section_shell_##_name = {                                              \
-        .p_name = #_name,                                                                  \
-        .p_name_size = (uint32_t)(sizeof(#_name) - 1),                                     \
-        .p_var = (void *)&(_var),                                                          \
-        .type = (uint32_t)(_type),                                                         \
-        .p_max = (void *)&_name##_##max,                                                   \
-        .p_min = (void *)&_name##_##min,                                                   \
-        .func = (_func),                                                                   \
-        .status = (uint32_t)(_status),                                                     \
-        .p_next = NULL,                                                                    \
-    };                                                                                     \
+#define REG_SHELL_VAR(_name, _var, _type, _max, _min, _func, _status)                       \
+    static __typeof__(_var) _name##_##max = (__typeof__(_var))(_max);                       \
+    static __typeof__(_var) _name##_##min = (__typeof__(_var))(_min);                       \
+    section_shell_t section_shell_##_name = {                                               \
+        .p_name = #_name,                                                                   \
+        .p_name_size = (uint32_t)(sizeof(#_name) - 1),                                      \
+        .p_var = (void *)&(_var),                                                           \
+        .type = (uint32_t)(_type),                                                          \
+        .p_max = (void *)&_name##_##max,                                                    \
+        .p_min = (void *)&_name##_##min,                                                    \
+        .func = (_func),                                                                    \
+        .status = (uint32_t)(_status),                                                      \
+        .p_next = NULL,                                                                     \
+    };                                                                                      \
     _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 
 /**
  * @brief Register a Shell command.
  */
-#define REG_SHELL_CMD(_name, _func)                                                        \
-    section_shell_t section_shell_##_name = {                                              \
-        .p_name = #_name,                                                                  \
-        .p_name_size = (uint32_t)(sizeof(#_name) - 1),                                     \
-        .p_var = NULL,                                                                     \
-        .type = (uint32_t)SHELL_CMD,                                                       \
-        .func = (_func),                                                                   \
-        .status = 0,                                                                       \
-        .p_next = NULL,                                                                    \
-    };                                                                                     \
+#define REG_SHELL_CMD(_name, _func)                                                         \
+    section_shell_t section_shell_##_name = {                                               \
+        .p_name = #_name,                                                                   \
+        .p_name_size = (uint32_t)(sizeof(#_name) - 1),                                      \
+        .p_var = NULL,                                                                      \
+        .type = (uint32_t)SHELL_CMD,                                                        \
+        .func = (_func),                                                                    \
+        .status = 0,                                                                        \
+        .p_next = NULL,                                                                     \
+    };                                                                                      \
     _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 

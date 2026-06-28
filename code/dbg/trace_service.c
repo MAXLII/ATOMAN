@@ -82,12 +82,12 @@ typedef struct
 static dbg_trace_print_ctx_t g_dbg_trace_print_ctx = {0};
 
 #define DBG_TRACE_PRINT_VALUE(p_link_printf, time_value, line_value)                                               \
-    do                                                                                                            \
-    {                                                                                                             \
-        if (((p_link_printf) != NULL) && ((p_link_printf)->my_printf != NULL))                                    \
-        {                                                                                                         \
+    do                                                                                                             \
+    {                                                                                                              \
+        if (((p_link_printf) != NULL) && ((p_link_printf)->my_printf != NULL))                                     \
+        {                                                                                                          \
             (p_link_printf)->my_printf("%lu\t%lu \r\n", (unsigned long)(time_value), (unsigned long)(line_value)); \
-        }                                                                                                         \
+        }                                                                                                          \
     } while (0)
 
 static void dbg_trace_print_start(DEC_MY_PRINTF)

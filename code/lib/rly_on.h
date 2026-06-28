@@ -89,4 +89,3 @@ void rly_on_init(rly_on_t *p_str, uint8_t *p_rly_on_trig, uint8_t *p_rly_off_tri
 void rly_on_func(rly_on_t *p_str);
 
 #endif
-

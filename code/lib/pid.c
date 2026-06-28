@@ -33,7 +33,8 @@ void pid_reset(pid_param_t *pid_param)
 {
     memset(pid_param, 0, sizeof(pid_param_t));
 }
-float pid_cal(pid_param_t *pid_param, float ref, float act) {
+float pid_cal(pid_param_t *pid_param, float ref, float act)
+{
     // 1. 计算误差项（减少重复访问内存）
     const float err = ref - act;
     const float err_diff = err - pid_param->inter.err_last;
@@ -56,22 +57,26 @@ float pid_cal(pid_param_t *pid_param, float ref, float act) {
     float output = p_term + (ki * pid_param->inter.i_err) + d_term;
 
     // 5. 输出限幅（优化分支逻辑）
-    if (output > output_lmt_max) {
+    if (output > output_lmt_max)
+    {
         output = output_lmt_max;
         // 抗饱和处理（仅在必要时计算）
-        if (ki != 0.0f) {
+        if (ki != 0.0f)
+        {
             // 计算最大允许的积分项（提前计算常量）
             const float max_i_term = output_lmt_max - p_term - d_term;
-            pid_param->inter.i_err = max_i_term * ki_inv;  // ki_inv = 1/ki
+            pid_param->inter.i_err = max_i_term * ki_inv; // ki_inv = 1/ki
         }
-    } 
-    else if (output < output_lmt_min) {
+    }
+    else if (output < output_lmt_min)
+    {
         output = output_lmt_min;
         // 抗饱和处理（仅在必要时计算）
-        if (ki != 0.0f) {
+        if (ki != 0.0f)
+        {
             // 计算最小允许的积分项（提前计算常量）
             const float min_i_term = output_lmt_min - p_term - d_term;
-            pid_param->inter.i_err = min_i_term * ki_inv;  // ki_inv = 1/ki
+            pid_param->inter.i_err = min_i_term * ki_inv; // ki_inv = 1/ki
         }
     }
 

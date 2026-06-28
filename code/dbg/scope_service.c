@@ -283,7 +283,6 @@ static void scope_service_poll_task(void)
     scope_service_poll_list();
 }
 
-
 static void scope_service_send_empty_list(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     scope_list_item_t item = {0};

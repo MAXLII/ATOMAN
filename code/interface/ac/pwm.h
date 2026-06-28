@@ -12,4 +12,3 @@ void pwm_set_inv(float v_pwm, float v_bus);
 void pwm_disable(void);
 
 #endif
-

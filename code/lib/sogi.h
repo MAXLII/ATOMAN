@@ -62,10 +62,8 @@ typedef struct
 // 初始化正交信号发生器
 void sogi_init(sogi_t *sogi, float Ts, float w, float k, float *p_val);
 
-
 // 更新正交信号发生器状态并计算输出
 void sogi_cal(sogi_t *sogi);
-
 
 // 更新中心频率并重新计算系数
 void sogi_update_frequency(sogi_t *sogi, float new_w);

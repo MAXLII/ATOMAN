@@ -64,7 +64,7 @@ typedef struct
 typedef struct
 {
     volt_st_t st;     // 当前状态
-    uint8_t is_vld;      // 当前是否有效
+    uint8_t is_vld;   // 当前是否有效
     uint32_t vld_dur; // 有效状态持续时间 (ms)
     uint32_t st_dur;  // 当前状态持续时间 (ms)
 } volt_out_t;

@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "section.h"   // 仅依赖：REG_SECTION_FUNC / SECTION_COMM / SECTION_COMM_ROUTE / DEC_MY_PRINTF
+#include "section.h" // 仅依赖：REG_SECTION_FUNC / SECTION_COMM / SECTION_COMM_ROUTE / DEC_MY_PRINTF
 
 /* =============================================================================
  * COMM 协议基础：CRC / 帧格式 / 解析状态
@@ -60,19 +60,19 @@ uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in);
  */
 typedef struct
 {
-    uint8_t  sop;      ///< 0xE8
-    uint8_t  version;  ///< 协议版本
-    uint8_t  src;      ///< 源地址
-    uint8_t  d_src;    ///< 动态源地址
-    uint8_t  dst;      ///< 目的地址
-    uint8_t  d_dst;    ///< 动态目的地址
-    uint8_t  cmd_set;  ///< 命令集
-    uint8_t  cmd_word; ///< 命令字
-    uint8_t  is_ack;   ///< 是否响应帧
-    uint16_t len;      ///< payload 长度
-    uint8_t *p_data;   ///< payload 指针
-    uint16_t crc;      ///< CRC16（sop..payload）
-    uint16_t eop;      ///< 0x0A0D
+    uint8_t sop;      ///< 0xE8
+    uint8_t version;  ///< 协议版本
+    uint8_t src;      ///< 源地址
+    uint8_t d_src;    ///< 动态源地址
+    uint8_t dst;      ///< 目的地址
+    uint8_t d_dst;    ///< 动态目的地址
+    uint8_t cmd_set;  ///< 命令集
+    uint8_t cmd_word; ///< 命令字
+    uint8_t is_ack;   ///< 是否响应帧
+    uint16_t len;     ///< payload 长度
+    uint8_t *p_data;  ///< payload 指针
+    uint16_t crc;     ///< CRC16（sop..payload）
+    uint16_t eop;     ///< 0x0A0D
 } section_packform_t;
 #pragma pack(pop)
 
@@ -104,19 +104,19 @@ typedef enum
  */
 typedef struct
 {
-    uint8_t  *p_data_buffer; ///< payload 缓冲区首地址
-    uint16_t  buffer_size;   ///< payload 缓冲区长度
+    uint8_t *p_data_buffer; ///< payload 缓冲区首地址
+    uint16_t buffer_size;   ///< payload 缓冲区长度
 
-    uint16_t  index;         ///< payload 写入索引
-    uint8_t   status;        ///< SECTION_PACKFORM_STA_E
-    uint16_t  crc;           ///< 运行中 CRC
+    uint16_t index;          ///< payload 写入索引
+    uint8_t status;          ///< SECTION_PACKFORM_STA_E
+    uint16_t crc;            ///< 运行中 CRC
     section_packform_t pack; ///< 当前帧缓存
     void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
 
-    uint16_t len;            ///< 剩余 payload 字节数
-    const uint8_t src;       ///< 本机地址
-    uint8_t d_src;           ///< 动态源地址
-    uint32_t last_rx_tick;   ///< Last byte time for parser timeout recovery
+    uint16_t len;          ///< 剩余 payload 字节数
+    const uint8_t src;     ///< 本机地址
+    uint8_t d_src;         ///< 动态源地址
+    uint32_t last_rx_tick; ///< Last byte time for parser timeout recovery
 
     uint8_t src_flag : 1;
     uint8_t dst_flag : 1;
@@ -125,7 +125,7 @@ typedef struct
     uint8_t eop_flag : 1;
     uint8_t is_route : 1;
 
-    uint8_t link_id;         ///< 所属链路ID
+    uint8_t link_id; ///< 所属链路ID
 } comm_ctx_t;
 
 /**
@@ -135,23 +135,23 @@ typedef struct
     static uint8_t name##_payload_buf[(payload_size)] = {0}; \
     static comm_ctx_t name = {                               \
         .p_data_buffer = name##_payload_buf,                 \
-        .buffer_size   = (uint16_t)sizeof(name##_payload_buf), \
-        .index         = 0,                                  \
-        .status        = SECTION_PACKFORM_STA_SOP,           \
-        .crc           = 0,                                  \
-        .pack          = {0},                                \
-        .func          = NULL,                               \
-        .len           = 0,                                  \
-        .src           = (uint8_t)(_src),                    \
-        .d_src         = 0,                                  \
-        .last_rx_tick  = 0,                                  \
-        .src_flag      = 0,                                  \
-        .dst_flag      = 0,                                  \
-        .cmd_flag      = 0,                                  \
-        .len_flag      = 0,                                  \
-        .eop_flag      = 0,                                  \
-        .is_route      = 0,                                  \
-        .link_id       = (uint8_t)(_link_id),                \
+        .buffer_size = (uint16_t)sizeof(name##_payload_buf), \
+        .index = 0,                                          \
+        .status = SECTION_PACKFORM_STA_SOP,                  \
+        .crc = 0,                                            \
+        .pack = {0},                                         \
+        .func = NULL,                                        \
+        .len = 0,                                            \
+        .src = (uint8_t)(_src),                              \
+        .d_src = 0,                                          \
+        .last_rx_tick = 0,                                   \
+        .src_flag = 0,                                       \
+        .dst_flag = 0,                                       \
+        .cmd_flag = 0,                                       \
+        .len_flag = 0,                                       \
+        .eop_flag = 0,                                       \
+        .is_route = 0,                                       \
+        .link_id = (uint8_t)(_link_id),                      \
     }
 
 /* =============================================================================
@@ -203,8 +203,8 @@ typedef struct comm_route_t
     comm_route_t comm_route_##_src_link_id##_dst_link_id##_dst_addr = { \
         .src_link_id = (_src_link_id),                                  \
         .dst_link_id = (_dst_link_id),                                  \
-        .dst_addr    = (_dst_addr),                                     \
-        .p_next      = NULL,                                            \
+        .dst_addr = (_dst_addr),                                        \
+        .p_next = NULL,                                                 \
     };                                                                  \
     REG_SECTION_FUNC(SECTION_COMM_ROUTE, comm_route_##_src_link_id##_dst_link_id##_dst_addr)
 

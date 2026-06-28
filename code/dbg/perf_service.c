@@ -374,10 +374,10 @@ REG_SHELL_VAR(TASK_METRIC_MAX, s_perf_service_task_metric_max, SHELL_FP32, 100.0
 REG_SHELL_VAR(INTERRUPT_METRIC, s_perf_service_interrupt_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(INTERRUPT_METRIC_MAX, s_perf_service_interrupt_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 
-#else /* !PERF_SERVICE_PRINTF â€” stubs */
+#else /* !PERF_SERVICE_PRINTF â€?stubs */
 
-static void perf_service_print_step(void) { }
-static void perf_service_print_cancel(void) { }
+static void perf_service_print_step(void) {}
+static void perf_service_print_cancel(void) {}
 
 #endif /* PERF_SERVICE_PRINTF */
 
