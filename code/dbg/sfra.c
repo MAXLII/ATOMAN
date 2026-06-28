@@ -108,6 +108,16 @@ static void sfra_update_output(sfra_t *sfra, sfra_status_t status)
     sfra->task.status = status;
 }
 
+static uint8_t sfra_sample_buffer_count(uint8_t write_index, uint8_t read_index)
+{
+    if (write_index >= read_index)
+    {
+        return (uint8_t)(write_index - read_index);
+    }
+
+    return (uint8_t)(SFRA_SAMPLE_BUFFER_SIZE - read_index + write_index);
+}
+
 static void sfra_sample_buffer_clear(sfra_t *sfra)
 {
     if (sfra == NULL)
@@ -126,23 +136,27 @@ static inline void sfra_sample_buffer_push(sfra_t *sfra,
                                     float collect_sample)
 {
     uint8_t write_index;
+    uint8_t next_index;
+    uint8_t read_index;
 
     if (sfra == NULL)
     {
         return;
     }
 
-    if (sfra->isr.sample_count >= SFRA_SAMPLE_BUFFER_SIZE)
+    write_index = sfra->isr.sample_write_index;
+    next_index = (uint8_t)((write_index + 1U) % SFRA_SAMPLE_BUFFER_SIZE);
+    read_index = sfra->isr.sample_read_index;
+    if (next_index == read_index)
     {
         sfra->isr.sample_overflow = 1U;
         return;
     }
 
-    write_index = sfra->isr.sample_write_index;
     sfra->isr.inject_sample_buf[write_index] = inject_sample;
     sfra->isr.collect_sample_buf[write_index] = collect_sample;
-    sfra->isr.sample_write_index = (uint8_t)((write_index + 1U) % SFRA_SAMPLE_BUFFER_SIZE);
-    sfra->isr.sample_count++;
+    sfra->isr.sample_write_index = next_index;
+    sfra->isr.sample_count = sfra_sample_buffer_count(next_index, read_index);
 }
 
 static uint8_t sfra_sample_buffer_pop(sfra_t *sfra,
@@ -150,6 +164,8 @@ static uint8_t sfra_sample_buffer_pop(sfra_t *sfra,
                                       float *p_collect_sample)
 {
     uint8_t read_index;
+    uint8_t write_index;
+    uint8_t next_index;
 
     if ((sfra == NULL) ||
         (p_inject_sample == NULL) ||
@@ -158,16 +174,19 @@ static uint8_t sfra_sample_buffer_pop(sfra_t *sfra,
         return 0U;
     }
 
-    if (sfra->isr.sample_count == 0U)
+    read_index = sfra->isr.sample_read_index;
+    write_index = sfra->isr.sample_write_index;
+    if (read_index == write_index)
     {
+        sfra->isr.sample_count = 0U;
         return 0U;
     }
 
-    read_index = sfra->isr.sample_read_index;
     *p_inject_sample = sfra->isr.inject_sample_buf[read_index];
     *p_collect_sample = sfra->isr.collect_sample_buf[read_index];
-    sfra->isr.sample_read_index = (uint8_t)((read_index + 1U) % SFRA_SAMPLE_BUFFER_SIZE);
-    sfra->isr.sample_count--;
+    next_index = (uint8_t)((read_index + 1U) % SFRA_SAMPLE_BUFFER_SIZE);
+    sfra->isr.sample_read_index = next_index;
+    sfra->isr.sample_count = sfra_sample_buffer_count(write_index, next_index);
 
     return 1U;
 }

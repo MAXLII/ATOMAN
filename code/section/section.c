@@ -524,11 +524,20 @@ static void task_activate_if_due(reg_task_t *task, uint32_t now)
 void section_task_tick(void)
 {
     const uint32_t now = SECTION_SYS_TICK;
+    uint32_t primask;
 
     if (task_scheduler_ready == 0u)
     {
         return;
     }
+
+    primask = section_critical_enter();
+    if (p_task_ready_first != NULL)
+    {
+        section_critical_exit(primask);
+        return;
+    }
+    section_critical_exit(primask);
 
     for (reg_task_t *task = p_task_first; task != NULL; task = task->p_next)
     {

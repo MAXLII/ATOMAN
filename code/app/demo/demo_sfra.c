@@ -35,6 +35,8 @@ static float s_demo_sfra_ref = 0.0f;
 static float s_demo_sfra_fbk = 0.0f;
 static pi_tustin_t s_demo_sfra_pi;
 
+#define DEMO_SFRA_ISR_DIVIDER 6u
+
 static void demo_sfra_prepare_freq(void *p_ctx);
 
 REG_SFRA(demo_sfra,
@@ -72,6 +74,15 @@ static void demo_sfra_init(void)
 
 static void demo_sfra_isr_10k_task(void)
 {
+    static uint8_t s_sfra_isr_divider = 0u;
+
+    s_sfra_isr_divider++;
+    if (s_sfra_isr_divider < DEMO_SFRA_ISR_DIVIDER)
+    {
+        return;
+    }
+    s_sfra_isr_divider = 0u;
+
     sfra_isr_pre_sample(&demo_sfra);
 
     s_demo_sfra_ref = demo_sfra_inject;
@@ -88,5 +99,5 @@ static void demo_sfra_task_1ms(void)
 }
 
 REG_INIT(5, demo_sfra_init)
-REG_TASK(1, demo_sfra_isr_10k_task)
+REG_INTERRUPT(6, demo_sfra_isr_10k_task)
 REG_TASK_MS(1, demo_sfra_task_1ms)
