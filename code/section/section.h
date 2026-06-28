@@ -177,6 +177,8 @@ typedef struct section_link_t section_link_t;
     SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
         SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, _p_str);
 
+#include "perf.h"
+
 #ifdef __GNUC__
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
