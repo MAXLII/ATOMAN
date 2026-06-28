@@ -602,12 +602,16 @@ sfra_status_t sfra_task(sfra_t *sfra)
         break;
 
     case SFRA_STATE_PREPARE_FREQ:
-        sfra_prepare_current_freq(sfra);
-        if (sfra->cb.freq_prepare != NULL)
+        /* Keep the completed point latched until sfra_service consumes it. */
+        if (sfra->output.point_done == 0U)
         {
-            sfra->cb.freq_prepare(sfra->cb.p_ctx);
+            sfra_prepare_current_freq(sfra);
+            if (sfra->cb.freq_prepare != NULL)
+            {
+                sfra->cb.freq_prepare(sfra->cb.p_ctx);
+            }
+            sfra->task.state = SFRA_STATE_SETTLE;
         }
-        sfra->task.state = SFRA_STATE_SETTLE;
         status = SFRA_STATUS_BUSY;
         break;
 
