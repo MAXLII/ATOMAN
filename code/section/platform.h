@@ -70,6 +70,14 @@ extern size_t __stop_section;
 #define SYSTEM_RESET
 #define PLECS_LOG(...) SIM_LOG(__VA_ARGS__)
 #define FUNC_RAM
+#define SRTOS_PENDSV_SET() \
+    do                     \
+    {                      \
+    } while (0)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
 
 #elif defined(IS_PLECS)
 #include "plecs.h"
@@ -87,6 +95,14 @@ extern size_t __stop_section;
 #endif
 #define SYSTEM_RESET
 #define FUNC_RAM
+#define SRTOS_PENDSV_SET() \
+    do                     \
+    {                      \
+    } while (0)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
 
 #elif defined(IS_GD32)
 #include "systick.h"
@@ -94,7 +110,7 @@ extern size_t __stop_section;
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 #ifndef SRTOS
-#define SRTOS 0
+#define SRTOS 1
 #endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t Image$$SECTION$$Base;
@@ -112,6 +128,25 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#define SRTOS_PENDSV_SET()                  \
+    do                                      \
+    {                                       \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
+        __DSB();                            \
+        __ISB();                            \
+    } while (0)
+#if defined(FPU) && (__FPU_PRESENT == 1U)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+    do                                      \
+    {                                       \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+    } while (0)
+#else
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
+#endif
 
 #elif defined(IS_HC32)
 #include "systick.h"
@@ -145,6 +180,25 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#define SRTOS_PENDSV_SET()                  \
+    do                                      \
+    {                                       \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
+        __DSB();                            \
+        __ISB();                            \
+    } while (0)
+#if defined(FPU) && (__FPU_PRESENT == 1U)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+    do                                      \
+    {                                       \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+    } while (0)
+#else
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
+#endif
 
 #elif defined(IS_APM32)
 #include "apm32f402_403.h"
@@ -163,6 +217,25 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#define SRTOS_PENDSV_SET()                  \
+    do                                      \
+    {                                       \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
+        __DSB();                            \
+        __ISB();                            \
+    } while (0)
+#if defined(FPU) && (__FPU_PRESENT == 1U)
+#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+    do                                      \
+    {                                       \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+    } while (0)
+#else
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
+#endif
 
 #else
 #include "systick.h"
@@ -181,26 +254,17 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#endif
-
-#if (SRTOS != 0) && (SRTOS != 1)
-#error "SRTOS must be 0 or 1."
-#endif
-
-#if (SRTOS == 1)
-#if defined(IS_GD32) || defined(IS_HC32) || defined(IS_APM32) || (!defined(IS_MATLAB) && !defined(IS_PLECS))
-#define SRTOS_PENDSV_SET()                 \
-    do                                     \
-    {                                      \
+#define SRTOS_PENDSV_SET()                  \
+    do                                      \
+    {                                       \
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
-        __DSB();                           \
-        __ISB();                           \
+        __DSB();                            \
+        __ISB();                            \
     } while (0)
-
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
-    do                                    \
-    {                                     \
+#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+    do                                      \
+    {                                       \
         FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
     } while (0)
 #else
@@ -209,18 +273,14 @@ extern uint32_t __section_end;
     {                                     \
     } while (0)
 #endif
-#else
-#error "SRTOS=1 requires a hardware platform to provide Cortex-M exception interfaces."
 #endif
-#else
-#define SRTOS_PENDSV_SET() \
-    do                     \
-    {                      \
-    } while (0)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
-    do                                    \
-    {                                     \
-    } while (0)
+
+#if (SRTOS != 0) && (SRTOS != 1)
+#error "SRTOS must be 0 or 1."
+#endif
+
+#if (SRTOS == 1) && (!defined(SRTOS_PENDSV_SET) || !defined(SRTOS_FPU_DISABLE_LAZY_STACKING))
+#error "SRTOS=1 requires the selected platform to provide SRTOS exception interfaces."
 #endif
 
 /* Section registration attributes */

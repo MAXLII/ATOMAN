@@ -33,10 +33,17 @@ OF SUCH DAMAGE.
 */
 
 #include "gd32g5x3_it.h"
+#include "section.h"
 #include "systick.h"
 
 #define SRAM_ECC_ERROR_HANDLE(s)    do{}while(1)
 #define FLASH_ECC_ERROR_HANDLE(s)   do{}while(1)
+
+#if defined(__GNUC__) || defined(__ARMCC_VERSION)
+#define GD32_EXCEPTION_NAKED __attribute__((naked))
+#else
+#define GD32_EXCEPTION_NAKED
+#endif
 
 /*!
     \brief      this function handles NMI exception
@@ -120,11 +127,17 @@ void UsageFault_Handler(void)
     \param[out] none
     \retval     none
 */
-void SVC_Handler(void)
+void GD32_EXCEPTION_NAKED SVC_Handler(void)
 {
-    /* if SVC exception occurs, go to infinite loop */
-    while(1) {
-    }
+#if (SRTOS == 1)
+    __ASM volatile(
+        "push {r0, lr}                     \n"
+        "bl section_task_start_request     \n"
+        "pop {r0, r1}                      \n"
+        "bx r1                             \n");
+#else
+    __ASM volatile("bx lr                  \n");
+#endif
 }
 
 /*!
@@ -146,11 +159,69 @@ void DebugMon_Handler(void)
     \param[out] none
     \retval     none
 */
-void PendSV_Handler(void)
+void GD32_EXCEPTION_NAKED PendSV_Handler(void)
 {
-    /* if PendSV exception occurs, go to infinite loop */
-    while(1) {
-    }
+#if (SRTOS == 1)
+#if defined(__FPU_USED) && (__FPU_USED == 1U)
+    __ASM volatile(
+        "push {r0, lr}                     \n"
+        "bl section_task_scheduler_started \n"
+        "cmp r0, #0                        \n"
+        "beq 1f                            \n"
+        "ldr lr, [sp, #4]                  \n"
+        "tst lr, #0x04                     \n"
+        "beq 2f                            \n"
+        "mrs r0, psp                       \n"
+        "cbz r0, 2f                        \n"
+        "tst lr, #0x10                     \n"
+        "it eq                             \n"
+        "vstmdbeq r0!, {s16-s31}           \n"
+        "stmdb r0!, {r4-r11, lr}           \n"
+        "b 3f                              \n"
+        "2:                                \n"
+        "movs r0, #0                       \n"
+        "3:                                \n"
+        "bl section_task_switch_sp         \n"
+        "cbz r0, 1f                        \n"
+        "ldmia r0!, {r4-r11, lr}           \n"
+        "tst lr, #0x10                     \n"
+        "it eq                             \n"
+        "vldmiaeq r0!, {s16-s31}           \n"
+        "msr psp, r0                       \n"
+        "add sp, sp, #8                    \n"
+        "bx lr                             \n"
+        "1:                                \n"
+        "pop {r0, r1}                      \n"
+        "bx r1                             \n");
+#else
+    __ASM volatile(
+        "push {r0, lr}                     \n"
+        "bl section_task_scheduler_started \n"
+        "cmp r0, #0                        \n"
+        "beq 1f                            \n"
+        "ldr lr, [sp, #4]                  \n"
+        "tst lr, #0x04                     \n"
+        "beq 2f                            \n"
+        "mrs r0, psp                       \n"
+        "cbz r0, 2f                        \n"
+        "stmdb r0!, {r4-r11, lr}           \n"
+        "b 3f                              \n"
+        "2:                                \n"
+        "movs r0, #0                       \n"
+        "3:                                \n"
+        "bl section_task_switch_sp         \n"
+        "cbz r0, 1f                        \n"
+        "ldmia r0!, {r4-r11, lr}           \n"
+        "msr psp, r0                       \n"
+        "add sp, sp, #8                    \n"
+        "bx lr                             \n"
+        "1:                                \n"
+        "pop {r0, r1}                      \n"
+        "bx r1                             \n");
+#endif
+#else
+    __ASM volatile("bx lr                  \n");
+#endif
 }
 
 /*!
@@ -162,4 +233,10 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
     delay_decrement();
+#if (SRTOS == 1)
+    if((section_task_scheduler_started() != 0U) &&
+       (section_task_slice_elapsed() != 0U)) {
+        SRTOS_PENDSV_SET();
+    }
+#endif
 }
