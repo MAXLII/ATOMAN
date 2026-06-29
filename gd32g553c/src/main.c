@@ -37,6 +37,7 @@ OF SUCH DAMAGE.
 #include "section.h"
 #include "bsp_pwm.h"
 #include "gd32g5x3_it.h"
+#include "demo_jitter.h"
 
 /*!
     \brief      main function
@@ -56,6 +57,7 @@ int main(void)
 
 void TIMER2_IRQHandler(void)
 {
+    demo_jitter_timer2_isr_entry();
     if (timer_interrupt_flag_get(TIMER2, TIMER_INT_FLAG_UP) != RESET)
     {
         timer_interrupt_flag_clear(TIMER2, TIMER_INT_FLAG_UP);
