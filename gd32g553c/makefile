@@ -114,6 +114,8 @@ C_SOURCES =  \
 ../code/app/demo/demo.c \
 ../code/app/demo/demo_comm.c \
 ../code/app/demo/demo_interrupt.c \
+../code/app/demo/demo_jitter.c \
+../code/app/demo/demo_rtos_risk.c \
 ../code/app/demo/demo_perf.c \
 ../code/app/demo/demo_scope.c \
 ../code/app/demo/demo_sfra.c \

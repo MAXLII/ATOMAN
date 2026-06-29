@@ -43,6 +43,10 @@ static uint32_t s_demo_task_tick_count = 0u;
 #define DEMO_TASK_SCHED_PROBE_ENABLE 0
 #endif
 
+#ifndef DEMO_TASK_VARIABLE_LENGTH_ENABLE
+#define DEMO_TASK_VARIABLE_LENGTH_ENABLE 0
+#endif
+
 static void demo_task_10ms(void)
 {
     s_demo_task_10ms_count++;
@@ -240,6 +244,81 @@ static void demo_sched_probe_ultra_long(void)
 }
 #endif
 
+#if (DEMO_TASK_VARIABLE_LENGTH_ENABLE == 1)
+typedef struct
+{
+    uint32_t enter_count;
+    uint32_t short_count;
+    uint32_t long_count;
+    uint32_t long_enter_count;
+    uint32_t active;
+    uint32_t last_run_ticks;
+    uint32_t max_run_ticks;
+    uint32_t local_error_count;
+    uint32_t phase;
+    uint32_t last_guard;
+    uint32_t last_tick;
+} demo_task_variable_length_debug_t;
+
+volatile demo_task_variable_length_debug_t g_demo_task_variable_length_debug;
+
+static void demo_task_variable_length(void)
+{
+    const uint32_t start_tick = SECTION_SYS_TICK;
+    uint32_t guard_a = 0x13579BDFu ^ g_demo_task_variable_length_debug.enter_count;
+    uint32_t guard_b = 0x2468ACE0u + g_demo_task_variable_length_debug.enter_count;
+    uint32_t run_ticks = 0u;
+    uint32_t phase = 0u;
+
+    g_demo_task_variable_length_debug.enter_count++;
+    phase = g_demo_task_variable_length_debug.enter_count % 6u;
+    g_demo_task_variable_length_debug.phase = phase;
+    g_demo_task_variable_length_debug.active = 1u;
+
+    if (phase == 0u)
+    {
+        const uint32_t long_start_tick = SECTION_SYS_TICK;
+
+        g_demo_task_variable_length_debug.long_enter_count++;
+        while ((uint32_t)(SECTION_SYS_TICK - long_start_tick) < 100u)
+        {
+            guard_a ^= 0x55AA55AAu;
+            guard_a ^= 0x55AA55AAu;
+            guard_b += 3u;
+            guard_b -= 3u;
+        }
+        g_demo_task_variable_length_debug.long_count++;
+    }
+    else
+    {
+        for (uint32_t i = 0u; i < 64u; ++i)
+        {
+            guard_a += i;
+            guard_a -= i;
+            guard_b ^= i;
+            guard_b ^= i;
+        }
+        g_demo_task_variable_length_debug.short_count++;
+    }
+
+    if ((guard_a != (0x13579BDFu ^ (g_demo_task_variable_length_debug.enter_count - 1u))) ||
+        (guard_b != (0x2468ACE0u + (g_demo_task_variable_length_debug.enter_count - 1u))))
+    {
+        g_demo_task_variable_length_debug.local_error_count++;
+    }
+
+    run_ticks = (uint32_t)(SECTION_SYS_TICK - start_tick);
+    g_demo_task_variable_length_debug.last_run_ticks = run_ticks;
+    if (run_ticks > g_demo_task_variable_length_debug.max_run_ticks)
+    {
+        g_demo_task_variable_length_debug.max_run_ticks = run_ticks;
+    }
+    g_demo_task_variable_length_debug.last_guard = guard_a ^ guard_b;
+    g_demo_task_variable_length_debug.last_tick = SECTION_SYS_TICK;
+    g_demo_task_variable_length_debug.active = 0u;
+}
+#endif
+
 REG_TASK_MS(10, demo_task_10ms)
 REG_TASK(1, demo_task_100us)
 #if (DEMO_TASK_DEAD_LOOP_ENABLE == 1)
@@ -252,4 +331,7 @@ REG_TASK(2, demo_sched_probe_mid)
 REG_TASK(3, demo_sched_probe_float)
 REG_TASK(5, demo_sched_probe_long)
 REG_TASK(7, demo_sched_probe_ultra_long)
+#endif
+#if (DEMO_TASK_VARIABLE_LENGTH_ENABLE == 1)
+REG_TASK_MS(3, demo_task_variable_length)
 #endif
