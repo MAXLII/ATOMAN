@@ -73,6 +73,19 @@ typedef struct
 
 extern volatile section_fault_debug_t g_section_fault_debug;
 
+typedef struct
+{
+    uint32_t probe_enter_count;
+    uint32_t probe_reentry_count;
+    uint32_t probe_invariant_fail_count;
+    uint32_t probe_max_depth;
+    uint32_t probe_last_tag;
+    uint32_t critical_enter_count;
+    uint32_t critical_exit_count;
+} section_critical_race_debug_t;
+
+extern volatile section_critical_race_debug_t g_section_critical_race_debug;
+
 #ifndef SECTION_TASK_RUNTIME_STACK_WORDS
 #define SECTION_TASK_RUNTIME_STACK_WORDS 512u
 #endif
@@ -87,6 +100,22 @@ extern volatile section_fault_debug_t g_section_fault_debug;
 
 #ifndef SECTION_TASK_READY_BURST_MAX
 #define SECTION_TASK_READY_BURST_MAX 4u
+#endif
+
+#ifndef SECTION_CRITICAL_USE_PRIMASK
+#define SECTION_CRITICAL_USE_PRIMASK 0u
+#endif
+
+#ifndef SECTION_CRITICAL_RACE_PROBE_ENABLE
+#define SECTION_CRITICAL_RACE_PROBE_ENABLE 0u
+#endif
+
+#ifndef SECTION_CRITICAL_RACE_PROBE_SPIN
+#define SECTION_CRITICAL_RACE_PROBE_SPIN 64u
+#endif
+
+#ifndef SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL
+#define SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL 0u
 #endif
 
 #define SECTION_TASK_CONTEXT_POOL_FAULT 0u
