@@ -234,6 +234,9 @@ void SysTick_Handler(void)
 {
     delay_decrement();
 #if (SRTOS == 1)
+#if defined(SECTION_TASK_TICK_FROM_SYSTICK_TEST) && (SECTION_TASK_TICK_FROM_SYSTICK_TEST == 1)
+    section_task_tick();
+#endif
     if((section_task_scheduler_started() != 0U) &&
        (section_task_slice_elapsed() != 0U)) {
         SRTOS_PENDSV_SET();

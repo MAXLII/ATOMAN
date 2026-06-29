@@ -44,6 +44,81 @@ static section_link_t *p_link_tail = NULL;
 static reg_init_t *p_init_first = NULL;
 static volatile uint8_t task_scheduler_ready = 0u;
 volatile section_fault_debug_t g_section_fault_debug;
+volatile section_critical_race_debug_t g_section_critical_race_debug;
+
+#if (SECTION_CRITICAL_RACE_PROBE_ENABLE == 1u)
+static volatile uint32_t s_section_race_probe_depth = 0u;
+
+static void section_race_probe_delay(void)
+{
+    volatile uint32_t spin = 0u;
+
+    for (spin = 0u; spin < SECTION_CRITICAL_RACE_PROBE_SPIN; ++spin)
+    {
+    }
+}
+
+static void section_race_probe_invariant(reg_task_t *first, reg_task_t *tail)
+{
+    if (((first == NULL) && (tail != NULL)) ||
+        ((first != NULL) && (tail == NULL)))
+    {
+        g_section_critical_race_debug.probe_invariant_fail_count++;
+    }
+}
+
+static void section_race_probe_begin(uint32_t tag)
+{
+    uint32_t depth = 0u;
+
+    g_section_critical_race_debug.probe_enter_count++;
+    g_section_critical_race_debug.probe_last_tag = tag;
+
+    depth = s_section_race_probe_depth;
+    if (depth != 0u)
+    {
+        g_section_critical_race_debug.probe_reentry_count++;
+    }
+
+    depth++;
+    s_section_race_probe_depth = depth;
+    if (depth > g_section_critical_race_debug.probe_max_depth)
+    {
+        g_section_critical_race_debug.probe_max_depth = depth;
+    }
+
+    section_race_probe_delay();
+}
+
+static void section_race_probe_end(void)
+{
+    section_race_probe_delay();
+    if (s_section_race_probe_depth != 0u)
+    {
+        s_section_race_probe_depth--;
+    }
+}
+#else
+#define section_race_probe_delay() \
+    do                             \
+    {                              \
+    } while (0)
+#define section_race_probe_invariant(first, tail) \
+    do                                           \
+    {                                            \
+        (void)(first);                           \
+        (void)(tail);                            \
+    } while (0)
+#define section_race_probe_begin(tag) \
+    do                                \
+    {                                 \
+        (void)(tag);                  \
+    } while (0)
+#define section_race_probe_end() \
+    do                           \
+    {                            \
+    } while (0)
+#endif
 
 static uint32_t task_os_enabled(void)
 {
@@ -92,6 +167,9 @@ static void section_task_entry(void);
 static void srtos_task_schedule_next(reg_task_t *task, uint32_t elapsed);
 static uint32_t task_context_alloc(reg_task_t *task, uint32_t required_words);
 static void task_context_release(reg_task_t *task);
+static void task_context_release_gap_if_head(void);
+static uint32_t section_critical_enter(void);
+static void section_critical_exit(uint32_t primask);
 static uint32_t *task_runtime_stack_low_get(void);
 static uint32_t *task_runtime_stack_top_get(void);
 static void task_stack_prepare_initial(reg_task_t *task);
@@ -312,6 +390,7 @@ static void task_context_release(reg_task_t *task)
     }
 
     offset = (uint32_t)(task->p_snapshot - s_task_context_pool);
+    task_context_release_gap_if_head();
     if (offset != s_task_context_pool_head)
     {
         g_section_fault_debug.task_context_release_fail_count++;
@@ -326,6 +405,16 @@ static void task_context_release(reg_task_t *task)
         s_task_context_pool_head = 0u;
     }
 
+    task_context_release_gap_if_head();
+
+    task->p_snapshot = NULL;
+    task->snapshot_words = 0u;
+    task->snapshot_capacity_words = 0u;
+    task_debug_context_pool_update();
+}
+
+static void task_context_release_gap_if_head(void)
+{
     if ((s_task_context_pool_gap_words != 0u) &&
         (s_task_context_pool_head == s_task_context_pool_gap_start))
     {
@@ -334,11 +423,6 @@ static void task_context_release(reg_task_t *task)
         s_task_context_pool_gap_start = 0u;
         s_task_context_pool_gap_words = 0u;
     }
-
-    task->p_snapshot = NULL;
-    task->snapshot_words = 0u;
-    task->snapshot_capacity_words = 0u;
-    task_debug_context_pool_update();
 }
 
 static void task_stack_prepare_initial(reg_task_t *task)
@@ -537,13 +621,23 @@ static uint32_t task_stack_free_words_get(const reg_task_t *task)
 
 static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task)
 {
+#if (SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL == 1u)
+    uint32_t primask = section_critical_enter();
+#endif
+    section_race_probe_begin(0x5352454Eu);
     if ((first == NULL) || (tail == NULL) || (task == NULL) || (task->is_ready != 0u))
     {
+        section_race_probe_end();
+#if (SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL == 1u)
+        section_critical_exit(primask);
+#endif
         return;
     }
 
+    section_race_probe_invariant(*first, *tail);
     task->p_ready_next = NULL;
     task->is_ready = 1u;
+    section_race_probe_delay();
 
     if (*first == NULL)
     {
@@ -555,19 +649,34 @@ static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **t
         (*tail)->p_ready_next = task;
         *tail = task;
     }
+    section_race_probe_invariant(*first, *tail);
+    section_race_probe_end();
+#if (SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL == 1u)
+    section_critical_exit(primask);
+#endif
 }
 
 static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail)
 {
     reg_task_t *task = NULL;
+#if (SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL == 1u)
+    uint32_t primask = section_critical_enter();
+#endif
 
+    section_race_probe_begin(0x5352504Fu);
     if ((first == NULL) || (tail == NULL) || (*first == NULL))
     {
+        section_race_probe_end();
+#if (SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL == 1u)
+        section_critical_exit(primask);
+#endif
         return NULL;
     }
 
+    section_race_probe_invariant(*first, *tail);
     task = *first;
     *first = task->p_ready_next;
+    section_race_probe_delay();
     if (*first == NULL)
     {
         *tail = NULL;
@@ -575,6 +684,11 @@ static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t 
 
     task->p_ready_next = NULL;
     task->is_ready = 0u;
+    section_race_probe_invariant(*first, *tail);
+    section_race_probe_end();
+#if (SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL == 1u)
+    section_critical_exit(primask);
+#endif
 
     return task;
 }
@@ -963,23 +1077,54 @@ SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *rec
 
 static uint32_t section_critical_enter(void)
 {
+#if (SECTION_CRITICAL_USE_PRIMASK == 1u)
+    uint32_t primask = __get_PRIMASK();
+
+    __disable_irq();
+    __DSB();
+    __ISB();
+#if (SECTION_CRITICAL_RACE_PROBE_ENABLE == 1u)
+    g_section_critical_race_debug.critical_enter_count++;
+#endif
+    return primask;
+#else
+#if (SECTION_CRITICAL_RACE_PROBE_ENABLE == 1u)
+    g_section_critical_race_debug.critical_enter_count++;
+#endif
     return 0u;
+#endif
 }
 
 static void section_critical_exit(uint32_t primask)
 {
+#if (SECTION_CRITICAL_USE_PRIMASK == 1u)
+#if (SECTION_CRITICAL_RACE_PROBE_ENABLE == 1u)
+    g_section_critical_race_debug.critical_exit_count++;
+#endif
+    __set_PRIMASK(primask);
+    __DSB();
+    __ISB();
+#else
     (void)primask;
+#if (SECTION_CRITICAL_RACE_PROBE_ENABLE == 1u)
+    g_section_critical_race_debug.critical_exit_count++;
+#endif
+#endif
 }
 
 static void task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task)
 {
+    section_race_probe_begin(0x4252454Eu);
     if ((first == NULL) || (tail == NULL) || (task == NULL) || (task->is_ready != 0u))
     {
+        section_race_probe_end();
         return;
     }
 
+    section_race_probe_invariant(*first, *tail);
     task->p_ready_next = NULL;
     task->is_ready = 1u;
+    section_race_probe_delay();
 
     if (*first == NULL)
     {
@@ -991,19 +1136,25 @@ static void task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, r
         (*tail)->p_ready_next = task;
         *tail = task;
     }
+    section_race_probe_invariant(*first, *tail);
+    section_race_probe_end();
 }
 
 static reg_task_t *task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail)
 {
     reg_task_t *task = NULL;
 
+    section_race_probe_begin(0x4252504Fu);
     if ((first == NULL) || (tail == NULL) || (*first == NULL))
     {
+        section_race_probe_end();
         return NULL;
     }
 
+    section_race_probe_invariant(*first, *tail);
     task = *first;
     *first = task->p_ready_next;
+    section_race_probe_delay();
     if (*first == NULL)
     {
         *tail = NULL;
@@ -1011,6 +1162,8 @@ static reg_task_t *task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail
 
     task->p_ready_next = NULL;
     task->is_ready = 0u;
+    section_race_probe_invariant(*first, *tail);
+    section_race_probe_end();
 
     return task;
 }
@@ -1156,6 +1309,7 @@ void section_init(void)
 void section_runtime_reset(void)
 {
     task_scheduler_ready = 0u;
+    (void)memset((void *)&g_section_critical_race_debug, 0, sizeof(g_section_critical_race_debug));
     p_task_first = NULL;
     p_task_tail = NULL;
     p_task_ready_first = NULL;
