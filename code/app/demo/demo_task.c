@@ -31,6 +31,7 @@
 #include "comm_link.h"
 
 #include <stdint.h>
+#include <string.h>
 
 static uint32_t s_demo_task_10ms_count = 0u;
 static uint32_t s_demo_task_tick_count = 0u;
@@ -169,7 +170,7 @@ static void demo_sched_probe_float(void)
     uint32_t bits = 0u;
 
     acc = (acc * 1.125f) + 0.25f;
-    bits = *((uint32_t *)&acc);
+    (void)memcpy(&bits, &acc, sizeof(bits));
     g_demo_task_sched_debug.float_bits = bits;
     g_demo_task_sched_debug.float_count++;
     demo_task_sched_mark(0xC3000000u | (g_demo_task_sched_debug.float_count & 0x0000FFFFu));
