@@ -145,7 +145,7 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
     uint32_t *p_snapshot;             \
     uint32_t snapshot_words;          \
     uint32_t snapshot_capacity_words; \
-    uint8_t state
+    uint8_t state;
 
 #define SECTION_SRTOS_TASK_INIT \
     , .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, .state = 0u
@@ -224,7 +224,9 @@ typedef struct section_link_t section_link_t;
     SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
         SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, _p_str);
 
+#ifndef IS_MATLAB
 #include "perf.h"
+#endif
 
 #ifdef __GNUC__
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -278,7 +280,7 @@ typedef struct reg_task_t
     struct reg_task_t *p_ready_next;
     uint8_t is_ready;
     uint8_t is_running;
-    SECTION_SRTOS_TASK_FIELDS;
+    SECTION_SRTOS_TASK_FIELDS
 } reg_task_t;
 
 #ifndef TASK_RECORD_PERF_ENABLE
