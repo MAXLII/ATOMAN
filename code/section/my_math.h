@@ -71,7 +71,7 @@
 /* Alpha-beta to dq transform. */
 #define DQ_CAL(a, b, sintheta, costheta, d, q) \
     d = costheta * a + sintheta * b;           \
-    q = sintheta * a - costheta * b;
+    q = -sintheta * a + costheta * b;
 
 /* Increment a counter and wrap it into [0, max_value). */
 #define INC_AND_WRAP(count, max_value) \
