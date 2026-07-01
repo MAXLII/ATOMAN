@@ -37,7 +37,37 @@
 
 #include "platform.h"
 
+#ifndef SECTION_PERF_ENABLE
+#define SECTION_PERF_ENABLE 0u
+#endif
+
+#if (SECTION_PERF_ENABLE != 0u) && (SECTION_PERF_ENABLE != 1u)
+#error "SECTION_PERF_ENABLE must be 0 or 1."
+#endif
+
+#if (SECTION_PERF_ENABLE == 1u)
 typedef struct section_perf_record section_perf_record_t;
+#define SECTION_PERF_RECORD_T_DECLARED 1u
+#define SECTION_TASK_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_TASK_PERF_INIT(name) , .p_perf_record = TASK_RECORD_PERF(name)
+#define SECTION_INTERRUPT_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_INTERRUPT_PERF_INIT(name) , .p_perf_record = INTERRUPT_RECORD_PERF(name)
+#ifndef TASK_RECORD_PERF_ENABLE
+#define TASK_RECORD_PERF_ENABLE 1
+#endif
+#ifndef INTERRUPT_RECORD_PERF_ENABLE
+#define INTERRUPT_RECORD_PERF_ENABLE 1
+#endif
+#else
+#define SECTION_TASK_PERF_FIELD
+#define SECTION_TASK_PERF_INIT(name)
+#define SECTION_INTERRUPT_PERF_FIELD
+#define SECTION_INTERRUPT_PERF_INIT(name)
+#undef TASK_RECORD_PERF_ENABLE
+#define TASK_RECORD_PERF_ENABLE 0
+#undef INTERRUPT_RECORD_PERF_ENABLE
+#define INTERRUPT_RECORD_PERF_ENABLE 0
+#endif
 
 typedef struct
 {
@@ -147,8 +177,12 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
     uint32_t snapshot_capacity_words; \
     uint8_t state;
 
-#define SECTION_SRTOS_TASK_INIT \
-    , .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, .state = 0u
+#define SECTION_SRTOS_TASK_INIT       \
+    , .p_sp = NULL, .p_stack = NULL,  \
+      .p_snapshot = NULL,             \
+      .snapshot_words = 0u,           \
+      .snapshot_capacity_words = 0u,  \
+      .state = 0u
 #else
 #define SECTION_SRTOS_TASK_FIELDS
 #define SECTION_SRTOS_TASK_INIT
@@ -224,10 +258,6 @@ typedef struct section_link_t section_link_t;
     SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
         SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, _p_str);
 
-#ifndef IS_MATLAB
-#include "perf.h"
-#endif
-
 #ifdef __GNUC__
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
@@ -253,11 +283,13 @@ typedef struct reg_init
 void section_init(void);
 void section_runtime_reset(void);
 
+#if (SECTION_PERF_ENABLE == 1u)
 uint32_t section_perf_task_begin(section_perf_record_t *record);
 void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
 void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us);
 uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record);
 void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
+#endif
 
 typedef enum
 {
@@ -275,17 +307,13 @@ typedef struct reg_task_t
     section_task_step_f p_step_func;
     void *p_ctx;
     const char *p_name;
-    section_perf_record_t *p_perf_record;
+    SECTION_TASK_PERF_FIELD
     struct reg_task_t *p_next;
     struct reg_task_t *p_ready_next;
     uint8_t is_ready;
     uint8_t is_running;
     SECTION_SRTOS_TASK_FIELDS
 } reg_task_t;
-
-#ifndef TASK_RECORD_PERF_ENABLE
-#define TASK_RECORD_PERF_ENABLE 1
-#endif
 
 #if (TASK_RECORD_PERF_ENABLE == 1)
 #define TASK_RECORD_PERF(name) P_RECORD_PERF(name)
@@ -295,11 +323,33 @@ typedef struct reg_task_t
 #define REG_TASK_PERF_RECORD(name)
 #endif
 
-#define REG_TASK_RECORD(period, func) \
-    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = (func), .p_step_func = NULL, .p_ctx = NULL, .p_name = #func, .p_perf_record = TASK_RECORD_PERF(func), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u SECTION_SRTOS_TASK_INIT}
+#define REG_TASK_RECORD(period, func)         \
+    {                                         \
+        .t_period = (uint32_t)(period),       \
+        .time_last = 0u,                      \
+        .p_func = (func),                     \
+        .p_step_func = NULL,                  \
+        .p_ctx = NULL,                        \
+        .p_name = #func SECTION_TASK_PERF_INIT(func), \
+        .p_next = NULL,                       \
+        .p_ready_next = NULL,                 \
+        .is_ready = 0u,                       \
+        .is_running = 0u SECTION_SRTOS_TASK_INIT \
+    }
 
 #define REG_TASK_STEP_RECORD(period, func, ctx, perf_name) \
-    {.t_period = (uint32_t)(period), .time_last = 0u, .p_func = NULL, .p_step_func = (func), .p_ctx = (ctx), .p_name = #perf_name, .p_perf_record = TASK_RECORD_PERF(perf_name), .p_next = NULL, .p_ready_next = NULL, .is_ready = 0u, .is_running = 0u SECTION_SRTOS_TASK_INIT}
+    {                                                      \
+        .t_period = (uint32_t)(period),                    \
+        .time_last = 0u,                                   \
+        .p_func = NULL,                                    \
+        .p_step_func = (func),                             \
+        .p_ctx = (ctx),                                    \
+        .p_name = #perf_name SECTION_TASK_PERF_INIT(perf_name), \
+        .p_next = NULL,                                    \
+        .p_ready_next = NULL,                              \
+        .is_ready = 0u,                                    \
+        .is_running = 0u SECTION_SRTOS_TASK_INIT           \
+    }
 
 #define REG_TASK(period, func)                                  \
     REG_TASK_PERF_RECORD(func)                                  \
@@ -341,10 +391,6 @@ uint32_t *section_task_switch_sp(uint32_t *sp);
 
 #define PRIORITY_NUM_MAX 16
 
-#ifndef INTERRUPT_RECORD_PERF_ENABLE
-#define INTERRUPT_RECORD_PERF_ENABLE 1
-#endif
-
 #if (INTERRUPT_RECORD_PERF_ENABLE == 1)
 #define INTERRUPT_RECORD_PERF(name) P_RECORD_PERF(name)
 #else
@@ -357,12 +403,12 @@ typedef struct reg_interrupt
 {
     uint8_t priority;
     void (*p_func)(void);
-    section_perf_record_t *p_perf_record;
+    SECTION_INTERRUPT_PERF_FIELD
     struct reg_interrupt *p_next;
 } reg_interrupt_t;
 
 #define REG_INTERRUPT_RECORD(priority_num, func) \
-    {.priority = (uint8_t)(priority_num), .p_func = (func), .p_perf_record = INTERRUPT_RECORD_PERF(func), .p_next = NULL}
+    {.priority = (uint8_t)(priority_num), .p_func = (func) SECTION_INTERRUPT_PERF_INIT(func), .p_next = NULL}
 
 #define REG_INTERRUPT(priority_num, func)                                            \
     REG_INTERRUPT_PERF_RECORD(func)                                                  \
