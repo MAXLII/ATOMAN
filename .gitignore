@@ -51,3 +51,8 @@ matlab/inv/build/
 matlab/inv/slprj/
 matlab/inv/*.mexw64
 matlab/inv/*.slxc
+matlab/pll/build/
+matlab/pll/slprj/
+matlab/pll/*.mexw64
+matlab/pll/*.slxc
+.codex-remote-attachments

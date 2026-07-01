@@ -1,6 +1,7 @@
 {
     "env": {
         "MATLAB_ROOT": "${env:ProgramFiles}/MATLAB/R2024a",
+        "MATLAB_R2022B_ROOT": "${env:ProgramFiles}/MATLAB/R2022b",
         "MSVC2017_ROOT": "${env:ProgramFiles(x86)}/Microsoft Visual Studio/2017/BuildTools",
         "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023",
         "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin",
@@ -340,6 +341,39 @@
                     "${workspaceFolder}/code",
                     "${MATLAB_ROOT}/extern/include",
                     "${MATLAB_ROOT}/simulink/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "matlab_pll",
+            "compilerPath": "${MSVC2017_TOOLS}/bin/HostX64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64",
+            "includePath": [
+                "${workspaceFolder}/matlab/common",
+                "${workspaceFolder}/matlab/pll",
+                "${workspaceFolder}/matlab/pll/app",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/section",
+                "${MATLAB_R2022B_ROOT}/extern/include",
+                "${MATLAB_R2022B_ROOT}/simulink/include"
+            ],
+            "defines": [
+                "IS_MATLAB",
+                "IS_PLL",
+                "TOOLCHAIN_MSVC",
+                "MATLAB_MEX_FILE",
+                "S_FUNCTION_NAME=sfunc",
+                "__RAM_FUNC="
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/matlab",
+                    "${workspaceFolder}/code",
+                    "${MATLAB_R2022B_ROOT}/extern/include",
+                    "${MATLAB_R2022B_ROOT}/simulink/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
