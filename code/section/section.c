@@ -125,6 +125,66 @@ static uint32_t task_os_enabled(void)
     return (uint32_t)SRTOS;
 }
 
+#if (SECTION_PERF_ENABLE == 1u)
+#define SECTION_TASK_PERF_LOCALS()     \
+    section_perf_record_t *rec = NULL; \
+    uint32_t perf_start = 0u
+#define SECTION_TASK_PERF_BEGIN(task)              \
+    do                                             \
+    {                                              \
+        rec = (task)->p_perf_record;               \
+        perf_start = section_perf_task_begin(rec); \
+    } while (0)
+#define SECTION_TASK_PERF_END()                 \
+    do                                          \
+    {                                           \
+        section_perf_task_end(rec, perf_start); \
+    } while (0)
+#define SECTION_TASK_PERF_PERIOD_SET(task)                                         \
+    do                                                                             \
+    {                                                                              \
+        section_perf_task_period_set((task)->p_perf_record,                        \
+                                     (task)->t_period * SECTION_SYS_TICK_UNIT_US); \
+    } while (0)
+#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+#define SECTION_INTERRUPT_PERF_RUN(item)                         \
+    do                                                           \
+    {                                                            \
+        section_perf_record_t *rec = (item)->p_perf_record;      \
+        uint32_t perf_start = section_perf_interrupt_begin(rec); \
+        (item)->p_func();                                        \
+        section_perf_interrupt_end(rec, perf_start);             \
+    } while (0)
+#else
+#define SECTION_INTERRUPT_PERF_RUN(item) \
+    do                                   \
+    {                                    \
+        (item)->p_func();                \
+    } while (0)
+#endif
+#else
+#define SECTION_TASK_PERF_LOCALS()
+#define SECTION_TASK_PERF_BEGIN(task) \
+    do                                \
+    {                                 \
+        (void)(task);                 \
+    } while (0)
+#define SECTION_TASK_PERF_END() \
+    do                          \
+    {                           \
+    } while (0)
+#define SECTION_TASK_PERF_PERIOD_SET(task) \
+    do                                     \
+    {                                      \
+        (void)(task);                      \
+    } while (0)
+#define SECTION_INTERRUPT_PERF_RUN(item) \
+    do                                   \
+    {                                    \
+        (item)->p_func();                \
+    } while (0)
+#endif
+
 #if (SRTOS == 1)
 typedef enum
 {
@@ -140,9 +200,9 @@ typedef enum
 #define TASK_SW_FP_FRAME_WORDS 16u
 #define TASK_HW_FP_FRAME_WORDS 18u
 
-#if (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_FAULT) && \
+#if (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_FAULT) &&       \
     (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING)
-#error "SECTION_TASK_CONTEXT_POOL_FULL_POLICY must be SECTION_TASK_CONTEXT_POOL_FAULT or SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING."
+#error "Invalid SECTION_TASK_CONTEXT_POOL_FULL_POLICY."
 #endif
 
 static reg_task_t *p_srtos_task_ready_first = NULL;
@@ -791,7 +851,10 @@ static void section_task_continue_current(void)
     {
         p_task_current->state = (uint8_t)TASK_STACK_STATE_READY_NEW;
         p_task_current->is_running = 0u;
-        srtos_task_ready_enqueue_unlocked(&p_srtos_task_unfinished_first, &p_srtos_task_unfinished_tail, p_task_current);
+        reg_task_t **first = &p_srtos_task_unfinished_first;
+        reg_task_t **tail = &p_srtos_task_unfinished_tail;
+
+        srtos_task_ready_enqueue_unlocked(first, tail, p_task_current);
     }
 }
 
@@ -872,7 +935,10 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
             }
             p_task_current->state = (uint8_t)TASK_STACK_STATE_READY_OLD;
             p_task_current->is_running = 0u;
-            srtos_task_ready_enqueue_unlocked(&p_srtos_task_unfinished_first, &p_srtos_task_unfinished_tail, p_task_current);
+            reg_task_t **first = &p_srtos_task_unfinished_first;
+            reg_task_t **tail = &p_srtos_task_unfinished_tail;
+
+            srtos_task_ready_enqueue_unlocked(first, tail, p_task_current);
         }
         else
         {
@@ -933,8 +999,7 @@ void section_task_start(void)
 static section_task_status_t section_task_run_current(void)
 {
     section_task_status_t status = SECTION_TASK_DONE;
-    section_perf_record_t *rec = NULL;
-    uint32_t perf_start = 0u;
+    SECTION_TASK_PERF_LOCALS();
 
     if (p_task_current == NULL)
     {
@@ -943,18 +1008,16 @@ static section_task_status_t section_task_run_current(void)
 
     if (p_task_current->p_func != NULL)
     {
-        rec = p_task_current->p_perf_record;
-        perf_start = section_perf_task_begin(rec);
+        SECTION_TASK_PERF_BEGIN(p_task_current);
         p_task_current->p_func();
-        section_perf_task_end(rec, perf_start);
+        SECTION_TASK_PERF_END();
         status = SECTION_TASK_DONE;
     }
     else if (p_task_current->p_step_func != NULL)
     {
-        rec = p_task_current->p_perf_record;
-        perf_start = section_perf_task_begin(rec);
+        SECTION_TASK_PERF_BEGIN(p_task_current);
         status = p_task_current->p_step_func(p_task_current->p_ctx);
-        section_perf_task_end(rec, perf_start);
+        SECTION_TASK_PERF_END();
     }
     else
     {
@@ -1045,6 +1108,7 @@ SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop = {0u, NULL};
 #define SECTION_WEAK
 #endif
 
+#if (SECTION_PERF_ENABLE == 1u)
 SECTION_WEAK uint32_t section_perf_task_begin(section_perf_record_t *record)
 {
     (void)record;
@@ -1074,6 +1138,7 @@ SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *rec
     (void)record;
     (void)start_cnt;
 }
+#endif
 
 static uint32_t section_critical_enter(void)
 {
@@ -1181,7 +1246,7 @@ static void task_insert(reg_task_t *task)
     task->is_ready = 0u;
     task->is_running = 0u;
     task_os_insert_init(task);
-    section_perf_task_period_set(task->p_perf_record, task->t_period * SECTION_SYS_TICK_UNIT_US);
+    SECTION_TASK_PERF_PERIOD_SET(task);
 
     if (p_task_first == NULL)
     {
@@ -1466,11 +1531,11 @@ void run_task(void)
     task = task_ready_pop();
     while (task != NULL)
     {
-        section_perf_record_t *rec = task->p_perf_record;
-        uint32_t perf_start = section_perf_task_begin(rec);
+        SECTION_TASK_PERF_LOCALS();
+        SECTION_TASK_PERF_BEGIN(task);
         section_task_status_t status = task_run_step(task);
 
-        section_perf_task_end(rec, perf_start);
+        SECTION_TASK_PERF_END();
         task_finish_step(task, status);
 
         section_task_tick();
@@ -1487,16 +1552,7 @@ void FUNC_RAM section_interrupt(void)
             continue;
         }
 
-#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
-        section_perf_record_t *rec = p->p_perf_record;
-        uint32_t perf_start = section_perf_interrupt_begin(rec);
-
-        p->p_func();
-
-        section_perf_interrupt_end(rec, perf_start);
-#else
-        p->p_func();
-#endif
+        SECTION_INTERRUPT_PERF_RUN(p);
     }
 }
 

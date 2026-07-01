@@ -33,6 +33,10 @@
 
 #include "section.h"
 
+#ifndef SECTION_PERF_RECORD_T_DECLARED
+typedef struct section_perf_record section_perf_record_t;
+#endif
+
 typedef enum
 {
     SECTION_PERF_RECORD = 0,
@@ -120,6 +124,11 @@ uint16_t perf_record_count_by_type(uint8_t record_type);
 uint32_t perf_count_to_us(uint32_t count);
 uint32_t perf_task_period_us_get(section_perf_record_t *record);
 void perf_reset_peak_value(void);
+uint32_t section_perf_task_begin(section_perf_record_t *record);
+void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
+void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us);
+uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record);
+void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
 
 #define REG_PERF_BASE_CNT(timer_cnt, period_s)      \
     section_perf_base_t section_perf_base_timer = { \
@@ -196,8 +205,13 @@ void perf_reset_peak_value(void);
     REG_SECTION_FUNC(SECTION_PERF, section_perf_record_##name##_perf)
 
 #define REG_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_CODE)
+#if (SECTION_PERF_ENABLE == 1u)
 #define REG_TASK_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_TASK)
 #define REG_INTERRUPT_PERF_RECORD(name) REG_PERF_RECORD_EX(name, SECTION_PERF_RECORD_INTERRUPT)
+#else
+#define REG_TASK_PERF_RECORD(name)
+#define REG_INTERRUPT_PERF_RECORD(name)
+#endif
 
 #else
 
