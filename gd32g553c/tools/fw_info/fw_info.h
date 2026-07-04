@@ -26,7 +26,7 @@ typedef struct
 #define RELEASE_VER 9 // release version 9
 
 // 调试版本 (低8位中的低4位)
-#define DEBUG_VER 9 // debug version 9
+#define DEBUG_VER 10 // debug version 10
 // 模块主机类型
 #ifdef IS_LLC
 #define HOST_ADDR 0x02
