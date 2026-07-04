@@ -78,7 +78,7 @@ typedef struct
     section_shell_t *cur;
     DEC_MY_PRINTF;
     uint8_t active;
-    int max_name_len;
+    size_t max_name_len;
     int tab_count;
 } list_print_ctx_t;
 
@@ -93,10 +93,10 @@ void list_print_start(DEC_MY_PRINTF)
     g_list_print_ctx.cur = shell_first_get();
     g_list_print_ctx.my_printf = my_printf;
     g_list_print_ctx.active = 1u;
-    int max_len = 0;
+    size_t max_len = 0u;
     for (section_shell_t *s = shell_first_get(); s != NULL; s = s->p_next)
     {
-        int len = strlen(s->p_name);
+        size_t len = strlen(s->p_name);
         if (len > max_len)
         {
             max_len = len;

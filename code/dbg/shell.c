@@ -231,7 +231,7 @@ static float eval_expr_inner(const char **p)
             /* strtof advances expr to the first non-numeric character. */
             number = strtof(expr, (char **)&expr);
         }
-        number *= sign;
+        number *= (float)sign;
 
         while (1u)
         {
@@ -267,7 +267,7 @@ static float eval_expr_inner(const char **p)
             {
                 next = strtof(expr, (char **)&expr);
             }
-            next *= next_sign;
+            next *= (float)next_sign;
 
             if (muldiv == '*')
                 number *= next;
