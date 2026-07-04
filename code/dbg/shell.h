@@ -45,7 +45,9 @@
  *
  * When not defined, the shell is read-only: variables can be printed but not written.
  */
+#ifndef SHELL_STRING_PARSE
 #define SHELL_STRING_PARSE 0
+#endif
 
 /* Shell: input parsing context (used by shell_run only)
  *
