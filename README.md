@@ -42,6 +42,7 @@ code
 
 ## 相关文档
 
+- 功能使用接入指南：[docs/FEATURE_USAGE_GUIDE.md](docs/FEATURE_USAGE_GUIDE.md)
 - 平台接入：[docs/MCU_PLATFORM_PORTING.md](docs/MCU_PLATFORM_PORTING.md)
 - 工程设计：[docs/ENGINEERING_DESIGN.md](docs/ENGINEERING_DESIGN.md)
 - 控制模块设计：[docs/CTRL_DESIGN.md](docs/CTRL_DESIGN.md)
