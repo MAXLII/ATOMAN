@@ -70,6 +70,25 @@ int _read(int file, char *ptr, int len)
     return 0;
 }
 
+#if defined(__GNUC__) && !defined(__ARMCC_VERSION)
+void *_sbrk(ptrdiff_t increment)
+{
+    extern char __HeapBase;
+    extern char __HeapLimit;
+    static char *heap_end = &__HeapBase;
+    char *previous_heap_end = heap_end;
+
+    if ((increment < 0) || (increment > (&__HeapLimit - heap_end)))
+    {
+        errno = ENOMEM;
+        return (void *)-1;
+    }
+
+    heap_end += increment;
+    return previous_heap_end;
+}
+#endif
+
 int _write(int file, char *ptr, int len)
 {
     (void)file;

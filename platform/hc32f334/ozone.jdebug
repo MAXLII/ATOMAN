@@ -22,18 +22,16 @@ void OnProjectLoad (void) {
   //
   // Dialog-generated settings
   //
-  Project.AddPathSubstitute ("D:/OneDrive/XXC/BDPCS/ws/PFC_CLLLC_SW/hc32f334", "$(ProjectDir)");
-  Project.AddPathSubstitute ("d:/onedrive/xxc/bdpcs/ws/pfc_clllc_sw/hc32f334", "$(ProjectDir)");
   Project.SetDevice ("Cortex-M4");
   Project.SetHostIF ("USB", "");
   Project.SetTargetIF ("SWD");
   Project.SetTIFSpeed ("4 MHz");
   Project.AddSvdFile ("$(InstallDir)/Config/CPU/Cortex-M4F.svd");
-  Project.AddSvdFile ("D:/Downloads/HC32F334_DDL_Rev1.1.0/HC32F334_DDL_Rev1.1.0/drivers/cmsis/Device/HDSC/hc32f3xx/Source/GCC/svd/HC32F334.svd");
+  Project.AddSvdFile ("$(ProjectDir)/HC32F334.svd");
   //
   // User settings
   //
-  File.Open ("$(ProjectDir)/ac/build/test.elf");
+  File.Open ("$(ProjectDir)/gcc/build/hc32f334_ac.elf");
 }
 
 /*********************************************************************
