@@ -3,6 +3,12 @@ chcp 65001 >nul
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 
+set "DEFAULT_HEX=output\hc32f334_ac.hex"
+set "DOWNLOAD_FAILED=1"
+
+if /I "%~1"=="-h" goto show_usage
+if /I "%~1"=="/?" goto show_usage
+
 if not defined RUN_AFTER_DOWNLOAD (
     set "RUN_AFTER_DOWNLOAD=1"
 ) else if /I "%RUN_AFTER_DOWNLOAD%"=="0" (
@@ -37,13 +43,13 @@ if errorlevel 1 goto end
 call :find_jlink
 if errorlevel 1 goto end
 
-set "KEIL_PROJECT=%~dp0keil_flash\hc32f334_flash.uvprojx"
+set "TEMPLATE_PROJECT=%~dp0hc32f334_ac.uvprojx"
+set "TEMPLATE_OPTIONS=%~dp0hc32f334_ac.uvoptx"
+set "KEIL_PROJECT=%~dp0.hc32f334_flash.uvprojx"
+set "KEIL_OPTIONS=%~dp0.hc32f334_flash.uvoptx"
 set "KEIL_TARGET=AC_Download"
-set "INPUT_DIR=%~dp0keil_flash\input"
-set "INPUT_HEX=%INPUT_DIR%\download.hex"
-set "LOG_FILE=%~dp0keil_flash\Keil_%PROJECT%.log"
-set "RUN_LOG_FILE=%~dp0keil_flash\JLinkRun_%PROJECT%.log"
-set "DEFAULT_HEX=%PROJECT%\build\test.hex"
+set "LOG_FILE=%~dp0download_%PROJECT%.log"
+set "RUN_LOG_FILE=%~dp0JLinkRun_%PROJECT%.log"
 
 echo Project: %PROJECT_NAME%
 echo MCU: HC32F334KATI
@@ -76,6 +82,7 @@ if not exist "%FILE_PATH%" (
 
 :process_file
 for %%F in ("%FILE_PATH%") do (
+    set "FILE_PATH=%%~fF"
     set "FILE_NAME=%%~nxF"
     set "FILE_EXT=%%~xF"
 )
@@ -86,30 +93,41 @@ if /I not "%FILE_EXT%"==".hex" (
     goto end
 )
 
-if not exist "%KEIL_PROJECT%" (
-    echo ERROR: Keil flash project does not exist.
-    echo Path: %KEIL_PROJECT%
+if not exist "%TEMPLATE_PROJECT%" (
+    echo ERROR: Keil project template does not exist.
+    echo Path: %TEMPLATE_PROJECT%
     goto end
 )
 
-if not exist "%INPUT_DIR%" mkdir "%INPUT_DIR%"
-copy /Y "%FILE_PATH%" "%INPUT_HEX%" >nul
+if not exist "%TEMPLATE_OPTIONS%" (
+    echo ERROR: Keil project options do not exist.
+    echo Path: %TEMPLATE_OPTIONS%
+    goto end
+)
+
+call :create_flash_project
+if errorlevel 1 goto end
 
 echo Start download: %FILE_NAME%
 echo Source file: %FILE_PATH%
-echo Keil input : %INPUT_HEX%
 echo.
 
 if exist "%LOG_FILE%" del "%LOG_FILE%"
-"%UV4_EXE%" -f "%KEIL_PROJECT%" -t "%KEIL_TARGET%" -j0 -o "%LOG_FILE%"
+set "UV4_ARGUMENTS=-f "%KEIL_PROJECT%" -t "%KEIL_TARGET%" -j0 -o "%LOG_FILE%""
+powershell.exe -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -Command "$process = Start-Process -FilePath $env:UV4_EXE -ArgumentList $env:UV4_ARGUMENTS -WindowStyle Hidden -Wait -PassThru; exit $process.ExitCode"
 
 set "DOWNLOAD_FAILED=0"
 set "UV4_RC=%ERRORLEVEL%"
 
+if not "%UV4_RC%"=="0" (
+    echo ERROR: Keil download process returned exit code %UV4_RC%.
+    set "DOWNLOAD_FAILED=1"
+)
+
 if not exist "%LOG_FILE%" set "DOWNLOAD_FAILED=1"
 
 if "%DOWNLOAD_FAILED%"=="0" (
-    findstr /I /C:"Error:" /C:"Could not load file" /C:"Flash Download failed" /C:"No ULINK device found" /C:"No J-LINK device found" "%LOG_FILE%" >nul 2>nul
+    findstr /I /C:"*** error" /C:"Error:" /C:"Could not load file" /C:"Flash Download failed" /C:"No ULINK device found" /C:"No J-LINK device found" "%LOG_FILE%" >nul 2>nul
     if not errorlevel 1 set "DOWNLOAD_FAILED=1"
 )
 
@@ -144,12 +162,35 @@ if "%DOWNLOAD_FAILED%"=="1" (
     if "%RUN_AFTER_DOWNLOAD%"=="1" (
         echo MCU is now running.
     ) else (
-        echo MCU remains halted.
+        echo Additional J-Link go command was skipped.
     )
 )
 
 :end
+call :cleanup_flash_project
 exit /b %DOWNLOAD_FAILED%
+
+:show_usage
+echo.
+echo Usage:
+echo   %~nx0                  Download the default firmware.
+echo   %~nx0 AC               Download the default AC firmware.
+echo   %~nx0 ^<firmware.hex^>  Download a specified HEX file.
+echo   %~nx0 AC ^<firmware.hex^>
+echo Default firmware: %DEFAULT_HEX%
+echo Environment:
+echo   RUN_AFTER_DOWNLOAD=0  Skip the extra J-Link go command.
+exit /b 0
+
+:create_flash_project
+powershell.exe -NoLogo -NoProfile -NonInteractive -Command "try { $utf8 = [System.Text.UTF8Encoding]::new($false); $outputDirectory = [System.Security.SecurityElement]::Escape((Split-Path -Parent $env:FILE_PATH) + '\'); $outputName = [System.Security.SecurityElement]::Escape([System.IO.Path]::GetFileName($env:FILE_PATH)); $project = [System.IO.File]::ReadAllText($env:TEMPLATE_PROJECT, $utf8); $project = $project.Replace('<TargetName>hc32f334_ac</TargetName>', '<TargetName>' + $env:KEIL_TARGET + '</TargetName>'); $project = $project.Replace('<OutputDirectory>.\output\</OutputDirectory>', '<OutputDirectory>' + $outputDirectory + '</OutputDirectory>'); $project = $project.Replace('<OutputName>hc32f334_ac</OutputName>', '<OutputName>' + $outputName + '</OutputName>'); $project = $project.Replace('<InvalidFlash>1</InvalidFlash>', '<InvalidFlash>0</InvalidFlash>'); $project = $project.Replace('<Flash4>.\config\debug_init.ini</Flash4>', '<Flash4></Flash4>'); [System.IO.File]::WriteAllText($env:KEIL_PROJECT, $project, $utf8); $options = [System.IO.File]::ReadAllText($env:TEMPLATE_OPTIONS, $utf8); $options = $options.Replace('<TargetName>hc32f334_ac</TargetName>', '<TargetName>' + $env:KEIL_TARGET + '</TargetName>'); [System.IO.File]::WriteAllText($env:KEIL_OPTIONS, $options, $utf8); exit 0 } catch { Write-Error $_; exit 1 }"
+exit /b %ERRORLEVEL%
+
+:cleanup_flash_project
+if /I "%KEEP_FLASH_PROJECT%"=="1" exit /b 0
+if defined KEIL_PROJECT if exist "%KEIL_PROJECT%" del /f /q "%KEIL_PROJECT%"
+if defined KEIL_OPTIONS if exist "%KEIL_OPTIONS%" del /f /q "%KEIL_OPTIONS%"
+exit /b 0
 
 :find_uv4
 set "UV4_EXE="
@@ -223,7 +264,8 @@ echo g
 echo exit
 ) > "%RUN_SCRIPT%"
 
-"%JLINK_EXE%" -CommanderScript "%RUN_SCRIPT%" -Log "%RUN_LOG_FILE%" >nul
+set "JLINK_ARGUMENTS=-CommanderScript "%RUN_SCRIPT%" -Log "%RUN_LOG_FILE%""
+powershell.exe -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -Command "$process = Start-Process -FilePath $env:JLINK_EXE -ArgumentList $env:JLINK_ARGUMENTS -WindowStyle Hidden -Wait -PassThru; exit $process.ExitCode"
 set "RUN_FAILED=0"
 
 if errorlevel 1 set "RUN_FAILED=1"
