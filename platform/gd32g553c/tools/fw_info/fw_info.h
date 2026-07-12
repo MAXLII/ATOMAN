@@ -23,10 +23,10 @@ typedef struct
 #define DEVICE_VENDOR 2 // 设备商代码
 
 // 发布版本 (低8位中的高4位)
-#define RELEASE_VER 9 // release version 9
+#define RELEASE_VER 10 // release version 10
 
 // 调试版本 (低8位中的低4位)
-#define DEBUG_VER 10 // debug version 10
+#define DEBUG_VER 0 // debug version 0
 // 模块主机类型
 #ifdef IS_LLC
 #define HOST_ADDR 0x02
