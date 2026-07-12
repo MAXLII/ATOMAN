@@ -201,13 +201,13 @@ REG_LINK(0, demo_print, demo_rx_get_byte, demo_handlers, ARRAY_SIZE(demo_handler
 如需关闭：
 
 ```c
-#define TASK_RECORD_PERF_ENABLE 0
-#define INTERRUPT_RECORD_PERF_ENABLE 0
+#define PERF_TASK_ENABLE 0u
+#define PERF_INTERRUPT_ENABLE 0u
 ```
 
-这些宏需要在包含 `section.h` 之前生效。
+这些开关统一定义在 `perf.h` 中，`section.h` 会直接读取对应值。
 
-`INTERRUPT_RECORD_PERF_ENABLE` 会影响 `section_interrupt()` 的编译路径。关闭后，中断调度不会调用 Perf begin/end 函数，也不会增加运行时判断。
+`PERF_INTERRUPT_ENABLE` 会影响 `section_interrupt()` 的编译路径。关闭后，中断调度不会调用 Perf begin/end 函数，也不会增加运行时判断。
 
 ## 9. 使用注意事项
 

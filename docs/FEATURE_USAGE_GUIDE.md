@@ -217,18 +217,13 @@ REG_LINK(USART0_LINK,
 
 ### 6.5 打开字符串 Shell
 
-在平台 makefile 或编译命令中定义：
+在 `code/dbg/shell.h` 中配置：
 
-```makefile
-SHELL_STRING_PARSE_VALUE = 1
-PROJECT_DEFINES += -DSHELL_STRING_PARSE=$(SHELL_STRING_PARSE_VALUE)
+```c
+#define SHELL_STRING_ENABLE 1u
 ```
 
-GD32 当前工程已经在 `gd32g553c/makefile` 中打开：
-
-```makefile
-SHELL_STRING_PARSE_VALUE = 1
-```
+Makefile 和 Keil 工程不定义字符串 Shell 功能宏。
 
 常用串口输入：
 
@@ -370,21 +365,15 @@ if (copy_len > sizeof(req))
 
 ### 9.1 修改位置
 
-在平台 makefile 中打开：
+在 `code/dbg/perf.h` 中分别配置任务、中断和手工代码插桩：
 
-```makefile
-SECTION_PERF_ENABLE_VALUE = 1
-PERF_SERVICE_PRINTF_VALUE = 1
-
-PROJECT_DEFINES += -DSECTION_PERF_ENABLE=$(SECTION_PERF_ENABLE_VALUE)
-PROJECT_DEFINES += -DPERF_SERVICE_PRINTF=$(PERF_SERVICE_PRINTF_VALUE)
+```c
+#define PERF_TASK_ENABLE 1u
+#define PERF_INTERRUPT_ENABLE 1u
+#define PERF_CODE_ENABLE 1u
 ```
 
-如果业务 `.c` 文件只包含 `section.h`，还需要保证 `perf.h` 在 `section.h` 之前生效。GD32 当前工程用强制预包含处理：
-
-```makefile
-CFLAGS += -include perf.h
-```
+Perf 功能开启后，Shell 输出和二进制 service 同步启用，不再设置独立的 service 输出开关。`section.h` 直接读取 `perf.h` 中的开关，不需要强制预包含，也不需要在编译工程中传入功能宏。
 
 ### 9.2 平台计数器
 
@@ -400,7 +389,7 @@ REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x00000024u), BSP_TIMER_CNT_P
 
 ### 9.3 自动测量
 
-打开 `SECTION_PERF_ENABLE` 后，所有：
+打开 `PERF_TASK_ENABLE` 和 `PERF_INTERRUPT_ENABLE` 后，所有：
 
 ```c
 REG_TASK(...)
@@ -427,7 +416,7 @@ static void demo_run(void)
 
 ### 9.5 Shell 查看
 
-打开 `PERF_SERVICE_PRINTF=1` 后可用：
+Perf 功能开启后可用：
 
 ```text
 perf_info
@@ -580,7 +569,7 @@ code/app/llc/update.c
 
 平台工程使用当前旧升级代码时，需要做以下修改：
 
-1. 在平台 makefile 中编译对应业务升级文件，例如 `../code/app/pfc/update.c`。
+1. 在平台 makefile 中编译对应业务升级文件，例如 `../../code/app/pfc/update.c`。
 2. 编译 `code/comm/comm.c`，并在串口链路中接入 `comm_run()`。
 3. 编译并适配 `fal.c/fal.h`，保证存在升级代码使用的 Flash 分区。
 4. 确认升级命令使用的 `cmd_set/cmd_word` 未和其他业务冲突。
@@ -639,23 +628,29 @@ static int32_t update_flash_read(uint32_t offset, uint8_t *data, uint32_t len)
 
 函数指针表的类型和注册函数名以恢复后的 `code/app/update/update_port.h` 为准。当前工作区没有该头文件，不能直接按本节示例编译。
 
-## 14. GD32 当前默认打开项
+## 14. 当前默认调试开关
 
-`gd32g553c/makefile` 当前默认打开：
+调试功能开关统一放在对应模块头文件中：
 
-```makefile
-SHELL_STRING_PARSE_VALUE = 1
-SECTION_PERF_ENABLE_VALUE = 1
-PERF_SERVICE_PRINTF_VALUE = 1
+```c
+/* code/dbg/shell.h */
+#define SHELL_STRING_ENABLE 1u
+
+/* code/dbg/perf.h */
+#define PERF_TASK_ENABLE 1u
+#define PERF_INTERRUPT_ENABLE 1u
+#define PERF_CODE_ENABLE 1u
+
+/* code/dbg/scope.h */
+#define SCOPE_ENABLE 1u
+
+/* code/dbg/trace.h */
+#define TRACE_ENABLE 1u
 ```
 
-编译时会打印：
+平台 Makefile 和 `.uvprojx` 只保留固件类型、MCU/芯片族、工具链、链接脚本选择等工程身份与构建配置，不定义调试功能开关。
 
-```text
-Build config: SHELL_STRING_PARSE=1
-Build config: SECTION_PERF_ENABLE=1
-Build config: PERF_SERVICE_PRINTF=1
-```
+MCU 工程的实际编译、产物和下载命令见 `docs/MCU_BUILD_DOWNLOAD_GUIDE.md`。
 
 当前 GD32 AC 串口链路：
 
@@ -675,7 +670,7 @@ Build config: PERF_SERVICE_PRINTF=1
 6. 调试命令是否用 `REG_SHELL_CMD()` 注册。
 7. 二进制命令是否用 `REG_COMM()` 注册。
 8. 需要波形时是否注册 `REG_SCOPE()` 并周期调用 `SCOPE_RUN()`。
-9. 需要耗时统计时是否打开 `SECTION_PERF_ENABLE` 并注册平台计数器。
+9. 需要耗时统计时是否在 `perf.h` 打开对应 Perf 开关并注册平台计数器。
 10. 需要执行路径定位时是否绑定 Trace 时间源。
-11. 修改 makefile 后是否能在编译日志看到关键宏。
+11. 平台构建文件中是否只保留工程身份和构建必需宏。
 12. 编译后是否能在 map 文件中看到对应注册符号。

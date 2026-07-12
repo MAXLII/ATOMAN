@@ -148,10 +148,10 @@ section_perf_interrupt_end()
 
 如果工程编译进 `perf.c`，Perf 模块会提供同名强符号覆盖这些空实现。
 
-中断 Perf hook 使用 `FUNC_RAM` 修饰。`section_interrupt()` 内部按 `INTERRUPT_RECORD_PERF_ENABLE` 编译成两套路径：
+中断 Perf hook 使用 `FUNC_RAM` 修饰。`section_interrupt()` 内部按 `PERF_INTERRUPT_ENABLE` 编译成两套路径：
 
-- `INTERRUPT_RECORD_PERF_ENABLE == 1`：执行中断回调前后调用 `section_perf_interrupt_begin/end()`。
-- `INTERRUPT_RECORD_PERF_ENABLE == 0`：直接遍历中断链表并执行回调。
+- `PERF_INTERRUPT_ENABLE == 1u`：执行中断回调前后调用 `section_perf_interrupt_begin/end()`。
+- `PERF_INTERRUPT_ENABLE == 0u`：直接遍历中断链表并执行回调。
 
 这样中断热路径不需要在运行时判断 Perf 是否使能。
 
@@ -159,8 +159,8 @@ section_perf_interrupt_end()
 
 | 开关 | 默认值 | 作用 |
 | --- | --- | --- |
-| `TASK_RECORD_PERF_ENABLE` | `1` | 任务自动测量 |
-| `INTERRUPT_RECORD_PERF_ENABLE` | `1` | 中断自动测量 |
+| `PERF_TASK_ENABLE` | `1u` | 任务自动测量 |
+| `PERF_INTERRUPT_ENABLE` | `1u` | 中断自动测量 |
 
 ## 8. FSM
 

@@ -8,11 +8,15 @@
 
 | 目录 | 模型文件 | 编译脚本 |
 | --- | --- | --- |
-| `plecs/ac/` | `ac.plecs` | `compile.bat` |
-| `plecs/buck/` | `buck.plecs` | `compile.bat` |
-| `plecs/boost/` | `boost.plecs` | `compile.bat` |
+| `platform/plecs/ac/` | `ac.plecs` | `compile.bat` |
+| `platform/plecs/buck/` | `buck.plecs` | `compile.bat` |
+| `platform/plecs/boost/` | `boost.plecs` | `compile.bat` |
+| `platform/plecs/inv/` | `inv.plecs` | `compile.bat` |
+| `platform/plecs/llc/` | `llc.plecs` | `compile.bat` |
+| `platform/plecs/pfc/` | `pfc.plecs` | `compile.bat` |
+| `platform/plecs/pfc_i32/` | `pfc.plecs` | `compile.bat` |
 
-公共 DLL 适配代码位于 `plecs/common/`，控制算法代码复用 `code/` 目录下的模块。
+公共 DLL 适配代码位于 `platform/plecs/common/`，控制算法代码复用 `code/` 目录下的模块。
 
 ## 2. 必需软件
 
@@ -20,7 +24,7 @@
 
 安装 PLECS Standalone。
 
-当前工程按 `README.md` 中记录的 PLECS `4.7.6` 环境使用。其它版本可用于打开模型，但 DLL Block 接口和加载行为应以实际安装版本为准。
+PLECS 版本需要支持当前模型文件和 64 位 DLL Block。DLL Block 接口和加载行为以实际安装版本为准。
 
 ### 2.2 CMake
 
@@ -69,23 +73,21 @@ C:\mingw64\bin\mingw32-make.exe --version
 
 ### 3.1 编译 AC 工程
 
-当前 `plecs/ac/compile.bat` 在 `cmd.exe` 下存在脚本解析异常。AC 工程可使用以下等价 CMake 命令编译：
+AC 工程使用 `compile.bat` 执行 CMake 配置和 MinGW 编译：
 
 ```bat
-pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\plecs\ac
-if exist build rmdir /s /q build
-mkdir build
-cd build
-cmake -G "MinGW Makefiles" -DCMAKE_C_COMPILER=C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=C:/mingw64/bin/x86_64-w64-mingw32-g++.exe ..
-C:/mingw64/bin/mingw32-make.exe -j8
+pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\platform\plecs\ac
+compile.bat
 popd
 ```
+
+AC 工程的 `CMakeLists.txt` 当前引用 `plecs_log_file_path.c`，当前工作区没有该文件。因此 AC 工程可以完成 CMake 配置，但 Make 阶段会报告源文件不存在。其余列出的 PLECS 工程具备当前 CMake 源文件集合。
 
 生成文件：
 
 ```text
-plecs/ac/build/bin/libplecs.dll
-plecs/ac/build/bin/plecs.map
+platform/plecs/ac/build/bin/libplecs.dll
+platform/plecs/ac/build/bin/plecs.map
 ```
 
 `ac.plecs` 当前保存的 DLL 路径为：
@@ -99,7 +101,7 @@ build/libplecs.dll
 ### 3.2 编译 Buck 工程
 
 ```bat
-pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\plecs\buck
+pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\platform\plecs\buck
 compile.bat
 popd
 ```
@@ -107,8 +109,8 @@ popd
 生成文件：
 
 ```text
-plecs/buck/build/bin/libplecs.dll
-plecs/buck/build/bin/plecs.map
+platform/plecs/buck/build/bin/libplecs.dll
+platform/plecs/buck/build/bin/plecs.map
 ```
 
 `buck.plecs` 当前加载的 DLL 路径为：
@@ -120,7 +122,7 @@ build\bin\libplecs.dll
 ### 3.3 编译 Boost 工程
 
 ```bat
-pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\plecs\boost
+pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\platform\plecs\boost
 compile.bat
 popd
 ```
@@ -128,8 +130,8 @@ popd
 生成文件：
 
 ```text
-plecs/boost/build/bin/libplecs.dll
-plecs/boost/build/bin/plecs.map
+platform/plecs/boost/build/bin/libplecs.dll
+platform/plecs/boost/build/bin/plecs.map
 ```
 
 `boost.plecs` 当前加载的 DLL 路径为：
@@ -140,7 +142,7 @@ build\bin\libplecs.dll
 
 ## 4. 编译脚本行为
 
-Buck 和 Boost 工程的 `compile.bat` 会执行以下步骤：
+各 PLECS 工程的 `compile.bat` 会执行以下步骤：
 
 1. 删除当前工程目录下已有的 `build/`。
 2. 重新创建 `build/`。
@@ -151,7 +153,7 @@ Buck 和 Boost 工程的 `compile.bat` 会执行以下步骤：
 等价的手动编译流程如下：
 
 ```bat
-cd plecs\buck
+cd platform\plecs\buck
 rmdir /s /q build
 mkdir build
 cd build
@@ -159,7 +161,7 @@ cmake -G "MinGW Makefiles" -DCMAKE_C_COMPILER=C:/mingw64/bin/x86_64-w64-mingw32-
 C:/mingw64/bin/mingw32-make.exe -j8
 ```
 
-AC 工程手动编译时还会传入 C++ 编译器路径：
+AC、INV、PFC 和 PFC_I32 工程还会向 CMake 传入 C++ 编译器路径：
 
 ```bat
 cmake -G "MinGW Makefiles" ^
@@ -172,9 +174,13 @@ cmake -G "MinGW Makefiles" ^
 
 1. 先完成对应工程的 DLL 编译。
 2. 打开对应模型文件：
-   - `plecs/ac/ac.plecs`
-   - `plecs/buck/buck.plecs`
-   - `plecs/boost/boost.plecs`
+   - `platform/plecs/ac/ac.plecs`
+   - `platform/plecs/buck/buck.plecs`
+   - `platform/plecs/boost/boost.plecs`
+   - `platform/plecs/inv/inv.plecs`
+   - `platform/plecs/llc/llc.plecs`
+   - `platform/plecs/pfc/pfc.plecs`
+   - `platform/plecs/pfc_i32/pfc.plecs`
 3. 检查模型中 DLL Block 的 DLL 路径是否指向当前工程生成的 `libplecs.dll`。
 4. 运行仿真。
 
@@ -182,9 +188,13 @@ DLL 运行时日志文件由各工程的 `plecs_log_file_path.c` 定义：
 
 | 工程 | 日志文件 |
 | --- | --- |
-| AC | `plecs/ac/plecs_log.txt` |
-| Buck | `plecs/buck/plecs_log.txt` |
-| Boost | `plecs/boost/plecs_log.txt` |
+| AC | `platform/plecs/ac/plecs_log.txt` |
+| Buck | `platform/plecs/buck/plecs_log.txt` |
+| Boost | `platform/plecs/boost/plecs_log.txt` |
+| INV | `platform/plecs/inv/plecs_log.txt` |
+| LLC | `platform/plecs/llc/plecs_log.txt` |
+| PFC | `platform/plecs/pfc/plecs_log.txt` |
+| PFC_I32 | `platform/plecs/pfc_i32/plecs_log.txt` |
 
 ## 6. 常见问题
 
@@ -227,11 +237,11 @@ MinGW-w64 安装路径与工程配置不一致。
 `cmd.exe` 不支持 UNC 路径作为当前工作目录。使用 `pushd` 进入工程目录后再执行脚本：
 
 ```bat
-pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\plecs\buck
+pushd \\wsl.localhost\Ubuntu\home\zeus\work\base\platform\plecs\buck
 compile.bat
 popd
 ```
 
-### 6.6 AC `compile.bat` 解析失败
+### 6.6 AC 工程缺少 `plecs_log_file_path.c`
 
-当前 `plecs/ac/compile.bat` 在 `cmd.exe` 中会出现命令解析异常。使用第 3.1 节中的手动 CMake 命令编译 AC 工程。
+当前工作区没有 `platform/plecs/ac/plecs_log_file_path.c`，`compile.bat` 会在 Make 阶段失败。该源文件由 AC PLECS 工程环境提供后，重新执行脚本。

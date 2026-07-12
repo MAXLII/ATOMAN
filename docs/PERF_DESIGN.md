@@ -153,5 +153,6 @@ Perf 二进制服务使用 `cmd_set = 0x01`，命令如下：
 - 计时精度由平台注册的硬件计数器决定。
 - record 名称来自注册宏参数。
 - 二进制字典和采样一次只允许一个活跃传输上下文。
-- `PERF_RECORD_ENABLE == 0` 时，record 和测量宏会被裁剪为空。
+- `PERF_CODE_ENABLE == 0u` 时，手工 `PERF_START`、`PERF_END` 和 `REG_PERF_RECORD` 插桩会被裁剪为空。
+- `PERF_TASK_ENABLE` 与 `PERF_INTERRUPT_ENABLE` 分别控制任务和中断自动测量。
 - 平台需要保证硬件计数器自由运行，并允许无符号差值处理回绕。

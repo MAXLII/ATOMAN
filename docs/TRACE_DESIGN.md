@@ -13,6 +13,8 @@ Trace 模块用于记录代码执行路径中的时间戳和源码行号，适�
 
 Trace 只记录 `line` 和 `time`，不记录文件名和自定义文本。
 
+`TRACE_ENABLE` 同时控制 Trace 内核、Shell 输出和二进制 service。功能关闭后，核心 API 保留无副作用空桩，所有 service 注册被裁剪。
+
 ## 2. 时间源
 
 Trace 使用外部时间源：
