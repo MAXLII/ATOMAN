@@ -2,7 +2,7 @@ function create_topology()
 %CREATE_TOPOLOGY Create a simple PLL test model.
 %
 % Run this script from MATLAB:
-%   cd <repo_root>/matlab/pll
+%   cd <repo_root>/platform/matlab/pll
 %   compile
 %   create_topology
 

@@ -5,7 +5,7 @@ set(CMAKE_C_COMPILER "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe")
 
 set(PLECS_PROJECT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PLECS_COMMON_DIR ${CMAKE_CURRENT_LIST_DIR}/../common)
-set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../code)
+set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../code)
 
 set(SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
@@ -32,6 +32,7 @@ target_include_directories(plecs PRIVATE
     ${PLECS_COMMON_DIR}
     ${CODE_DIR}/interface
     ${CODE_DIR}/section
+    ${CODE_DIR}/dbg
     ${CODE_DIR}/lib
     ${CODE_DIR}/ctrl
     ${CODE_DIR}/ctrl/boost
