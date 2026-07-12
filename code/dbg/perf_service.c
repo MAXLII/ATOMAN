@@ -34,6 +34,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#if (PERF_ENABLE)
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -171,9 +173,7 @@ static float s_perf_service_task_metric_max = 0.0f;
 static float s_perf_service_interrupt_metric = 0.0f;
 static float s_perf_service_interrupt_metric_max = 0.0f;
 
-/* --- printf / shell command helpers (gated by PERF_SERVICE_PRINTF) -------- */
-
-#if PERF_SERVICE_PRINTF == 1
+/* --- printf / shell command helpers --------------------------------------- */
 
 typedef struct
 {
@@ -373,13 +373,6 @@ REG_SHELL_VAR(TASK_METRIC, s_perf_service_task_metric, SHELL_FP32, 100.0f, 0.0f,
 REG_SHELL_VAR(TASK_METRIC_MAX, s_perf_service_task_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(INTERRUPT_METRIC, s_perf_service_interrupt_metric, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(INTERRUPT_METRIC_MAX, s_perf_service_interrupt_metric_max, SHELL_FP32, 100.0f, 0.0f, NULL, SHELL_STA_NULL)
-
-#else /* !PERF_SERVICE_PRINTF â€?stubs */
-
-static void perf_service_print_step(void) {}
-static void perf_service_print_cancel(void) {}
-
-#endif /* PERF_SERVICE_PRINTF */
 
 /* --- binary protocol constants and helpers --------------------------------- */
 
@@ -1033,3 +1026,12 @@ REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_RESET_PEAK, perf_reset_peak_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_DICT_QUERY, perf_dict_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_SAMPLE_QUERY, perf_sample_query_act)
 REG_COMM(PERF_OPT_CMD_SET, PERF_OPT_CMD_REPORT_CONTROL, perf_report_control_act)
+
+#else
+
+void perf_opt_service_init(perf_opt_service_t *self)
+{
+    (void)self;
+}
+
+#endif /* PERF_ENABLE */

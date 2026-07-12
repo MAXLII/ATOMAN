@@ -33,10 +33,12 @@
 #include <stddef.h>
 #include <string.h>
 
+#if (SCOPE_ENABLE == 1u)
+
 #define SCOPE_SERVICE_VAR_COUNT_MAX 10u
 #define SCOPE_SERVICE_NAME_LEN_MAX 64u
 
-/* Linked list head — built at init time from SECTION_SCOPE entries */
+/* Linked list head built at init time from SECTION_SCOPE entries. */
 scope_t *g_scope_first = NULL;
 static uint8_t g_scope_service_count = 0u;
 
@@ -54,7 +56,7 @@ typedef struct
 
 static scope_list_ctx_t s_scope_list_ctx = {0};
 
-/* Init — traverse .section segment, build g_scope_first linked list */
+/* Traverse the section table and build the g_scope_first linked list. */
 void scope_service_init(void)
 {
     scope_t **p_tail = &g_scope_first;
@@ -218,7 +220,7 @@ static void scope_service_send_active(scope_list_ctx_t *p_ctx, uint8_t cmd_word,
     comm_send_data(&packform, p_ctx->my_printf);
 }
 
-/* Poll tasks — walk g_scope_first linked list */
+/* Poll all instances in the g_scope_first linked list. */
 static void scope_service_poll_state(void)
 {
     scope_t *s = g_scope_first;
@@ -646,8 +648,7 @@ static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_SAMPLE_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-/* Printf helpers (gated by SCOPE_ENABLE_PRINTF) */
-#if SCOPE_ENABLE_PRINTF == 1
+/* Printf helpers */
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
@@ -803,8 +804,33 @@ static void scope_print_data(void)
 REG_TASK_MS(1, scope_print_data)
 
 #pragma GCC diagnostic pop
+/* Registration */
+REG_INIT(0, scope_service_init)
+REG_TASK_MS(1, scope_service_poll_task)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_LIST_QUERY, scope_list_query_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_INFO_QUERY, scope_info_query_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_VAR_QUERY, scope_var_query_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_START, scope_start_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_TRIGGER, scope_trigger_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_STOP, scope_stop_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_RESET, scope_reset_act)
+REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_SAMPLE_QUERY, scope_sample_query_act)
+
 #else
+
+scope_t *g_scope_first = NULL;
+
+void scope_service_init(void)
+{
+}
+
 void scope_printf_status(scope_t *scope, DEC_MY_PRINTF)
+{
+    (void)scope;
+    (void)my_printf;
+}
+
+void scope_printf_data(scope_t *scope, DEC_MY_PRINTF)
 {
     (void)scope;
     (void)my_printf;
@@ -826,21 +852,4 @@ int scope_printf_data_is_active(void)
     return 0;
 }
 
-void scope_printf_data(scope_t *scope, DEC_MY_PRINTF)
-{
-    (void)scope;
-    (void)my_printf;
-}
-#endif
-
-/* Registration */
-REG_INIT(0, scope_service_init)
-REG_TASK_MS(1, scope_service_poll_task)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_LIST_QUERY, scope_list_query_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_INFO_QUERY, scope_info_query_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_VAR_QUERY, scope_var_query_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_START, scope_start_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_TRIGGER, scope_trigger_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_STOP, scope_stop_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_RESET, scope_reset_act)
-REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_SAMPLE_QUERY, scope_sample_query_act)
+#endif /* SCOPE_ENABLE */

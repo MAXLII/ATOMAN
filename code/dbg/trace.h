@@ -31,6 +31,12 @@
 
 #include <stdint.h>
 
+#define TRACE_ENABLE 1u
+
+#if ((TRACE_ENABLE != 0u) && (TRACE_ENABLE != 1u))
+#error "TRACE_ENABLE must be 0 or 1."
+#endif
+
 typedef struct
 {
     uint32_t line; /* Source line number captured at the trace point. */
@@ -48,6 +54,7 @@ uint32_t dbg_trace_record_count_get(void);
 const dbg_trace_item_t *dbg_trace_item_get(uint32_t index);
 uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
 
+#if (TRACE_ENABLE == 1u)
 /* Bind the external system time counter used by all trace records. */
 #define DBG_TRACE_BIND_TIME(p_system_time) \
     dbg_trace_bind_time((volatile uint32_t *)(p_system_time))
@@ -58,5 +65,9 @@ uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
     {                               \
         dbg_trace_record(__LINE__); \
     } while (0)
+#else
+#define DBG_TRACE_BIND_TIME(p_system_time) ((void)0)
+#define DBG_TRACE_MARK() ((void)0)
+#endif
 
 #endif

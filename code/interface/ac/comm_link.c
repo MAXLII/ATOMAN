@@ -7,14 +7,6 @@
 
 #include <stdint.h>
 
-#ifndef COMM_LINK_ENABLE_ISO
-#define COMM_LINK_ENABLE_ISO 1
-#endif
-
-#ifndef COMM_LINK_ENABLE_CAN
-#define COMM_LINK_ENABLE_CAN 1
-#endif
-
 #if (COMM_LINK_ENABLE_CAN == 1)
 #include "bsp_can.h"
 #endif

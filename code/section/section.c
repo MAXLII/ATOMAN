@@ -125,7 +125,7 @@ static uint32_t task_os_enabled(void)
     return (uint32_t)SRTOS;
 }
 
-#if (SECTION_PERF_ENABLE == 1u)
+#if (PERF_ENABLE)
 #define SECTION_TASK_PERF_LOCALS()     \
     section_perf_record_t *rec = NULL; \
     uint32_t perf_start = 0u
@@ -146,7 +146,7 @@ static uint32_t task_os_enabled(void)
         section_perf_task_period_set((task)->p_perf_record,                        \
                                      (task)->t_period * SECTION_SYS_TICK_UNIT_US); \
     } while (0)
-#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+#if (PERF_INTERRUPT_ENABLE == 1u)
 #define SECTION_INTERRUPT_PERF_RUN(item)                         \
     do                                                           \
     {                                                            \
@@ -1108,7 +1108,7 @@ SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop = {0u, NULL};
 #define SECTION_WEAK
 #endif
 
-#if (SECTION_PERF_ENABLE == 1u)
+#if (PERF_ENABLE)
 SECTION_WEAK uint32_t section_perf_task_begin(section_perf_record_t *record)
 {
     (void)record;

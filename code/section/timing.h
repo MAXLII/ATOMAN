@@ -31,8 +31,10 @@
 
 #include <stdint.h>
 
+#include "platform.h"
+
 /* Topology defaults used by demo builds. Real projects may override these
- * macros from their project or compiler configuration before including this file.
+ * macros in their code configuration before including this file.
  */
 #if defined(IS_BUCK)
 #ifndef PWM_FREQ
@@ -77,11 +79,8 @@
 #endif
 
 #if defined(PWM_FREQ) && !defined(CTRL_PWM_CMP_MAX)
-#if defined(IS_HC32F334) || defined(IS_HC32F558)
-#ifndef CTRL_PWM_TIMER_FREQ_HZ
-#define CTRL_PWM_TIMER_FREQ_HZ (120000000UL)
-#endif
-#define CTRL_PWM_CMP_MAX ((int32_t)((((float)CTRL_PWM_TIMER_FREQ_HZ * 64.0f) / PWM_FREQ / 2.0f) + 0.5f))
+#if (PLATFORM_CTRL_PWM_TIMER_FREQ_HZ > 0UL)
+#define CTRL_PWM_CMP_MAX ((int32_t)((((float)PLATFORM_CTRL_PWM_TIMER_FREQ_HZ * 64.0f) / PWM_FREQ / 2.0f) + 0.5f))
 #else
 #define CTRL_PWM_CMP_MAX ((int32_t)65535)
 #endif
