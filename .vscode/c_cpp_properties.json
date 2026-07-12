@@ -5,7 +5,8 @@
         "MSVC2017_ROOT": "${env:ProgramFiles(x86)}/Microsoft Visual Studio/2017/BuildTools",
         "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023",
         "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin",
-        "KEIL_ARMCLANG_ROOT": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/Bin"
+        "KEIL_ARMCLANG_ROOT": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/Bin",
+        "KEIL_ARMCLANG_INCLUDE": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/include"
     },
     "configurations": [
         {
@@ -30,11 +31,11 @@
                 "${workspaceFolder}/code/interface/common",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm",
-                "${workspaceFolder}/gd32g553c/inc",
-                "${workspaceFolder}/gd32g553c/bsp/inc",
-                "${workspaceFolder}/gd32g553c/Firmware/CMSIS",
-                "${workspaceFolder}/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
-                "${workspaceFolder}/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include"
+                "${workspaceFolder}/platform/gd32g553c/inc",
+                "${workspaceFolder}/platform/gd32g553c/bsp/inc",
+                "${workspaceFolder}/platform/gd32g553c/Firmware/CMSIS",
+                "${workspaceFolder}/platform/gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include",
+                "${workspaceFolder}/platform/gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include"
             ],
             "defines": [
                 "GD32G5X3",
@@ -46,7 +47,7 @@
             "browse": {
                 "path": [
                     "${workspaceFolder}/code",
-                    "${workspaceFolder}/gd32g553c"
+                    "${workspaceFolder}/platform/gd32g553c"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
@@ -56,7 +57,7 @@
             "compilerPath": "${KEIL_ARMCLANG_ROOT}/armclang.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-arm",
+            "intelliSenseMode": "windows-clang-arm",
             "compilerArgs": [
                 "-mcpu=cortex-m4",
                 "-mthumb",
@@ -64,13 +65,14 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${workspaceFolder}/hc32f334/ac/src",
-                "${workspaceFolder}/hc32f334/ac/bsp",
-                "${workspaceFolder}/hc32f334/inc",
-                "${workspaceFolder}/hc32f334/src",
-                "${workspaceFolder}/hc32f334/Firmware/CMSIS/Include",
-                "${workspaceFolder}/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
-                "${workspaceFolder}/hc32f334/Firmware/HC32_LL_Driver/inc",
+                "${KEIL_ARMCLANG_INCLUDE}",
+                "${workspaceFolder}/platform/hc32f334/src",
+                "${workspaceFolder}/platform/hc32f334/bsp",
+                "${workspaceFolder}/platform/hc32f334/inc",
+                "${workspaceFolder}/platform/hc32f334/src",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
                 "${workspaceFolder}/code/app/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
@@ -93,7 +95,55 @@
             "browse": {
                 "path": [
                     "${workspaceFolder}/code",
-                    "${workspaceFolder}/hc32f334"
+                    "${workspaceFolder}/platform/hc32f334"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "hc32f334_ac_gcc",
+            "compilerPath": "${ARM_GNU_ROOT}/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/platform/hc32f334/src",
+                "${workspaceFolder}/platform/hc32f334/bsp",
+                "${workspaceFolder}/platform/hc32f334/inc",
+                "${workspaceFolder}/platform/hc32f334/src",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm"
+            ],
+            "defines": [
+                "HC32F334",
+                "USE_DDL_DRIVER",
+                "IS_HC32F334",
+                "FIRMWARE_TYPE_ISP",
+                "APP_START_ADDR=0x00000000",
+                "VECT_TAB_OFFSET=0x00000000",
+                "TOOLCHAIN_GCC",
+                "IS_AC"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/platform/hc32f334"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
@@ -111,13 +161,13 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${workspaceFolder}/hc32f558/ac/src",
-                "${workspaceFolder}/hc32f558/ac/bsp",
-                "${workspaceFolder}/hc32f558/inc",
-                "${workspaceFolder}/hc32f558/src",
-                "${workspaceFolder}/hc32f558/Firmware/CMSIS/HDSC/hc32f5xx/Include",
-                "${workspaceFolder}/hc32f558/Firmware/CMSIS/Include",
-                "${workspaceFolder}/hc32f558/Firmware/HC32_LL_Driver/inc",
+                "${workspaceFolder}/platform/hc32f558/src",
+                "${workspaceFolder}/platform/hc32f558/bsp",
+                "${workspaceFolder}/platform/hc32f558/inc",
+                "${workspaceFolder}/platform/hc32f558/src",
+                "${workspaceFolder}/platform/hc32f558/Firmware/CMSIS/HDSC/hc32f5xx/Include",
+                "${workspaceFolder}/platform/hc32f558/Firmware/CMSIS/Include",
+                "${workspaceFolder}/platform/hc32f558/Firmware/HC32_LL_Driver/inc",
                 "${workspaceFolder}/code/app/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
@@ -139,7 +189,7 @@
             "browse": {
                 "path": [
                     "${workspaceFolder}/code",
-                    "${workspaceFolder}/hc32f558"
+                    "${workspaceFolder}/platform/hc32f558"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
@@ -157,11 +207,11 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${workspaceFolder}/apm32/src",
-                "${workspaceFolder}/apm32/bsp/inc",
-                "${workspaceFolder}/apm32/Libraries/CMSIS/Include",
-                "${workspaceFolder}/apm32/Libraries/Device/Geehy/APM32F4xx/Include",
-                "${workspaceFolder}/apm32/Libraries/APM32F402_403_StdPeriphDriver/inc",
+                "${workspaceFolder}/platform/apm32/src",
+                "${workspaceFolder}/platform/apm32/bsp/inc",
+                "${workspaceFolder}/platform/apm32/Libraries/CMSIS/Include",
+                "${workspaceFolder}/platform/apm32/Libraries/Device/Geehy/APM32F4xx/Include",
+                "${workspaceFolder}/platform/apm32/Libraries/APM32F402_403_StdPeriphDriver/inc",
                 "${workspaceFolder}/code/app",
                 "${workspaceFolder}/code/app/demo",
                 "${workspaceFolder}/code/lib",
@@ -176,13 +226,12 @@
                 "APM32F402xx",
                 "IS_APM32F402",
                 "TOOLCHAIN_GCC",
-                "FIRMWARE_TYPE_ISP",
-                "APP_START_ADDR=0x08000000"
+                "FIRMWARE_TYPE_ISP"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/code",
-                    "${workspaceFolder}/apm32"
+                    "${workspaceFolder}/platform/apm32"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
@@ -194,10 +243,10 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
-                "${workspaceFolder}/plecs/common",
-                "${workspaceFolder}/plecs/ac",
-                "${workspaceFolder}/plecs/ac/app",
-                "${workspaceFolder}/plecs/ac/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/ac",
+                "${workspaceFolder}/platform/plecs/ac/app",
+                "${workspaceFolder}/platform/plecs/ac/bsp",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/app",
                 "${workspaceFolder}/code/app/ac",
@@ -221,10 +270,10 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
-                "${workspaceFolder}/plecs/common",
-                "${workspaceFolder}/plecs/pfc",
-                "${workspaceFolder}/plecs/pfc/app",
-                "${workspaceFolder}/plecs/pfc/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/pfc",
+                "${workspaceFolder}/platform/plecs/pfc/app",
+                "${workspaceFolder}/platform/plecs/pfc/bsp",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/pfc",
@@ -244,10 +293,10 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
-                "${workspaceFolder}/plecs/common",
-                "${workspaceFolder}/plecs/inv",
-                "${workspaceFolder}/plecs/inv/app",
-                "${workspaceFolder}/plecs/inv/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/inv",
+                "${workspaceFolder}/platform/plecs/inv/app",
+                "${workspaceFolder}/platform/plecs/inv/bsp",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/inv",
@@ -267,10 +316,10 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
-                "${workspaceFolder}/plecs/common",
-                "${workspaceFolder}/plecs/dc",
-                "${workspaceFolder}/plecs/dc/app",
-                "${workspaceFolder}/plecs/dc/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/dc",
+                "${workspaceFolder}/platform/plecs/dc/app",
+                "${workspaceFolder}/platform/plecs/dc/bsp",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/app",
                 "${workspaceFolder}/code/app/ac",
@@ -294,10 +343,10 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "includePath": [
-                "${workspaceFolder}/plecs/common",
-                "${workspaceFolder}/plecs/llc",
-                "${workspaceFolder}/plecs/llc/app",
-                "${workspaceFolder}/plecs/llc/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/llc",
+                "${workspaceFolder}/platform/plecs/llc/app",
+                "${workspaceFolder}/platform/plecs/llc/bsp",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/llc",
@@ -316,10 +365,10 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "includePath": [
-                "${workspaceFolder}/matlab/common",
-                "${workspaceFolder}/matlab/inv",
-                "${workspaceFolder}/matlab/inv/app",
-                "${workspaceFolder}/matlab/inv/bsp",
+                "${workspaceFolder}/platform/matlab/common",
+                "${workspaceFolder}/platform/matlab/inv",
+                "${workspaceFolder}/platform/matlab/inv/app",
+                "${workspaceFolder}/platform/matlab/inv/bsp",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/inv",
@@ -337,7 +386,7 @@
             ],
             "browse": {
                 "path": [
-                    "${workspaceFolder}/matlab",
+                    "${workspaceFolder}/platform/matlab",
                     "${workspaceFolder}/code",
                     "${MATLAB_ROOT}/extern/include",
                     "${MATLAB_ROOT}/simulink/include"
@@ -352,9 +401,9 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "includePath": [
-                "${workspaceFolder}/matlab/common",
-                "${workspaceFolder}/matlab/pll",
-                "${workspaceFolder}/matlab/pll/app",
+                "${workspaceFolder}/platform/matlab/common",
+                "${workspaceFolder}/platform/matlab/pll",
+                "${workspaceFolder}/platform/matlab/pll/app",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/section",
                 "${MATLAB_R2022B_ROOT}/extern/include",
@@ -370,7 +419,7 @@
             ],
             "browse": {
                 "path": [
-                    "${workspaceFolder}/matlab",
+                    "${workspaceFolder}/platform/matlab",
                     "${workspaceFolder}/code",
                     "${MATLAB_R2022B_ROOT}/extern/include",
                     "${MATLAB_R2022B_ROOT}/simulink/include"
