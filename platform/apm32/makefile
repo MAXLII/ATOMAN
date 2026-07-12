@@ -3,16 +3,15 @@
 ##########################################################################################################################
 
 PROJECT_FW_TYPE = ISP
-PROJECT_OUTPUT_NAME = apm32_demo
-PROJECT_PLATFORM_DEFINE = -DAPM32F402xx -DIS_APM32F402 -DTOOLCHAIN_GCC
-PROJECT_FW_DEFINE = -DFIRMWARE_TYPE_ISP
-PROJECT_APP_START_ADDR = 0x08000000
-PROJECT_LD_SCRIPT = ./ldscripts/apm32f402_403xb_flash.ld
+PROJECT_MCU = APM32F402
+PROJECT_DEVICE_FAMILY = APM32F402xx
+PROJECT_TOOLCHAIN = GCC
+LD_SCRIPT = ./ldscripts/apm32f402_403xb_flash.ld
 
-OUTPUT_NAME ?= $(PROJECT_OUTPUT_NAME)
-DEFINES ?=
-PROJECT_DEFINES = $(PROJECT_PLATFORM_DEFINE) $(PROJECT_FW_DEFINE) -DAPP_START_ADDR=$(PROJECT_APP_START_ADDR)
-LD_SCRIPT = $(PROJECT_LD_SCRIPT)
+PROJECT_DEFINES = -D$(PROJECT_DEVICE_FAMILY) \
+                  -DIS_$(PROJECT_MCU) \
+                  -DTOOLCHAIN_$(PROJECT_TOOLCHAIN) \
+                  -DFIRMWARE_TYPE_$(PROJECT_FW_TYPE)
 
 TARGET = demo
 DEBUG = 1
@@ -27,49 +26,49 @@ MKDIR_P = mkdir -p "$@"
 endif
 
 C_SOURCES = \
-../apm32/Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_dma.c \
-../apm32/Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_gpio.c \
-../apm32/Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_misc.c \
-../apm32/Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_rcm.c \
-../apm32/Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_usart.c \
-../apm32/Libraries/Device/Geehy/APM32F4xx/Source/system_apm32f402_403.c \
-../apm32/bsp/src/bsp_can.c \
-../apm32/bsp/src/bsp_gpio.c \
-../apm32/bsp/src/bsp_usart.c \
-../apm32/src/apm32f402_403_int.c \
-../apm32/src/main.c \
-../apm32/src/syscalls.c \
-../code/app/demo/demo.c \
-../code/app/demo/demo_comm.c \
-../code/app/demo/demo_interrupt.c \
-../code/app/demo/demo_perf.c \
-../code/app/demo/demo_scope.c \
-../code/app/demo/demo_sfra.c \
-../code/app/demo/demo_shell.c \
-../code/app/demo/demo_task.c \
-../code/app/demo/demo_trace.c \
-../code/lib/dft.c \
-../code/lib/pi_tustin.c \
-../code/lib/pr.c \
-../code/lib/record_dict.c \
-../code/lib/sogi.c \
-../code/dbg/perf.c \
-../code/dbg/perf_service.c \
-../code/dbg/scope.c \
-../code/dbg/scope_service.c \
-../code/dbg/sfra.c \
-../code/dbg/sfra_service.c \
-../code/dbg/trace.c \
-../code/dbg/trace_service.c \
-../code/dbg/shell.c \
-../code/dbg/shell_service.c \
-../code/interface/ac/gpio.c \
-../code/interface/ac/comm_link.c \
-../code/section/section.c \
-../code/comm/comm.c
+./Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_dma.c \
+./Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_gpio.c \
+./Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_misc.c \
+./Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_rcm.c \
+./Libraries/APM32F402_403_StdPeriphDriver/src/apm32f402_403_usart.c \
+./Libraries/Device/Geehy/APM32F4xx/Source/system_apm32f402_403.c \
+./bsp/src/bsp_can.c \
+./bsp/src/bsp_gpio.c \
+./bsp/src/bsp_usart.c \
+./src/apm32f402_403_int.c \
+./src/main.c \
+./src/syscalls.c \
+../../code/app/demo/demo.c \
+../../code/app/demo/demo_comm.c \
+../../code/app/demo/demo_interrupt.c \
+../../code/app/demo/demo_perf.c \
+../../code/app/demo/demo_scope.c \
+../../code/app/demo/demo_sfra.c \
+../../code/app/demo/demo_shell.c \
+../../code/app/demo/demo_task.c \
+../../code/app/demo/demo_trace.c \
+../../code/lib/dft.c \
+../../code/lib/pi_tustin.c \
+../../code/lib/pr.c \
+../../code/lib/record_dict.c \
+../../code/lib/sogi.c \
+../../code/dbg/perf.c \
+../../code/dbg/perf_service.c \
+../../code/dbg/scope.c \
+../../code/dbg/scope_service.c \
+../../code/dbg/sfra.c \
+../../code/dbg/sfra_service.c \
+../../code/dbg/trace.c \
+../../code/dbg/trace_service.c \
+../../code/dbg/shell.c \
+../../code/dbg/shell_service.c \
+../../code/interface/ac/gpio.c \
+../../code/interface/ac/comm_link.c \
+../../code/section/section.c \
+../../code/comm/comm.c
 
 ASM_SOURCES = \
-../apm32/gcc_startup/startup_apm32f402_403.s
+./gcc_startup/startup_apm32f402_403.s
 
 PREFIX = arm-none-eabi-
 ifdef GCC_PATH
@@ -92,23 +91,23 @@ FLOAT-ABI = -mfloat-abi=hard
 MCU = $(CPU) $(FPU) $(FLOAT-ABI)
 
 AS_DEFS =
-C_DEFS = $(PROJECT_DEFINES) $(DEFINES)
+C_DEFS = $(PROJECT_DEFINES)
 AS_INCLUDES =
 C_INCLUDES = \
--I../code/app \
--I../code/app/demo \
--I../code/lib \
--I../code/dbg \
--I../code/interface/ac \
--I../code/interface \
--I../code/interface/common \
--I../code/section \
--I../code/comm \
--I../apm32/Libraries/CMSIS/Include \
--I../apm32/Libraries/Device/Geehy/APM32F4xx/Include \
--I../apm32/Libraries/APM32F402_403_StdPeriphDriver/inc \
--I../apm32/src \
--I../apm32/bsp/inc
+-I../../code/app \
+-I../../code/app/demo \
+-I../../code/lib \
+-I../../code/dbg \
+-I../../code/interface/ac \
+-I../../code/interface \
+-I../../code/interface/common \
+-I../../code/section \
+-I../../code/comm \
+-I./Libraries/CMSIS/Include \
+-I./Libraries/Device/Geehy/APM32F4xx/Include \
+-I./Libraries/APM32F402_403_StdPeriphDriver/inc \
+-I./src \
+-I./bsp/inc
 
 C_STANDARD_FLAGS = -std=c11
 COMMON_SECTION_FLAGS = -fdata-sections -ffunction-sections

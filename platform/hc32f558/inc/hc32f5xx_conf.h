@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- * @file  hc32f558/inc/hc32f5xx_conf.h
+ * @file  platform/hc32f558/inc/hc32f5xx_conf.h
  * @brief This file contains HC32 Series Device Driver Library usage management.
  @verbatim
    Change Logs:

@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- * @file  hc32f558/ac/src/main.c
+ * @file  platform/hc32f558/src/main.c
  * @brief Main program template for the Device Driver Library.
  @verbatim
    Change Logs:
