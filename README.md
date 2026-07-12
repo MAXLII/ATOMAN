@@ -15,15 +15,19 @@
 ```text
 base
 ├─ code/          自动注册、控制、通信、调试、接口和基础算法代码
-├─ gd32g553c/     GD32G553C 平台工程
-├─ hc32f334/      HC32F334 平台工程
-├─ hc32f558/      HC32F558 demo 平台工程
-├─ apm32/         APM32 平台工程
-├─ plecs/         PLECS 控制算法仿真工程
+├─ platform/      MCU、MATLAB 和 PLECS 平台工程
+│  ├─ apm32/      APM32 平台工程
+│  ├─ gd32g553c/  GD32G553C 平台工程
+│  ├─ hc32f334/   HC32F334 平台工程
+│  ├─ hc32f558/   HC32F558 demo 平台工程
+│  ├─ matlab/     MATLAB 仿真与分析工程
+│  └─ plecs/      PLECS 控制算法仿真工程
 └─ docs/          工程设计、平台接入和专项设计文档
 ```
 
-其中 `code/` 是公共代码目录。各 MCU 平台目录负责把公共代码接到具体硬件、官方库、编译工程和外设资源上；`plecs/` 只承接控制算法仿真所需的 `ctrl/` 与 `lib/`。
+其中 `code/` 是公共代码目录。`platform/` 下的 MCU 平台负责把公共代码接到具体硬件、官方库、编译工程和外设资源上；`platform/plecs/` 承接控制算法仿真所需的 `ctrl/` 与 `lib/`。
+
+HC32F334 平台同时提供 `gcc/` 和 `keil_mdk/` 两套工程。两套工程各自包含 `compile.bat` 和 `download.bat`；GCC 固件下载通过 Keil 的 HC32F334 Flash 算法烧录 GCC 生成的 HEX，成功条件包含 Flash 校验通过。
 
 ## `code/` 分层
 
@@ -44,6 +48,7 @@ code
 
 - 功能使用接入指南：[docs/FEATURE_USAGE_GUIDE.md](docs/FEATURE_USAGE_GUIDE.md)
 - 平台接入：[docs/MCU_PLATFORM_PORTING.md](docs/MCU_PLATFORM_PORTING.md)
+- MCU 编译与下载：[docs/MCU_BUILD_DOWNLOAD_GUIDE.md](docs/MCU_BUILD_DOWNLOAD_GUIDE.md)
 - 工程设计：[docs/ENGINEERING_DESIGN.md](docs/ENGINEERING_DESIGN.md)
 - 控制模块设计：[docs/CTRL_DESIGN.md](docs/CTRL_DESIGN.md)
 - 控制模块使用：[docs/CTRL_USAGE.md](docs/CTRL_USAGE.md)

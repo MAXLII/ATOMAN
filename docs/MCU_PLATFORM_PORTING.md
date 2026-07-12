@@ -1,6 +1,6 @@
 # MCU 平台接入流程
 
-本文档记录新增 MCU 平台时的工程流程。目标是让新的 MCU 平台接入后，能够达到当前 HC32F558 工程的效果：工程可编译、串口通信可用、perf 时间可信、BSP 能承接接口层、Keil/ARMCC6 工程可直接使用。
+本文档记录新增 MCU 平台时的工程流程。目标是让新的 MCU 平台接入后具备完整 BSP、公共代码接入、串口通信、可信 perf 时间基准和可直接使用的编译工程。平台根据当前工具链提供 Keil MDK、GCC 或两套工程。
 
 ## 1. 输入资料
 
@@ -30,14 +30,13 @@
 新增平台目录按当前仓库结构组织。当前 MCU 工程定位为 demo 工程，重点是验证平台工程、BSP 接口、通信链路、perf 和调试能力是否能完整跑通，不要求管脚语义和最终产品板完全一致。
 
 ```text
-<mcu>/
-├─ ac/
-│  ├─ bsp/
-│  ├─ inc/
-│  ├─ src/
-│  └─ keil_mdk/
+platform/<mcu>/
+├─ bsp/
+├─ inc/
+├─ src/
 ├─ Firmware/
-└─ inc/
+├─ keil_mdk/
+└─ gcc/
 ```
 
 平台目录只放 MCU 相关内容。共享控制、通信、调试、算法和接口代码继续复用 `code/`。
@@ -62,12 +61,12 @@ bsp_pwm.c/.h
 - scatter 文件
 - Keil target 配置
 - include path
-- C11 / ARMCC6 编译选项
+- C11、ARM Compiler 6 或 Arm GNU Toolchain 编译选项
 - 官方库源文件列表
 - Flash 下载算法
 - 调试配置
 
-工程只保留一个目标 target。当前约定统一使用 C11 和 ARMCC6，不需要为 GCC、ARMCC5 或其他 shell 环境做兼容。
+单个 Keil 工程只保留当前平台目标。GCC 工程使用独立目录、Makefile、启动文件和链接脚本；Keil 与 GCC 工程共享 BSP、平台入口、官方驱动和 `code/` 公共模块。功能开关定义在对应模块头文件中，不通过 Makefile 或 `.uvprojx` 注入。
 
 新增工程后，需要把共享代码按现有工程方式加入：
 
@@ -274,13 +273,14 @@ BSP 完成后，需要确认 `code/interface` 能在新平台编译通过。
 
 ## 12. 工程验证
 
-每次平台接入完成后至少执行：
+每次平台接入完成后执行该平台当前提供的全部工具链工程：
 
 ```text
 Keil uVision rebuild
+GCC clean rebuild
 ```
 
-当前约定使用 ARMCC6。编译结果必须达到：
+Keil 工程使用 ARM Compiler 6，GCC 工程使用 Arm GNU Toolchain。项目代码编译结果必须达到：
 
 ```text
 0 Error(s), 0 Warning(s)

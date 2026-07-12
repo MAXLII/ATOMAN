@@ -2,14 +2,16 @@
 
 ## 1. 工程概述
 
-本工程为数字电源框架项目，当前包含四个目标平台工程：
+本工程为数字电源框架项目。MCU、MATLAB 和 PLECS 平台工程统一位于 `platform/`：
 
 | 目录 | 说明 |
 |------|------|
-| `hc32f334/` | HDSC HC32F334 AC/DC 平台 |
-| `gd32g553c/` | GigaDevice GD32G553C 平台 |
-| `apm32/` | Geehy APM32F402/403 平台 |
-| `plecs/` | PLECS 仿真模型 |
+| `platform/hc32f334/` | HDSC HC32F334 AC 平台 |
+| `platform/hc32f558/` | HDSC HC32F558 AC 平台 |
+| `platform/gd32g553c/` | GigaDevice GD32G553C 平台 |
+| `platform/apm32/` | Geehy APM32F402/403 平台 |
+| `platform/matlab/` | MATLAB 仿真与分析平台 |
+| `platform/plecs/` | PLECS 仿真平台 |
 
 共享代码位于 `code/` 目录，各平台工程通过相对路径引用。
 
@@ -24,7 +26,28 @@ code/
 ├── interface/     硬件接口层
 ├── lib/           控制算法库（PID、SOGI、锁相环等）
 └── section/       模块注册与链接框架
+
+platform/
+├── apm32/          APM32 MCU 工程
+├── gd32g553c/      GD32G553C MCU 工程
+├── hc32f334/       HC32F334 MCU 工程
+├── hc32f558/       HC32F558 MCU 工程
+├── matlab/         MATLAB 工程
+└── plecs/          PLECS 工程
 ```
+
+HC32F334 AC 平台的编译工程位于 `platform/hc32f334/`：
+
+| 目录 | 职责 |
+|------|------|
+| `keil_mdk/` | Arm Compiler 6 工程、启动文件、scatter 文件、编译脚本和 Keil 下载脚本 |
+| `gcc/` | Arm GNU Toolchain Makefile 工程、GCC 启动文件、链接脚本、编译脚本和 GCC 固件下载入口 |
+| `bsp/` | AC 工程的 ADC、PWM、GPIO、CAN、USART、时钟和定时器适配 |
+| `src/` | AC 工程入口和平台中断入口 |
+
+GCC 工程与 MDK 工程引用相同的 AC BSP、公共代码和 HC32 LL 驱动。GCC 链接脚本固定向量表到 `0x00000000`、ICG 数据到 `0x00000400`，主 SRAM 承载数据、BSS 和堆，`RAMB` 承载主栈。
+
+两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
 ## 3. 模块注册与链接框架（`code/section/`）
 
@@ -59,7 +82,7 @@ code/
 `run_task()` 在 `main()` 的 `while(1)` 循环中持续调用。遍历 `p_task_first` 链表，对每个到达周期的任务执行回调。调度特性：
 
 - **周期驱动**：每个任务有 `t_period`（以 `SECTION_SYS_TICK` 为单位），`REG_TASK_MS` 宏将毫秒转为 tick。任务到期后 `time_last` 增加 `k * period`（`k = elapsed / period`），确保不积累延迟偏差。
-- **性能测量**：如启用 `TASK_RECORD_PERF_ENABLE`，调度器在调用前后读取硬件计数器，计算任务执行时间并更新 `section_perf_record_t` 中的 `time`、`max_time`、`run_time`。ISR 在下一次任务调用之间打断的时间会被扣除。
+- **性能测量**：如启用 `PERF_TASK_ENABLE`，调度器在调用前后读取硬件计数器，计算任务执行时间并更新 `section_perf_record_t` 中的 `time`、`max_time`、`run_time`。ISR 在下一次任务调用之间打断的时间会被扣除。
 - **无阻塞**：每个周期只执行一次任务回调，不循环追赶。
 
 ### 3.4 中断调度 (`section_interrupt`)
@@ -118,15 +141,15 @@ code/
 3. 匹配后通过 `:` 分隔命令名和参数值
 4. 参数值支持 `-s N` 后缀设置 `status` 位（周期执行）
 
-### 4.4 表达式求值（SHELL_STRING_PARSE）
+### 4.4 表达式求值（SHELL_STRING_ENABLE）
 
-当 `SHELL_STRING_PARSE == 1` 时，shell 支持变量写入和表达式求值：
+当 `SHELL_STRING_ENABLE == 1u` 时，shell 支持变量写入和表达式求值：
 
 - **`parse_integer`**：支持十进制、`0x` 十六进制、`0b` 二进制，以及简单算术表达式如 `1+2*3`
 - **`eval_expr`**：递归下降表达式求值器，支持 `+` `-` `*` `/` 四则运算和括号嵌套，使用 `strtof` 解析浮点数
 - **`shell_write_item_if_needed`**：按变量类型解析写入值，写入后钳位到 `[p_min, p_max]` 范围，然后调用 `func` 通知上层
 
-当 `SHELL_STRING_PARSE == 0` 时，`shell_run` 为空桩函数，变量只读且通过二进制协议访问。
+当 `SHELL_STRING_ENABLE == 0u` 时，`shell_run` 为空桩函数，变量只读且通过二进制协议访问。
 
 ### 4.5 服务层
 
@@ -139,7 +162,7 @@ code/
 | 波形流 | `shell_wave_start_act` + `shell_wave_report_task` | `SHELL_STA_AUTO` 选中的变量周期性流式上报 |
 | list 分步打印 | `list_print_start` + `list_print_step` | 非阻塞分页打印所有注册项 |
 
-list 分步打印和状态周期执行由 `SHELL_STRING_PARSE` 宏控制。
+list 分步打印和状态周期执行由 `SHELL_STRING_ENABLE` 宏控制。
 
 ### 4.6 FLASH 与 RAM 用量
 
@@ -236,7 +259,7 @@ FIFO 缓冲区固定 64 条记录（`DBG_TRACE_BUFFER_SIZE = 64`）。`write_cou
 
 | 功能 | 实现 | 说明 |
 |------|------|------|
-| printf 打印 | `dbg_trace_service_print_task` | 以 50ms 周期逐条打印 FIFO 记录（由 `TRACE_SERVICE_PRINTF` 宏控制） |
+| printf 打印 | `dbg_trace_service_print_task` | Trace 开启后，以 50ms 周期逐条打印 FIFO 记录 |
 | 二进制上报 | `dbg_trace_service_binary_task` | 上位机通过 control 命令开启后，以 1ms 周期批量上报记录（每次最多 3 条） |
 | 清除 | `dbg_trace_clear_cmd` | shell 命令清除缓冲区 |
 
@@ -296,7 +319,7 @@ perf 需要一个硬件计数器作为时间基准，通过 `REG_PERF_BASE_CNT(t
 | `PERF_RECORD_QUERY` | 查询单个记录的运行时间、负载、ID |
 | `PERF_RECORD_RESET_PEAK` | 重置峰值统计数据 |
 
-printf 输出（`PERF_SERVICE_PRINTF` 宏控制）提供 `perf_printf_status` 和 `perf_printf_record` 用于终端调试。
+Perf 开启后，printf 输出与二进制 service 同步启用，提供终端调试能力。
 
 ### 7.6 FLASH 与 RAM 用量
 
@@ -328,22 +351,21 @@ dbg 的五个子模块（shell、scope、trace、perf）遵循统一的分层模
 这种分层的设计原则：
 
 - **依赖方向单向**：服务层依赖内核层和 `comm.h`/`section.h`，内核层不依赖服务层或通信框架
-- **printf 宏隔离**：每个服务层提供 `*_SERVICE_PRINTF` / `*_ENABLE_PRINTF` 宏，在资源紧张的场景中可关闭所有 printf 代码
-- **二进制协议无依赖**：`REG_COMM` 注册的二进制协议处理函数始终编译，不随 printf 宏裁剪
+- **功能开关统一**：Perf、Scope 和 Trace 只使用各自模块头文件中的功能开关；功能开启时同时提供配套 Shell 输出和二进制 service
+- **关闭行为一致**：功能关闭后，对应记录、缓冲区和 service 注册一起裁剪，不设置独立的 printf 输出开关
 - **内核 ISR 安全**：内核函数（`scope_run`、`dbg_trace_record`、`PERF_START`/`PERF_END` 等）不包含任何阻塞或重量级操作
 
-## 9. 编译配置
+## 9. 功能与编译配置
 
-HC32F334 AC 平台当前使用 ARM Compiler for Embedded 6.24，优化等级 `-Oz`（极致空间优化）。
+HC32F334 AC 平台提供两套当前可编译工程：Keil MDK 使用 ARM Compiler for Embedded 6.24 和 `-Oz` 优化；GCC 工程使用 Arm GNU Toolchain、C11 和 `-O2` 优化。两套工程共享同一组平台 BSP 与公共代码。
 
 ### 9.1 裁剪宏汇总
 
 | 宏 | 模块 | 默认值 | 关闭时行为 |
 |----|------|--------|-----------|
-| `SHELL_STRING_PARSE` | shell | 0 | 只读变量，不解析表达式 |
-| `SCOPE_ENABLE_PRINTF` | scope_service | 0 | printf 输出为空桩 |
-| `TRACE_SERVICE_PRINTF` | trace_service | 0 | printf 输出为空桩 |
-| `PERF_SERVICE_PRINTF` | perf_service | 0 | printf 输出为空桩 |
-| `PERF_RECORD_ENABLE` | perf | 1 | 关闭 `PERF_START`/`PERF_END` 插桩 |
-| `TASK_RECORD_PERF_ENABLE` | section | 1 | 关闭任务自动测量 |
-| `INTERRUPT_RECORD_PERF_ENABLE` | section | 1 | 关闭中断自动测量 |
+| `SHELL_STRING_ENABLE` | shell | 1u | 只读变量，不解析表达式 |
+| `SCOPE_ENABLE` | scope | 1u | 不注册 Scope 实例，不分配采样缓冲区 |
+| `TRACE_ENABLE` | trace | 1u | Trace 记录宏为空，不分配记录缓冲区，不注册 service |
+| `PERF_CODE_ENABLE` | perf | 1u | 关闭 `PERF_START`/`PERF_END` 插桩 |
+| `PERF_TASK_ENABLE` | perf | 1u | 关闭任务自动测量 |
+| `PERF_INTERRUPT_ENABLE` | perf | 1u | 关闭中断自动测量 |

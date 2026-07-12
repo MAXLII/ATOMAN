@@ -81,6 +81,6 @@ compile.bat
 
 The same demo source files are also listed in:
 
-- `../../../gd32g553c/makefile`
-- `../../../gd32g553c/mdk/gd32g553.uvprojx`
-- `../../../hc32f334/ac/keil_mdk/hc32f334_ac.uvprojx`
+- `../../../platform/gd32g553c/makefile`
+- `../../../platform/gd32g553c/mdk/gd32g553.uvprojx`
+- `../../../platform/hc32f334/keil_mdk/hc32f334_ac.uvprojx`

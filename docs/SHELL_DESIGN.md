@@ -58,15 +58,15 @@ section_shell_t *shell_find(const char *p_name, uint8_t len);
 
 ## 4. 字符串 Shell
 
-字符串 Shell 由 `SHELL_STRING_PARSE` 控制：
+字符串 Shell 由 `SHELL_STRING_ENABLE` 控制：
 
 ```c
-#define SHELL_STRING_PARSE 0
+#define SHELL_STRING_ENABLE 1u
 ```
 
 当前默认值为 `0`，此时 `shell_run()` 是空实现，不解析输入字节。
 
-当 `SHELL_STRING_PARSE == 1` 时，`shell_run()` 使用 `shell_ctx_t` 保存每条链路自己的输入缓冲：
+当 `SHELL_STRING_ENABLE == 1u` 时，`shell_run()` 使用 `shell_ctx_t` 保存每条链路自己的输入缓冲：
 
 ```c
 typedef struct
@@ -92,7 +92,7 @@ typedef struct
 
 ## 5. 字符串参数解析
 
-当 `SHELL_STRING_PARSE == 1` 时，变量写入支持以下形式：
+当 `SHELL_STRING_ENABLE == 1u` 时，变量写入支持以下形式：
 
 ```text
 name:value

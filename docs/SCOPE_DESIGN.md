@@ -102,9 +102,9 @@ Scope 服务使用 `cmd_set = 0x01`。
 
 服务层使用 `capture_tag` 区分不同批次的采样数据。上位机读取样本时可带上期望的 `capture_tag`，避免读到新旧混合数据。
 
-## 7. 可选 Shell 打印
+## 7. Shell 打印
 
-`SCOPE_ENABLE_PRINTF == 1` 时，`scope_service.h` 提供 Shell 命令注册宏：
+`SCOPE_ENABLE == 1u` 时，`scope_service.h` 提供 Shell 命令注册宏：
 
 | 宏 | 说明 |
 | --- | --- |
@@ -112,7 +112,7 @@ Scope 服务使用 `cmd_set = 0x01`。
 | `REG_SCOPE_START_CMD(name)` | 注册启动命令 |
 | `REG_SCOPE_DATA_STEP_CMD(name)` | 注册分步打印数据命令 |
 
-默认 `SCOPE_ENABLE_PRINTF` 为 `0`，这些宏为空。
+`SCOPE_ENABLE == 0u` 时，这些宏为空，同时不注册 Scope 二进制 service。
 
 ## 8. 当前约束
 

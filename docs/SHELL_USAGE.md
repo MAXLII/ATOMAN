@@ -124,14 +124,7 @@ REG_SHELL_VAR(DEMO_STATE, s_state, SHELL_UINT32, 0xFFFFFFFFu, 0u, NULL, SHELL_ST
 
 ## 6. 字符串 Shell 接入
 
-`shell.h` 中 `SHELL_STRING_PARSE` 的库默认值是 `0`。平台工程可以在 makefile 或编译命令中覆盖。
-
-GD32 当前工程在 `gd32g553c/makefile` 中已打开：
-
-```makefile
-SHELL_STRING_PARSE_VALUE = 1
-PROJECT_DEFINES += -DSHELL_STRING_PARSE=$(SHELL_STRING_PARSE_VALUE)
-```
+字符串解析由 `shell.h` 中的 `SHELL_STRING_ENABLE` 控制，当前值为 `1`。需要裁剪字符串解析时，直接在 `shell.h` 中改为 `0`；平台 Makefile 和 Keil 工程不定义该功能宏。
 
 如果打开字符串解析，需要为每条链路准备独立上下文：
 
@@ -205,4 +198,4 @@ code/app/demo/demo_shell.c
 - 写变量时会按注册的 `max/min` 做限幅。
 - `SHELL_FP32` 通过 4 字节浮点数据读写。
 - 字符串 Shell 使用每链路 128 字节输入缓冲。
-- 二进制协议访问不依赖 `SHELL_STRING_PARSE` 是否开启。
+- 二进制协议访问不依赖 `SHELL_STRING_ENABLE` 是否开启。

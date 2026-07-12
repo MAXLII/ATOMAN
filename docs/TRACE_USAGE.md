@@ -6,6 +6,14 @@
 
 内部实现见 [TRACE_DESIGN.md](TRACE_DESIGN.md)。
 
+Trace 总开关位于 `code/dbg/trace.h`：
+
+```c
+#define TRACE_ENABLE 1u
+```
+
+设为 `0u` 后，记录宏为空，不分配 Trace 缓冲区，也不注册 Shell 和二进制 service。
+
 ## 2. 绑定时间源
 
 使用 Trace 前需要绑定时间源：

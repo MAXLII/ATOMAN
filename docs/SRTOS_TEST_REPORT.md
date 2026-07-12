@@ -253,7 +253,7 @@ task_stack_free_words = 495
 构建失败：
 
 ```text
-gd32g553c/bsp/src/bsp_usart.c:20:9:
+platform/gd32g553c/bsp/src/bsp_usart.c:20:9:
 error: "BSP_USART_DBG_BAUDRATE" redefined [-Werror]
 ```
 

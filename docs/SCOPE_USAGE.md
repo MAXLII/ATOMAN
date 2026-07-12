@@ -100,7 +100,9 @@ Scope 服务通过二进制协议提供访问能力：
 
 ## 7. 可选 Shell 命令
 
-如果打开 `SCOPE_ENABLE_PRINTF`，可以在注册 Scope 后追加：
+Scope 模块总开关是 `scope.h` 中的 `SCOPE_ENABLE`。设为 `0u` 后，注册宏只保留业务变量声明，不分配采样缓冲区，也不注册 Scope 实例。
+
+Scope 开启后，可以在注册 Scope 后追加：
 
 ```c
 REG_SCOPE_STATUS_CMD(demo_scope)
