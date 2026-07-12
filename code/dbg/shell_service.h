@@ -148,7 +148,7 @@ typedef struct
 #pragma pack(pop)
 
 void shell_status_run(void);
-#ifdef SHELL_STRING_PARSE
+#if (SHELL_STRING_ENABLE == 1u)
 void list_print_start(DEC_MY_PRINTF);
 int list_print_step(void);
 #endif

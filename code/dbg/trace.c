@@ -30,6 +30,8 @@
 
 #include <string.h>
 
+#if (TRACE_ENABLE == 1u)
+
 typedef struct
 {
     volatile uint32_t *p_system_time; /* External time counter used for trace timestamps. */
@@ -133,3 +135,49 @@ uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line)
 
     return 1u;
 }
+
+#else
+
+void dbg_trace_bind_time(volatile uint32_t *p_system_time)
+{
+    (void)p_system_time;
+}
+
+void dbg_trace_record(uint32_t line)
+{
+    (void)line;
+}
+
+void dbg_trace_clear(void)
+{
+}
+
+const dbg_trace_item_t *dbg_trace_buffer_get(void)
+{
+    return NULL;
+}
+
+uint32_t dbg_trace_buffer_size_get(void)
+{
+    return 0u;
+}
+
+uint32_t dbg_trace_record_count_get(void)
+{
+    return 0u;
+}
+
+const dbg_trace_item_t *dbg_trace_item_get(uint32_t index)
+{
+    (void)index;
+    return NULL;
+}
+
+uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line)
+{
+    (void)p_time;
+    (void)p_line;
+    return 0u;
+}
+
+#endif /* TRACE_ENABLE */

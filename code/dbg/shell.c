@@ -89,9 +89,9 @@ void shell_init(void)
 
 REG_INIT(0, shell_init)
 
-/* --- string parsing & variable writing (gated by SHELL_STRING_PARSE) ------ */
+/* --- string parsing & variable writing (gated by SHELL_STRING_ENABLE) ----- */
 
-#if SHELL_STRING_PARSE == 1
+#if SHELL_STRING_ENABLE == 1u
 
 /* --- string helpers (always available) ----------------------------------- */
 
@@ -480,7 +480,7 @@ static void shell_write_item_if_needed(section_shell_t *p, const char *value_str
  * @brief Handle parameter parsing, value writing, and status update after a
  *        command/variable name match in shell_run.
  *
- * When SHELL_STRING_PARSE is defined this is the full implementation.
+ * When SHELL_STRING_ENABLE is 1 this is the full implementation.
  * Otherwise a minimal stub dispatches commands and prints variables read-only.
  */
 static void shell_handle_param(section_shell_t *p, char c, char *line, DEC_MY_PRINTF)
@@ -608,7 +608,7 @@ shell_done:
     ctx->shell_buffer[0] = 0u;
 }
 
-#else /* !SHELL_STRING_PARSE — minimal stubs */
+#else /* SHELL_STRING_ENABLE == 0u: minimal stubs. */
 
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 {
@@ -617,7 +617,7 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
     (void)p_ctx;
 }
 
-#endif /* SHELL_STRING_PARSE */
+#endif /* SHELL_STRING_ENABLE */
 
 section_shell_t *shell_first_get(void)
 {

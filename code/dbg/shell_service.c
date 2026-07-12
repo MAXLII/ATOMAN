@@ -33,7 +33,7 @@
 
 #include <string.h>
 
-#if SHELL_STRING_PARSE == 1
+#if SHELL_STRING_ENABLE == 1u
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
@@ -216,7 +216,7 @@ REG_TASK_MS(10, list_print_task)
 
 #pragma GCC diagnostic pop
 
-#endif /* SHELL_STRING_PARSE */
+#endif /* SHELL_STRING_ENABLE */
 
 /* Context used when a remote peer requests a full shell item enumeration. */
 static shell_report_ctx_t shell_report_ctx = {0};

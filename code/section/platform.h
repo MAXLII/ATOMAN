@@ -146,10 +146,10 @@ extern size_t __stop_section;
 #define SRTOS 1
 #endif
 #if defined(TOOLCHAIN_MDK)
-extern uint32_t Image$$SECTION$$Base;
-extern uint32_t Image$$SECTION$$Limit;
-#define SECTION_START Image$$SECTION$$Base
-#define SECTION_STOP Image$$SECTION$$Limit
+extern uint32_t section_image_base __asm("Image$$SECTION$$Base");
+extern uint32_t section_image_limit __asm("Image$$SECTION$$Limit");
+#define SECTION_START section_image_base
+#define SECTION_STOP section_image_limit
 #else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
@@ -196,14 +196,17 @@ extern uint32_t __section_end;
 #include "hc32f3xx.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#define PLATFORM_PERF_COUNT_UNIT_US (8.0f / 15.0f)
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 188UL
+#define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 120000000UL
 #ifndef SRTOS
 #define SRTOS 1
 #endif
 #if defined(TOOLCHAIN_MDK)
-extern uint32_t Load$$SECTION$$Base;
-extern uint32_t Load$$SECTION$$Limit;
-#define SECTION_START Load$$SECTION$$Base
-#define SECTION_STOP Load$$SECTION$$Limit
+extern uint32_t section_load_base __asm("Load$$SECTION$$Base");
+extern uint32_t section_load_limit __asm("Load$$SECTION$$Limit");
+#define SECTION_START section_load_base
+#define SECTION_STOP section_load_limit
 #else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
@@ -250,14 +253,17 @@ extern uint32_t __section_end;
 #include "hc32f5xx.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
+#define PLATFORM_COMM_LINK_ENABLE_ISO 0u
+#define PLATFORM_COMM_LINK_ENABLE_CAN 0u
+#define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 120000000UL
 #ifndef SRTOS
 #define SRTOS 0
 #endif
 #if defined(TOOLCHAIN_MDK)
-extern uint32_t Load$$SECTION$$Base;
-extern uint32_t Load$$SECTION$$Limit;
-#define SECTION_START Load$$SECTION$$Base
-#define SECTION_STOP Load$$SECTION$$Limit
+extern uint32_t section_load_base __asm("Load$$SECTION$$Base");
+extern uint32_t section_load_limit __asm("Load$$SECTION$$Limit");
+#define SECTION_START section_load_base
+#define SECTION_STOP section_load_limit
 #else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
@@ -302,6 +308,7 @@ extern uint32_t __section_end;
 #elif defined(IS_APM32F402)
 #include "apm32f402_403.h"
 #include "apm32f402_403_int.h"
+#define APP_START_ADDR 0x08000000UL
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 #ifndef SRTOS
@@ -391,6 +398,30 @@ extern uint32_t __section_end;
         {                        \
         }                        \
     } while (0)
+#endif
+
+/* -------------------------------------------------------------------------- */
+/* Optional platform capabilities                                             */
+/* -------------------------------------------------------------------------- */
+
+#ifndef PLATFORM_PERF_COUNT_UNIT_US
+#define PLATFORM_PERF_COUNT_UNIT_US 0.5f
+#endif
+
+#ifndef PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 200UL
+#endif
+
+#ifndef PLATFORM_COMM_LINK_ENABLE_ISO
+#define PLATFORM_COMM_LINK_ENABLE_ISO 1u
+#endif
+
+#ifndef PLATFORM_COMM_LINK_ENABLE_CAN
+#define PLATFORM_COMM_LINK_ENABLE_CAN 1u
+#endif
+
+#ifndef PLATFORM_CTRL_PWM_TIMER_FREQ_HZ
+#define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 0UL
 #endif
 
 /* -------------------------------------------------------------------------- */

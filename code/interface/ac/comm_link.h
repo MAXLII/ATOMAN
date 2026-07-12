@@ -1,6 +1,11 @@
 #ifndef __COMM_LINK_H
 #define __COMM_LINK_H
 
+#include "platform.h"
+
+#define COMM_LINK_ENABLE_ISO PLATFORM_COMM_LINK_ENABLE_ISO
+#define COMM_LINK_ENABLE_CAN PLATFORM_COMM_LINK_ENABLE_CAN
+
 typedef enum
 {
     USART0_LINK,

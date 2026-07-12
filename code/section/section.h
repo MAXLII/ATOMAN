@@ -9,7 +9,7 @@
  *          - Define the shared descriptors stored in the linker-managed section table
  *          - Provide REG_INIT, REG_TASK, REG_INTERRUPT, REG_FSM, and link registration macros
  *          - Expose runtime dispatch APIs used by the main loop, interrupt path, and service modules
- *          - Offer optional instrumentation hook points without depending on the dbg/perf module
+ *          - Read unified Perf switches and bind optional instrumentation hook points
  *
  *          Design notes:
  *          - C11 compatible
@@ -37,36 +37,57 @@
 
 #include "platform.h"
 
-#ifndef SECTION_PERF_ENABLE
-#define SECTION_PERF_ENABLE 0u
-#endif
+typedef struct
+{
+    void (*my_printf)(const char *__format, ...); /* 链路格式化输出回调。 */
+    void (*tx_by_dma)(char *ptr, int len);        /* 链路 DMA 发送回调。 */
+} section_link_tx_func_t;
 
-#if (SECTION_PERF_ENABLE != 0u) && (SECTION_PERF_ENABLE != 1u)
-#error "SECTION_PERF_ENABLE must be 0 or 1."
-#endif
+#define DEC_MY_PRINTF section_link_tx_func_t *my_printf
 
-#if (SECTION_PERF_ENABLE == 1u)
-typedef struct section_perf_record section_perf_record_t;
-#define SECTION_PERF_RECORD_T_DECLARED 1u
+typedef enum
+{
+    SECTION_INIT = 0,   /* 初始化函数注册项。 */
+    SECTION_TASK,       /* 周期任务注册项。 */
+    SECTION_INTERRUPT,  /* 中断调度注册项。 */
+    SECTION_SHELL,      /* Shell 命令与变量注册项。 */
+    SECTION_LINK,       /* 通信链路注册项。 */
+    SECTION_PERF,       /* 性能计数器与记录注册项。 */
+    SECTION_COMM,       /* 通信命令注册项。 */
+    SECTION_COMM_ROUTE, /* 通信路由注册项。 */
+    SECTION_SCOPE,      /* Scope 实例注册项。 */
+    SECTION_SFRA,       /* SFRA 实例注册项。 */
+} SECTION_E;
+
+typedef struct
+{
+    uint32_t section_type; /* 注册项类型，对应 SECTION_E。 */
+    void *p_str;           /* 注册对象地址。 */
+} reg_section_t;
+
+#define REG_SECTION_INIT(_section_type, _p_str) \
+    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_p_str)}
+
+#define REG_SECTION_FUNC(_section_type, _p_str)                      \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
+        SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, _p_str);
+
+#include "perf.h"
+
+#if (PERF_TASK_ENABLE == 1u)
 #define SECTION_TASK_PERF_FIELD section_perf_record_t *p_perf_record;
 #define SECTION_TASK_PERF_INIT(name) , .p_perf_record = TASK_RECORD_PERF(name)
-#define SECTION_INTERRUPT_PERF_FIELD section_perf_record_t *p_perf_record;
-#define SECTION_INTERRUPT_PERF_INIT(name) , .p_perf_record = INTERRUPT_RECORD_PERF(name)
-#ifndef TASK_RECORD_PERF_ENABLE
-#define TASK_RECORD_PERF_ENABLE 1
-#endif
-#ifndef INTERRUPT_RECORD_PERF_ENABLE
-#define INTERRUPT_RECORD_PERF_ENABLE 1
-#endif
 #else
 #define SECTION_TASK_PERF_FIELD
 #define SECTION_TASK_PERF_INIT(name)
+#endif
+
+#if (PERF_INTERRUPT_ENABLE == 1u)
+#define SECTION_INTERRUPT_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_INTERRUPT_PERF_INIT(name) , .p_perf_record = INTERRUPT_RECORD_PERF(name)
+#else
 #define SECTION_INTERRUPT_PERF_FIELD
 #define SECTION_INTERRUPT_PERF_INIT(name)
-#undef TASK_RECORD_PERF_ENABLE
-#define TASK_RECORD_PERF_ENABLE 0
-#undef INTERRUPT_RECORD_PERF_ENABLE
-#define INTERRUPT_RECORD_PERF_ENABLE 0
 #endif
 
 typedef struct
@@ -212,34 +233,6 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define REG_INTERRUPT_PERF_RECORD(name)
 #endif
 
-typedef struct
-{
-    void (*my_printf)(const char *__format, ...);
-    void (*tx_by_dma)(char *ptr, int len);
-} section_link_tx_func_t;
-
-#define DEC_MY_PRINTF section_link_tx_func_t *my_printf
-
-typedef enum
-{
-    SECTION_INIT = 0,
-    SECTION_TASK,
-    SECTION_INTERRUPT,
-    SECTION_SHELL,
-    SECTION_LINK,
-    SECTION_PERF,
-    SECTION_COMM,
-    SECTION_COMM_ROUTE,
-    SECTION_SCOPE,
-    SECTION_SFRA,
-} SECTION_E;
-
-typedef struct
-{
-    uint32_t section_type;
-    void *p_str;
-} reg_section_t;
-
 typedef struct section_link_t section_link_t;
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -250,13 +243,6 @@ typedef struct section_link_t section_link_t;
 #else
 #define SECTION_STATIC_ASSERT(cond, msg) _Static_assert((cond), msg)
 #endif
-
-#define REG_SECTION_INIT(_section_type, _p_str) \
-    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_p_str)}
-
-#define REG_SECTION_FUNC(_section_type, _p_str)                      \
-    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
-        SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, _p_str);
 
 #ifdef __GNUC__
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -283,7 +269,7 @@ typedef struct reg_init
 void section_init(void);
 void section_runtime_reset(void);
 
-#if (SECTION_PERF_ENABLE == 1u)
+#if (PERF_ENABLE)
 uint32_t section_perf_task_begin(section_perf_record_t *record);
 void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
 void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us);
@@ -315,7 +301,7 @@ typedef struct reg_task_t
     SECTION_SRTOS_TASK_FIELDS
 } reg_task_t;
 
-#if (TASK_RECORD_PERF_ENABLE == 1)
+#if (PERF_TASK_ENABLE == 1u)
 #define TASK_RECORD_PERF(name) P_RECORD_PERF(name)
 #else
 #define TASK_RECORD_PERF(name) NULL
@@ -391,7 +377,7 @@ uint32_t *section_task_switch_sp(uint32_t *sp);
 
 #define PRIORITY_NUM_MAX 16
 
-#if (INTERRUPT_RECORD_PERF_ENABLE == 1)
+#if (PERF_INTERRUPT_ENABLE == 1u)
 #define INTERRUPT_RECORD_PERF(name) P_RECORD_PERF(name)
 #else
 #define INTERRUPT_RECORD_PERF(name) NULL

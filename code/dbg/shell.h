@@ -45,8 +45,10 @@
  *
  * When not defined, the shell is read-only: variables can be printed but not written.
  */
-#ifndef SHELL_STRING_PARSE
-#define SHELL_STRING_PARSE 0
+#define SHELL_STRING_ENABLE 1u
+
+#if ((SHELL_STRING_ENABLE != 0u) && (SHELL_STRING_ENABLE != 1u))
+#error "SHELL_STRING_ENABLE must be 0 or 1."
 #endif
 
 /* Shell: input parsing context (used by shell_run only)

@@ -33,6 +33,12 @@
 
 #include <stdint.h>
 
+#define SCOPE_ENABLE 1u
+
+#if ((SCOPE_ENABLE != 0u) && (SCOPE_ENABLE != 1u))
+#error "SCOPE_ENABLE must be 0 or 1."
+#endif
+
 typedef enum
 {
     SCOPE_STATE_IDLE,
@@ -42,7 +48,7 @@ typedef enum
 
 typedef struct scope_t
 {
-    /* Capture state — used by scope.c */
+    /* Capture state used by scope.c. */
     uint32_t write_index;
     uint32_t trigger_index;
     uint8_t is_triggered;
@@ -56,7 +62,7 @@ typedef struct scope_t
     float **var_ptrs;
     const char **var_names;
     scope_state_e state;
-    /* Service state — used by scope_service.c */
+    /* Service state used by scope_service.c. */
     uint8_t scope_id;
     uint8_t data_ready;
     scope_state_e last_state;
@@ -116,7 +122,7 @@ typedef struct scope_t
         .capture_tag = 0u,                                                                                          \
         .p_name = #name,                                                                                            \
         .p_next = NULL,                                                                                             \
-    };
+    }
 
 void scope_run(scope_t *scope);
 void scope_start(scope_t *scope);
@@ -124,6 +130,11 @@ void scope_stop(scope_t *scope);
 void scope_trigger(scope_t *scope);
 void scope_reset(scope_t *scope);
 
+/* Scope linked list built at init from SECTION_SCOPE entries. */
+extern scope_t *g_scope_first;
+void scope_service_init(void);
+
+#if (SCOPE_ENABLE == 1u)
 #define SCOPE_RUN(name) scope_run(&scope_##name)
 #define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
 #define SCOPE_GET_BUFFER(name) (scope_##name.buffer)
@@ -131,9 +142,6 @@ void scope_reset(scope_t *scope);
 #define SCOPE_GET_VAR_NUM(name) (scope_##name.var_count)
 #define SCOPE_GET_VAR_PTRS(name) (scope_##name.var_ptrs)
 
-/* Scope linked list — built at init from SECTION_SCOPE entries */
-extern scope_t *g_scope_first;
-void scope_service_init(void);
 #define REG_SCOPE(name, buf_size, trig_post_cnt, ...)                \
     SCOPE_DEFINE(name, buf_size, trig_post_cnt, 1000u, __VA_ARGS__); \
     const reg_section_t reg_scope_##name AUTO_REG_SECTION = {        \
@@ -147,5 +155,15 @@ void scope_service_init(void);
         .section_type = (uint32_t)SECTION_SCOPE,                                   \
         .p_str = (void *)&scope_##name,                                            \
     };
+#else
+#define SCOPE_RUN(name) ((void)0)
+#define SCOPE_TRIGGER(name) ((void)0)
+#define SCOPE_GET_BUFFER(name) NULL
+#define SCOPE_GET_BUFFER_SIZE(name) 0u
+#define SCOPE_GET_VAR_NUM(name) 0u
+#define SCOPE_GET_VAR_PTRS(name) NULL
+#define REG_SCOPE(name, buf_size, trig_post_cnt, ...) float __VA_ARGS__;
+#define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...) float __VA_ARGS__;
+#endif
 
 #endif

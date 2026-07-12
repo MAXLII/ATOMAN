@@ -29,9 +29,7 @@
 #ifndef __TRACE_SERVICE_H__
 #define __TRACE_SERVICE_H__
 
-#ifndef TRACE_SERVICE_PRINTF
-#define TRACE_SERVICE_PRINTF 0
-#endif
+#include "trace.h"
 
 #define TRACE_SERVICE_CMD_SET 0x01u
 #define TRACE_SERVICE_CMD_CONTROL 0x2Cu
