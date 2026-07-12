@@ -10,25 +10,25 @@ echo.
 
 call :remove_dir "build"
 call :remove_dir ".metadata"
-call :remove_dir "gd32g553c\build"
-call :remove_dir "gd32g553c\builds"
-call :remove_dir "gd32g553c\gcc_build"
-call :remove_dir "gd32g553c\gd_dbg"
-call :remove_dir "gd32g553c\-p"
-call :remove_dir "apm32\build"
-call :remove_dir "hc32f334\keil_flash"
-call :remove_dir "matlab\inv\build"
-call :remove_dir "matlab\inv\slprj"
+call :remove_dir "platform\gd32g553c\build"
+call :remove_dir "platform\gd32g553c\builds"
+call :remove_dir "platform\gd32g553c\gcc_build"
+call :remove_dir "platform\gd32g553c\gd_dbg"
+call :remove_dir "platform\gd32g553c\-p"
+call :remove_dir "platform\apm32\build"
+call :remove_dir "platform\hc32f334\keil_flash"
+call :remove_dir "platform\matlab\inv\build"
+call :remove_dir "platform\matlab\inv\slprj"
 
 call :remove_known_output_dirs
 
-call :remove_file "gd32g553c\debug_log.txt"
-call :remove_file "gd32g553c\fw_info.exe"
-call :remove_file "gd32g553c\tools\fw_info\fw_info"
-call :remove_file "gd32g553c\tools\fw_info\fw_info.exe"
-call :remove_file "plecs\plecs_log_file_path.c"
-call :remove_file "plecs\plecs_log.txt"
-call :remove_file "plecs\ac\plecs_log_file_path.c"
+call :remove_file "platform\gd32g553c\debug_log.txt"
+call :remove_file "platform\gd32g553c\fw_info.exe"
+call :remove_file "platform\gd32g553c\tools\fw_info\fw_info"
+call :remove_file "platform\gd32g553c\tools\fw_info\fw_info.exe"
+call :remove_file "platform\plecs\plecs_log_file_path.c"
+call :remove_file "platform\plecs\plecs_log.txt"
+call :remove_file "platform\plecs\ac\plecs_log_file_path.c"
 call :remove_file "_final.py"
 
 for /r %%F in (*.o *.d *.crf *.axf *.hex *.lnp *.map *.dep *.build_log.htm *.log *.slxc *.mexw64 *plecs.autosave JLinkLog.txt EventRecorderStub.scvd) do (
@@ -38,7 +38,7 @@ for /r %%F in (*.o *.d *.crf *.axf *.hex *.lnp *.map *.dep *.build_log.htm *.log
     )
 )
 
-for /f "delims=" %%F in ('dir /b /s "gd32g553c\gcc\Makefile.tmp.*" 2^>nul') do (
+for /f "delims=" %%F in ('dir /b /s "platform\gd32g553c\gcc\Makefile.tmp.*" 2^>nul') do (
     echo Removing file: %%F
     del /f /q "%%F"
 )
