@@ -338,9 +338,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32G553,TOOLCHAIN_MDK</Define>
+              <Define>GD32G5X3,IS_GD32G553,TOOLCHAIN_MDK,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
+              <IncludePath>..\..\..\code\app;..\..\..\code\app\demo;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\section;..\..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -356,9 +356,9 @@
             <ClangAsOpt>1</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>GD32G5X3,GD32G5X3,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000,IS_GD32G553,TOOLCHAIN_MDK</Define>
+              <Define>GD32G5X3,IS_GD32G553,TOOLCHAIN_MDK,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\code\app;..\..\code\app\demo;..\..\code\lib;..\..\code\dbg;..\..\code\interface\ac;..\..\code\interface;..\..\code\interface\common;..\..\code\section;..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
+              <IncludePath>..\..\..\code\app;..\..\..\code\app\demo;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\section;..\..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -657,47 +657,57 @@
             <File>
               <FileName>demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
             </File>
             <File>
               <FileName>demo_comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_comm.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_comm.c</FilePath>
             </File>
             <File>
               <FileName>demo_interrupt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_interrupt.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_interrupt.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_jitter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_jitter.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_rtos_risk.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\demo\demo_rtos_risk.c</FilePath>
             </File>
             <File>
               <FileName>demo_perf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_perf.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_perf.c</FilePath>
             </File>
             <File>
               <FileName>demo_scope.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_scope.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_scope.c</FilePath>
             </File>
             <File>
               <FileName>demo_sfra.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_sfra.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_sfra.c</FilePath>
             </File>
             <File>
               <FileName>demo_shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_shell.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_shell.c</FilePath>
             </File>
             <File>
               <FileName>demo_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_task.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_task.c</FilePath>
             </File>
             <File>
               <FileName>demo_trace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\app\demo\demo_trace.c</FilePath>
+              <FilePath>..\..\..\code\app\demo\demo_trace.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -707,27 +717,27 @@
             <File>
               <FileName>dft.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\lib\dft.c</FilePath>
+              <FilePath>..\..\..\code\lib\dft.c</FilePath>
             </File>
             <File>
               <FileName>pi_tustin.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\lib\pi_tustin.c</FilePath>
+              <FilePath>..\..\..\code\lib\pi_tustin.c</FilePath>
             </File>
             <File>
               <FileName>pr.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\lib\pr.c</FilePath>
+              <FilePath>..\..\..\code\lib\pr.c</FilePath>
             </File>
             <File>
               <FileName>record_dict.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\lib\record_dict.c</FilePath>
+              <FilePath>..\..\..\code\lib\record_dict.c</FilePath>
             </File>
             <File>
               <FileName>sogi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\lib\sogi.c</FilePath>
+              <FilePath>..\..\..\code\lib\sogi.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -737,52 +747,52 @@
             <File>
               <FileName>perf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\perf.c</FilePath>
+              <FilePath>..\..\..\code\dbg\perf.c</FilePath>
             </File>
             <File>
               <FileName>perf_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\perf_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\perf_service.c</FilePath>
             </File>
             <File>
               <FileName>scope.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\scope.c</FilePath>
+              <FilePath>..\..\..\code\dbg\scope.c</FilePath>
             </File>
             <File>
               <FileName>scope_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\scope_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\scope_service.c</FilePath>
             </File>
             <File>
               <FileName>sfra.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\sfra.c</FilePath>
+              <FilePath>..\..\..\code\dbg\sfra.c</FilePath>
             </File>
             <File>
               <FileName>sfra_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\sfra_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\sfra_service.c</FilePath>
             </File>
             <File>
               <FileName>trace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\trace.c</FilePath>
+              <FilePath>..\..\..\code\dbg\trace.c</FilePath>
             </File>
             <File>
               <FileName>trace_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\trace_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\trace_service.c</FilePath>
             </File>
             <File>
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\shell.c</FilePath>
+              <FilePath>..\..\..\code\dbg\shell.c</FilePath>
             </File>
             <File>
               <FileName>shell_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\dbg\shell_service.c</FilePath>
+              <FilePath>..\..\..\code\dbg\shell_service.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -792,12 +802,12 @@
             <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\interface\ac\gpio.c</FilePath>
+              <FilePath>..\..\..\code\interface\ac\gpio.c</FilePath>
             </File>
             <File>
               <FileName>comm_link.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\interface\ac\comm_link.c</FilePath>
+              <FilePath>..\..\..\code\interface\ac\comm_link.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -807,7 +817,7 @@
             <File>
               <FileName>section.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\section\section.c</FilePath>
+              <FilePath>..\..\..\code\section\section.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -817,7 +827,7 @@
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\code\comm\comm.c</FilePath>
+              <FilePath>..\..\..\code\comm\comm.c</FilePath>
             </File>
           </Files>
         </Group>

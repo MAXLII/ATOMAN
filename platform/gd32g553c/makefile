@@ -10,29 +10,19 @@
 #   2015-07-22 - first version
 # ------------------------------------------------
 
-# 从环境变量获取参�?
+# Project identity and build layout
 PROJECT_FW_TYPE = ISP
-PROJECT_OUTPUT_NAME = isp_firmware
-PROJECT_PLATFORM_DEFINE = -DGD32G5X3 -DIS_GD32G553 -DTOOLCHAIN_GCC
-PROJECT_FW_DEFINE = -DFIRMWARE_TYPE_ISP
+PROJECT_MCU = GD32G553
+PROJECT_DEVICE_FAMILY = GD32G5X3
+PROJECT_TOOLCHAIN = GCC
 PROJECT_APP_START_ADDR = 0x08000000
-PROJECT_LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
-SHELL_STRING_PARSE_VALUE = 1
-SECTION_PERF_ENABLE_VALUE = 1
-PERF_SERVICE_PRINTF_VALUE = 1
+LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
 
-OUTPUT_NAME ?= $(PROJECT_OUTPUT_NAME)
-DEFINES ?=
-# Fixed project identity macros:
-#   $(PROJECT_PLATFORM_DEFINE) -> GD32 platform and GCC toolchain identity
-#   $(PROJECT_FW_DEFINE)       -> -DFIRMWARE_TYPE_ISP
-#   -DAPP_START_ADDR=...       -> fixed ISP application start address
-PROJECT_DEFINES = $(PROJECT_PLATFORM_DEFINE) $(PROJECT_FW_DEFINE) -DAPP_START_ADDR=$(PROJECT_APP_START_ADDR) -DSHELL_STRING_PARSE=$(SHELL_STRING_PARSE_VALUE) -DSECTION_PERF_ENABLE=$(SECTION_PERF_ENABLE_VALUE) -DPERF_SERVICE_PRINTF=$(PERF_SERVICE_PRINTF_VALUE)
-LD_SCRIPT = $(PROJECT_LD_SCRIPT)
-
-$(info Build config: SHELL_STRING_PARSE=$(SHELL_STRING_PARSE_VALUE))
-$(info Build config: SECTION_PERF_ENABLE=$(SECTION_PERF_ENABLE_VALUE))
-$(info Build config: PERF_SERVICE_PRINTF=$(PERF_SERVICE_PRINTF_VALUE))
+PROJECT_DEFINES = -D$(PROJECT_DEVICE_FAMILY) \
+                  -DIS_$(PROJECT_MCU) \
+                  -DTOOLCHAIN_$(PROJECT_TOOLCHAIN) \
+                  -DFIRMWARE_TYPE_$(PROJECT_FW_TYPE) \
+                  -DAPP_START_ADDR=$(PROJECT_APP_START_ADDR)
 
 # 根据类型设置不同的编译选项
 ######################################
@@ -68,90 +58,90 @@ endif
 ######################################
 # C sources
 C_SOURCES =  \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_adc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_can.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_aes.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_des.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_tdes.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cla.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cmp.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cpdm.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_crc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dac.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dbg.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dma.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exmc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exti.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fac.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fft.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc_ramfunc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fwdgt.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_gpio.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hpdf.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hrtimer.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_i2c.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_lptimer.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_misc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_pmu.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_qspi.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rcu.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rtc.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_spi.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_syscfg.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_timer.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_tmu.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trigsel.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trng.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_usart.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_vref.c \
-../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.c \
-../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.c \
-../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.c \
-../gd32g553c/bsp/src/bsp_can.c \
-../gd32g553c/bsp/src/bsp_gpio.c \
-../gd32g553c/bsp/src/bsp_init.c \
-../gd32g553c/bsp/src/bsp_pwm.c \
-../gd32g553c/bsp/src/bsp_timer.c \
-../gd32g553c/bsp/src/bsp_usart.c \
-../gd32g553c/src/gd32g5x3_it.c \
-../gd32g553c/src/main.c \
-../gd32g553c/src/systick.c \
-../code/app/demo/demo.c \
-../code/app/demo/demo_comm.c \
-../code/app/demo/demo_interrupt.c \
-../code/app/demo/demo_jitter.c \
-../code/app/demo/demo_rtos_risk.c \
-../code/app/demo/demo_perf.c \
-../code/app/demo/demo_scope.c \
-../code/app/demo/demo_sfra.c \
-../code/app/demo/demo_shell.c \
-../code/app/demo/demo_task.c \
-../code/app/demo/demo_trace.c \
-../code/lib/dft.c \
-../code/lib/pi_tustin.c \
-../code/lib/pr.c \
-../code/lib/record_dict.c \
-../code/lib/sogi.c \
-../code/dbg/perf.c \
-../code/dbg/perf_service.c \
-../code/dbg/scope.c \
-../code/dbg/scope_service.c \
-../code/dbg/sfra.c \
-../code/dbg/sfra_service.c \
-../code/dbg/trace.c \
-../code/dbg/trace_service.c \
-../code/dbg/shell.c \
-../code/dbg/shell_service.c \
-../code/interface/ac/gpio.c \
-../code/interface/ac/comm_link.c \
-../code/section/section.c \
-../code/comm/comm.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_adc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_can.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_aes.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_des.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau_tdes.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cau.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cla.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cmp.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_cpdm.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_crc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dac.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dbg.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_dma.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exmc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_exti.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fac.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fft.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc_ramfunc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fmc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_fwdgt.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_gpio.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hpdf.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_hrtimer.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_i2c.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_lptimer.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_misc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_pmu.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_qspi.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rcu.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_rtc.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_spi.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_syscfg.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_timer.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_tmu.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trigsel.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_trng.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_usart.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_vref.c \
+./Firmware/GD32G5x3_standard_peripheral/Source/gd32g5x3_wwdgt.c \
+./Firmware/CMSIS/GD/GD32G5x3/Source/syscalls.c \
+./Firmware/CMSIS/GD/GD32G5x3/Source/system_gd32g5x3.c \
+./bsp/src/bsp_can.c \
+./bsp/src/bsp_gpio.c \
+./bsp/src/bsp_init.c \
+./bsp/src/bsp_pwm.c \
+./bsp/src/bsp_timer.c \
+./bsp/src/bsp_usart.c \
+./src/gd32g5x3_it.c \
+./src/main.c \
+./src/systick.c \
+../../code/app/demo/demo.c \
+../../code/app/demo/demo_comm.c \
+../../code/app/demo/demo_interrupt.c \
+../../code/app/demo/demo_jitter.c \
+../../code/app/demo/demo_rtos_risk.c \
+../../code/app/demo/demo_perf.c \
+../../code/app/demo/demo_scope.c \
+../../code/app/demo/demo_sfra.c \
+../../code/app/demo/demo_shell.c \
+../../code/app/demo/demo_task.c \
+../../code/app/demo/demo_trace.c \
+../../code/lib/dft.c \
+../../code/lib/pi_tustin.c \
+../../code/lib/pr.c \
+../../code/lib/record_dict.c \
+../../code/lib/sogi.c \
+../../code/dbg/perf.c \
+../../code/dbg/perf_service.c \
+../../code/dbg/scope.c \
+../../code/dbg/scope_service.c \
+../../code/dbg/sfra.c \
+../../code/dbg/sfra_service.c \
+../../code/dbg/trace.c \
+../../code/dbg/trace_service.c \
+../../code/dbg/shell.c \
+../../code/dbg/shell_service.c \
+../../code/interface/ac/gpio.c \
+../../code/interface/ac/comm_link.c \
+../../code/section/section.c \
+../../code/comm/comm.c \
 
 # ASM sources
 ASM_SOURCES =  \
-../gd32g553c/gcc_startup/startup_gd32g5x3.s
+./gcc_startup/startup_gd32g5x3.s
 
 # ASMM sources
 ASMM_SOURCES = 
@@ -203,13 +193,7 @@ MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 AS_DEFS = 
 
 # C defines
-C_DEFS =  \
--DGD32G5X3
-
-# Final compile-time macro set:
-#   $(PROJECT_DEFINES) -> fixed macros for this workspace's ISP + IS_DC project identity
-#   $(DEFINES)         -> optional extra macros appended from external make arguments if needed
-C_DEFS += $(PROJECT_DEFINES) $(DEFINES)
+C_DEFS = $(PROJECT_DEFINES)
 
 
 # AS includes
@@ -217,20 +201,20 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
--I../code/app \
--I../code/app/demo \
--I../code/lib \
--I../code/dbg \
--I../code/interface/ac \
--I../code/interface \
--I../code/interface/common \
--I../code/section \
--I../code/comm \
--I../gd32g553c/Firmware/CMSIS \
--I../gd32g553c/Firmware/CMSIS/GD/GD32G5x3/Include \
--I../gd32g553c/Firmware/GD32G5x3_standard_peripheral/Include \
--I../gd32g553c/inc \
--I../gd32g553c/bsp/inc \
+-I../../code/app \
+-I../../code/app/demo \
+-I../../code/lib \
+-I../../code/dbg \
+-I../../code/interface/ac \
+-I../../code/interface \
+-I../../code/interface/common \
+-I../../code/section \
+-I../../code/comm \
+-I./Firmware/CMSIS \
+-I./Firmware/CMSIS/GD/GD32G5x3/Include \
+-I./Firmware/GD32G5x3_standard_peripheral/Include \
+-I./inc \
+-I./bsp/inc \
 
 
 # compile gcc flags
@@ -247,7 +231,7 @@ ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) $(AS_WARN_FLAGS) $(COMMON_SECT
 
 CFLAGS += $(C_STANDARD_FLAGS)
 
-CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) -include perf.h $(OPT) $(WARN_FLAGS) $(COMMON_SECTION_FLAGS)
+CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) $(WARN_FLAGS) $(COMMON_SECTION_FLAGS)
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2

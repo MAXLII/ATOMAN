@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- * @file  hc32f558/inc/main.h
+ * @file  platform/hc32f558/inc/main.h
  * @brief This file contains the including files of main routine.
  @verbatim
    Change Logs:
