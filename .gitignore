@@ -1,17 +1,16 @@
-﻿gd32g553c/GD ARM MCU Debug
-gd32g553c/debug_log.txt
+﻿platform/gd32g553c/GD ARM MCU Debug
+platform/gd32g553c/debug_log.txt
 build
-gd32g553c/gd_dbg
+platform/gd32g553c/gd_dbg
 .metadata
-plecs/plecs_log_file_path.c
-plecs/plecs_log.txt
-plecs/ac/plecs_log.txt
-plecs/*/plecs_log.txt
-gd32g553c/fw_info.exe
-gd32g553c/tools/fw_info/fw_info
-gd32g553c/tools/fw_info/fw_info.exe
+**/plecs_log_file_path*
+platform/plecs/plecs_log.txt
+platform/plecs/ac/plecs_log.txt
+platform/plecs/*/plecs_log.txt
+platform/gd32g553c/fw_info.exe
+platform/gd32g553c/tools/fw_info/fw_info
+platform/gd32g553c/tools/fw_info/fw_info.exe
 *plecs.autosave
-plecs/ac/plecs_log_file_path.c
 *.log
 
 # Keil local/build artifacts
@@ -36,23 +35,23 @@ EventRecorderStub.scvd
 *.build_log.htm
 
 # HC32 download-only wrapper project and generated input image
-hc32f334/keil_flash/
+platform/hc32f334/keil_flash/
 _final.py
 .claude/settings.local.json
-gd32g553c/builds
-gd32g553c/build/
-gd32g553c/gcc_build/
-gd32g553c/gcc/Makefile.tmp.*
-gd32g553c/-p/
-apm32/build/
+platform/gd32g553c/builds
+platform/gd32g553c/build/
+platform/gd32g553c/gcc_build/
+platform/gd32g553c/gcc/Makefile.tmp.*
+platform/gd32g553c/-p/
+platform/apm32/build/
 
 # MATLAB local build artifacts
-matlab/inv/build/
-matlab/inv/slprj/
-matlab/inv/*.mexw64
-matlab/inv/*.slxc
-matlab/pll/build/
-matlab/pll/slprj/
-matlab/pll/*.mexw64
-matlab/pll/*.slxc
+platform/matlab/inv/build/
+platform/matlab/inv/slprj/
+platform/matlab/inv/*.mexw64
+platform/matlab/inv/*.slxc
+platform/matlab/pll/build/
+platform/matlab/pll/slprj/
+platform/matlab/pll/*.mexw64
+platform/matlab/pll/*.slxc
 .codex-remote-attachments
