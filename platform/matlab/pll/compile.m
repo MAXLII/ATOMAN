@@ -2,14 +2,15 @@ function mexFile = compile()
 %COMPILE Build the PLL C MEX S-Function with the selected MATLAB mex compiler.
 %
 % Run this script from MATLAB:
-%   cd <repo_root>/matlab/pll
+%   cd <repo_root>/platform/matlab/pll
 %   compile
 
 % Path layout, with the base repository root written as ./:
-projectDir = fileparts(mfilename('fullpath')); % projectDir = ./matlab/pll
-matlabDir  = fileparts(projectDir);            % matlabDir  = ./matlab
-repoDir    = fileparts(matlabDir);             % repoDir    = ./
-commonDir  = fullfile(matlabDir, 'common');    % commonDir  = ./matlab/common
+projectDir = fileparts(mfilename('fullpath')); % projectDir = ./platform/matlab/pll
+matlabDir  = fileparts(projectDir);            % matlabDir  = ./platform/matlab
+platformDir = fileparts(matlabDir);           % platformDir = ./platform
+repoDir     = fileparts(platformDir);           % repoDir     = ./
+commonDir  = fullfile(matlabDir, 'common');    % commonDir  = ./platform/matlab/common
 codeDir    = fullfile(repoDir, 'code');        % codeDir    = ./code
 
 includeDirs = {

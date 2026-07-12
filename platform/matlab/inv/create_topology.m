@@ -2,7 +2,7 @@ function create_topology()
 %CREATE_TOPOLOGY Create the inverter Simulink power-stage model.
 %
 % Run this script from MATLAB:
-%   cd <repo_root>/matlab/inv
+%   cd <repo_root>/platform/matlab/inv
 %   create_topology
 
 model = 'inv_mod';
