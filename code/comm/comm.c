@@ -136,7 +136,7 @@ static void crc16_init_table(void)
         {
             if (((crc ^ c) & 0x8000u) != 0u)
             {
-                crc = (uint16_t)((crc << 1) ^ CRC16_CCITT_POLY);
+                crc = (uint16_t)(((uint32_t)crc << 1u) ^ (uint32_t)CRC16_CCITT_POLY);
             }
             else
             {

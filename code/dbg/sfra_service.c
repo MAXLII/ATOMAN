@@ -378,7 +378,7 @@ static void sfra_service_cache_current_point(sfra_t *sfra)
 
     if (sfra->result_count < (point_index + 1u))
     {
-        sfra->result_count = point_index + 1u;
+        sfra->result_count = (uint16_t)(point_index + 1u);
     }
 }
 
