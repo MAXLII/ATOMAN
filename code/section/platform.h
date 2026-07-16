@@ -304,6 +304,44 @@ extern uint32_t __section_end;
         }                        \
     } while (0)
 
+/* SoC: Xilinx Zynq-7020 Cortex-A9 */
+#elif defined(IS_ZYNQ7020)
+#include "zynq7020_section_config.h"
+#include "bsp_platform.h"
+#include "bsp_timer.h"
+#if (SRTOS == 1)
+#include "a9_section_port.h"
+#endif
+#define APP_START_ADDR 0x00100000UL
+#define SECTION_SYS_TICK bsp_timer_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
+#define PLATFORM_PERF_COUNT_UNIT_US 0.003f
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 33333UL
+#define PLATFORM_COMM_LINK_ENABLE_ISO 0u
+#define PLATFORM_COMM_LINK_ENABLE_CAN 0u
+#define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 0UL
+#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address) \
+    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+extern uint32_t __section_start;
+extern uint32_t __section_end;
+#define SECTION_START __section_start
+#define SECTION_STOP __section_end
+#define SYSTEM_RESET bsp_platform_reset()
+#ifndef PLECS_LOG
+#define PLECS_LOG(...)
+#endif
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#if (SRTOS == 1)
+#define SRTOS_PENDSV_SET() a9_section_port_yield()
+#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+    do                                    \
+    {                                     \
+    } while (0)
+#define SRTOS_FAULT_HOOK(reason) a9_section_port_fault((uint32_t)(reason))
+#endif
+
 /* MCU: APM32F402 */
 #elif defined(IS_APM32F402)
 #include "apm32f402_403.h"
@@ -432,7 +470,8 @@ extern uint32_t __section_end;
 #error "SRTOS must be 0 or 1."
 #endif
 
-#if (SRTOS == 1) && (!defined(SRTOS_PENDSV_SET) || !defined(SRTOS_FPU_DISABLE_LAZY_STACKING) || !defined(SRTOS_FAULT_HOOK))
+#if (SRTOS == 1) && \
+    (!defined(SRTOS_PENDSV_SET) || !defined(SRTOS_FPU_DISABLE_LAZY_STACKING) || !defined(SRTOS_FAULT_HOOK))
 #error "SRTOS=1 requires the selected platform to provide SRTOS exception interfaces."
 #endif
 
