@@ -126,16 +126,16 @@ REG_LINK(USART0_LINK,
          s_usart_dbg_tx_func,
          bsp_usart_dbg_rx_get_byte,
          s_usart_dbg_handler_arr,
-         sizeof(s_usart_dbg_handler_arr) / sizeof(s_usart_dbg_handler_arr[0]));
+         sizeof(s_usart_dbg_handler_arr) / sizeof(s_usart_dbg_handler_arr[0]))
 
 #if (COMM_LINK_ENABLE_ISO == 1)
 REG_LINK(USART2_LINK,
          s_usart_iso_tx_func,
          bsp_usart_iso_rx_get_byte,
          s_usart_iso_handler_arr,
-         sizeof(s_usart_iso_handler_arr) / sizeof(s_usart_iso_handler_arr[0]));
+         sizeof(s_usart_iso_handler_arr) / sizeof(s_usart_iso_handler_arr[0]))
 #else
-REG_LINK(USART2_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u);
+REG_LINK(USART2_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
 #endif
 
 #if (COMM_LINK_ENABLE_CAN == 1)
@@ -143,12 +143,12 @@ REG_LINK(CAN_DBG_LINK,
          s_can_dbg_tx_func,
          bsp_can_dbg_rx_get_byte,
          s_can_dbg_handler_arr,
-         sizeof(s_can_dbg_handler_arr) / sizeof(s_can_dbg_handler_arr[0]));
+         sizeof(s_can_dbg_handler_arr) / sizeof(s_can_dbg_handler_arr[0]))
 #else
-REG_LINK(CAN_DBG_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u);
+REG_LINK(CAN_DBG_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
 #endif
 
-REG_LINK(USART1_LINK, s_usart_dbg_tx_func, comm_link_empty_rx_get_byte, NULL, 0u);
-REG_LINK(USART_DBG_LINK, s_usart_dbg_tx_func, comm_link_empty_rx_get_byte, NULL, 0u);
-REG_LINK(USART_ISO_LINK, s_usart_iso_tx_func, comm_link_empty_rx_get_byte, NULL, 0u);
-REG_LINK(UART4_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u);
+REG_LINK(USART1_LINK, s_usart_dbg_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
+REG_LINK(USART_DBG_LINK, s_usart_dbg_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
+REG_LINK(USART_ISO_LINK, s_usart_iso_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
+REG_LINK(UART4_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)

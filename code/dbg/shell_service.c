@@ -575,7 +575,7 @@ static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
     packform.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
     packform.src = shell_wave_src;
     packform.dst = shell_wave_dst;
-    packform.len = sizeof(shell_wave_param_t) - SHELL_STR_SIZE_MAX + p->name_len;
+    packform.len = (uint16_t)(sizeof(shell_wave_param_t) - SHELL_STR_SIZE_MAX + p->name_len);
     packform.p_data = (uint8_t *)p;
 
     comm_send_data(&packform, my_printf);

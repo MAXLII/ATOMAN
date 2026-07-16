@@ -639,7 +639,8 @@ static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
             (void)memcpy(&payload[sizeof(ack) + ((uint32_t)i * sizeof(float))], &value, sizeof(value));
         }
 
-        uint16_t len = (uint16_t)(sizeof(ack) + ((uint16_t)var_count * (uint16_t)sizeof(float)));
+        uint16_t len = (uint16_t)((uint32_t)sizeof(ack) +
+                                  ((uint32_t)var_count * (uint32_t)sizeof(float)));
         (void)memcpy(payload, &ack, sizeof(ack));
         scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_SAMPLE_QUERY, 1u, payload, len);
         return;

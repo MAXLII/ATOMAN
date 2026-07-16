@@ -752,7 +752,8 @@ static void perf_opt_poll_sample(perf_opt_service_t *self)
             break;
         }
 
-        payload_len += perf_opt_fill_sample_item(record, &self->payload[payload_len]);
+        payload_len = (uint16_t)(payload_len +
+                                 perf_opt_fill_sample_item(record, &self->payload[payload_len]));
         self->cur = (section_perf_record_t *)record->p_next;
         ++self->index;
         ++item_count;

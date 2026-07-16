@@ -280,7 +280,7 @@ static void sfra_calc_current_point(sfra_t *sfra)
 
     sfra->output.current_freq_hz = sfra->isr.current_freq_hz;
     sfra->output.point_index = index;
-    sfra->output.point_count = index + 1U;
+    sfra->output.point_count = (uint16_t)(index + 1U);
     sfra->output.mag =
         sqrtf((response.real * response.real) + (response.imag * response.imag));
     sfra->output.phase = atan2f(response.imag, response.real) * SFRA_RAD_TO_DEG;
