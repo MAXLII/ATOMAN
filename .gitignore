@@ -55,9 +55,9 @@ platform/matlab/pll/*.slxc
 docs/zynq7020
 
 # Zynq-7020 local Xilinx build artifacts
-platform/zynq7020/.Xil/
-platform/zynq7020/build/
-platform/zynq7020/build_srtos/
+platform/zynq7020/ps/.Xil/
+platform/zynq7020/ps/build/
+platform/zynq7020/ps/build_srtos/
 platform/zynq7020/pl/.Xil/
 platform/zynq7020/pl/NA/
 platform/zynq7020/pl/build/
