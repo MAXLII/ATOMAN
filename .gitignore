@@ -3,10 +3,7 @@ platform/gd32g553c/debug_log.txt
 build
 platform/gd32g553c/gd_dbg
 .metadata
-**/plecs_log_file_path*
-platform/plecs/plecs_log.txt
-platform/plecs/ac/plecs_log.txt
-platform/plecs/*/plecs_log.txt
+**/plecs_log.txt
 platform/gd32g553c/fw_info.exe
 platform/gd32g553c/tools/fw_info/fw_info
 platform/gd32g553c/tools/fw_info/fw_info.exe
