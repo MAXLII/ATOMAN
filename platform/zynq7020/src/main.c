@@ -8,12 +8,12 @@
  *          Module responsibilities:
  *          - Initialize PS UART1 and the global-timer section time base
  *          - Start linker-section discovery and registered initialization
- *          - Run the no-RTOS task loop or the Cortex-A9 section SRTOS port
+ *          - Run the section implementation selected by the platform build
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - SVC and IRQ use separate exception stacks from SRTOS tasks
+ *          - The A9 SRTOS build keeps SVC and IRQ stacks separate from task context
  *          - Hardware access is abstracted through the Zynq BSP
  *
  * @author  Max.Li
@@ -39,9 +39,7 @@ int main(void)
     int32_t timer_status = XST_FAILURE; /* 10 kHz section 中断定时器初始化结果。 */
 
     bsp_timer_init();                               /* 建立 section 的 100 us 单调时间基准。 */
-#if (SRTOS == 1)
-    a9_section_port_install_vector_table();          /* 安装 Cortex-A9 SVC/IRQ SRTOS 异常入口。 */
-#endif
+    section_port_init();                            /* 由选中的 section 实现完成运行端口初始化。 */
     uart_status = bsp_usart_init();                 /* 初始化连接板载 CH340 的 PS UART1。 */
     if (uart_status != XST_SUCCESS)
     {

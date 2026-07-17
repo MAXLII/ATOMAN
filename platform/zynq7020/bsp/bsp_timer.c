@@ -57,13 +57,7 @@ static void section_timer_interrupt_handler(void *callback_ref)
 
     XScuTimer_ClearInterruptStatus(timer); /* 先清除私有定时器中断状态，允许下一周期触发。 */
     section_interrupt();                   /* 调度全部 SECTION_INTERRUPT 注册回调。 */
-#if (SRTOS == 1)
-    if ((section_task_scheduler_started() != 0U) && /* SRTOS 已经接管任务运行栈。 */
-        (section_task_slice_elapsed() != 0U))       /* 当前任务已运行一个 1 ms 时间片。 */
-    {
-        a9_section_port_switch_request(); /* 请求自定义 IRQ 返回路径保存现场并切换任务。 */
-    }
-#endif
+    section_task_irq_exit_request();       /* 由选中的 section 实现决定是否请求任务切换。 */
 }
 
 void bsp_timer_init(void)
