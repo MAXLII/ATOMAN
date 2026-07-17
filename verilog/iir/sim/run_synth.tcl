@@ -1,6 +1,6 @@
 set script_dir [file dirname [file normalize [info script]]]
 set verilog_dir [file dirname $script_dir]
-set repo_root [file dirname $verilog_dir]
+set repo_root [file dirname [file dirname $verilog_dir]]
 set output_dir [file join $repo_root build verilog_synth]
 
 if {[file exists $output_dir]} {

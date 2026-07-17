@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 $simRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $verilogRoot = Split-Path -Parent $simRoot
-$repoRoot = Split-Path -Parent $verilogRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $verilogRoot)
 $buildRoot = Join-Path $repoRoot "build\verilog_sim"
 $iverilog = Join-Path $IcarusRoot "bin\iverilog.exe"
 $vvp = Join-Path $IcarusRoot "bin\vvp.exe"
