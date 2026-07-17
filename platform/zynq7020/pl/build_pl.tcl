@@ -100,8 +100,13 @@ if {![file exists $bit_file]} {
     error "PL bitstream not found: $bit_file"
 }
 file copy -force $bit_file [file join $output_dir zynq7020_platform.bit]
-set ps7_init_file [file join $project_dir zynq7020_platform.srcs sources_1 bd design_1 ip \
-                        design_1_processing_system7_0_0 ps7_init.tcl]
+set ps7_init_candidates [glob -nocomplain \
+    [file join $project_dir zynq7020_platform.srcs sources_1 bd design_1 ip \
+        design_1_processing_system7_0_0* ps7_init.tcl]]
+if {[llength $ps7_init_candidates] != 1} {
+    error "Expected one PS7 initialization script, found [llength $ps7_init_candidates]: $ps7_init_candidates"
+}
+set ps7_init_file [lindex $ps7_init_candidates 0]
 file copy -force $ps7_init_file [file join $output_dir ps7_init.tcl]
 write_hwdef -force -file [file join $output_dir zynq7020_platform.hwdef]
 write_sysdef -force \
