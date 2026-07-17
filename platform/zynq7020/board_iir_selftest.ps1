@@ -60,10 +60,10 @@ finally
     $ErrorActionPreference = $savedErrorAction
 }
 $statusOutput | ForEach-Object { Write-Output $_ }
-$modePassed = @($statusOutput | Select-String -SimpleMatch "zynq mode=no-RTOS").Count -ge 1
+$modePassed = @($statusOutput | Select-String -SimpleMatch "zynq mode=baremetal").Count -ge 1
 if (($statusExitCode -ne 0) -or !$modePassed)
 {
-    throw "COM5 no-RTOS status check failed: exit=$statusExitCode pass_marker=$modePassed"
+    throw "COM5 bare-metal status check failed: exit=$statusExitCode pass_marker=$modePassed"
 }
 
-Write-Output "BOARD_IIR_SELFTEST result=PASS port=$Port baud=$Baud mode=no-RTOS"
+Write-Output "BOARD_IIR_SELFTEST result=PASS port=$Port baud=$Baud mode=baremetal"

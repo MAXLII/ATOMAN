@@ -13,7 +13,7 @@ $frame = Join-Path $FrameRoot "frame.ps1"
 $combinedCommand = [string]::Concat("ZYNQ_STATUS", [char]13, [char]10,
                                     "IIR_TEST", [char]13, [char]10)
 $statusCommand = [string]::Concat("ZYNQ_STATUS", [char]13, [char]10)
-$statusPattern = "zynq mode=section-SRTOS tick_100us=(\d+) task_count=(\d+) section=[0-9A-F]+-[0-9A-F]+ srtos=1 fault=0 save_fail=0 release_fail=0 pool=(\d+)/(\d+) stack_free=(\d+)"
+$statusPattern = "zynq mode=srtos-a9 tick_100us=(\d+) task_count=(\d+) section=[0-9A-F]+-[0-9A-F]+ srtos=1 fault=0 save_fail=0 release_fail=0 pool=(\d+)/(\d+) stack_free=(\d+)"
 
 foreach ($requiredFile in @($compileScript, $downloadScript, $frame))
 {
@@ -46,7 +46,7 @@ if ($firstExitCode -ne 0)
     throw "FRAME SRTOS probe failed: exit=$firstExitCode"
 }
 
-$firstStatusLine = @($firstOutput | Where-Object { $_ -match "zynq mode=section-SRTOS" } | Select-Object -Last 1)
+$firstStatusLine = @($firstOutput | Where-Object { $_ -match "zynq mode=srtos-a9" } | Select-Object -Last 1)
 if ($firstStatusLine.Count -ne 1)
 {
     throw "SRTOS status response was not received"
@@ -89,7 +89,7 @@ if ($secondExitCode -ne 0)
     throw "FRAME SRTOS follow-up probe failed: exit=$secondExitCode"
 }
 
-$secondStatusLine = @($secondOutput | Where-Object { $_ -match "zynq mode=section-SRTOS" } | Select-Object -Last 1)
+$secondStatusLine = @($secondOutput | Where-Object { $_ -match "zynq mode=srtos-a9" } | Select-Object -Last 1)
 if ($secondStatusLine.Count -ne 1)
 {
     throw "SRTOS follow-up status response was not received"
