@@ -70,12 +70,15 @@ bsp_pwm.c/.h
 
 新增工程后，需要把共享代码按现有工程方式加入：
 
-- `code/section`
+- `code/section/baremetal`、`code/section/srtos_m` 或 `code/section/srtos_a9` 中的一套 `section.c/.h`
+- `code/section` 公共平台适配头
 - `code/comm`
 - `code/dbg`
 - `code/interface`
 - 当前需要的 `code/app` demo 或业务模块
 - 当前需要的 `code/lib`
+
+所选 section 目录必须排在 `code/section` 之前，使业务代码中的 `#include "section.h"` 命中当前实现。构建目标不定义 `SRTOS` 选择宏，也不能同时编译多套 `section.c`。
 
 ## 4. 时钟与 Cache
 

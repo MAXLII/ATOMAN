@@ -41,9 +41,12 @@ code
 ├─ interface/    ADC、PWM、GPIO、USART 等平台接口封装
 ├─ lib/          PI、滤波、SOGI、DFT、RMS 等基础算法
 └─ section/      自动注册、任务调度、中断调度和链路调度框架
+   ├─ baremetal/ 裸机 section.c/.h
+   ├─ srtos_m/   Cortex-M SRTOS section.c/.h
+   └─ srtos_a9/  Cortex-A9 SRTOS section.c/.h
 ```
 
-公共代码通过接口层访问硬件。平台变化时，优先修改平台 BSP 和 `interface/` 适配，不直接改控制算法主体。
+Section 构建目标只选择一个运行时目录，并让该目录中的 `section.h` 位于公共 `code/section/` 之前。三套实现使用相同注册接口，不通过 `SRTOS` 构建宏切换。公共代码通过接口层访问硬件。平台变化时，优先修改平台 BSP 和 `interface/` 适配，不直接改控制算法主体。
 
 ## 相关文档
 

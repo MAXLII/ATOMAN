@@ -122,7 +122,7 @@ Build defines:
 -DSECTION_CRITICAL_RACE_PROBE_SPIN=512
 -DSECTION_TASK_TICK_FROM_SYSTICK_TEST=1
 -DSECTION_CRITICAL_USE_PRIMASK=1
--DSECTION_SRTOS_QUEUE_INTERNAL_CRITICAL=1
+-DSECTION_TASK_QUEUE_INTERNAL_CRITICAL=1
 -DDEMO_TASK_DEAD_LOOP_ENABLE=0
 -DDEMO_TASK_VARIABLE_LENGTH_ENABLE=1
 ```
@@ -196,4 +196,3 @@ The longer-term implementation should consider BASEPRI if high-priority control 
 | Medium | Add a permanent diagnostic counter for queue re-entry or queue invariant violation in debug builds |
 | Medium | Add a BASEPRI version for platforms where high-priority control ISR latency must not be affected |
 | Medium | Add a regression build target for the race-probe configuration |
-

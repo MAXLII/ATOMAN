@@ -9,8 +9,8 @@
 - 可由 Tcl 完整重建的 PS7、DDR、M_AXI_GP0 和 PL 外设工程
 - 运行于 PL 的 32 位定点 3P3Z IIR
 - PS 可自由读写的 AXI4-Lite 32 位寄存器接口
-- Cortex-A9 无 RTOS section 工程
-- section 自带 SRTOS 的 Cortex-A9 上下文切换端口
+- `code/section/baremetal/` 裸机 section 工程
+- `code/section/srtos_a9/` 与 A9 SVC/IRQ 上下文切换端口
 - PS UART1 的 COM5 通信、FRAME 二进制协议和 Shell 调试入口
 
 平台不使用第三方 RTOS。
@@ -96,9 +96,10 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 | `verilog/iir/sim/` | SystemVerilog testbench、仿真/综合脚本和 CSV 数值结果 |
 | `verilog/iir/doc/` | PL IP 独立使用说明 |
 | `platform/zynq7020/bsp/` | UART、定时器、GIC 与 IIR MMIO 平台适配 |
-| `platform/zynq7020/srtos/section_a9.c` | A9 无 RTOS 与 SRTOS 的 section 双模式实现 |
+| `code/section/baremetal/section.c/.h` | 裸机 section 独立实现与统一注册接口 |
+| `code/section/srtos_a9/section.c/.h` | Cortex-A9 SRTOS 独立实现与统一注册接口 |
 | `platform/zynq7020/srtos/a9_section_port.S` | A9 SVC/IRQ 上下文切换端口 |
-| `platform/zynq7020/src/main.c` | 无 RTOS/SRTOS 条件入口 |
+| `platform/zynq7020/src/main.c` | 所选 section 运行时的统一平台入口 |
 | `platform/zynq7020/src/platform_probe.c` | 平台自主测试与 Shell 状态命令 |
 | `platform/zynq7020/pl/package_axi_iir_ip.tcl` | 自定义 IIR IP 与 IP-XACT 寄存器描述 |
 | `platform/zynq7020/pl/build_pl.tcl` | PS+PL block design、实现和输出报告 |
@@ -135,7 +136,7 @@ Vivado 输出位于 `pl/build/output/`：
 - `timing_summary.rpt`
 - `utilization.rpt`
 
-无 RTOS ARM 输出位于 `build/`，SRTOS ARM 输出位于 `build_srtos/`。两个工程均编译 `section_a9.c`，平台配置头分别定义 `SRTOS` 为 0 和 1；Makefile 只定义平台与工具链宏。构建启用 `-Werror`、`-Wconversion`、`-Wsign-conversion`、`-Wshadow`、`-Wcast-align`、`-Wstrict-prototypes`、`-Wmissing-prototypes` 和 `-Wundef`。
+无 RTOS ARM 输出位于 `build/`，编译 `code/section/baremetal/section.c`；SRTOS ARM 输出位于 `build_srtos/`，编译 `code/section/srtos_a9/section.c` 并链接 A9 端口。两个 Makefile 都只定义平台与工具链宏，不定义运行时选择宏。`compile.ps1` 的 `-Srtos 0/1` 仅用于选择对应 Makefile 和输出目录。构建启用 `-Werror`、`-Wconversion`、`-Wsign-conversion`、`-Wshadow`、`-Wcast-align`、`-Wstrict-prototypes`、`-Wmissing-prototypes` 和 `-Wundef`。
 
 ## 8. 下载与板上测试
 
@@ -163,6 +164,6 @@ Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST` 和 `DEMO_SHELL_PING`。
 
 ## 9. section 运行模式
 
-`section_a9.c` 通过平台配置头中的 `SRTOS` 宏选择运行模式。无 RTOS 模式由 SCU 私有定时器产生 10kHz 中断，在 ISR 中调用 `section_interrupt()`，主循环持续调用 `run_task()`。
+裸机与 A9 SRTOS 是两套独立源码，构建时通过源文件和 include path 选择。两套头文件都名为 `section.h`，注册接口保持一致。裸机模式由 SCU 私有定时器产生 10kHz 中断，在 ISR 中调用 `section_interrupt()`，主循环持续调用 `run_task()`。
 
 SRTOS 模式使用 section 自带的任务表和调度器。Cortex-A9 端口保存通用寄存器、VFP 状态、返回 PC 与 CPSR，通过 SVC 启动/主动让出，通过 IRQ 退出路径执行时间片切换。

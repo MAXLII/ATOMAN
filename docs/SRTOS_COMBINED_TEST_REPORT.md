@@ -313,7 +313,7 @@ Additional defines:
 
 ```text
 SECTION_CRITICAL_USE_PRIMASK=1
-SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL=1
+SECTION_TASK_QUEUE_INTERNAL_CRITICAL=1
 ```
 
 Result after about 5 s:
@@ -349,7 +349,7 @@ DEMO_JITTER_CAPTURE_ENABLE=1
 DEMO_TASK_DEAD_LOOP_ENABLE=0
 DEMO_TASK_VARIABLE_LENGTH_ENABLE=0
 SECTION_CRITICAL_USE_PRIMASK=1
-SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL=1
+SECTION_TASK_QUEUE_INTERNAL_CRITICAL=1
 SECTION_TASK_RUNTIME_STACK_WORDS=1024
 SECTION_TASK_CONTEXT_POOL_WORDS=8192
 ```
@@ -498,4 +498,3 @@ The current strongest conclusions are:
 - Make `BSP_USART_DBG_BAUDRATE` macro-override safe so low-baud serial regression can be automated.
 - Fix the floating-point scheduler probe test code so it is compatible with strict-aliasing and `-Werror`.
 - Add permanent debug-only counters for queue re-entry, queue invariant violations, and context-pool head/tail wrap events.
-

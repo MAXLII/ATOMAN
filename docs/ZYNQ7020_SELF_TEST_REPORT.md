@@ -12,6 +12,8 @@
 | RTL 仿真 | Icarus Verilog，SystemVerilog 2012 |
 | 上位机 | FRAME CLI |
 
+本报告中的板上串口原始输出采集于 section 目录拆分前，因此保留当时的 `no-RTOS` 和 `section-SRTOS` 模式文本。当前源码已改为独立的 `baremetal` 与 `srtos_a9` 实现，板测脚本对应匹配 `baremetal` 和 `srtos-a9`。
+
 ## 2. 当前结论
 
 3P3Z IIR 的纯 PL 数字验证、AXI4-Lite 仿真、OOC 综合、完整 PS+PL 实现和板上 AXI 访问均已通过。A9 无 RTOS 与 section SRTOS 固件均通过严格构建、JTAG 下载和 COM5 双向通信验证。SRTOS 公共栈任务切换期间无调度故障、现场保存失败或现场释放失败。
@@ -81,9 +83,9 @@ OOC 报告包含一条预期的 `ZPS7-1`，表示独立 PL core 顶层没有 PS7
 
 ## 6. ARM 无 RTOS 构建
 
-无 RTOS 平台配置头定义 `SRTOS` 为 0，Makefile 只定义 `IS_ZYNQ7020` 与 `TOOLCHAIN_GCC`。该工程编译 A9 专用 `section_a9.c`，不链接 SVC/IRQ 上下文切换端口；ELF 使用 Xilinx standalone 向量表 `_vector_table`。
+当前无 RTOS Makefile 只定义 `IS_ZYNQ7020` 与 `TOOLCHAIN_GCC`，编译 `code/section/baremetal/section.c`，并优先包含同目录的 `section.h`。该工程不链接 SVC/IRQ 上下文切换端口；ELF 使用 Xilinx standalone 向量表 `_vector_table`。
 
-构建尺寸：
+板测版本记录的构建尺寸：
 
 | text | data | bss | total |
 |-----:|-----:|----:|------:|
@@ -100,9 +102,9 @@ OOC 报告包含一条预期的 `ZPS7-1`，表示独立 PL core 顶层没有 PS7
 
 ## 7. ARM section SRTOS 构建
 
-SRTOS 平台配置头定义 `SRTOS` 为 1，Makefile 仍只定义 `IS_ZYNQ7020` 与 `TOOLCHAIN_GCC`。该工程编译同一份 `section_a9.c`，并链接 `a9_section_control.c` 与 `a9_section_port.S`。A9 端口保存通用寄存器、VFP D0-D31、FPEXC、FPSCR、返回 PC 与 CPSR。
+当前 A9 SRTOS Makefile 仍只定义 `IS_ZYNQ7020` 与 `TOOLCHAIN_GCC`，编译独立的 `code/section/srtos_a9/section.c`，并链接 `a9_section_control.c` 与 `a9_section_port.S`。A9 端口保存通用寄存器、VFP D0-D31、FPEXC、FPSCR、返回 PC 与 CPSR。
 
-构建尺寸：
+板测版本记录的构建尺寸：
 
 | text | data | bss | total |
 |-----:|-----:|----:|------:|
@@ -115,7 +117,7 @@ SRTOS 平台配置头定义 `SRTOS` 为 1，Makefile 仍只定义 `IS_ZYNQ7020` 
 .func_ram         0x00130CC0 size 0xF4
 ```
 
-严格编译结果为 0 编译告警、0 错误。ELF 中包含 `section_task_switch_sp`、`a9_section_irq_handler` 与 `a9_section_port_yield`；无 RTOS ELF 不包含这些调度符号。
+严格编译结果为 0 编译告警、0 错误。A9 SRTOS ELF 包含 `a9_section_irq_handler` 与 `a9_section_port_yield`；裸机 ELF 不链接这两个 A9 端口符号。三套 section 头文件都保留统一的调度兼容函数声明，裸机实现对应空操作。
 
 ## 8. 板上联调结果
 
