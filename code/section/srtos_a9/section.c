@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    section_a9.c
- * @brief   Cortex-A9 section runtime module.
+ * @file    section.c
+ * @brief   Cortex-A9 section SRTOS runtime module.
  * @details
- *          This file is part of the Zynq-7020 platform project.
+ *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
  *          - Discover section registration records without changing the public REG_* interface
- *          - Run registered tasks directly in the A9 bare-metal mode when SRTOS is disabled
- *          - Run A9 tasks on one shared runtime stack and snapshot suspended contexts when SRTOS is enabled
- *          - Select new and suspended SRTOS tasks while preserving periodic section scheduling
+ *          - Run A9 tasks on one shared runtime stack and snapshot suspended contexts
+ *          - Select new and suspended tasks while preserving periodic section scheduling
  *          - Dispatch registered initialization, interrupt, communication link, and FSM callbacks
  *
  *          Design notes:
@@ -30,9 +29,7 @@
  */
 
 #include "section.h"
-#if (SRTOS == 1)
 #include "a9_section_port.h"
-#endif
 
 #include <stddef.h>
 #include <string.h>
@@ -41,10 +38,6 @@
 
 static reg_task_t *p_task_first = NULL;
 static reg_task_t *p_task_tail = NULL;
-static reg_task_t *p_task_ready_first = NULL;
-static reg_task_t *p_task_ready_tail = NULL;
-static reg_task_t *p_task_unfinished_first = NULL;
-static reg_task_t *p_task_unfinished_tail = NULL;
 static reg_interrupt_t *p_interrupt_first = NULL;
 static section_link_t *p_link_first = NULL;
 static section_link_t *p_link_tail = NULL;
@@ -127,11 +120,6 @@ static void section_race_probe_end(void)
     } while (0)
 #endif
 
-static uint32_t task_os_enabled(void)
-{
-    return (uint32_t)SRTOS;
-}
-
 #if (PERF_ENABLE)
 #define SECTION_TASK_PERF_LOCALS()     \
     section_perf_record_t *rec = NULL; \
@@ -192,7 +180,26 @@ static uint32_t task_os_enabled(void)
     } while (0)
 #endif
 
-#if (SRTOS == 1)
+section_runtime_kind_t section_runtime_kind_get(void)
+{
+    return SECTION_RUNTIME_SRTOS_A9;
+}
+
+const char *section_runtime_name_get(void)
+{
+    return "srtos-a9";
+}
+
+uint32_t section_runtime_preemptive_get(void)
+{
+    return SECTION_RUNTIME_PREEMPTIVE;
+}
+
+void section_port_init(void)
+{
+    a9_section_port_install_vector_table();
+}
+
 typedef enum
 {
     TASK_STACK_STATE_SLEEPING = 0,
@@ -209,8 +216,6 @@ typedef enum
 #define TASK_A9_RETURN_STATUS_INDEX 81u
 #define TASK_FRAME_PC_INDEX 0u
 #define TASK_FRAME_STATUS_INDEX 1u
-#define SECTION_A9_QUEUE_INTERNAL_CRITICAL 0u
-
 #if (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_FAULT) &&       \
     (SECTION_TASK_CONTEXT_POOL_FULL_POLICY != SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING)
 #error "Invalid SECTION_TASK_CONTEXT_POOL_FULL_POLICY."
@@ -257,7 +262,7 @@ static void task_fault_set(uint32_t reason, const reg_task_t *task, uint32_t *sp
 static section_task_status_t section_task_run_current(void);
 static void section_task_continue_current(void);
 
-static void task_os_insert_init(reg_task_t *task)
+static void srtos_task_insert_init(reg_task_t *task)
 {
     if (task == NULL)
     {
@@ -272,7 +277,7 @@ static void task_os_insert_init(reg_task_t *task)
     task->state = (uint8_t)TASK_STACK_STATE_SLEEPING;
 }
 
-static void task_os_runtime_reset(void)
+static void srtos_task_runtime_reset(void)
 {
     p_srtos_task_ready_first = NULL;
     p_srtos_task_ready_tail = NULL;
@@ -291,7 +296,7 @@ static void task_os_runtime_reset(void)
     g_section_fault_debug.task_fault_policy = SECTION_TASK_CONTEXT_POOL_FULL_POLICY;
 }
 
-static uint32_t task_os_activate_if_due(reg_task_t *task, uint32_t elapsed)
+static uint32_t srtos_task_activate_if_due(reg_task_t *task, uint32_t elapsed)
 {
     if ((task == NULL) || (elapsed < task->t_period) || (task->state != (uint8_t)TASK_STACK_STATE_SLEEPING))
     {
@@ -678,14 +683,14 @@ static uint32_t task_stack_free_words_get(const reg_task_t *task)
 
 static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task)
 {
-#if (SECTION_A9_QUEUE_INTERNAL_CRITICAL == 1u)
+#if (SECTION_TASK_QUEUE_INTERNAL_CRITICAL == 1u)
     uint32_t primask = section_critical_enter();
 #endif
     section_race_probe_begin(0x5352454Eu);
     if ((first == NULL) || (tail == NULL) || (task == NULL) || (task->is_ready != 0u))
     {
         section_race_probe_end();
-#if (SECTION_A9_QUEUE_INTERNAL_CRITICAL == 1u)
+#if (SECTION_TASK_QUEUE_INTERNAL_CRITICAL == 1u)
         section_critical_exit(primask);
 #endif
         return;
@@ -708,7 +713,7 @@ static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **t
     }
     section_race_probe_invariant(*first, *tail);
     section_race_probe_end();
-#if (SECTION_A9_QUEUE_INTERNAL_CRITICAL == 1u)
+#if (SECTION_TASK_QUEUE_INTERNAL_CRITICAL == 1u)
     section_critical_exit(primask);
 #endif
 }
@@ -716,7 +721,7 @@ static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **t
 static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail)
 {
     reg_task_t *task = NULL;
-#if (SECTION_A9_QUEUE_INTERNAL_CRITICAL == 1u)
+#if (SECTION_TASK_QUEUE_INTERNAL_CRITICAL == 1u)
     uint32_t primask = section_critical_enter();
 #endif
 
@@ -724,7 +729,7 @@ static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t 
     if ((first == NULL) || (tail == NULL) || (*first == NULL))
     {
         section_race_probe_end();
-#if (SECTION_A9_QUEUE_INTERNAL_CRITICAL == 1u)
+#if (SECTION_TASK_QUEUE_INTERNAL_CRITICAL == 1u)
         section_critical_exit(primask);
 #endif
         return NULL;
@@ -743,7 +748,7 @@ static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t 
     task->is_ready = 0u;
     section_race_probe_invariant(*first, *tail);
     section_race_probe_end();
-#if (SECTION_A9_QUEUE_INTERNAL_CRITICAL == 1u)
+#if (SECTION_TASK_QUEUE_INTERNAL_CRITICAL == 1u)
     section_critical_exit(primask);
 #endif
 
@@ -811,6 +816,15 @@ uint32_t section_task_slice_elapsed(void)
     }
 
     return elapsed;
+}
+
+void section_task_irq_exit_request(void)
+{
+    if ((section_task_scheduler_started() != 0u) && /* A9 共享栈调度器已经接管任务现场。 */
+        (section_task_slice_elapsed() != 0u))       /* 当前任务已经耗尽本次时间片。 */
+    {
+        a9_section_port_switch_request(); /* 请求自定义 IRQ 返回路径切换任务。 */
+    }
 }
 
 void section_task_start_request(void)
@@ -1048,7 +1062,7 @@ static void section_task_entry(void)
     }
 }
 
-static void task_os_run(void)
+static void srtos_task_run(void)
 {
     section_task_tick();
 
@@ -1061,30 +1075,6 @@ static void task_os_run(void)
         section_task_yield();
     }
 }
-#else
-static void task_os_insert_init(reg_task_t *task)
-{
-    (void)task;
-}
-
-static void task_os_runtime_reset(void)
-{
-}
-
-static uint32_t task_os_activate_if_due(reg_task_t *task, uint32_t elapsed)
-{
-    (void)task;
-    (void)elapsed;
-    return 0u;
-}
-
-static void task_os_run(void)
-{
-}
-#endif
-
-static void task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task);
-static reg_task_t *task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail);
 
 #if defined(SECTION_SENTINEL_REG_SECTION)
 SECTION_REG_START_ATTR_PREFIX const reg_section_t section_reg_start = {0u, NULL};
@@ -1166,62 +1156,6 @@ static void section_critical_exit(uint32_t saved_cpsr)
     __asm volatile("isb" ::: "memory");
 }
 
-static void task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task)
-{
-    section_race_probe_begin(0x4252454Eu);
-    if ((first == NULL) || (tail == NULL) || (task == NULL) || (task->is_ready != 0u))
-    {
-        section_race_probe_end();
-        return;
-    }
-
-    section_race_probe_invariant(*first, *tail);
-    task->p_ready_next = NULL;
-    task->is_ready = 1u;
-    section_race_probe_delay();
-
-    if (*first == NULL)
-    {
-        *first = task;
-        *tail = task;
-    }
-    else
-    {
-        (*tail)->p_ready_next = task;
-        *tail = task;
-    }
-    section_race_probe_invariant(*first, *tail);
-    section_race_probe_end();
-}
-
-static reg_task_t *task_ready_pop_unlocked(reg_task_t **first, reg_task_t **tail)
-{
-    reg_task_t *task = NULL;
-
-    section_race_probe_begin(0x4252504Fu);
-    if ((first == NULL) || (tail == NULL) || (*first == NULL))
-    {
-        section_race_probe_end();
-        return NULL;
-    }
-
-    section_race_probe_invariant(*first, *tail);
-    task = *first;
-    *first = task->p_ready_next;
-    section_race_probe_delay();
-    if (*first == NULL)
-    {
-        *tail = NULL;
-    }
-
-    task->p_ready_next = NULL;
-    task->is_ready = 0u;
-    section_race_probe_invariant(*first, *tail);
-    section_race_probe_end();
-
-    return task;
-}
-
 static void task_insert(reg_task_t *task)
 {
     if (task == NULL)
@@ -1234,7 +1168,7 @@ static void task_insert(reg_task_t *task)
     task->p_ready_next = NULL;
     task->is_ready = 0u;
     task->is_running = 0u;
-    task_os_insert_init(task);
+    srtos_task_insert_init(task);
     SECTION_TASK_PERF_PERIOD_SET(task);
 
     if (p_task_first == NULL)
@@ -1366,11 +1300,7 @@ void section_runtime_reset(void)
     (void)memset((void *)&g_section_critical_race_debug, 0, sizeof(g_section_critical_race_debug));
     p_task_first = NULL;
     p_task_tail = NULL;
-    p_task_ready_first = NULL;
-    p_task_ready_tail = NULL;
-    p_task_unfinished_first = NULL;
-    p_task_unfinished_tail = NULL;
-    task_os_runtime_reset();
+    srtos_task_runtime_reset();
     p_interrupt_first = NULL;
     p_link_first = NULL;
     p_link_tail = NULL;
@@ -1380,13 +1310,6 @@ void section_runtime_reset(void)
 const section_link_t *section_link_first_get(void)
 {
     return p_link_first;
-}
-
-static void task_schedule_next(reg_task_t *task, uint32_t elapsed)
-{
-    const uint32_t periods_elapsed = elapsed / task->t_period;
-
-    task->time_last += periods_elapsed * task->t_period;
 }
 
 static void task_activate_if_due(reg_task_t *task, uint32_t now)
@@ -1408,23 +1331,7 @@ static void task_activate_if_due(reg_task_t *task, uint32_t now)
     primask = section_critical_enter();
 
     elapsed = (uint32_t)(now - task->time_last);
-    if (task_os_activate_if_due(task, elapsed) != 0u)
-    {
-        section_critical_exit(primask);
-        return;
-    }
-    if (task_os_enabled() != 0u)
-    {
-        section_critical_exit(primask);
-        return;
-    }
-
-    if ((elapsed >= task->t_period) && (task->is_ready == 0u) && (task->is_running == 0u))
-    {
-        task_schedule_next(task, elapsed);
-        task_ready_enqueue_unlocked(&p_task_ready_first, &p_task_ready_tail, task);
-    }
-
+    (void)srtos_task_activate_if_due(task, elapsed);
     section_critical_exit(primask);
 }
 
@@ -1443,93 +1350,9 @@ void section_task_tick(void)
     }
 }
 
-static reg_task_t *task_ready_pop(void)
-{
-    reg_task_t *task = NULL;
-    uint32_t primask = section_critical_enter();
-
-    task = task_ready_pop_unlocked(&p_task_ready_first, &p_task_ready_tail);
-    if (task == NULL)
-    {
-        task = task_ready_pop_unlocked(&p_task_unfinished_first, &p_task_unfinished_tail);
-    }
-
-    if (task != NULL)
-    {
-        task->is_running = 1u;
-    }
-
-    section_critical_exit(primask);
-    return task;
-}
-
-static section_task_status_t task_run_step(reg_task_t *task)
-{
-    section_task_status_t status = SECTION_TASK_DONE;
-
-    if (task == NULL)
-    {
-        return SECTION_TASK_DONE;
-    }
-
-    if (task->p_step_func != NULL)
-    {
-        status = task->p_step_func(task->p_ctx);
-    }
-    else if (task->p_func != NULL)
-    {
-        task->p_func();
-        status = SECTION_TASK_DONE;
-    }
-    else
-    {
-        status = SECTION_TASK_DONE;
-    }
-
-    return status;
-}
-
-static void task_finish_step(reg_task_t *task, section_task_status_t status)
-{
-    uint32_t primask = section_critical_enter();
-
-    if (task != NULL)
-    {
-        task->is_running = 0u;
-        if (status == SECTION_TASK_RUNNING)
-        {
-            task_ready_enqueue_unlocked(&p_task_unfinished_first, &p_task_unfinished_tail, task);
-        }
-    }
-
-    section_critical_exit(primask);
-}
-
 void run_task(void)
 {
-    reg_task_t *task = NULL;
-
-    if (task_os_enabled() != 0u)
-    {
-        task_os_run();
-        return;
-    }
-
-    section_task_tick();
-
-    task = task_ready_pop();
-    while (task != NULL)
-    {
-        SECTION_TASK_PERF_LOCALS();
-        SECTION_TASK_PERF_BEGIN(task);
-        section_task_status_t status = task_run_step(task);
-
-        SECTION_TASK_PERF_END();
-        task_finish_step(task, status);
-
-        section_task_tick();
-        task = task_ready_pop();
-    }
+    srtos_task_run();
 }
 
 void FUNC_RAM section_interrupt(void)
