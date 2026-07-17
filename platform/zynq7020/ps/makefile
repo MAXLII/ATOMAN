@@ -1,4 +1,4 @@
-PROJECT_ROOT := ../..
+PROJECT_ROOT := ../../..
 TARGET ?= zynq7020_section_comm
 BUILD_DIR ?= build
 BSP_ROOT := $(BUILD_DIR)/bsp/ps7_cortexa9_0

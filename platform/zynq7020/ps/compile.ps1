@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = (Resolve-Path (Join-Path $projectRoot "..\..")).Path
+$repoRoot = (Resolve-Path (Join-Path $projectRoot "..\..\..")).Path
 $referenceExample = Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs\zynq7020") `
     -Recurse -Directory -Filter "arm_07_uart_tx_rxeco" | Select-Object -First 1
 if ($null -eq $referenceExample)
@@ -16,7 +16,6 @@ if ($null -eq $referenceExample)
 $referenceRoot = Join-Path $referenceExample.FullName "arm_07_uart_tx_rxeco.sdk"
 $referenceBsp = Join-Path $referenceRoot "uart_eco_bsp\ps7_cortexa9_0"
 $referenceLinker = Join-Path $referenceRoot "uart_eco\src\lscript.ld"
-$referenceHardware = Get-ChildItem -LiteralPath $referenceRoot -Directory -Filter "*hw_platform*" | Select-Object -First 1
 $buildName = if ($Srtos -eq 1) { "build_srtos" } else { "build" }
 $makefileName = if ($Srtos -eq 1) { "Makefile.a9_srtos" } else { "Makefile" }
 $buildRoot = Join-Path $projectRoot $buildName
@@ -34,18 +33,11 @@ if (!(Test-Path -LiteralPath $makeExe))
     throw "Xilinx SDK make not found: $makeExe"
 }
 
-if ($null -eq $referenceHardware)
-{
-    throw "Reference Xilinx hardware platform not found: $referenceRoot"
-}
-
 New-Item -ItemType Directory -Force -Path (Join-Path $buildBsp "include") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $buildBsp "lib") | Out-Null
 Copy-Item -Path (Join-Path $referenceBsp "include\*") -Destination (Join-Path $buildBsp "include") -Recurse -Force
 Copy-Item -Path (Join-Path $referenceBsp "lib\*") -Destination (Join-Path $buildBsp "lib") -Recurse -Force
 Copy-Item -LiteralPath $referenceLinker -Destination (Join-Path $buildRoot "lscript.ld") -Force
-Copy-Item -LiteralPath (Join-Path $referenceHardware.FullName "ps7_init.tcl") -Destination (Join-Path $buildRoot "ps7_init.tcl") -Force
-Copy-Item -LiteralPath (Join-Path $referenceHardware.FullName "system.hdf") -Destination (Join-Path $buildRoot "system.hdf") -Force
 
 $env:PATH = "$gccBin;$($env:PATH)"
 Push-Location $projectRoot
