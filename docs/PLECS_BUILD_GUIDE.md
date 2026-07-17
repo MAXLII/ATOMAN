@@ -81,7 +81,7 @@ compile.bat
 popd
 ```
 
-AC 工程的 `CMakeLists.txt` 当前引用 `plecs_log_file_path.c`，当前工作区没有该文件。因此 AC 工程可以完成 CMake 配置，但 Make 阶段会报告源文件不存在。其余列出的 PLECS 工程具备当前 CMake 源文件集合。
+所有 PLECS 工程共用 `platform/plecs/common/plecs.c`。日志路径在 DLL 加载后根据 DLL 自身位置生成，不需要工程专用的绝对路径源文件。
 
 生成文件：
 
@@ -184,17 +184,19 @@ cmake -G "MinGW Makefiles" ^
 3. 检查模型中 DLL Block 的 DLL 路径是否指向当前工程生成的 `libplecs.dll`。
 4. 运行仿真。
 
-DLL 运行时日志文件由各工程的 `plecs_log_file_path.c` 定义：
+DLL 运行时日志文件与当前加载的 `libplecs.dll` 位于同一目录：
 
 | 工程 | 日志文件 |
 | --- | --- |
-| AC | `platform/plecs/ac/plecs_log.txt` |
-| Buck | `platform/plecs/buck/plecs_log.txt` |
-| Boost | `platform/plecs/boost/plecs_log.txt` |
-| INV | `platform/plecs/inv/plecs_log.txt` |
-| LLC | `platform/plecs/llc/plecs_log.txt` |
-| PFC | `platform/plecs/pfc/plecs_log.txt` |
-| PFC_I32 | `platform/plecs/pfc_i32/plecs_log.txt` |
+| AC | `platform/plecs/ac/build/bin/plecs_log.txt` |
+| Buck | `platform/plecs/buck/build/bin/plecs_log.txt` |
+| Boost | `platform/plecs/boost/build/bin/plecs_log.txt` |
+| INV | `platform/plecs/inv/build/bin/plecs_log.txt` |
+| LLC | `platform/plecs/llc/build/bin/plecs_log.txt` |
+| PFC | `platform/plecs/pfc/build/bin/plecs_log.txt` |
+| PFC_I32 | `platform/plecs/pfc_i32/build/bin/plecs_log.txt` |
+
+Windows 构建使用宽字符系统接口读取当前 DLL 的完整路径，再在其目录下创建 `plecs_log.txt`。仓库路径包含中文时也不依赖本地 ANSI 代码页。日志路径解析失败时，仿真继续运行，但日志文件不会创建。
 
 ## 6. 常见问题
 
@@ -242,6 +244,6 @@ compile.bat
 popd
 ```
 
-### 6.6 AC 工程缺少 `plecs_log_file_path.c`
+### 6.6 没有生成日志文件
 
-当前工作区没有 `platform/plecs/ac/plecs_log_file_path.c`，`compile.bat` 会在 Make 阶段失败。该源文件由 AC PLECS 工程环境提供后，重新执行脚本。
+确认 DLL 已从当前工程的 `build/bin/` 加载，并检查该目录是否具有写入权限。日志路径解析或文件打开失败不会中止仿真。
