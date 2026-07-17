@@ -55,3 +55,14 @@ platform/matlab/pll/slprj/
 platform/matlab/pll/*.mexw64
 platform/matlab/pll/*.slxc
 .codex-remote-attachments
+docs/zynq7020
+
+# Zynq-7020 local Xilinx build artifacts
+platform/zynq7020/.Xil/
+platform/zynq7020/build/
+platform/zynq7020/build_srtos/
+platform/zynq7020/pl/.Xil/
+platform/zynq7020/pl/NA/
+platform/zynq7020/pl/build/
+platform/zynq7020/pl/*.jou
+verilog/iir/sim/*.jou
