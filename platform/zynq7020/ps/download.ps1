@@ -6,11 +6,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$platformRoot = Split-Path -Parent $projectRoot
 $xsct = Join-Path $XilinxSdk "bin\xsct.bat"
 $buildName = if ($Srtos -eq 1) { "build_srtos" } else { "build" }
 $firmwareName = if ($Srtos -eq 1) { "zynq7020_section_comm_srtos.elf" } else { "zynq7020_section_comm.elf" }
 $firmware = Join-Path (Join-Path $projectRoot $buildName) $firmwareName
-$plOutput = Join-Path $projectRoot "pl\build\output"
+$plOutput = Join-Path $platformRoot "pl\build\output"
+$plBuildScript = Join-Path $platformRoot "pl\build_pl.ps1"
 $plArtifacts = @(
     (Join-Path $plOutput "ps7_init.tcl"),
     (Join-Path $plOutput "zynq7020_platform.bit"),
@@ -31,7 +33,7 @@ foreach ($artifact in $plArtifacts)
 {
     if (!(Test-Path -LiteralPath $artifact))
     {
-        throw "PL artifact not found. Run pl\build_pl.ps1 first: $artifact"
+        throw "PL artifact not found. Run $plBuildScript first: $artifact"
     }
 }
 

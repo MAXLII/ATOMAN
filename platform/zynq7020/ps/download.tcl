@@ -1,6 +1,7 @@
 proc download_platform {script_dir build_name firmware_name} {
     set build_dir [file join $script_dir $build_name]
-    set pl_output_dir [file join $script_dir pl build output]
+    set platform_dir [file dirname $script_dir]
+    set pl_output_dir [file join $platform_dir pl build output]
 
     connect -url tcp:127.0.0.1:3121
     targets -set -nocase -filter {name =~ "APU*"} -index 0
@@ -21,7 +22,8 @@ proc download_platform {script_dir build_name firmware_name} {
 }
 
 set script_dir [file dirname [file normalize [info script]]]
-set ps7_init_file [file join $script_dir pl build output ps7_init.tcl]
+set platform_dir [file dirname $script_dir]
+set ps7_init_file [file join $platform_dir pl build output ps7_init.tcl]
 set srtos_mode 0
 if {[llength $argv] > 0} {
     set srtos_mode [lindex $argv 0]
