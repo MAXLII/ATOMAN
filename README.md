@@ -20,6 +20,7 @@ base
 │  ├─ gd32g553c/  GD32G553C 平台工程
 │  ├─ hc32f334/   HC32F334 平台工程
 │  ├─ hc32f558/   HC32F558 demo 平台工程
+│  ├─ zynq7020/   Zynq-7020 Cortex-A9 + PL 平台工程
 │  ├─ matlab/     MATLAB 仿真与分析工程
 │  └─ plecs/      PLECS 控制算法仿真工程
 └─ docs/          工程设计、平台接入和专项设计文档
@@ -49,6 +50,9 @@ code
 - 功能使用接入指南：[docs/FEATURE_USAGE_GUIDE.md](docs/FEATURE_USAGE_GUIDE.md)
 - 平台接入：[docs/MCU_PLATFORM_PORTING.md](docs/MCU_PLATFORM_PORTING.md)
 - MCU 编译与下载：[docs/MCU_BUILD_DOWNLOAD_GUIDE.md](docs/MCU_BUILD_DOWNLOAD_GUIDE.md)
+- Zynq-7020 平台：[docs/ZYNQ7020_PLATFORM.md](docs/ZYNQ7020_PLATFORM.md)
+- Zynq-7020 IIR PL 验证：[docs/ZYNQ7020_IIR_PL_VERIFICATION.md](docs/ZYNQ7020_IIR_PL_VERIFICATION.md)
+- Zynq-7020 自测报告：[docs/ZYNQ7020_SELF_TEST_REPORT.md](docs/ZYNQ7020_SELF_TEST_REPORT.md)
 - 工程设计：[docs/ENGINEERING_DESIGN.md](docs/ENGINEERING_DESIGN.md)
 - 控制模块设计：[docs/CTRL_DESIGN.md](docs/CTRL_DESIGN.md)
 - 控制模块使用：[docs/CTRL_USAGE.md](docs/CTRL_USAGE.md)
