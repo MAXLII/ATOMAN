@@ -6,13 +6,34 @@
 
 内部实现见 [SECTION_DESIGN.md](SECTION_DESIGN.md)。
 
-## 2. 初始化调用
+## 2. 构建时选择运行时
+
+每个工程从以下目录选择一套 `section.c/.h`：
+
+| 目录 | 目标 |
+| --- | --- |
+| `code/section/baremetal/` | 裸机协作式运行时 |
+| `code/section/srtos_m/` | Cortex-M SRTOS |
+| `code/section/srtos_a9/` | Cortex-A9 SRTOS |
+
+构建文件只加入所选目录的 `section.c`，并把所选目录放在 include path 的 `code/section/` 之前。业务源码继续统一使用：
+
+```c
+#include "section.h"
+```
+
+运行时选择完全由源文件和头文件路径完成，不定义 `SRTOS` 选择宏。
+
+## 3. 初始化调用
 
 系统启动时需要调用：
 
 ```c
+section_port_init();
 section_init();
 ```
+
+`section_port_init()` 在裸机和 Cortex-M 实现中可为空操作；Cortex-A9 SRTOS 使用它安装异常向量端口。
 
 主循环中需要持续调用：
 
@@ -34,7 +55,7 @@ void Timer_IRQHandler(void)
 
 `section_interrupt()` 使用 `FUNC_RAM` 修饰，平台工程需要保证 `.func_ram` 段按目标 MCU 的方式放到 RAM 中运行。
 
-## 3. 注册初始化函数
+## 4. 注册初始化函数
 
 使用：
 
@@ -55,7 +76,7 @@ REG_INIT(0, demo_init)
 
 `priority` 越小越早执行。
 
-## 4. 注册周期任务
+## 5. 注册周期任务
 
 使用系统 tick 为单位：
 
@@ -80,9 +101,9 @@ static void demo_task_10ms(void)
 REG_TASK_MS(10, demo_task_10ms)
 ```
 
-任务函数不能长时间阻塞，否则会影响其他任务和链路轮询。
+裸机任务函数不能长时间阻塞，否则会影响其他任务和链路轮询。SRTOS 可以在时间片边界切出长任务，但任务仍不应无限等待硬件或持有跨时间片临界区。
 
-## 5. 注册中断回调
+## 6. 注册中断回调
 
 使用：
 
@@ -103,7 +124,7 @@ REG_INTERRUPT(0, demo_fast_ctrl)
 
 硬件 ISR 中调用 `section_interrupt()` 后，所有注册中断回调会按优先级执行。
 
-## 6. 注册状态机
+## 7. 注册状态机
 
 事件变量必须是 `uint32_t` 大小：
 
@@ -157,7 +178,7 @@ s_demo_event = 1u;
 uint32_t state = FSM_GET_STATE(demo);
 ```
 
-## 7. 注册通信链路
+## 8. 注册通信链路
 
 链路接收函数原型：
 
@@ -194,7 +215,7 @@ REG_LINK(0, demo_print, demo_rx_get_byte, demo_handlers, ARRAY_SIZE(demo_handler
 
 每个收到的字节会依次送入 handler 数组。handler 需要自己维护协议解析状态。
 
-## 8. 使用 Perf 自动测量
+## 9. 使用 Perf 自动测量
 
 默认情况下，`REG_TASK()` 和 `REG_INTERRUPT()` 会为任务和中断回调自动绑定 Perf record。
 
@@ -209,7 +230,7 @@ REG_LINK(0, demo_print, demo_rx_get_byte, demo_handlers, ARRAY_SIZE(demo_handler
 
 `PERF_INTERRUPT_ENABLE` 会影响 `section_interrupt()` 的编译路径。关闭后，中断调度不会调用 Perf begin/end 函数，也不会增加运行时判断。
 
-## 9. 使用注意事项
+## 10. 使用注意事项
 
 - 注册宏通常放在模块 `.c` 文件中。
 - 注册对象为静态生命周期，不需要手动释放。
@@ -219,3 +240,4 @@ REG_LINK(0, demo_print, demo_rx_get_byte, demo_handlers, ARRAY_SIZE(demo_handler
 - 中断回调应只做中断安全的操作。
 - 链路 handler 按字节被调用，不能假设一次收到完整帧。
 - 新平台需要保证链接段和 `SECTION_START/SECTION_STOP` 符号正确。
+- 一个目标只能编译一套 `section.c`，不能同时加入三个实现目录。

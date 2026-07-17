@@ -23,7 +23,7 @@ DEMO_JITTER_CAPTURE_ENABLE=1
 DEMO_TASK_DEAD_LOOP_ENABLE=0
 DEMO_TASK_VARIABLE_LENGTH_ENABLE=0
 SECTION_CRITICAL_USE_PRIMASK=1
-SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL=1
+SECTION_TASK_QUEUE_INTERNAL_CRITICAL=1
 SECTION_TASK_RUNTIME_STACK_WORDS=1024
 SECTION_TASK_CONTEXT_POOL_WORDS=8192
 ```
@@ -189,4 +189,3 @@ For the tested GD32G553 configuration:
 - Do not use a 2048-word common context pool for this 240-task stress level.
 - Use at least an 8192-word common context pool for this stress scenario, then re-test with the real application task set.
 - Keep TIMER2 ISR entry timestamp capture available as a compile-time diagnostic, because it gives a direct hardware-timer view of interrupt delay caused by global interrupt masking.
-

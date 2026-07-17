@@ -27,6 +27,9 @@ code/
 ├── interface/     硬件接口层
 ├── lib/           控制算法库（PID、SOGI、锁相环等）
 └── section/       模块注册与链接框架
+    ├── baremetal/ 裸机 section.c/.h
+    ├── srtos_m/   Cortex-M SRTOS section.c/.h
+    └── srtos_a9/  Cortex-A9 SRTOS section.c/.h
 
 platform/
 ├── apm32/          APM32 MCU 工程
@@ -51,15 +54,25 @@ GCC 工程与 MDK 工程引用相同的 AC BSP、公共代码和 HC32 LL 驱动�
 
 两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
-Zynq-7020 平台位于 `platform/zynq7020/`。`verilog/iir/` 保存 3P3Z IIR core、AXI4-Lite 外设封装、SystemVerilog 数值验证和使用说明；`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、AXI GPIO、AXI UART Lite、自定义 AXI IIR IP 和管脚约束；`bsp/` 保存 PS UART1、全局定时器、SCU 私有定时器、GIC、IIR MMIO 驱动和复位适配；`srtos/` 保存 A9 专用 section 双模式实现及 SVC/IRQ 上下文切换端口；`src/` 保存平台入口与自主测试。
+Zynq-7020 平台位于 `platform/zynq7020/`。`verilog/iir/` 保存 3P3Z IIR core、AXI4-Lite 外设封装、SystemVerilog 数值验证和使用说明；`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、AXI GPIO、AXI UART Lite、自定义 AXI IIR IP 和管脚约束；`bsp/` 保存 PS UART1、全局定时器、SCU 私有定时器、GIC、IIR MMIO 驱动和复位适配；`srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`src/` 保存平台入口与自主测试。
 
-Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。两套 ARM 工程均编译 `section_a9.c`，由平台配置头中的 `SRTOS` 选择无 RTOS 主循环或 section SRTOS Cortex-A9 上下文切换；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`compile.ps1 -Srtos 0/1` 选择对应工程文件。下载入口在编程完整 PS+PL 硬件后启动 ARM Cortex-A9 CPU0。板载 CH340 使用 PS UART1 MIO48/MIO49，Bank501 和对应 MIO I/O 类型为 1.8V。
+Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录。下载入口在编程完整 PS+PL 硬件后启动 ARM Cortex-A9 CPU0。板载 CH340 使用 PS UART1 MIO48/MIO49，Bank501 和对应 MIO I/O 类型为 1.8V。
 
 ## 3. 模块注册与链接框架（`code/section/`）
 
 ### 3.1 设计目标
 
 `code/section/` 框架解决嵌入式系统中模块自动注册和生命周期管理问题。各模块通过编译时链接器 section 机制将自身注册到框架中，运行时框架遍历注册链表完成初始化和调度，全程不使用动态内存分配。
+
+运行时实现按目录完全拆分：
+
+| 目录 | 职责 |
+|------|------|
+| `baremetal/` | 裸机协作式任务调度 |
+| `srtos_m/` | Cortex-M PendSV 抢占、公共运行栈和公共现场池 |
+| `srtos_a9/` | Cortex-A9 SVC/IRQ 抢占、公共运行栈和公共现场池 |
+
+每个构建目标只编译一个目录中的 `section.c`，并优先包含同目录的 `section.h`。三套头文件保持相同的注册宏和业务调用接口，运行时选择不使用 `SRTOS` 预处理宏。`code/section/` 根目录保存三套实现共用的平台适配定义。
 
 ### 3.2 注册机制
 
@@ -85,11 +98,12 @@ Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DR
 
 ### 3.3 任务调度 (`run_task`)
 
-`run_task()` 在 `main()` 的 `while(1)` 循环中持续调用。遍历 `p_task_first` 链表，对每个到达周期的任务执行回调。调度特性：
+`run_task()` 在 `main()` 的 `while(1)` 循环中持续调用。裸机实现遍历 `p_task_first` 链表并执行到期任务；两套 SRTOS 实现把到期任务送入 Ready 队列，并在公共运行栈上调度。共同调度特性：
 
 - **周期驱动**：每个任务有 `t_period`（以 `SECTION_SYS_TICK` 为单位），`REG_TASK_MS` 宏将毫秒转为 tick。任务到期后 `time_last` 增加 `k * period`（`k = elapsed / period`），确保不积累延迟偏差。
 - **性能测量**：如启用 `PERF_TASK_ENABLE`，调度器在调用前后读取硬件计数器，计算任务执行时间并更新 `section_perf_record_t` 中的 `time`、`max_time`、`run_time`。ISR 在下一次任务调用之间打断的时间会被扣除。
-- **无阻塞**：每个周期只执行一次任务回调，不循环追赶。
+- **周期推进**：每个周期只登记或执行一次任务，不循环追赶历史周期。
+- **SRTOS 抢占**：长任务现场保存到公共现场池，新 Ready 任务优先，未完成任务按 FIFO 恢复。
 
 ### 3.4 中断调度 (`section_interrupt`)
 
@@ -103,11 +117,9 @@ Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DR
 
 `section_link_t` 抽象串行通信通道。每个 link 包含 `rx_get_byte`（接收回调）、`handler_arr[]`（接收字节到回调的映射）、以及 `my_printf`（输出接口）。`section_link_task` 以 100us 周期轮询所有 link 的接收缓冲区，按字节分派到 handler。
 
-### 3.7 FLASH 与 RAM 用量
+### 3.7 静态内存
 
-| 模块 | Code | RO Data | FLASH | RW Data | ZI Data | RAM |
-|------|-----:|--------:|------:|--------:|--------:|----:|
-| `section.o` | 592 | 10 | 602 | 34 | 72 | 106 |
+三套实现均不使用动态内存。裸机实现保存注册链表和协作式任务队列；Cortex-M 与 Cortex-A9 SRTOS 额外静态分配 `SECTION_TASK_RUNTIME_STACK_WORDS` 公共运行栈和 `SECTION_TASK_CONTEXT_POOL_WORDS` 公共现场池。具体镜像占用由目标工程链接报告给出。
 
 ## 4. Shell 命令行模块（`code/dbg/shell.{c,h}` + `shell_service.{c,h}`）
 
