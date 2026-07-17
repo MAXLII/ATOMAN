@@ -46,12 +46,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#if (SRTOS == 1)
-#define ZYNQ7020_RUNTIME_MODE "section-SRTOS" /* section 自带 SRTOS 的运行模式名称。 */
-#else
-#define ZYNQ7020_RUNTIME_MODE "no-RTOS" /* 纯裸机 section 调度的运行模式名称。 */
-#endif
-
 static uint32_t s_probe_task_count = 0U; /* 100 ms 平台探针任务累计执行次数。 */
 static uint8_t s_self_test_reported = 0U; /* 平台自主测试报告已输出标志。 */
 static uint32_t s_probe_start_tick = 0U;  /* section 初始化完成时的 100us 启动基准。 */
@@ -286,11 +280,7 @@ static void platform_self_test_report(void)
     uint8_t comm_loop_passed = communication_loopback_test();    /* 通信编码、CRC、解析、handler 与 ACK 回环结果。 */
     uint8_t shell_loop_passed = shell_loopback_test();           /* Shell 字节解析与命令执行回环结果。 */
     uint8_t iir_passed = bsp_iir_self_test(NULL);                /* 3P3Z 运算、历史和饱和自测结果。 */
-#if (SRTOS == 1)
-    uint32_t srtos_started = section_task_scheduler_started();   /* Cortex-A9 SRTOS 调度器运行状态。 */
-#else
-    uint32_t srtos_started = 0U;                                 /* 当前构建未启用 SRTOS。 */
-#endif
+    uint32_t scheduler_started = section_task_scheduler_started(); /* 当前 section 调度器运行状态。 */
     uint32_t shell_items = shell_count_get();                    /* Shell 命令与变量数量。 */
     uint32_t trace_records = dbg_trace_record_count_get();       /* Demo 已产生的 Trace 记录数量。 */
 
@@ -330,12 +320,11 @@ static void platform_self_test_report(void)
     {
         passed = 0U;
     }
-#if (SRTOS == 1)
-    if (srtos_started == 0U)
+    if ((section_runtime_preemptive_get() == 1U) && /* 当前选择的是抢占式 section 实现。 */
+        (scheduler_started == 0U))                  /* 抢占调度器尚未成功接管任务现场。 */
     {
         passed = 0U;
     }
-#endif
     if (perf_ready == 0U)
     {
         passed = 0U;
@@ -354,7 +343,7 @@ static void platform_self_test_report(void)
     }
 
     bsp_usart_dbg_printf("[SELFTEST] mode=%s result=%s reg(init=%lu task=%lu irq=%lu shell=%lu link=%lu perf=%lu comm=%lu scope=%lu sfra=%lu) runtime(task=%lu irq=%u shell=%lu perf=%u scope=%u sfra=%u trace=%lu comm_loop=%u shell_loop=%u srtos=%lu iir=%u)\r\n",
-                         ZYNQ7020_RUNTIME_MODE,
+                         section_runtime_name_get(),
                          (passed == 1U) ? "PASS" : "FAIL",
                          (unsigned long)counts.init_count,
                          (unsigned long)counts.task_count,
@@ -374,7 +363,7 @@ static void platform_self_test_report(void)
                          (unsigned long)trace_records,
                          (unsigned)comm_loop_passed,
                          (unsigned)shell_loop_passed,
-                         (unsigned long)srtos_started,
+                         (unsigned long)scheduler_started,
                          (unsigned)iir_passed);
 }
 
@@ -382,7 +371,7 @@ static void platform_probe_init(void)
 {
     s_probe_start_tick = bsp_timer_gettime_100us(); /* 以本次固件启动时刻建立自主测试延时基准。 */
     bsp_usart_dbg_printf("section init ready; mode=%s; COM5 115200 8N1\r\n",
-                         ZYNQ7020_RUNTIME_MODE); /* 确认链接段初始化回调已经执行。 */
+                         section_runtime_name_get()); /* 确认链接段初始化回调已经执行。 */
     bsp_usart_dbg_printf("commands: help, ZYNQ_STATUS, IIR_TEST, DEMO_SHELL_PING\r\n"); /* 提示平台通信与 IIR 验证命令。 */
 }
 
@@ -413,9 +402,8 @@ static void platform_status_command(DEC_MY_PRINTF)
         return;
     }
 
-#if (SRTOS == 1)
     my_printf->my_printf("zynq mode=%s tick_100us=%lu task_count=%lu section=%08lX-%08lX srtos=%lu fault=%lu save_fail=%lu release_fail=%lu pool=%lu/%lu stack_free=%lu\r\n",
-                         ZYNQ7020_RUNTIME_MODE,
+                         section_runtime_name_get(),
                          (unsigned long)bsp_timer_gettime_100us(),
                          (unsigned long)s_probe_task_count,
                          (unsigned long)(uintptr_t)&SECTION_START,
@@ -427,14 +415,6 @@ static void platform_status_command(DEC_MY_PRINTF)
                          (unsigned long)g_section_fault_debug.task_context_pool_used,
                          (unsigned long)g_section_fault_debug.task_context_pool_words,
                          (unsigned long)g_section_fault_debug.task_stack_free_words);
-#else
-    my_printf->my_printf("zynq mode=%s tick_100us=%lu task_count=%lu section=%08lX-%08lX\r\n",
-                         ZYNQ7020_RUNTIME_MODE,
-                         (unsigned long)bsp_timer_gettime_100us(),
-                         (unsigned long)s_probe_task_count,
-                         (unsigned long)(uintptr_t)&SECTION_START,
-                         (unsigned long)(uintptr_t)&SECTION_STOP);
-#endif
 }
 
 REG_SHELL_CMD(ZYNQ_STATUS, platform_status_command)

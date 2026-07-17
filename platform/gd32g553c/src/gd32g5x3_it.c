@@ -129,15 +129,11 @@ void UsageFault_Handler(void)
 */
 void GD32_EXCEPTION_NAKED SVC_Handler(void)
 {
-#if (SRTOS == 1)
     __ASM volatile(
         "push {r0, lr}                     \n"
         "bl section_task_start_request     \n"
         "pop {r0, r1}                      \n"
         "bx r1                             \n");
-#else
-    __ASM volatile("bx lr                  \n");
-#endif
 }
 
 /*!
@@ -161,7 +157,6 @@ void DebugMon_Handler(void)
 */
 void GD32_EXCEPTION_NAKED PendSV_Handler(void)
 {
-#if (SRTOS == 1)
 #if defined(__FPU_USED) && (__FPU_USED == 1U)
     __ASM volatile(
         "push {r0, lr}                     \n"
@@ -219,9 +214,6 @@ void GD32_EXCEPTION_NAKED PendSV_Handler(void)
         "pop {r0, r1}                      \n"
         "bx r1                             \n");
 #endif
-#else
-    __ASM volatile("bx lr                  \n");
-#endif
 }
 
 /*!
@@ -233,13 +225,8 @@ void GD32_EXCEPTION_NAKED PendSV_Handler(void)
 void SysTick_Handler(void)
 {
     delay_decrement();
-#if (SRTOS == 1)
 #if defined(SECTION_TASK_TICK_FROM_SYSTICK_TEST) && (SECTION_TASK_TICK_FROM_SYSTICK_TEST == 1)
     section_task_tick();
 #endif
-    if((section_task_scheduler_started() != 0U) &&
-       (section_task_slice_elapsed() != 0U)) {
-        SRTOS_PENDSV_SET();
-    }
-#endif
+    section_task_irq_exit_request();
 }

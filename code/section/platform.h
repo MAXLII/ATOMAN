@@ -64,13 +64,12 @@
 /* Required contract per platform block:                                      */
 /* - SECTION_SYS_TICK: monotonic scheduler tick source                         */
 /* - SECTION_SYS_TICK_UNIT_US: tick unit in microseconds                       */
-/* - SRTOS: default RTOS enable switch, 0 or 1                                 */
 /* - SECTION_START / SECTION_STOP: REG_TASK linker section boundaries          */
 /* - SYSTEM_RESET: platform reset expression                                  */
 /* - FUNC_RAM: optional RAM-function attribute                                */
-/* - SRTOS_PENDSV_SET: request a PendSV context switch                         */
-/* - SRTOS_FPU_DISABLE_LAZY_STACKING: optional FPU context policy              */
-/* - SRTOS_FAULT_HOOK: platform action after section records an RTOS fault     */
+/* - SECTION_PORT_CONTEXT_SWITCH_REQUEST: Cortex-M context-switch request       */
+/* - SECTION_PORT_FPU_LAZY_STACKING_DISABLE: Cortex-M FPU context policy        */
+/* - SECTION_PORT_FAULT_HOOK: Cortex-M scheduler fault action                   */
 /* -------------------------------------------------------------------------- */
 
 /* Simulation: MATLAB */
@@ -79,9 +78,6 @@
 extern uint32_t sim_time_100us;
 #define SECTION_SYS_TICK sim_time_100us
 #define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
-#ifndef SRTOS
-#define SRTOS 0
-#endif
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
@@ -91,15 +87,15 @@ extern size_t __stop_section;
 #define SYSTEM_RESET
 #define PLECS_LOG(...) SIM_LOG(__VA_ARGS__)
 #define FUNC_RAM
-#define SRTOS_PENDSV_SET() \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
     do                     \
     {                      \
     } while (0)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -111,9 +107,6 @@ extern size_t __stop_section;
 extern uint32_t plecs_time_100us;
 #define SECTION_SYS_TICK plecs_time_100us
 #define SECTION_SYS_TICK_UNIT_US 100u
-#ifndef SRTOS
-#define SRTOS 0
-#endif
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
@@ -122,15 +115,15 @@ extern size_t __stop_section;
 #endif
 #define SYSTEM_RESET
 #define FUNC_RAM
-#define SRTOS_PENDSV_SET() \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
     do                     \
     {                      \
     } while (0)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -142,9 +135,6 @@ extern size_t __stop_section;
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#ifndef SRTOS
-#define SRTOS 1
-#endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t section_image_base __asm("Image$$SECTION$$Base");
 extern uint32_t section_image_limit __asm("Image$$SECTION$$Limit");
@@ -161,7 +151,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SRTOS_PENDSV_SET()                  \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
     do                                      \
     {                                       \
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
@@ -169,18 +159,18 @@ extern uint32_t __section_end;
         __ISB();                            \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
     do                                      \
     {                                       \
         FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
     } while (0)
 #else
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
 #endif
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -199,9 +189,6 @@ extern uint32_t __section_end;
 #define PLATFORM_PERF_COUNT_UNIT_US (8.0f / 15.0f)
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 188UL
 #define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 120000000UL
-#ifndef SRTOS
-#define SRTOS 1
-#endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t section_load_base __asm("Load$$SECTION$$Base");
 extern uint32_t section_load_limit __asm("Load$$SECTION$$Limit");
@@ -218,7 +205,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SRTOS_PENDSV_SET()                  \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
     do                                      \
     {                                       \
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
@@ -226,18 +213,18 @@ extern uint32_t __section_end;
         __ISB();                            \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
     do                                      \
     {                                       \
         FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
     } while (0)
 #else
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
 #endif
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -256,9 +243,6 @@ extern uint32_t __section_end;
 #define PLATFORM_COMM_LINK_ENABLE_ISO 0u
 #define PLATFORM_COMM_LINK_ENABLE_CAN 0u
 #define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 120000000UL
-#ifndef SRTOS
-#define SRTOS 0
-#endif
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t section_load_base __asm("Load$$SECTION$$Base");
 extern uint32_t section_load_limit __asm("Load$$SECTION$$Limit");
@@ -275,7 +259,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SRTOS_PENDSV_SET()                  \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
     do                                      \
     {                                       \
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
@@ -283,18 +267,18 @@ extern uint32_t __section_end;
         __ISB();                            \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
     do                                      \
     {                                       \
         FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
     } while (0)
 #else
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
 #endif
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -306,12 +290,8 @@ extern uint32_t __section_end;
 
 /* SoC: Xilinx Zynq-7020 Cortex-A9 */
 #elif defined(IS_ZYNQ7020)
-#include "zynq7020_section_config.h"
 #include "bsp_platform.h"
 #include "bsp_timer.h"
-#if (SRTOS == 1)
-#include "a9_section_port.h"
-#endif
 #define APP_START_ADDR 0x00100000UL
 #define SECTION_SYS_TICK bsp_timer_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
@@ -333,14 +313,6 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#if (SRTOS == 1)
-#define SRTOS_PENDSV_SET() a9_section_port_yield()
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
-    do                                    \
-    {                                     \
-    } while (0)
-#define SRTOS_FAULT_HOOK(reason) a9_section_port_fault((uint32_t)(reason))
-#endif
 
 /* MCU: APM32F402 */
 #elif defined(IS_APM32F402)
@@ -349,9 +321,6 @@ extern uint32_t __section_end;
 #define APP_START_ADDR 0x08000000UL
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#ifndef SRTOS
-#define SRTOS 0
-#endif
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
@@ -361,7 +330,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SRTOS_PENDSV_SET()                  \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
     do                                      \
     {                                       \
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
@@ -369,18 +338,18 @@ extern uint32_t __section_end;
         __ISB();                            \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
     do                                      \
     {                                       \
         FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
     } while (0)
 #else
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
 #endif
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -396,9 +365,6 @@ extern uint32_t __section_end;
 #include "gd32g5x3.h"
 #define SECTION_SYS_TICK systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#ifndef SRTOS
-#define SRTOS 0
-#endif
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
@@ -408,7 +374,7 @@ extern uint32_t __section_end;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SRTOS_PENDSV_SET()                  \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
     do                                      \
     {                                       \
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
@@ -416,18 +382,18 @@ extern uint32_t __section_end;
         __ISB();                            \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SRTOS_FPU_DISABLE_LAZY_STACKING()   \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
     do                                      \
     {                                       \
         FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
     } while (0)
 #else
-#define SRTOS_FPU_DISABLE_LAZY_STACKING() \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
     do                                    \
     {                                     \
     } while (0)
 #endif
-#define SRTOS_FAULT_HOOK(reason) \
+#define SECTION_PORT_FAULT_HOOK(reason) \
     do                           \
     {                            \
         (void)(reason);          \
@@ -460,19 +426,6 @@ extern uint32_t __section_end;
 
 #ifndef PLATFORM_CTRL_PWM_TIMER_FREQ_HZ
 #define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 0UL
-#endif
-
-/* -------------------------------------------------------------------------- */
-/* Runtime contract validation                                                */
-/* -------------------------------------------------------------------------- */
-
-#if (SRTOS != 0) && (SRTOS != 1)
-#error "SRTOS must be 0 or 1."
-#endif
-
-#if (SRTOS == 1) && \
-    (!defined(SRTOS_PENDSV_SET) || !defined(SRTOS_FPU_DISABLE_LAZY_STACKING) || !defined(SRTOS_FAULT_HOOK))
-#error "SRTOS=1 requires the selected platform to provide SRTOS exception interfaces."
 #endif
 
 /* -------------------------------------------------------------------------- */
