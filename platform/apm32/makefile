@@ -64,7 +64,7 @@ C_SOURCES = \
 ../../code/dbg/shell_service.c \
 ../../code/interface/ac/gpio.c \
 ../../code/interface/ac/comm_link.c \
-../../code/section/section.c \
+../../code/section/baremetal/section.c \
 ../../code/comm/comm.c
 
 ASM_SOURCES = \
@@ -101,6 +101,7 @@ C_INCLUDES = \
 -I../../code/interface/ac \
 -I../../code/interface \
 -I../../code/interface/common \
+-I../../code/section/baremetal \
 -I../../code/section \
 -I../../code/comm \
 -I./Libraries/CMSIS/Include \

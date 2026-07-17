@@ -17,7 +17,7 @@ C_SOURCES := \
 ./bsp/bsp_usart.c \
 ./src/main.c \
 ./src/platform_probe.c \
-./srtos/section_a9.c \
+$(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/dbg/shell.c \
 $(PROJECT_ROOT)/code/dbg/shell_service.c \
@@ -50,6 +50,7 @@ ASM_SOURCES :=
 C_INCLUDES := \
 -I./bsp \
 -I./src \
+-I$(PROJECT_ROOT)/code/section/baremetal \
 -I$(PROJECT_ROOT)/code/section \
 -I$(PROJECT_ROOT)/code/comm \
 -I$(PROJECT_ROOT)/code/dbg \

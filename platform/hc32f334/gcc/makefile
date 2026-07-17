@@ -42,7 +42,7 @@ PROJECT_SOURCES = \
 ../../../code/interface/ac/gpio.c \
 ../../../code/interface/ac/pwm.c \
 ../../../code/interface/ac/comm_link.c \
-../../../code/section/section.c \
+../../../code/section/srtos_m/section.c \
 ../../../code/comm/comm.c \
 ../../../code/lib/record_dict.c \
 ../../../code/lib/pi_tustin.c \
@@ -92,6 +92,7 @@ C_INCLUDES = \
 -I../Firmware/HC32_LL_Driver/inc \
 -I../../../code/app \
 -I../../../code/app/demo \
+-I../../../code/section/srtos_m \
 -I../../../code/section \
 -I../../../code/comm \
 -I../../../code/interface \

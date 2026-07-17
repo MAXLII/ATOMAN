@@ -12,7 +12,7 @@ set(SOURCES
     ${PLECS_PROJECT_DIR}/app/app.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_adc.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
-    ${CODE_DIR}/section/section.c
+    ${CODE_DIR}/section/baremetal/section.c
     ${CODE_DIR}/lib/pi_tustin_i32.c
     ${CODE_DIR}/ctrl/boost/boost_cfg.c
     ${CODE_DIR}/ctrl/boost/boost_ctrl.c
@@ -31,6 +31,7 @@ target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}/bsp
     ${PLECS_COMMON_DIR}
     ${CODE_DIR}/interface
+    ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
     ${CODE_DIR}/dbg
     ${CODE_DIR}/lib

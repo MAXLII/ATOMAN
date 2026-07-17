@@ -12,7 +12,7 @@ set(SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
     ${PLECS_PROJECT_DIR}/app/app.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
-    ${CODE_DIR}/section/section.c
+    ${CODE_DIR}/section/baremetal/section.c
     ${CODE_DIR}/lib/fll.c
     ${CODE_DIR}/lib/notch.c
     ${CODE_DIR}/lib/pi_tustin.c
@@ -38,6 +38,7 @@ target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}/app
     ${PLECS_PROJECT_DIR}/bsp
     ${PLECS_COMMON_DIR}
+    ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
     ${CODE_DIR}/dbg
     ${CODE_DIR}/lib

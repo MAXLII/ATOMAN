@@ -136,7 +136,7 @@ C_SOURCES =  \
 ../../code/dbg/shell_service.c \
 ../../code/interface/ac/gpio.c \
 ../../code/interface/ac/comm_link.c \
-../../code/section/section.c \
+../../code/section/srtos_m/section.c \
 ../../code/comm/comm.c \
 
 # ASM sources
@@ -208,6 +208,7 @@ C_INCLUDES =  \
 -I../../code/interface/ac \
 -I../../code/interface \
 -I../../code/interface/common \
+-I../../code/section/srtos_m \
 -I../../code/section \
 -I../../code/comm \
 -I./Firmware/CMSIS \

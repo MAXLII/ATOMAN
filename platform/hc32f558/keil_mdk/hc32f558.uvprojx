@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F558,IS_HC32F558,TOOLCHAIN_MDK,USE_DDL_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\bsp;..\inc;..\src;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\dbg;..\Firmware\CMSIS\HDSC\hc32f5xx\Include;..\Firmware\CMSIS\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\app\demo;..\..\..\code\lib</IncludePath>
+              <IncludePath>..\src;..\bsp;..\inc;..\src;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\dbg;..\Firmware\CMSIS\HDSC\hc32f5xx\Include;..\Firmware\CMSIS\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\app\demo;..\..\..\code\lib</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -428,7 +428,7 @@
             <File>
               <FileName>section.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\section\section.c</FilePath>
+              <FilePath>..\..\..\code\section\baremetal\section.c</FilePath>
             </File>
           </Files>
         </Group>
