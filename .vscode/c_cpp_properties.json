@@ -29,6 +29,7 @@
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm",
                 "${workspaceFolder}/platform/gd32g553c/inc",
@@ -79,6 +80,7 @@
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm"
             ],
@@ -127,6 +129,7 @@
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm"
             ],
@@ -174,6 +177,7 @@
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm"
             ],
@@ -219,6 +223,7 @@
                 "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
                 "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/comm"
             ],
@@ -255,6 +260,7 @@
                 "${workspaceFolder}/code/ctrl/pfc",
                 "${workspaceFolder}/code/ctrl/inv",
                 "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
@@ -277,6 +283,7 @@
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/pfc",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
@@ -300,6 +307,7 @@
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
@@ -328,6 +336,7 @@
                 "${workspaceFolder}/code/ctrl/pfc",
                 "${workspaceFolder}/code/ctrl/inv",
                 "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
@@ -350,6 +359,7 @@
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/llc",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
@@ -372,6 +382,7 @@
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/inv",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
                 "${MATLAB_ROOT}/extern/include",
                 "${MATLAB_ROOT}/simulink/include"
@@ -405,6 +416,7 @@
                 "${workspaceFolder}/platform/matlab/pll",
                 "${workspaceFolder}/platform/matlab/pll/app",
                 "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
                 "${MATLAB_R2022B_ROOT}/extern/include",
                 "${MATLAB_R2022B_ROOT}/simulink/include"
