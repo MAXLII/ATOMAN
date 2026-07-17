@@ -26,9 +26,7 @@ call :remove_file "platform\gd32g553c\debug_log.txt"
 call :remove_file "platform\gd32g553c\fw_info.exe"
 call :remove_file "platform\gd32g553c\tools\fw_info\fw_info"
 call :remove_file "platform\gd32g553c\tools\fw_info\fw_info.exe"
-call :remove_file "platform\plecs\plecs_log_file_path.c"
 call :remove_file "platform\plecs\plecs_log.txt"
-call :remove_file "platform\plecs\ac\plecs_log_file_path.c"
 call :remove_file "_final.py"
 
 for /r %%F in (*.o *.d *.crf *.axf *.hex *.lnp *.map *.dep *.build_log.htm *.log *.slxc *.mexw64 *plecs.autosave JLinkLog.txt EventRecorderStub.scvd) do (
