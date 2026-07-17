@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    section.h
- * @brief   Section framework public interface.
+ * @brief   Cortex-M section SRTOS public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
  *          - Define the shared descriptors stored in the linker-managed section table
  *          - Provide REG_INIT, REG_TASK, REG_INTERRUPT, REG_FSM, and link registration macros
- *          - Expose runtime dispatch APIs used by the main loop, interrupt path, and service modules
+ *          - Expose Cortex-M shared-stack scheduling and exception-switch APIs
  *          - Read unified Perf switches and bind optional instrumentation hook points
  *
  *          Design notes:
@@ -18,7 +18,7 @@
  *          - Hardware access should be abstracted through HAL / BSP
  *
  * @author  Max.Li
- * @date    2026-04-30
+ * @date    2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,6 +36,15 @@
 #include <stdint.h>
 
 #include "platform.h"
+
+#define SECTION_RUNTIME_PREEMPTIVE 1u
+
+typedef enum
+{
+    SECTION_RUNTIME_BAREMETAL = 0, /* 裸机协作式任务调度实现。 */
+    SECTION_RUNTIME_SRTOS_M,       /* Cortex-M 共享栈抢占式调度实现。 */
+    SECTION_RUNTIME_SRTOS_A9,      /* Cortex-A9 共享栈抢占式调度实现。 */
+} section_runtime_kind_t;
 
 typedef struct
 {
@@ -165,8 +174,8 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define SECTION_CRITICAL_RACE_PROBE_SPIN 64u
 #endif
 
-#ifndef SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL
-#define SECTION_SRTOS_QUEUE_INTERNAL_CRITICAL 0u
+#ifndef SECTION_TASK_QUEUE_INTERNAL_CRITICAL
+#define SECTION_TASK_QUEUE_INTERNAL_CRITICAL 0u
 #endif
 
 #define SECTION_TASK_CONTEXT_POOL_FAULT 0u
@@ -189,8 +198,7 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define SECTION_TASK_STACK_ATTR
 #endif
 
-#if (SRTOS == 1)
-#define SECTION_SRTOS_TASK_FIELDS     \
+#define SECTION_TASK_RUNTIME_FIELDS   \
     uint32_t *p_sp;                   \
     uint32_t *p_stack;                \
     uint32_t *p_snapshot;             \
@@ -198,16 +206,12 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
     uint32_t snapshot_capacity_words; \
     uint8_t state;
 
-#define SECTION_SRTOS_TASK_INIT       \
+#define SECTION_TASK_RUNTIME_INIT     \
     , .p_sp = NULL, .p_stack = NULL,  \
       .p_snapshot = NULL,             \
       .snapshot_words = 0u,           \
       .snapshot_capacity_words = 0u,  \
       .state = 0u
-#else
-#define SECTION_SRTOS_TASK_FIELDS
-#define SECTION_SRTOS_TASK_INIT
-#endif
 
 #ifndef PERF_START
 #define PERF_START(name)
@@ -268,6 +272,11 @@ typedef struct reg_init
 
 void section_init(void);
 void section_runtime_reset(void);
+section_runtime_kind_t section_runtime_kind_get(void);
+const char *section_runtime_name_get(void);
+uint32_t section_runtime_preemptive_get(void);
+void section_port_init(void);
+void section_task_irq_exit_request(void);
 
 #if (PERF_ENABLE)
 uint32_t section_perf_task_begin(section_perf_record_t *record);
@@ -298,7 +307,7 @@ typedef struct reg_task_t
     struct reg_task_t *p_ready_next;
     uint8_t is_ready;
     uint8_t is_running;
-    SECTION_SRTOS_TASK_FIELDS
+    SECTION_TASK_RUNTIME_FIELDS
 } reg_task_t;
 
 #if (PERF_TASK_ENABLE == 1u)
@@ -320,7 +329,7 @@ typedef struct reg_task_t
         .p_next = NULL,                       \
         .p_ready_next = NULL,                 \
         .is_ready = 0u,                       \
-        .is_running = 0u SECTION_SRTOS_TASK_INIT \
+        .is_running = 0u SECTION_TASK_RUNTIME_INIT \
     }
 
 #define REG_TASK_STEP_RECORD(period, func, ctx, perf_name) \
@@ -334,7 +343,7 @@ typedef struct reg_task_t
         .p_next = NULL,                                    \
         .p_ready_next = NULL,                              \
         .is_ready = 0u,                                    \
-        .is_running = 0u SECTION_SRTOS_TASK_INIT           \
+        .is_running = 0u SECTION_TASK_RUNTIME_INIT           \
     }
 
 #define REG_TASK(period, func)                                  \
@@ -363,7 +372,6 @@ typedef struct reg_task_t
 
 void run_task(void);
 void section_task_tick(void);
-#if (SRTOS == 1)
 void section_task_start(void);
 void section_task_yield(void);
 void section_task_complete_current(void);
@@ -373,7 +381,6 @@ uint32_t section_task_switch_pending(void);
 uint32_t section_task_slice_elapsed(void);
 uint32_t *section_task_start_sp_get(void);
 uint32_t *section_task_switch_sp(uint32_t *sp);
-#endif
 
 #define PRIORITY_NUM_MAX 16
 
