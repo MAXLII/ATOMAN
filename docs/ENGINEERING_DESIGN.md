@@ -37,6 +37,8 @@ platform/
 ├── hc32f334/       HC32F334 MCU 工程
 ├── hc32f558/       HC32F558 MCU 工程
 ├── zynq7020/       Zynq-7020 PS+PL 工程
+│   ├── ps/         ARM 软件、BSP、构建、下载和板测工程
+│   └── pl/         Vivado 硬件平台、IP、约束和 PL 自测工程
 ├── matlab/         MATLAB 工程
 └── plecs/          PLECS 工程
 ```
@@ -54,9 +56,9 @@ GCC 工程与 MDK 工程引用相同的 AC BSP、公共代码和 HC32 LL 驱动�
 
 两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
-Zynq-7020 平台位于 `platform/zynq7020/`。`verilog/iir/` 保存 3P3Z IIR core、AXI4-Lite 外设封装、SystemVerilog 数值验证和使用说明；`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、AXI GPIO、AXI UART Lite、自定义 AXI IIR IP 和管脚约束；`bsp/` 保存 PS UART1、全局定时器、SCU 私有定时器、GIC、IIR MMIO 驱动和复位适配；`srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`src/` 保存平台入口与自主测试。
+Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/iir/` 保存 3P3Z IIR core、AXI4-Lite 外设封装、SystemVerilog 数值验证和使用说明；`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、AXI GPIO、AXI UART Lite、自定义 AXI IIR IP、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、全局定时器、SCU 私有定时器、GIC、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口与自主测试。
 
-Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录。下载入口在编程完整 PS+PL 硬件后启动 ARM Cortex-A9 CPU0。板载 CH340 使用 PS UART1 MIO48/MIO49，Bank501 和对应 MIO I/O 类型为 1.8V。
+Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`ps/compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录，`ps/download.ps1` 使用 `pl/build/output/` 中的硬件产物完成配置和固件下载。板载 CH340 使用 PS UART1 MIO48/MIO49，Bank501 和对应 MIO I/O 类型为 1.8V。
 
 ## 3. 模块注册与链接框架（`code/section/`）
 
