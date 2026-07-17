@@ -2,7 +2,7 @@
 
 ## 1. 平台组成
 
-`platform/zynq7020/` 是 ZYNQ MINI RevB 开发板的 Cortex-A9 + PL 平台工程。目标器件为 `xc7z020clg400-2`，工具链为 Xilinx Vivado/SDK 2018.3。
+`platform/zynq7020/` 是 ZYNQ MINI RevB 开发板的 Cortex-A9 + PL 平台工程，顶层只包含 `ps/` 软件工程和 `pl/` 硬件工程。目标器件为 `xc7z020clg400-2`，工具链为 Xilinx Vivado/SDK 2018.3。
 
 平台包含：
 
@@ -95,15 +95,17 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 | `verilog/iir/src/` | 可综合 Verilog：IIR core 和 AXI4-Lite 封装 |
 | `verilog/iir/sim/` | SystemVerilog testbench、仿真/综合脚本和 CSV 数值结果 |
 | `verilog/iir/doc/` | PL IP 独立使用说明 |
-| `platform/zynq7020/bsp/` | UART、定时器、GIC 与 IIR MMIO 平台适配 |
+| `platform/zynq7020/ps/` | ARM 启动、BSP、应用入口、SRTOS 端口、编译、下载和板测 |
+| `platform/zynq7020/pl/` | Vivado 工程、PS7 硬件平台、自定义 IP、约束、bitstream/HDF 输出和 PL 自测 |
+| `platform/zynq7020/ps/bsp/` | UART、定时器、GIC 与 IIR MMIO 平台适配 |
 | `code/section/baremetal/section.c/.h` | 裸机 section 独立实现与统一注册接口 |
 | `code/section/srtos_a9/section.c/.h` | Cortex-A9 SRTOS 独立实现与统一注册接口 |
-| `platform/zynq7020/srtos/a9_section_port.S` | A9 SVC/IRQ 上下文切换端口 |
-| `platform/zynq7020/src/main.c` | 所选 section 运行时的统一平台入口 |
-| `platform/zynq7020/src/platform_probe.c` | 平台自主测试与 Shell 状态命令 |
+| `platform/zynq7020/ps/srtos/a9_section_port.S` | A9 SVC/IRQ 上下文切换端口 |
+| `platform/zynq7020/ps/src/main.c` | 所选 section 运行时的统一平台入口 |
+| `platform/zynq7020/ps/src/platform_probe.c` | 平台自主测试与 Shell 状态命令 |
 | `platform/zynq7020/pl/package_axi_iir_ip.tcl` | 自定义 IIR IP 与 IP-XACT 寄存器描述 |
 | `platform/zynq7020/pl/build_pl.tcl` | PS+PL block design、实现和输出报告 |
-| `platform/zynq7020/pl_selftest.tcl` | JTAG 直接访问 PL 外设的硬件测试 |
+| `platform/zynq7020/pl/pl_selftest.tcl` | JTAG 直接访问 PL 外设的硬件测试 |
 
 ## 6. PL 独立验证
 
@@ -123,8 +125,8 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 ```powershell
 cd D:\OneDrive\LWX\GD32\base\platform\zynq7020
 .\pl\build_pl.ps1
-.\compile.ps1 -Srtos 0
-.\compile.ps1 -Srtos 1
+.\ps\compile.ps1 -Srtos 0
+.\ps\compile.ps1 -Srtos 1
 ```
 
 Vivado 输出位于 `pl/build/output/`：
@@ -136,17 +138,17 @@ Vivado 输出位于 `pl/build/output/`：
 - `timing_summary.rpt`
 - `utilization.rpt`
 
-无 RTOS ARM 输出位于 `build/`，编译 `code/section/baremetal/section.c`；SRTOS ARM 输出位于 `build_srtos/`，编译 `code/section/srtos_a9/section.c` 并链接 A9 端口。两个 Makefile 都只定义平台与工具链宏，不定义运行时选择宏。`compile.ps1` 的 `-Srtos 0/1` 仅用于选择对应 Makefile 和输出目录。构建启用 `-Werror`、`-Wconversion`、`-Wsign-conversion`、`-Wshadow`、`-Wcast-align`、`-Wstrict-prototypes`、`-Wmissing-prototypes` 和 `-Wundef`。
+无 RTOS ARM 输出位于 `ps/build/`，编译 `code/section/baremetal/section.c`；SRTOS ARM 输出位于 `ps/build_srtos/`，编译 `code/section/srtos_a9/section.c` 并链接 A9 端口。两个 Makefile 都只定义平台与工具链宏，不定义运行时选择宏。`ps/compile.ps1` 的 `-Srtos 0/1` 仅用于选择对应 Makefile 和输出目录。构建启用 `-Werror`、`-Wconversion`、`-Wsign-conversion`、`-Wshadow`、`-Wcast-align`、`-Wstrict-prototypes`、`-Wmissing-prototypes` 和 `-Wundef`。
 
 ## 8. 下载与板上测试
 
 ```powershell
 # 一键完成下载、JTAG 和 COM5 检查
-.\board_iir_selftest.ps1
+.\ps\board_iir_selftest.ps1
 
 # 或分步执行
-.\download.ps1
-.\pl_selftest.ps1
+.\ps\download.ps1
+.\pl\pl_selftest.ps1
 ```
 
 下载脚本依次复位系统、加载 HDF、初始化 PS、配置 PL bitstream、下载无 RTOS ELF 并启动 CPU0。`board_iir_selftest.ps1` 串联下载、JTAG PL 自测和 COM5 的 `IIR_TEST`/`ZYNQ_STATUS` 检查，最终通过标志为 `BOARD_IIR_SELFTEST result=PASS`。

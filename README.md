@@ -21,6 +21,8 @@ base
 │  ├─ hc32f334/   HC32F334 平台工程
 │  ├─ hc32f558/   HC32F558 demo 平台工程
 │  ├─ zynq7020/   Zynq-7020 Cortex-A9 + PL 平台工程
+│  │  ├─ ps/      ARM 软件、BSP、构建、下载和板测工程
+│  │  └─ pl/      Vivado 硬件平台、IP、约束和 PL 自测工程
 │  ├─ matlab/     MATLAB 仿真与分析工程
 │  └─ plecs/      PLECS 控制算法仿真工程
 └─ docs/          工程设计、平台接入和专项设计文档

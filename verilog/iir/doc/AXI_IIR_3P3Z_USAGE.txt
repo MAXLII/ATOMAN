@@ -106,7 +106,7 @@ run_synth.ps1 使用 Vivado 2018.3 对 XC7Z020 做 50MHz OOC 综合，任何 IIR
 
 1) src/axi_iir_3p3z.v 的 AXI 读译码；可写寄存器还要加入写译码和 WSTRB。
 2) platform/zynq7020/pl/package_axi_iir_ip.tcl 的 IP-XACT 寄存器描述。
-3) platform/zynq7020/bsp/bsp_iir.h 的偏移宏和需要的驱动接口。
+3) platform/zynq7020/ps/bsp/bsp_iir.h 的偏移宏和需要的驱动接口。
 4) sim/tb_axi_iir_3p3z.sv 的读写、复位值和访问属性测试。
 
 地址必须 4 字节对齐。当前 AXI 地址宽度为 8 位，寄存器窗口为 256 字节；

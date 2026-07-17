@@ -155,6 +155,6 @@ task_count=26->83 fault=0 save_fail=0 release_fail=0 iir=PASS
 
 ```powershell
 cd D:\OneDrive\LWX\GD32\base\platform\zynq7020
-.\board_iir_selftest.ps1
-.\board_srtos_selftest.ps1
+.\ps\board_iir_selftest.ps1
+.\ps\board_srtos_selftest.ps1
 ```

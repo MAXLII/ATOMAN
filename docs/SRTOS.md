@@ -194,7 +194,7 @@ Ready 新任务队列优先级高于未完成队列。
 | 处理器 | 源文件与头文件目录 | 端口 |
 | --- | --- | --- |
 | Cortex-M | `code/section/srtos_m/` | PendSV、PSP 和平台中断入口 |
-| Cortex-A9 | `code/section/srtos_a9/` | `platform/zynq7020/srtos/a9_section_port.S` 与 `a9_section_control.c` |
+| Cortex-A9 | `code/section/srtos_a9/` | `platform/zynq7020/ps/srtos/a9_section_port.S` 与 `a9_section_control.c` |
 
 工程只编译所选目录中的 `section.c`，并让该目录中的 `section.h` 优先于 `code/section/`。注册接口和业务代码中的 `#include "section.h"` 不变。
 
