@@ -7,8 +7,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$platformRoot = Split-Path -Parent $projectRoot
 $downloadScript = Join-Path $projectRoot "download.ps1"
-$plSelfTestScript = Join-Path $projectRoot "pl_selftest.ps1"
+$plSelfTestScript = Join-Path $platformRoot "pl\pl_selftest.ps1"
 $frame = Join-Path $FrameRoot "frame.ps1"
 $iirCommand = [string]::Concat("IIR_TEST", [char]13, [char]10)
 $statusCommand = [string]::Concat("ZYNQ_STATUS", [char]13, [char]10)
