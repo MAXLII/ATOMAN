@@ -31,35 +31,69 @@
 
 #include <stdint.h>
 
-volatile uint32_t g_a9_section_switch_requested = 0U; /* IRQ 返回前的任务切换请求。 */
+volatile uint32_t g_a9_section_switch_requested = 0U; /* Task-switch request consumed by the IRQ return path. */
 volatile a9_section_port_debug_t g_a9_section_port_debug = {
     .yield_request_count = 0U,
     .irq_switch_request_count = 0U,
+    .idle_wait_count = 0U,
     .fault_reason = A9_SECTION_PORT_FAULT_NONE,
-}; /* Cortex-A9 section SRTOS 端口调试状态。 */
+}; /* Cortex-A9 section SRTOS architecture-port diagnostics. */
 
 void a9_section_port_yield(void)
 {
     g_a9_section_port_debug.yield_request_count++;
-    __asm volatile("svc 0" ::: "memory", "cc"); /* 进入 A9 公共栈切换入口。 */
+    __asm volatile("svc 0" ::: "memory", "cc"); /* Enter the shared-stack switch path. */
 }
 
 void a9_section_port_switch_request(void)
 {
     g_a9_section_port_debug.irq_switch_request_count++;
     g_a9_section_switch_requested = 1U;
-    __asm volatile("dsb" ::: "memory"); /* 使汇编 IRQ 返回路径立即看到请求。 */
+    __asm volatile("dsb" ::: "memory"); /* Publish the request before the assembly IRQ return path reads it. */
+}
+
+uint32_t a9_section_port_irq_save(void)
+{
+    uint32_t saved_cpsr = 0U; /* IRQ mask state that must be restored on critical-section exit. */
+
+    __asm volatile("mrs %0, cpsr\n\t"
+                   "cpsid i\n\t"
+                   "dsb\n\t"
+                   "isb"
+                   : "=r"(saved_cpsr)
+                   :
+                   : "memory", "cc");
+
+    return saved_cpsr;
+}
+
+void a9_section_port_irq_restore(uint32_t saved_cpsr)
+{
+    __asm volatile("dsb" ::: "memory");
+    if ((saved_cpsr & 0x00000080U) == 0U) /* IRQ delivery was enabled before entering the critical section. */
+    {
+        __asm volatile("cpsie i" ::: "memory", "cc");
+    }
+    __asm volatile("isb" ::: "memory");
+}
+
+void a9_section_port_wait_for_interrupt(void)
+{
+    g_a9_section_port_debug.idle_wait_count++;
+    __asm volatile("dsb\n\t"
+                   "wfi"
+                   ::: "memory"); /* Avoid repeated SVC polling while waiting for the next scheduler tick. */
 }
 
 void a9_section_port_fault(uint32_t reason)
 {
     g_a9_section_port_debug.fault_reason = reason;
-    __asm volatile("cpsid if" ::: "memory", "cc"); /* 保留故障现场并阻止嵌套异常。 */
+    __asm volatile("cpsid if" ::: "memory", "cc"); /* Preserve the fault context and prevent nested exceptions. */
     __asm volatile("dsb" ::: "memory");
     __asm volatile("isb" ::: "memory");
 
     for (;;)
     {
-        __asm volatile("wfi" ::: "memory"); /* 等待 JTAG 读取故障状态。 */
+        __asm volatile("wfi" ::: "memory"); /* Keep the processor observable for JTAG fault inspection. */
     }
 }

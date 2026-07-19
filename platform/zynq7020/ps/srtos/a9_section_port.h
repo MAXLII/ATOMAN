@@ -34,41 +34,59 @@
 
 typedef enum
 {
-    A9_SECTION_PORT_FAULT_NONE = 0U,             /* 当前未记录端口故障。 */
-    A9_SECTION_PORT_FAULT_CONTEXT = 0xA901U,     /* 调度器返回了无效任务上下文。 */
-    A9_SECTION_PORT_FAULT_UNDEFINED = 0xA902U,   /* Cortex-A9 未定义指令异常。 */
-    A9_SECTION_PORT_FAULT_PREFETCH = 0xA903U,    /* Cortex-A9 预取中止异常。 */
-    A9_SECTION_PORT_FAULT_DATA_ABORT = 0xA904U,  /* Cortex-A9 数据中止异常。 */
+    A9_SECTION_PORT_FAULT_NONE = 0U,            /* No architecture-port fault has been recorded. */
+    A9_SECTION_PORT_FAULT_CONTEXT = 0xA901U,    /* The scheduler returned an invalid task context. */
+    A9_SECTION_PORT_FAULT_UNDEFINED = 0xA902U,  /* The processor entered the undefined-instruction vector. */
+    A9_SECTION_PORT_FAULT_PREFETCH = 0xA903U,   /* The processor entered the prefetch-abort vector. */
+    A9_SECTION_PORT_FAULT_DATA_ABORT = 0xA904U, /* The processor entered the data-abort vector. */
 } a9_section_port_fault_t;
 
 typedef struct
 {
-    uint32_t yield_request_count;      /* 任务主动触发 SVC 的累计次数。 */
-    uint32_t irq_switch_request_count; /* 定时 IRQ 请求上下文切换的累计次数。 */
-    uint32_t fault_reason;             /* 最后一次不可恢复端口故障原因。 */
+    uint32_t yield_request_count;      /* Number of task-side SVC yield requests. */
+    uint32_t irq_switch_request_count; /* Number of context switches requested from IRQ exit. */
+    uint32_t idle_wait_count;          /* Number of low-power waits entered by the scheduler idle path. */
+    uint32_t fault_reason;             /* Most recent unrecoverable architecture-port fault. */
 } a9_section_port_debug_t;
 
 extern volatile uint32_t g_a9_section_switch_requested;
 extern volatile a9_section_port_debug_t g_a9_section_port_debug;
 
 /**
- * @brief 将 Cortex-A9 VBAR 指向 A9 section SRTOS 异常向量表。
+ * @brief Point Cortex-A9 VBAR at the section SRTOS exception vector table.
  */
 void a9_section_port_install_vector_table(void);
 
 /**
- * @brief 通过 SVC 立即让出当前公共任务栈。
+ * @brief Yield the current shared task stack through an SVC exception.
  */
 void a9_section_port_yield(void);
 
 /**
- * @brief 请求在当前 IRQ 返回前执行一次公共栈上下文切换。
+ * @brief Request one shared-stack context switch before the current IRQ returns.
  */
 void a9_section_port_switch_request(void);
 
 /**
- * @brief 记录不可恢复故障并关闭 Cortex-A9 IRQ/FIQ。
- * @param[in] reason section 或异常端口故障原因。
+ * @brief Save the current IRQ mask state and disable IRQ delivery.
+ * @return CPSR value captured before IRQ masking.
+ */
+uint32_t a9_section_port_irq_save(void);
+
+/**
+ * @brief Restore IRQ delivery to the state captured by a9_section_port_irq_save().
+ * @param[in] saved_cpsr CPSR value captured before entering the critical section.
+ */
+void a9_section_port_irq_restore(uint32_t saved_cpsr);
+
+/**
+ * @brief Wait for the next interrupt while no section task is runnable.
+ */
+void a9_section_port_wait_for_interrupt(void);
+
+/**
+ * @brief Record an unrecoverable fault and disable Cortex-A9 IRQ/FIQ delivery.
+ * @param[in] reason Section scheduler or architecture-port fault reason.
  */
 void a9_section_port_fault(uint32_t reason) __attribute__((noreturn));
 
