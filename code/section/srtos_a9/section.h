@@ -41,37 +41,37 @@
 
 typedef enum
 {
-    SECTION_RUNTIME_BAREMETAL = 0, /* 裸机协作式任务调度实现。 */
-    SECTION_RUNTIME_SRTOS_M,       /* Cortex-M 共享栈抢占式调度实现。 */
-    SECTION_RUNTIME_SRTOS_A9,      /* Cortex-A9 共享栈抢占式调度实现。 */
+    SECTION_RUNTIME_BAREMETAL = 0, /* Cooperative bare-metal task scheduler. */
+    SECTION_RUNTIME_SRTOS_M,       /* Cortex-M preemptive shared-stack scheduler. */
+    SECTION_RUNTIME_SRTOS_A9,      /* Cortex-A9 preemptive shared-stack scheduler. */
 } section_runtime_kind_t;
 
 typedef struct
 {
-    void (*my_printf)(const char *__format, ...); /* 链路格式化输出回调。 */
-    void (*tx_by_dma)(char *ptr, int len);        /* 链路 DMA 发送回调。 */
+    void (*my_printf)(const char *__format, ...); /* Formatted-output callback owned by the link. */
+    void (*tx_by_dma)(char *ptr, int len);        /* DMA transmit callback owned by the link. */
 } section_link_tx_func_t;
 
 #define DEC_MY_PRINTF section_link_tx_func_t *my_printf
 
 typedef enum
 {
-    SECTION_INIT = 0,   /* 初始化函数注册项。 */
-    SECTION_TASK,       /* 周期任务注册项。 */
-    SECTION_INTERRUPT,  /* 中断调度注册项。 */
-    SECTION_SHELL,      /* Shell 命令与变量注册项。 */
-    SECTION_LINK,       /* 通信链路注册项。 */
-    SECTION_PERF,       /* 性能计数器与记录注册项。 */
-    SECTION_COMM,       /* 通信命令注册项。 */
-    SECTION_COMM_ROUTE, /* 通信路由注册项。 */
-    SECTION_SCOPE,      /* Scope 实例注册项。 */
-    SECTION_SFRA,       /* SFRA 实例注册项。 */
+    SECTION_INIT = 0,   /* Initialization-function registration entry. */
+    SECTION_TASK,       /* Periodic-task registration entry. */
+    SECTION_INTERRUPT,  /* Interrupt-dispatch registration entry. */
+    SECTION_SHELL,      /* Shell command or variable registration entry. */
+    SECTION_LINK,       /* Communication-link registration entry. */
+    SECTION_PERF,       /* Performance-counter registration entry. */
+    SECTION_COMM,       /* Communication-command registration entry. */
+    SECTION_COMM_ROUTE, /* Communication-route registration entry. */
+    SECTION_SCOPE,      /* Scope-instance registration entry. */
+    SECTION_SFRA,       /* SFRA-instance registration entry. */
 } SECTION_E;
 
 typedef struct
 {
-    uint32_t section_type; /* 注册项类型，对应 SECTION_E。 */
-    void *p_str;           /* 注册对象地址。 */
+    uint32_t section_type; /* Registration type represented by SECTION_E. */
+    void *p_str;           /* Address of the registered object. */
 } reg_section_t;
 
 #define REG_SECTION_INIT(_section_type, _p_str) \
@@ -135,6 +135,26 @@ extern volatile section_fault_debug_t g_section_fault_debug;
 
 typedef struct
 {
+    uint32_t task_switch_count;                 /* Number of completed task selections. */
+    uint32_t ready_task_pick_count;             /* Number of newly released tasks selected for execution. */
+    uint32_t unfinished_task_pick_count;        /* Number of suspended or step-continuation tasks selected. */
+    uint32_t context_save_count;                /* Number of shared runtime-stack snapshots created. */
+    uint32_t context_restore_count;             /* Number of suspended snapshots restored. */
+    uint32_t context_alloc_count;               /* Number of successful context-pool allocations. */
+    uint32_t context_release_count;             /* Number of successful FIFO context-pool releases. */
+    uint32_t context_pool_wrap_count;           /* Number of context-pool tail wraps. */
+    uint32_t context_pool_high_water_words;     /* Maximum context-pool occupancy, including wrap gaps. */
+    uint32_t runtime_stack_min_free_words;      /* Minimum observed free shared-stack words. */
+    uint32_t runtime_stack_peak_used_words;     /* Maximum observed shared-stack context size. */
+    uint32_t runtime_stack_peak_task_name;      /* Task-name address associated with the deepest context. */
+    uint32_t idle_wait_count;                   /* Number of waits entered while no task was runnable. */
+    uint32_t invariant_fail_count;              /* Number of internal scheduler invariant violations. */
+} section_scheduler_debug_t;
+
+extern volatile section_scheduler_debug_t g_section_scheduler_debug;
+
+typedef struct
+{
     uint32_t probe_enter_count;
     uint32_t probe_reentry_count;
     uint32_t probe_invariant_fail_count;
@@ -151,7 +171,7 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #endif
 
 #ifndef SECTION_TASK_CONTEXT_POOL_WORDS
-#define SECTION_TASK_CONTEXT_POOL_WORDS 1024u
+#define SECTION_TASK_CONTEXT_POOL_WORDS 2048u
 #endif
 
 #ifndef SECTION_TASK_SLICE_TICKS
@@ -187,6 +207,7 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW 3u
 #define SECTION_TASK_FAULT_CONTEXT_RELEASE_ORDER 4u
 #define SECTION_TASK_FAULT_RUNTIME_STACK_TOO_SMALL 5u
+#define SECTION_TASK_FAULT_CONTEXT_POOL_CORRUPT 6u
 
 #ifndef SECTION_TASK_CONTEXT_POOL_FULL_POLICY
 #define SECTION_TASK_CONTEXT_POOL_FULL_POLICY SECTION_TASK_CONTEXT_POOL_FAULT
