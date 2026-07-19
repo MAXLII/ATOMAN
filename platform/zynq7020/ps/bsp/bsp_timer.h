@@ -8,6 +8,7 @@
  *          Module responsibilities:
  *          - Initialize the Cortex-A9 global-timer time base
  *          - Expose a monotonic 100 us tick for section scheduling
+ *          - Expose the raw global-timer register to Perf through BSP registration
  *          - Keep Xilinx timer types out of shared framework headers
  *
  *          Design notes:

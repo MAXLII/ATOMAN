@@ -88,11 +88,15 @@ struct section_perf_record
     uint32_t time;
     uint32_t max_time;
     uint32_t run_time;
+    uint32_t start_to_start_time; /* Raw counts between consecutive task-entry timestamps. */
+    uint32_t end_to_start_time;   /* Raw counts from the previous task exit to the next entry. */
     uint32_t period_us;
     float load;
     float load_max;
     uint16_t record_id;
     uint8_t record_type;
+    uint8_t start_valid; /* Indicates that start contains a previous task-entry timestamp. */
+    uint8_t end_valid;   /* Indicates that end contains a previous task-exit timestamp. */
     volatile uint32_t **p_cnt;
     void *p_next;
 };
@@ -113,10 +117,17 @@ extern uint32_t perf_dict_version;
 #define PERF_CNT_PER_SECTION_SYS_TICK PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK
 #endif
 
+#define PERF_REPORT_UNIT_NS 100u /* Time quantum used by the Perf text report. */
+
 uint32_t perf_base_cnt_get(void);
 uint8_t perf_base_is_ready(void);
 float perf_count_period_s_get(void);
 float perf_count_unit_us_get(void);
+/**
+ * @brief Get the raw Perf counter period rounded to nanoseconds.
+ * @return Raw hardware counter period in nanoseconds.
+ */
+uint32_t perf_count_unit_ns_get(void);
 uint32_t perf_cnt_per_sys_tick_get(void);
 float perf_task_metric_get(void);
 float perf_task_metric_max_get(void);
@@ -126,6 +137,12 @@ uint32_t perf_dict_version_get(void);
 uint16_t perf_record_count_get(void);
 uint16_t perf_record_count_by_type(uint8_t record_type);
 uint32_t perf_count_to_us(uint32_t count);
+/**
+ * @brief Convert a raw Perf counter difference to 100 ns report units.
+ * @param[in] count Raw hardware counter difference.
+ * @return Converted duration in 100 ns units, saturated to UINT32_MAX.
+ */
+uint32_t perf_count_to_100ns(uint32_t count);
 uint32_t perf_task_period_us_get(section_perf_record_t *record);
 void perf_reset_peak_value(void);
 uint32_t section_perf_task_begin(section_perf_record_t *record);
@@ -167,11 +184,15 @@ void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t
         .time = 0,                                       \
         .max_time = 0,                                   \
         .run_time = 0,                                   \
+        .start_to_start_time = 0,                        \
+        .end_to_start_time = 0,                          \
         .period_us = 0,                                  \
         .load = 0.0f,                                    \
         .load_max = 0.0f,                                \
         .record_id = 0,                                  \
         .record_type = (_record_type),                   \
+        .start_valid = 0,                                \
+        .end_valid = 0,                                  \
         .p_cnt = NULL,                                   \
         .p_next = NULL,                                  \
     };                                                   \

@@ -8,6 +8,7 @@
  *          Module responsibilities:
  *          - Read the Cortex-A9 global timer through the Xilinx standalone BSP
  *          - Convert global-timer counts into a monotonic 100 us section tick
+ *          - Register the raw global-timer counter as the Perf measurement source
  *          - Preserve unsigned wraparound behavior expected by section scheduling
  *
  *          Design notes:
@@ -40,7 +41,7 @@
 
 #include <stdint.h>
 
-#define BSP_TIMER_TICKS_PER_SECOND 10000ULL /* Section 每秒包含的 100 us tick 数量。 */
+#define BSP_TIMER_SECTION_TICKS_PER_SECOND 10000ULL /* Number of 100 us section ticks per second. */
 
 volatile uint32_t sys_tick_100us = 0U; /* Trace 与调试模块共享的 100 us 系统时间。 */
 
@@ -73,7 +74,7 @@ uint32_t bsp_timer_gettime_100us(void)
 
     XTime_GetTime(&current_count); /* 原子读取 64 位全局计时器。 */
     elapsed_count = current_count - s_start_count;
-    ticks_100us = (elapsed_count * BSP_TIMER_TICKS_PER_SECOND) / (XTime)COUNTS_PER_SECOND;
+    ticks_100us = (elapsed_count * BSP_TIMER_SECTION_TICKS_PER_SECOND) / (XTime)COUNTS_PER_SECOND;
     sys_tick_100us = (uint32_t)ticks_100us;
 
     return (uint32_t)ticks_100us;
