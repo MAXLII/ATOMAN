@@ -31,6 +31,8 @@ REG_PERF_BASE_CNT(&TIMER6->CNT, 0.1e-6f)
 
 `period_s` 必须按实际定时器时钟和分频计算，不按期望值填写。
 
+Zynq-7020 平台把 Cortex-A9 全局定时器低 32 位寄存器直接注册给 Perf，内部保留约 3 ns 原始计数。任务、中断和代码段完成测量后，Shell 输出再把原始差值换算为 100 ns。
+
 ## 3. 手动测量代码段
 
 在 `.c` 文件中注册 record：
@@ -64,6 +66,14 @@ REG_INTERRUPT_PERF_RECORD(my_interrupt)
 ```
 
 调度层会在任务或中断执行前后调用 Perf begin/end 接口。
+
+任务 record 同时保存三类时间：
+
+- `Run(100ns)`：本次任务开始到结束的执行时间。
+- `EndToStart(100ns)`：上次任务结束到本次任务开始的间隔。
+- `StartToStart(100ns)`：相邻两次任务开始时刻的实测周期。
+
+例如 100 ms 周期对应 `StartToStart(100ns) = 1000000`。
 
 ## 5. Shell 查看
 
@@ -99,6 +109,13 @@ Perf Viewer 通过二进制协议访问：
 4. 需要时发送峰值清零。
 
 二进制访问不依赖字符串 Shell 是否开启。
+
+FRAME 可以先读取 Perf 基本信息，再通过串口 Shell 输出包含实际周期的任务表：
+
+```powershell
+.\frame.ps1 perf info --port COM5 --baud 115200
+.\frame.ps1 serial raw --port COM5 --baud 115200 --send-text "perf_print_task`r`n" --read-seconds 1
+```
 
 ## 7. 使用注意事项
 

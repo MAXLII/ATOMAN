@@ -11,7 +11,7 @@ Perf 模块用于记录任务、代码段和中断阶段的运行时间，并把
 | Perf 内核 | `code/dbg/perf.c`、`code/dbg/perf.h` | 时间基准注册、record 注册、耗时累计、负载统计 |
 | Perf 服务 | `code/dbg/perf_service.c`、`code/dbg/perf_service.h` | Shell 打印、字典上报、采样上报、峰值清零 |
 
-Perf 不直接初始化硬件定时器。平台 BSP 负责配置一个自由运行计数器，并通过 `REG_PERF_BASE_CNT()` 注册计数寄存器地址和真实 tick 周期。
+Perf 不直接初始化硬件定时器。平台 BSP 负责配置一个自由运行计数器，并通过 `REG_PERF_BASE_CNT()` 注册计数寄存器地址和真实 tick 周期。任务、中断和代码段的测量热路径只读取原始计数，单位换算在结果输出阶段执行。
 
 ## 2. 时间基准
 
@@ -30,6 +30,8 @@ REG_PERF_BASE_CNT(timer_cnt, period_s)
 
 `period_s` 由平台实际时钟树和定时器分频计算得到。例如 0.1 us 写作 `0.1e-6f`。
 
+Zynq-7020 直接记录约 333 MHz Cortex-A9 全局定时器的原始计数，内部计数分辨率约为 3 ns。Shell 输出阶段再把原始差值换算成 100 ns，避免在 Perf begin/end 热路径执行 64 位除法。每个 100 us section tick 对应约 33333 个原始 Perf 计数。
+
 如果没有注册硬件计数器，Perf record 仍会被扫描进链表，但 `PERF_START/PERF_END` 和任务/中断自动测量无法得到有效硬件时间。
 
 ## 3. Record 模型
@@ -43,7 +45,9 @@ Perf 使用 `section_perf_record_t` 表示一个测量对象。
 | `time` | 最近一次运行耗时，单位为硬件 tick |
 | `max_time` | 峰值耗时，单位为硬件 tick |
 | `run_time` | 当前统计窗口累计耗时 |
-| `period_us` | 任务周期，任务 record 使用 |
+| `start_to_start_time` | 相邻两次任务开始时刻的实测间隔 |
+| `end_to_start_time` | 上次任务结束到本次任务开始的实测间隔 |
+| `period_us` | 任务配置周期，任务 record 使用 |
 | `load` / `load_max` | 当前负载和峰值负载 |
 | `record_id` | 字典 ID |
 | `record_type` | `CODE` / `TASK` / `INTERRUPT` |
@@ -87,7 +91,7 @@ PERF_END(my_code);
 
 `PERF_START()` 读取当前硬件计数到 `start`。`PERF_END()` 再次读取计数，使用无符号减法得到 delta，写入 `time`，更新 `max_time`，并累计到 `run_time`。
 
-任务和中断测量由 `section` 调度层调用 `section_perf_task_begin/end()` 和 `section_perf_interrupt_begin/end()`。中断结束时，如果当前存在正在运行的任务 record，会把中断耗时从任务累计时间中扣除，避免任务负载包含中断时间。
+任务和中断测量由 `section` 调度层调用 `section_perf_task_begin/end()` 和 `section_perf_interrupt_begin/end()`。任务开始时同时更新相邻 Start→Start 周期和上次 End→本次 Start 间隔，任务结束时更新本次 Start→End 执行时间。中断结束时，如果当前存在正在运行的任务 record，会把中断耗时从任务累计时间中扣除，避免任务负载包含中断时间。
 
 ## 6. 负载统计
 
@@ -102,7 +106,7 @@ PERF_END(my_code);
 5. 汇总中断 record 得到中断总负载。
 6. 清零每个 record 的 `run_time`，进入下一个统计窗口。
 
-`perf_count_to_us()` 使用注册的硬件 tick 周期把计数换算为 us。
+`perf_count_to_us()` 使用注册的硬件 tick 周期把计数换算为 us，`perf_count_to_100ns()` 把计数换算为 100 ns 单位。
 
 ## 7. Shell 服务
 
@@ -118,6 +122,8 @@ Perf 服务注册了以下 Shell 命令：
 | `perf_summary` | 打印汇总信息 |
 | `perf_info` | 打印计时单位、系统 tick 换算、record 数量 |
 | `perf_reset_peak` | 清除峰值 |
+
+任务打印使用 100 ns 为报告单位。`Run` 表示本次 Start→End 执行时间，`EndToStart` 表示上次结束到本次开始的间隔，`StartToStart` 表示任务实测周期，`ConfigPeriod` 表示任务注册时配置的周期。`raw_unit_ns` 表示内部硬件计数分辨率，`report_unit_ns` 表示表格输出刻度。
 
 同时注册了以下 Shell 变量：
 
