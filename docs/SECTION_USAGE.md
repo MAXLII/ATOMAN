@@ -136,7 +136,7 @@ typedef enum
     DEMO_FAULT,
 } demo_state_t;
 
-static uint32_t s_demo_event;
+static uint32_t demo_event;
 ```
 
 状态处理函数：
@@ -160,7 +160,7 @@ static void demo_idle_out(void) {}
 ```c
 REG_FSM(demo,
         DEMO_IDLE,
-        s_demo_event,
+        demo_event,
         FSM_ENTRY(DEMO_IDLE, demo_idle_in, demo_idle_exe, demo_idle_chk, demo_idle_out),
         FSM_ENTRY(DEMO_RUN, NULL, demo_run_exe, demo_run_chk, NULL),
         FSM_ENTRY(DEMO_FAULT, NULL, demo_fault_exe, NULL, NULL))
@@ -169,7 +169,7 @@ REG_FSM(demo,
 触发事件：
 
 ```c
-s_demo_event = 1u;
+demo_event = 1u;
 ```
 
 读取当前状态：
@@ -202,7 +202,7 @@ handler 数组：
 
 ```c
 static const section_link_handler_item_t demo_handlers[] = {
-    {.func = shell_run, .ctx = (void *)&s_shell_ctx},
+    {.func = shell_run, .ctx = (void *)&shell_ctx},
     {.func = comm_run, .ctx = NULL},
 };
 ```
