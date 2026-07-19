@@ -47,7 +47,7 @@ volatile section_fault_debug_t g_section_fault_debug;
 volatile section_critical_race_debug_t g_section_critical_race_debug;
 
 #if (SECTION_CRITICAL_RACE_PROBE_ENABLE == 1u)
-static volatile uint32_t s_section_race_probe_depth = 0u;
+static volatile uint32_t section_race_probe_depth = 0u;
 
 static void section_race_probe_delay(void)
 {
@@ -74,14 +74,14 @@ static void section_race_probe_begin(uint32_t tag)
     g_section_critical_race_debug.probe_enter_count++;
     g_section_critical_race_debug.probe_last_tag = tag;
 
-    depth = s_section_race_probe_depth;
+    depth = section_race_probe_depth;
     if (depth != 0u)
     {
         g_section_critical_race_debug.probe_reentry_count++;
     }
 
     depth++;
-    s_section_race_probe_depth = depth;
+    section_race_probe_depth = depth;
     if (depth > g_section_critical_race_debug.probe_max_depth)
     {
         g_section_critical_race_debug.probe_max_depth = depth;
@@ -93,9 +93,9 @@ static void section_race_probe_begin(uint32_t tag)
 static void section_race_probe_end(void)
 {
     section_race_probe_delay();
-    if (s_section_race_probe_depth != 0u)
+    if (section_race_probe_depth != 0u)
     {
-        s_section_race_probe_depth--;
+        section_race_probe_depth--;
     }
 }
 #else
@@ -240,8 +240,8 @@ uint32_t *section_task_start_sp_get(void)
 }
 
 /**
- * @param[in] sp 当前异常现场的栈指针
- * @return 原栈指针，裸机实现不执行上下文切换
+ * @param[in] sp Stack pointer for the active exception context.
+ * @return The original stack pointer because bare-metal mode does not switch context.
  */
 uint32_t *section_task_switch_sp(uint32_t *sp)
 {

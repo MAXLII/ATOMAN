@@ -41,37 +41,37 @@
 
 typedef enum
 {
-    SECTION_RUNTIME_BAREMETAL = 0, /* 裸机协作式任务调度实现。 */
-    SECTION_RUNTIME_SRTOS_M,       /* Cortex-M 共享栈抢占式调度实现。 */
-    SECTION_RUNTIME_SRTOS_A9,      /* Cortex-A9 共享栈抢占式调度实现。 */
+    SECTION_RUNTIME_BAREMETAL = 0, /* Cooperative bare-metal task scheduler. */
+    SECTION_RUNTIME_SRTOS_M,       /* Cortex-M preemptive shared-stack scheduler. */
+    SECTION_RUNTIME_SRTOS_A9,      /* Cortex-A9 preemptive shared-stack scheduler. */
 } section_runtime_kind_t;
 
 typedef struct
 {
-    void (*my_printf)(const char *__format, ...); /* 链路格式化输出回调。 */
-    void (*tx_by_dma)(char *ptr, int len);        /* 链路 DMA 发送回调。 */
+    void (*my_printf)(const char *__format, ...); /* Formatted-output callback owned by the link. */
+    void (*tx_by_dma)(char *ptr, int len);        /* DMA transmit callback owned by the link. */
 } section_link_tx_func_t;
 
 #define DEC_MY_PRINTF section_link_tx_func_t *my_printf
 
 typedef enum
 {
-    SECTION_INIT = 0,   /* 初始化函数注册项。 */
-    SECTION_TASK,       /* 周期任务注册项。 */
-    SECTION_INTERRUPT,  /* 中断调度注册项。 */
-    SECTION_SHELL,      /* Shell 命令与变量注册项。 */
-    SECTION_LINK,       /* 通信链路注册项。 */
-    SECTION_PERF,       /* 性能计数器与记录注册项。 */
-    SECTION_COMM,       /* 通信命令注册项。 */
-    SECTION_COMM_ROUTE, /* 通信路由注册项。 */
-    SECTION_SCOPE,      /* Scope 实例注册项。 */
-    SECTION_SFRA,       /* SFRA 实例注册项。 */
+    SECTION_INIT = 0,   /* Initialization-function registration entry. */
+    SECTION_TASK,       /* Periodic-task registration entry. */
+    SECTION_INTERRUPT,  /* Interrupt-dispatch registration entry. */
+    SECTION_SHELL,      /* Shell command or variable registration entry. */
+    SECTION_LINK,       /* Communication-link registration entry. */
+    SECTION_PERF,       /* Performance-counter registration entry. */
+    SECTION_COMM,       /* Communication-command registration entry. */
+    SECTION_COMM_ROUTE, /* Communication-route registration entry. */
+    SECTION_SCOPE,      /* Scope-instance registration entry. */
+    SECTION_SFRA,       /* SFRA-instance registration entry. */
 } SECTION_E;
 
 typedef struct
 {
-    uint32_t section_type; /* 注册项类型，对应 SECTION_E。 */
-    void *p_str;           /* 注册对象地址。 */
+    uint32_t section_type; /* Registration type represented by SECTION_E. */
+    void *p_str;           /* Address of the registered object. */
 } reg_section_t;
 
 #define REG_SECTION_INIT(_section_type, _p_str) \
