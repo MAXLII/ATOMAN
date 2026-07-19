@@ -199,6 +199,16 @@ static const char *perf_service_record_type_name(uint8_t record_type)
     }
 }
 
+static uint32_t perf_service_us_to_100ns(uint32_t time_us)
+{
+    if (time_us > (UINT32_MAX / 10u))
+    {
+        return UINT32_MAX;
+    }
+
+    return time_us * 10u;
+}
+
 static void perf_service_print_record_item(section_perf_record_t *record, DEC_MY_PRINTF)
 {
     if ((record == NULL) || (my_printf == NULL) || (my_printf->my_printf == NULL))
@@ -208,19 +218,32 @@ static void perf_service_print_record_item(section_perf_record_t *record, DEC_MY
 
     if (record->record_type == SECTION_PERF_RECORD_CODE)
     {
-        my_printf->my_printf("%s\t%s\t%lu\t%lu\t-\t-\r\n",
+        my_printf->my_printf("%s\t%s\t%lu\t%lu\t-\t-\t-\t-\t-\r\n",
                              perf_service_record_type_name(record->record_type),
                              record->p_name,
-                             (unsigned long)perf_count_to_us(record->time),
-                             (unsigned long)perf_count_to_us(record->max_time));
+                             (unsigned long)perf_count_to_100ns(record->time),
+                             (unsigned long)perf_count_to_100ns(record->max_time));
+    }
+    else if (record->record_type == SECTION_PERF_RECORD_TASK)
+    {
+        my_printf->my_printf("%s\t%s\t%lu\t%lu\t%lu\t%lu\t%lu\t%f\t%f\r\n",
+                             perf_service_record_type_name(record->record_type),
+                             record->p_name,
+                             (unsigned long)perf_count_to_100ns(record->time),
+                             (unsigned long)perf_count_to_100ns(record->max_time),
+                             (unsigned long)perf_count_to_100ns(record->end_to_start_time),
+                             (unsigned long)perf_count_to_100ns(record->start_to_start_time),
+                             (unsigned long)perf_service_us_to_100ns(record->period_us),
+                             (double)(record->load * 100.0f),
+                             (double)(record->load_max * 100.0f));
     }
     else
     {
-        my_printf->my_printf("%s\t%s\t%lu\t%lu\t%f\t%f\r\n",
+        my_printf->my_printf("%s\t%s\t%lu\t%lu\t-\t-\t-\t%f\t%f\r\n",
                              perf_service_record_type_name(record->record_type),
                              record->p_name,
-                             (unsigned long)perf_count_to_us(record->time),
-                             (unsigned long)perf_count_to_us(record->max_time),
+                             (unsigned long)perf_count_to_100ns(record->time),
+                             (unsigned long)perf_count_to_100ns(record->max_time),
                              (double)(record->load * 100.0f),
                              (double)(record->load_max * 100.0f));
     }
@@ -233,11 +256,15 @@ static void perf_service_print_by_type(uint8_t record_type, DEC_MY_PRINTF)
         return;
     }
 
-    my_printf->my_printf("PERF_BEGIN type=%s count=%u unit_us=%f\r\n",
+    my_printf->my_printf("PERF_BEGIN type=%s count=%u raw_unit_us=%f "
+                         "raw_unit_ns=%lu report_unit_ns=%lu\r\n",
                          perf_service_record_type_name(record_type),
                          (unsigned)perf_record_count_by_type(record_type),
-                         (double)perf_count_unit_us_get());
-    my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
+                         (double)perf_count_unit_us_get(),
+                         (unsigned long)perf_count_unit_ns_get(),
+                         (unsigned long)PERF_REPORT_UNIT_NS);
+    my_printf->my_printf("Type\tPerf Name\tRun(100ns)\tMaxRun(100ns)\tEndToStart(100ns)\t"
+                         "StartToStart(100ns)\tConfigPeriod(100ns)\tLoad(%%)\tPeak(%%)\r\n");
     for (section_perf_record_t *record = p_perf_record_first; record != NULL; record = (section_perf_record_t *)record->p_next)
     {
         if (record->record_type == record_type)
@@ -299,8 +326,11 @@ static void perf_service_info(DEC_MY_PRINTF)
         return;
     }
 
-    my_printf->my_printf("PERF_INFO unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu record_count=%u\r\n",
+    my_printf->my_printf("PERF_INFO raw_unit_us=%f raw_unit_ns=%lu report_unit_ns=%lu "
+                         "cnt_per_sys_tick=%lu cpu_window_ms=%lu record_count=%u\r\n",
                          (double)perf_count_unit_us_get(),
+                         (unsigned long)perf_count_unit_ns_get(),
+                         (unsigned long)PERF_REPORT_UNIT_NS,
                          (unsigned long)perf_cnt_per_sys_tick_get(),
                          (unsigned long)PERF_CPU_LOAD_PERIOD_MS,
                          (unsigned)perf_record_count_get());
@@ -327,12 +357,16 @@ static void perf_service_print_start(DEC_MY_PRINTF)
     s_perf_text_print_ctx.my_printf = my_printf;
     s_perf_text_print_ctx.active = 1u;
 
-    my_printf->my_printf("PERF_BEGIN type=ALL count=%u unit_us=%f cnt_per_sys_tick=%lu cpu_window_ms=%lu\r\n",
+    my_printf->my_printf("PERF_BEGIN type=ALL count=%u raw_unit_us=%f raw_unit_ns=%lu "
+                         "report_unit_ns=%lu cnt_per_sys_tick=%lu cpu_window_ms=%lu\r\n",
                          (unsigned)perf_record_count_get(),
                          (double)perf_count_unit_us_get(),
+                         (unsigned long)perf_count_unit_ns_get(),
+                         (unsigned long)PERF_REPORT_UNIT_NS,
                          (unsigned long)perf_cnt_per_sys_tick_get(),
                          (unsigned long)PERF_CPU_LOAD_PERIOD_MS);
-    my_printf->my_printf("Type\tPerf Name\tTime(us)\tMax(us)\tLoad(%%)\tPeak(%%)\r\n");
+    my_printf->my_printf("Type\tPerf Name\tRun(100ns)\tMaxRun(100ns)\tEndToStart(100ns)\t"
+                         "StartToStart(100ns)\tConfigPeriod(100ns)\tLoad(%%)\tPeak(%%)\r\n");
 }
 
 static void perf_service_print_step(void)
