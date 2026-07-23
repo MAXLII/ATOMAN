@@ -2,7 +2,7 @@ param(
     [string]$XilinxSdk = "C:\Xilinx\SDK\2018.3",
     [string]$FrameRoot = "D:\OneDrive\LWX\FRAME",
     [string]$Port = "COM5",
-    [int]$Baud = 115200
+    [int]$Baud = 921600
 )
 
 $ErrorActionPreference = "Stop"
