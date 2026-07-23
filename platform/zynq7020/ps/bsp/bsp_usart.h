@@ -6,7 +6,7 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Initialize PS UART1 on MIO48 and MIO49 at 115200 baud
+ *          - Initialize PS UART1 on MIO48 and MIO49 at 921600 baud
  *          - Provide byte polling for section Shell and comm protocol parsing
  *          - Provide blocking transmit and bounded formatted output
  *

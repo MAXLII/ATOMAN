@@ -6,7 +6,7 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Configure the board CH340 link through PS UART1 at 115200 8N1
+ *          - Configure the board CH340 link through PS UART1 at 921600 8N1
  *          - Poll received bytes for the shared section communication link
  *          - Serialize blocking transmit and bounded printf traffic
  *
@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define BSP_USART_BAUD_RATE 115200U   /* COM5 使用的 PS UART1 波特率。 */
+#define BSP_USART_BAUD_RATE 921600U   /* PS UART1 baud rate used by the COM5 CH340 link. */
 #define BSP_USART_PRINTF_SIZE 512U    /* 单次格式化输出的固定缓冲区容量。 */
 
 static XUartPs s_uart_instance;       /* PS UART1 驱动实例。 */
