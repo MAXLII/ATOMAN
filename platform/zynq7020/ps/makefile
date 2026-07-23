@@ -17,7 +17,8 @@ C_SOURCES := \
 ./bsp/bsp_usart.c \
 ./src/main.c \
 ./src/platform_probe.c \
-$(PROJECT_ROOT)/code/section/baremetal/section.c \
+$(PROJECT_ROOT)/code/section/srtos_a9/section.c \
+./srtos/a9_section_control.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/dbg/shell.c \
 $(PROJECT_ROOT)/code/dbg/shell_service.c \
@@ -45,12 +46,13 @@ $(PROJECT_ROOT)/code/lib/pr.c \
 $(PROJECT_ROOT)/code/lib/record_dict.c \
 $(PROJECT_ROOT)/code/lib/sogi.c
 
-ASM_SOURCES :=
+ASM_SOURCES := ./srtos/a9_section_port.S
 
 C_INCLUDES := \
+-I./srtos \
 -I./bsp \
 -I./src \
--I$(PROJECT_ROOT)/code/section/baremetal \
+-I$(PROJECT_ROOT)/code/section/srtos_a9 \
 -I$(PROJECT_ROOT)/code/section \
 -I$(PROJECT_ROOT)/code/comm \
 -I$(PROJECT_ROOT)/code/dbg \
@@ -72,7 +74,7 @@ ASFLAGS := $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) \
 LDFLAGS := $(CPU_FLAGS) -Wl,-build-id=none -specs=./Xilinx.spec \
            -Wl,-T,$(LD_SCRIPT) -Wl,-T,./zynq7020_sections.ld \
            -L$(BSP_LIB) -Wl,-Map,$(BUILD_DIR)/$(TARGET).map,--cref \
-           -Wl,--gc-sections
+           -Wl,--gc-sections -Wl,--defsym,_SUPERVISOR_STACK_SIZE=0x2000
 LIBS := -Wl,--start-group,-lxil,-lgcc,-lc,-lm,--end-group
 
 OBJECTS := $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o))) \
