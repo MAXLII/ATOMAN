@@ -5,6 +5,7 @@
         "MSVC2017_ROOT": "${env:ProgramFiles(x86)}/Microsoft Visual Studio/2017/BuildTools",
         "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023",
         "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin",
+        "XILINX_SDK_ROOT": "C:/Xilinx/SDK/2018.3",
         "KEIL_ARMCLANG_ROOT": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/Bin",
         "KEIL_ARMCLANG_INCLUDE": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/include"
     },
@@ -237,6 +238,44 @@
                 "path": [
                     "${workspaceFolder}/code",
                     "${workspaceFolder}/platform/apm32"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "zynq7020_a9_srtos",
+            "compilerPath": "${XILINX_SDK_ROOT}/gnu/aarch32/nt/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-a9",
+                "-mfpu=vfpv3",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/platform/zynq7020/ps/srtos",
+                "${workspaceFolder}/platform/zynq7020/ps/bsp",
+                "${workspaceFolder}/platform/zynq7020/ps/src",
+                "${workspaceFolder}/platform/zynq7020/ps/build/bsp/ps7_cortexa9_0/include",
+                "${workspaceFolder}/platform/zynq7020/ps/build_srtos/bsp/ps7_cortexa9_0/include",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/srtos_a9",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm"
+            ],
+            "defines": [
+                "IS_ZYNQ7020",
+                "TOOLCHAIN_GCC"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/platform/zynq7020/ps"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             }
