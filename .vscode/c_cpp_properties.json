@@ -6,8 +6,7 @@
         "MSVC2017_TOOLS": "${MSVC2017_ROOT}/VC/Tools/MSVC/14.16.27023",
         "ARM_GNU_ROOT": "${env:ProgramFiles(x86)}/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin",
         "XILINX_SDK_ROOT": "C:/Xilinx/SDK/2018.3",
-        "KEIL_ARMCLANG_ROOT": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/Bin",
-        "KEIL_ARMCLANG_INCLUDE": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/include"
+        "KEIL_ARMCLANG_ROOT": "${env:USERPROFILE}/AppData/Local/Keil_v5/ARM/ARMCLANG/Bin"
     },
     "configurations": [
         {
@@ -61,13 +60,13 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-clang-arm",
             "compilerArgs": [
+                "--target=arm-arm-none-eabi",
                 "-mcpu=cortex-m4",
                 "-mthumb",
                 "-mfpu=fpv4-sp-d16",
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${KEIL_ARMCLANG_INCLUDE}",
                 "${workspaceFolder}/platform/hc32f334/src",
                 "${workspaceFolder}/platform/hc32f334/bsp",
                 "${workspaceFolder}/platform/hc32f334/inc",
