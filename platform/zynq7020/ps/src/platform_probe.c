@@ -370,7 +370,7 @@ static void platform_self_test_report(void)
 static void platform_probe_init(void)
 {
     s_probe_start_tick = bsp_timer_gettime_100us(); /* 以本次固件启动时刻建立自主测试延时基准。 */
-    bsp_usart_dbg_printf("section init ready; mode=%s; COM5 115200 8N1\r\n",
+    bsp_usart_dbg_printf("section init ready; mode=%s; COM5 921600 8N1\r\n",
                          section_runtime_name_get()); /* 确认链接段初始化回调已经执行。 */
     bsp_usart_dbg_printf("commands: help, ZYNQ_STATUS, IIR_TEST, DEMO_SHELL_PING\r\n"); /* 提示平台通信与 IIR 验证命令。 */
 }
