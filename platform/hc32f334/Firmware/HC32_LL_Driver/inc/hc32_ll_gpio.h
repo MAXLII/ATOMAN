@@ -212,7 +212,7 @@ typedef struct {
 #define GPIO_PIN_TDO                (0x04U)
 #define GPIO_PIN_TDI                (0x08U)
 #define GPIO_PIN_TRST               (0x10U)
-#define GPIO_PIN_DEBUG_JTAG         (0x1FU)
+#define GPIO_PIN_DEBUG_JTAG         (0x1CU)
 #define GPIO_PIN_SWCLK              (0x01U)
 #define GPIO_PIN_SWDIO              (0x02U)
 #define GPIO_PIN_SWO                (0x04U)
