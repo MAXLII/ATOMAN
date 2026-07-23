@@ -113,8 +113,8 @@ Perf Viewer 通过二进制协议访问：
 FRAME 可以先读取 Perf 基本信息，再通过串口 Shell 输出包含实际周期的任务表：
 
 ```powershell
-.\frame.ps1 perf info --port COM5 --baud 115200
-.\frame.ps1 serial raw --port COM5 --baud 115200 --send-text "perf_print_task`r`n" --read-seconds 1
+.\frame.ps1 perf info --port COM5 --baud 921600
+.\frame.ps1 serial raw --port COM5 --baud 921600 --send-text "perf_print_task`r`n" --read-seconds 1
 ```
 
 ## 7. 使用注意事项

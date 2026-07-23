@@ -24,7 +24,7 @@
 | UART1 TX | MIO48 | `MIO48 -> U10(74LVC1T45) -> CH340 RXD` |
 | UART1 RX | MIO49 | `CH340 TXD -> U9(74LVC1T45) -> MIO49` |
 
-PS Bank501 为 1.8V。Vivado 工程将 `PCW_PRESET_BANK1_VOLTAGE`、MIO48 和 MIO49 设置为 LVCMOS 1.8V。COM5 参数为 115200、8 数据位、无校验、1 停止位。
+PS Bank501 为 1.8V。Vivado 工程将 `PCW_PRESET_BANK1_VOLTAGE`、MIO48 和 MIO49 设置为 LVCMOS 1.8V。COM5 参数为 921600、8 数据位、无校验、1 停止位。
 
 ## 3. PS+PL 地址空间
 
@@ -158,8 +158,8 @@ Vivado 输出位于 `pl/build/output/`：
 ```powershell
 cd D:\OneDrive\LWX\FRAME
 .\frame.ps1 serial ports
-.\frame.ps1 serial raw --port COM5 --baud 115200 --send-text "IIR_TEST\r\n" --read-seconds 2
-.\frame.ps1 serial raw --port COM5 --baud 115200 --send-text "ZYNQ_STATUS\r\n" --read-seconds 2
+.\frame.ps1 serial raw --port COM5 --baud 921600 --send-text "IIR_TEST\r\n" --read-seconds 2
+.\frame.ps1 serial raw --port COM5 --baud 921600 --send-text "ZYNQ_STATUS\r\n" --read-seconds 2
 ```
 
 Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST` 和 `DEMO_SHELL_PING`。
