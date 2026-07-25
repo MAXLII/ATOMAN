@@ -11,7 +11,8 @@
 - PS 可自由读写的 AXI4-Lite 32 位寄存器接口
 - `code/section/baremetal/` 裸机 section 工程
 - `code/section/srtos_a9/` 与 A9 SVC/IRQ 上下文切换端口
-- PS UART1 的 COM5 通信、FRAME 二进制协议和 Shell 调试入口
+- PS UART1 的 COM6 日志、Shell 和故障诊断入口
+- PL UART DMA 的 COM7 业务通信、FRAME 协议和压测入口
 
 平台不使用第三方 RTOS。
 
@@ -24,7 +25,16 @@
 | UART1 TX | MIO48 | `MIO48 -> U10(74LVC1T45) -> CH340 RXD` |
 | UART1 RX | MIO49 | `CH340 TXD -> U9(74LVC1T45) -> MIO49` |
 
-PS Bank501 为 1.8V。Vivado 工程将 `PCW_PRESET_BANK1_VOLTAGE`、MIO48 和 MIO49 设置为 LVCMOS 1.8V。COM5 参数为 921600、8 数据位、无校验、1 停止位。
+PS Bank501 为 1.8V。Vivado 工程将 `PCW_PRESET_BANK1_VOLTAGE`、MIO48 和 MIO49 设置为 LVCMOS 1.8V。该串口枚举为 COM6。
+
+PL UART 使用 Bank 34：
+
+| 信号 | 原理图网络 | Zynq 引脚 | 电气约束 |
+|------|------------|-----------|----------|
+| PL UART RX | `FPGA_GPIO_10N_34` | W15 | LVCMOS33、上拉 |
+| PL UART TX | `FPGA_GPIO_11N_34` | U15 | LVCMOS33、SLEW SLOW |
+
+PL 串口枚举为 COM7。COM6 与 COM7 均使用 921600、8 数据位、无校验、1 停止位。
 
 ## 3. PS+PL 地址空间
 
@@ -32,12 +42,18 @@ PS7 的 `M_AXI_GP0` 通过 AXI Interconnect 连接以下 PL 外设：
 
 | 外设 | 基地址 | 功能 |
 |------|--------|------|
-| AXI UART Lite | `0x40600000` | 扩展 PL 串口，115200 8N1 |
+| AXI PL UART DMA | `0x40600000` | PL 串口控制、DDR RX/TX ring 和错误状态 |
 | AXI GPIO 输入 | `0x41200000` | PL KEY1/M19 |
 | AXI GPIO 输出 | `0x41210000` | 4 个 PL LED/T12、U12、V12、W13 |
+| AXI OLED DMA | `0x41220000` | DDR framebuffer DMA、SSD1306协议和串行PHY |
 | AXI 3P3Z IIR | `0x43C00000` | 系数、样点、状态和历史寄存器 |
 
-PL 时钟为 PS FCLK0 50MHz。板载 COM5 使用 PS UART1，不经过 AXI UART Lite。
+PL 时钟为 PS FCLK0 50MHz。PL UART DMA和OLED DMA控制口连接M_AXI_GP0，
+两个DMA Master通过同一个AXI Interconnect连接S_AXI_HP0。UART错误IRQ连接
+`IRQ_F2P[0]` / GIC SPI ID 61，OLED错误IRQ连接 `IRQ_F2P[1]` / GIC SPI ID 62。
+RX ring 为 `0x1FF00000` 的64 KiB，TX ring为 `0x1FF10000` 的64 KiB，
+OLED framebuffer为 `0x1FF20000` 的1024字节；
+`0x1FF00000～0x1FFFFFFF` 整体保留并设置为 non-cacheable。
 
 ## 4. 3P3Z IIR
 
@@ -48,7 +64,7 @@ y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + b3*x[n-3]
        - a1*y[n-1] - a2*y[n-2] - a3*y[n-3]
 ```
 
-系数为有符号 Q2.30，输入和输出为有符号 32 位整数。样点的工程量比例由 PS 决定；PL 使用 70 位累加器，计算后算术右移 30 位，并饱和到 `int32_t`。一个 core 样点从接受 `start` 到 `done` 的固定延迟为 13 个 50MHz 时钟。
+系数为有符号 Q2.30，输入和输出为有符号 32 位整数。样点的工程量比例由 PS 决定；PL 使用 7 个并行组合乘法器和 70 位平衡加法树，计算后算术右移 30 位，并限幅到 `LIMIT_LOWER..LIMIT_UPPER`。core 从接受 `start` 到结果锁存的固定延迟为 1 个 50MHz 时钟，并支持每时钟一个样点。最终限幅值作为输出并写入反馈历史 `y[n-1]`。
 
 32×32 位乘法器分解为 4 路 17×17 位部分积，映射到 4 个 DSP48E1。每路具有输入、乘法和输出流水寄存器。
 
@@ -68,7 +84,7 @@ y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + b3*x[n-3]
 | `0x24` | A2 | RW | Q2.30 系数 a2 |
 | `0x28` | A3 | RW | Q2.30 系数 a3 |
 | `0x2C` | SAMPLE_COUNT | RO | 清状态后的完成样点数 |
-| `0x30` | VERSION | RO | `0x00010000` |
+| `0x30` | VERSION | RO | `0x00020000` |
 | `0x34` | FORMAT | RO | `0x0000201E`：32 位样点、30 位系数小数 |
 | `0x38` | X1 | RO | 输入历史 x[n-1] |
 | `0x3C` | X2 | RO | 输入历史 x[n-2] |
@@ -76,6 +92,8 @@ y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + b3*x[n-3]
 | `0x44` | Y1 | RO | 饱和输出历史 y[n-1] |
 | `0x48` | Y2 | RO | 饱和输出历史 y[n-2] |
 | `0x4C` | Y3 | RO | 饱和输出历史 y[n-3] |
+| `0x50` | LIMIT_LOWER | RW | 有符号输出下限，复位值 `INT32_MIN` |
+| `0x54` | LIMIT_UPPER | RW | 有符号输出上限，复位值 `INT32_MAX` |
 
 AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次 `start` 会清除旧的完成标志；软件也可显式写 CONTROL.bit2。
 
@@ -95,15 +113,21 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 | `verilog/iir/src/` | 可综合 Verilog：IIR core 和 AXI4-Lite 封装 |
 | `verilog/iir/sim/` | SystemVerilog testbench、仿真/综合脚本和 CSV 数值结果 |
 | `verilog/iir/doc/` | PL IP 独立使用说明 |
+| `verilog/uart_dma/src/` | 可配置 UART、同步 FIFO 和 AXI 环形 DMA RTL |
+| `verilog/uart_dma/sim/` | UART DMA SystemVerilog 自检和 OOC 综合脚本 |
 | `platform/zynq7020/ps/` | ARM 启动、BSP、应用入口、SRTOS 端口、编译、下载和板测 |
 | `platform/zynq7020/pl/` | Vivado 工程、PS7 硬件平台、自定义 IP、约束、bitstream/HDF 输出和 PL 自测 |
-| `platform/zynq7020/ps/bsp/` | UART、定时器、GIC 与 IIR MMIO 平台适配 |
+| `platform/zynq7020/ps/bsp/` | PS UART、PL UART DMA、共享 GIC、定时器与 IIR MMIO 平台适配 |
+| `platform/zynq7020/ps/bsp/bsp_oled.c/.h` | PL OLED DMA、DDR framebuffer、显示控制和错误IRQ |
 | `code/section/baremetal/section.c/.h` | 裸机 section 独立实现与统一注册接口 |
 | `code/section/srtos_a9/section.c/.h` | Cortex-A9 SRTOS 独立实现与统一注册接口 |
 | `platform/zynq7020/ps/srtos/a9_section_port.S` | A9 SVC/IRQ 上下文切换端口 |
 | `platform/zynq7020/ps/src/main.c` | 所选 section 运行时的统一平台入口 |
 | `platform/zynq7020/ps/src/platform_probe.c` | 平台自主测试与 Shell 状态命令 |
+| `platform/zynq7020/ps/src/zero_player_oled.c` | 30x31 Zero Player 棋盘到 128x64 OLED 的映射 |
 | `platform/zynq7020/pl/package_axi_iir_ip.tcl` | 自定义 IIR IP 与 IP-XACT 寄存器描述 |
+| `platform/zynq7020/pl/package_axi_uart_dma_ip.tcl` | 自定义 PL UART DMA IP 与接口描述 |
+| `platform/zynq7020/pl/package_axi_oled_dma_ip.tcl` | 自定义 PL OLED DMA IP 与寄存器描述 |
 | `platform/zynq7020/pl/build_pl.tcl` | PS+PL block design、实现和输出报告 |
 | `platform/zynq7020/pl/pl_selftest.tcl` | JTAG 直接访问 PL 外设的硬件测试 |
 
@@ -119,6 +143,17 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 `run_sim.ps1` 先执行纯 IIR core 参考模型比对，再执行 AXI4-Lite 协议与数值测试。CSV 结果保存在 `verilog/iir/sim/`。
 
 `run_synth.ps1` 以 50MHz 对 IIR core 做 Vivado OOC 综合，检查 DSP 映射、DRC 和时序。OOC 工程没有 PS7，因此仅豁免 Zynq 顶层规则 `ZPS7-1`；其他 DRC 均会使脚本失败。
+
+PL UART DMA 独立验证：
+
+```powershell
+.\verilog\uart_dma\sim\run_sim.ps1
+.\verilog\uart_dma\sim\run_synth.ps1
+```
+
+数字验证覆盖 UART 配置、错误、FIFO、AXI 背压、ring 回卷、错误 IRQ 和
+1 MiB PRBS。详细结果见
+`verilog/uart_dma/doc/test/ZYNQ7020_PL_UART_DMA_VERIFICATION.md`。
 
 ## 7. PS+PL 构建
 
@@ -143,7 +178,7 @@ Vivado 输出位于 `pl/build/output/`：
 ## 8. 下载与板上测试
 
 ```powershell
-# 一键完成下载、JTAG 和 COM5 检查
+# 一键完成下载、JTAG 和 COM6 检查
 .\ps\board_iir_selftest.ps1
 
 # 或分步执行
@@ -151,18 +186,28 @@ Vivado 输出位于 `pl/build/output/`：
 .\pl\pl_selftest.ps1
 ```
 
-下载脚本依次复位系统、加载 HDF、初始化 PS、配置 PL bitstream、下载无 RTOS ELF 并启动 CPU0。`board_iir_selftest.ps1` 串联下载、JTAG PL 自测和 COM5 的 `IIR_TEST`/`ZYNQ_STATUS` 检查，最终通过标志为 `BOARD_IIR_SELFTEST result=PASS`。
+下载脚本依次复位系统、加载 HDF、初始化 PS、配置 PL bitstream、下载所选 ELF
+并启动 CPU0。`pl_selftest.ps1` 同时检查 GPIO、IIR 和 UART DMA 版本寄存器。
 
-使用 FRAME 验证 COM5：
+使用 FRAME 验证 COM6 与 COM7：
 
 ```powershell
 cd D:\OneDrive\LWX\FRAME
 .\frame.ps1 serial ports
-.\frame.ps1 serial raw --port COM5 --baud 921600 --send-text "IIR_TEST\r\n" --read-seconds 2
-.\frame.ps1 serial raw --port COM5 --baud 921600 --send-text "ZYNQ_STATUS\r\n" --read-seconds 2
+.\frame.ps1 serial raw --port COM6 --baud 921600 --send-text "PL_UART_STATUS\r\n" --read-seconds 2
+.\frame.ps1 serial raw --port COM7 --baud 921600 --send-hex "74 69 6D 65 0D 0A" --rx-hex --read-seconds 1
+
+cd D:\OneDrive\LWX\GD32\base\platform\zynq7020\ps
+.\board_pl_uart_dma_acceptance.ps1
 ```
 
-Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST` 和 `DEMO_SHELL_PING`。
+PL UART DMA 验收脚本由两个独立进程分别独占 COM6 和 COM7，执行 11000 个
+497 字节 payload 回环帧，双向总量为 11264000 字节。详细结果见
+`verilog/uart_dma/doc/test/ZYNQ7020_PL_UART_DMA_BOARD_TEST_REPORT.md`。
+
+Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST`、`PL_UART_STATUS`、
+`PL_UART_RESET`、`PL_UART_DMA_TEST`、`PL_UART_ERROR_CLEAR` 和
+`DEMO_SHELL_PING`。
 
 ## 9. section 运行模式
 

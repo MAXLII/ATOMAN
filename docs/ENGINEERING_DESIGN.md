@@ -56,9 +56,9 @@ GCC 工程与 MDK 工程引用相同的 AC BSP、公共代码和 HC32 LL 驱动�
 
 两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
-Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/iir/` 保存 3P3Z IIR core、AXI4-Lite 外设封装、SystemVerilog 数值验证和使用说明；`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、AXI GPIO、AXI UART Lite、自定义 AXI IIR IP、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、全局定时器、SCU 私有定时器、GIC、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口与自主测试。
+Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/` 中每个 IP 使用独立目录，`src/` 保存可综合 RTL，`sim/` 保存 SystemVerilog 自检、仿真与 OOC 综合脚本，`doc/design/`、`doc/test/`、`doc/application/` 分别保存设计、测试和应用文档。`verilog/iir/` 实现 3P3Z IIR core 和 AXI4-Lite 外设封装；`verilog/uart_dma/` 实现可配置 UART、AXI4-Lite 控制和 AXI Master DDR 环形 DMA；`verilog/oled_dma/` 实现 OLED 寄存器、DDR 帧 DMA、快照 RAM、SSD1306 协议层和串行 PHY。`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、S_AXI_HP0、AXI GPIO、自定义 AXI IIR、PL UART DMA、PL OLED DMA、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、PL UART DMA、OLED framebuffer DMA、共享 GIC、定时器、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口、自主测试和 Zero Player OLED 映射。
 
-Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`ps/compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录，`ps/download.ps1` 使用 `pl/build/output/` 中的硬件产物完成配置和固件下载。板载 CH340 使用 PS UART1 MIO48/MIO49，Bank501 和对应 MIO I/O 类型为 1.8V。
+Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`ps/compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录，`ps/download.ps1` 使用 `pl/build/output/` 中的硬件产物完成配置和固件下载。COM6 使用 PS UART1 MIO48/MIO49；COM7 使用 Bank 34 的 W15 RX 和 U15 TX。两端均运行 921600 8N1。PL UART RX/TX ring 位于 `0x1FF00000` 和 `0x1FF10000`，OLED framebuffer位于 `0x1FF20000`，均由BSP以non-cacheable属性访问。Bank 35的E18、E19、F16、F17由PL OLED协议层和串行PHY驱动，`code/app/zero_player.c` 的30x31棋盘缩放至完整128x64区域。
 
 ## 3. 模块注册与链接框架（`code/section/`）
 
