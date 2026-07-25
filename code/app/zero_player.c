@@ -1,165 +1,225 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    zero_player.c
+ * @brief   Zero-player cellular automaton implementation.
+ * @details
+ *          This file is part of the base project.
+ *
+ *          Module responsibilities:
+ *          - Evolve a wrapping 30x31 Conway cellular-automaton grid
+ *          - Re-seed stable or oscillating states with deterministic pseudo-random cells
+ *          - Stream the grid to Shell and a platform-provided display hook
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - Grid evolution and display run from task context
+ *          - The weak display hook keeps the game hardware-independent
+ *
+ * @author  Max.Li
+ * @date    2026-07-25
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
+
 #include "zero_player.h"
-#include <stdio.h>
-#include <string.h>
+
 #include "section.h"
-#include "systick.h"
 #include "shell.h"
 
-static int last_grid[ROWS][COLS] = {0};
-static int grid[ROWS][COLS] = {0};
-static int next_grid[ROWS][COLS] = {0};
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
-// 初始化棋盘
+static int last_grid[ROWS][COLS] = {0}; /* Previous generation for oscillator detection. */
+static int grid[ROWS][COLS] = {0}; /* Current generation rendered to the user. */
+static int next_grid[ROWS][COLS] = {0}; /* Next generation under construction. */
+static uint8_t print_state = 0U; /* Shell print state: 0 idle, 1 streaming, 2 complete. */
+static uint32_t print_row = 0U; /* Current Shell output row. */
+static uint32_t print_column = 0U; /* Current Shell output column. */
+static section_link_tx_func_t *p_print_link = NULL; /* Shell link owning the active print. */
+
 void zero_player_init(const int init[ROWS][COLS])
 {
-    memcpy(grid, init, sizeof(grid));
-}
-
-static uint8_t zp_in_print = 0;
-static uint32_t row_cnt;
-static uint32_t col_cnt;
-
-section_link_tx_func_t *zp_printf = NULL;
-
-// 打印棋盘
-void zero_player_print(DEC_MY_PRINTF)
-{
-    if (zp_in_print != 0)
+    if (init == NULL)
     {
         return;
     }
-    zp_printf = my_printf;
-    zp_in_print = 1;
-    row_cnt = 0;
-    col_cnt = 0;
-    for (int i = 0; i < COLS; i++)
+
+    (void)memcpy(grid, init, sizeof(grid));
+    (void)memset(last_grid, 0, sizeof(last_grid));
+    (void)memset(next_grid, 0, sizeof(next_grid));
+}
+
+__attribute__((weak)) void zero_player_display(int display_grid[ROWS][COLS])
+{
+    (void)display_grid;
+}
+
+static void zero_player_print(DEC_MY_PRINTF)
+{
+    uint32_t column = 0U; /* Header separator column. */
+
+    if ((print_state != 0U) ||
+        (my_printf == NULL) ||
+        (my_printf->my_printf == NULL))
+    {
+        return;
+    }
+
+    p_print_link = my_printf;
+    print_state = 1U;
+    print_row = 0U;
+    print_column = 0U;
+    for (column = 0U; column < (uint32_t)COLS; ++column)
     {
         my_printf->my_printf("--");
     }
     my_printf->my_printf("\r\n");
 }
 
-void zero_player_print_step(void)
+static void zero_player_print_step(void)
 {
-    if (zp_in_print != 1)
+    if ((print_state != 1U) ||
+        (p_print_link == NULL) ||
+        (p_print_link->my_printf == NULL))
     {
         return;
     }
 
-    zp_printf->my_printf("%c ", grid[row_cnt][col_cnt] ? '*' : ' ');
-    col_cnt = (col_cnt + 1) % COLS;
-    if (col_cnt == 0)
+    p_print_link->my_printf("%c ",
+                            (grid[print_row][print_column] != 0) ? '*' : ' ');
+    print_column = (print_column + 1U) % (uint32_t)COLS;
+    if (print_column == 0U)
     {
-        zp_printf->my_printf("\r\n");
-        row_cnt++;
+        p_print_link->my_printf("\r\n");
+        print_row++;
     }
 
-    if ((row_cnt >= ROWS) &&
-        (zp_in_print == 1))
+    if (print_row >= (uint32_t)ROWS)
     {
-        zp_in_print = 2;
+        print_state = 2U;
     }
 }
 
-REG_TASK_MS(1, zero_player_print_step)
+REG_TASK_MS(1U, zero_player_print_step)
 
 REG_SHELL_CMD(zero_player_print, zero_player_print)
 
-// 计算某个细胞的邻居数量
-static int count_neighbors(int x, int y)
+static int count_neighbors(int row, int column)
 {
-    int cnt = 0;
-    for (int dx = -1; dx <= 1; ++dx)
+    int count = 0; /* Number of live cells in the wrapped 3x3 neighborhood. */
+    int row_delta = 0; /* Neighbor row displacement. */
+    int column_delta = 0; /* Neighbor column displacement. */
+
+    for (row_delta = -1; row_delta <= 1; ++row_delta)
     {
-        for (int dy = -1; dy <= 1; ++dy)
+        for (column_delta = -1; column_delta <= 1; ++column_delta)
         {
-            if (dx == 0 && dy == 0)
-                continue;
-            int nx = x + dx;
-            int ny = y + dy;
-            nx += ROWS;
-            nx %= ROWS;
-            ny += COLS;
-            ny %= COLS;
-            if (nx >= 0 && nx < ROWS && ny >= 0 && ny < COLS)
+            int neighbor_row = 0; /* Wrapped neighbor row. */
+            int neighbor_column = 0; /* Wrapped neighbor column. */
+
+            if ((row_delta == 0) &&
+                (column_delta == 0))
             {
-                cnt += grid[nx][ny];
+                continue;
             }
+            neighbor_row = (row + row_delta + ROWS) % ROWS;
+            neighbor_column = (column + column_delta + COLS) % COLS;
+            count += grid[neighbor_row][neighbor_column];
         }
     }
-    return cnt;
+    return count;
 }
 
-// 运行一步
 void zero_player_step(void)
 {
-    if (zp_in_print != 2)
+    uint8_t equal_to_current = 1U; /* Next generation equals the current generation. */
+    uint8_t equal_to_previous = 1U; /* Next generation forms a period-2 oscillator. */
+    int row = 0; /* Current generation row. */
+    int column = 0; /* Current generation column. */
+
+    if (print_state == 1U)
     {
         return;
     }
-    uint8_t is_equal_now_next = 1;
-    uint8_t is_equal_last_next = 1;
-    for (int i = 0; i < ROWS; ++i)
+    print_state = 0U;
+    zero_player_display(grid);
+
+    for (row = 0; row < ROWS; ++row)
     {
-        for (int j = 0; j < COLS; ++j)
+        for (column = 0; column < COLS; ++column)
         {
-            int neighbors = count_neighbors(i, j);
-            if (grid[i][j])
+            int neighbors = count_neighbors(row, column); /* Live neighbor count. */
+
+            if (grid[row][column] != 0)
             {
-                // 活细胞规则
-                next_grid[i][j] = (neighbors == 2 || neighbors == 3) ? 1 : 0;
+                next_grid[row][column] =
+                    ((neighbors == 2) ||
+                     (neighbors == 3)) ? 1 : 0;
             }
             else
             {
-                // 死细胞规则
-                next_grid[i][j] = (neighbors == 3) ? 1 : 0;
+                next_grid[row][column] = (neighbors == 3) ? 1 : 0;
             }
 
-            if (next_grid[i][j] != last_grid[i][j])
+            if (next_grid[row][column] != last_grid[row][column])
             {
-                is_equal_last_next = 0;
+                equal_to_previous = 0U;
             }
 
-            if (grid[i][j] != next_grid[i][j])
+            if (grid[row][column] != next_grid[row][column])
             {
-                is_equal_now_next = 0;
+                equal_to_current = 0U;
             }
         }
     }
-    memcpy(last_grid, grid, sizeof(grid));
-    memcpy(grid, next_grid, sizeof(grid));
-    if ((is_equal_last_next == 1) ||
-        (is_equal_now_next == 1))
+    (void)memcpy(last_grid, grid, sizeof(grid));
+    (void)memcpy(grid, next_grid, sizeof(grid));
+    if ((equal_to_previous == 1U) ||
+        (equal_to_current == 1U))
     {
-        zero_player_add(zp_printf);
+        zero_player_add(p_print_link);
     }
-    zp_in_print = 0;
 }
 
-REG_TASK(1, zero_player_step) // 每秒运行一次
+REG_TASK_MS(1000U, zero_player_step)
 
 void zero_player_add(DEC_MY_PRINTF)
 {
-    uint32_t system_time = systick_gettime_100us();
-    if (my_printf != NULL)
+    uint32_t system_time = SECTION_SYS_TICK; /* Current 100 us platform time. */
+    uint32_t random_seed = system_time ^ 0xA5A5A5A5U; /* LCG state. */
+    uint32_t row = 0U; /* Grid row being populated. */
+    uint32_t column = 0U; /* Grid column being populated. */
+
+    if ((my_printf != NULL) &&
+        (my_printf->my_printf != NULL))
     {
         my_printf->my_printf("system_time = %u\r\n", system_time);
     }
-    // 使用更复杂的伪随机算法
-    uint32_t rand_seed = system_time ^ 0xA5A5A5A5;
-    for (uint32_t i = 0; i < ROWS; i++)
+
+    for (row = 0U; row < (uint32_t)ROWS; ++row)
     {
-        for (uint32_t j = 0; j < COLS; j++)
+        for (column = 0U; column < (uint32_t)COLS; ++column)
         {
-            if (grid[i][j] == 0)
+            if (grid[row][column] == 0)
             {
-                // 线性同余法伪随机
-                rand_seed = rand_seed * 1664525 + 1013904223 + i * 73 + j * 37;
-                grid[i][j] = ((rand_seed >> 16) & 0xFF) < 51 ? 1 : 0; // 约20%概率
+                random_seed = (random_seed * 1664525U) +
+                              1013904223U +
+                              (row * 73U) +
+                              (column * 37U);
+                grid[row][column] =
+                    (((random_seed >> 16U) & 0xFFU) < 51U) ? 1 : 0;
             }
         }
     }
-    if (my_printf != NULL)
+    if ((my_printf != NULL) &&
+        (my_printf->my_printf != NULL))
     {
         my_printf->my_printf("zero_player_add: random fill done\r\n");
     }
@@ -167,9 +227,16 @@ void zero_player_add(DEC_MY_PRINTF)
 
 REG_SHELL_CMD(zero_player_add, zero_player_add)
 
-void timing_add_seed(void)
+static void zero_player_start(void)
 {
     zero_player_add(NULL);
 }
 
-REG_TASK_MS(10 * 60 * 1000, timing_add_seed)
+REG_INIT(2, zero_player_start)
+
+static void timing_add_seed(void)
+{
+    zero_player_add(NULL);
+}
+
+REG_TASK_MS(10U * 60U * 1000U, timing_add_seed)

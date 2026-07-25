@@ -15,3 +15,6 @@ SECTIONS
         KEEP(*(.func_ram.*))
     } > ps7_ddr_0
 }
+
+ASSERT(_end <= 0x1FF00000,
+       "Firmware overlaps reserved PL UART DMA DDR window at 0x1FF00000")

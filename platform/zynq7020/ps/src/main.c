@@ -6,7 +6,7 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Initialize PS UART1 and the global-timer section time base
+ *          - Initialize PS UART1, PL UART DMA, GIC, and section time base
  *          - Start linker-section discovery and registered initialization
  *          - Run the section implementation selected by the platform build
  *
@@ -27,6 +27,8 @@
  * See the LICENSE file in the project root for full license text.
  */
 
+#include "bsp_interrupt.h"
+#include "bsp_oled.h"
 #include "bsp_timer.h"
 #include "bsp_usart.h"
 #include "section.h"
@@ -36,6 +38,9 @@
 int main(void)
 {
     int32_t uart_status = XST_FAILURE; /* PS UART1 初始化结果。 */
+    int32_t interrupt_status = XST_FAILURE; /* Shared GIC initialization result. */
+    int32_t pl_uart_status = XST_FAILURE; /* PL UART DMA initialization result. */
+    int32_t oled_status = XST_FAILURE; /* PL OLED transport initialization result. */
     int32_t timer_status = XST_FAILURE; /* 10 kHz section 中断定时器初始化结果。 */
 
     bsp_timer_init();                               /* 建立 section 的 100 us 单调时间基准。 */
@@ -50,6 +55,39 @@ int main(void)
     }
 
     bsp_usart_dbg_printf("\r\nZynq-7020 section platform boot\r\n"); /* 输出最早期可观测启动信息。 */
+    interrupt_status = bsp_interrupt_init(); /* 初始化定时器和 PL UART 共用的 GIC。 */
+    if (interrupt_status != XST_SUCCESS)
+    {
+        bsp_usart_dbg_printf("shared interrupt controller init failed: %ld\r\n",
+                             (long)interrupt_status);
+        for (;;)
+        {
+            /* GIC 不可用时无法保证错误中断和 section 调度。 */
+        }
+    }
+
+    pl_uart_status = bsp_usart_pl_init(); /* 初始化 COM7 的 UART 与 DDR 环形 DMA。 */
+    if (pl_uart_status != XST_SUCCESS)
+    {
+        bsp_usart_dbg_printf("PL UART DMA init failed: %ld\r\n",
+                             (long)pl_uart_status);
+        for (;;)
+        {
+            /* PL UART 版本、DDR ring 或错误 IRQ 不可用时停止启动。 */
+        }
+    }
+
+    oled_status = bsp_oled_init(); /* Initialize the PL OLED framebuffer DMA. */
+    if (oled_status != XST_SUCCESS)
+    {
+        bsp_usart_dbg_printf("PL OLED init failed: %ld\r\n",
+                             (long)oled_status);
+        for (;;)
+        {
+            /* OLED DMA failure prevents the requested local display function. */
+        }
+    }
+
     section_init();                                                   /* 发现并初始化全部 section 注册项。 */
     timer_status = bsp_timer_interrupt_start(10000U);                 /* 启动 10 kHz SECTION_INTERRUPT 调度。 */
     if (timer_status != XST_SUCCESS)

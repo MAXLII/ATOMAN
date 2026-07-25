@@ -14,10 +14,26 @@ if (!(Test-Path -LiteralPath $vivado))
 Push-Location $scriptRoot
 try
 {
-    & $vivado -mode batch -source (Join-Path $scriptRoot "build_pl.tcl")
-    if ($LASTEXITCODE -ne 0)
+    $buildTree = Join-Path $scriptRoot "build"
+    $vivadoProcess = Start-Process `
+        -FilePath $vivado `
+        -ArgumentList @("-mode", "batch", "-source", (Join-Path $scriptRoot "build_pl.tcl")) `
+        -WorkingDirectory $scriptRoot `
+        -WindowStyle Hidden `
+        -PassThru
+
+    while (!$vivadoProcess.WaitForExit(2000))
     {
-        throw "Zynq-7020 PL build failed with exit code $LASTEXITCODE"
+        if (Test-Path -LiteralPath $buildTree)
+        {
+            & attrib.exe -R (Join-Path $buildTree "*") /S /D | Out-Null
+        }
+    }
+
+    $vivadoProcess.WaitForExit()
+    if ($vivadoProcess.ExitCode -ne 0)
+    {
+        throw "Zynq-7020 PL build failed with exit code $($vivadoProcess.ExitCode)"
     }
 }
 finally

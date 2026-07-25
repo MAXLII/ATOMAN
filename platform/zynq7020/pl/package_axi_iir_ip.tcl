@@ -10,7 +10,7 @@ proc add_axi_iir_register {address_block name offset access description} {
 proc package_axi_iir_ip {script_dir package_project_dir ip_repo_dir} {
     set repo_root [file normalize [file join $script_dir .. .. ..]]
     set rtl_dir [file join $repo_root verilog iir src]
-    set ip_root [file join $ip_repo_dir axi_iir_3p3z_1_0]
+    set ip_root [file join $ip_repo_dir axi_iir_3p3z_2_0]
 
     create_project -force axi_iir_3p3z_ip_package $package_project_dir \
         -part xc7z020clg400-2
@@ -33,9 +33,9 @@ proc package_axi_iir_ip {script_dir package_project_dir ip_repo_dir} {
     set_property name axi_iir_3p3z $core
     set_property display_name {AXI 3P3Z IIR Peripheral} $core
     set_property description \
-        {PS-configurable signed Q2.30 3P3Z IIR filter with 32-bit samples.} $core
+        {Single-cycle signed Q2.30 3P3Z IIR filter with configurable output limits.} $core
     set_property vendor_display_name {Max.Li} $core
-    set_property version 1.0 $core
+    set_property version 2.0 $core
 
     set slave_axi [ipx::get_bus_interfaces -quiet S_AXI -of_objects $core]
     if {[llength $slave_axi] != 1} {
@@ -66,9 +66,9 @@ proc package_axi_iir_ip {script_dir package_project_dir ip_repo_dir} {
     set status_reg [add_axi_iir_register $address_block STATUS 0x04 \
                         read-only {Busy, done, saturation, and ready status.}]
     foreach {field_name bit_offset field_description} {
-        BUSY 0 {The seven-term MAC is running.}
+        BUSY 0 {Reserved compatibility status; single-cycle core is never busy.}
         DONE 1 {The output register contains a completed sample.}
-        SATURATED 2 {The completed sample was clamped to int32 range.}
+        SATURATED 2 {The completed sample was clamped to configured limits.}
         READY 3 {A new start command can be accepted.}
     } {
         set field [ipx::add_field $field_name $status_reg]
@@ -100,6 +100,10 @@ proc package_axi_iir_ip {script_dir package_project_dir ip_repo_dir} {
     add_axi_iir_register $address_block Y1 0x44 read-only {Output history y[n-1].}
     add_axi_iir_register $address_block Y2 0x48 read-only {Output history y[n-2].}
     add_axi_iir_register $address_block Y3 0x4C read-only {Output history y[n-3].}
+    add_axi_iir_register $address_block LIMIT_LOWER 0x50 read-write \
+        {Signed lower output limit; reset value is INT32_MIN.}
+    add_axi_iir_register $address_block LIMIT_UPPER 0x54 read-write \
+        {Signed upper output limit; reset value is INT32_MAX.}
 
     ipx::create_xgui_files $core
     ipx::update_checksums $core

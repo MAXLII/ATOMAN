@@ -34,6 +34,28 @@
 
 static demo_comm_frame_t s_demo_comm_last_frame;
 
+static void demo_comm_frame_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    section_packform_t ack = {0};
+
+    if ((p_pack == NULL) ||
+        ((p_pack->len > 0U) && (p_pack->p_data == NULL)))
+    {
+        return;
+    }
+
+    ack.src = p_pack->dst;
+    ack.d_src = p_pack->d_dst;
+    ack.dst = p_pack->src;
+    ack.d_dst = p_pack->d_src;
+    ack.cmd_set = p_pack->cmd_set;
+    ack.cmd_word = p_pack->cmd_word;
+    ack.is_ack = 1U;
+    ack.len = p_pack->len;
+    ack.p_data = p_pack->p_data;
+    comm_send_data(&ack, my_printf);
+}
+
 static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     section_packform_t ack = {0};
@@ -61,3 +83,4 @@ static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
 }
 
 REG_COMM(DEMO_CMD_SET_LOOPBACK, DEMO_CMD_WORD_LOOPBACK, demo_comm_loopback)
+REG_COMM(DEMO_CMD_SET_FRAME_LOOPBACK, DEMO_CMD_WORD_FRAME_LOOPBACK, demo_comm_frame_loopback)

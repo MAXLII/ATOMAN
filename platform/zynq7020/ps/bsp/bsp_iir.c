@@ -8,7 +8,8 @@
  *          Module responsibilities:
  *          - Perform ordered 32-bit MMIO access to the PL IIR peripheral
  *          - Program all feedforward and feedback coefficients
- *          - Submit samples and poll deterministic PL completion
+ *          - Configure signed output limits
+ *          - Submit samples and poll deterministic single-cycle completion
  *          - Execute a destructive closed-loop hardware self-test
  *
  *          Design notes:
@@ -18,8 +19,8 @@
  *          - The self-test restores coefficients but intentionally clears state
  *
  * @author  Max.Li
- * @date    2026-07-17
- * @version 1.0.0
+ * @date    2026-07-25
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -128,6 +129,21 @@ uint8_t bsp_iir_configure(const bsp_iir_coefficients_t *coefficients)
     return 1U;
 }
 
+uint8_t bsp_iir_limit_configure(int32_t lower_limit, int32_t upper_limit)
+{
+    if (lower_limit > upper_limit)
+    {
+        return 0U;
+    }
+
+    bsp_iir_write_register((uint32_t)BSP_IIR_LIMIT_LOWER_OFFSET,
+                           (uint32_t)lower_limit);
+    bsp_iir_write_register((uint32_t)BSP_IIR_LIMIT_UPPER_OFFSET,
+                           (uint32_t)upper_limit);
+
+    return 1U;
+}
+
 void bsp_iir_reset_state(void)
 {
     bsp_iir_write_register((uint32_t)BSP_IIR_CONTROL_OFFSET,
@@ -194,6 +210,10 @@ uint8_t bsp_iir_self_test(bsp_iir_self_test_result_t *result)
     bsp_iir_coefficients_t saved_coefficients = coefficients_read(); /* 自测前系数。 */
     bsp_iir_coefficients_t saturation_coefficients = {0}; /* 双向饱和测试系数。 */
     int32_t saved_input = (int32_t)bsp_iir_read_register((uint32_t)BSP_IIR_INPUT_OFFSET); /* 自测前输入。 */
+    int32_t saved_limit_lower =
+        (int32_t)bsp_iir_read_register((uint32_t)BSP_IIR_LIMIT_LOWER_OFFSET); /* 自测前下限。 */
+    int32_t saved_limit_upper =
+        (int32_t)bsp_iir_read_register((uint32_t)BSP_IIR_LIMIT_UPPER_OFFSET); /* 自测前上限。 */
     int32_t output_sample = 0L; /* 当前 PL 输出。 */
     uint32_t status = 0U;       /* 当前样本完成状态。 */
     uint32_t version = 0U;      /* RTL 版本回读值。 */
@@ -209,6 +229,9 @@ uint8_t bsp_iir_self_test(bsp_iir_self_test_result_t *result)
         }
         result->positive_saturation_output = 0L;
         result->negative_saturation_output = 0L;
+        result->upper_limited_output = 0L;
+        result->lower_limited_output = 0L;
+        result->limited_feedback_output = 0L;
         result->sample_count = 0U;
         result->final_status = 0U;
         result->version = 0U;
@@ -224,6 +247,7 @@ uint8_t bsp_iir_self_test(bsp_iir_self_test_result_t *result)
     }
 
     bsp_iir_reset_state();
+    (void)bsp_iir_limit_configure(INT32_MIN, INT32_MAX);
     if (bsp_iir_configure(&s_impulse_test_coefficients) == 0U)
     {
         passed = 0U;
@@ -310,8 +334,64 @@ uint8_t bsp_iir_self_test(bsp_iir_self_test_result_t *result)
         result->format = format;
     }
 
+    saturation_coefficients.b0 = BSP_IIR_Q30_ONE;
+    saturation_coefficients.a1 = -BSP_IIR_Q30_ONE;
+    bsp_iir_reset_state();
+    (void)bsp_iir_configure(&saturation_coefficients);
+    (void)bsp_iir_limit_configure(-100L, 100L);
+    if ((bsp_iir_process_sample(1000L,
+                                &output_sample,
+                                &status,
+                                BSP_IIR_SELF_TEST_TIMEOUT) == 0U) ||
+        (output_sample != 100L) ||
+        ((status & (uint32_t)BSP_IIR_STATUS_SATURATED) == 0U) ||
+        (bsp_iir_read_register((uint32_t)BSP_IIR_Y1_OFFSET) != 100U))
+    {
+        passed = 0U;
+    }
+    if (result != NULL)
+    {
+        result->upper_limited_output = output_sample;
+    }
+
+    (void)bsp_iir_limit_configure(INT32_MIN, INT32_MAX);
+    if ((bsp_iir_process_sample(0L,
+                                &output_sample,
+                                &status,
+                                BSP_IIR_SELF_TEST_TIMEOUT) == 0U) ||
+        (output_sample != 100L) ||
+        ((status & (uint32_t)BSP_IIR_STATUS_SATURATED) != 0U))
+    {
+        passed = 0U;
+    }
+    if (result != NULL)
+    {
+        result->limited_feedback_output = output_sample;
+    }
+
+    saturation_coefficients.a1 = 0L;
+    bsp_iir_reset_state();
+    (void)bsp_iir_configure(&saturation_coefficients);
+    (void)bsp_iir_limit_configure(-75L, 125L);
+    if ((bsp_iir_process_sample(-1000L,
+                                &output_sample,
+                                &status,
+                                BSP_IIR_SELF_TEST_TIMEOUT) == 0U) ||
+        (output_sample != -75L) ||
+        ((status & (uint32_t)BSP_IIR_STATUS_SATURATED) == 0U) ||
+        (bsp_iir_read_register((uint32_t)BSP_IIR_Y1_OFFSET) !=
+         (uint32_t)-75L))
+    {
+        passed = 0U;
+    }
+    if (result != NULL)
+    {
+        result->lower_limited_output = output_sample;
+    }
+
     bsp_iir_reset_state();
     (void)bsp_iir_configure(&saved_coefficients);
+    (void)bsp_iir_limit_configure(saved_limit_lower, saved_limit_upper);
     bsp_iir_write_register((uint32_t)BSP_IIR_INPUT_OFFSET, (uint32_t)saved_input);
 
     return passed;
