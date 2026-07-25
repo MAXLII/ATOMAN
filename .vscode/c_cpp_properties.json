@@ -258,6 +258,7 @@
                 "${workspaceFolder}/platform/zynq7020/ps/src",
                 "${workspaceFolder}/platform/zynq7020/ps/build/bsp/ps7_cortexa9_0/include",
                 "${workspaceFolder}/platform/zynq7020/ps/build_srtos/bsp/ps7_cortexa9_0/include",
+                "${workspaceFolder}/code/app",
                 "${workspaceFolder}/code/app/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
