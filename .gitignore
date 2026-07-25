@@ -62,4 +62,7 @@ platform/zynq7020/pl/.Xil/
 platform/zynq7020/pl/NA/
 platform/zynq7020/pl/build/
 platform/zynq7020/pl/*.jou
-verilog/iir/sim/*.jou
+verilog/*/sim/.Xil/
+verilog/*/sim/*.jou
+xsim.dir/
+xvlog.pb
