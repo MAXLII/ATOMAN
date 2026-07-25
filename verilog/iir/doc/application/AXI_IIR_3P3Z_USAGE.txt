@@ -4,7 +4,7 @@ AXI 3P3Z IIR 使用说明
 1. 文件
 
 src/iir_3p3z_core.v
-    3P3Z IIR 运算 core 和流水线 32x32 位有符号乘法器。
+    单周期 3P3Z IIR 运算 core、并行乘法器、上下限幅和历史状态。
 
 src/axi_iir_3p3z.v
     AXI4-Lite 从设备、32 位寄存器组和 IIR core 封装。
@@ -21,17 +21,16 @@ y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + b3*x[n-3]
        - a1*y[n-1] - a2*y[n-2] - a3*y[n-3]
 
 所有系数为有符号 Q2.30。输入和输出为有符号 32 位整数，工程量
-比例由调用方选择。内部使用 70 位累加器，结果算术右移 30 位后饱和到
-int32_t。反馈历史保存饱和后的输出。
+比例由调用方选择。内部使用 70 位累加器，结果算术右移 30 位后限幅到
+LIMIT_LOWER..LIMIT_UPPER。反馈历史保存最终限幅后的输出。
 
 3. core 接口
 
-start 仅在 ready=1 时被接受。接受后 busy 拉高，13 个 clk 后 sample_out、
-saturated 和 sample_count 更新，同时 done 拉高一个 clk。clear_state 会清除
-输入/输出历史、计数、输出和正在执行的流水线。
+ready 始终为 1，busy 始终为 0。start 在上升沿被接受时，sample_out、
+saturated、sample_count 和 X/Y 历史在该上升沿同步更新，固定完成延迟为
+1 个 clk。连续保持 start 有效时，每个 clk 完成一个样点。
 
-系数和 sample_in 在 start 被接受时锁存，因此 busy 期间修改输入端不会影响
-当前样点。
+clear_state 的优先级高于 start，并清除输入/输出历史、计数和输出。
 
 4. AXI4-Lite 寄存器
 
@@ -50,7 +49,7 @@ saturated 和 sample_count 更新，同时 done 拉高一个 clk。clear_state �
 0x24  A2            RW    Q2.30 a2
 0x28  A3            RW    Q2.30 a3
 0x2C  SAMPLE_COUNT  RO    完成样点数
-0x30  VERSION       RO    0x00010000
+0x30  VERSION       RO    0x00020000
 0x34  FORMAT        RO    0x0000201E
 0x38  X1            RO    x[n-1]
 0x3C  X2            RO    x[n-2]
@@ -58,6 +57,8 @@ saturated 和 sample_count 更新，同时 done 拉高一个 clk。clear_state �
 0x44  Y1            RO    y[n-1]
 0x48  Y2            RO    y[n-2]
 0x4C  Y3            RO    y[n-3]
+0x50  LIMIT_LOWER   RW    有符号输出下限，复位值0x80000000
+0x54  LIMIT_UPPER   RW    有符号输出上限，复位值0x7FFFFFFF
 
 AW 和 W 通道可以独立先到，写数据支持 WSTRB。AXI done 为粘滞位，下一次
 start、reset_state 或 clear_done 会清除。
@@ -65,13 +66,12 @@ start、reset_state 或 clear_done 会清除。
 5. 软件操作顺序
 
 1) 写 B0/B1/B2/B3/A1/A2/A3。
-2) 写 CONTROL.reset_state。
-3) 等待 STATUS.ready。
+2) 写 LIMIT_LOWER 和 LIMIT_UPPER，保证 lower <= upper。
+3) 写 CONTROL.reset_state。
 4) 写 INPUT。
 5) 写 CONTROL.start。
-6) 轮询 STATUS.done。
-7) 读取 OUTPUT 和 STATUS.saturated。
-8) 写 CONTROL.clear_done，或直接启动下一样点。
+6) 读取 OUTPUT 和 STATUS.saturated。
+7) 写 CONTROL.clear_done，或直接启动下一样点。
 
 PS 可以像访问 MCU 外设寄存器一样直接操作任意已定义偏移：
 
@@ -81,8 +81,9 @@ PS 可以像访问 MCU 外设寄存器一样直接操作任意已定义偏移：
                            BSP_IIR_CONTROL_START);
     status = bsp_iir_read_register(BSP_IIR_STATUS_OFFSET);
 
-`bsp_iir_configure()`、`bsp_iir_process_sample()` 和 `bsp_iir_self_test()`
-是在上述 32 位 MMIO 接口之上的便捷封装。
+`bsp_iir_configure()`、`bsp_iir_limit_configure()`、
+`bsp_iir_process_sample()` 和 `bsp_iir_self_test()` 是在上述 32 位 MMIO
+接口之上的便捷封装。`bsp_iir_limit_configure()` 会拒绝上下限倒置。
 
 6. 验证
 
