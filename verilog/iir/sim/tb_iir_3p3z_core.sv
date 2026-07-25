@@ -6,12 +6,13 @@
  *          Compares every completed RTL sample against an independent
  *          fixed-point direct-form-I reference model. Tests cover signed
  *          multiplier quadrants, continuous pseudo-random input, stateful
- *          feedback, saturation, ready/busy/done handshaking, and sample
- *          counting without using AXI or PS software.
+ *          feedback, configurable output limiting, one-cycle completion,
+ *          continuous one-sample-per-clock throughput, and sample counting
+ *          without using AXI or PS software.
  *
  * @author  Max.Li
- * @date    2026-07-17
- * @version 1.0.0
+ * @date    2026-07-25
+ * @version 2.0.0
  */
 
 `timescale 1 ns / 1 ps
@@ -19,7 +20,7 @@
 module tb_iir_3p3z_core;
 
     localparam integer COEFF_FRAC_BITS = 30;
-    localparam integer MAX_COMPLETION_CYCLES = 32;
+    localparam integer EXPECTED_COMPLETION_CYCLES = 1;
 
     logic clk;
     logic resetn;
@@ -33,6 +34,8 @@ module tb_iir_3p3z_core;
     logic signed [31:0] coeff_a1;
     logic signed [31:0] coeff_a2;
     logic signed [31:0] coeff_a3;
+    logic signed [31:0] limit_lower;
+    logic signed [31:0] limit_upper;
     wire ready;
     wire busy;
     wire done;
@@ -77,6 +80,8 @@ module tb_iir_3p3z_core;
         .coeff_a1(coeff_a1),
         .coeff_a2(coeff_a2),
         .coeff_a3(coeff_a3),
+        .limit_lower(limit_lower),
+        .limit_upper(limit_upper),
         .ready(ready),
         .busy(busy),
         .done(done),
@@ -142,6 +147,8 @@ module tb_iir_3p3z_core;
         logic signed [63:0] product_a3;
         logic signed [69:0] accumulator;
         logic signed [69:0] scaled;
+        logic signed [69:0] lower_extended;
+        logic signed [69:0] upper_extended;
         begin
             product_b0 = multiply_32x32(input_sample, coeff_b0);
             product_b1 = multiply_32x32(model_x1, coeff_b1);
@@ -159,12 +166,14 @@ module tb_iir_3p3z_core;
                           {{6{product_a2[63]}}, product_a2} -
                           {{6{product_a3[63]}}, product_a3};
             scaled = accumulator >>> COEFF_FRAC_BITS;
+            lower_extended = {{38{limit_lower[31]}}, limit_lower};
+            upper_extended = {{38{limit_upper[31]}}, limit_upper};
 
-            if (scaled > 70'sd2147483647) begin
-                expected_sample = 32'sh7FFF_FFFF;
+            if (scaled > upper_extended) begin
+                expected_sample = limit_upper;
                 expected_saturation = 1'b1;
-            end else if (scaled < -70'sd2147483648) begin
-                expected_sample = 32'sh8000_0000;
+            end else if (scaled < lower_extended) begin
+                expected_sample = limit_lower;
                 expected_saturation = 1'b1;
             end else begin
                 expected_sample = scaled[31:0];
@@ -201,23 +210,21 @@ module tb_iir_3p3z_core;
             @(negedge clk);
             start = 1'b0;
 
-            completion_cycles = 0;
-            while ((done !== 1'b1) &&
-                   (completion_cycles < MAX_COMPLETION_CYCLES)) begin
-                if ((completion_cycles > 0) && (busy !== 1'b1)) begin
-                    record_failure("busy deasserted before completion");
-                end
-                @(posedge clk);
-                completion_cycles = completion_cycles + 1;
-            end
+            completion_cycles = 1;
 
             if (done !== 1'b1) begin
-                record_failure("IIR core completion timeout");
+                record_failure("IIR core did not complete in one cycle");
             end else begin
                 if (first_latency < 0) begin
                     first_latency = completion_cycles;
                 end else if (completion_cycles != first_latency) begin
                     record_failure("IIR completion latency changed between samples");
+                end
+                if (completion_cycles != EXPECTED_COMPLETION_CYCLES) begin
+                    record_failure("IIR completion latency was not one cycle");
+                end
+                if ((ready !== 1'b1) || (busy !== 1'b0)) begin
+                    record_failure("Single-cycle core was not continuously ready");
                 end
                 if (sample_out !== expected_sample) begin
                     failure_count = failure_count + 1;
@@ -260,6 +267,8 @@ module tb_iir_3p3z_core;
         coeff_a1 = 32'sd0;
         coeff_a2 = 32'sd0;
         coeff_a3 = 32'sd0;
+        limit_lower = 32'sh8000_0000;
+        limit_upper = 32'sh7FFF_FFFF;
         model_x1 = 32'sd0;
         model_x2 = 32'sd0;
         model_x3 = 32'sd0;
@@ -349,6 +358,65 @@ module tb_iir_3p3z_core;
         process_and_compare("positive_saturation", 32'sh7FFF_FFFF);
         clear_model_and_core();
         process_and_compare("negative_saturation", 32'sh8000_0000);
+
+        /*
+         * Verify programmable limiting and prove that the limited result,
+         * rather than the raw accumulator result, becomes y[n-1].
+         */
+        coeff_b0 = 32'sh4000_0000;
+        coeff_b1 = 32'sd0;
+        coeff_b2 = 32'sd0;
+        coeff_b3 = 32'sd0;
+        coeff_a1 = -32'sh4000_0000;
+        coeff_a2 = 32'sd0;
+        coeff_a3 = 32'sd0;
+        limit_lower = -32'sd100;
+        limit_upper = 32'sd100;
+        clear_model_and_core();
+        process_and_compare("configured_upper_limit", 32'sd1000);
+        if (history_y1 !== 32'sd100) begin
+            record_failure("Upper-limited result was not stored in y[n-1]");
+        end
+        limit_lower = 32'sh8000_0000;
+        limit_upper = 32'sh7FFF_FFFF;
+        process_and_compare("limited_feedback_history", 32'sd0);
+        if (sample_out !== 32'sd100) begin
+            record_failure("Feedback did not use limited y[n-1]");
+        end
+
+        coeff_a1 = 32'sd0;
+        limit_lower = -32'sd75;
+        limit_upper = 32'sd125;
+        clear_model_and_core();
+        process_and_compare("configured_lower_limit", -32'sd1000);
+        if (history_y1 !== -32'sd75) begin
+            record_failure("Lower-limited result was not stored in y[n-1]");
+        end
+
+        /*
+         * Hold start high and change the input once per cycle. With b0=1 and
+         * all history coefficients zero, every rising edge must retire one
+         * independent sample.
+         */
+        limit_lower = 32'sh8000_0000;
+        limit_upper = 32'sh7FFF_FFFF;
+        clear_model_and_core();
+        @(negedge clk);
+        start = 1'b1;
+        for (sample_index = 1; sample_index <= 8;
+             sample_index = sample_index + 1) begin
+            sample_in = sample_index * 32'sd17;
+            @(posedge clk);
+            @(negedge clk);
+            if ((done !== 1'b1) ||
+                (sample_out !== (sample_index * 32'sd17))) begin
+                record_failure("One-sample-per-clock throughput failed");
+            end
+        end
+        start = 1'b0;
+        if (sample_count !== 32'd8) begin
+            record_failure("Continuous start did not retire every sample");
+        end
 
         $fclose(result_file);
         if (failure_count == 0) begin
