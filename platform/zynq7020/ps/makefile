@@ -13,12 +13,14 @@ SZ := arm-none-eabi-size
 C_SOURCES := \
 ./bsp/bsp_platform.c \
 ./bsp/bsp_iir.c \
+./bsp/bsp_interrupt.c \
+./bsp/bsp_oled.c \
 ./bsp/bsp_timer.c \
 ./bsp/bsp_usart.c \
 ./src/main.c \
 ./src/platform_probe.c \
-$(PROJECT_ROOT)/code/section/srtos_a9/section.c \
-./srtos/a9_section_control.c \
+./src/zero_player_oled.c \
+$(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/dbg/shell.c \
 $(PROJECT_ROOT)/code/dbg/shell_service.c \
@@ -31,6 +33,7 @@ $(PROJECT_ROOT)/code/dbg/sfra_service.c \
 $(PROJECT_ROOT)/code/dbg/trace.c \
 $(PROJECT_ROOT)/code/dbg/trace_service.c \
 $(PROJECT_ROOT)/code/interface/ac/comm_link.c \
+$(PROJECT_ROOT)/code/app/zero_player.c \
 $(PROJECT_ROOT)/code/app/demo/demo.c \
 $(PROJECT_ROOT)/code/app/demo/demo_comm.c \
 $(PROJECT_ROOT)/code/app/demo/demo_interrupt.c \
@@ -46,18 +49,18 @@ $(PROJECT_ROOT)/code/lib/pr.c \
 $(PROJECT_ROOT)/code/lib/record_dict.c \
 $(PROJECT_ROOT)/code/lib/sogi.c
 
-ASM_SOURCES := ./srtos/a9_section_port.S
+ASM_SOURCES :=
 
 C_INCLUDES := \
--I./srtos \
 -I./bsp \
 -I./src \
--I$(PROJECT_ROOT)/code/section/srtos_a9 \
+-I$(PROJECT_ROOT)/code/section/baremetal \
 -I$(PROJECT_ROOT)/code/section \
 -I$(PROJECT_ROOT)/code/comm \
 -I$(PROJECT_ROOT)/code/dbg \
 -I$(PROJECT_ROOT)/code/interface/ac \
 -I$(PROJECT_ROOT)/code/interface/common \
+-I$(PROJECT_ROOT)/code/app \
 -I$(PROJECT_ROOT)/code/app/demo \
 -I$(PROJECT_ROOT)/code/lib \
 -isystem $(BSP_INCLUDE)

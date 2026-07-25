@@ -18,4 +18,6 @@ typedef enum
     CAN_DBG_LINK,
 } USART_LINK_E;
 
+void comm_link_usart1_suspend(uint8_t suspended);
+
 #endif

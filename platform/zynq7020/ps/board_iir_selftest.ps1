@@ -1,8 +1,10 @@
 param(
     [string]$XilinxSdk = "C:\Xilinx\SDK\2018.3",
     [string]$FrameRoot = "D:\OneDrive\LWX\FRAME",
-    [string]$Port = "COM5",
-    [int]$Baud = 921600
+    [string]$Port = "COM6",
+    [int]$Baud = 921600,
+    [ValidateSet(0, 1)]
+    [int]$Srtos = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,7 +24,7 @@ foreach ($requiredFile in @($downloadScript, $plSelfTestScript, $frame))
     }
 }
 
-& $downloadScript -XilinxSdk $XilinxSdk
+& $downloadScript -XilinxSdk $XilinxSdk -Srtos $Srtos
 Start-Sleep -Milliseconds 3000
 
 & $plSelfTestScript -XilinxSdk $XilinxSdk
@@ -45,7 +47,7 @@ $iirOutput | ForEach-Object { Write-Output $_ }
 $iirPassed = @($iirOutput | Select-String -SimpleMatch "iir result=PASS").Count -ge 1
 if (($iirExitCode -ne 0) -or !$iirPassed)
 {
-    throw "COM5 IIR self-test failed: exit=$iirExitCode pass_marker=$iirPassed"
+    throw "$Port IIR self-test failed: exit=$iirExitCode pass_marker=$iirPassed"
 }
 
 try
@@ -61,10 +63,11 @@ finally
     $ErrorActionPreference = $savedErrorAction
 }
 $statusOutput | ForEach-Object { Write-Output $_ }
-$modePassed = @($statusOutput | Select-String -SimpleMatch "zynq mode=baremetal").Count -ge 1
+$expectedMode = if ($Srtos -eq 1) { "srtos-a9" } else { "baremetal" }
+$modePassed = @($statusOutput | Select-String -SimpleMatch "zynq mode=$expectedMode").Count -ge 1
 if (($statusExitCode -ne 0) -or !$modePassed)
 {
-    throw "COM5 bare-metal status check failed: exit=$statusExitCode pass_marker=$modePassed"
+    throw "$Port $expectedMode status check failed: exit=$statusExitCode pass_marker=$modePassed"
 }
 
-Write-Output "BOARD_IIR_SELFTEST result=PASS port=$Port baud=$Baud mode=baremetal"
+Write-Output "BOARD_IIR_SELFTEST result=PASS port=$Port baud=$Baud mode=$expectedMode"

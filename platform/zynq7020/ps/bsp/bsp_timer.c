@@ -30,11 +30,10 @@
 
 #include "bsp_timer.h"
 
+#include "bsp_interrupt.h"
 #include "perf.h"
 #include "section.h"
-#include "xil_exception.h"
 #include "xparameters.h"
-#include "xscugic.h"
 #include "xscutimer.h"
 #include "xstatus.h"
 #include "xtime_l.h"
@@ -46,7 +45,6 @@
 volatile uint32_t sys_tick_100us = 0U; /* Trace 与调试模块共享的 100 us 系统时间。 */
 
 static XTime s_start_count = 0ULL;          /* 平台启动时的全局计时器基准计数。 */
-static XScuGic s_interrupt_controller;      /* Cortex-A9 通用中断控制器实例。 */
 static XScuTimer s_section_interrupt_timer; /* 驱动 section_interrupt 的私有定时器实例。 */
 
 REG_PERF_BASE_CNT((uintptr_t)(GLOBAL_TMR_BASEADDR + GTIMER_COUNTER_LOWER_OFFSET),
@@ -82,7 +80,6 @@ uint32_t bsp_timer_gettime_100us(void)
 
 int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
 {
-    XScuGic_Config *gic_config = NULL;     /* GIC 硬件配置描述符。 */
     XScuTimer_Config *timer_config = NULL; /* Cortex-A9 私有定时器配置描述符。 */
     uint64_t timer_clock_hz = 0ULL;        /* 私有定时器输入时钟频率，单位 Hz。 */
     uint64_t timer_load = 0ULL;            /* 目标中断频率对应的重装计数。 */
@@ -107,29 +104,9 @@ int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
         return status;
     }
 
-    gic_config = XScuGic_LookupConfig(XPAR_SCUGIC_SINGLE_DEVICE_ID);
-    if (gic_config == NULL)
-    {
-        return XST_FAILURE;
-    }
-
-    status = XScuGic_CfgInitialize(&s_interrupt_controller,
-                                   gic_config,
-                                   gic_config->CpuBaseAddress);
-    if (status != XST_SUCCESS)
-    {
-        return status;
-    }
-
-    Xil_ExceptionInit(); /* 建立 Cortex-A9 异常向量分派环境。 */
-    Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
-                                 (Xil_ExceptionHandler)XScuGic_InterruptHandler,
-                                 &s_interrupt_controller); /* 将 IRQ 异常入口交给 GIC 分派。 */
-
-    status = XScuGic_Connect(&s_interrupt_controller,
-                             XPAR_SCUTIMER_INTR,
-                             (Xil_ExceptionHandler)section_timer_interrupt_handler,
-                             &s_section_interrupt_timer);
+    status = bsp_interrupt_connect(XPAR_SCUTIMER_INTR,
+                                   (Xil_ExceptionHandler)section_timer_interrupt_handler,
+                                   &s_section_interrupt_timer);
     if (status != XST_SUCCESS)
     {
         return status;
@@ -145,9 +122,9 @@ int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
 
     XScuTimer_LoadTimer(&s_section_interrupt_timer, (uint32_t)(timer_load - 1ULL)); /* 配置目标 IRQ 周期。 */
     XScuTimer_EnableAutoReload(&s_section_interrupt_timer);                         /* 每次到期后自动重新装载。 */
-    XScuGic_Enable(&s_interrupt_controller, XPAR_SCUTIMER_INTR);                    /* 在 GIC 中开放私有定时器 IRQ。 */
+    bsp_interrupt_enable(XPAR_SCUTIMER_INTR);                                       /* 在共享 GIC 中开放私有定时器 IRQ。 */
     XScuTimer_EnableInterrupt(&s_section_interrupt_timer);                          /* 开放私有定时器本地中断。 */
-    Xil_ExceptionEnableMask((uint32_t)XIL_EXCEPTION_IRQ);                           /* 开放 Cortex-A9 IRQ 异常。 */
+    bsp_interrupt_global_enable();                                                  /* 开放 Cortex-A9 IRQ 异常。 */
     XScuTimer_Start(&s_section_interrupt_timer);                                    /* 启动 10 kHz section 中断源。 */
 
     return XST_SUCCESS;
