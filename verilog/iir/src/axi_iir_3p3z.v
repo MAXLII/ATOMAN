@@ -3,14 +3,15 @@
  * @file    axi_iir_3p3z.v
  * @brief   AXI4-Lite register peripheral for the fixed-point 3P3Z IIR core.
  * @details
- *          The PS configures signed Q2.30 coefficients and exchanges signed
- *          32-bit samples with PL logic through memory-mapped registers.
+ *          The PS configures signed Q2.30 coefficients, signed output limits,
+ *          and exchanges signed 32-bit samples with PL logic through
+ *          memory-mapped registers.
  *          AXI write address and write data channels are accepted
  *          independently, and byte write strobes are honored.
  *
  * @author  Max.Li
- * @date    2026-07-17
- * @version 1.0.0
+ * @date    2026-07-25
+ * @version 2.0.0
  */
 
 `timescale 1 ns / 1 ps
@@ -69,7 +70,7 @@ module axi_iir_3p3z #(
     input  wire                              s_axi_rready
 );
 
-    localparam [31:0] RTL_VERSION = 32'h0001_0000;
+    localparam [31:0] RTL_VERSION = 32'h0002_0000;
     localparam [31:0] FORMAT_VALUE = 32'h0000_201E;
 
     reg [31:0] input_reg;
@@ -80,6 +81,8 @@ module axi_iir_3p3z #(
     reg [31:0] coeff_a1_reg;
     reg [31:0] coeff_a2_reg;
     reg [31:0] coeff_a3_reg;
+    reg [31:0] limit_lower_reg;
+    reg [31:0] limit_upper_reg;
 
     reg start_pulse;
     reg clear_state_pulse;
@@ -153,6 +156,8 @@ module axi_iir_3p3z #(
                 6'h11: register_read = history_y1;
                 6'h12: register_read = history_y2;
                 6'h13: register_read = history_y3;
+                6'h14: register_read = limit_lower_reg;
+                6'h15: register_read = limit_upper_reg;
                 default: register_read = 32'h0000_0000;
             endcase
         end
@@ -190,6 +195,8 @@ module axi_iir_3p3z #(
         .coeff_a1(coeff_a1_reg),
         .coeff_a2(coeff_a2_reg),
         .coeff_a3(coeff_a3_reg),
+        .limit_lower(limit_lower_reg),
+        .limit_upper(limit_upper_reg),
         .ready(core_ready),
         .busy(core_busy),
         .done(core_done),
@@ -220,6 +227,8 @@ module axi_iir_3p3z #(
             coeff_a1_reg <= 32'h0000_0000;
             coeff_a2_reg <= 32'h0000_0000;
             coeff_a3_reg <= 32'h0000_0000;
+            limit_lower_reg <= 32'h8000_0000;
+            limit_upper_reg <= 32'h7FFF_FFFF;
             start_pulse <= 1'b0;
             clear_state_pulse <= 1'b0;
             done_sticky <= 1'b0;
@@ -285,6 +294,12 @@ module axi_iir_3p3z #(
                     6'h0A: coeff_a3_reg <= apply_wstrb(coeff_a3_reg,
                                                         wdata_hold,
                                                         wstrb_hold);
+                    6'h14: limit_lower_reg <= apply_wstrb(limit_lower_reg,
+                                                           wdata_hold,
+                                                           wstrb_hold);
+                    6'h15: limit_upper_reg <= apply_wstrb(limit_upper_reg,
+                                                           wdata_hold,
+                                                           wstrb_hold);
                     default: begin
                     end
                 endcase

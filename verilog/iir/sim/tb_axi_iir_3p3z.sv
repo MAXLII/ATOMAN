@@ -4,12 +4,13 @@
  * @brief   AXI4-Lite protocol and numerical testbench for the 3P3Z IIR.
  * @details
  *          Verifies independent AW/W ordering, byte strobes, register
- *          readback, impulse response, history, sample counting, and signed
- *          output saturation through the complete AXI peripheral wrapper.
+ *          readback, impulse response, history, sample counting, signed
+ *          output limiting, and limited-result feedback through the complete
+ *          AXI peripheral wrapper.
  *
  * @author  Max.Li
- * @date    2026-07-17
- * @version 1.0.0
+ * @date    2026-07-25
+ * @version 2.0.0
  */
 
 `timescale 1 ns / 1 ps
@@ -34,6 +35,8 @@ module tb_axi_iir_3p3z;
     localparam logic [7:0] REG_Y1           = 8'h44;
     localparam logic [7:0] REG_Y2           = 8'h48;
     localparam logic [7:0] REG_Y3           = 8'h4C;
+    localparam logic [7:0] REG_LIMIT_LOWER  = 8'h50;
+    localparam logic [7:0] REG_LIMIT_UPPER  = 8'h54;
 
     localparam logic [31:0] CONTROL_START       = 32'h0000_0001;
     localparam logic [31:0] CONTROL_RESET_STATE = 32'h0000_0002;
@@ -335,11 +338,15 @@ module tb_axi_iir_3p3z;
         repeat (3) @(posedge clk);
 
         axi_read(REG_VERSION, read_value);
-        check_word("VERSION", read_value, 32'h0001_0000);
+        check_word("VERSION", read_value, 32'h0002_0000);
         axi_read(REG_FORMAT, read_value);
         check_word("FORMAT", read_value, 32'h0000_201E);
         axi_read(REG_B0, read_value);
         check_word("default B0", read_value, 32'h4000_0000);
+        axi_read(REG_LIMIT_LOWER, read_value);
+        check_word("default lower limit", read_value, 32'h8000_0000);
+        axi_read(REG_LIMIT_UPPER, read_value);
+        check_word("default upper limit", read_value, 32'h7FFF_FFFF);
 
         axi_write(REG_B0, 32'h1122_3344, 4'hF);
         axi_write_address_first(REG_B0, 32'h0000_AA00, 4'b0010);
@@ -414,11 +421,45 @@ module tb_axi_iir_3p3z;
             record_failure("Negative saturation flag was not set");
         end
 
+        /*
+         * Limit a positive result, then remove the limit and use feedback
+         * only. The second result proves y[n-1] contains the limited value.
+         */
+        axi_write(REG_CONTROL, CONTROL_RESET_STATE, 4'hF);
+        axi_write(REG_B0, 32'h4000_0000, 4'hF);
+        axi_write(REG_A1, 32'hC000_0000, 4'hF);
+        axi_write(REG_LIMIT_LOWER, -32'sd100, 4'hF);
+        axi_write(REG_LIMIT_UPPER, 32'sd100, 4'hF);
+        process_sample(32'sd1000, actual_value, status_value);
+        check_word("configured upper limit", actual_value, 32'd100);
+        if ((status_value & 32'h0000_0004) == 0) begin
+            record_failure("Configured upper limit did not set saturation");
+        end
+        axi_read(REG_Y1, read_value);
+        check_word("limited y1 history", read_value, 32'd100);
+
+        axi_write(REG_LIMIT_LOWER, 32'h8000_0000, 4'hF);
+        axi_write(REG_LIMIT_UPPER, 32'h7FFF_FFFF, 4'hF);
+        process_sample(32'sd0, actual_value, status_value);
+        check_word("limited feedback result", actual_value, 32'd100);
+        if ((status_value & 32'h0000_0004) != 0) begin
+            record_failure("Limited feedback unexpectedly saturated");
+        end
+
+        axi_write(REG_CONTROL, CONTROL_RESET_STATE, 4'hF);
+        axi_write(REG_A1, 32'h0000_0000, 4'hF);
+        axi_write(REG_LIMIT_LOWER, -32'sd75, 4'hF);
+        axi_write(REG_LIMIT_UPPER, 32'sd125, 4'hF);
+        process_sample(-32'sd1000, actual_value, status_value);
+        check_word("configured lower limit", actual_value, -32'sd75);
+        axi_read(REG_Y1, read_value);
+        check_word("lower-limited y1 history", read_value, -32'sd75);
+
         $fclose(result_file);
         if (failure_count == 0) begin
-            $display("SIM_RESULT PASS vectors=10 failures=0");
+            $display("SIM_RESULT PASS vectors=13 failures=0");
         end else begin
-            $display("SIM_RESULT FAIL vectors=10 failures=%0d", failure_count);
+            $display("SIM_RESULT FAIL vectors=13 failures=%0d", failure_count);
             $fatal(1, "3P3Z AXI simulation failed");
         end
 
