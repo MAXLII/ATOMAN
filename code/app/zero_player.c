@@ -6,15 +6,15 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Evolve a wrapping 30x31 Conway cellular-automaton grid
+ *          - Evolve a wrapping 32x64 Conway cellular-automaton grid
  *          - Re-seed stable or oscillating states with deterministic pseudo-random cells
- *          - Stream the grid to Shell and a platform-provided display hook
+ *          - Publish the current grid through a read-only pointer interface
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - Grid evolution and display run from task context
- *          - The weak display hook keeps the game hardware-independent
+ *          - Grid evolution runs from task context
+ *          - Display and transport concerns remain outside this module
  *
  * @author  Max.Li
  * @date    2026-07-25
@@ -30,19 +30,18 @@
 #include "zero_player.h"
 
 #include "section.h"
-#include "shell.h"
 
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 static int last_grid[ROWS][COLS] = {0}; /* Previous generation for oscillator detection. */
-static int grid[ROWS][COLS] = {0}; /* Current generation rendered to the user. */
+static int grid[ROWS][COLS] = {0}; /* Current generation exposed to display consumers. */
 static int next_grid[ROWS][COLS] = {0}; /* Next generation under construction. */
-static uint8_t print_state = 0U; /* Shell print state: 0 idle, 1 streaming, 2 complete. */
-static uint32_t print_row = 0U; /* Current Shell output row. */
-static uint32_t print_column = 0U; /* Current Shell output column. */
-static section_link_tx_func_t *p_print_link = NULL; /* Shell link owning the active print. */
+static const zero_player_grid_t grid_view = { /* Read-only grid descriptor shared with display consumers. */
+    .rows = (uint32_t)ROWS,
+    .columns = (uint32_t)COLS,
+    .p_cells = (const int (*)[COLS])grid,
+};
 
 void zero_player_init(const int init[ROWS][COLS])
 {
@@ -56,60 +55,10 @@ void zero_player_init(const int init[ROWS][COLS])
     (void)memset(next_grid, 0, sizeof(next_grid));
 }
 
-__attribute__((weak)) void zero_player_display(int display_grid[ROWS][COLS])
+const zero_player_grid_t *zero_player_grid_get(void)
 {
-    (void)display_grid;
+    return &grid_view;
 }
-
-static void zero_player_print(DEC_MY_PRINTF)
-{
-    uint32_t column = 0U; /* Header separator column. */
-
-    if ((print_state != 0U) ||
-        (my_printf == NULL) ||
-        (my_printf->my_printf == NULL))
-    {
-        return;
-    }
-
-    p_print_link = my_printf;
-    print_state = 1U;
-    print_row = 0U;
-    print_column = 0U;
-    for (column = 0U; column < (uint32_t)COLS; ++column)
-    {
-        my_printf->my_printf("--");
-    }
-    my_printf->my_printf("\r\n");
-}
-
-static void zero_player_print_step(void)
-{
-    if ((print_state != 1U) ||
-        (p_print_link == NULL) ||
-        (p_print_link->my_printf == NULL))
-    {
-        return;
-    }
-
-    p_print_link->my_printf("%c ",
-                            (grid[print_row][print_column] != 0) ? '*' : ' ');
-    print_column = (print_column + 1U) % (uint32_t)COLS;
-    if (print_column == 0U)
-    {
-        p_print_link->my_printf("\r\n");
-        print_row++;
-    }
-
-    if (print_row >= (uint32_t)ROWS)
-    {
-        print_state = 2U;
-    }
-}
-
-REG_TASK_MS(1U, zero_player_print_step)
-
-REG_SHELL_CMD(zero_player_print, zero_player_print)
 
 static int count_neighbors(int row, int column)
 {
@@ -144,13 +93,6 @@ void zero_player_step(void)
     int row = 0; /* Current generation row. */
     int column = 0; /* Current generation column. */
 
-    if (print_state == 1U)
-    {
-        return;
-    }
-    print_state = 0U;
-    zero_player_display(grid);
-
     for (row = 0; row < ROWS; ++row)
     {
         for (column = 0; column < COLS; ++column)
@@ -184,24 +126,18 @@ void zero_player_step(void)
     if ((equal_to_previous == 1U) ||
         (equal_to_current == 1U))
     {
-        zero_player_add(p_print_link);
+        zero_player_add();
     }
 }
 
 REG_TASK_MS(1000U, zero_player_step)
 
-void zero_player_add(DEC_MY_PRINTF)
+void zero_player_add(void)
 {
     uint32_t system_time = SECTION_SYS_TICK; /* Current 100 us platform time. */
     uint32_t random_seed = system_time ^ 0xA5A5A5A5U; /* LCG state. */
     uint32_t row = 0U; /* Grid row being populated. */
     uint32_t column = 0U; /* Grid column being populated. */
-
-    if ((my_printf != NULL) &&
-        (my_printf->my_printf != NULL))
-    {
-        my_printf->my_printf("system_time = %u\r\n", system_time);
-    }
 
     for (row = 0U; row < (uint32_t)ROWS; ++row)
     {
@@ -218,25 +154,18 @@ void zero_player_add(DEC_MY_PRINTF)
             }
         }
     }
-    if ((my_printf != NULL) &&
-        (my_printf->my_printf != NULL))
-    {
-        my_printf->my_printf("zero_player_add: random fill done\r\n");
-    }
 }
-
-REG_SHELL_CMD(zero_player_add, zero_player_add)
 
 static void zero_player_start(void)
 {
-    zero_player_add(NULL);
+    zero_player_add();
 }
 
 REG_INIT(2, zero_player_start)
 
 static void timing_add_seed(void)
 {
-    zero_player_add(NULL);
+    zero_player_add();
 }
 
 REG_TASK_MS(10U * 60U * 1000U, timing_add_seed)

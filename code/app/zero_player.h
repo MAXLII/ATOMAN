@@ -8,13 +8,13 @@
  *          Module responsibilities:
  *          - Define the fixed cellular-automaton grid dimensions
  *          - Expose grid initialization and random population APIs
- *          - Provide a platform display hook for each generation
+ *          - Expose the current grid through a read-only pointer interface
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - Display implementations run from task context
- *          - Hardware access is supplied by the platform display hook
+ *          - Grid consumers read the data without taking ownership
+ *          - Hardware access remains outside the application module
  *
  * @author  Max.Li
  * @date    2026-07-25
@@ -30,14 +30,21 @@
 #ifndef ZERO_PLAYER_H
 #define ZERO_PLAYER_H
 
-#include "section.h"
+#include <stdint.h>
 
 #define ROWS 32
 #define COLS 64
 
+typedef struct
+{
+    uint32_t rows; /* Number of valid grid rows. */
+    uint32_t columns; /* Number of valid cells in each row. */
+    const int (*p_cells)[COLS]; /* Read-only cells addressed as p_cells[row][column]. */
+} zero_player_grid_t;
+
 void zero_player_init(const int init[ROWS][COLS]);
 void zero_player_step(void);
-void zero_player_add(DEC_MY_PRINTF);
-void zero_player_display(int grid[ROWS][COLS]);
+void zero_player_add(void);
+const zero_player_grid_t *zero_player_grid_get(void);
 
 #endif /* ZERO_PLAYER_H */

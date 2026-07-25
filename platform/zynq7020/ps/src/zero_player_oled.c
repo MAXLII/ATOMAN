@@ -6,7 +6,7 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Map the 30x31 zero-player grid to the 128x64 OLED
+ *          - Fetch the current 32x64 zero-player grid through its data interface
  *          - Scale the complete game grid across the full OLED area
  *          - Present one coherent framebuffer per game generation
  *
@@ -30,11 +30,13 @@
 #include "zero_player.h"
 
 #include "bsp_oled.h"
+#include "section.h"
 
 #include <stdint.h>
 
-void zero_player_display(int grid[ROWS][COLS])
+static void zero_player_oled_refresh(void)
 {
+    const zero_player_grid_t *p_grid = zero_player_grid_get(); /* Grid dimensions and read-only cell storage. */
     uint32_t row = 0U; /* Source grid row. */
     uint32_t column = 0U; /* Source grid column. */
     uint32_t pixel_y = 0U; /* Scaled OLED pixel row. */
@@ -44,19 +46,36 @@ void zero_player_display(int grid[ROWS][COLS])
     uint32_t pixel_x_begin = 0U; /* Inclusive left edge of one scaled cell. */
     uint32_t pixel_x_end = 0U; /* Exclusive right edge of one scaled cell. */
 
-    bsp_oled_frame_clear();
-    for (row = 0U; row < (uint32_t)ROWS; ++row)
+    if (p_grid == NULL)
     {
-        pixel_y_begin = (row * BSP_OLED_HEIGHT) / (uint32_t)ROWS;
-        pixel_y_end = ((row + 1U) * BSP_OLED_HEIGHT) / (uint32_t)ROWS;
-        for (column = 0U; column < (uint32_t)COLS; ++column)
+        return;
+    }
+    if (p_grid->p_cells == NULL)
+    {
+        return;
+    }
+    if (p_grid->rows == 0U)
+    {
+        return;
+    }
+    if (p_grid->columns == 0U)
+    {
+        return;
+    }
+
+    bsp_oled_frame_clear();
+    for (row = 0U; row < p_grid->rows; ++row)
+    {
+        pixel_y_begin = (row * BSP_OLED_HEIGHT) / p_grid->rows;
+        pixel_y_end = ((row + 1U) * BSP_OLED_HEIGHT) / p_grid->rows;
+        for (column = 0U; column < p_grid->columns; ++column)
         {
-            if (grid[row][column] == 0)
+            if (p_grid->p_cells[row][column] == 0)
             {
                 continue;
             }
-            pixel_x_begin = (column * BSP_OLED_WIDTH) / (uint32_t)COLS;
-            pixel_x_end = ((column + 1U) * BSP_OLED_WIDTH) / (uint32_t)COLS;
+            pixel_x_begin = (column * BSP_OLED_WIDTH) / p_grid->columns;
+            pixel_x_end = ((column + 1U) * BSP_OLED_WIDTH) / p_grid->columns;
             for (pixel_y = pixel_y_begin; pixel_y < pixel_y_end; ++pixel_y)
             {
                 for (pixel_x = pixel_x_begin; pixel_x < pixel_x_end; ++pixel_x)
@@ -68,3 +87,5 @@ void zero_player_display(int grid[ROWS][COLS])
     }
     bsp_oled_present();
 }
+
+REG_TASK_MS(1000U, zero_player_oled_refresh)
