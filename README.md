@@ -38,7 +38,7 @@ HC32F334 平台同时提供 `gcc/` 和 `keil_mdk/` 两套工程。两套工程�
 code
 ├─ app/          上层流程、保护、demo、升级和业务逻辑
 ├─ comm/         基础通信协议、CRC、命令解析和路由
-├─ ctrl/         PFC、INV、Buck、Boost、Buck-Boost 等控制模块
+├─ ctrl/         PFC、INV、Buck、Boost、Buck-Boost、CLLC 等控制模块
 ├─ dbg/          perf、scope、trace、shell、SFRA 等调试观测能力
 ├─ interface/    ADC、PWM、GPIO、USART 等平台接口封装
 ├─ lib/          PI、滤波、SOGI、DFT、RMS 等基础算法

@@ -9,6 +9,7 @@
 | `code/ctrl/pfc/` | 交流侧 PFC 控制 | 浮点物理量 |
 | `code/ctrl/inv/` | 逆变输出控制 | 浮点物理量 |
 | `code/ctrl/bb/` | Buck-Boost 控制 | 浮点物理量 |
+| `code/ctrl/cllc/` | 双向 CLLC 控制 | 浮点物理量 |
 | `code/ctrl/buck/` | Buck 控制 | 整数代码域 |
 | `code/ctrl/boost/` | Boost 控制 | 整数代码域 |
 
@@ -56,6 +57,7 @@ HAL 层绑定平台提供的采样变量和回调函数。控制 ISR 不直接�
 | PFC | `pfc_ctrl_update_feedback()` 整理 `v_g`、`v_cap`、`i_l`、`v_bus`、`v_rms` 和主继电器反馈 |
 | INV | `inv_ctrl_update_feedback()` 整理 `v_cap`、`i_l`、`v_bus` |
 | BB | `bb_ctrl_update_feedback()` 整理 `v_in`、`i_in`、`v_out`、`i_out`、`i_l` |
+| CLLC | `cllc_ctrl` 整理 `v_battery`、`i_battery`、`v_bus`，按 FSM 锁存方向选择正向或反向控制集 |
 | Boost | `update_adc_feedback()` 整理 `v_in_fb`、`v_out_fb`、`i_l_fb[]` |
 | Buck | ISR 和任务直接读取整数代码域采样 |
 
@@ -83,5 +85,6 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 | PFC | [CTRL_PFC_DESIGN.md](CTRL_PFC_DESIGN.md) | [CTRL_PFC_USAGE.md](CTRL_PFC_USAGE.md) |
 | INV | [CTRL_INV_DESIGN.md](CTRL_INV_DESIGN.md) | [CTRL_INV_USAGE.md](CTRL_INV_USAGE.md) |
 | BB | [CTRL_BB_DESIGN.md](CTRL_BB_DESIGN.md) | [CTRL_BB_USAGE.md](CTRL_BB_USAGE.md) |
+| CLLC | [CTRL_CLLC_DESIGN.md](cllc/CTRL_CLLC_DESIGN.md) | [CTRL_CLLC_USAGE.md](cllc/CTRL_CLLC_USAGE.md) |
 | Buck | [CTRL_BUCK_DESIGN.md](CTRL_BUCK_DESIGN.md) | [CTRL_BUCK_USAGE.md](CTRL_BUCK_USAGE.md) |
 | Boost | [CTRL_BOOST_DESIGN.md](CTRL_BOOST_DESIGN.md) | [CTRL_BOOST_USAGE.md](CTRL_BOOST_USAGE.md) |
