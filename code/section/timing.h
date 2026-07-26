@@ -53,6 +53,13 @@
 #ifndef CTRL_FREQ
 #define CTRL_FREQ 100.0e3f
 #endif
+#elif defined(IS_CLLC)
+#ifndef CTRL_FREQ
+#define CTRL_FREQ 30.0e3f
+#endif
+#ifndef CTRL_TS
+#define CTRL_TS (1.0f / CTRL_FREQ)
+#endif
 #else
 #ifndef BUCK_PWM_FREQ
 #define BUCK_PWM_FREQ 60.0e3f
@@ -70,7 +77,7 @@
 #define PWM_TS (1.0f / PWM_FREQ)
 #endif
 
-#ifndef BUCK_PWM_TS
+#if defined(BUCK_PWM_FREQ) && !defined(BUCK_PWM_TS)
 #define BUCK_PWM_TS (1.0f / BUCK_PWM_FREQ)
 #endif
 
