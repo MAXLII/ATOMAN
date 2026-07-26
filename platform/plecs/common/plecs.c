@@ -15,6 +15,8 @@
 #endif
 
 static FILE *fp_plecs = NULL; /* 当前 PLECS DLL 实例使用的日志文件句柄。 */
+static double interrupt_time_last = 0.0; /* Simulation time of the latest committed control interrupt. */
+static uint8_t interrupt_time_valid = 0u; /* Nonzero after one control interrupt has run in this simulation. */
 
 /**
  * @return DLL 目录中的日志文件句柄；路径解析或文件打开失败时返回 NULL。
@@ -22,9 +24,9 @@ static FILE *fp_plecs = NULL; /* 当前 PLECS DLL 实例使用的日志文件句
 static FILE *plecs_log_open(void)
 {
 #if defined(_WIN32)
-    HMODULE module = NULL; /* 当前 common/plecs.c 所属的已加载 DLL 模块句柄。 */
-    DWORD path_length = 0U; /* 不含结尾空字符的 DLL 绝对路径长度。 */
-    wchar_t *separator = NULL; /* DLL 路径中最后一个目录分隔符的位置。 */
+    HMODULE module = NULL;        /* 当前 common/plecs.c 所属的已加载 DLL 模块句柄。 */
+    DWORD path_length = 0U;       /* 不含结尾空字符的 DLL 绝对路径长度。 */
+    wchar_t *separator = NULL;    /* DLL 路径中最后一个目录分隔符的位置。 */
     size_t directory_length = 0U; /* 包含末尾目录分隔符的 DLL 目录长度。 */
     const size_t file_name_length = sizeof(PLECS_LOG_FILE_NAME) / sizeof(PLECS_LOG_FILE_NAME[0]);
     static wchar_t log_path[PLECS_LOG_PATH_CAPACITY] = {L'\0'}; /* DLL 同目录日志文件的完整路径。 */
@@ -120,6 +122,8 @@ DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 DLLEXPORT void plecsStart(struct SimulationState *aState)
 {
     plecs_astate = aState;
+    interrupt_time_last = 0.0;
+    interrupt_time_valid = 0u;
     if (fp_plecs != NULL)
     {
         fclose(fp_plecs);
@@ -141,5 +145,27 @@ DLLEXPORT void plecsOutput(struct SimulationState *aState)
         run_task();
         time_last += 0.0001f;
     }
-    section_interrupt();
+    if ((interrupt_time_valid == 0u) ||             /* Execute the initial sample exactly once. */
+        (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
+    {
+        section_interrupt();
+        interrupt_time_last = plecs_astate->time;
+        interrupt_time_valid = 1u;
+    }
+}
+
+/**
+ * @brief Release resources owned by the current PLECS simulation instance.
+ * @param aState Simulation state supplied by PLECS during termination.
+ */
+DLLEXPORT void plecsTerminate(struct SimulationState *aState)
+{
+    (void)aState;
+
+    if (fp_plecs != NULL)
+    {
+        (void)fclose(fp_plecs);
+        fp_plecs = NULL;
+    }
+    plecs_astate = NULL;
 }
