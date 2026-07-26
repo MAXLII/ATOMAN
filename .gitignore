@@ -51,6 +51,9 @@ platform/matlab/pll/build/
 platform/matlab/pll/slprj/
 platform/matlab/pll/*.mexw64
 platform/matlab/pll/*.slxc
+
+# PLECS local comparison and verification build artifacts
+platform/plecs/*/build_*/
 .codex-remote-attachments
 docs/zynq7020
 
