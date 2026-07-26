@@ -408,6 +408,32 @@
             ]
         },
         {
+            "name": "plecs_cllc",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/cllc",
+                "${workspaceFolder}/platform/plecs/cllc/app",
+                "${workspaceFolder}/platform/plecs/cllc/bsp",
+                "${workspaceFolder}/code/interface/cllc",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/cllc",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_CLLC",
+                "TOOLCHAIN_GCC",
+                "__RAM_FUNC="
+            ]
+        },
+        {
             "name": "matlab_inv",
             "compilerPath": "${MSVC2017_TOOLS}/bin/HostX64/x64/cl.exe",
             "cStandard": "c11",
