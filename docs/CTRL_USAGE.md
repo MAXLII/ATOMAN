@@ -60,5 +60,6 @@ xxx_hal_hard_protect_trip();
 | PFC | [CTRL_PFC_USAGE.md](CTRL_PFC_USAGE.md) |
 | INV | [CTRL_INV_USAGE.md](CTRL_INV_USAGE.md) |
 | BB | [CTRL_BB_USAGE.md](CTRL_BB_USAGE.md) |
+| CLLC | [CTRL_CLLC_USAGE.md](cllc/CTRL_CLLC_USAGE.md) |
 | Buck | [CTRL_BUCK_USAGE.md](CTRL_BUCK_USAGE.md) |
 | Boost | [CTRL_BOOST_USAGE.md](CTRL_BOOST_USAGE.md) |

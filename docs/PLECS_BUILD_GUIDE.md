@@ -11,6 +11,7 @@
 | `platform/plecs/ac/` | `ac.plecs` | `compile.bat` |
 | `platform/plecs/buck/` | `buck.plecs` | `compile.bat` |
 | `platform/plecs/boost/` | `boost.plecs` | `compile.bat` |
+| `platform/plecs/cllc/` | `cllc.plecs` | `compile.bat` |
 | `platform/plecs/inv/` | `inv.plecs` | `compile.bat` |
 | `platform/plecs/llc/` | `llc.plecs` | `compile.bat` |
 | `platform/plecs/pfc/` | `pfc.plecs` | `compile.bat` |
@@ -177,6 +178,7 @@ cmake -G "MinGW Makefiles" ^
    - `platform/plecs/ac/ac.plecs`
    - `platform/plecs/buck/buck.plecs`
    - `platform/plecs/boost/boost.plecs`
+   - `platform/plecs/cllc/cllc.plecs`
    - `platform/plecs/inv/inv.plecs`
    - `platform/plecs/llc/llc.plecs`
    - `platform/plecs/pfc/pfc.plecs`
@@ -191,6 +193,7 @@ DLL 运行时日志文件与当前加载的 `libplecs.dll` 位于同一目录：
 | AC | `platform/plecs/ac/build/bin/plecs_log.txt` |
 | Buck | `platform/plecs/buck/build/bin/plecs_log.txt` |
 | Boost | `platform/plecs/boost/build/bin/plecs_log.txt` |
+| CLLC | `platform/plecs/cllc/build/bin/plecs_log.txt` |
 | INV | `platform/plecs/inv/build/bin/plecs_log.txt` |
 | LLC | `platform/plecs/llc/build/bin/plecs_log.txt` |
 | PFC | `platform/plecs/pfc/build/bin/plecs_log.txt` |
