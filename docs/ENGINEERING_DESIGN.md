@@ -50,10 +50,11 @@ HC32F334 AC 平台的编译工程位于 `platform/hc32f334/`：
 |------|------|
 | `keil_mdk/` | Arm Compiler 6 工程、启动文件、scatter 文件、编译脚本和 Keil 下载脚本 |
 | `gcc/` | Arm GNU Toolchain Makefile 工程、GCC 启动文件、链接脚本、编译脚本和 GCC 固件下载入口 |
-| `bsp/` | AC 工程的 ADC、PWM、GPIO、CAN、USART、时钟和定时器适配 |
-| `src/` | AC 工程入口和平台中断入口 |
+| `bootloader/` | 独立 Bootloader 入口、FAL cfg、USART2 通信及 GCC 构建工程 |
+| `bsp/` | ADC、PWM、GPIO、CAN、USART、SPI Flash、片内 EFM、时钟和定时器适配 |
+| `src/` | AC 工程入口、平台中断、保留 SRAM 切换记录和 IAP 升级服务 |
 
-GCC 工程与 MDK 工程引用相同的 AC BSP、公共代码和 HC32 LL 驱动。GCC 链接脚本固定向量表到 `0x00000000`、ICG 数据到 `0x00000400`，主 SRAM 承载数据、BSS 和堆，`RAMB` 承载主栈。
+GCC 与 MDK 的 IAP 工程从片内 Flash `0x00004000` 链接，Bootloader 工程从 `0x00000000` 链接并持有 `0x00000400` 的 ICG 数据。主 SRAM 起始 16 字节保存复位期间持续有效的切换记录，`RAMB` 承载主栈。
 
 两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
@@ -423,3 +424,22 @@ Zynq-7020 使用 16 MiB PS QSPI Flash，program page 为 256 字节，erase bloc
 | Layout | `0xB20000` | 64 KiB | 只读 |
 
 独立 Bootloader 链接到 DDR `0x04000000`，IAP 链接到 `0x00100000`，PL DMA 区从 `0x1FF00000` 开始。`build_boot_image.ps1` 从当前 HDF 自动生成 FSBL，并将 FSBL、bitstream 与 Bootloader ELF 打包为 `BOOT.bin`；脚本检查镜像不超过 5 MiB 启动分区并输出 64 KiB 擦除边界对齐后的实际占用。IAP 与 Bootloader 通过 OCM 保留记录传递升级启动原因。
+
+## 13. HC32F334 Bootloader 集成
+
+HC32F334 使用 128 KiB 片内 EFM 和 8 MiB W25Q64。W25Q64 通过 PB5 SCK、PA0 MOSI、PA1 MISO 和 PA6 软件片选连接，SPI 工作于 Mode 0、15 MHz；命令阶段使用轮询传输，数据读写使用 DMA 通道 4 和 5。BSP 提供 JEDEC ID、状态查询、读取、256 字节页编程、4 KiB 扇区擦除，以及位于 `0x7FF000` 的跨页自检。
+
+FAL cfg 使用以下连续区域：
+
+| 设备 | 区域 | 起始偏移 | 大小 | 权限 |
+|------|------|---------:|-----:|------|
+| 片内 EFM | Bootloader | `0x000000` | 16 KiB | 只读 |
+| 片内 EFM | IAP | `0x004000` | 112 KiB | 读写擦 |
+| W25Q64 | Staging | `0x000000` | 128 KiB | 读写擦 |
+| W25Q64 | Metadata A | `0x020000` | 4 KiB | 读写擦 |
+| W25Q64 | Metadata B | `0x021000` | 4 KiB | 读写擦 |
+| W25Q64 | Layout | `0x022000` | 4 KiB | 只读 |
+
+Bootloader 使用独立 USART2 链路，PC10 为 TX、PC4 为 RX，波特率为 921600。最小中断入口只保留 SysTick，USART 初始化直接配置固定时钟下的寄存器参数，GCC 使用 `-Os` 与 LTO，Keil 使用 Link-Time Optimization。GCC 和 Keil 工程均链接到 16 KiB Bootloader 区，链接区域本身构成固件大小上限；默认升级模式为暂存升级，GCC 构建参数 `UPGRADE_MODE=direct` 生成直接升级配置，`W25Q_SELF_TEST=1` 启用启动阶段 W25Q64 硬件自检。
+
+IAP 只挂载 `0x08` 升级触发服务。服务执行弱定义的 `hc32_iap_update_prepare()` 用户回调，将升级原因写入保留 SRAM，等待 USART2 DMA 与发送移位寄存器空闲后执行系统复位。GCC 构建生成带 34 字节 FRAME footer 的 `hc32f334_ac_update.bin`。
