@@ -1,0 +1,25 @@
+; *************************************************************
+; HC32F334 Bootloader scatter-loading description file
+; *************************************************************
+LR_IROM1 0x00000000 0x00004000  {
+    ER_IROM1 0x00000000 0x00004000  {
+        *.o (RESET, +First)
+        *(InRoot$$Sections)
+        .ANY (+RO)
+        .ANY (+XO)
+    }
+    SECTION AlignExpr(+0, 4)  {
+        *(section)
+    }
+    RW_IRAM1 0x1FFFC000 UNINIT 0x00000010  {
+        *(.bss.noinit)
+        *(.noinit*)
+    }
+    RW_IRAM2 0x1FFFC010 0x00007FF0  {
+        .ANY (+RW +ZI)
+        .ANY (RAMCODE)
+    }
+    RW_IRAMB 0x200F0000 0x00001000  {
+        .ANY (+RW +ZI)
+    }
+}

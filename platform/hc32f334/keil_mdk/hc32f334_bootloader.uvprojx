@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>hc32f334_ac</TargetName>
+      <TargetName>hc32f334_bootloader</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pArmCC>6240000::V6.24::ARMCLANG</pArmCC>
@@ -19,7 +19,7 @@
           <Vendor>HDSC</Vendor>
           <PackID>HDSC.HC32F334.1.0.0</PackID>
           <PackURL>https://raw.githubusercontent.com/hdscmcu/pack/master/</PackURL>
-          <Cpu>IROM1(0x00004000,0x1C000) IROM2(0x03000000,0x1800) IRAM1(0x1FFFC000,0x8000) IRAM2(0x200F0000,0x1000) CPUTYPE("Cortex-M4") FPU2 CLOCK(8000000) ESEL ELITTLE</Cpu>
+          <Cpu>IROM1(0x00000000,0x4000) IROM2(0x03000000,0x1800) IRAM1(0x1FFFC000,0x8000) IRAM2(0x200F0000,0x1000) CPUTYPE("Cortex-M4") FPU2 CLOCK(8000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
           <FlashDriverDll>CMSIS_AGDI(-S0 -C0 -P00 -FO15 -FD1FFFC000 -FC4000 -FN2 -FF0HC32F334_128K -FS00 -FL0020000 -FP0($$Device:HC32F334PETB$FlashARM\HC32F334_128K.FLM) -FF1HC32F334_otp -FS13000000 -FL11800 -FP1($$Device:HC32F334KATI$FlashARM\HC32F334_otp.FLM))</FlashDriverDll>
@@ -49,8 +49,8 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\output\</OutputDirectory>
-          <OutputName>hc32f334_ac</OutputName>
+          <OutputDirectory>.\output_bootloader\</OutputDirectory>
+          <OutputName>hc32f334_bootloader</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -334,14 +334,14 @@
             <v6LangP>3</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
-            <v6Lto>0</v6Lto>
+            <v6Lto>1</v6Lto>
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_IAP,IS_AC,APP_START_ADDR=0x00004000,VECT_TAB_OFFSET=0x00004000</Define>
+              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,APP_START_ADDR=0,VECT_TAB_OFFSET=0,HC32F334_IAP_BASE=0x00004000UL,HC32_BOOT_W25Q64_SELF_TEST=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader</IncludePath>
+              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\dbg;..\..\..\code\interface\fal;..\..\..\code\interface\common;..\..\..\code\app\bootloader</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -369,10 +369,10 @@
             <noStLib>0</noStLib>
             <RepFail>1</RepFail>
             <useFile>0</useFile>
-            <TextAddressRange>0x4000</TextAddressRange>
+            <TextAddressRange>0x0</TextAddressRange>
             <DataAddressRange>0x1FFFC000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\config\linker\HC32F334xA.sct</ScatterFile>
+            <ScatterFile>.\config\linker\HC32F334_bootloader.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc>--keep=*Handler</Misc>
@@ -383,190 +383,57 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Readme</GroupName>
-        </Group>
-        <Group>
-          <GroupName>cmsis</GroupName>
-          <Files>
-            <File>
-              <FileName>startup_hc32f334.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\startup_hc32f334.s</FilePath>
-            </File>
-            <File>
-              <FileName>system_hc32f334.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\CMSIS\HDSC\hc32f3xx\Source\system_hc32f334.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>source</GroupName>
+          <GroupName>bootloader</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\main.c</FilePath>
+              <FilePath>..\bootloader\main.c</FilePath>
+            </File>
+            <File>
+              <FileName>boot_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\boot_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>boot_comm_link.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\boot_comm_link.c</FilePath>
+            </File>
+            <File>
+              <FileName>hc32_boot_platform.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\hc32_boot_platform.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal_cfg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\fal_cfg.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>app</GroupName>
+          <GroupName>platform</GroupName>
           <Files>
             <File>
-              <FileName>demo.c</FileName>
+              <FileName>hc32_boot_handoff.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
+              <FilePath>..\src\hc32_boot_handoff.c</FilePath>
             </File>
-            <File>
-              <FileName>demo_comm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_comm.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_interrupt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_interrupt.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_perf.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_perf.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_scope.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_scope.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_sfra.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_sfra.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_shell.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_shell.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>demo_trace.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_trace.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>bsp</GroupName>
-          <Files>
             <File>
               <FileName>bsp_clk.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\bsp\bsp_clk.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_gpio.c</FileName>
+              <FileName>bsp_efm_flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_gpio.c</FilePath>
+              <FilePath>..\bsp\bsp_efm_flash.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_pwm.c</FileName>
+              <FileName>bsp_w25q64.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_pwm.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_can.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_can.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_timer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\bsp\bsp_timer.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>interface</GroupName>
-          <Files>
-            <File>
-              <FileName>gpio.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\gpio.c</FilePath>
-            </File>
-            <File>
-              <FileName>pwm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\pwm.c</FilePath>
-            </File>
-            <File>
-              <FileName>comm_link.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\comm_link.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>section</GroupName>
-          <Files>
-            <File>
-              <FileName>section.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\section\srtos_m\section.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>comm</GroupName>
-          <Files>
-            <File>
-              <FileName>comm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\comm\comm.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>lib</GroupName>
-          <Files>
-            <File>
-              <FileName>record_dict.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\lib\record_dict.c</FilePath>
-            </File>
-            <File>
-              <FileName>pi_tustin.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\lib\pi_tustin.c</FilePath>
-            </File>
-            <File>
-              <FileName>dft.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\lib\dft.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>runtime</GroupName>
-          <Files>
-            <File>
-              <FileName>hc32f334_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\hc32f334_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>syscalls.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\syscalls.c</FilePath>
+              <FilePath>..\bsp\bsp_w25q64.c</FilePath>
             </File>
             <File>
               <FileName>systick.c</FileName>
@@ -574,39 +441,79 @@
               <FilePath>..\src\systick.c</FilePath>
             </File>
             <File>
-              <FileName>hc32_boot_handoff.c</FileName>
+              <FileName>boot_interrupt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\hc32_boot_handoff.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_iap_update_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\hc32_iap_update_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>iap_boot_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\iap_boot_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>iap_section_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\iap_section_service.c</FilePath>
+              <FilePath>..\bootloader\boot_interrupt.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>driver</GroupName>
+          <GroupName>core</GroupName>
           <Files>
+            <File>
+              <FileName>section.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\section\baremetal\section.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\comm\comm.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\interface\fal\fal_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\bootloader\bootloader_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader_fal_adapter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\bootloader\bootloader_fal_adapter.c</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader_metadata.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\bootloader\bootloader_metadata.c</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader_protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\bootloader\bootloader_protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader_section_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\bootloader\bootloader_section_service.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>startup</GroupName>
+          <Files>
+            <File>
+              <FileName>startup_hc32f334.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\startup_hc32f334.s</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>vendor</GroupName>
+          <Files>
+            <File>
+              <FileName>system_hc32f334.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Firmware\CMSIS\HDSC\hc32f3xx\Source\system_hc32f334.c</FilePath>
+            </File>
             <File>
               <FileName>hc32_ll.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_adc.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_aos.c</FileName>
@@ -619,31 +526,6 @@
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_clk.c</FilePath>
             </File>
             <File>
-              <FileName>hc32_ll_cmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_cmp.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_crc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_crc.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_ctc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_ctc.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_dac.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_dac.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_dbgc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_dbgc.c</FilePath>
-            </File>
-            <File>
               <FileName>hc32_ll_dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_dma.c</FilePath>
@@ -654,24 +536,9 @@
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_efm.c</FilePath>
             </File>
             <File>
-              <FileName>hc32_ll_emb.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_emb.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_event_port.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_event_port.c</FilePath>
-            </File>
-            <File>
               <FileName>hc32_ll_fcg.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_fcg.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_fcm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_fcm.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_gpio.c</FileName>
@@ -679,84 +546,14 @@
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_gpio.c</FilePath>
             </File>
             <File>
-              <FileName>hc32_ll_hrpwm.c</FileName>
+              <FileName>hc32_ll_icg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_hrpwm.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_i2c.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_interrupts.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_interrupts.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_mcan.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_mcan.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_mpu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_mpu.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_pla.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_pla.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_pwc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_pwc.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_rmu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_rmu.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_rtc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_rtc.c</FilePath>
+              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_icg.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_spi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_sram.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_sram.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_swdt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_swdt.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_tmr0.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr0.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_tmr4.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr4.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_tmr6.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmr6.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_tmra.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_tmra.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_usart.c</FileName>
@@ -767,66 +564,6 @@
               <FileName>hc32_ll_utility.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_utility.c</FilePath>
-            </File>
-            <File>
-              <FileName>hc32_ll_wdt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_wdt.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>dbg</GroupName>
-          <Files>
-            <File>
-              <FileName>perf.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\perf.c</FilePath>
-            </File>
-            <File>
-              <FileName>perf_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\perf_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>scope.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\scope.c</FilePath>
-            </File>
-            <File>
-              <FileName>scope_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\scope_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>shell.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\shell.c</FilePath>
-            </File>
-            <File>
-              <FileName>shell_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\shell_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>sfra.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\sfra.c</FilePath>
-            </File>
-            <File>
-              <FileName>sfra_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\sfra_service.c</FilePath>
-            </File>
-            <File>
-              <FileName>trace.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\trace.c</FilePath>
-            </File>
-            <File>
-              <FileName>trace_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\dbg\trace_service.c</FilePath>
             </File>
           </Files>
         </Group>
