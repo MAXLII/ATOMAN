@@ -69,6 +69,7 @@ int32_t bsp_usart_init(void);
 void bsp_usart_dbg_printf(const char *format, ...);
 void bsp_usart_dbg_tx(char *data, int length);
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *data);
+uint8_t bsp_usart_dbg_tx_is_idle(void);
 
 int32_t bsp_usart_pl_init(void);
 int32_t bsp_usart_pl_configure(const bsp_usart_pl_config_t *config);

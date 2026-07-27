@@ -227,6 +227,18 @@ uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *data)
     return 1U;
 }
 
+uint8_t bsp_usart_dbg_tx_is_idle(void)
+{
+    if (s_uart_initialized == 0U)
+    {
+        return 0U;
+    }
+    return ((XUartPs_ReadReg(XPAR_XUARTPS_0_BASEADDR, XUARTPS_SR_OFFSET) &
+             XUARTPS_SR_TXEMPTY) != 0U)
+               ? 1U
+               : 0U;
+}
+
 int32_t bsp_usart_pl_configure(const bsp_usart_pl_config_t *config)
 {
     uint32_t uart_config = 0U; /* Encoded data, parity, and stop fields. */
