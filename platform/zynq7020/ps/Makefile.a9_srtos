@@ -20,6 +20,8 @@ C_SOURCES := \
 ./src/main.c \
 ./src/platform_probe.c \
 ./src/zero_player_oled.c \
+./src/zynq_iap_update_service.c \
+./src/zynq_boot_handoff.c \
 $(PROJECT_ROOT)/code/section/srtos_a9/section.c \
 ./srtos/a9_section_control.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
@@ -44,6 +46,8 @@ $(PROJECT_ROOT)/code/app/demo/demo_sfra.c \
 $(PROJECT_ROOT)/code/app/demo/demo_shell.c \
 $(PROJECT_ROOT)/code/app/demo/demo_task.c \
 $(PROJECT_ROOT)/code/app/demo/demo_trace.c \
+$(PROJECT_ROOT)/code/app/bootloader/iap_boot_service.c \
+$(PROJECT_ROOT)/code/app/bootloader/iap_section_service.c \
 $(PROJECT_ROOT)/code/lib/dft.c \
 $(PROJECT_ROOT)/code/lib/pi_tustin.c \
 $(PROJECT_ROOT)/code/lib/pr.c \
@@ -64,6 +68,7 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/interface/common \
 -I$(PROJECT_ROOT)/code/app \
 -I$(PROJECT_ROOT)/code/app/demo \
+-I$(PROJECT_ROOT)/code/app/bootloader \
 -I$(PROJECT_ROOT)/code/lib \
 -isystem $(BSP_INCLUDE)
 
