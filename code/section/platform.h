@@ -299,6 +299,7 @@ extern uint32_t __section_end;
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 33333UL
 #define PLATFORM_COMM_LINK_ENABLE_ISO 0u
 #define PLATFORM_COMM_LINK_ENABLE_CAN 0u
+#define PLATFORM_COMM_LINK_ENABLE_PL 1u
 #define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 0UL
 #define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
 #define __STREXB(value, address) \
@@ -422,6 +423,10 @@ extern uint32_t __section_end;
 
 #ifndef PLATFORM_COMM_LINK_ENABLE_CAN
 #define PLATFORM_COMM_LINK_ENABLE_CAN 1u
+#endif
+
+#ifndef PLATFORM_COMM_LINK_ENABLE_PL
+#define PLATFORM_COMM_LINK_ENABLE_PL 0u
 #endif
 
 #ifndef PLATFORM_CTRL_PWM_TIMER_FREQ_HZ
