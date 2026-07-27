@@ -1,7 +1,7 @@
-PROJECT_FW_TYPE = ISP
+PROJECT_FW_TYPE = IAP
 PROJECT_MCU = HC32F334
 PROJECT_TOOLCHAIN = GCC
-PROJECT_APP_START_ADDR = 0x00000000
+PROJECT_APP_START_ADDR = 0x00004000
 LD_SCRIPT = ./HC32F334xA.ld
 PROJECT_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 
@@ -18,6 +18,10 @@ TARGET = hc32f334_ac
 DEBUG ?= 1
 OPT ?= -O2
 BUILD_DIR ?= build
+HOST_CC ?= gcc
+FW_INFO_SOURCE = ../../gd32g553c/tools/fw_info/fw_info.c
+FW_INFO_HEADER = ../../gd32g553c/tools/fw_info/fw_info.h
+FW_INFO_TOOL = $(BUILD_DIR)/hc32_fw_info.exe
 
 PROJECT_SOURCES = \
 ../src/main.c \
@@ -30,6 +34,8 @@ PROJECT_SOURCES = \
 ../src/hc32f334_it.c \
 ../src/syscalls.c \
 ../src/systick.c \
+../src/hc32_boot_handoff.c \
+../src/hc32_iap_update_service.c \
 ../../../code/app/demo/demo.c \
 ../../../code/app/demo/demo_comm.c \
 ../../../code/app/demo/demo_interrupt.c \
@@ -39,6 +45,8 @@ PROJECT_SOURCES = \
 ../../../code/app/demo/demo_shell.c \
 ../../../code/app/demo/demo_task.c \
 ../../../code/app/demo/demo_trace.c \
+../../../code/app/bootloader/iap_boot_service.c \
+../../../code/app/bootloader/iap_section_service.c \
 ../../../code/interface/ac/gpio.c \
 ../../../code/interface/ac/pwm.c \
 ../../../code/interface/ac/comm_link.c \
@@ -92,6 +100,7 @@ C_INCLUDES = \
 -I../Firmware/HC32_LL_Driver/inc \
 -I../../../code/app \
 -I../../../code/app/demo \
+-I../../../code/app/bootloader \
 -I../../../code/section/srtos_m \
 -I../../../code/section \
 -I../../../code/comm \
@@ -130,7 +139,7 @@ vpath %.c $(sort $(dir $(PROJECT_SOURCES)))
 vpath %.c $(sort $(dir $(VENDOR_SOURCES)))
 vpath %.S $(sort $(dir $(ASM_SOURCES)))
 
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET)_update.bin
 
 # The vendor DDL assert macro compiles out its only reads of these local values.
 $(BUILD_DIR)/project/bsp_usart.o: PROJECT_CFLAGS += -Wno-unused-but-set-variable
@@ -155,6 +164,12 @@ $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
 
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 	$(BIN) $< $@
+
+$(FW_INFO_TOOL): $(FW_INFO_SOURCE) $(FW_INFO_HEADER) | $(BUILD_DIR)
+	$(HOST_CC) -std=gnu11 -DIS_LLC -DFIRMWARE_TYPE_IAP $< -o $@
+
+$(BUILD_DIR)/$(TARGET)_update.bin: $(BUILD_DIR)/$(TARGET).bin $(FW_INFO_TOOL)
+	$(FW_INFO_TOOL) $< $@
 
 $(BUILD_DIR) $(BUILD_DIR)/project $(BUILD_DIR)/vendor $(BUILD_DIR)/startup:
 ifeq ($(OS),Windows_NT)
