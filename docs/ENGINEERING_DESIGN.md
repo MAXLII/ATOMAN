@@ -20,11 +20,11 @@
 
 ```
 code/
-├── app/           应用层（PFC、LLC、逆变器、AC 等）
+├── app/           应用层（Bootloader、PFC、LLC、逆变器、AC 等）
 ├── comm/          通信模块
 ├── ctrl/          控制算法（PFC、逆变器、BB 等）
 ├── dbg/           调试与监控模块
-├── interface/     硬件接口层
+├── interface/     平台接口层与 FAL Flash 管理核心
 ├── lib/           控制算法库（PID、SOGI、锁相环等）
 └── section/       模块注册与链接框架
     ├── baremetal/ 裸机 section.c/.h
@@ -38,6 +38,7 @@ platform/
 ├── hc32f558/       HC32F558 MCU 工程
 ├── zynq7020/       Zynq-7020 PS+PL 工程
 │   ├── ps/         ARM 软件、BSP、构建、下载和板测工程
+│   │   └── bootloader/ 独立 Bootloader 构建、Zynq FAL cfg 与启动镜像生成
 │   └── pl/         Vivado 硬件平台、IP、约束和 PL 自测工程
 ├── matlab/         MATLAB 工程
 └── plecs/          PLECS 工程
@@ -56,7 +57,7 @@ GCC 工程与 MDK 工程引用相同的 AC BSP、公共代码和 HC32 LL 驱动�
 
 两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
-Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/` 中每个 IP 使用独立目录，`src/` 保存可综合 RTL，`sim/` 保存 SystemVerilog 自检、仿真与 OOC 综合脚本，`doc/design/`、`doc/test/`、`doc/application/` 分别保存设计、测试和应用文档。`verilog/iir/` 实现 3P3Z IIR core 和 AXI4-Lite 外设封装；`verilog/uart_dma/` 实现可配置 UART、AXI4-Lite 控制和 AXI Master DDR 环形 DMA；`verilog/oled_dma/` 实现 OLED 寄存器、DDR 帧 DMA、快照 RAM、SSD1306 协议层和串行 PHY。`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、M_AXI_GP0、S_AXI_HP0、AXI GPIO、自定义 AXI IIR、PL UART DMA、PL OLED DMA、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、PL UART DMA、OLED framebuffer DMA、共享 GIC、定时器、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口、自主测试和 Zero Player OLED 映射。
+Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/` 中每个 IP 使用独立目录，`src/` 保存可综合 RTL，`sim/` 保存 SystemVerilog 自检、仿真与 OOC 综合脚本，`doc/design/`、`doc/test/`、`doc/application/` 分别保存设计、测试和应用文档。`verilog/iir/` 实现 3P3Z IIR core 和 AXI4-Lite 外设封装；`verilog/uart_dma/` 实现可配置 UART、AXI4-Lite 控制和 AXI Master DDR 环形 DMA；`verilog/oled_dma/` 实现 OLED 寄存器、DDR 帧 DMA、快照 RAM、SSD1306 协议层和串行 PHY。`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、QSPI、M_AXI_GP0、S_AXI_HP0、AXI GPIO、自定义 AXI IIR、PL UART DMA、PL OLED DMA、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、PS QSPI Flash、PL UART DMA、OLED framebuffer DMA、共享 GIC、定时器、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口、自主测试、IAP 升级入口、Bootloader 跳转和 Zero Player OLED 映射；`ps/bootloader/` 保存独立 Bootloader 入口、FAL 平台配置、通信链路、BSP/FSBL 生成和 `BOOT.bin` 打包脚本。
 
 Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`ps/compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录，`ps/download.ps1` 使用 `pl/build/output/` 中的硬件产物完成配置和固件下载。COM6 使用 PS UART1 MIO48/MIO49；COM7 使用 Bank 34 的 W15 RX 和 U15 TX。两端均运行 921600 8N1。PL UART RX/TX ring 位于 `0x1FF00000` 和 `0x1FF10000`，OLED framebuffer位于 `0x1FF20000`，均由BSP以non-cacheable属性访问。Bank 35的E18、E19、F16、F17由PL OLED协议层和串行PHY驱动，`code/app/zero_player.c` 的30x31棋盘缩放至完整128x64区域。
 
@@ -389,3 +390,36 @@ HC32F334 AC 平台提供两套当前可编译工程：Keil MDK 使用 ARM Compil
 | `PERF_CODE_ENABLE` | perf | 1u | 关闭 `PERF_START`/`PERF_END` 插桩 |
 | `PERF_TASK_ENABLE` | perf | 1u | 关闭任务自动测量 |
 | `PERF_INTERRUPT_ENABLE` | perf | 1u | 关闭中断自动测量 |
+
+## 10. Flash 抽象层（`code/interface/fal/`）
+
+FAL Core 使用调用方持有的 `fal_t` 管理单个异步 Flash 操作。`fal_cfg_t` 挂载物理设备表和逻辑分区表，每个设备通过 `fal_flash_ops_t` 绑定初始化、状态查询、读取、编程、擦除和可选同步操作。Core 根据设备配置的最大读取长度、program page 和 erase block 推进有限步状态机，并进行设备、分区、权限、重叠、边界和整数溢出检查。
+
+平台 cfg 定义设备 ID、分区 ID、geometry、权限与底层驱动。逻辑地址按分区设备偏移转换为物理 Flash 地址。`g_fal_api` 提供可挂载 API 表，供适配层或测试替换。FAL Core 不注册调度任务，调用方通过 `fal_process()` 推进操作。
+
+`mingw/fal_core/` 使用 fake cfg 和 fake Flash 验证多设备地址换算、读写擦分段、权限与非法配置、设备 busy/失败、停止请求和多实例隔离。
+
+## 11. Bootloader（`code/app/bootloader/`）
+
+Bootloader Core 通过 `bootloader_flash_ops_t` 访问 IAP、暂存区、元数据 A/B 和布局区。`bootloader_fal_adapter` 将这些逻辑区映射到挂载的 `fal_api_t`，并转换 FAL 返回结果。Bootloader 自身区域不出现在逻辑区枚举和映射表中。
+
+Core 支持直接升级和暂存升级。直接升级在写入目标区前使 IAP 失效；暂存升级先完成分包 CRC、整包 CRC16 与 34 字节 footer 校验，再按擦除块复制至目标区并读回校验。footer 校验覆盖固件类型、版本、文件长度、模块 ID 和 footer CRC32。双份元数据使用序列号、记录 CRC 和提交标记保存下载与复制进度，启动时选择有效的新记录恢复未完成的暂存安装。无有效 IAP、存在升级请求、升级失败或 Flash 连续失败时，状态机停留在 Bootloader；有效 IAP 且无升级需求时通过平台跳转接口启动应用。
+
+`bootloader_protocol` 实现 `0x08`、`0x09`、`0x0A`、`0x0B` 升级命令，数据块使用 1024 字节包络。`bootloader_section_service` 注册 Bootloader 通信和周期任务。`iap_boot_service` 与 `iap_section_service` 只处理 IAP 环境中的 `0x08`，依次执行用户 prepare 回调、写入启动原因、等待 ACK 发送完成和进入 Bootloader。
+
+`mingw/bootloader_core/` 使用 fake Flash、fake FAL API 和 fake 平台接口验证启动判断、两种升级方式、重复数据包、失败重试、断电恢复、元数据切换、协议校验、逻辑分区映射和多层接口隔离。
+
+## 12. Zynq-7020 Bootloader 集成
+
+Zynq-7020 使用 16 MiB PS QSPI Flash，program page 为 256 字节，erase block 为 64 KiB。当前连续分区为：
+
+| 区域 | 起始偏移 | 大小 | 权限 |
+|------|---------:|-----:|------|
+| Boot image | `0x000000` | 5 MiB | 只读 |
+| IAP | `0x500000` | 3 MiB | 读写擦 |
+| Staging | `0x800000` | 3 MiB | 读写擦 |
+| Metadata A | `0xB00000` | 64 KiB | 读写擦 |
+| Metadata B | `0xB10000` | 64 KiB | 读写擦 |
+| Layout | `0xB20000` | 64 KiB | 只读 |
+
+独立 Bootloader 链接到 DDR `0x04000000`，IAP 链接到 `0x00100000`，PL DMA 区从 `0x1FF00000` 开始。`build_boot_image.ps1` 从当前 HDF 自动生成 FSBL，并将 FSBL、bitstream 与 Bootloader ELF 打包为 `BOOT.bin`；脚本检查镜像不超过 5 MiB 启动分区并输出 64 KiB 擦除边界对齐后的实际占用。IAP 与 Bootloader 通过 OCM 保留记录传递升级启动原因。
