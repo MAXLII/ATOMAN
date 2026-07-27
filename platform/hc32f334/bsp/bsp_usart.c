@@ -35,10 +35,10 @@
 #define BSP_USART2_UNIT (CM_USART2)
 #define BSP_USART2_FCG (FCG3_PERIPH_USART2)
 
-#define BSP_USART2_TX_PORT (GPIO_PORT_B)
-#define BSP_USART2_TX_PIN (GPIO_PIN_04)
-#define BSP_USART2_RX_PORT (GPIO_PORT_B)
-#define BSP_USART2_RX_PIN (GPIO_PIN_05)
+#define BSP_USART2_TX_PORT (GPIO_PORT_C)
+#define BSP_USART2_TX_PIN (GPIO_PIN_10)
+#define BSP_USART2_RX_PORT (GPIO_PORT_C)
+#define BSP_USART2_RX_PIN (GPIO_PIN_04)
 #define BSP_USART2_PORT_FUNC (GPIO_FUNC_36)
 
 #define BSP_USART2_BAUDRATE (921600UL)
@@ -773,6 +773,16 @@ void bsp_usart_iso_printf(const char *__format, ...)
 uint8_t bsp_usart_iso_rx_get_byte(uint8_t *p_data)
 {
     return (LL_OK == bsp_usart2_read_byte(p_data)) ? 1U : 0U;
+}
+
+uint8_t bsp_usart_iso_tx_is_idle(void)
+{
+    bsp_usart_tx_dma_service(&s_bsp_usart2_ctx, &s_bsp_usart2_cfg);
+    return (uint8_t)((s_bsp_usart2_ctx.tx_ring_head == s_bsp_usart2_ctx.tx_ring_tail) &&
+                     (0U == s_bsp_usart2_ctx.tx_dma_busy) &&
+                     (0U != bsp_usart_tx_dma_chstat_is_idle(s_bsp_usart2_cfg.tx_dma_unit,
+                                                            s_bsp_usart2_cfg.tx_dma_chstat_busy_mask)) &&
+                     (SET == USART_GetStatus(s_bsp_usart2_cfg.unit, USART_FLAG_TX_CPLT)));
 }
 
 static int32_t bsp_usart1_read_byte(uint8_t *data)
