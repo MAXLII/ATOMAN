@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 
-set "DEFAULT_HEX=output\hc32f334_ac.hex"
+set "DEFAULT_HEX=output_isp\hc32f334_ac_isp.hex"
 set "DOWNLOAD_FAILED=1"
 
 if /I "%~1"=="-h" goto show_usage
@@ -183,7 +183,7 @@ echo   RUN_AFTER_DOWNLOAD=0  Skip the extra J-Link go command.
 exit /b 0
 
 :create_flash_project
-powershell.exe -NoLogo -NoProfile -NonInteractive -Command "try { $utf8 = [System.Text.UTF8Encoding]::new($false); $outputDirectory = [System.Security.SecurityElement]::Escape((Split-Path -Parent $env:FILE_PATH) + '\'); $outputName = [System.Security.SecurityElement]::Escape([System.IO.Path]::GetFileName($env:FILE_PATH)); $project = [System.IO.File]::ReadAllText($env:TEMPLATE_PROJECT, $utf8); $project = $project.Replace('<TargetName>hc32f334_ac</TargetName>', '<TargetName>' + $env:KEIL_TARGET + '</TargetName>'); $project = $project.Replace('<OutputDirectory>.\output\</OutputDirectory>', '<OutputDirectory>' + $outputDirectory + '</OutputDirectory>'); $project = $project.Replace('<OutputName>hc32f334_ac</OutputName>', '<OutputName>' + $outputName + '</OutputName>'); $project = $project.Replace('<InvalidFlash>1</InvalidFlash>', '<InvalidFlash>0</InvalidFlash>'); $project = $project.Replace('<Flash4>.\config\debug_init.ini</Flash4>', '<Flash4></Flash4>'); [System.IO.File]::WriteAllText($env:KEIL_PROJECT, $project, $utf8); $options = [System.IO.File]::ReadAllText($env:TEMPLATE_OPTIONS, $utf8); $options = $options.Replace('<TargetName>hc32f334_ac</TargetName>', '<TargetName>' + $env:KEIL_TARGET + '</TargetName>'); [System.IO.File]::WriteAllText($env:KEIL_OPTIONS, $options, $utf8); exit 0 } catch { Write-Error $_; exit 1 }"
+powershell.exe -NoLogo -NoProfile -NonInteractive -Command "try { $utf8 = [System.Text.UTF8Encoding]::new($false); $outputDirectory = [System.Security.SecurityElement]::Escape((Split-Path -Parent $env:FILE_PATH) + '\'); $outputName = [System.Security.SecurityElement]::Escape([System.IO.Path]::GetFileName($env:FILE_PATH)); $project = [System.IO.File]::ReadAllText($env:TEMPLATE_PROJECT, $utf8); $project = $project.Replace('<TargetName>ISP</TargetName>', '<TargetName>' + $env:KEIL_TARGET + '</TargetName>'); $project = $project.Replace('<OutputDirectory>.\output_isp\</OutputDirectory>', '<OutputDirectory>' + $outputDirectory + '</OutputDirectory>'); $project = $project.Replace('<OutputName>hc32f334_ac_isp</OutputName>', '<OutputName>' + $outputName + '</OutputName>'); $project = $project.Replace('<InvalidFlash>1</InvalidFlash>', '<InvalidFlash>0</InvalidFlash>'); $project = $project.Replace('<Flash4>.\config\debug_init.ini</Flash4>', '<Flash4></Flash4>'); [System.IO.File]::WriteAllText($env:KEIL_PROJECT, $project, $utf8); $options = [System.IO.File]::ReadAllText($env:TEMPLATE_OPTIONS, $utf8); $options = $options.Replace('<TargetName>ISP</TargetName>', '<TargetName>' + $env:KEIL_TARGET + '</TargetName>'); [System.IO.File]::WriteAllText($env:KEIL_OPTIONS, $options, $utf8); exit 0 } catch { Write-Error $_; exit 1 }"
 exit /b %ERRORLEVEL%
 
 :cleanup_flash_project

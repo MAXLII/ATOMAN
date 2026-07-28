@@ -1,23 +1,38 @@
-PROJECT_FW_TYPE = IAP
 PROJECT_MCU = HC32F334
 PROJECT_TOOLCHAIN = GCC
-PROJECT_APP_START_ADDR = 0x00004000
-LD_SCRIPT = ./HC32F334xA.ld
 PROJECT_MAKEFILE := $(lastword $(MAKEFILE_LIST))
+BUILD_TARGET ?= isp
+IS_IAP = 0
+
+ifeq ($(BUILD_TARGET),iap)
+IS_IAP = 1
+LD_SCRIPT = ./HC32F334xA.ld
+else ifeq ($(BUILD_TARGET),isp)
+LD_SCRIPT = ./HC32F334_isp.ld
+else
+$(error Unsupported BUILD_TARGET '$(BUILD_TARGET)'; use isp or iap)
+endif
+
+ifeq ($(IS_IAP),1)
+PROJECT_TARGET_DEFINES = -DIS_IAP
+IAP_SOURCES = ../../../code/app/bootloader/iap_update_service.c
+else
+PROJECT_TARGET_DEFINES = -DFIRMWARE_TYPE_ISP
+IAP_SOURCES =
+endif
 
 PROJECT_DEFINES = -D$(PROJECT_MCU) \
                   -DIS_$(PROJECT_MCU) \
                   -DTOOLCHAIN_$(PROJECT_TOOLCHAIN) \
                   -DUSE_DDL_DRIVER \
-                  -DFIRMWARE_TYPE_$(PROJECT_FW_TYPE) \
                   -DIS_AC \
-                  -DAPP_START_ADDR=$(PROJECT_APP_START_ADDR) \
-                  -DVECT_TAB_OFFSET=$(PROJECT_APP_START_ADDR)
+                  $(PROJECT_TARGET_DEFINES)
 
-TARGET = hc32f334_ac
+TARGET = hc32f334_ac_$(BUILD_TARGET)
 DEBUG ?= 1
 OPT ?= -O2
-BUILD_DIR ?= build
+BUILD_ROOT ?= build
+BUILD_DIR = $(BUILD_ROOT)/$(BUILD_TARGET)
 HOST_CC ?= gcc
 FW_INFO_SOURCE = ../../gd32g553c/tools/fw_info/fw_info.c
 FW_INFO_HEADER = ../../gd32g553c/tools/fw_info/fw_info.h
@@ -34,8 +49,6 @@ PROJECT_SOURCES = \
 ../src/hc32f334_it.c \
 ../src/syscalls.c \
 ../src/systick.c \
-../src/hc32_boot_handoff.c \
-../src/hc32_iap_update_service.c \
 ../../../code/app/demo/demo.c \
 ../../../code/app/demo/demo_comm.c \
 ../../../code/app/demo/demo_interrupt.c \
@@ -45,8 +58,6 @@ PROJECT_SOURCES = \
 ../../../code/app/demo/demo_shell.c \
 ../../../code/app/demo/demo_task.c \
 ../../../code/app/demo/demo_trace.c \
-../../../code/app/bootloader/iap_boot_service.c \
-../../../code/app/bootloader/iap_section_service.c \
 ../../../code/interface/ac/gpio.c \
 ../../../code/interface/ac/pwm.c \
 ../../../code/interface/ac/comm_link.c \
@@ -65,6 +76,8 @@ PROJECT_SOURCES = \
 ../../../code/dbg/sfra_service.c \
 ../../../code/dbg/trace.c \
 ../../../code/dbg/trace_service.c
+
+PROJECT_SOURCES += $(IAP_SOURCES)
 
 VENDOR_SOURCES = \
 ../Firmware/CMSIS/HDSC/hc32f3xx/Source/system_hc32f334.c \
@@ -139,7 +152,14 @@ vpath %.c $(sort $(dir $(PROJECT_SOURCES)))
 vpath %.c $(sort $(dir $(VENDOR_SOURCES)))
 vpath %.S $(sort $(dir $(ASM_SOURCES)))
 
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET)_update.bin
+TARGET_OUTPUTS = $(BUILD_DIR)/$(TARGET).elf \
+                 $(BUILD_DIR)/$(TARGET).hex \
+                 $(BUILD_DIR)/$(TARGET).bin
+ifeq ($(BUILD_TARGET),iap)
+TARGET_OUTPUTS += $(BUILD_DIR)/hc32f334_ac_update_iap.bin
+endif
+
+all: $(TARGET_OUTPUTS)
 
 # The vendor DDL assert macro compiles out its only reads of these local values.
 $(BUILD_DIR)/project/bsp_usart.o: PROJECT_CFLAGS += -Wno-unused-but-set-variable
@@ -166,9 +186,9 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 	$(BIN) $< $@
 
 $(FW_INFO_TOOL): $(FW_INFO_SOURCE) $(FW_INFO_HEADER) | $(BUILD_DIR)
-	$(HOST_CC) -std=gnu11 -DIS_LLC -DFIRMWARE_TYPE_IAP $< -o $@
+	$(HOST_CC) -std=gnu11 -DIS_LLC -DIS_IAP $< -o $@
 
-$(BUILD_DIR)/$(TARGET)_update.bin: $(BUILD_DIR)/$(TARGET).bin $(FW_INFO_TOOL)
+$(BUILD_DIR)/hc32f334_ac_update_iap.bin: $(BUILD_DIR)/$(TARGET).bin $(FW_INFO_TOOL)
 	$(FW_INFO_TOOL) $< $@
 
 $(BUILD_DIR) $(BUILD_DIR)/project $(BUILD_DIR)/vendor $(BUILD_DIR)/startup:
