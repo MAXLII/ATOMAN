@@ -30,8 +30,42 @@
 #include "fal_cfg.h"
 
 #include "bsp_qspi_flash.h"
+#include "section.h"
 
 #include <stddef.h>
+
+static const fal_zone_cfg_t s_qspi_zones[] = {
+    {
+        .zone_id = FAL_ZONE_ZYNQ_BOOT,
+        .size = ZYNQ7020_QSPI_BOOT_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_READ,
+    },
+    {
+        .zone_id = FAL_ZONE_ZYNQ_IAP,
+        .size = ZYNQ7020_QSPI_IAP_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_ZYNQ_IAP_STAGING,
+        .size = ZYNQ7020_QSPI_STAGING_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_ZYNQ_UPDATE_META_A,
+        .size = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_ZYNQ_UPDATE_META_B,
+        .size = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_ZYNQ_LAYOUT,
+        .size = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_READ,
+    },
+};
 
 static const fal_device_cfg_t s_devices[] = {
     {
@@ -40,6 +74,8 @@ static const fal_device_cfg_t s_devices[] = {
         .program_page_size = BSP_QSPI_FLASH_PAGE_SIZE,
         .erase_block_size = BSP_QSPI_FLASH_ERASE_SIZE,
         .max_read_size = BSP_QSPI_FLASH_MAX_READ,
+        .p_zones = s_qspi_zones,
+        .zone_count = (uint16_t)(sizeof(s_qspi_zones) / sizeof(s_qspi_zones[0])),
         .ops = {
             .p_context = NULL,
             .p_init = bsp_qspi_flash_init,
@@ -52,33 +88,28 @@ static const fal_device_cfg_t s_devices[] = {
     },
 };
 
-static const fal_zone_cfg_t s_zones[] = {
-    {FAL_ZONE_ZYNQ_BOOT, FAL_DEVICE_ZYNQ_QSPI, ZYNQ7020_QSPI_BOOT_OFFSET,
-     ZYNQ7020_QSPI_BOOT_SIZE, FAL_ZONE_PERMISSION_READ},
-    {FAL_ZONE_ZYNQ_IAP, FAL_DEVICE_ZYNQ_QSPI, ZYNQ7020_QSPI_IAP_OFFSET,
-     ZYNQ7020_QSPI_IAP_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_ZYNQ_IAP_STAGING, FAL_DEVICE_ZYNQ_QSPI, ZYNQ7020_QSPI_STAGING_OFFSET,
-     ZYNQ7020_QSPI_STAGING_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_ZYNQ_UPDATE_META_A, FAL_DEVICE_ZYNQ_QSPI, ZYNQ7020_QSPI_META_A_OFFSET,
-     ZYNQ7020_QSPI_SMALL_ZONE_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_ZYNQ_UPDATE_META_B, FAL_DEVICE_ZYNQ_QSPI, ZYNQ7020_QSPI_META_B_OFFSET,
-     ZYNQ7020_QSPI_SMALL_ZONE_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_ZYNQ_LAYOUT, FAL_DEVICE_ZYNQ_QSPI, ZYNQ7020_QSPI_LAYOUT_OFFSET,
-     ZYNQ7020_QSPI_SMALL_ZONE_SIZE, FAL_ZONE_PERMISSION_READ},
-};
-
 const fal_cfg_t g_zynq7020_fal_cfg = {
     .p_devices = s_devices,
     .device_count = (uint16_t)(sizeof(s_devices) / sizeof(s_devices[0])),
-    .p_zones = s_zones,
-    .zone_count = (uint16_t)(sizeof(s_zones) / sizeof(s_zones[0])),
 };
 
-const bootloader_fal_zone_map_t
-    g_zynq7020_bootloader_zone_map[BOOTLOADER_FLASH_ZONE_COUNT] = {
-        {BOOTLOADER_FLASH_ZONE_IAP, FAL_ZONE_ZYNQ_IAP},
-        {BOOTLOADER_FLASH_ZONE_STAGING, FAL_ZONE_ZYNQ_IAP_STAGING},
-        {BOOTLOADER_FLASH_ZONE_META_A, FAL_ZONE_ZYNQ_UPDATE_META_A},
-        {BOOTLOADER_FLASH_ZONE_META_B, FAL_ZONE_ZYNQ_UPDATE_META_B},
-        {BOOTLOADER_FLASH_ZONE_LAYOUT, FAL_ZONE_ZYNQ_LAYOUT},
-    };
+/*
+ * The immutable FAL configuration and the Section-managed runtime service
+ * currently remain in this file. Although the responsibilities are not an
+ * ideal match, they are intentionally kept together until the platform FAL
+ * service boundary is reorganized.
+ */
+fal_t g_zynq7020_fal = {0}; /* Shared platform FAL state-machine instance. */
+
+static void fal_service_init(void)
+{
+    (void)fal_init(&g_zynq7020_fal, &g_zynq7020_fal_cfg);
+}
+
+static void fal_service_process(void)
+{
+    fal_process(&g_zynq7020_fal);
+}
+
+REG_INIT(0, fal_service_init)
+REG_TASK_MS(1u, fal_service_process)

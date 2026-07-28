@@ -69,7 +69,7 @@ static bootloader_result_t image_header_is_valid(void *p_context,
     (void)p_context;
     if ((p_header == NULL) || (p_valid == NULL) || (header_length < sizeof(reset_vector)))
     {
-        return BOOTLOADER_RESULT_INVALID_ARGUMENT;
+        return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
     (void)memcpy(&reset_vector, p_header, sizeof(reset_vector));
     *p_valid = (((reset_vector & 0xFF000000u) == 0xEA000000u) &&
@@ -78,7 +78,7 @@ static bootloader_result_t image_header_is_valid(void *p_context,
                 (image_size <= (ZYNQ7020_DMA_RESERVED_ADDRESS - ZYNQ7020_IAP_DDR_ADDRESS)))
                    ? 1u
                    : 0u;
-    return BOOTLOADER_RESULT_SUCCESS;
+    return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
 static bootloader_result_t jump_to_iap(void *p_context)
@@ -90,12 +90,12 @@ static bootloader_result_t jump_to_iap(void *p_context)
 
     if ((p_platform == NULL) || (p_platform->p_bootloader == NULL))
     {
-        return BOOTLOADER_RESULT_CONFIG_ERROR;
+        return BOOTLOADER_RESULT_CONFIG_ERROR_E;
     }
     remaining = p_platform->p_bootloader->upgrade_info.file_size;
     if ((remaining == 0u) || (remaining > ZYNQ7020_QSPI_IAP_SIZE))
     {
-        return BOOTLOADER_RESULT_IMAGE_INVALID;
+        return BOOTLOADER_RESULT_IMAGE_INVALID_E;
     }
     while (remaining != 0u)
     {
@@ -103,11 +103,11 @@ static bootloader_result_t jump_to_iap(void *p_context)
                                    ? BSP_QSPI_FLASH_MAX_READ
                                    : remaining;
         if (bsp_qspi_flash_read(NULL,
-                                ZYNQ7020_QSPI_IAP_OFFSET + offset,
+                                ZYNQ7020_QSPI_BOOT_SIZE + offset,
                                 chunk,
                                 &p_destination[offset]) != FAL_RESULT_SUCCESS)
         {
-            return BOOTLOADER_RESULT_STORAGE_ERROR;
+            return BOOTLOADER_RESULT_STORAGE_ERROR_E;
         }
         offset += chunk;
         remaining -= chunk;
@@ -118,7 +118,7 @@ static bootloader_result_t jump_to_iap(void *p_context)
     Xil_DCacheDisable();
     Xil_ICacheDisable();
     ((void (*)(void))(uintptr_t)ZYNQ7020_IAP_DDR_ADDRESS)();
-    return BOOTLOADER_RESULT_STORAGE_ERROR;
+    return BOOTLOADER_RESULT_STORAGE_ERROR_E;
 }
 
 bootloader_platform_ops_t zynq_boot_platform_ops_make(bootloader_t *p_bootloader)

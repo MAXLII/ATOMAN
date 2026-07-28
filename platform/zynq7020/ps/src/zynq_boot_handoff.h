@@ -6,9 +6,9 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Publish and inspect the retained bootloader request record
+ *          - Inspect the retained request written by the independent IAP service
  *          - Clear a consumed request before launching the IAP
- *          - Transfer from IAP to the independently linked bootloader entry
+ *          - Keep Bootloader-side retained state handling platform-local
  *
  *          Design notes:
  *          - C11 compatible
@@ -33,8 +33,6 @@
 #include "bootloader_core.h"
 
 bootloader_boot_reason_t zynq_boot_request_get(void);
-bootloader_result_t zynq_boot_request_set(void);
 bootloader_result_t zynq_boot_request_clear(void);
-bootloader_result_t zynq_enter_bootloader(void);
 
 #endif /* ZYNQ_BOOT_HANDOFF_H */

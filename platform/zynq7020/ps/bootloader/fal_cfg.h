@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Define platform FAL zone identifiers and continuous QSPI allocation
  *          - Bind the Zynq PS QSPI BSP operation table to FAL Core
- *          - Publish the Bootloader logical-zone mapping without exposing its self region
+ *          - Keep platform Flash allocation independent from Bootloader interfaces
  *
  *          Design notes:
  *          - C11 compatible
@@ -30,20 +30,13 @@
 #ifndef ZYNQ7020_BOOTLOADER_FAL_CFG_H
 #define ZYNQ7020_BOOTLOADER_FAL_CFG_H
 
-#include "bootloader_fal_adapter.h"
 #include "fal_core.h"
 
 #include <stdint.h>
 
-#define ZYNQ7020_QSPI_BOOT_OFFSET 0x00000000u
 #define ZYNQ7020_QSPI_BOOT_SIZE 0x00500000u
-#define ZYNQ7020_QSPI_IAP_OFFSET 0x00500000u
 #define ZYNQ7020_QSPI_IAP_SIZE 0x00300000u
-#define ZYNQ7020_QSPI_STAGING_OFFSET 0x00800000u
 #define ZYNQ7020_QSPI_STAGING_SIZE 0x00300000u
-#define ZYNQ7020_QSPI_META_A_OFFSET 0x00B00000u
-#define ZYNQ7020_QSPI_META_B_OFFSET 0x00B10000u
-#define ZYNQ7020_QSPI_LAYOUT_OFFSET 0x00B20000u
 #define ZYNQ7020_QSPI_SMALL_ZONE_SIZE 0x00010000u
 
 typedef enum
@@ -62,7 +55,6 @@ typedef enum
 } zynq7020_fal_zone_id_t;
 
 extern const fal_cfg_t g_zynq7020_fal_cfg;
-extern const bootloader_fal_zone_map_t
-    g_zynq7020_bootloader_zone_map[BOOTLOADER_FLASH_ZONE_COUNT];
+extern fal_t g_zynq7020_fal; /* Shared platform FAL state-machine instance. */
 
 #endif /* ZYNQ7020_BOOTLOADER_FAL_CFG_H */
