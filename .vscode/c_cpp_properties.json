@@ -152,6 +152,97 @@
             }
         },
         {
+            "name": "hc32f334_bootloader",
+            "compilerPath": "${KEIL_ARMCLANG_ROOT}/armclang.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-clang-arm",
+            "compilerArgs": [
+                "--target=arm-arm-none-eabi",
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/platform/hc32f334/bootloader",
+                "${workspaceFolder}/platform/hc32f334/bsp",
+                "${workspaceFolder}/platform/hc32f334/inc",
+                "${workspaceFolder}/platform/hc32f334/src",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/fal",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/app/bootloader"
+            ],
+            "defines": [
+                "HC32F334",
+                "IS_HC32F334",
+                "USE_DDL_DRIVER",
+                "FIRMWARE_TYPE_BOOTLOADER",
+                "BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE",
+                "HC32F334_IAP_BASE=0x00004000UL",
+                "TOOLCHAIN_MDK"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/platform/hc32f334"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "hc32f334_bootloader_gcc",
+            "compilerPath": "${ARM_GNU_ROOT}/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/platform/hc32f334/bootloader",
+                "${workspaceFolder}/platform/hc32f334/bsp",
+                "${workspaceFolder}/platform/hc32f334/inc",
+                "${workspaceFolder}/platform/hc32f334/src",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
+                "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/fal",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/app/bootloader"
+            ],
+            "defines": [
+                "HC32F334",
+                "IS_HC32F334",
+                "USE_DDL_DRIVER",
+                "FIRMWARE_TYPE_BOOTLOADER",
+                "BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE",
+                "HC32F334_IAP_BASE=0x00004000UL",
+                "TOOLCHAIN_GCC"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/platform/hc32f334"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "hc32f558_ac",
             "compilerPath": "${KEIL_ARMCLANG_ROOT}/armclang.exe",
             "cStandard": "c11",
