@@ -8,12 +8,13 @@
  *          Module responsibilities:
  *          - Adapt the HC32 EFM and W25Q64 BSP results to FAL callbacks
  *          - Define aligned device and logical partition tables
+ *          - Own and schedule the shared HC32 FAL instance
  *          - Keep the Bootloader self region read-only and outside online mappings
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - Configuration objects are immutable
+ *          - Configuration objects are immutable after construction
  *          - Physical address calculations remain in FAL Core
  *
  * @author  Max.Li
@@ -31,13 +32,30 @@
 
 #include "bsp_efm_flash.h"
 #include "bsp_w25q64.h"
+#include "section.h"
 
 #include <stddef.h>
 
+_Static_assert(HC32F334_EFM_BLOCK_SIZE == BSP_EFM_FLASH_ERASE_SIZE,
+               "HC32 EFM partition unit must match the erase block");
+_Static_assert(HC32F334_W25Q64_BLOCK_SIZE == BSP_W25Q64_SECTOR_SIZE,
+               "W25Q64 partition unit must match the erase sector");
+_Static_assert(HC32F334_IAP_BASE == HC32F334_BOOT_SIZE,
+               "IAP base must immediately follow the Bootloader partition");
+_Static_assert(HC32F334_FLASH_END == BSP_EFM_FLASH_CAPACITY_BYTES,
+               "EFM partition sizes must cover the complete device");
+
 static fal_result_t efm_init(void *p_context)
 {
+    bsp_efm_flash_result_t result;
+
     (void)p_context;
-    return (BSP_EFM_FLASH_RESULT_SUCCESS == bsp_efm_flash_init())
+    result = bsp_efm_flash_init();
+    if (BSP_EFM_FLASH_RESULT_SUCCESS == result)
+    {
+        result = bsp_efm_flash_write_range_enable(HC32F334_IAP_BASE, HC32F334_IAP_SIZE);
+    }
+    return (BSP_EFM_FLASH_RESULT_SUCCESS == result)
                ? FAL_RESULT_SUCCESS
                : FAL_RESULT_DRIVER_ERROR;
 }
@@ -127,46 +145,103 @@ static fal_result_t w25q_erase(void *p_context, uint32_t address, uint32_t lengt
                : FAL_RESULT_DRIVER_ERROR;
 }
 
+static const fal_zone_cfg_t s_efm_zones[] = {
+    {
+        .zone_id = FAL_ZONE_HC32_BOOT_E,
+        .size = HC32F334_BOOT_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_READ,
+    },
+    {
+        .zone_id = FAL_ZONE_HC32_IAP_E,
+        .size = HC32F334_IAP_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+};
+
+static const fal_zone_cfg_t s_w25q64_zones[] = {
+    {
+        .zone_id = FAL_ZONE_HC32_IAP_STAGING_E,
+        .size = HC32F334_STAGING_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_HC32_UPDATE_META_A_E,
+        .size = HC32F334_META_A_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_HC32_UPDATE_META_B_E,
+        .size = HC32F334_META_B_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_ALL,
+    },
+    {
+        .zone_id = FAL_ZONE_HC32_LAYOUT_E,
+        .size = HC32F334_LAYOUT_SIZE,
+        .permissions = FAL_ZONE_PERMISSION_READ,
+    },
+};
+
 static const fal_device_cfg_t s_devices[] = {
     {
-        .device_id = FAL_DEVICE_HC32_EFM,
+        .device_id = FAL_DEVICE_HC32_EFM_E,
         .capacity = BSP_EFM_FLASH_CAPACITY_BYTES,
         .program_page_size = BSP_EFM_FLASH_PROGRAM_SIZE,
         .erase_block_size = BSP_EFM_FLASH_ERASE_SIZE,
         .max_read_size = 1024UL,
-        .ops = {NULL, efm_init, efm_state_get, efm_read, efm_program, efm_erase, NULL},
+        .p_zones = s_efm_zones,
+        .zone_count = (uint16_t)(sizeof(s_efm_zones) / sizeof(s_efm_zones[0])),
+        .ops = {
+            .p_context = NULL,
+            .p_init = efm_init,
+            .p_get_state = efm_state_get,
+            .p_read = efm_read,
+            .p_program = efm_program,
+            .p_erase = efm_erase,
+            .p_sync = NULL,
+        },
     },
     {
-        .device_id = FAL_DEVICE_HC32_W25Q64,
+        .device_id = FAL_DEVICE_HC32_W25Q64_E,
         .capacity = BSP_W25Q64_CAPACITY_BYTES,
         .program_page_size = BSP_W25Q64_PAGE_SIZE,
         .erase_block_size = BSP_W25Q64_SECTOR_SIZE,
         .max_read_size = 1024UL,
-        .ops = {NULL, w25q_init, w25q_state_get, w25q_read, w25q_program, w25q_erase, NULL},
+        .p_zones = s_w25q64_zones,
+        .zone_count = (uint16_t)(sizeof(s_w25q64_zones) / sizeof(s_w25q64_zones[0])),
+        .ops = {
+            .p_context = NULL,
+            .p_init = w25q_init,
+            .p_get_state = w25q_state_get,
+            .p_read = w25q_read,
+            .p_program = w25q_program,
+            .p_erase = w25q_erase,
+            .p_sync = NULL,
+        },
     },
 };
 
-static const fal_zone_cfg_t s_zones[] = {
-    {FAL_ZONE_HC32_BOOT, FAL_DEVICE_HC32_EFM, 0UL, HC32F334_BOOT_SIZE, FAL_ZONE_PERMISSION_READ},
-    {FAL_ZONE_HC32_IAP, FAL_DEVICE_HC32_EFM, HC32F334_IAP_BASE, HC32F334_IAP_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_HC32_IAP_STAGING, FAL_DEVICE_HC32_W25Q64, HC32F334_STAGING_OFFSET, HC32F334_STAGING_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_HC32_UPDATE_META_A, FAL_DEVICE_HC32_W25Q64, HC32F334_META_A_OFFSET, HC32F334_SMALL_ZONE_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_HC32_UPDATE_META_B, FAL_DEVICE_HC32_W25Q64, HC32F334_META_B_OFFSET, HC32F334_SMALL_ZONE_SIZE, FAL_ZONE_PERMISSION_ALL},
-    {FAL_ZONE_HC32_LAYOUT, FAL_DEVICE_HC32_W25Q64, HC32F334_LAYOUT_OFFSET, HC32F334_SMALL_ZONE_SIZE, FAL_ZONE_PERMISSION_READ},
-};
-
 const fal_cfg_t g_hc32f334_fal_cfg = {
-    s_devices,
-    (uint16_t)(sizeof(s_devices) / sizeof(s_devices[0])),
-    s_zones,
-    (uint16_t)(sizeof(s_zones) / sizeof(s_zones[0])),
+    .p_devices = s_devices,
+    .device_count = (uint16_t)(sizeof(s_devices) / sizeof(s_devices[0])),
 };
 
-const bootloader_fal_zone_map_t
-    g_hc32f334_bootloader_zone_map[BOOTLOADER_FLASH_ZONE_COUNT] = {
-        {BOOTLOADER_FLASH_ZONE_IAP, FAL_ZONE_HC32_IAP},
-        {BOOTLOADER_FLASH_ZONE_STAGING, FAL_ZONE_HC32_IAP_STAGING},
-        {BOOTLOADER_FLASH_ZONE_META_A, FAL_ZONE_HC32_UPDATE_META_A},
-        {BOOTLOADER_FLASH_ZONE_META_B, FAL_ZONE_HC32_UPDATE_META_B},
-        {BOOTLOADER_FLASH_ZONE_LAYOUT, FAL_ZONE_HC32_LAYOUT},
-    };
+/*
+ * The immutable FAL configuration and the Section-managed runtime service
+ * currently remain in this file. Although the responsibilities are not an
+ * ideal match, they are intentionally kept together until the platform FAL
+ * service boundary is reorganized.
+ */
+fal_t g_hc32f334_fal = {0}; /* Shared platform FAL state-machine instance. */
+
+static void fal_service_init(void)
+{
+    (void)fal_init(&g_hc32f334_fal, &g_hc32f334_fal_cfg);
+}
+
+static void fal_service_process(void)
+{
+    fal_process(&g_hc32f334_fal);
+}
+
+REG_INIT(0, fal_service_init)
+REG_TASK_MS(1u, fal_service_process)

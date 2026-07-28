@@ -31,47 +31,44 @@
 
 #include "hc32_ll.h"
 
-#define BSP_W25Q64_SPI_UNIT              CM_SPI
-#define BSP_W25Q64_SCK_PORT              GPIO_PORT_B
-#define BSP_W25Q64_SCK_PIN               GPIO_PIN_05
-#define BSP_W25Q64_SCK_FUNC              GPIO_FUNC_49
-#define BSP_W25Q64_MOSI_PORT             GPIO_PORT_A
-#define BSP_W25Q64_MOSI_PIN              GPIO_PIN_00
-#define BSP_W25Q64_MOSI_FUNC             GPIO_FUNC_50
-#define BSP_W25Q64_MISO_PORT             GPIO_PORT_A
-#define BSP_W25Q64_MISO_PIN              GPIO_PIN_01
-#define BSP_W25Q64_MISO_FUNC             GPIO_FUNC_51
-#define BSP_W25Q64_CS_PORT               GPIO_PORT_A
-#define BSP_W25Q64_CS_PIN                GPIO_PIN_06
-#define BSP_W25Q64_SPI_TIMEOUT            1000000UL
+#define BSP_W25Q64_SPI_UNIT CM_SPI
+#define BSP_W25Q64_SCK_PORT GPIO_PORT_B
+#define BSP_W25Q64_SCK_PIN GPIO_PIN_05
+#define BSP_W25Q64_SCK_FUNC GPIO_FUNC_49
+#define BSP_W25Q64_MOSI_PORT GPIO_PORT_A
+#define BSP_W25Q64_MOSI_PIN GPIO_PIN_00
+#define BSP_W25Q64_MOSI_FUNC GPIO_FUNC_50
+#define BSP_W25Q64_MISO_PORT GPIO_PORT_A
+#define BSP_W25Q64_MISO_PIN GPIO_PIN_01
+#define BSP_W25Q64_MISO_FUNC GPIO_FUNC_51
+#define BSP_W25Q64_CS_PORT GPIO_PORT_C
+#define BSP_W25Q64_CS_PIN GPIO_PIN_01
+#define BSP_W25Q64_SPI_TIMEOUT 1000000UL
 #ifndef BSP_W25Q64_SPI_MODE
-#define BSP_W25Q64_SPI_MODE               SPI_MD_0
+#define BSP_W25Q64_SPI_MODE SPI_MD_0
 #endif
 #ifndef BSP_W25Q64_SPI_PRESCALER
-#define BSP_W25Q64_SPI_PRESCALER          SPI_BR_CLK_DIV4
+#define BSP_W25Q64_SPI_PRESCALER SPI_BR_CLK_DIV4
 #endif
-#define BSP_W25Q64_DMA_UNIT               CM_DMA
-#define BSP_W25Q64_DMA_RX_CH              DMA_CH4
-#define BSP_W25Q64_DMA_RX_MX_CH           DMA_MX_CH4
-#define BSP_W25Q64_DMA_RX_TRIGGER         AOS_DMA_4
-#define BSP_W25Q64_DMA_RX_TC_FLAG         DMA_FLAG_TC_CH4
-#define BSP_W25Q64_DMA_TX_CH              DMA_CH5
-#define BSP_W25Q64_DMA_TX_MX_CH           DMA_MX_CH5
-#define BSP_W25Q64_DMA_TX_TRIGGER         AOS_DMA_5
-#define BSP_W25Q64_DMA_TX_TC_FLAG         DMA_FLAG_TC_CH5
-#define BSP_W25Q64_DMA_ERROR_FLAGS        (DMA_FLAG_REQ_ERR_CH4 | DMA_FLAG_REQ_ERR_CH5 | \
-                                           DMA_FLAG_TRANS_ERR_CH4 | DMA_FLAG_TRANS_ERR_CH5)
-#define BSP_W25Q64_SELF_TEST_WAIT_LIMIT   1000000UL
-#define BSP_W25Q64_SELF_TEST_LENGTH       300UL
-
-#define W25Q64_CMD_WRITE_ENABLE           0x06U
-#define W25Q64_CMD_READ_STATUS_1          0x05U
-#define W25Q64_CMD_READ_DATA              0x03U
-#define W25Q64_CMD_PAGE_PROGRAM           0x02U
-#define W25Q64_CMD_SECTOR_ERASE_4K        0x20U
-#define W25Q64_CMD_READ_JEDEC_ID          0x9FU
-#define W25Q64_STATUS_1_WIP               (1U << 0U)
-#define W25Q64_STATUS_1_WEL               (1U << 1U)
+#define BSP_W25Q64_DMA_UNIT CM_DMA
+#define BSP_W25Q64_DMA_RX_CH DMA_CH4
+#define BSP_W25Q64_DMA_RX_MX_CH DMA_MX_CH4
+#define BSP_W25Q64_DMA_RX_TRIGGER AOS_DMA_4
+#define BSP_W25Q64_DMA_RX_TC_FLAG DMA_FLAG_TC_CH4
+#define BSP_W25Q64_DMA_TX_CH DMA_CH5
+#define BSP_W25Q64_DMA_TX_MX_CH DMA_MX_CH5
+#define BSP_W25Q64_DMA_TX_TRIGGER AOS_DMA_5
+#define BSP_W25Q64_DMA_TX_TC_FLAG DMA_FLAG_TC_CH5
+#define BSP_W25Q64_DMA_ERROR_FLAGS (DMA_FLAG_REQ_ERR_CH4 | DMA_FLAG_REQ_ERR_CH5 | \
+                                    DMA_FLAG_TRANS_ERR_CH4 | DMA_FLAG_TRANS_ERR_CH5)
+#define W25Q64_CMD_WRITE_ENABLE 0x06U
+#define W25Q64_CMD_READ_STATUS_1 0x05U
+#define W25Q64_CMD_READ_DATA 0x03U
+#define W25Q64_CMD_PAGE_PROGRAM 0x02U
+#define W25Q64_CMD_SECTOR_ERASE_4K 0x20U
+#define W25Q64_CMD_READ_JEDEC_ID 0x9FU
+#define W25Q64_STATUS_1_WIP (1U << 0U)
+#define W25Q64_STATUS_1_WEL (1U << 1U)
 
 static uint8_t s_initialized;
 static uint8_t s_io_error;
@@ -181,10 +178,11 @@ static bsp_w25q64_result_t bsp_w25q64_transfer_dma(const uint8_t *p_tx,
 
     AOS_SetTriggerEventSrc(BSP_W25Q64_DMA_RX_TRIGGER, EVT_SRC_SPI_SPRI);
     AOS_SetTriggerEventSrc(BSP_W25Q64_DMA_TX_TRIGGER, EVT_SRC_SPI_SPTI);
-    (void)DMA_ChCmd(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_RX_CH, ENABLE);
-    (void)DMA_ChCmd(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_TX_CH, ENABLE);
     DMA_MxChCmd(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_RX_MX_CH, ENABLE);
     DMA_MxChCmd(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_TX_MX_CH, ENABLE);
+    (void)DMA_ChCmd(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_RX_CH, ENABLE);
+    (void)DMA_ChCmd(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_TX_CH, ENABLE);
+    DMA_MxChSWTrigger(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_TX_MX_CH);
 
     timeout = BSP_W25Q64_SPI_TIMEOUT;
     while ((SET != DMA_GetTransCompleteStatus(BSP_W25Q64_DMA_UNIT, BSP_W25Q64_DMA_RX_TC_FLAG)) ||
@@ -266,27 +264,6 @@ static bsp_w25q64_result_t bsp_w25q64_write_enable(void)
     }
 
     return result;
-}
-
-static bsp_w25q64_result_t bsp_w25q64_wait_ready(void)
-{
-    uint32_t count;
-
-    for (count = 0UL; count < BSP_W25Q64_SELF_TEST_WAIT_LIMIT; count++)
-    {
-        const bsp_w25q64_state_t state = bsp_w25q64_state_get();
-
-        if (BSP_W25Q64_STATE_READY == state)
-        {
-            return BSP_W25Q64_RESULT_SUCCESS;
-        }
-        if (BSP_W25Q64_STATE_ERROR == state)
-        {
-            return BSP_W25Q64_RESULT_IO_ERROR;
-        }
-    }
-
-    return BSP_W25Q64_RESULT_TIMEOUT;
 }
 
 bsp_w25q64_result_t bsp_w25q64_init(void)
@@ -521,65 +498,6 @@ bsp_w25q64_result_t bsp_w25q64_sector_erase(uint32_t address)
     bsp_w25q64_cs_low();
     result = bsp_w25q64_transmit(command, sizeof(command));
     bsp_w25q64_cs_high();
-
-    return result;
-}
-
-bsp_w25q64_result_t bsp_w25q64_self_test(void)
-{
-    uint8_t write_data[BSP_W25Q64_SELF_TEST_LENGTH];
-    uint8_t read_data[BSP_W25Q64_SELF_TEST_LENGTH];
-    uint32_t offset;
-    uint32_t chunk;
-    bsp_w25q64_result_t result;
-
-    for (offset = 0UL; offset < BSP_W25Q64_SELF_TEST_LENGTH; offset++)
-    {
-        write_data[offset] = (uint8_t)((offset * 37UL) ^ (offset >> 1U) ^ 0xA5UL);
-        read_data[offset] = 0U;
-    }
-
-    result = bsp_w25q64_sector_erase(BSP_W25Q64_SELF_TEST_ADDRESS);
-    if (BSP_W25Q64_RESULT_SUCCESS == result)
-    {
-        result = bsp_w25q64_wait_ready();
-    }
-
-    offset = 0UL;
-    while ((BSP_W25Q64_RESULT_SUCCESS == result) && (offset < BSP_W25Q64_SELF_TEST_LENGTH))
-    {
-        chunk = BSP_W25Q64_PAGE_SIZE - ((BSP_W25Q64_SELF_TEST_ADDRESS + 0xF0UL + offset) % BSP_W25Q64_PAGE_SIZE);
-        if (chunk > (BSP_W25Q64_SELF_TEST_LENGTH - offset))
-        {
-            chunk = BSP_W25Q64_SELF_TEST_LENGTH - offset;
-        }
-        result = bsp_w25q64_page_program(BSP_W25Q64_SELF_TEST_ADDRESS + 0xF0UL + offset,
-                                         chunk,
-                                         &write_data[offset]);
-        if (BSP_W25Q64_RESULT_SUCCESS == result)
-        {
-            result = bsp_w25q64_wait_ready();
-        }
-        offset += chunk;
-    }
-
-    if (BSP_W25Q64_RESULT_SUCCESS == result)
-    {
-        result = bsp_w25q64_read(BSP_W25Q64_SELF_TEST_ADDRESS + 0xF0UL,
-                                  BSP_W25Q64_SELF_TEST_LENGTH,
-                                  read_data);
-    }
-    if (BSP_W25Q64_RESULT_SUCCESS == result)
-    {
-        for (offset = 0UL; offset < BSP_W25Q64_SELF_TEST_LENGTH; offset++)
-        {
-            if (write_data[offset] != read_data[offset])
-            {
-                result = BSP_W25Q64_RESULT_VERIFY_ERROR;
-                break;
-            }
-        }
-    }
 
     return result;
 }
