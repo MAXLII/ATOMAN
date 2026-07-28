@@ -52,11 +52,11 @@ HC32F334 AC 平台的编译工程位于 `platform/hc32f334/`：
 | `gcc/` | Arm GNU Toolchain Makefile 工程、GCC 启动文件、链接脚本、编译脚本和 GCC 固件下载入口 |
 | `bootloader/` | 独立 Bootloader 入口、FAL cfg、USART2 通信及 GCC 构建工程 |
 | `bsp/` | ADC、PWM、GPIO、CAN、USART、SPI Flash、片内 EFM、时钟和定时器适配 |
-| `src/` | AC 工程入口、平台中断、保留 SRAM 切换记录和 IAP 升级服务 |
+| `src/` | AC 工程入口、平台中断和 Bootloader 启动原因适配 |
 
 GCC 与 MDK 的 IAP 工程从片内 Flash `0x00004000` 链接，Bootloader 工程从 `0x00000000` 链接并持有 `0x00000400` 的 ICG 数据。主 SRAM 起始 16 字节保存复位期间持续有效的切换记录，`RAMB` 承载主栈。
 
-两套工程的 `compile.bat` 均在各自工程目录运行。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 将 `build/hc32f334_ac.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
+GCC 与 Keil 目录各自使用统一的 `compile.bat` 选择固件目标。无参数调用默认构建 ISP，参数 `-iap` 构建 IAP。ISP 产物使用 `hc32f334_ac_isp` 文件名，IAP 产物使用 `hc32f334_ac_iap` 文件名，两套产物保存在独立输出目录。IAP 构建定义 `IS_IAP`，`system_hc32f334.c` 根据该宏将向量表设置到 `0x00004000`；ISP 不定义该宏，向量表位于 `0x00000000`。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 默认将 `build/isp/hc32f334_ac_isp.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
 
 Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/` 中每个 IP 使用独立目录，`src/` 保存可综合 RTL，`sim/` 保存 SystemVerilog 自检、仿真与 OOC 综合脚本，`doc/design/`、`doc/test/`、`doc/application/` 分别保存设计、测试和应用文档。`verilog/iir/` 实现 3P3Z IIR core 和 AXI4-Lite 外设封装；`verilog/uart_dma/` 实现可配置 UART、AXI4-Lite 控制和 AXI Master DDR 环形 DMA；`verilog/oled_dma/` 实现 OLED 寄存器、DDR 帧 DMA、快照 RAM、SSD1306 协议层和串行 PHY。`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、QSPI、M_AXI_GP0、S_AXI_HP0、AXI GPIO、自定义 AXI IIR、PL UART DMA、PL OLED DMA、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、PS QSPI Flash、PL UART DMA、OLED framebuffer DMA、共享 GIC、定时器、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口、自主测试、IAP 升级入口、Bootloader 跳转和 Zero Player OLED 映射；`ps/bootloader/` 保存独立 Bootloader 入口、FAL 平台配置、通信链路、BSP/FSBL 生成和 `BOOT.bin` 打包脚本。
 
@@ -394,19 +394,19 @@ HC32F334 AC 平台提供两套当前可编译工程：Keil MDK 使用 ARM Compil
 
 ## 10. Flash 抽象层（`code/interface/fal/`）
 
-FAL Core 使用调用方持有的 `fal_t` 管理单个异步 Flash 操作。`fal_cfg_t` 挂载物理设备表和逻辑分区表，每个设备通过 `fal_flash_ops_t` 绑定初始化、状态查询、读取、编程、擦除和可选同步操作。Core 根据设备配置的最大读取长度、program page 和 erase block 推进有限步状态机，并进行设备、分区、权限、重叠、边界和整数溢出检查。
+FAL Core 使用调用方持有的 `fal_t` 管理单个异步 Flash 操作。`fal_cfg_t` 挂载物理设备表，每个设备持有独立的有序分区表，并通过 `fal_flash_ops_t` 绑定初始化、状态查询、读取、编程、擦除和可选同步操作。分区配置只保存标识、大小和权限，Core 通过累加同一设备内的前序分区大小换算物理地址。`fal_process()` 遍历平台设备表，找到活动请求所属 Flash 后，根据设备配置的最大读取长度、program page 和 erase block 推进有限步状态机，并进行设备、分区、权限、累计容量、边界和整数溢出检查。
 
-平台 cfg 定义设备 ID、分区 ID、geometry、权限与底层驱动。逻辑地址按分区设备偏移转换为物理 Flash 地址。`g_fal_api` 提供可挂载 API 表，供适配层或测试替换。FAL Core 不注册调度任务，调用方通过 `fal_process()` 推进操作。
+平台 cfg 定义设备 ID、分区 ID、geometry、权限与底层驱动。逻辑地址按分区设备偏移转换为物理 Flash 地址。上层直接调用 FAL 公共函数提交请求。FAL Core 不注册调度任务，平台通过 `fal_process()` 推进操作。
 
 `mingw/fal_core/` 使用 fake cfg 和 fake Flash 验证多设备地址换算、读写擦分段、权限与非法配置、设备 busy/失败、停止请求和多实例隔离。
 
 ## 11. Bootloader（`code/app/bootloader/`）
 
-Bootloader Core 通过 `bootloader_flash_ops_t` 访问 IAP、暂存区、元数据 A/B 和布局区。`bootloader_fal_adapter` 将这些逻辑区映射到挂载的 `fal_api_t`，并转换 FAL 返回结果。Bootloader 自身区域不出现在逻辑区枚举和映射表中。
+`bootloader_core.h` 定义 Bootloader 自有的逻辑区枚举和 `bootloader_flash_ops_t` Flash 虚函数接口。Flash 虚函数不传递上下文，平台适配文件直接使用本平台唯一的 FAL 实例，通过 `switch case` 将 Bootloader 逻辑区映射到平台 `fal_cfg.h` 定义的 FAL 分区，实现区域查询、读、写、擦除和状态函数，并通过 `bootloader_flash_ops_init()` 挂载到 Bootloader Core。FAL 分区所属物理 Flash、设备配置和周期调度由平台维护。Bootloader 自身区域不出现在 Bootloader 逻辑区枚举中。
 
 Core 支持直接升级和暂存升级。直接升级在写入目标区前使 IAP 失效；暂存升级先完成分包 CRC、整包 CRC16 与 34 字节 footer 校验，再按擦除块复制至目标区并读回校验。footer 校验覆盖固件类型、版本、文件长度、模块 ID 和 footer CRC32。双份元数据使用序列号、记录 CRC 和提交标记保存下载与复制进度，启动时选择有效的新记录恢复未完成的暂存安装。无有效 IAP、存在升级请求、升级失败或 Flash 连续失败时，状态机停留在 Bootloader；有效 IAP 且无升级需求时通过平台跳转接口启动应用。
 
-`bootloader_protocol` 实现 `0x08`、`0x09`、`0x0A`、`0x0B` 升级命令，数据块使用 1024 字节包络。`bootloader_section_service` 注册 Bootloader 通信和周期任务。`iap_boot_service` 与 `iap_section_service` 只处理 IAP 环境中的 `0x08`，依次执行用户 prepare 回调、写入启动原因、等待 ACK 发送完成和进入 Bootloader。
+`bootloader_protocol` 是 Bootloader 协议层，实现 `0x08`、`0x09`、`0x0A`、`0x0B` 升级命令、FRAME 通信注册、直接 ACK 和周期任务。每条命令使用独立的 `REG_COMM` 回调，回调声明对应的 ACK 结构并构造同命令应答帧；收到 ACK 帧时直接返回。`bootloader_protocol_types.h` 按 1 字节对齐定义请求与 ACK 负载，字段顺序与 `update.h` 一致，并通过编译期断言固定结构大小和关键字段偏移。`0x08` 请求和 ACK 分别为 10 字节和 3 字节，`0x09` ACK 为 1 字节，`0x0A` 请求为 1033 字节且包含 1024 字节数据区，`0x0A` ACK 为 1 字节，`0x0B` 请求和 ACK 分别为 2 字节和 1 字节。`bootloader_core` 是升级逻辑层，处理启动判断、下载、校验、复制、恢复和跳转决策。
 
 `mingw/bootloader_core/` 使用 fake Flash、fake FAL API 和 fake 平台接口验证启动判断、两种升级方式、重复数据包、失败重试、断电恢复、元数据切换、协议校验、逻辑分区映射和多层接口隔离。
 
@@ -423,7 +423,7 @@ Zynq-7020 使用 16 MiB PS QSPI Flash，program page 为 256 字节，erase bloc
 | Metadata B | `0xB10000` | 64 KiB | 读写擦 |
 | Layout | `0xB20000` | 64 KiB | 只读 |
 
-独立 Bootloader 链接到 DDR `0x04000000`，IAP 链接到 `0x00100000`，PL DMA 区从 `0x1FF00000` 开始。`build_boot_image.ps1` 从当前 HDF 自动生成 FSBL，并将 FSBL、bitstream 与 Bootloader ELF 打包为 `BOOT.bin`；脚本检查镜像不超过 5 MiB 启动分区并输出 64 KiB 擦除边界对齐后的实际占用。IAP 与 Bootloader 通过 OCM 保留记录传递升级启动原因。
+独立 Bootloader 链接到 DDR `0x04000000`，IAP 链接到 `0x00100000`，PL DMA 区从 `0x1FF00000` 开始。`build_boot_image.ps1` 从当前 HDF 自动生成 FSBL，并将 FSBL、bitstream 与 Bootloader ELF 打包为 `BOOT.bin`；脚本检查镜像不超过 5 MiB 启动分区并输出 64 KiB 擦除边界对齐后的实际占用。`zynq_iap_update_service.c/.h` 独立处理 IAP 的 `0x08`、用户回调、OCM 启动原因和 Bootloader 切换，不依赖 Bootloader Core。
 
 ## 13. HC32F334 Bootloader 集成
 
@@ -440,6 +440,6 @@ FAL cfg 使用以下连续区域：
 | W25Q64 | Metadata B | `0x021000` | 4 KiB | 读写擦 |
 | W25Q64 | Layout | `0x022000` | 4 KiB | 只读 |
 
-Bootloader 使用独立 USART2 链路，PC10 为 TX、PC4 为 RX，波特率为 921600。最小中断入口只保留 SysTick，USART 初始化直接配置固定时钟下的寄存器参数，GCC 使用 `-Os` 与 LTO，Keil 使用 Link-Time Optimization。GCC 和 Keil 工程均链接到 16 KiB Bootloader 区，链接区域本身构成固件大小上限；默认升级模式为暂存升级，GCC 构建参数 `UPGRADE_MODE=direct` 生成直接升级配置，`W25Q_SELF_TEST=1` 启用启动阶段 W25Q64 硬件自检。
+Bootloader 使用独立 USART2 链路，PC10 为 TX、PC4 为 RX，波特率为 921600。`main.c` 只初始化时钟、SysTick 和 Section运行时。`bootloader_fal_adapter.c`在静态操作表中挂载FAL读写擦和状态接口，并保存Bootloader Core、协议实例及升级缓冲区。最小中断入口只保留SysTick，USART初始化直接配置固定时钟下的寄存器参数，GCC使用`-Os`与LTO，Keil使用Link-Time Optimization。GCC和Keil工程均链接到16 KiB Bootloader区，链接区域本身构成固件大小上限；默认升级模式为暂存升级，GCC构建参数`UPGRADE_MODE=direct`生成直接升级配置。
 
-IAP 只挂载 `0x08` 升级触发服务。服务执行弱定义的 `hc32_iap_update_prepare()` 用户回调，将升级原因写入保留 SRAM，等待 USART2 DMA 与发送移位寄存器空闲后执行系统复位。GCC 构建生成带 34 字节 FRAME footer 的 `hc32f334_ac_update.bin`。
+`code/app/bootloader/iap_update_service.c/.h` 是 IAP 使用的纯软件升级切换服务，处理 `0x08`、弱定义用户准备回调、复位间保留的升级请求和 `SYSTEM_RESET`。通信回调保存升级信息并直接 ACK；周期任务轮询准备回调，准备进行中时保持 IAP 运行，准备失败时取消切换，准备完成后经过软件发送余量时间写入升级请求并复位。`bootloader_update_request.h` 定义 IAP 与 Bootloader 共享的 16 字节保留请求格式，记录完整模块号、版本、文件大小、升级类型、校验值和最后提交的有效标记。HC32 IAP 与 Bootloader 将该请求放在 SRAM `0x1FFFC008`，`hc32_boot_platform.c` 校验后通过平台操作表把升级信息交给 Bootloader Core；Core 完成元数据检查后直接建立会话。Bootloader 和 ISP 不编译 IAP 服务实现。GCC Makefile 仅在 `IS_IAP=1` 时定义 `IS_IAP` 并加入服务；GCC 构建生成带 34 字节 FRAME footer 的 `hc32f334_ac_update_iap.bin`。
