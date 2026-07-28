@@ -339,7 +339,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,APP_START_ADDR=0,VECT_TAB_OFFSET=0,HC32F334_IAP_BASE=0x00004000UL,HC32_BOOT_W25Q64_SELF_TEST=0</Define>
+              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE,HC32F334_IAP_BASE=0x00004000UL</Define>
               <Undefine></Undefine>
               <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\dbg;..\..\..\code\interface\fal;..\..\..\code\interface\common;..\..\..\code\app\bootloader</IncludePath>
             </VariousControls>
@@ -391,6 +391,11 @@
               <FilePath>..\bootloader\main.c</FilePath>
             </File>
             <File>
+              <FileName>bootloader_fal_adapter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\bootloader_fal_adapter.c</FilePath>
+            </File>
+            <File>
               <FileName>boot_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\bootloader\boot_uart.c</FilePath>
@@ -415,11 +420,6 @@
         <Group>
           <GroupName>platform</GroupName>
           <Files>
-            <File>
-              <FileName>hc32_boot_handoff.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\hc32_boot_handoff.c</FilePath>
-            </File>
             <File>
               <FileName>bsp_clk.c</FileName>
               <FileType>1</FileType>
@@ -471,11 +471,6 @@
               <FilePath>..\..\..\code\app\bootloader\bootloader_core.c</FilePath>
             </File>
             <File>
-              <FileName>bootloader_fal_adapter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\bootloader_fal_adapter.c</FilePath>
-            </File>
-            <File>
               <FileName>bootloader_metadata.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\app\bootloader\bootloader_metadata.c</FilePath>
@@ -484,11 +479,6 @@
               <FileName>bootloader_protocol.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\app\bootloader\bootloader_protocol.c</FilePath>
-            </File>
-            <File>
-              <FileName>bootloader_section_service.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\bootloader_section_service.c</FilePath>
             </File>
           </Files>
         </Group>

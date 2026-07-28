@@ -1,8 +1,8 @@
 ; ****************************************************************
 ; Scatter-Loading Description File
 ; ****************************************************************
-LR_IROM1 0x00004000 0x0001C000  {    ; load region size_region
-    ER_IROM1 0x00004000 0x0001C000  {  ; load address = execution address
+LR_IROM1 0x00000000 0x00020000  {    ; load region size_region
+    ER_IROM1 0x00000000 0x00020000  {  ; load address = execution address
         *.o (RESET, +First)
         *(InRoot$$Sections)
         .ANY (+RO)
@@ -11,11 +11,10 @@ LR_IROM1 0x00004000 0x0001C000  {    ; load region size_region
     SECTION AlignExpr(+0, 4)  {  ; auto-registration table
         *(section)
     }
-    RW_IRAM1 0x1FFFC000  UNINIT 0x00000018   {  ; retained boot request and system clock data
+    RW_IRAM1 0x1FFFC000  UNINIT 0x00000008   {  ; RW data
         *(.bss.noinit)
-        *(.noinit*)
     }
-    RW_IRAM2 0x1FFFC018  0x00007FE8   {  ; RW data
+    RW_IRAM2 0x1FFFC008  0x00007FF8   {  ; RW data
         .ANY (+RW +ZI)
         .ANY (RAMCODE)
     }

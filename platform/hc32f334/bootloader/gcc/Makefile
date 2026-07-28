@@ -3,7 +3,6 @@ PLATFORM_ROOT := ../..
 TARGET := hc32f334_bootloader
 BUILD_DIR ?= build
 UPGRADE_MODE ?= staged
-W25Q_SELF_TEST ?= 0
 EXTRA_DEFS ?=
 OPT ?= -Os
 LTO_FLAGS ?= -flto
@@ -17,12 +16,12 @@ SZ := $(PREFIX)size
 
 PROJECT_SOURCES := \
 ../main.c \
+../bootloader_fal_adapter.c \
 ../boot_interrupt.c \
 ../boot_uart.c \
 ../boot_comm_link.c \
 ../hc32_boot_platform.c \
 ../fal_cfg.c \
-$(PLATFORM_ROOT)/src/hc32_boot_handoff.c \
 $(PLATFORM_ROOT)/bsp/bsp_clk.c \
 $(PLATFORM_ROOT)/bsp/bsp_efm_flash.c \
 $(PLATFORM_ROOT)/bsp/bsp_w25q64.c \
@@ -31,10 +30,8 @@ $(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/interface/fal/fal_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/bootloader_core.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_fal_adapter.c \
 $(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_section_service.c
+$(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c
 
 VENDOR_SOURCES := \
 $(PLATFORM_ROOT)/Firmware/CMSIS/HDSC/hc32f3xx/Source/system_hc32f334.c \
@@ -54,12 +51,11 @@ ASM_SOURCES := $(PLATFORM_ROOT)/gcc/startup_hc32f334.S
 
 MCU_FLAGS := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 C_DEFS := -DHC32F334 -DIS_HC32F334 -DTOOLCHAIN_GCC -DUSE_DDL_DRIVER \
-          -DFIRMWARE_TYPE_BOOTLOADER -DAPP_START_ADDR=0 -DVECT_TAB_OFFSET=0 \
+          -DFIRMWARE_TYPE_BOOTLOADER -DBOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE \
           -DHC32F334_IAP_BASE=0x00004000UL
 ifeq ($(UPGRADE_MODE),direct)
-C_DEFS += -DHC32_BOOTLOADER_DEFAULT_MODE=BOOTLOADER_UPGRADE_MODE_DIRECT
+C_DEFS += -DHC32_BOOTLOADER_DEFAULT_MODE=BOOTLOADER_UPGRADE_MODE_DIRECT_E
 endif
-C_DEFS += -DHC32_BOOT_W25Q64_SELF_TEST=$(W25Q_SELF_TEST)
 C_DEFS += $(EXTRA_DEFS)
 C_INCLUDES := \
 -I.. \

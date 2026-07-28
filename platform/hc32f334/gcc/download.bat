@@ -4,7 +4,7 @@ setlocal
 cd /d "%~dp0"
 
 set "TARGET_CORE=Cortex-M4"
-set "DEFAULT_FIRMWARE=build\hc32f334_ac.hex"
+set "DEFAULT_FIRMWARE=build\isp\hc32f334_ac_isp.hex"
 set "MDK_DOWNLOADER=%~dp0..\keil_mdk\download.bat"
 
 if /I "%~1"=="-h" goto show_usage

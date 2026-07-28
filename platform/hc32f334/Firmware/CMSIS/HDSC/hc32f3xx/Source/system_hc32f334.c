@@ -46,9 +46,11 @@
 /* HRC select */
 #define HRC_FREQ_MON()                  (*((volatile uint32_t *)(0x40010684UL)))
 
-/* Vector Table base offset field */
-#ifndef VECT_TAB_OFFSET
-#define VECT_TAB_OFFSET                 (0x0UL)     /*!< This value must be a multiple of 0x400. */
+/* Vector table position is selected by the firmware target. */
+#if defined(IS_IAP)
+#define VECT_TAB_OFFSET                 (0x00004000UL) /*!< IAP vector table address. */
+#else
+#define VECT_TAB_OFFSET                 (0x00000000UL) /*!< ISP vector table address. */
 #endif
 /**
  * @}

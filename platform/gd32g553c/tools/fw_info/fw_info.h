@@ -52,7 +52,7 @@ typedef enum
 } firmware_type_t;
 
 // 根据宏定义设置固件类型
-#ifdef FIRMWARE_TYPE_IAP
+#ifdef IS_IAP
 #define DEFAULT_FW_TYPE FW_TYPE_IAP
 #elif defined(FIRMWARE_TYPE_ISP)
 #define DEFAULT_FW_TYPE FW_TYPE_ISP

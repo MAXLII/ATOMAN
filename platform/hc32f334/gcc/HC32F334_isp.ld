@@ -5,9 +5,9 @@ _Min_Stack_Size = 0x0C00;
 
 MEMORY
 {
-    FLASH       (rx)  : ORIGIN = 0x00004000, LENGTH = 112K
-    RAM_NOINIT  (rwx) : ORIGIN = 0x1FFFC000, LENGTH = 24
-    RAM         (rwx) : ORIGIN = 0x1FFFC018, LENGTH = 0x7FE8
+    FLASH       (rx)  : ORIGIN = 0x00000000, LENGTH = 128K
+    RAM_NOINIT  (rwx) : ORIGIN = 0x1FFFC000, LENGTH = 8
+    RAM         (rwx) : ORIGIN = 0x1FFFC008, LENGTH = 0x7FF8
     RAMB        (rwx) : ORIGIN = 0x200F0000, LENGTH = 4K
 }
 
@@ -18,6 +18,11 @@ SECTIONS
         . = ALIGN(4);
         KEEP(*(.vectors))
         . = ALIGN(4);
+    } > FLASH
+
+    .icg_sec 0x00000400 :
+    {
+        KEEP(*(.icg_sec))
     } > FLASH
 
     .text :
@@ -145,15 +150,14 @@ SECTIONS
     /DISCARD/ :
     {
         *(.note.GNU-stack)
-        *(.icg_sec)
     }
 
     PROVIDE(end = __HeapBase);
     PROVIDE(_end = __HeapBase);
     PROVIDE(_stack = __StackTop);
 
-    ASSERT(SIZEOF(.vectors) <= 0x400, "HC32F334 vector table exceeds reserved size")
-    ASSERT(SIZEOF(.noinit) <= LENGTH(RAM_NOINIT), "HC32F334 no-init area exceeds 24 bytes")
+    ASSERT(SIZEOF(.vectors) <= 0x400, "HC32F334 vector table overlaps ICG data")
+    ASSERT(SIZEOF(.noinit) <= LENGTH(RAM_NOINIT), "HC32F334 no-init area exceeds 8 bytes")
     ASSERT(__HeapLimit <= ORIGIN(RAM) + LENGTH(RAM), "HC32F334 main RAM overflow")
     ASSERT(__StackTop <= ORIGIN(RAMB) + LENGTH(RAMB), "HC32F334 RAMB overflow")
 }

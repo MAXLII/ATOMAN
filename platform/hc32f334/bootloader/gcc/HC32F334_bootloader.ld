@@ -7,8 +7,8 @@ _Min_Stack_Size = 0x0800;
 MEMORY
 {
     FLASH       (rx)  : ORIGIN = 0x00000000, LENGTH = HC32F334_IAP_BASE
-    RAM_NOINIT  (rwx) : ORIGIN = 0x1FFFC000, LENGTH = 16
-    RAM         (rwx) : ORIGIN = 0x1FFFC010, LENGTH = 0x7FF0
+    RAM_NOINIT  (rwx) : ORIGIN = 0x1FFFC000, LENGTH = 24
+    RAM         (rwx) : ORIGIN = 0x1FFFC018, LENGTH = 0x7FE8
     RAMB        (rwx) : ORIGIN = 0x200F0000, LENGTH = 4K
 }
 
@@ -133,7 +133,7 @@ SECTIONS
     PROVIDE(_stack = __StackTop);
 
     ASSERT(SIZEOF(.vectors) <= 0x400, "HC32F334 vector table overlaps ICG data")
-    ASSERT(SIZEOF(.noinit) <= LENGTH(RAM_NOINIT), "HC32F334 retained area exceeds 16 bytes")
+    ASSERT(SIZEOF(.noinit) <= LENGTH(RAM_NOINIT), "HC32F334 retained area exceeds 24 bytes")
     ASSERT(__HeapLimit <= ORIGIN(RAM) + LENGTH(RAM), "HC32F334 bootloader RAM overflow")
     ASSERT(__StackTop <= ORIGIN(RAMB) + LENGTH(RAMB), "HC32F334 bootloader stack overflow")
 }

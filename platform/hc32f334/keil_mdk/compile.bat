@@ -3,10 +3,18 @@ chcp 65001 >nul
 setlocal
 cd /d "%~dp0"
 
+set "FIRMWARE_TARGET=ISP"
 set "PROJECT_FILE=%~dp0hc32f334_ac.uvprojx"
-set "LOG_FILE=%~dp0compile.log"
+set "LOG_FILE=%~dp0compile_isp.log"
 set "BUILD_OPTION=-b"
 set "BUILD_NAME=Build"
+
+if /I "%~1"=="-iap" (
+    set "FIRMWARE_TARGET=IAP"
+    set "LOG_FILE=%~dp0compile_iap.log"
+    shift
+)
+if /I "%~1"=="-isp" shift
 
 if "%~1"=="" goto arguments_ready
 if /I "%~1"=="-b" goto arguments_ready
@@ -40,11 +48,12 @@ if errorlevel 1 exit /b 1
 if exist "%LOG_FILE%" del /f /q "%LOG_FILE%"
 
 echo %BUILD_NAME% project: %PROJECT_FILE%
+echo Firmware target: %FIRMWARE_TARGET%
 echo UV4: %UV4_EXE%
 echo Log: %LOG_FILE%
 echo.
 
-set "UV4_ARGUMENTS=%BUILD_OPTION% "%PROJECT_FILE%" -j0 -o "%LOG_FILE%""
+set "UV4_ARGUMENTS=%BUILD_OPTION% "%PROJECT_FILE%" -t %FIRMWARE_TARGET% -j0 -o "%LOG_FILE%""
 powershell.exe -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -Command "$process = Start-Process -FilePath $env:UV4_EXE -ArgumentList $env:UV4_ARGUMENTS -WindowStyle Hidden -Wait -PassThru; exit $process.ExitCode"
 set "UV4_RESULT=%ERRORLEVEL%"
 
@@ -96,7 +105,9 @@ exit /b 1
 
 :show_usage
 echo.
-echo Usage: %~nx0 [build^|-b^|rebuild^|-r]
+echo Usage: %~nx0 [-isp^|-iap] [build^|-b^|rebuild^|-r]
+echo   -isp     Build the ISP target. This is the default.
+echo   -iap     Build the IAP target.
 echo   build    Incremental Keil build. This is the default.
 echo   rebuild  Rebuild all project files.
 exit /b 0

@@ -39,7 +39,7 @@
 
 /* #define VECT_TAB_SRAM */
 
-#ifdef FIRMWARE_TYPE_IAP
+#ifdef IS_IAP
 // IAP版本，从0x08006000开始
 #define VECT_TAB_OFFSET 0x6000
 #else
