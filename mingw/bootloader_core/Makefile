@@ -11,10 +11,8 @@ CFLAGS := -std=c11 -O2 -g3 $(WARN_FLAGS) \
 
 SOURCES := test_bootloader_core.c \
            $(PROJECT_ROOT)/code/app/bootloader/bootloader_core.c \
-           $(PROJECT_ROOT)/code/app/bootloader/bootloader_fal_adapter.c \
            $(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c \
-           $(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c \
-           $(PROJECT_ROOT)/code/app/bootloader/iap_boot_service.c
+           $(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c
 
 .PHONY: all test clean
 
