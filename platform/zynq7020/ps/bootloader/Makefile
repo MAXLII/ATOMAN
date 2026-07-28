@@ -18,6 +18,7 @@ C_SOURCES := \
 ../bsp/bsp_qspi_flash.c \
 main.c \
 bootloader_comm_link.c \
+bootloader_fal_adapter.c \
 zynq_boot_platform.c \
 ../src/zynq_boot_handoff.c \
 fal_cfg.c \
@@ -25,10 +26,8 @@ $(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/interface/fal/fal_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/bootloader_core.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_fal_adapter.c \
 $(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_section_service.c
+$(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c
 
 C_INCLUDES := \
 -I. \
@@ -43,7 +42,7 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/app/bootloader \
 -isystem $(BSP_INCLUDE)
 
-C_DEFS := -DIS_ZYNQ7020 -DTOOLCHAIN_GCC \
+C_DEFS := -DIS_ZYNQ7020 -DTOOLCHAIN_GCC -DBOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE \
           -DHYP_GUEST=0 -DEL1_NONSECURE=0 -DXEN_USE_PV_CONSOLE=0
 CPU_FLAGS := -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic \

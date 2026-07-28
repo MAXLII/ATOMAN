@@ -21,7 +21,6 @@ C_SOURCES := \
 ./src/platform_probe.c \
 ./src/zero_player_oled.c \
 ./src/zynq_iap_update_service.c \
-./src/zynq_boot_handoff.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/dbg/shell.c \
@@ -45,8 +44,6 @@ $(PROJECT_ROOT)/code/app/demo/demo_sfra.c \
 $(PROJECT_ROOT)/code/app/demo/demo_shell.c \
 $(PROJECT_ROOT)/code/app/demo/demo_task.c \
 $(PROJECT_ROOT)/code/app/demo/demo_trace.c \
-$(PROJECT_ROOT)/code/app/bootloader/iap_boot_service.c \
-$(PROJECT_ROOT)/code/app/bootloader/iap_section_service.c \
 $(PROJECT_ROOT)/code/lib/dft.c \
 $(PROJECT_ROOT)/code/lib/pi_tustin.c \
 $(PROJECT_ROOT)/code/lib/pr.c \
@@ -70,7 +67,7 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/lib \
 -isystem $(BSP_INCLUDE)
 
-C_DEFS := -DIS_ZYNQ7020 -DTOOLCHAIN_GCC
+C_DEFS := -DIS_ZYNQ7020 -DIS_IAP -DTOOLCHAIN_GCC
 CPU_FLAGS := -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic \
               -Wconversion -Wsign-conversion -Wshadow -Wcast-align \
