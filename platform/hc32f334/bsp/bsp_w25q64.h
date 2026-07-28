@@ -32,15 +32,10 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define BSP_W25Q64_CAPACITY_BYTES   (8UL * 1024UL * 1024UL)
-#define BSP_W25Q64_PAGE_SIZE        256UL
-#define BSP_W25Q64_SECTOR_SIZE      4096UL
+#define BSP_W25Q64_CAPACITY_BYTES (8UL * 1024UL * 1024UL)
+#define BSP_W25Q64_PAGE_SIZE 256UL
+#define BSP_W25Q64_SECTOR_SIZE 4096UL
 #define BSP_W25Q64_EXPECTED_JEDEC_ID 0x00EF4017UL
-#define BSP_W25Q64_SELF_TEST_ADDRESS 0x007FF000UL
 
 typedef enum
 {
@@ -50,7 +45,6 @@ typedef enum
     BSP_W25Q64_RESULT_BUSY = -3,
     BSP_W25Q64_RESULT_IO_ERROR = -4,
     BSP_W25Q64_RESULT_ID_MISMATCH = -5,
-    BSP_W25Q64_RESULT_VERIFY_ERROR = -6,
     BSP_W25Q64_RESULT_TIMEOUT = -7
 } bsp_w25q64_result_t;
 
@@ -69,10 +63,5 @@ bsp_w25q64_result_t bsp_w25q64_page_program(uint32_t address,
                                             uint32_t length,
                                             const uint8_t *p_data);
 bsp_w25q64_result_t bsp_w25q64_sector_erase(uint32_t address);
-bsp_w25q64_result_t bsp_w25q64_self_test(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* BSP_W25Q64_H */

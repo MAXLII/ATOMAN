@@ -51,6 +51,25 @@ bsp_efm_flash_result_t bsp_efm_flash_init(void)
     return BSP_EFM_FLASH_RESULT_SUCCESS;
 }
 
+bsp_efm_flash_result_t bsp_efm_flash_write_range_enable(uint32_t address, uint32_t length)
+{
+    uint32_t start_sector;
+    uint32_t sector_count;
+
+    if ((0UL == length) ||
+        (0UL != (address % BSP_EFM_FLASH_ERASE_SIZE)) ||
+        (0UL != (length % BSP_EFM_FLASH_ERASE_SIZE)) ||
+        (0U == bsp_efm_flash_range_is_valid(address, length)))
+    {
+        return BSP_EFM_FLASH_RESULT_INVALID_ARGUMENT;
+    }
+
+    start_sector = address / BSP_EFM_FLASH_ERASE_SIZE;
+    sector_count = length / BSP_EFM_FLASH_ERASE_SIZE;
+    EFM_SequenceSectorOperateCmd(start_sector, (uint16_t)sector_count, ENABLE);
+    return BSP_EFM_FLASH_RESULT_SUCCESS;
+}
+
 bsp_efm_flash_state_t bsp_efm_flash_state_get(void)
 {
     return (0U == s_efm_error) ? BSP_EFM_FLASH_STATE_READY : BSP_EFM_FLASH_STATE_ERROR;
@@ -74,14 +93,18 @@ bsp_efm_flash_result_t bsp_efm_flash_read(uint32_t address, uint32_t length, uin
 }
 
 bsp_efm_flash_result_t bsp_efm_flash_program(uint32_t address,
-                                            uint32_t length,
-                                            const uint8_t *p_data)
+                                             uint32_t length,
+                                             const uint8_t *p_data)
 {
-    int32_t result;
+    uint8_t program_data[BSP_EFM_FLASH_PROGRAM_SIZE] = {0U};
+    uint32_t program_address = 0UL;
+    uint32_t source_offset = 0UL;
+    uint32_t byte_offset = 0UL;
+    uint32_t copy_length = 0UL;
+    uint32_t primask = 0UL;
+    int32_t result = LL_OK;
 
-    if ((NULL == p_data) || (0UL == length) ||
-        (0UL != (address % BSP_EFM_FLASH_PROGRAM_SIZE)) ||
-        (0UL != (length % BSP_EFM_FLASH_PROGRAM_SIZE)))
+    if ((NULL == p_data) || (0UL == length))
     {
         return BSP_EFM_FLASH_RESULT_INVALID_ARGUMENT;
     }
@@ -90,11 +113,33 @@ bsp_efm_flash_result_t bsp_efm_flash_program(uint32_t address,
         return BSP_EFM_FLASH_RESULT_OUT_OF_RANGE;
     }
 
-    result = EFM_ProgramReadBack(address, p_data, length);
-    if (LL_OK != result)
+    while (source_offset < length)
     {
-        s_efm_error = 1U;
-        return BSP_EFM_FLASH_RESULT_IO_ERROR;
+        program_address = (address + source_offset) & ~(BSP_EFM_FLASH_PROGRAM_SIZE - 1UL);
+        byte_offset = (address + source_offset) - program_address;
+        copy_length = BSP_EFM_FLASH_PROGRAM_SIZE - byte_offset;
+        if (copy_length > (length - source_offset))
+        {
+            copy_length = length - source_offset;
+        }
+
+        (void)memcpy(program_data,
+                     (const void *)(uintptr_t)program_address,
+                     BSP_EFM_FLASH_PROGRAM_SIZE);
+        (void)memcpy(&program_data[byte_offset], &p_data[source_offset], copy_length);
+
+        primask = __get_PRIMASK();
+        __disable_irq();
+        result = EFM_ProgramReadBack(program_address,
+                                     program_data,
+                                     BSP_EFM_FLASH_PROGRAM_SIZE);
+        __set_PRIMASK(primask);
+        if (LL_OK != result)
+        {
+            s_efm_error = 1U;
+            return BSP_EFM_FLASH_RESULT_IO_ERROR;
+        }
+        source_offset += copy_length;
     }
     return BSP_EFM_FLASH_RESULT_SUCCESS;
 }
@@ -102,6 +147,7 @@ bsp_efm_flash_result_t bsp_efm_flash_program(uint32_t address,
 bsp_efm_flash_result_t bsp_efm_flash_erase(uint32_t address, uint32_t length)
 {
     int32_t result;
+    uint32_t primask;
 
     if ((BSP_EFM_FLASH_ERASE_SIZE != length) ||
         (0UL != (address % BSP_EFM_FLASH_ERASE_SIZE)))
@@ -113,7 +159,10 @@ bsp_efm_flash_result_t bsp_efm_flash_erase(uint32_t address, uint32_t length)
         return BSP_EFM_FLASH_RESULT_OUT_OF_RANGE;
     }
 
+    primask = __get_PRIMASK();
+    __disable_irq();
     result = EFM_SectorErase(address);
+    __set_PRIMASK(primask);
     if (LL_OK != result)
     {
         s_efm_error = 1U;

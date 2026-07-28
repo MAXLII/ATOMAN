@@ -32,7 +32,7 @@
 #include "comm_addr.h"
 #include "section.h"
 
-#define HC32_BOOTLOADER_LINK_ID         0U
+#define HC32_BOOTLOADER_LINK_ID 0U
 #define HC32_BOOTLOADER_RX_PAYLOAD_SIZE 1033U
 
 static section_link_tx_func_t s_bootloader_tx = {

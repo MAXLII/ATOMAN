@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Define HC32 embedded-flash and W25Q64 FAL device identifiers
  *          - Describe the internal IAP and external staging/metadata partitions
- *          - Publish the Bootloader-to-FAL logical zone mapping
+ *          - Publish the HC32 FAL configuration and shared instance
  *
  *          Design notes:
  *          - C11 compatible
@@ -30,41 +30,41 @@
 #ifndef HC32F334_BOOTLOADER_FAL_CFG_H
 #define HC32F334_BOOTLOADER_FAL_CFG_H
 
-#include "bootloader_fal_adapter.h"
 #include "fal_core.h"
 
-#ifndef HC32F334_IAP_BASE
-#define HC32F334_IAP_BASE 0x00004000UL
-#endif
+#define HC32F334_EFM_BLOCK_SIZE (4UL * 1024UL)
+#define HC32F334_W25Q64_BLOCK_SIZE (4UL * 1024UL)
 
-#define HC32F334_FLASH_END             0x00020000UL
-#define HC32F334_BOOT_SIZE             HC32F334_IAP_BASE
-#define HC32F334_IAP_SIZE              (HC32F334_FLASH_END - HC32F334_IAP_BASE)
-#define HC32F334_STAGING_OFFSET        0x00000000UL
-#define HC32F334_STAGING_SIZE          0x00020000UL
-#define HC32F334_META_A_OFFSET         0x00020000UL
-#define HC32F334_META_B_OFFSET         0x00021000UL
-#define HC32F334_LAYOUT_OFFSET         0x00022000UL
-#define HC32F334_SMALL_ZONE_SIZE       0x00001000UL
+#define HC32F334_BOOT_SIZE (4UL * HC32F334_EFM_BLOCK_SIZE)
+#define HC32F334_IAP_SIZE (28UL * HC32F334_EFM_BLOCK_SIZE)
+#define HC32F334_FLASH_END (32UL * HC32F334_EFM_BLOCK_SIZE)
+
+#define HC32F334_STAGING_SIZE (32UL * HC32F334_W25Q64_BLOCK_SIZE)
+#define HC32F334_META_A_SIZE (1UL * HC32F334_W25Q64_BLOCK_SIZE)
+#define HC32F334_META_B_SIZE (1UL * HC32F334_W25Q64_BLOCK_SIZE)
+#define HC32F334_LAYOUT_SIZE (1UL * HC32F334_W25Q64_BLOCK_SIZE)
+
+#ifndef HC32F334_IAP_BASE
+#define HC32F334_IAP_BASE HC32F334_BOOT_SIZE
+#endif
 
 typedef enum
 {
-    FAL_DEVICE_HC32_EFM = 1U,
-    FAL_DEVICE_HC32_W25Q64 = 2U
+    FAL_DEVICE_HC32_EFM_E = 1U,
+    FAL_DEVICE_HC32_W25Q64_E = 2U
 } hc32f334_fal_device_id_t;
 
 typedef enum
 {
-    FAL_ZONE_HC32_BOOT = 1U,
-    FAL_ZONE_HC32_IAP,
-    FAL_ZONE_HC32_IAP_STAGING,
-    FAL_ZONE_HC32_UPDATE_META_A,
-    FAL_ZONE_HC32_UPDATE_META_B,
-    FAL_ZONE_HC32_LAYOUT
+    FAL_ZONE_HC32_BOOT_E = 1U,
+    FAL_ZONE_HC32_IAP_E,
+    FAL_ZONE_HC32_IAP_STAGING_E,
+    FAL_ZONE_HC32_UPDATE_META_A_E,
+    FAL_ZONE_HC32_UPDATE_META_B_E,
+    FAL_ZONE_HC32_LAYOUT_E
 } hc32f334_fal_zone_id_t;
 
 extern const fal_cfg_t g_hc32f334_fal_cfg;
-extern const bootloader_fal_zone_map_t
-    g_hc32f334_bootloader_zone_map[BOOTLOADER_FLASH_ZONE_COUNT];
+extern fal_t g_hc32f334_fal;
 
 #endif /* HC32F334_BOOTLOADER_FAL_CFG_H */

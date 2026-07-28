@@ -33,8 +33,8 @@
 #include <stdint.h>
 
 #define BSP_EFM_FLASH_CAPACITY_BYTES 0x00020000UL
-#define BSP_EFM_FLASH_PROGRAM_SIZE   4UL
-#define BSP_EFM_FLASH_ERASE_SIZE     0x00001000UL
+#define BSP_EFM_FLASH_PROGRAM_SIZE 4UL
+#define BSP_EFM_FLASH_ERASE_SIZE 0x00001000UL
 
 typedef enum
 {
@@ -51,11 +51,12 @@ typedef enum
 } bsp_efm_flash_state_t;
 
 bsp_efm_flash_result_t bsp_efm_flash_init(void);
+bsp_efm_flash_result_t bsp_efm_flash_write_range_enable(uint32_t address, uint32_t length);
 bsp_efm_flash_state_t bsp_efm_flash_state_get(void);
 bsp_efm_flash_result_t bsp_efm_flash_read(uint32_t address, uint32_t length, uint8_t *p_data);
 bsp_efm_flash_result_t bsp_efm_flash_program(uint32_t address,
-                                            uint32_t length,
-                                            const uint8_t *p_data);
+                                             uint32_t length,
+                                             const uint8_t *p_data);
 bsp_efm_flash_result_t bsp_efm_flash_erase(uint32_t address, uint32_t length);
 
 #endif /* BSP_EFM_FLASH_H */

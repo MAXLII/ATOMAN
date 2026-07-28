@@ -7,13 +7,14 @@
  *
  *          Module responsibilities:
  *          - Configure PC10 TX and PC4 RX for USART2
- *          - Send FRAME responses and poll received bytes without application buffers
+ *          - Buffer USART2 receive bytes with circular DMA for the FRAME parser
+ *          - Send FRAME responses from the foreground communication path
  *          - Expose hardware-complete TX status before reset or jump
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - Foreground polling only; no UART ISR ownership
+ *          - DMA channel 0 is dedicated to USART2 RX; W25Q uses channels 4 and 5
  *          - A bounded wait prevents a failed USART from trapping the bootloader
  *
  * @author  Max.Li
@@ -32,17 +33,61 @@
 #include "hc32_ll.h"
 
 #include <stddef.h>
-#define HC32_BOOT_UART_UNIT       CM_USART2
-#define HC32_BOOT_UART_TX_PORT    GPIO_PORT_C
-#define HC32_BOOT_UART_TX_PIN     GPIO_PIN_10
-#define HC32_BOOT_UART_RX_PORT    GPIO_PORT_C
-#define HC32_BOOT_UART_RX_PIN     GPIO_PIN_04
-#define HC32_BOOT_UART_FUNC       GPIO_FUNC_36
-#define HC32_BOOT_UART_TIMEOUT    1000000UL
-#define HC32_BOOT_UART_CR2_RESET  0x0600UL
+#define HC32_BOOT_UART_UNIT CM_USART2
+#define HC32_BOOT_UART_TX_PORT GPIO_PORT_C
+#define HC32_BOOT_UART_TX_PIN GPIO_PIN_10
+#define HC32_BOOT_UART_RX_PORT GPIO_PORT_C
+#define HC32_BOOT_UART_RX_PIN GPIO_PIN_04
+#define HC32_BOOT_UART_TX_FUNC GPIO_FUNC_36
+#define HC32_BOOT_UART_RX_FUNC GPIO_FUNC_37
+#define HC32_BOOT_UART_TIMEOUT 1000000UL
+#define HC32_BOOT_UART_RX_BUFFER_SIZE 1023U
+#define HC32_BOOT_UART_RX_DMA_CH DMA_CH0
+#define HC32_BOOT_UART_RX_DMA_MX_CH DMA_MX_CH0
+#define HC32_BOOT_UART_RX_DMA_TRIGGER AOS_DMA_0
+#define HC32_BOOT_UART_RX_DMA_TC_FLAG DMA_FLAG_TC_CH0
+#define HC32_BOOT_UART_RX_DMA_RESTART_THRESHOLD 2048UL
+#define HC32_BOOT_UART_CR2_RESET 0x0600UL
 #ifndef HC32_BOOT_UART_BRR
-#define HC32_BOOT_UART_BRR        0x017CUL
+#define HC32_BOOT_UART_BRR 0x017CUL
 #endif
+
+static uint8_t s_rx_buffer[HC32_BOOT_UART_RX_BUFFER_SIZE] = {0};
+static uint16_t s_rx_tail = 0U;
+
+static void hc32_boot_uart_rx_dma_init(void)
+{
+    stc_dma_init_t dma_init;
+    stc_dma_repeat_init_t repeat_init;
+
+    FCG_Fcg0PeriphClockCmd(FCG0_PERIPH_AOS | FCG0_PERIPH_DMA, ENABLE);
+    DMA_Cmd(CM_DMA, ENABLE);
+    DMA_MxChCmd(CM_DMA, HC32_BOOT_UART_RX_DMA_MX_CH, DISABLE);
+    (void)DMA_ChCmd(CM_DMA, HC32_BOOT_UART_RX_DMA_CH, DISABLE);
+    DMA_ClearTransCompleteStatus(CM_DMA, HC32_BOOT_UART_RX_DMA_TC_FLAG);
+
+    (void)DMA_StructInit(&dma_init);
+    dma_init.u32IntEn = DMA_INT_DISABLE;
+    dma_init.u32SrcAddr = (uint32_t)&HC32_BOOT_UART_UNIT->RDR;
+    dma_init.u32DestAddr = (uint32_t)&s_rx_buffer[0];
+    dma_init.u32DataWidth = DMA_DATAWIDTH_8BIT;
+    dma_init.u32BlockSize = 1UL;
+    dma_init.u32TransCount = UINT16_MAX;
+    dma_init.u32SrcAddrInc = DMA_SRC_ADDR_FIX;
+    dma_init.u32DestAddrInc = DMA_DEST_ADDR_INC;
+    (void)DMA_Init(CM_DMA, HC32_BOOT_UART_RX_DMA_CH, &dma_init);
+
+    (void)DMA_RepeatStructInit(&repeat_init);
+    repeat_init.u32Mode = DMA_RPT_DEST;
+    repeat_init.u32DestCount = HC32_BOOT_UART_RX_BUFFER_SIZE;
+    repeat_init.u32SrcCount = 0UL;
+    (void)DMA_RepeatInit(CM_DMA, HC32_BOOT_UART_RX_DMA_CH, &repeat_init);
+
+    AOS_SetTriggerEventSrc(HC32_BOOT_UART_RX_DMA_TRIGGER, EVT_SRC_USART2_RI);
+    DMA_MxChCmd(CM_DMA, HC32_BOOT_UART_RX_DMA_MX_CH, ENABLE);
+    (void)DMA_ChCmd(CM_DMA, HC32_BOOT_UART_RX_DMA_CH, ENABLE);
+    s_rx_tail = 0U;
+}
 
 int32_t hc32_boot_uart_init(void)
 {
@@ -59,8 +104,8 @@ int32_t hc32_boot_uart_init(void)
     gpio_init.u16PinDir = PIN_DIR_IN;
     gpio_init.u16PullUp = PIN_PU_ON;
     (void)GPIO_Init(HC32_BOOT_UART_RX_PORT, HC32_BOOT_UART_RX_PIN, &gpio_init);
-    GPIO_SetFunc(HC32_BOOT_UART_TX_PORT, HC32_BOOT_UART_TX_PIN, HC32_BOOT_UART_FUNC);
-    GPIO_SetFunc(HC32_BOOT_UART_RX_PORT, HC32_BOOT_UART_RX_PIN, HC32_BOOT_UART_FUNC);
+    GPIO_SetFunc(HC32_BOOT_UART_TX_PORT, HC32_BOOT_UART_TX_PIN, HC32_BOOT_UART_TX_FUNC);
+    GPIO_SetFunc(HC32_BOOT_UART_RX_PORT, HC32_BOOT_UART_RX_PIN, HC32_BOOT_UART_RX_FUNC);
     GPIO_OutputCmd(HC32_BOOT_UART_TX_PORT, HC32_BOOT_UART_TX_PIN, ENABLE);
     GPIO_OutputCmd(HC32_BOOT_UART_RX_PORT, HC32_BOOT_UART_RX_PIN, DISABLE);
     GPIO_REG_Lock();
@@ -72,16 +117,46 @@ int32_t hc32_boot_uart_init(void)
     WRITE_REG32(HC32_BOOT_UART_UNIT->PR, USART_CLK_DIV4);
     WRITE_REG32(HC32_BOOT_UART_UNIT->BRR, HC32_BOOT_UART_BRR);
     USART_FuncCmd(HC32_BOOT_UART_UNIT, USART_RX | USART_TX, ENABLE);
+    hc32_boot_uart_rx_dma_init();
     return LL_OK;
 }
 
 uint8_t hc32_boot_uart_rx_get_byte(uint8_t *p_data)
 {
-    if ((NULL == p_data) || (SET != USART_GetStatus(HC32_BOOT_UART_UNIT, USART_FLAG_RX_FULL)))
+    uint32_t write_address;
+    uint16_t write_index;
+
+    if (NULL == p_data)
     {
         return 0U;
     }
-    *p_data = (uint8_t)USART_ReadData(HC32_BOOT_UART_UNIT);
+    write_address = DMA_GetDestAddr(CM_DMA, HC32_BOOT_UART_RX_DMA_CH);
+    if ((write_address < (uint32_t)&s_rx_buffer[0]) ||
+        (write_address > ((uint32_t)&s_rx_buffer[HC32_BOOT_UART_RX_BUFFER_SIZE - 1U] + 1UL)))
+    {
+        return 0U;
+    }
+    write_index = (uint16_t)(write_address - (uint32_t)&s_rx_buffer[0]);
+    if (write_index == HC32_BOOT_UART_RX_BUFFER_SIZE)
+    {
+        write_index = 0U;
+    }
+    if (s_rx_tail == write_index)
+    {
+        if ((DMA_GetTransCount(CM_DMA, HC32_BOOT_UART_RX_DMA_CH) <
+             HC32_BOOT_UART_RX_DMA_RESTART_THRESHOLD) ||
+            (SET == DMA_GetTransCompleteStatus(CM_DMA, HC32_BOOT_UART_RX_DMA_TC_FLAG)))
+        {
+            hc32_boot_uart_rx_dma_init();
+        }
+        return 0U;
+    }
+    *p_data = s_rx_buffer[s_rx_tail];
+    s_rx_tail++;
+    if (s_rx_tail == HC32_BOOT_UART_RX_BUFFER_SIZE)
+    {
+        s_rx_tail = 0U;
+    }
     return 1U;
 }
 
