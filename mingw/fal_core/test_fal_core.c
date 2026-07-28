@@ -198,19 +198,19 @@ static void case_invalid_cfg_and_second_device(void)
 
     log_line("\nCASE invalid_cfg_and_second_device\n");
     fake_fal_fixture_reset(&fixture);
-    fixture.zones[2].device_offset = fixture.zones[1].device_offset;
-    check_i32("reject overlapping zones", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
+    fixture.devices[0].capacity = 1024u;
+    check_i32("reject cumulative overflow", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
 
     fake_fal_fixture_reset(&fixture);
-    fixture.zones[0].device_id = 99u;
-    check_i32("reject unknown device", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
+    fixture.devices[0].p_zones = NULL;
+    check_i32("reject missing zone table", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
 
     fake_fal_fixture_reset(&fixture);
     fixture.devices[1].device_id = fixture.devices[0].device_id;
     check_i32("reject duplicate device id", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
 
     fake_fal_fixture_reset(&fixture);
-    fixture.zones[1].zone_id = fixture.zones[0].zone_id;
+    fixture.zones[3].zone_id = fixture.zones[0].zone_id;
     check_i32("reject duplicate zone id", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
 
     fake_fal_fixture_reset(&fixture);
@@ -222,8 +222,8 @@ static void case_invalid_cfg_and_second_device(void)
     check_i32("reject missing driver function", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
 
     fake_fal_fixture_reset(&fixture);
-    fixture.zones[1].device_offset++;
-    check_i32("reject unaligned zone", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
+    fixture.zones[1].size++;
+    check_i32("reject unaligned zone size", FAL_RESULT_CONFIG_ERROR, fal_init(&fal, &fixture.cfg));
 
     fake_fal_fixture_reset(&fixture);
     check_i32("fal_init", FAL_RESULT_SUCCESS, fal_init(&fal, &fixture.cfg));
@@ -231,7 +231,7 @@ static void case_invalid_cfg_and_second_device(void)
               fal_write(&fal, FAKE_FAL_ZONE_SECOND, 5u, sizeof(data), data));
     process_until_idle(&fal, 32u);
     check_i32("second device used", 0, (int32_t)fixture.first_flash.call_count);
-    check_i32("second physical address", 261, (int32_t)fixture.second_flash.calls[0].address);
+    check_i32("second physical address", 5, (int32_t)fixture.second_flash.calls[0].address);
     check_i32("out of range", FAL_RESULT_OUT_OF_RANGE,
               fal_read(&fal, FAKE_FAL_ZONE_SECOND, 1023u, 2u, data));
     check_i32("overflow-sized offset", FAL_RESULT_OUT_OF_RANGE,

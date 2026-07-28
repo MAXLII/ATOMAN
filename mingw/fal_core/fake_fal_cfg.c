@@ -47,6 +47,8 @@ void fake_fal_fixture_reset(fake_fal_fixture_t *p_fixture)
     p_fixture->devices[0].program_page_size = 16u;
     p_fixture->devices[0].erase_block_size = 64u;
     p_fixture->devices[0].max_read_size = 24u;
+    p_fixture->devices[0].p_zones = &p_fixture->zones[0];
+    p_fixture->devices[0].zone_count = 3u;
     p_fixture->devices[0].ops = fake_flash_ops_make(&p_fixture->first_flash);
 
     p_fixture->devices[1].device_id = 20u;
@@ -54,39 +56,31 @@ void fake_fal_fixture_reset(fake_fal_fixture_t *p_fixture)
     p_fixture->devices[1].program_page_size = 32u;
     p_fixture->devices[1].erase_block_size = 128u;
     p_fixture->devices[1].max_read_size = 0u;
+    p_fixture->devices[1].p_zones = &p_fixture->zones[3];
+    p_fixture->devices[1].zone_count = 1u;
     p_fixture->devices[1].ops = fake_flash_ops_make(&p_fixture->second_flash);
 
     p_fixture->zones[0] = (fal_zone_cfg_t){
         .zone_id = FAKE_FAL_ZONE_BOOT,
-        .device_id = 10u,
-        .device_offset = 0u,
         .size = 512u,
         .permissions = FAL_ZONE_PERMISSION_READ,
     };
     p_fixture->zones[1] = (fal_zone_cfg_t){
         .zone_id = FAKE_FAL_ZONE_IAP,
-        .device_id = 10u,
-        .device_offset = 512u,
         .size = 2048u,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     };
     p_fixture->zones[2] = (fal_zone_cfg_t){
         .zone_id = FAKE_FAL_ZONE_STAGING,
-        .device_id = 10u,
-        .device_offset = 2560u,
         .size = 2048u,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     };
     p_fixture->zones[3] = (fal_zone_cfg_t){
         .zone_id = FAKE_FAL_ZONE_SECOND,
-        .device_id = 20u,
-        .device_offset = 256u,
         .size = 1024u,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     };
 
     p_fixture->cfg.p_devices = p_fixture->devices;
     p_fixture->cfg.device_count = 2u;
-    p_fixture->cfg.p_zones = p_fixture->zones;
-    p_fixture->cfg.zone_count = 4u;
 }
