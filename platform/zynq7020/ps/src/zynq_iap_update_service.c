@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    zynq_iap_update_service.c
- * @brief   Minimal Section-registered Zynq IAP bootloader handoff.
+ * @brief   Independent Zynq IAP upgrade-trigger implementation.
  * @details
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Mount the user preparation hook into the generic IAP boot service
- *          - Set the retained request only after preparation succeeds
- *          - Wait for the PS UART ACK to drain before entering Bootloader DDR code
+ *          - Register and directly acknowledge only FRAME command 0x08
+ *          - Invoke the mounted preparation callback and publish the boot request
+ *          - Drain the UART response before transferring to the Bootloader image
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - IAP does not register 0x09, 0x0A, or 0x0B handlers
- *          - Hardware access remains in Zynq BSP and handoff modules
+ *          - The boot request occupies a fixed on-chip-memory address
+ *          - Cache and interrupt shutdown occurs immediately before transfer
  *
  * @author  Max.Li
- * @date    2026-07-27
+ * @date    2026-07-28
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,80 +30,139 @@
 #include "zynq_iap_update_service.h"
 
 #include "bsp_usart.h"
-#include "iap_boot_service.h"
-#include "iap_section_service.h"
+#include "comm.h"
 #include "section.h"
-#include "zynq_boot_handoff.h"
+#include "xil_cache.h"
+#include "xil_exception.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
-static iap_boot_service_t s_service;
-static zynq_iap_prepare_t s_p_prepare;
-static void *s_p_prepare_context;
+#define ZYNQ_IAP_CMD_SET             0x01u
+#define ZYNQ_IAP_CMD_INFO            0x08u
+#define ZYNQ_IAP_INFO_LENGTH         10u
+#define ZYNQ_IAP_ACK_LENGTH          3u
+#define ZYNQ_IAP_ACK_ACCEPTED        1u
+#define ZYNQ_IAP_ACK_REJECTED        2u
+#define ZYNQ_BOOT_REASON_ADDRESS     0x0003FFF0u
+#define ZYNQ_BOOT_REASON_MAGIC       0x42544C44u
+#define ZYNQ_BOOT_REASON_IAP_REQUEST 1u
+#define ZYNQ_BOOTLOADER_ENTRY        0x04000000u
 
-static bootloader_result_t default_prepare(void *p_context,
-                                           const bootloader_upgrade_info_t *p_info)
+typedef struct
+{
+    uint32_t magic;
+    uint32_t reason;
+    uint32_t inverted_magic;
+} zynq_iap_boot_reason_record_t;
+
+static zynq_iap_prepare_t p_prepare_callback;
+static void *p_prepare_context;
+static uint8_t transfer_pending;
+static uint8_t transfer_called;
+
+static uint32_t read_u32_le(const uint8_t *p_data)
+{
+    return (uint32_t)p_data[0] |
+           ((uint32_t)p_data[1] << 8u) |
+           ((uint32_t)p_data[2] << 16u) |
+           ((uint32_t)p_data[3] << 24u);
+}
+
+static zynq_iap_update_result_t default_prepare(void *p_context,
+                                                 const zynq_iap_update_info_t *p_info)
 {
     (void)p_context;
     (void)p_info;
-    return BOOTLOADER_RESULT_SUCCESS;
+    return ZYNQ_IAP_UPDATE_RESULT_SUCCESS;
 }
 
-static bootloader_result_t prepare_call(void *p_context,
-                                        const bootloader_upgrade_info_t *p_info)
+static void boot_reason_set(void)
 {
-    (void)p_context;
-    return s_p_prepare(s_p_prepare_context, p_info);
+    volatile zynq_iap_boot_reason_record_t *p_record =
+        (volatile zynq_iap_boot_reason_record_t *)(uintptr_t)ZYNQ_BOOT_REASON_ADDRESS;
+
+    p_record->reason = ZYNQ_BOOT_REASON_IAP_REQUEST;
+    p_record->inverted_magic = (uint32_t)(~ZYNQ_BOOT_REASON_MAGIC);
+    __asm__ volatile("dmb sy" ::: "memory");
+    p_record->magic = ZYNQ_BOOT_REASON_MAGIC;
+    __asm__ volatile("dmb sy" ::: "memory");
 }
 
-static bootloader_result_t request_set(void *p_context)
+static void info_handle(section_packform_t *p_request, DEC_MY_PRINTF)
 {
-    (void)p_context;
-    return zynq_boot_request_set();
-}
+    section_packform_t response = {0};
+    zynq_iap_update_info_t info = {0};
+    uint8_t ack[ZYNQ_IAP_ACK_LENGTH] = {ZYNQ_IAP_ACK_REJECTED, 0u, 0u};
 
-static uint8_t tx_is_idle(void *p_context)
-{
-    (void)p_context;
-    return bsp_usart_dbg_tx_is_idle();
-}
-
-static bootloader_result_t enter_bootloader(void *p_context)
-{
-    (void)p_context;
-    return zynq_enter_bootloader();
-}
-
-static void zynq_iap_update_init(void)
-{
-    const iap_boot_service_ops_t ops = {
-        .p_context = NULL,
-        .p_prepare = prepare_call,
-        .p_boot_reason_set = request_set,
-        .p_tx_is_idle = tx_is_idle,
-        .p_enter_bootloader = enter_bootloader,
-    };
-
-    if (s_p_prepare == NULL)
+    if ((p_request == NULL) || (my_printf == NULL))
     {
-        s_p_prepare = default_prepare;
+        return;
     }
-    if (iap_boot_service_init(&s_service, &ops) == BOOTLOADER_RESULT_SUCCESS)
+    if ((p_request->p_data != NULL) &&
+        (p_request->len >= ZYNQ_IAP_INFO_LENGTH) &&
+        (transfer_pending == 0u))
     {
-        (void)iap_section_service_mount(&s_service);
+        info.module_id = p_request->p_data[0];
+        info.version = read_u32_le(&p_request->p_data[1]);
+        info.file_size = read_u32_le(&p_request->p_data[5]);
+        info.update_type = p_request->p_data[9];
+        if (p_prepare_callback(p_prepare_context, &info) == ZYNQ_IAP_UPDATE_RESULT_SUCCESS)
+        {
+            boot_reason_set();
+            transfer_pending = 1u;
+            transfer_called = 0u;
+            ack[0] = ZYNQ_IAP_ACK_ACCEPTED;
+        }
+    }
+    response.cmd_set = p_request->cmd_set;
+    response.cmd_word = p_request->cmd_word;
+    response.dst = p_request->src;
+    response.d_dst = p_request->d_src;
+    response.src = p_request->dst;
+    response.d_src = p_request->d_dst;
+    response.is_ack = 1u;
+    response.len = ZYNQ_IAP_ACK_LENGTH;
+    response.p_data = ack;
+    comm_send_data(&response, my_printf);
+}
+
+static void process(void)
+{
+    if ((transfer_pending == 1u) &&
+        (transfer_called == 0u) &&
+        (bsp_usart_dbg_tx_is_idle() == 1u))
+    {
+        transfer_called = 1u;
+        Xil_DCacheFlush();
+        Xil_ExceptionDisable();
+        Xil_DCacheDisable();
+        Xil_ICacheDisable();
+        ((void (*)(void))(uintptr_t)ZYNQ_BOOTLOADER_ENTRY)();
+        transfer_pending = 0u;
     }
 }
 
-bootloader_result_t zynq_iap_update_prepare_mount(zynq_iap_prepare_t p_prepare,
-                                                   void *p_context)
+static void init(void)
+{
+    if (p_prepare_callback == NULL)
+    {
+        p_prepare_callback = default_prepare;
+    }
+}
+
+zynq_iap_update_result_t zynq_iap_update_prepare_mount(zynq_iap_prepare_t p_prepare,
+                                                        void *p_context)
 {
     if (p_prepare == NULL)
     {
-        return BOOTLOADER_RESULT_INVALID_ARGUMENT;
+        return ZYNQ_IAP_UPDATE_RESULT_INVALID_ARGUMENT;
     }
-    s_p_prepare = p_prepare;
-    s_p_prepare_context = p_context;
-    return BOOTLOADER_RESULT_SUCCESS;
+    p_prepare_callback = p_prepare;
+    p_prepare_context = p_context;
+    return ZYNQ_IAP_UPDATE_RESULT_SUCCESS;
 }
 
-REG_INIT(1, zynq_iap_update_init)
+REG_INIT(1, init)
+REG_TASK_MS(1u, process)
+REG_COMM(ZYNQ_IAP_CMD_SET, ZYNQ_IAP_CMD_INFO, info_handle)

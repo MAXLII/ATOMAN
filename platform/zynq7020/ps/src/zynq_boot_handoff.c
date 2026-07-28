@@ -6,9 +6,9 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Commit the boot request with integrity fields
- *          - Preserve the request across the independent-image transfer
- *          - Quiesce interrupts and caches before entering the Bootloader vector
+ *          - Read the retained request committed by the independent IAP service
+ *          - Validate the record integrity fields after Bootloader startup
+ *          - Clear the consumed request before launching the application
  *
  *          Design notes:
  *          - C11 compatible
@@ -29,14 +29,10 @@
 
 #include "zynq_boot_handoff.h"
 
-#include "xil_cache.h"
-#include "xil_exception.h"
-
 #include <stdint.h>
 
 #define ZYNQ_BOOT_REASON_ADDRESS 0x0003FFF0u
 #define ZYNQ_BOOT_REASON_MAGIC 0x42544C44u
-#define ZYNQ_BOOTLOADER_ENTRY 0x04000000u
 
 typedef struct
 {
@@ -56,23 +52,11 @@ bootloader_boot_reason_t zynq_boot_request_get(void)
 
     if ((p_record->magic == ZYNQ_BOOT_REASON_MAGIC) &&
         (p_record->inverted_magic == (uint32_t)(~ZYNQ_BOOT_REASON_MAGIC)) &&
-        (p_record->reason == (uint32_t)BOOTLOADER_BOOT_REASON_IAP_REQUEST))
+        (p_record->reason == (uint32_t)BOOTLOADER_BOOT_REASON_IAP_REQUEST_E))
     {
-        return BOOTLOADER_BOOT_REASON_IAP_REQUEST;
+        return BOOTLOADER_BOOT_REASON_IAP_REQUEST_E;
     }
-    return BOOTLOADER_BOOT_REASON_POWER_ON;
-}
-
-bootloader_result_t zynq_boot_request_set(void)
-{
-    volatile zynq_boot_reason_record_t *p_record = record_get();
-
-    p_record->reason = (uint32_t)BOOTLOADER_BOOT_REASON_IAP_REQUEST;
-    p_record->inverted_magic = (uint32_t)(~ZYNQ_BOOT_REASON_MAGIC);
-    __asm__ volatile("dmb sy" ::: "memory");
-    p_record->magic = ZYNQ_BOOT_REASON_MAGIC;
-    __asm__ volatile("dmb sy" ::: "memory");
-    return BOOTLOADER_RESULT_SUCCESS;
+    return BOOTLOADER_BOOT_REASON_POWER_ON_E;
 }
 
 bootloader_result_t zynq_boot_request_clear(void)
@@ -83,15 +67,5 @@ bootloader_result_t zynq_boot_request_clear(void)
     p_record->reason = 0u;
     p_record->inverted_magic = 0u;
     __asm__ volatile("dmb sy" ::: "memory");
-    return BOOTLOADER_RESULT_SUCCESS;
-}
-
-bootloader_result_t zynq_enter_bootloader(void)
-{
-    Xil_DCacheFlush();
-    Xil_ExceptionDisable();
-    Xil_DCacheDisable();
-    Xil_ICacheDisable();
-    ((void (*)(void))(uintptr_t)ZYNQ_BOOTLOADER_ENTRY)();
-    return BOOTLOADER_RESULT_STORAGE_ERROR;
+    return BOOTLOADER_RESULT_SUCCESS_E;
 }
