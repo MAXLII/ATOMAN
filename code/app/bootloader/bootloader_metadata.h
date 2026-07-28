@@ -64,14 +64,14 @@ typedef struct
 } bootloader_metadata_t;
 
 bootloader_result_t bootloader_metadata_encode(const bootloader_metadata_t *p_metadata,
-                                                uint8_t *p_encoded,
-                                                uint32_t encoded_capacity);
+                                               uint8_t *p_encoded,
+                                               uint32_t encoded_capacity);
 bootloader_result_t bootloader_metadata_decode(const uint8_t *p_encoded,
-                                                uint32_t encoded_length,
-                                                bootloader_metadata_t *p_metadata);
+                                               uint32_t encoded_length,
+                                               bootloader_metadata_t *p_metadata);
 bootloader_result_t bootloader_metadata_select(const uint8_t *p_meta_a,
-                                                const uint8_t *p_meta_b,
-                                                bootloader_metadata_t *p_metadata,
-                                                bootloader_flash_zone_t *p_source_zone);
+                                               const uint8_t *p_meta_b,
+                                               bootloader_metadata_t *p_metadata,
+                                               bootloader_flash_zone_t *p_source_zone);
 
 #endif /* BOOTLOADER_METADATA_H */
