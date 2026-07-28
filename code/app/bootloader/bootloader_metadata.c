@@ -97,15 +97,15 @@ static uint16_t metadata_crc16(const uint8_t *p_data, uint32_t length)
 }
 
 bootloader_result_t bootloader_metadata_encode(const bootloader_metadata_t *p_metadata,
-                                                uint8_t *p_encoded,
-                                                uint32_t encoded_capacity)
+                                               uint8_t *p_encoded,
+                                               uint32_t encoded_capacity)
 {
     if ((p_metadata == NULL) || (p_encoded == NULL) ||
         (encoded_capacity < BOOTLOADER_METADATA_ENCODED_SIZE) ||
         (state_valid(p_metadata->state) == 0u) ||
-        (p_metadata->mode > BOOTLOADER_UPGRADE_MODE_STAGED))
+        (p_metadata->mode > BOOTLOADER_UPGRADE_MODE_STAGED_E))
     {
-        return BOOTLOADER_RESULT_INVALID_ARGUMENT;
+        return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
     (void)memset(p_encoded, 0xFF, BOOTLOADER_METADATA_ENCODED_SIZE);
     write_u32_le(&p_encoded[0], METADATA_MAGIC);
@@ -124,31 +124,31 @@ bootloader_result_t bootloader_metadata_encode(const bootloader_metadata_t *p_me
     write_u16_le(&p_encoded[34], p_metadata->error_code);
     write_u16_le(&p_encoded[METADATA_CRC_OFFSET], metadata_crc16(p_encoded, METADATA_CRC_OFFSET));
     write_u32_le(&p_encoded[METADATA_COMMIT_OFFSET], METADATA_COMMIT_MARKER);
-    return BOOTLOADER_RESULT_SUCCESS;
+    return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
 bootloader_result_t bootloader_metadata_decode(const uint8_t *p_encoded,
-                                                uint32_t encoded_length,
-                                                bootloader_metadata_t *p_metadata)
+                                               uint32_t encoded_length,
+                                               bootloader_metadata_t *p_metadata)
 {
     bootloader_metadata_state_t state = BOOTLOADER_METADATA_STATE_EMPTY;
-    bootloader_upgrade_mode_t mode = BOOTLOADER_UPGRADE_MODE_DIRECT;
+    bootloader_upgrade_mode_t mode = BOOTLOADER_UPGRADE_MODE_DIRECT_E;
 
     if ((p_encoded == NULL) || (p_metadata == NULL) ||
         (encoded_length < BOOTLOADER_METADATA_ENCODED_SIZE))
     {
-        return BOOTLOADER_RESULT_INVALID_ARGUMENT;
+        return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
     state = (bootloader_metadata_state_t)p_encoded[6];
     mode = (bootloader_upgrade_mode_t)p_encoded[7];
     if ((read_u32_le(&p_encoded[0]) != METADATA_MAGIC) ||
         (read_u16_le(&p_encoded[4]) != METADATA_FORMAT_VERSION) ||
         (state_valid(state) == 0u) ||
-        (mode > BOOTLOADER_UPGRADE_MODE_STAGED) ||
+        (mode > BOOTLOADER_UPGRADE_MODE_STAGED_E) ||
         (read_u16_le(&p_encoded[METADATA_CRC_OFFSET]) != metadata_crc16(p_encoded, METADATA_CRC_OFFSET)) ||
         (read_u32_le(&p_encoded[METADATA_COMMIT_OFFSET]) != METADATA_COMMIT_MARKER))
     {
-        return BOOTLOADER_RESULT_IMAGE_INVALID;
+        return BOOTLOADER_RESULT_IMAGE_INVALID_E;
     }
     p_metadata->state = state;
     p_metadata->mode = mode;
@@ -162,44 +162,44 @@ bootloader_result_t bootloader_metadata_decode(const uint8_t *p_encoded,
     p_metadata->running_crc = read_u16_le(&p_encoded[28]);
     p_metadata->copy_offset = read_u32_le(&p_encoded[30]);
     p_metadata->error_code = read_u16_le(&p_encoded[34]);
-    return BOOTLOADER_RESULT_SUCCESS;
+    return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
 bootloader_result_t bootloader_metadata_select(const uint8_t *p_meta_a,
-                                                const uint8_t *p_meta_b,
-                                                bootloader_metadata_t *p_metadata,
-                                                bootloader_flash_zone_t *p_source_zone)
+                                               const uint8_t *p_meta_b,
+                                               bootloader_metadata_t *p_metadata,
+                                               bootloader_flash_zone_t *p_source_zone)
 {
     bootloader_metadata_t meta_a = {0};
     bootloader_metadata_t meta_b = {0};
     const uint8_t valid_a = (bootloader_metadata_decode(p_meta_a,
-                                                         BOOTLOADER_METADATA_ENCODED_SIZE,
-                                                         &meta_a) == BOOTLOADER_RESULT_SUCCESS)
+                                                        BOOTLOADER_METADATA_ENCODED_SIZE,
+                                                        &meta_a) == BOOTLOADER_RESULT_SUCCESS_E)
                                 ? 1u
                                 : 0u;
     const uint8_t valid_b = (bootloader_metadata_decode(p_meta_b,
-                                                         BOOTLOADER_METADATA_ENCODED_SIZE,
-                                                         &meta_b) == BOOTLOADER_RESULT_SUCCESS)
+                                                        BOOTLOADER_METADATA_ENCODED_SIZE,
+                                                        &meta_b) == BOOTLOADER_RESULT_SUCCESS_E)
                                 ? 1u
                                 : 0u;
 
     if ((p_metadata == NULL) || (p_source_zone == NULL))
     {
-        return BOOTLOADER_RESULT_INVALID_ARGUMENT;
+        return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
     if ((valid_a == 0u) && (valid_b == 0u))
     {
-        return BOOTLOADER_RESULT_IMAGE_INVALID;
+        return BOOTLOADER_RESULT_IMAGE_INVALID_E;
     }
     if ((valid_b != 0u) && ((valid_a == 0u) || (sequence_is_newer(meta_b.sequence, meta_a.sequence) != 0u)))
     {
         *p_metadata = meta_b;
-        *p_source_zone = BOOTLOADER_FLASH_ZONE_META_B;
+        *p_source_zone = BOOTLOADER_FLASH_ZONE_META_B_E;
     }
     else
     {
         *p_metadata = meta_a;
-        *p_source_zone = BOOTLOADER_FLASH_ZONE_META_A;
+        *p_source_zone = BOOTLOADER_FLASH_ZONE_META_A_E;
     }
-    return BOOTLOADER_RESULT_SUCCESS;
+    return BOOTLOADER_RESULT_SUCCESS_E;
 }
