@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal
 
-for %%I in ("%~dp0..\..") do set "ROOT=%%~fI"
+for %%I in ("%~dp0..\..\..") do set "ROOT=%%~fI"
 set "PROJECT_DIR=%ROOT%\platform\hc32f334\keil_mdk"
 set "PROJECT_FILE=%PROJECT_DIR%\hc32f334_ac.uvprojx"
 set "LOG_FILE=%PROJECT_DIR%\codex_flash.log"
