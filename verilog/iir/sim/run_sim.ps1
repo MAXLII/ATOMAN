@@ -26,7 +26,7 @@ New-Item -ItemType Directory -Force -Path $buildRoot | Out-Null
 
 & $iverilog -g2012 -Wall -s tb_iir_3p3z_core `
     -o $coreSimulation `
-    (Join-Path $verilogRoot "src\iir_3p3z_core.v") `
+    (Join-Path $verilogRoot "rtl\iir_3p3z_core.v") `
     (Join-Path $simRoot "tb_iir_3p3z_core.sv")
 if ($LASTEXITCODE -ne 0)
 {
@@ -35,8 +35,8 @@ if ($LASTEXITCODE -ne 0)
 
 & $iverilog -g2012 -Wall -s tb_axi_iir_3p3z `
     -o $axiSimulation `
-    (Join-Path $verilogRoot "src\iir_3p3z_core.v") `
-    (Join-Path $verilogRoot "src\axi_iir_3p3z.v") `
+    (Join-Path $verilogRoot "rtl\iir_3p3z_core.v") `
+    (Join-Path $verilogRoot "rtl\axi_iir_3p3z.v") `
     (Join-Path $simRoot "tb_axi_iir_3p3z.sv")
 if ($LASTEXITCODE -ne 0)
 {
