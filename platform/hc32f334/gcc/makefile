@@ -15,7 +15,7 @@ endif
 
 ifeq ($(IS_IAP),1)
 PROJECT_TARGET_DEFINES = -DIS_IAP
-IAP_SOURCES = ../../../code/app/bootloader/iap_update_service.c
+IAP_SOURCES = ../../../code/app/bootloader/iap/iap_update_service.c
 else
 PROJECT_TARGET_DEFINES = -DFIRMWARE_TYPE_ISP
 IAP_SOURCES =
@@ -113,7 +113,9 @@ C_INCLUDES = \
 -I../Firmware/HC32_LL_Driver/inc \
 -I../../../code/app \
 -I../../../code/app/demo \
--I../../../code/app/bootloader \
+-I../../../code/app/bootloader/iap \
+-I../../../code/app/bootloader/protocol \
+-I../../../code/app/bootloader/common \
 -I../../../code/section/srtos_m \
 -I../../../code/section \
 -I../../../code/comm \

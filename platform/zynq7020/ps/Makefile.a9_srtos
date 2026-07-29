@@ -65,7 +65,10 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/interface/common \
 -I$(PROJECT_ROOT)/code/app \
 -I$(PROJECT_ROOT)/code/app/demo \
--I$(PROJECT_ROOT)/code/app/bootloader \
+-I$(PROJECT_ROOT)/code/app/bootloader/core \
+-I$(PROJECT_ROOT)/code/app/bootloader/protocol \
+-I$(PROJECT_ROOT)/code/app/bootloader/common \
+-I$(PROJECT_ROOT)/code/app/bootloader/iap \
 -I$(PROJECT_ROOT)/code/lib \
 -isystem $(BSP_INCLUDE)
 

@@ -29,9 +29,9 @@ $(PLATFORM_ROOT)/src/systick.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/interface/fal/fal_core.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_core.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c
+$(PROJECT_ROOT)/code/app/bootloader/core/bootloader_core.c \
+$(PROJECT_ROOT)/code/app/bootloader/core/bootloader_metadata.c \
+$(PROJECT_ROOT)/code/app/bootloader/protocol/bootloader_protocol.c
 
 VENDOR_SOURCES := \
 $(PLATFORM_ROOT)/Firmware/CMSIS/HDSC/hc32f3xx/Source/system_hc32f334.c \
@@ -71,7 +71,9 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/dbg \
 -I$(PROJECT_ROOT)/code/interface/fal \
 -I$(PROJECT_ROOT)/code/interface/common \
--I$(PROJECT_ROOT)/code/app/bootloader
+-I$(PROJECT_ROOT)/code/app/bootloader/core \
+-I$(PROJECT_ROOT)/code/app/bootloader/protocol \
+-I$(PROJECT_ROOT)/code/app/bootloader/common
 
 COMMON_FLAGS := $(MCU_FLAGS) $(C_DEFS) $(C_INCLUDES) -std=c11 $(OPT) $(LTO_FLAGS) -g3 \
                 -ffunction-sections -fdata-sections -MMD -MP
