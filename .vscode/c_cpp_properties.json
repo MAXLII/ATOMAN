@@ -178,7 +178,10 @@
                 "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/interface/fal",
                 "${workspaceFolder}/code/interface/common",
-                "${workspaceFolder}/code/app/bootloader"
+                "${workspaceFolder}/code/app/bootloader/core",
+                "${workspaceFolder}/code/app/bootloader/protocol",
+                "${workspaceFolder}/code/app/bootloader/common",
+                "${workspaceFolder}/code/app/bootloader/iap"
             ],
             "defines": [
                 "HC32F334",
@@ -223,7 +226,10 @@
                 "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/interface/fal",
                 "${workspaceFolder}/code/interface/common",
-                "${workspaceFolder}/code/app/bootloader"
+                "${workspaceFolder}/code/app/bootloader/core",
+                "${workspaceFolder}/code/app/bootloader/protocol",
+                "${workspaceFolder}/code/app/bootloader/common",
+                "${workspaceFolder}/code/app/bootloader/iap"
             ],
             "defines": [
                 "HC32F334",
