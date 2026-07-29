@@ -21,13 +21,20 @@
 
 ## 框架与调试
 
-- Section：[设计](framework/section/section_design.md)
+- [公共软件组件模型](framework/component_model.md)
+- Section：[总体设计](framework/section/section_design.md) · [Link](framework/section/link_design.md) · [FSM](framework/section/fsm_design.md) · [Perf 协作](framework/section/perf_design.md)
 - SRTOS：[设计](framework/srtos/srtos.md)
 - Perf：[设计](debug/perf/perf_design.md)
 - Scope：[设计](debug/scope/scope_design.md)
 - SFRA：[设计](debug/sfra/sfra_design.md)
 - Shell：[设计](debug/shell/shell_design.md)
 - Trace：[设计](debug/trace/trace_design.md)
+
+## 通信、存储与升级
+
+- [FRAME通信核心设计](communication/frame_design.md)
+- [FAL分区与异步Flash管理设计](storage/fal_design.md)
+- [Bootloader升级与防变砖设计](bootloader/bootloader_design.md)
 
 ## 平台
 

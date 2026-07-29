@@ -1,6 +1,21 @@
 # 教材总纲
 
-教材用于理解控制原理、参数设计和仿真方法。内容以理论说明、MATLAB 脚本和结果图为主，可在接入嵌入式工程前独立学习和验证。
+教材用于理解嵌入式软件、控制原理、参数设计和仿真方法。内容以基础知识、原理推导、独立示例、MATLAB 脚本和结果图为主，可在接入具体工程前独立学习和验证。
+
+## 嵌入式软件基础
+
+- [C语言静态注册与链接基础](static_registration_and_linking.md)
+- [C语言函数表与依赖倒置基础](c_function_table_and_dependency_inversion.md)
+- [裸机调度、中断与状态机基础](baremetal_scheduling_interrupt_fsm.md)
+- [嵌入式通信分发、性能与可靠性基础](communication_performance_reliability.md)
+- [异步设备状态机基础](asynchronous_device_state_machine.md)
+- [掉电安全持久化基础](power_fail_safe_persistence.md)
+
+## 实时系统基础
+
+- [实时任务与调度基础](realtime_task_scheduling.md)
+- [处理器现场、栈与上下文切换基础](processor_context_and_stack.md)
+- [RTOS并发、内存与可靠性基础](rtos_concurrency_and_reliability.md)
 
 ## 基础入口
 
