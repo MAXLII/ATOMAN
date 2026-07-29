@@ -1,19 +1,34 @@
-﻿platform/gd32g553c/GD ARM MCU Debug
-platform/gd32g553c/debug_log.txt
-build
-platform/gd32g553c/gd_dbg
-.metadata
-**/plecs_log.txt
-platform/gd32g553c/fw_info.exe
-platform/gd32g553c/tools/fw_info/fw_info
-platform/gd32g553c/tools/fw_info/fw_info.exe
-*plecs.autosave
-*.log
+# Workspace-local state
+/.codex-remote-attachments/
+/.metadata/
+/.Xil/
+/tmp/
+/references/
+.claude/settings.local.json
 
-# Keil local/build artifacts
-**/output/
-**/Listings/
-**/Objects/
+# Generic build products
+/build/
+/build_*/
+platform/**/build/
+platform/**/build_*/
+Listings/
+Objects/
+output/
+output_*/
+*.o
+*.d
+*.dep
+*.crf
+*.axf
+*.elf
+*.hex
+*.map
+*.lnp
+*.build_log.htm
+*.log
+tests/host/**/*.exe
+
+# Keil and debugger local state
 *.uvguix.*
 *.uvgui.*
 *.uvoptx
@@ -21,49 +36,32 @@ platform/gd32g553c/tools/fw_info/fw_info.exe
 JLinkLog.txt
 JLinkSettings.ini
 EventRecorderStub.scvd
-*.crf
-*.d
-*.o
-*.axf
-*.hex
-*.lnp
-*.map
-*.dep
-*.build_log.htm
 
-# HC32 download-only wrapper project and generated input image
+# Platform-generated wrappers and tools
+platform/gd32g553c/GD ARM MCU Debug/
+platform/gd32g553c/gd_dbg/
+platform/gd32g553c/gcc_build/
+platform/gd32g553c/builds/
+platform/gd32g553c/-p/
+platform/gd32g553c/gcc/Makefile.tmp.*
+platform/gd32g553c/fw_info.exe
+platform/gd32g553c/tools/fw_info/fw_info
+platform/gd32g553c/tools/fw_info/fw_info.exe
 platform/hc32f334/keil_flash/
 _final.py
-.claude/settings.local.json
-platform/gd32g553c/builds
-platform/gd32g553c/build/
-platform/gd32g553c/gcc_build/
-platform/gd32g553c/gcc/Makefile.tmp.*
-platform/gd32g553c/-p/
-platform/apm32/build/
 
-# MATLAB local build artifacts
-platform/matlab/inv/build/
-platform/matlab/inv/slprj/
-platform/matlab/inv/*.mexw64
-platform/matlab/inv/*.slxc
-platform/matlab/pll/build/
-platform/matlab/pll/slprj/
-platform/matlab/pll/*.mexw64
-platform/matlab/pll/*.slxc
+# MATLAB local products
+platform/matlab/*/slprj/
+platform/matlab/*/*.mexw64
+platform/matlab/*/*.slxc
 
-# PLECS local comparison and verification build artifacts
-platform/plecs/*/build_*/
-.codex-remote-attachments
-docs/zynq7020
+# PLECS local products
+platform/plecs/*/plecs_log.txt
+platform/plecs/*/*.plecs.autosave
 
-# Zynq-7020 local Xilinx build artifacts
-platform/zynq7020/ps/.Xil/
-platform/zynq7020/ps/build/
-platform/zynq7020/ps/build_srtos/
-platform/zynq7020/pl/.Xil/
+# Xilinx and simulator products
+platform/zynq7020/**/.Xil/
 platform/zynq7020/pl/NA/
-platform/zynq7020/pl/build/
 platform/zynq7020/pl/*.jou
 verilog/*/sim/.Xil/
 verilog/*/sim/*.jou
