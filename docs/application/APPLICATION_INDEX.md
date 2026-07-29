@@ -14,9 +14,17 @@
 - [MCU 平台移植](porting/mcu_platform_porting.md)
 - [Bootloader 平台移植](porting/bootloader_platform_porting.md)
 
+## 通信、存储与升级
+
+- [FRAME通信接入](communication/frame_usage.md)
+- [FAL平台配置与上层接入](storage/fal_usage.md)
+- [Bootloader升级接入与运行](bootloader/bootloader_upgrade_usage.md)
+
 ## 框架与调试
 
+- [公共组件接入方法](framework/component_integration.md)
 - Section：[使用](framework/section/section_usage.md)
+- SRTOS：[使用](framework/srtos/srtos_usage.md) · [M 系列接入](framework/srtos/srtos_m_porting.md) · [A 系列接入](framework/srtos/srtos_a_porting.md)
 - Perf：[使用](debug/perf/perf_usage.md)
 - Scope：[使用](debug/scope/scope_usage.md)
 - SFRA：[使用](debug/sfra/sfra_usage.md)
