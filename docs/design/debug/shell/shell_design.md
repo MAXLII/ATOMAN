@@ -233,3 +233,9 @@ static section_link_handler_t s_handler[] = {
 - 二进制服务按名称查找注册项。
 - 波形上报只上报设置了 `SHELL_STA_AUTO` 的变量。
 - 变量读写需要保证注册类型和变量真实类型一致。
+
+## 12. 关联导航
+
+- 应用：[Shell 使用文档](../../../application/debug/shell/shell_usage.md)
+- 总体设计：[调试与观测系统总设计](../debug_system_design.md)
+- 基础教材：[嵌入式通信分发、性能与可靠性基础](../../../tutorial/communication_performance_reliability.md)

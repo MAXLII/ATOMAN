@@ -80,6 +80,8 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 
 ## 6. 文档索引
 
+控制参数从后台构建到实时路径生效的并发边界见[控制参数构建与发布设计](setpoint_publish_design.md)，接入顺序见[控制参数发布使用方法](../../application/control/setpoint_publish_usage.md)。
+
 | 模块 | 设计文档 | 使用文档 |
 | --- | --- | --- |
 | PFC | [ctrl_pfc_design.md](pfc/ctrl_pfc_design.md) | [ctrl_pfc_usage.md](../../application/control/pfc/ctrl_pfc_usage.md) |
@@ -88,3 +90,8 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 | CLLC | [ctrl_cllc_design.md](cllc/ctrl_cllc_design.md) | [ctrl_cllc_usage.md](../../application/control/cllc/ctrl_cllc_usage.md) |
 | Buck | [ctrl_buck_design.md](buck/ctrl_buck_design.md) | [ctrl_buck_usage.md](../../application/control/buck/ctrl_buck_usage.md) |
 | Boost | [ctrl_boost_design.md](boost/ctrl_boost_design.md) | [ctrl_boost_usage.md](../../application/control/boost/ctrl_boost_usage.md) |
+
+## 7. 关联导航
+
+- 应用：[控制模块通用接入](../../application/control/ctrl_usage.md) · [控制参数发布使用方法](../../application/control/setpoint_publish_usage.md)
+- 基础教材：[前后台数据一致性基础](../../tutorial/foreground_background_data_consistency.md) · [控制原理时域仿真说明](../../tutorial/control/control_time_domain_simulations.md)

@@ -102,3 +102,9 @@ Shell 命令：
 - 只记录源码行号，不记录文件名。
 - Shell 打印和二进制上报都会消费记录。
 - 未绑定时间源时，`DBG_TRACE_MARK()` 不写入记录。
+
+## 8. 关联导航
+
+- 应用：[Trace 使用文档](../../../application/debug/trace/trace_usage.md)
+- 总体设计：[调试与观测系统总设计](../debug_system_design.md)
+- 基础教材：[嵌入式通信分发、性能与可靠性基础](../../../tutorial/communication_performance_reliability.md)

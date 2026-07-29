@@ -96,3 +96,8 @@ Trace 服务通过二进制协议提供启停和上报：
 - 同一行多次调用无法从记录中区分调用点。
 - Shell 打印和二进制读取不能同时作为两个独立消费者使用。
 - Trace 适合临时定位流程问题，验证完成后应减少无用 trace 点。
+
+## 8. 关联导航
+
+- 源码：[Trace 核心](../../../../code/dbg/trace.c) · [Trace 服务](../../../../code/dbg/trace_service.c)
+- 设计：[Trace 设计](../../../design/debug/trace/trace_design.md) · [调试与观测系统总设计](../../../design/debug/debug_system_design.md)

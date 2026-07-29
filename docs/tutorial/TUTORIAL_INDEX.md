@@ -10,6 +10,8 @@
 - [嵌入式通信分发、性能与可靠性基础](communication_performance_reliability.md)
 - [异步设备状态机基础](asynchronous_device_state_machine.md)
 - [掉电安全持久化基础](power_fail_safe_persistence.md)
+- [前后台数据一致性基础](foreground_background_data_consistency.md)
+- [二进制序列化与兼容基础](binary_serialization_and_compatibility.md)
 
 ## 实时系统基础
 

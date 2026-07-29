@@ -139,3 +139,4 @@ FRAME 可以先读取 Perf 基本信息，再通过串口 Shell 输出包含实�
 
 - [Perf 设计文档](../../../design/debug/perf/perf_design.md)
 - [Section Perf 协作设计文档](../../../design/framework/section/perf_design.md)
+- [调试与观测系统总设计](../../../design/debug/debug_system_design.md)

@@ -157,3 +157,8 @@ REG_SFRA(demo_sfra,
 纯软件算法、无额外延迟的数学模型，通常使用 `0u`。如果控制器输出、PWM 更新、功率级或采样链路使当前注入到下一拍才反映到响应量，通常使用 `1u`。
 
 如果扫频结果相位整体多出接近一个采样周期的滞后，检查 `delay_tick` 是否偏小。如果相位整体少了一个采样周期的滞后，检查 `delay_tick` 是否偏大。
+
+## 9. 关联导航
+
+- 源码：[SFRA 核心](../../../../code/dbg/sfra.c) · [SFRA 服务](../../../../code/dbg/sfra_service.c)
+- 设计：[SFRA 设计](../../../design/debug/sfra/sfra_design.md) · [调试与观测系统总设计](../../../design/debug/debug_system_design.md)

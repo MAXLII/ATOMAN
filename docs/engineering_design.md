@@ -75,7 +75,7 @@ code/app/bootloader/
 
 通信层实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。业务模块通过 `REG_COMM` 注册命令处理函数，平台通过 Section link 提供字节收发能力。
 
-FRAME 的解析上下文、命令发现、地址判定和路由边界见 [FRAME通信核心设计](design/communication/frame_design.md)，工程接入见 [FRAME通信接入](application/communication/frame_usage.md)。
+FRAME 的解析上下文、命令发现、地址判定和路由边界见 [FRAME通信核心设计](design/communication/frame_design.md)，工程接入见 [FRAME通信接入](application/communication/frame_usage.md)。字段追加、长度解析、字节布局与 ACK 语义见[协议演进与兼容设计](design/communication/protocol_evolution_design.md)，新增命令按[通信命令开发方法](application/communication/command_development_usage.md)接入。
 
 ### 3.3 控制层 `code/ctrl/`
 
@@ -93,11 +93,11 @@ code/ctrl/
 └─ pfc_i32/                   整数 PFC
 ```
 
-控制模块使用公共接口访问采样值和 PWM 输出，并复用 `code/lib/` 中的控制算法。
+控制模块使用公共接口访问采样值和 PWM 输出，并复用 `code/lib/` 中的控制算法。后台参数构建、版本发布和实时同步的边界见[控制参数构建与发布设计](design/control/setpoint_publish_design.md)，接入方法见[控制参数发布使用方法](application/control/setpoint_publish_usage.md)。
 
 ### 3.4 算法库 `code/lib/`
 
-算法库保存可独立复用的计算组件，包括 PI/PID、PR、SOGI、PLL/FLL、DFT、RMS、Notch、2P2Z、MPPT、线性插值、继电器时序和电网检测。模块使用调用方持有的状态对象和显式参数，不保存平台硬件配置。
+算法库保存可独立复用的计算组件，包括 PI/PID、PR、SOGI、PLL/FLL、DFT、RMS、Notch、2P2Z、MPPT、线性插值、继电器时序和电网检测。模块使用调用方持有的状态对象和显式参数，不保存平台硬件配置。现有模块按使用语境整理为[控制算法库](application/library/control_blocks_usage.md)、[信号处理算法库](application/library/signal_processing_usage.md)和[检测与时序算法库](application/library/detection_sequence_usage.md)三份接入文档。
 
 ### 3.5 调试层 `code/dbg/`
 
@@ -112,6 +112,8 @@ code/ctrl/
 | SFRA | 扫频状态机与响应计算 | 扫频配置、控制和结果查询 |
 
 `*_service.c/.h` 负责 Section 注册和 FRAME 通信，核心文件负责数据结构、算法和实时路径。
+
+各调试工具的观测维度、实时边界和组合方法见[调试与观测系统总设计](design/debug/debug_system_design.md)。处理器异常、任务现场和调度资源的统一取证模型见[故障现场诊断设计](design/debug/fault_diagnosis_design.md)，现场使用步骤见[故障现场诊断使用方法](application/debug/fault_diagnosis_usage.md)。
 
 ### 3.6 接口层 `code/interface/`
 

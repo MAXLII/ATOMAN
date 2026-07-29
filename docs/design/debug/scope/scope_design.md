@@ -122,3 +122,9 @@ Scope 服务使用 `cmd_set = 0x01`。
 - Scope 只在调用 `scope_run()` 时采样。
 - 样本缓冲大小由注册宏静态决定。
 - 二进制样本读取按 `scope_id` 和 `sample_index` 查询。
+
+## 9. 关联导航
+
+- 应用：[Scope 使用文档](../../../application/debug/scope/scope_usage.md)
+- 总体设计：[调试与观测系统总设计](../debug_system_design.md)
+- 基础教材：[嵌入式通信分发、性能与可靠性基础](../../../tutorial/communication_performance_reliability.md)

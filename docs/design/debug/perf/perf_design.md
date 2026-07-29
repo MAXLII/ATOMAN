@@ -184,6 +184,7 @@ Perf 二进制服务使用 `cmd_set = 0x01`，命令如下：
 ### 应用文档
 
 - [Perf使用文档](../../../application/debug/perf/perf_usage.md)
+- [调试与观测系统总设计](../debug_system_design.md)
 
 ### 基础教材
 
