@@ -165,7 +165,7 @@ Adapter需要转换语义，而不是只强制转换枚举值。上层不应依�
 
 - [公共组件接入方法](../../application/framework/component_integration.md)
 - [FAL平台配置与上层接入](../../application/storage/fal_usage.md)
-- [Bootloader升级接入与运行](../../application/bootloader/bootloader_upgrade_usage.md)
+- [Bootloader升级运行方法](../../application/bootloader/bootloader_upgrade_usage.md)
 
 ### 基础教材
 

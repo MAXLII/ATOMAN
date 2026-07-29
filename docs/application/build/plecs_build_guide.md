@@ -250,3 +250,8 @@ popd
 ### 6.6 没有生成日志文件
 
 确认 DLL 已从当前工程的 `build/bin/` 加载，并检查该目录是否具有写入权限。日志路径解析或文件打开失败不会中止仿真。
+
+## 7. 关联导航
+
+- 源码：[PLECS 公共运行时](../../../platform/plecs/common/plecs.c) · [Buck 构建配置](../../../platform/plecs/buck/CMakeLists.txt) · [CLLC 构建配置](../../../platform/plecs/cllc/CMakeLists.txt)
+- 设计：[工程设计](../../engineering_design.md) · [控制模块总设计](../../design/control/ctrl_design.md)

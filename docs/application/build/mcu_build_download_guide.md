@@ -122,3 +122,8 @@ set GCC_PATH=C:\ArmGNU\bin
 4. 默认配置下日志包含 `Application running ...`。
 
 `Cortex-M4` 连接成功只说明调试内核可访问，不能替代片内 Flash 编程与校验结果。
+
+## 5. 关联导航
+
+- 源码：[HC32F334 GCC 构建脚本](../../../platform/hc32f334/gcc/compile.bat) · [HC32F334 Keil 构建脚本](../../../platform/hc32f334/keil_mdk/compile.bat) · [HC32F334 下载脚本](../../../platform/hc32f334/keil_mdk/download.bat)
+- 设计：[工程设计](../../engineering_design.md)

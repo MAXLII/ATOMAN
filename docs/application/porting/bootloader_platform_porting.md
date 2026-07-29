@@ -33,16 +33,7 @@ code/interface/fal/fal_core.c
 code/interface/fal/fal_core.h
 ```
 
-FAL Core 负责：
-
-- 遍历平台 Flash 设备表。
-- 根据设备内有序分区表累加换算物理地址。
-- 推进异步读、写和擦除状态机。
-- 根据最大读取长度、program page 和 erase block 拆分操作。
-- 检查配置、权限、边界、容量和整数溢出。
-- 等待底层 Flash 从 busy 返回 idle。
-
-FAL Core 不包含平台寄存器、平台分区枚举和 Section 注册。
+FAL Core的设备模型、分段状态机和平台配置方法统一见[FAL平台配置与上层接入](../storage/fal_usage.md)。Bootloader移植只确认平台FAL已经独立初始化并持续调度，不在Adapter中复制FAL逻辑或接管其生命周期。
 
 ### 2.2 Bootloader Core
 
@@ -140,6 +131,8 @@ Keil 工程使用对应的 scatter 文件和工程配置。平台已有通用 BS
 
 ## 4. 实现物理 Flash 驱动
 
+本节只列Bootloader移植必须复核的Flash约束。完整`fal_flash_ops_t`契约、geometry和异步状态要求由[FAL平台配置与上层接入](../storage/fal_usage.md)维护，平台实现以该文档和`fal_core.h`为准。
+
 ### 4.1 FAL 底层操作
 
 每个物理 Flash 设备通过 `fal_flash_ops_t` 挂载：
@@ -193,6 +186,8 @@ typedef struct
 容量、页大小和擦除块大小使用芯片真实参数，不能使用 Bootloader Core 中的固定值。
 
 ## 5. 配置 FAL 分区
+
+设备表、分区表和FAL服务注册方式由FAL应用文档维护；本节只保留Bootloader所需区域及在线升级保护要求。
 
 ### 5.1 平台分区枚举
 
@@ -620,8 +615,8 @@ platform/zynq7020/ps/bootloader/
 
 - [Bootloader Core接口](../../../code/app/bootloader/core/bootloader_core.h)
 - [FAL Core接口](../../../code/interface/fal/fal_core.h)
-- [HC32F334平台参考](../../../platform/hc32f334/bootloader/)
-- [Zynq-7020平台参考](../../../platform/zynq7020/ps/bootloader/)
+- [HC32F334适配器参考](../../../platform/hc32f334/bootloader/bootloader_fal_adapter.c)
+- [Zynq-7020适配器参考](../../../platform/zynq7020/ps/bootloader/bootloader_fal_adapter.c)
 
 ### 设计文档
 
