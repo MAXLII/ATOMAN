@@ -28,6 +28,10 @@ output_*/
 *.log
 tests/host/**/*.exe
 
+# Local test documentation
+/docs/test/
+/verilog/*/doc/test/
+
 # Keil and debugger local state
 *.uvguix.*
 *.uvgui.*
