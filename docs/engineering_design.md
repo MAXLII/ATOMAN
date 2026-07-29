@@ -75,6 +75,8 @@ code/app/bootloader/
 
 通信层实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。业务模块通过 `REG_COMM` 注册命令处理函数，平台通过 Section link 提供字节收发能力。
 
+FRAME 的解析上下文、命令发现、地址判定和路由边界见 [FRAME通信核心设计](design/communication/frame_design.md)，工程接入见 [FRAME通信接入](application/communication/frame_usage.md)。
+
 ### 3.3 控制层 `code/ctrl/`
 
 控制层按电源拓扑组织闭环控制和运行状态：
@@ -140,6 +142,8 @@ code/section/
 
 三个运行时提供一致的注册接口。平台构建目标选择其中一套 `section.c/.h`，业务模块使用 `REG_INIT`、`REG_TASK_MS`、`REG_INTERRUPT`、`REG_FSM`、`REG_COMM` 等宏接入运行时。
 
+公共Core、Service、Adapter、Cfg与Driver之间的职责关系见 [公共软件组件模型设计](design/framework/component_model.md)，新增模块的接入方法见 [公共组件接入方法](application/framework/component_integration.md)。
+
 ### 3.8 Legacy `code/legacy/`
 
 Legacy 目录保存当前平台构建未引用的产品升级实现和旧 USART 接口，作为兼容与实现参考。当前公共模块和平台工程使用 `code/app/bootloader/`、`code/comm/` 与 `code/interface/` 中的接口。
@@ -194,6 +198,8 @@ FAL Core 位于 `code/interface/fal/`，负责异步 Flash 请求和分区内地
 
 `fal_read()`、`fal_write()` 和 `fal_erase()` 提交请求，`fal_process()` 根据设备状态分段推进操作。FAL Core 负责配置、权限、边界、累计容量和整数溢出检查。
 
+FAL的设备模型、区域寻址、异步状态和停止语义见 [FAL分区与异步Flash管理设计](design/storage/fal_design.md)，平台配置与上层使用见 [FAL平台配置与上层接入](application/storage/fal_usage.md)。
+
 ### 5.2 Bootloader
 
 Bootloader 的 Flash 依赖链为：
@@ -211,6 +217,8 @@ Flash 驱动
 `bootloader_flash_ops_t` 提供逻辑区域查询、读、写、擦除和状态操作。平台适配器通过 `switch` 将 Bootloader 逻辑区域映射到本平台 FAL 分区，并把适配函数挂载到 Core。FAL 实例、设备配置和调度归平台管理。
 
 Bootloader Core 管理启动判断、直接升级、暂存升级、镜像校验、冗余元数据、掉电恢复和应用跳转决策。协议层处理 FRAME 的升级信息、就绪、数据和结束命令。IAP 服务处理升级触发、用户准备回调、升级请求保存和系统复位。
+
+升级安全不变量、持久化状态机和IAP交接见 [Bootloader升级与防变砖设计](design/bootloader/bootloader_design.md)，固件接入与运行流程见 [Bootloader升级接入与运行](application/bootloader/bootloader_upgrade_usage.md)。
 
 ## 6. FPGA IP 结构
 

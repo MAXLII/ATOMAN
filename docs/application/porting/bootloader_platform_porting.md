@@ -613,3 +613,19 @@ platform/zynq7020/ps/bootloader/
 ```
 
 两者使用相同的 FAL Core、Bootloader Core、升级元数据和 FRAME 协议层，只在 Flash 驱动、FAL cfg、区域映射、通信硬件、启动判断、IAP 跳转和构建链接方面提供平台实现。
+
+## 16. 关联导航
+
+### 源代码
+
+- [Bootloader Core接口](../../../code/app/bootloader/core/bootloader_core.h)
+- [FAL Core接口](../../../code/interface/fal/fal_core.h)
+- [HC32F334平台参考](../../../platform/hc32f334/bootloader/)
+- [Zynq-7020平台参考](../../../platform/zynq7020/ps/bootloader/)
+
+### 设计文档
+
+- [Bootloader升级与防变砖设计](../../design/bootloader/bootloader_design.md)
+- [FAL分区与异步Flash管理设计](../../design/storage/fal_design.md)
+- [FRAME通信核心设计](../../design/communication/frame_design.md)
+- [公共软件组件模型设计](../../design/framework/component_model.md)
