@@ -4,7 +4,7 @@
 
 Boost 模块位于 `code/ctrl/boost/`，用于升压功率级控制。该模块使用整数代码域，配置层把物理量转换成控制代码。
 
-通用控制模块结构见 [CTRL_DESIGN.md](../CTRL_DESIGN.md)。
+通用控制模块结构见 [ctrl_design.md](../ctrl_design.md)。
 
 ## 2. 文件职责
 

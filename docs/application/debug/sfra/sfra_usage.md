@@ -4,7 +4,7 @@
 
 本文档说明如何在当前工程中接入和使用 SFRA。
 
-内部实现见 [SFRA_DESIGN.md](SFRA_DESIGN.md)。
+内部实现见 [sfra_design.md](../../../design/debug/sfra/sfra_design.md)。
 
 ## 2. 注册 SFRA 实例
 

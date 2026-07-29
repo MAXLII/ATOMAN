@@ -4,7 +4,7 @@
 
 本文档说明如何使用 Section 自动注册初始化函数、周期任务、中断回调、状态机和通信链路。
 
-内部实现见 [SECTION_DESIGN.md](SECTION_DESIGN.md)。
+内部实现见 [section_design.md](../../../design/framework/section/section_design.md)。
 
 ## 2. 构建时选择运行时
 

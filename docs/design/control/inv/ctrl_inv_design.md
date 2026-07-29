@@ -4,7 +4,7 @@
 
 INV 模块位于 `code/ctrl/inv/`，用于逆变输出电压控制、输出继电器流程和运行状态管理。该模块使用浮点物理量控制域。
 
-通用控制模块结构见 [CTRL_DESIGN.md](../CTRL_DESIGN.md)。
+通用控制模块结构见 [ctrl_design.md](../ctrl_design.md)。
 
 ## 2. 文件职责
 

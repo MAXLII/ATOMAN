@@ -6,7 +6,7 @@
 
 - [cllc_forward_dual_pi_design.m](cllc_forward_dual_pi_design.m)：频域建模、PI 参数计算和波特图验证；
 - [cllc_forward_dual_pi_time_domain.m](cllc_forward_dual_pi_time_domain.m)：非线性平均模型、双竞争 PI、连续时域事件和波形验证；
-- [pi_dual_compete.c](../../../code/lib/pi_dual_compete.c)：时域脚本所复现的嵌入式双 PI 竞争与共积分实现。
+- [pi_dual_compete.c](../../../../code/lib/pi_dual_compete.c)：时域脚本所复现的嵌入式双 PI 竞争与共积分实现。
 
 这不是一份只讲 MATLAB 命令的语法手册。本文同时讲清楚：
 

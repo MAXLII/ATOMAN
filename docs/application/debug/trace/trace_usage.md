@@ -4,7 +4,7 @@
 
 本文档说明如何使用 Trace 记录执行路径。
 
-内部实现见 [TRACE_DESIGN.md](TRACE_DESIGN.md)。
+内部实现见 [trace_design.md](../../../design/debug/trace/trace_design.md)。
 
 Trace 总开关位于 `code/dbg/trace.h`：
 

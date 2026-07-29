@@ -1,6 +1,6 @@
 # Boost 控制模块使用
 
-通用接入流程见 [CTRL_USAGE.md](../CTRL_USAGE.md)，内部设计见 [CTRL_BOOST_DESIGN.md](CTRL_BOOST_DESIGN.md)。
+通用接入流程见 [ctrl_usage.md](../ctrl_usage.md)，内部设计见 [ctrl_boost_design.md](../../../design/control/boost/ctrl_boost_design.md)。
 
 ## 1. 配置
 

@@ -4,7 +4,7 @@
 
 本文档说明如何在当前工程中使用 Shell 注册调试变量和调试命令，以及如何通过通信协议访问这些变量。
 
-Shell 的内部实现见 [SHELL_DESIGN.md](SHELL_DESIGN.md)。
+Shell 的内部实现见 [shell_design.md](../../../design/debug/shell/shell_design.md)。
 
 ## 2. 头文件
 

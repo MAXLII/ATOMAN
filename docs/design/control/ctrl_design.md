@@ -82,9 +82,9 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 
 | 模块 | 设计文档 | 使用文档 |
 | --- | --- | --- |
-| PFC | [CTRL_PFC_DESIGN.md](pfc/CTRL_PFC_DESIGN.md) | [CTRL_PFC_USAGE.md](pfc/CTRL_PFC_USAGE.md) |
-| INV | [CTRL_INV_DESIGN.md](inv/CTRL_INV_DESIGN.md) | [CTRL_INV_USAGE.md](inv/CTRL_INV_USAGE.md) |
-| BB | [CTRL_BB_DESIGN.md](bb/CTRL_BB_DESIGN.md) | [CTRL_BB_USAGE.md](bb/CTRL_BB_USAGE.md) |
-| CLLC | [CTRL_CLLC_DESIGN.md](cllc/CTRL_CLLC_DESIGN.md) | [CTRL_CLLC_USAGE.md](cllc/CTRL_CLLC_USAGE.md) |
-| Buck | [CTRL_BUCK_DESIGN.md](buck/CTRL_BUCK_DESIGN.md) | [CTRL_BUCK_USAGE.md](buck/CTRL_BUCK_USAGE.md) |
-| Boost | [CTRL_BOOST_DESIGN.md](boost/CTRL_BOOST_DESIGN.md) | [CTRL_BOOST_USAGE.md](boost/CTRL_BOOST_USAGE.md) |
+| PFC | [ctrl_pfc_design.md](pfc/ctrl_pfc_design.md) | [ctrl_pfc_usage.md](../../application/control/pfc/ctrl_pfc_usage.md) |
+| INV | [ctrl_inv_design.md](inv/ctrl_inv_design.md) | [ctrl_inv_usage.md](../../application/control/inv/ctrl_inv_usage.md) |
+| BB | [ctrl_bb_design.md](bb/ctrl_bb_design.md) | [ctrl_bb_usage.md](../../application/control/bb/ctrl_bb_usage.md) |
+| CLLC | [ctrl_cllc_design.md](cllc/ctrl_cllc_design.md) | [ctrl_cllc_usage.md](../../application/control/cllc/ctrl_cllc_usage.md) |
+| Buck | [ctrl_buck_design.md](buck/ctrl_buck_design.md) | [ctrl_buck_usage.md](../../application/control/buck/ctrl_buck_usage.md) |
+| Boost | [ctrl_boost_design.md](boost/ctrl_boost_design.md) | [ctrl_boost_usage.md](../../application/control/boost/ctrl_boost_usage.md) |

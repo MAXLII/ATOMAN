@@ -4,7 +4,7 @@
 
 本文档说明如何注册和使用 Scope 捕获调试波形。
 
-内部实现见 [SCOPE_DESIGN.md](SCOPE_DESIGN.md)。
+内部实现见 [scope_design.md](../../../design/debug/scope/scope_design.md)。
 
 ## 2. 注册 Scope
 
