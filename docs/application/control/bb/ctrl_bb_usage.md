@@ -1,6 +1,6 @@
 # Buck-Boost 控制模块使用
 
-通用接入流程见 [CTRL_USAGE.md](../CTRL_USAGE.md)，内部设计见 [CTRL_BB_DESIGN.md](CTRL_BB_DESIGN.md)。
+通用接入流程见 [ctrl_usage.md](../ctrl_usage.md)，内部设计见 [ctrl_bb_design.md](../../../design/control/bb/ctrl_bb_design.md)。
 
 ## 1. 配置
 

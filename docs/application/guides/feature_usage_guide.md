@@ -6,12 +6,12 @@
 
 相关设计文档：
 
-- Section 自动注册：[SECTION_DESIGN.md](../framework/section/SECTION_DESIGN.md)
-- Shell 调试变量：[SHELL_DESIGN.md](../debug/shell/SHELL_DESIGN.md)
-- Perf 性能测量：[PERF_DESIGN.md](../debug/perf/PERF_DESIGN.md)
-- Scope 波形捕获：[SCOPE_DESIGN.md](../debug/scope/SCOPE_DESIGN.md)
-- Trace 执行路径记录：[TRACE_DESIGN.md](../debug/trace/TRACE_DESIGN.md)
-- SFRA 扫频分析：[SFRA_DESIGN.md](../debug/sfra/SFRA_DESIGN.md)
+- Section 自动注册：[section_design.md](../../design/framework/section/section_design.md)
+- Shell 调试变量：[shell_design.md](../../design/debug/shell/shell_design.md)
+- Perf 性能测量：[perf_design.md](../../design/debug/perf/perf_design.md)
+- Scope 波形捕获：[scope_design.md](../../design/debug/scope/scope_design.md)
+- Trace 执行路径记录：[trace_design.md](../../design/debug/trace/trace_design.md)
+- SFRA 扫频分析：[sfra_design.md](../../design/debug/sfra/sfra_design.md)
 
 ## 2. 平台工程必须接入的主循环
 
@@ -563,7 +563,7 @@ Bootloader Core 通过 `bootloader_flash_ops_t` 使用逻辑 Flash，不包含 F
 
 IAP 固件只编译 `iap/iap_update_service.c`。该服务接收命令 `0x08` 后直接 ACK，在 1 ms 任务中轮询弱定义的 `iap_update_prepare()`；准备完成后写入共享请求并通过 `SYSTEM_RESET` 进入 Bootloader。ISP 和 Bootloader 固件不编译该服务。
 
-平台移植所需文件、FAL 分区、链接区域和验证顺序见 [Bootloader 平台移植](../porting/BOOTLOADER_PLATFORM_PORTING.md)。产品专用的旧升级实现集中保存在 `code/legacy/update/`，用于已有协议与业务行为对照。
+平台移植所需文件、FAL 分区、链接区域和验证顺序见 [Bootloader 平台移植](../porting/bootloader_platform_porting.md)。产品专用的旧升级实现集中保存在 `code/legacy/update/`，用于已有协议与业务行为对照。
 
 ## 14. 当前默认调试开关
 
@@ -587,7 +587,7 @@ IAP 固件只编译 `iap/iap_update_service.c`。该服务接收命令 `0x08` �
 
 平台 Makefile 和 `.uvprojx` 只保留固件类型、MCU/芯片族、工具链、链接脚本选择等工程身份与构建配置，不定义调试功能开关。
 
-MCU 工程的实际编译、产物和下载命令见 [MCU_BUILD_DOWNLOAD_GUIDE.md](../build/MCU_BUILD_DOWNLOAD_GUIDE.md)。
+MCU 工程的实际编译、产物和下载命令见 [mcu_build_download_guide.md](../build/mcu_build_download_guide.md)。
 
 当前 GD32 AC 串口链路：
 

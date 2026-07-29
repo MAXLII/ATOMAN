@@ -4,7 +4,7 @@
 
 BB 模块位于 `code/ctrl/bb/`，用于宽范围 Buck-Boost 功率级控制。该模块使用浮点物理量控制域。
 
-通用控制模块结构见 [CTRL_DESIGN.md](../CTRL_DESIGN.md)。
+通用控制模块结构见 [ctrl_design.md](../ctrl_design.md)。
 
 ## 2. 文件职责
 

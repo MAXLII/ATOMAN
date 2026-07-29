@@ -4,7 +4,7 @@
 
 本文档说明如何使用 `code/lib/bb_mode.c`。
 
-设计说明见 [BB_MODE_DESIGN.md](BB_MODE_DESIGN.md)。
+设计说明见 [bb_mode_design.md](../../../design/control/bb/bb_mode_design.md)。
 
 ## 2. 准备输入和对象
 

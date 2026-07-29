@@ -10,7 +10,7 @@
 - `platform/`：MCU、Zynq、MATLAB 和 PLECS 平台工程。
 - `verilog/`：可复用 FPGA IP、验证环境和设计资料。
 - `tests/host/`：公共软件的主机测试。
-- `docs/`：工程、框架、模块、平台和移植文档。
+- `docs/`：设计、应用、教材和其他工程文档。
 
 公共软件通过接口和函数表使用平台能力，平台工程负责硬件初始化、驱动绑定、链接布局、编译目标和运行入口。各目标工程只选取自身需要的公共模块。
 
@@ -41,7 +41,7 @@ base/
 │  └─ uart_dma/               UART DMA IP
 ├─ tests/
 │  └─ host/                   MinGW 主机测试
-├─ docs/                      工程文档
+├─ docs/                      五类工程文档与统一索引
 ├─ .vscode/                   编辑器工程配置
 ├─ clean.bat                  生成物清理入口
 └─ README.md                  仓库概览
@@ -246,19 +246,19 @@ verilog/<ip>/
 
 ```text
 docs/
-├─ ENGINEERING_DESIGN.md       当前工程结构与模块职责
-├─ INDEX.md                    文档统一入口
-├─ build/                      编译与下载
-├─ control/                    控制模块与仿真
-├─ debug/                      调试模块设计与使用
-├─ examples/                   公共功能示例
-├─ framework/                  Section 与 SRTOS
-├─ guides/                     综合使用说明
-├─ platform/                   平台说明与验证报告
-└─ porting/                    MCU 与 Bootloader 移植
+├─ engineering_design.md       当前工程结构与模块职责
+├─ DOCUMENT_INDEX.md           文档统一入口
+├─ design/                    架构、模块和平台设计
+│  └─ DESIGN_INDEX.md         设计文档总纲
+├─ application/               接入、构建、下载、移植和使用
+│  └─ APPLICATION_INDEX.md    应用文档总纲
+├─ tutorial/                  原理、参数整定和仿真教材
+│  └─ TUTORIAL_INDEX.md       教材总纲
+└─ other/                     厂商资料和辅助说明
+   └─ OTHER_INDEX.md          其他文档总纲
 ```
 
-详细设计和操作方法由对应专题文档维护，统一入口为 [文档索引](INDEX.md)。
+各类总纲负责定义本类文档的内容边界、阅读顺序和详细文档入口，统一入口为 [文档索引](DOCUMENT_INDEX.md)。FPGA IP 的设计和应用资料保存在对应 `verilog/<ip>/doc/` 中，并由各类总纲统一链接。
 
 ## 9. 构建与生成物
 

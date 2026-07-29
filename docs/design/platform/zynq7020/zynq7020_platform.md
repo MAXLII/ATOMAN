@@ -154,8 +154,7 @@ PL UART DMA 独立验证：
 ```
 
 数字验证覆盖 UART 配置、错误、FIFO、AXI 背压、ring 回卷、错误 IRQ 和
-1 MiB PRBS。详细结果见
-`verilog/uart_dma/doc/test/ZYNQ7020_PL_UART_DMA_VERIFICATION.md`。
+1 MiB PRBS。
 
 ## 7. PS+PL 构建
 
@@ -204,8 +203,7 @@ cd D:\OneDrive\LWX\GD32\base\platform\zynq7020\ps
 ```
 
 PL UART DMA 验收脚本由两个独立进程分别独占 COM6 和 COM7，执行 11000 个
-497 字节 payload 回环帧，双向总量为 11264000 字节。详细结果见
-`verilog/uart_dma/doc/test/ZYNQ7020_PL_UART_DMA_BOARD_TEST_REPORT.md`。
+497 字节 payload 回环帧，双向总量为 11264000 字节。
 
 Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST`、`PL_UART_STATUS`、
 `PL_UART_RESET`、`PL_UART_DMA_TEST`、`PL_UART_ERROR_CLEAR` 和

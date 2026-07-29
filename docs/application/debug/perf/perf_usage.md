@@ -4,7 +4,7 @@
 
 本文档说明如何在当前工程中使用 Perf 测量任务、代码段和中断耗时。
 
-内部实现见 [PERF_DESIGN.md](PERF_DESIGN.md)。
+内部实现见 [perf_design.md](../../../design/debug/perf/perf_design.md)。
 
 ## 2. 平台时间基准
 

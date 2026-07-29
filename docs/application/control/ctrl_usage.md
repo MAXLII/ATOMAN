@@ -57,9 +57,9 @@ xxx_hal_hard_protect_trip();
 
 | 模块 | 使用文档 |
 | --- | --- |
-| PFC | [CTRL_PFC_USAGE.md](pfc/CTRL_PFC_USAGE.md) |
-| INV | [CTRL_INV_USAGE.md](inv/CTRL_INV_USAGE.md) |
-| BB | [CTRL_BB_USAGE.md](bb/CTRL_BB_USAGE.md) |
-| CLLC | [CTRL_CLLC_USAGE.md](cllc/CTRL_CLLC_USAGE.md) |
-| Buck | [CTRL_BUCK_USAGE.md](buck/CTRL_BUCK_USAGE.md) |
-| Boost | [CTRL_BOOST_USAGE.md](boost/CTRL_BOOST_USAGE.md) |
+| PFC | [ctrl_pfc_usage.md](pfc/ctrl_pfc_usage.md) |
+| INV | [ctrl_inv_usage.md](inv/ctrl_inv_usage.md) |
+| BB | [ctrl_bb_usage.md](bb/ctrl_bb_usage.md) |
+| CLLC | [ctrl_cllc_usage.md](cllc/ctrl_cllc_usage.md) |
+| Buck | [ctrl_buck_usage.md](buck/ctrl_buck_usage.md) |
+| Boost | [ctrl_boost_usage.md](boost/ctrl_boost_usage.md) |

@@ -1,50 +1,13 @@
-# 文档索引
+# 文档总览
 
-本目录按工程职责归档设计、使用、移植、构建与验证资料。源码目录只保留参与编译的代码和模块内必要资源；项目级说明统一从本索引进入。
+仓库文档按用途划分为设计、应用、测试、教材和其他五类。进入对应总纲后，可按模块查看详细文档和配套资源。
 
-## 工程架构
+文档总入口和分类总纲使用带语义的大写文件名；详细文档使用小写蛇形命名。`README.md` 和 `AGENTS.md` 保留仓库通用约定名称。
 
-- [工程设计](ENGINEERING_DESIGN.md)：仓库目录、公共软件层、平台层和验证工程的当前结构。
-- [功能使用总览](guides/FEATURE_USAGE_GUIDE.md)：公共框架与调试功能的组合使用方式。
-
-## 构建与移植
-
-- [MCU 编译与下载](build/MCU_BUILD_DOWNLOAD_GUIDE.md)
-- [PLECS 构建](build/PLECS_BUILD_GUIDE.md)
-- [MCU 平台移植](porting/MCU_PLATFORM_PORTING.md)
-- [Bootloader 平台移植](porting/BOOTLOADER_PLATFORM_PORTING.md)
-
-## 框架
-
-- Section：[设计](framework/section/SECTION_DESIGN.md) · [使用](framework/section/SECTION_USAGE.md)
-- SRTOS：[设计](framework/srtos/SRTOS.md) · [测试用例](framework/srtos/SRTOS_TEST_CASES.md) · [测试报告](framework/srtos/reports/)
-
-## 调试能力
-
-- Perf：[设计](debug/perf/PERF_DESIGN.md) · [使用](debug/perf/PERF_USAGE.md)
-- Scope：[设计](debug/scope/SCOPE_DESIGN.md) · [使用](debug/scope/SCOPE_USAGE.md)
-- SFRA：[设计](debug/sfra/SFRA_DESIGN.md) · [使用](debug/sfra/SFRA_USAGE.md)
-- Shell：[设计](debug/shell/SHELL_DESIGN.md) · [使用](debug/shell/SHELL_USAGE.md)
-- Trace：[设计](debug/trace/TRACE_DESIGN.md) · [使用](debug/trace/TRACE_USAGE.md)
-
-## 控制与算法
-
-- [控制模块总设计](control/CTRL_DESIGN.md) · [通用接入](control/CTRL_USAGE.md)
-- [时域仿真说明](control/CONTROL_TIME_DOMAIN_SIMULATIONS.md)
-- 拓扑资料：[`bb/`](control/bb/) · [`boost/`](control/boost/) · [`buck/`](control/buck/) · [`cllc/`](control/cllc/) · [`inv/`](control/inv/) · [`llc/`](control/llc/) · [`pfc/`](control/pfc/) · [`pfc_i32/`](control/pfc_i32/)
-- [PLL 参数整定](control/pll/PLL_PARAMETER_TUNING.md)
-
-## 平台与验证
-
-- Zynq-7020：[平台说明](platform/zynq7020/ZYNQ7020_PLATFORM.md) · [自测试报告](platform/zynq7020/ZYNQ7020_SELF_TEST_REPORT.md)
-- GD32G553C：[厂商示例说明](platform/gd32g553c/VENDOR_EXAMPLE_README.txt)
-- HC32F558：[平台说明](platform/hc32f558/PLATFORM_README.txt)
-- 公共示例：[Section/调试功能演示](examples/DEMO.md)
-
-## FPGA IP 文档
-
-FPGA IP 的设计、应用和验证资料与 IP 源码共同维护：
-
-- [`verilog/iir/doc/`](../verilog/iir/doc/)
-- [`verilog/oled_dma/doc/`](../verilog/oled_dma/doc/)
-- [`verilog/uart_dma/doc/`](../verilog/uart_dma/doc/)
+| 分类 | 内容 | 入口 |
+|---|---|---|
+| 设计 | 工程架构、模块内部设计、接口关系和平台结构 | [设计总纲](design/DESIGN_INDEX.md) |
+| 应用 | 模块接入、构建下载、平台移植和操作方法 | [应用总纲](application/APPLICATION_INDEX.md) |
+| 测试 | 测试用例、测试报告、验证结果和验证资源；资料保存在本地并由 Git 忽略 | `docs/test/` |
+| 教材 | 原理分析、参数整定、MATLAB 脚本和学习资料 | [教材总纲](tutorial/TUTORIAL_INDEX.md) |
+| 其他 | 厂商资料和不属于前四类的辅助说明 | [其他总纲](other/OTHER_INDEX.md) |
