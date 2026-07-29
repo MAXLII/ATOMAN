@@ -67,11 +67,11 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 
 平台接入控制模块时完成以下动作：
 
-1. 配置 timing。
-2. 写入 setpoint building buffer 并 publish。
-3. 解锁 HAL，绑定采样指针、PWM 回调、保护回调和状态机回调。
-4. 锁定 HAL。
-5. 调用 `section_init()`。
+1. 初始化平台硬件并保持 PWM 关闭。
+2. 配置 timing，写入 setpoint building buffer 并 publish。
+3. 调用 `section_init()`，由主循环推进 FSM 进入 Idle。
+4. 在 Idle 解锁 HAL，绑定采样指针、PWM 回调、保护回调和状态机资源。
+5. 通过 `*_hal_is_ready()` 验证后锁定 HAL。
 6. 主循环持续调用 `run_task()`。
 7. 控制 ISR 中调用 `section_interrupt()`。
 8. 通过模块 FSM 命令启动或停止。
@@ -80,7 +80,7 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 
 ## 6. 文档索引
 
-控制参数从后台构建到实时路径生效的并发边界见[控制参数构建与发布设计](setpoint_publish_design.md)，接入顺序见[控制参数发布使用方法](../../application/control/setpoint_publish_usage.md)。
+控制模块与平台之间的依赖冻结规则见[控制 HAL 挂载与生命周期设计](hal_binding_lifecycle_design.md)，平台接入见[控制 HAL 平台挂载方法](../../application/control/hal_binding_usage.md)。控制参数从后台构建到实时路径生效的并发边界见[控制参数构建与发布设计](setpoint_publish_design.md)，接入顺序见[控制参数发布使用方法](../../application/control/setpoint_publish_usage.md)。
 
 | 模块 | 设计文档 | 使用文档 |
 | --- | --- | --- |
@@ -93,5 +93,5 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 
 ## 7. 关联导航
 
-- 应用：[控制模块通用接入](../../application/control/ctrl_usage.md) · [控制参数发布使用方法](../../application/control/setpoint_publish_usage.md)
+- 应用：[控制模块通用接入](../../application/control/ctrl_usage.md) · [控制 HAL 平台挂载方法](../../application/control/hal_binding_usage.md) · [控制参数发布使用方法](../../application/control/setpoint_publish_usage.md)
 - 基础教材：[前后台数据一致性基础](../../tutorial/foreground_background_data_consistency.md) · [控制原理时域仿真说明](../../tutorial/control/control_time_domain_simulations.md)

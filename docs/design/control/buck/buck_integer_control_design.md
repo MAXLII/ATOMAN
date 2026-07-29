@@ -711,3 +711,14 @@ cmp = limit((VL_cmd + Vout_A * K4) / Vin_A, CMP_MIN, CMP_MAX)
 - 如果仿真或硬件 ADC 使用 offset-binary 电流码，需要在 interface/HAL 进入控制器前转换成控制器约定的电流码。
 
 ISR 内部不检查指针有效性，也不做码域纠错。启动前必须由 HAL 绑定和接口层保证输入指针与码域正确。
+
+## 8. 关联导航
+
+### 应用文档
+
+- [Buck 控制使用](../../../application/control/buck/ctrl_buck_usage.md)
+- [控制算法库使用方法](../../../application/library/control_blocks_usage.md)
+
+### 基础教材
+
+- [控制原理时域仿真说明](../../../tutorial/control/control_time_domain_simulations.md)

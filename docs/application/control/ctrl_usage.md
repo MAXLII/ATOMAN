@@ -33,6 +33,8 @@ xxx_hal_lock_binding();
 
 启动前通过 `xxx_hal_is_ready()` 检查绑定完整性。
 
+不同拓扑的必需测量、执行器、生命周期和保护资源见[控制 HAL 平台挂载方法](hal_binding_usage.md)。
+
 ## 4. 运行控制
 
 模块启动通过 FSM 命令完成：
@@ -63,3 +65,8 @@ xxx_hal_hard_protect_trip();
 | CLLC | [ctrl_cllc_usage.md](cllc/ctrl_cllc_usage.md) |
 | Buck | [ctrl_buck_usage.md](buck/ctrl_buck_usage.md) |
 | Boost | [ctrl_boost_usage.md](boost/ctrl_boost_usage.md) |
+
+## 6. 关联导航
+
+- 源码：[PFC接口](../../../code/ctrl/pfc/pfc_ctrl.h) · [INV接口](../../../code/ctrl/inv/inv_ctrl.h) · [BB接口](../../../code/ctrl/bb/bb_ctrl.h) · [CLLC接口](../../../code/ctrl/cllc/cllc_ctrl.h) · [Buck接口](../../../code/ctrl/buck/buck_ctrl.h) · [Boost接口](../../../code/ctrl/boost/boost_ctrl.h)
+- 设计：[控制模块总设计](../../design/control/ctrl_design.md) · [控制 HAL 挂载与生命周期设计](../../design/control/hal_binding_lifecycle_design.md) · [控制参数构建与发布设计](../../design/control/setpoint_publish_design.md)

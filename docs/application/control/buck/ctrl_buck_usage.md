@@ -55,3 +55,8 @@ buck_fsm_set_cmd(buck_fsm_cmd_stop);
 - HAL 采样指针类型为 `int32_t *`。
 - 电感电流通道号小于 `BUCK_CTRL_IND_CURR_CH_NUM`。
 - PWM setter 输出 compare 和上下管使能。
+
+## 5. 关联导航
+
+- 源码：[Buck 控制](../../../../code/ctrl/buck/buck_ctrl.c) · [Buck HAL](../../../../code/ctrl/buck/buck_hal.c) · [Buck FSM](../../../../code/ctrl/buck/buck_fsm.c)
+- 设计：[Buck 控制设计](../../../design/control/buck/ctrl_buck_design.md) · [Buck 整数控制设计](../../../design/control/buck/buck_integer_control_design.md) · [控制 HAL 挂载与生命周期设计](../../../design/control/hal_binding_lifecycle_design.md)
