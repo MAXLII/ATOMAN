@@ -66,3 +66,9 @@ bit4 clear为写1脉冲。正常刷新和清屏不产生中断。
 - CLEAR直接发送1024字节零，不读取或修改DDR显存。
 - 自动刷新复位后关闭；到期遇到忙状态时只保留一个待处理刷新。
 - 显示开关、反显和对比度操作经过通用operation接口提交给协议层。
+
+## 6. 关联导航
+
+### 应用文档
+
+- [Zynq-7020 OLED Zero Player应用](../application/zynq7020_oled_zero_player.md)

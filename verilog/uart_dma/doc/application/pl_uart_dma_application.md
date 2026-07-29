@@ -28,3 +28,8 @@ BSP 负责 DDR 地址、环形回卷、生产者/消费者计数同步、内存�
 正常 RX、TX、DMA 完成、RX 水位和 TX 空不启用中断。错误中断只用于 parity、frame、overflow、非法配置和 AXI 错误，ISR 只记录并清除状态。
 
 `USART1_LINK` 使用 COM7，`USART0_LINK` 和 `USART_DBG_LINK` 使用 COM6。两个串口具有独立的 Shell 与通信上下文。
+
+## 关联导航
+
+- 源码：[UART DMA顶层](../../rtl/axi_uart_dma.v) · [Zynq USART BSP](../../../../platform/zynq7020/ps/bsp/bsp_usart.c)
+- 设计：[PL UART DMA设计](../design/zynq7020_pl_uart_dma_design.md)

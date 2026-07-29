@@ -1,4 +1,4 @@
-# Zynq-7020 平台使用说明
+# Zynq-7020 平台设计
 
 ## 1. 平台组成
 
@@ -214,3 +214,15 @@ Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST`、`PL_UART_STATUS`、
 裸机与 A9 SRTOS 是两套独立源码，构建时通过源文件和 include path 选择。两套头文件都名为 `section.h`，注册接口保持一致。裸机模式由 SCU 私有定时器产生 10kHz 中断，在 ISR 中调用 `section_interrupt()`，主循环持续调用 `run_task()`。
 
 SRTOS 模式使用 section 自带的任务表和调度器。Cortex-A9 端口保存通用寄存器、VFP 状态、返回 PC 与 CPSR，通过 SVC 启动/主动让出，通过 IRQ 退出路径执行时间片切换。
+
+## 10. 关联导航
+
+### 应用文档
+
+- [MCU 编译与下载](../../../application/build/mcu_build_download_guide.md)
+- [A 系列 SRTOS 接入方法](../../../application/framework/srtos/srtos_a_porting.md)
+- [Bootloader 平台移植](../../../application/porting/bootloader_platform_porting.md)
+
+### 基础教材
+
+- [处理器现场、栈与上下文切换基础](../../../tutorial/processor_context_and_stack.md)
