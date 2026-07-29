@@ -9,7 +9,7 @@ if {[file exists $output_dir]} {
 file mkdir $output_dir
 
 create_project -in_memory -part xc7z020clg400-2
-read_verilog [file join $verilog_dir src iir_3p3z_core.v]
+read_verilog [file join $verilog_dir rtl iir_3p3z_core.v]
 synth_design -mode out_of_context -top iir_3p3z_core \
     -part xc7z020clg400-2 -flatten_hierarchy rebuilt
 create_clock -name pl_clk -period 20.000 [get_ports clk]

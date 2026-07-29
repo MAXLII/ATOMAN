@@ -9,7 +9,7 @@ proc add_axi_iir_register {address_block name offset access description} {
 
 proc package_axi_iir_ip {script_dir package_project_dir ip_repo_dir} {
     set repo_root [file normalize [file join $script_dir .. .. ..]]
-    set rtl_dir [file join $repo_root verilog iir src]
+    set rtl_dir [file join $repo_root verilog iir rtl]
     set ip_root [file join $ip_repo_dir axi_iir_3p3z_2_0]
 
     create_project -force axi_iir_3p3z_ip_package $package_project_dir \

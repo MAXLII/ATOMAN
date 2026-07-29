@@ -9,11 +9,11 @@ if {[file exists $output_dir]} {
 file mkdir $output_dir
 
 create_project -in_memory -part xc7z020clg400-2
-read_verilog [file join $verilog_dir src oled_serial_phy.v]
-read_verilog [file join $verilog_dir src oled_frame_ram.v]
-read_verilog [file join $verilog_dir src oled_frame_dma.v]
-read_verilog [file join $verilog_dir src ssd1306_protocol.v]
-read_verilog [file join $verilog_dir src axi_oled_dma.v]
+read_verilog [file join $verilog_dir rtl oled_serial_phy.v]
+read_verilog [file join $verilog_dir rtl oled_frame_ram.v]
+read_verilog [file join $verilog_dir rtl oled_frame_dma.v]
+read_verilog [file join $verilog_dir rtl ssd1306_protocol.v]
+read_verilog [file join $verilog_dir rtl axi_oled_dma.v]
 synth_design -mode out_of_context -top axi_oled_dma \
     -part xc7z020clg400-2 -flatten_hierarchy rebuilt
 create_clock -name pl_clk -period 20.000 [get_ports aclk]

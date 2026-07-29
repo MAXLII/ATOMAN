@@ -9,7 +9,7 @@ proc add_uart_dma_register {address_block name offset access description} {
 
 proc package_axi_uart_dma_ip {script_dir package_project_dir ip_repo_dir} {
     set repo_root [file normalize [file join $script_dir .. .. ..]]
-    set rtl_dir [file join $repo_root verilog uart_dma src]
+    set rtl_dir [file join $repo_root verilog uart_dma rtl]
     set project_dir [file join $package_project_dir axi_uart_dma]
     set ip_root [file join $ip_repo_dir axi_uart_dma_1_0]
 

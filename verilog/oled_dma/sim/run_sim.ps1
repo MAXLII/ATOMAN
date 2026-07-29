@@ -21,17 +21,17 @@ foreach ($requiredTool in @($iverilog, $vvp))
 New-Item -ItemType Directory -Force -Path $buildRoot | Out-Null
 
 $rtlFiles = @(
-    (Join-Path $verilogRoot "src\oled_serial_phy.v"),
-    (Join-Path $verilogRoot "src\oled_frame_ram.v"),
-    (Join-Path $verilogRoot "src\oled_frame_dma.v"),
-    (Join-Path $verilogRoot "src\ssd1306_protocol.v"),
-    (Join-Path $verilogRoot "src\axi_oled_dma.v")
+    (Join-Path $verilogRoot "rtl\oled_serial_phy.v"),
+    (Join-Path $verilogRoot "rtl\oled_frame_ram.v"),
+    (Join-Path $verilogRoot "rtl\oled_frame_dma.v"),
+    (Join-Path $verilogRoot "rtl\ssd1306_protocol.v"),
+    (Join-Path $verilogRoot "rtl\axi_oled_dma.v")
 )
 
 $protocolSimulation = Join-Path $buildRoot "tb_ssd1306_protocol.vvp"
 & $iverilog -g2012 -Wall -s tb_ssd1306_protocol `
     -o $protocolSimulation `
-    (Join-Path $verilogRoot "src\ssd1306_protocol.v") `
+    (Join-Path $verilogRoot "rtl\ssd1306_protocol.v") `
     (Join-Path $simRoot "tb_ssd1306_protocol.sv")
 if ($LASTEXITCODE -ne 0)
 {
