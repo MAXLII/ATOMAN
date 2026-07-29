@@ -125,3 +125,17 @@ FRAME 可以先读取 Perf 基本信息，再通过串口 Shell 输出包含实�
 - 平台必须注册正确的 `period_s`，否则显示时间会整体成比例错误。
 - 中断测量会从正在运行的任务累计时间中扣除中断耗时。
 - `perf_reset_peak` 只清峰值，不删除 record。
+
+## 8. 关联导航
+
+### 源代码
+
+- [Perf 公共接口](../../../../code/dbg/perf.h)
+- [Perf 统计实现](../../../../code/dbg/perf.c)
+- [Perf 服务接口](../../../../code/dbg/perf_service.h)
+- [Perf 服务实现](../../../../code/dbg/perf_service.c)
+
+### 设计文档
+
+- [Perf 设计文档](../../../design/debug/perf/perf_design.md)
+- [Section Perf 协作设计文档](../../../design/framework/section/perf_design.md)

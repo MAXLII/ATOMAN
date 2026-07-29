@@ -62,6 +62,22 @@ record 类型：
 | `SECTION_PERF_RECORD_TASK` | `REG_TASK_PERF_RECORD()` | 任务执行时间测量 |
 | `SECTION_PERF_RECORD_INTERRUPT` | `REG_INTERRUPT_PERF_RECORD()` | 中断阶段测量 |
 
+### 3.1 Record字典与稳定身份
+
+运行时链表指针只在当前固件进程内有效，上位机不能用地址长期标识测量对象。Perf因此使用`record_dict_t`为注册记录分配从1开始的`record_id`，并使用字典版本描述“这一版固件中ID、名称、类型和顺序的对应关系”。
+
+字典遍历通过调用方提供的next和type回调完成，不要求公共字典工具认识`section_perf_record_t`。这种边界让ID分配、类型过滤、计数和查找规则能够独立于具体记录结构复用。
+
+字典身份遵循以下规则：
+
+- ID 0表示无效记录；
+- 分配计数达到`UINT16_MAX`后饱和，不回绕覆盖旧身份；
+- 同一字典版本内，注册记录的ID和语义保持稳定；
+- 记录数量、顺序、名称或类型变化时，字典版本随固件更新；
+- 上位机先读取字典，再解释只携带`record_id`的采样数据。
+
+字典版本不是单个记录的版本，也不用于恢复持久化数据。它是固件与上位机之间的运行时数据模型版本。
+
 ## 4. 初始化流程
 
 `perf_init()` 通过 `REG_INIT(0, perf_init)` 注册。
@@ -162,3 +178,13 @@ Perf 二进制服务使用 `cmd_set = 0x01`，命令如下：
 - `PERF_CODE_ENABLE == 0u` 时，手工 `PERF_START`、`PERF_END` 和 `REG_PERF_RECORD` 插桩会被裁剪为空。
 - `PERF_TASK_ENABLE` 与 `PERF_INTERRUPT_ENABLE` 分别控制任务和中断自动测量。
 - 平台需要保证硬件计数器自由运行，并允许无符号差值处理回绕。
+
+## 10. 关联导航
+
+### 应用文档
+
+- [Perf使用文档](../../../application/debug/perf/perf_usage.md)
+
+### 基础教材
+
+- [嵌入式通信分发、性能与可靠性基础](../../../tutorial/communication_performance_reliability.md)
