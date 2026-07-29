@@ -194,7 +194,7 @@ Bootloader启动后验证magic、字段和checksum，读取模块、版本、文
 
 ### 应用文档
 
-- [Bootloader升级接入与运行](../../application/bootloader/bootloader_upgrade_usage.md)
+- [Bootloader升级运行方法](../../application/bootloader/bootloader_upgrade_usage.md)
 - [Bootloader平台移植](../../application/porting/bootloader_platform_porting.md)
 - [FAL平台配置与上层接入](../../application/storage/fal_usage.md)
 

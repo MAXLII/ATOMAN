@@ -1,4 +1,4 @@
-# MCU 平台接入流程
+# MCU 平台移植方法
 
 本文档记录新增 MCU 平台时的工程流程。目标是让新的 MCU 平台接入后具备完整 BSP、公共代码接入、串口通信、可信 perf 时间基准和可直接使用的编译工程。平台根据当前工具链提供 Keil MDK、GCC 或两套工程。
 
@@ -325,3 +325,8 @@ HC32F558 本次接入形成了以下经验：
 - 临时 debug perf 和 GPIO 翻转只用于验证，验证完要删除。
 
 新增平台时，如果能提供官方 demo、数据手册、参考手册和板级管脚信息，就可以按本文档把平台工程接到和 HC32F558 类似的完成度。
+
+## 15. 关联导航
+
+- 源码：[HC32F334平台入口](../../../platform/hc32f334/src/main.c) · [Zynq-7020平台入口](../../../platform/zynq7020/ps/src/main.c) · [通用ADC接口](../../../code/interface/ac/adc.h) · [Section平台定义](../../../code/section/platform.h)
+- 设计：[工程设计](../../engineering_design.md) · [公共软件组件模型](../../design/framework/component_model.md)
