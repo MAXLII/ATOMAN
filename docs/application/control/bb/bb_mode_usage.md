@@ -78,3 +78,8 @@ pwm_setter(bb_mode.output.buck_duty,
 - 输出 duty 会被限制在 `[0.0f, 1.0f]`。
 - `inter.mode` 会在 `bb_mode_func()` 内根据 duty 阈值自动切换。
 - `output.is_half_freq` 为 1 表示当前处于 Buck-Boost 联合调制区域。
+
+## 7. 关联导航
+
+- 源码：[BB 模式接口](../../../../code/lib/bb_mode.h) · [BB 模式实现](../../../../code/lib/bb_mode.c)
+- 设计：[BB 运行模式设计](../../../design/control/bb/bb_mode_design.md) · [BB 控制设计](../../../design/control/bb/ctrl_bb_design.md)

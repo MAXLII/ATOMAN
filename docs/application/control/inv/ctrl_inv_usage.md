@@ -51,3 +51,25 @@ inv_fsm_set_cmd(inv_fsm_cmd_stop);
 - INV PWM setter 接收 `v_pwm` 和 `v_bus`。
 - 频率和电压参考按配置斜率变化。
 - 采样更新需要先于 INV 控制 ISR。
+
+## 5. 拓扑移植重点
+
+- 电容电压、电感电流的极性与 DQ 变换约定保持一致。
+- `ctrl_ts`、`ctrl_freq`、输出周期和四分之一周期缓存必须使用同一时间基准。
+- 输出电容、串联电感和母线范围变化后重新核对电压环、电流环及输出限幅。
+- PWM setter 的 `v_pwm`、`v_bus` 语义和硬件调制极性保持一致。
+- 输出继电器命令与闭合条件由 FSM 管理，不能用命令动作替代硬件反馈。
+- 启动相位、频率斜率和 RMS 电压斜率不能产生初始输出跳变。
+
+## 6. 拓扑验收
+
+1. 在最低和最高输出频率验证周期、缓存索引和相位连续性。
+2. 验证 D/Q 电压环和电流环的方向与稳态目标。
+3. 验证频率、RMS 参考斜率及重新启动过程。
+4. 检查完整周期内 DQ 重构与 PWM 电压命令连续。
+5. stop、继电器断开和保护触发均关闭逆变输出。
+
+## 7. 关联导航
+
+- 源码：[INV 控制](../../../../code/ctrl/inv/inv_ctrl.c) · [INV HAL](../../../../code/ctrl/inv/inv_hal.c) · [INV FSM](../../../../code/ctrl/inv/inv_fsm.c)
+- 设计：[INV 控制设计](../../../design/control/inv/ctrl_inv_design.md) · [控制 HAL 挂载与生命周期设计](../../../design/control/hal_binding_lifecycle_design.md)

@@ -116,3 +116,8 @@ compile.bat
 ```
 
 输出文件为 `platform/plecs/cllc/build/bin/libplecs.dll`。DLL 使用10路输入和40路输出，具体顺序由 `platform/plecs/cllc/plecs_port.h` 定义。前6路输出分别为原边和副边的 `ENABLE / DUTY / FREQUENCY_HZ`：正向运行时仅原边桥输出有效，反向运行时仅副边桥输出有效，停机时两侧全部清零。控制器的归一化命令由 `PLECS_OUTPUT_PI_OUTPUT` 继续提供。
+
+## 9. 关联导航
+
+- 源码：[CLLC 控制](../../../../code/ctrl/cllc/cllc_ctrl.c) · [CLLC HAL](../../../../code/ctrl/cllc/cllc_hal.c) · [CLLC FSM](../../../../code/ctrl/cllc/cllc_fsm.c) · [CLLC PLECS 入口](../../../../platform/plecs/cllc/app/app.c)
+- 设计：[CLLC 控制设计](../../../design/control/cllc/ctrl_cllc_design.md) · [控制 HAL 挂载与生命周期设计](../../../design/control/hal_binding_lifecycle_design.md)

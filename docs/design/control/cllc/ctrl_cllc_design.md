@@ -154,3 +154,13 @@ flowchart LR
 - fault 只接受显式 reset。
 - 电池参考限制在 24~72 V，反向母线参考限制在 400~500 V。
 - 当前 48 V 网络在 400~500 V 全范围不能持续达到 6600 W；反向控制设计点采用可覆盖全电压范围的 3000 W。
+
+## 8. 关联导航
+
+### 应用文档
+
+- [CLLC 控制使用](../../../application/control/cllc/ctrl_cllc_usage.md)
+
+### 基础教材
+
+- [CLLC 双竞争 PI MATLAB 教程](../../../tutorial/control/cllc/cllc_dual_compete_pi_matlab_tutorial.md)

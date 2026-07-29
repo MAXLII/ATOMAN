@@ -74,3 +74,10 @@
 - 输入指针由调用方持有并保持有效。
 - `bb_mode_func()` 对 `NULL` 指针做保护；输入无效时直接返回。
 - 模块只生成 duty，不负责 PWM 使能、死区、互锁和硬件寄存器写入。
+
+## 8. 关联导航
+
+### 应用文档
+
+- [BB 运行模式使用](../../../application/control/bb/bb_mode_usage.md)
+- [BB 控制使用](../../../application/control/bb/ctrl_bb_usage.md)

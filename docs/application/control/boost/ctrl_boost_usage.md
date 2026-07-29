@@ -55,3 +55,8 @@ boost_fsm_set_cmd(boost_fsm_cmd_stop);
 - `update_adc_feedback()` 负责整理 Boost 控制反馈。
 - 电感电流通道号小于 `BOOST_CTRL_IND_CURR_CH_NUM`。
 - PWM setter 输出 compare 和上下管使能。
+
+## 5. 关联导航
+
+- 源码：[Boost 控制](../../../../code/ctrl/boost/boost_ctrl.c) · [Boost HAL](../../../../code/ctrl/boost/boost_hal.c) · [Boost FSM](../../../../code/ctrl/boost/boost_fsm.c)
+- 设计：[Boost 控制设计](../../../design/control/boost/ctrl_boost_design.md) · [控制 HAL 挂载与生命周期设计](../../../design/control/hal_binding_lifecycle_design.md)
