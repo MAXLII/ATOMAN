@@ -5,3 +5,4 @@
 ## 厂商资料
 
 - GD32G553C：[厂商示例说明](vendor/gd32g553c/vendor_example_readme.txt)
+- HC32F558：[厂商模板样例说明](vendor/hc32f558/vendor_example_readme.txt)

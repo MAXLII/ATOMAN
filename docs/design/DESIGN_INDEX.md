@@ -12,6 +12,7 @@
 ## 控制模块
 
 - [控制模块总设计](control/ctrl_design.md)
+- [控制 HAL 挂载与生命周期设计](control/hal_binding_lifecycle_design.md)
 - [控制参数构建与发布设计](control/setpoint_publish_design.md)
 - BB：[运行模式设计](control/bb/bb_mode_design.md) · [控制设计](control/bb/ctrl_bb_design.md)
 - Boost：[控制设计](control/boost/ctrl_boost_design.md)
@@ -43,12 +44,11 @@
 ## 平台
 
 - Zynq-7020：[平台设计](platform/zynq7020/zynq7020_platform.md)
-- HC32F558：[平台说明](platform/hc32f558/platform_readme.txt)
 
 ## FPGA IP
 
 FPGA IP 的设计文档与对应 RTL 共同维护：
 
-- [IIR 设计文档](../../verilog/iir/doc/design/)
-- [OLED DMA 设计文档](../../verilog/oled_dma/doc/design/)
-- [UART DMA 设计文档](../../verilog/uart_dma/doc/design/)
+- [IIR 设计文档](../../verilog/iir/doc/design/axi_iir_3p3z_design.md)
+- [OLED DMA 设计文档](../../verilog/oled_dma/doc/design/zynq7020_pl_oled_dma_design.md)
+- [UART DMA 设计文档](../../verilog/uart_dma/doc/design/zynq7020_pl_uart_dma_design.md)
