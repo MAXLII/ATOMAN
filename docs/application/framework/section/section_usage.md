@@ -241,3 +241,23 @@ REG_LINK(0, demo_print, demo_rx_get_byte, demo_handlers, ARRAY_SIZE(demo_handler
 - 链路 handler 按字节被调用，不能假设一次收到完整帧。
 - 新平台需要保证链接段和 `SECTION_START/SECTION_STOP` 符号正确。
 - 一个目标只能编译一套 `section.c`，不能同时加入三个实现目录。
+
+## 11. 关联导航
+
+### 源代码
+
+- [裸机 Section 头文件](../../../../code/section/baremetal/section.h)
+- [裸机 Section 实现](../../../../code/section/baremetal/section.c)
+- [M 系列 SRTOS 头文件](../../../../code/section/srtos_m/section.h)
+- [M 系列 SRTOS 实现](../../../../code/section/srtos_m/section.c)
+- [A 系列 SRTOS 头文件](../../../../code/section/srtos_a9/section.h)
+- [A 系列 SRTOS 实现](../../../../code/section/srtos_a9/section.c)
+- [Section 平台定义](../../../../code/section/platform.h)
+
+### 设计文档
+
+- [Section 设计文档](../../../design/framework/section/section_design.md)
+- [Section Link 设计文档](../../../design/framework/section/link_design.md)
+- [Section FSM 设计文档](../../../design/framework/section/fsm_design.md)
+- [Section Perf 协作设计文档](../../../design/framework/section/perf_design.md)
+- [SRTOS 设计思想](../../../design/framework/srtos/srtos.md)

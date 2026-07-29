@@ -154,91 +154,19 @@ REG_INTERRUPT(priority, func)
 
 `section_interrupt()` 使用 `FUNC_RAM` 修饰，平台可把该函数放到 RAM 中运行，降低中断热路径的 Flash wait-state 影响。
 
-## 8. Perf Hook
+## 8. 扩展执行机制
 
-Section 不直接依赖 Perf 模块。`section.c` 中提供弱符号：
+Section 的通用注册与调度能力承载三种扩展执行机制：
 
-```c
-section_perf_task_begin()
-section_perf_task_end()
-section_perf_task_period_set()
-section_perf_interrupt_begin()
-section_perf_interrupt_end()
-```
-
-如果工程编译进 `perf.c`，Perf 模块会提供同名强符号覆盖这些空实现。
-
-中断 Perf hook 使用 `FUNC_RAM` 修饰。`section_interrupt()` 内部按 `PERF_INTERRUPT_ENABLE` 编译成两套路径：
-
-- `PERF_INTERRUPT_ENABLE == 1u`：执行中断回调前后调用 `section_perf_interrupt_begin/end()`。
-- `PERF_INTERRUPT_ENABLE == 0u`：直接遍历中断链表并执行回调。
-
-这样中断热路径不需要在运行时判断 Perf 是否使能。
-
-任务和中断注册宏会在对应开关打开时自动注册 Perf record：
-
-| 开关 | 默认值 | 作用 |
+| 机制 | 核心思想 | 详细设计 |
 | --- | --- | --- |
-| `PERF_TASK_ENABLE` | `1u` | 任务自动测量 |
-| `PERF_INTERRUPT_ENABLE` | `1u` | 中断自动测量 |
+| Link | 将平台字节流同步扇出给多个独立解析上下文 | [Section Link 设计](link_design.md) |
+| FSM | 将进入、执行、事件判定和退出组织成表驱动状态执行器 | [Section FSM 设计](fsm_design.md) |
+| Perf | 在任务和中断边界注入可裁剪测量 hook，并由独立后端统计 | [Section Perf 协作设计](perf_design.md) |
 
-## 9. FSM
+Link 作为普通周期任务运行，FSM 由注册宏生成 1 ms 任务，Perf 则嵌入任务和中断的执行边界。三者共享 Section 的静态注册和调度基础，但各自维护数据模型与语义。
 
-状态机由 `reg_fsm_t` 和 `reg_fsm_func_t` 描述。
-
-状态表项使用：
-
-```c
-FSM_ENTRY(state, in, exe, chk, out)
-```
-
-状态机注册使用：
-
-```c
-REG_FSM(name, init_state, fsm_event, ...)
-```
-
-`REG_FSM()` 会生成一个 1 ms 周期任务，任务内部调用 `section_fsm_func()`。
-
-状态机执行流程：
-
-1. 当前状态第一次进入时调用 `func_in()`。
-2. 每次调度调用 `func_exe()`。
-3. 当事件变量非 0 时，调用 `func_chk(event)` 判断下一个状态。
-4. 如果状态变化，先调用 `func_out()`，再切换状态。
-5. 事件处理后清零事件变量。
-
-## 10. 通信链路
-
-链路对象使用 `section_link_t`：
-
-```c
-struct section_link_t
-{
-    uint8_t (*rx_get_byte)(uint8_t *p_data);
-    DEC_MY_PRINTF;
-    struct section_link_t *p_next;
-    const section_link_handler_item_t *handler_arr;
-    uint32_t handler_num;
-    uint8_t link_id;
-};
-```
-
-注册宏：
-
-```c
-REG_LINK(link, print, rx_get_byte, handler_arr, handler_num)
-```
-
-Section 内部注册了 `section_link_task`：
-
-```c
-REG_TASK(10, section_link_task)
-```
-
-该任务轮询所有注册 link，从 `rx_get_byte()` 取出字节，并把每个字节依次分发给 `handler_arr` 中的 handler。
-
-## 11. 当前约束
+## 9. 当前约束
 
 - 不使用动态内存。
 - 注册对象依赖链接段收集。
@@ -248,3 +176,18 @@ REG_TASK(10, section_link_task)
 - 中断注册项由实际 ISR 调用 `section_interrupt()` 后执行。
 - `REG_FSM()` 固定生成 1 ms 周期任务。
 - 链路处理按字节分发，handler 需要维护自己的解析上下文。
+
+## 10. 关联导航
+
+### 应用文档
+
+- [Section 使用文档](../../../application/framework/section/section_usage.md)
+
+### 基础教材
+
+- [C语言静态注册与链接基础](../../../tutorial/static_registration_and_linking.md)
+- [裸机调度、中断与状态机基础](../../../tutorial/baremetal_scheduling_interrupt_fsm.md)
+- [嵌入式通信分发、性能与可靠性基础](../../../tutorial/communication_performance_reliability.md)
+- [实时任务与调度基础](../../../tutorial/realtime_task_scheduling.md)
+- [处理器现场、栈与上下文切换基础](../../../tutorial/processor_context_and_stack.md)
+- [RTOS并发、内存与可靠性基础](../../../tutorial/rtos_concurrency_and_reliability.md)
