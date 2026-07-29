@@ -25,9 +25,9 @@ fal_cfg.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/comm/comm.c \
 $(PROJECT_ROOT)/code/interface/fal/fal_core.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_core.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c \
-$(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c
+$(PROJECT_ROOT)/code/app/bootloader/core/bootloader_core.c \
+$(PROJECT_ROOT)/code/app/bootloader/core/bootloader_metadata.c \
+$(PROJECT_ROOT)/code/app/bootloader/protocol/bootloader_protocol.c
 
 C_INCLUDES := \
 -I. \
@@ -39,7 +39,9 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/dbg \
 -I$(PROJECT_ROOT)/code/interface/fal \
 -I$(PROJECT_ROOT)/code/interface/common \
--I$(PROJECT_ROOT)/code/app/bootloader \
+-I$(PROJECT_ROOT)/code/app/bootloader/core \
+-I$(PROJECT_ROOT)/code/app/bootloader/protocol \
+-I$(PROJECT_ROOT)/code/app/bootloader/common \
 -isystem $(BSP_INCLUDE)
 
 C_DEFS := -DIS_ZYNQ7020 -DTOOLCHAIN_GCC -DBOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE \

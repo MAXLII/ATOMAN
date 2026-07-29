@@ -7,11 +7,11 @@ param(
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $projectRoot "..\..\..")).Path
-$referenceExample = Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs\zynq7020") `
+$referenceExample = Get-ChildItem -LiteralPath (Join-Path $repoRoot "references\zynq7020") `
     -Recurse -Directory -Filter "arm_07_uart_tx_rxeco" | Select-Object -First 1
 if ($null -eq $referenceExample)
 {
-    throw "arm_07_uart_tx_rxeco reference project not found under docs/zynq7020"
+    throw "arm_07_uart_tx_rxeco reference project not found under references/zynq7020"
 }
 $referenceRoot = Join-Path $referenceExample.FullName "arm_07_uart_tx_rxeco.sdk"
 $referenceBsp = Join-Path $referenceRoot "uart_eco_bsp\ps7_cortexa9_0"
@@ -43,6 +43,11 @@ $env:PATH = "$gccBin;$($env:PATH)"
 Push-Location $projectRoot
 try
 {
+    & $makeExe -f $makefileName clean
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Zynq-7020 clean failed with exit code $LASTEXITCODE"
+    }
     & $makeExe -f $makefileName all
     if ($LASTEXITCODE -ne 0)
     {

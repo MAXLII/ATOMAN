@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE,HC32F334_IAP_BASE=0x00004000UL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\dbg;..\..\..\code\interface\fal;..\..\..\code\interface\common;..\..\..\code\app\bootloader</IncludePath>
+              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\dbg;..\..\..\code\interface\fal;..\..\..\code\interface\common;..\..\..\code\app\bootloader\core;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -468,17 +468,17 @@
             <File>
               <FileName>bootloader_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\bootloader_core.c</FilePath>
+              <FilePath>..\..\..\code\app\bootloader\core\bootloader_core.c</FilePath>
             </File>
             <File>
               <FileName>bootloader_metadata.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\bootloader_metadata.c</FilePath>
+              <FilePath>..\..\..\code\app\bootloader\core\bootloader_metadata.c</FilePath>
             </File>
             <File>
               <FileName>bootloader_protocol.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\bootloader_protocol.c</FilePath>
+              <FilePath>..\..\..\code\app\bootloader\protocol\bootloader_protocol.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_ISP,IS_AC</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader</IncludePath>
+              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader\iap;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1152,7 +1152,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,IS_IAP,IS_AC</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader</IncludePath>
+              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader\iap;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1387,7 +1387,7 @@
             <File>
               <FileName>iap_update_service.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\bootloader\iap_update_service.c</FilePath>
+              <FilePath>..\..\..\code\app\bootloader\iap\iap_update_service.c</FilePath>
             </File>
           </Files>
         </Group>
