@@ -1,4 +1,4 @@
-PROJECT_ROOT := ../..
+PROJECT_ROOT := ../../..
 TARGET := test_bootloader_core.exe
 CC := C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe
 
@@ -6,13 +6,15 @@ WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic \
               -Wconversion -Wsign-conversion -Wshadow -Wcast-align \
               -Wstrict-prototypes -Wmissing-prototypes -Wundef
 CFLAGS := -std=c11 -O2 -g3 $(WARN_FLAGS) \
-          -I$(PROJECT_ROOT)/code/app/bootloader \
+          -I$(PROJECT_ROOT)/code/app/bootloader/core \
+          -I$(PROJECT_ROOT)/code/app/bootloader/protocol \
+          -I$(PROJECT_ROOT)/code/app/bootloader/common \
           -I$(PROJECT_ROOT)/code/interface/fal
 
 SOURCES := test_bootloader_core.c \
-           $(PROJECT_ROOT)/code/app/bootloader/bootloader_core.c \
-           $(PROJECT_ROOT)/code/app/bootloader/bootloader_protocol.c \
-           $(PROJECT_ROOT)/code/app/bootloader/bootloader_metadata.c
+           $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_core.c \
+           $(PROJECT_ROOT)/code/app/bootloader/protocol/bootloader_protocol.c \
+           $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_metadata.c
 
 .PHONY: all test clean
 
