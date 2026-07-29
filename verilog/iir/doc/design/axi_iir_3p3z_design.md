@@ -9,7 +9,7 @@
 
 ## RTL 简图
 
-![AXI 3P3Z IIR RTL结构](axi_iir_3p3z_rtl_v2.png)
+![AXI 3P3Z IIR RTL结构](axi_iir_3p3z_rtl.png)
 
 AXI 封装保存软件可写配置并产生单周期控制脉冲。core 内部由 X/Y 历史、
 并行乘法器、加法树、定点缩放和限幅器组成；限幅后的输出同时进入状态寄存器
