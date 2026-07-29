@@ -2,8 +2,8 @@
 
 ## 模块划分
 
-- `src/iir_3p3z_core.v`：实现单周期 3P3Z 运算、上下限幅、历史状态和样点计数。
-- `src/axi_iir_3p3z.v`：实现 AXI4-Lite 寄存器、配置存储和单周期 core 控制。
+- `rtl/iir_3p3z_core.v`：实现单周期 3P3Z 运算、上下限幅、历史状态和样点计数。
+- `rtl/axi_iir_3p3z.v`：实现 AXI4-Lite 寄存器、配置存储和单周期 core 控制。
 
 `iir_3p3z_core` 与总线协议无关。AXI 封装只负责寄存器访问和启动握手，数值计算、限幅和历史更新均位于 core。
 
