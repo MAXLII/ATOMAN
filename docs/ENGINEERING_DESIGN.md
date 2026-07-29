@@ -1,445 +1,267 @@
-# 工程设计文档
+# 工程设计
 
-## 1. 工程概述
+## 1. 工程定位
 
-本工程为数字电源框架项目。MCU、MATLAB 和 PLECS 平台工程统一位于 `platform/`：
+本仓库是数字电源公共软件、硬件平台、控制仿真和 FPGA IP 的统一工程。代码按照公共能力与平台适配分层组织，使控制算法、通信、调试、升级和调度模块能够在不同目标工程中复用。
 
-| 目录 | 说明 |
-|------|------|
-| `platform/hc32f334/` | HDSC HC32F334 AC 平台 |
-| `platform/hc32f558/` | HDSC HC32F558 AC 平台 |
-| `platform/gd32g553c/` | GigaDevice GD32G553C 平台 |
-| `platform/apm32/` | Geehy APM32F402/403 平台 |
-| `platform/zynq7020/` | Xilinx Zynq-7020 Cortex-A9 + PL 平台 |
-| `platform/matlab/` | MATLAB 仿真与分析平台 |
-| `platform/plecs/` | PLECS 仿真平台 |
+工程由五类内容组成：
 
-共享代码位于 `code/` 目录，各平台工程通过相对路径引用。
+- `code/`：平台无关的公共软件。
+- `platform/`：MCU、Zynq、MATLAB 和 PLECS 平台工程。
+- `verilog/`：可复用 FPGA IP、验证环境和设计资料。
+- `tests/host/`：公共软件的主机测试。
+- `docs/`：工程、框架、模块、平台和移植文档。
 
-## 2. 目录结构
+公共软件通过接口和函数表使用平台能力，平台工程负责硬件初始化、驱动绑定、链接布局、编译目标和运行入口。各目标工程只选取自身需要的公共模块。
 
+## 2. 仓库结构
+
+```text
+base/
+├─ code/
+│  ├─ app/                    应用流程和业务状态机
+│  ├─ comm/                   FRAME 通信与命令分发
+│  ├─ ctrl/                   电源拓扑控制模块
+│  ├─ dbg/                    调试、观测和在线分析
+│  ├─ interface/              公共硬件接口与 Flash 抽象层
+│  ├─ legacy/                 历史兼容和参考实现
+│  ├─ lib/                    通用算法与基础组件
+│  └─ section/                注册、初始化和任务调度框架
+├─ platform/
+│  ├─ apm32/                  APM32 MCU 平台
+│  ├─ gd32g553c/              GD32G553C MCU 平台
+│  ├─ hc32f334/               HC32F334 MCU 平台
+│  ├─ hc32f558/               HC32F558 MCU 平台
+│  ├─ zynq7020/               Zynq-7020 PS/PL 平台
+│  ├─ matlab/                 MATLAB 分析与时域仿真
+│  └─ plecs/                  PLECS 开关级仿真
+├─ verilog/
+│  ├─ iir/                    3P3Z IIR IP
+│  ├─ oled_dma/               OLED DMA IP
+│  └─ uart_dma/               UART DMA IP
+├─ tests/
+│  └─ host/                   MinGW 主机测试
+├─ docs/                      工程文档
+├─ .vscode/                   编辑器工程配置
+├─ clean.bat                  生成物清理入口
+└─ README.md                  仓库概览
 ```
-code/
-├── app/           应用层（Bootloader、PFC、LLC、逆变器、AC 等）
-├── comm/          通信模块
-├── ctrl/          控制算法（PFC、逆变器、BB 等）
-├── dbg/           调试与监控模块
-├── interface/     平台接口层与 FAL Flash 管理核心
-├── lib/           控制算法库（PID、SOGI、锁相环等）
-└── section/       模块注册与链接框架
-    ├── baremetal/ 裸机 section.c/.h
-    ├── srtos_m/   Cortex-M SRTOS section.c/.h
-    └── srtos_a9/  Cortex-A9 SRTOS section.c/.h
 
-platform/
-├── apm32/          APM32 MCU 工程
-├── gd32g553c/      GD32G553C MCU 工程
-├── hc32f334/       HC32F334 MCU 工程
-├── hc32f558/       HC32F558 MCU 工程
-├── zynq7020/       Zynq-7020 PS+PL 工程
-│   ├── ps/         ARM 软件、BSP、构建、下载和板测工程
-│   │   └── bootloader/ 独立 Bootloader 构建、Zynq FAL cfg 与启动镜像生成
-│   └── pl/         Vivado 硬件平台、IP、约束和 PL 自测工程
-├── matlab/         MATLAB 工程
-└── plecs/          PLECS 工程
+## 3. 公共软件结构
+
+### 3.1 应用层 `code/app/`
+
+应用层组织面向完整功能流程的状态机和服务。
+
+| 目录或模块 | 职责 |
+|---|---|
+| `ac/` | AC 应用流程 |
+| `llc/`、`pfc/` | 对应拓扑的应用逻辑 |
+| `demo/` | Section、通信和调试功能演示 |
+| `bootloader/` | 平台无关升级核心、协议和 IAP 切换服务 |
+| 根目录应用模块 | 故障、告警、上电、时间片、LED 和状态管理 |
+
+Bootloader 目录进一步按职责划分：
+
+```text
+code/app/bootloader/
+├─ core/                      升级状态机和冗余元数据
+├─ protocol/                  FRAME 升级协议
+├─ iap/                       IAP 升级触发与复位服务
+└─ common/                    IAP 与 Bootloader 共享数据契约
 ```
 
-HC32F334 AC 平台的编译工程位于 `platform/hc32f334/`：
+### 3.2 通信层 `code/comm/`
+
+通信层实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。业务模块通过 `REG_COMM` 注册命令处理函数，平台通过 Section link 提供字节收发能力。
+
+### 3.3 控制层 `code/ctrl/`
+
+控制层按电源拓扑组织闭环控制和运行状态：
+
+```text
+code/ctrl/
+├─ bb/                        Buck-Boost
+├─ boost/                     Boost
+├─ buck/                      Buck
+├─ cllc/                      CLLC
+├─ inv/                       逆变器
+├─ llc/                       LLC
+├─ pfc/                       浮点 PFC
+└─ pfc_i32/                   整数 PFC
+```
+
+控制模块使用公共接口访问采样值和 PWM 输出，并复用 `code/lib/` 中的控制算法。
+
+### 3.4 算法库 `code/lib/`
+
+算法库保存可独立复用的计算组件，包括 PI/PID、PR、SOGI、PLL/FLL、DFT、RMS、Notch、2P2Z、MPPT、线性插值、继电器时序和电网检测。模块使用调用方持有的状态对象和显式参数，不保存平台硬件配置。
+
+### 3.5 调试层 `code/dbg/`
+
+调试层由核心能力和通信服务组成：
+
+| 模块 | 核心职责 | 服务职责 |
+|---|---|---|
+| Shell | 变量、命令和表达式管理 | 文本命令与二进制读写 |
+| Scope | 多通道采样、触发和环形缓冲 | 配置、状态和采样数据传输 |
+| Trace | 运行轨迹 FIFO | 轨迹控制与分批上报 |
+| Perf | 任务、中断和代码段计时 | 负载与性能记录查询 |
+| SFRA | 扫频状态机与响应计算 | 扫频配置、控制和结果查询 |
+
+`*_service.c/.h` 负责 Section 注册和 FRAME 通信，核心文件负责数据结构、算法和实时路径。
+
+### 3.6 接口层 `code/interface/`
+
+接口层定义公共软件访问硬件和平台资源的统一边界：
 
 | 目录 | 职责 |
-|------|------|
-| `keil_mdk/` | Arm Compiler 6 工程、启动文件、scatter 文件、编译脚本和 Keil 下载脚本 |
-| `gcc/` | Arm GNU Toolchain Makefile 工程、GCC 启动文件、链接脚本、编译脚本和 GCC 固件下载入口 |
-| `bootloader/` | 独立 Bootloader 入口、FAL cfg、USART2 通信及 GCC 构建工程 |
-| `bsp/` | ADC、PWM、GPIO、CAN、USART、SPI Flash、片内 EFM、时钟和定时器适配 |
-| `src/` | AC 工程入口、平台中断和 Bootloader 启动原因适配 |
+|---|---|
+| `common/` | 公共 GPIO、PWM 和基础接口契约 |
+| `ac/` | AC 平台通信链路和接口绑定 |
+| `cllc/` | CLLC 使用的接口定义 |
+| `fal/` | Flash Abstraction Layer 核心 |
 
-GCC 与 MDK 的 IAP 工程从片内 Flash `0x00004000` 链接，Bootloader 工程从 `0x00000000` 链接并持有 `0x00000400` 的 ICG 数据。主 SRAM 起始 16 字节保存复位期间持续有效的切换记录，`RAMB` 承载主栈。
+平台 BSP 实现接口要求，应用和控制模块通过接口读取采样、更新 PWM、发送通信数据或访问 Flash。
 
-GCC 与 Keil 目录各自使用统一的 `compile.bat` 选择固件目标。无参数调用默认构建 ISP，参数 `-iap` 构建 IAP。ISP 产物使用 `hc32f334_ac_isp` 文件名，IAP 产物使用 `hc32f334_ac_iap` 文件名，两套产物保存在独立输出目录。IAP 构建定义 `IS_IAP`，`system_hc32f334.c` 根据该宏将向量表设置到 `0x00004000`；ISP 不定义该宏，向量表位于 `0x00000000`。Keil 编译和下载通过隐藏窗口启动 `UV4.exe`。GCC 的 `download.bat` 默认将 `build/isp/hc32f334_ac_isp.hex` 交给 Keil 下载脚本，由 HDSC Keil Pack 中的 `HC32F334_128K.FLM` 执行片内 Flash 擦除、编程和校验；J-Link 调试目标内核为 Cortex-M4。临时 HEX 下载工程在运行时生成，下载结束后清理。
+### 3.7 Section 框架 `code/section/`
 
-Zynq-7020 平台位于 `platform/zynq7020/`，顶层按处理系统和可编程逻辑分为 `ps/` 与 `pl/`。`verilog/` 中每个 IP 使用独立目录，`src/` 保存可综合 RTL，`sim/` 保存 SystemVerilog 自检、仿真与 OOC 综合脚本，`doc/design/`、`doc/test/`、`doc/application/` 分别保存设计、测试和应用文档。`verilog/iir/` 实现 3P3Z IIR core 和 AXI4-Lite 外设封装；`verilog/uart_dma/` 实现可配置 UART、AXI4-Lite 控制和 AXI Master DDR 环形 DMA；`verilog/oled_dma/` 实现 OLED 寄存器、DDR 帧 DMA、快照 RAM、SSD1306 协议层和串行 PHY。`platform/zynq7020/pl/` 保存 Vivado PS7、DDR、QSPI、M_AXI_GP0、S_AXI_HP0、AXI GPIO、自定义 AXI IIR、PL UART DMA、PL OLED DMA、管脚约束和 PL 自测；`platform/zynq7020/ps/bsp/` 保存 PS UART1、PS QSPI Flash、PL UART DMA、OLED framebuffer DMA、共享 GIC、定时器、IIR MMIO 驱动和复位适配；`ps/srtos/` 保存 A9 SVC/IRQ 上下文切换端口；`ps/src/` 保存平台入口、自主测试、IAP 升级入口、Bootloader 跳转和 Zero Player OLED 映射；`ps/bootloader/` 保存独立 Bootloader 入口、FAL 平台配置、通信链路、BSP/FSBL 生成和 `BOOT.bin` 打包脚本。
+Section 框架通过链接段收集模块注册项，统一完成初始化、周期任务、中断、有限状态机、通信链路和调试对象的调度。
 
-Vivado 工程通过 `pl/build_pl.ps1` 生成 bitstream、HDF、PS 初始化、DRC、时序和资源报告。无 RTOS ARM 工程编译 `code/section/baremetal/section.c`，A9 SRTOS 工程编译 `code/section/srtos_a9/section.c` 并链接 SVC/IRQ 端口；Makefile 只声明 `IS_ZYNQ7020` 和 `TOOLCHAIN_GCC`。`ps/compile.ps1 -Srtos 0/1` 选择对应工程文件和输出目录，`ps/download.ps1` 使用 `pl/build/output/` 中的硬件产物完成配置和固件下载。COM6 使用 PS UART1 MIO48/MIO49；COM7 使用 Bank 34 的 W15 RX 和 U15 TX。两端均运行 921600 8N1。PL UART RX/TX ring 位于 `0x1FF00000` 和 `0x1FF10000`，OLED framebuffer位于 `0x1FF20000`，均由BSP以non-cacheable属性访问。Bank 35的E18、E19、F16、F17由PL OLED协议层和串行PHY驱动，`code/app/zero_player.c` 的30x31棋盘缩放至完整128x64区域。
+```text
+code/section/
+├─ baremetal/                 裸机协作式调度
+├─ srtos_m/                   Cortex-M SRTOS 运行时
+├─ srtos_a9/                  Cortex-A9 SRTOS 运行时
+├─ platform.h                平台能力入口
+├─ timing.h                  时间换算定义
+└─ my_math.h                 公共数学辅助定义
+```
 
-## 3. 模块注册与链接框架（`code/section/`）
+三个运行时提供一致的注册接口。平台构建目标选择其中一套 `section.c/.h`，业务模块使用 `REG_INIT`、`REG_TASK_MS`、`REG_INTERRUPT`、`REG_FSM`、`REG_COMM` 等宏接入运行时。
 
-### 3.1 设计目标
+### 3.8 Legacy `code/legacy/`
 
-`code/section/` 框架解决嵌入式系统中模块自动注册和生命周期管理问题。各模块通过编译时链接器 section 机制将自身注册到框架中，运行时框架遍历注册链表完成初始化和调度，全程不使用动态内存分配。
+Legacy 目录保存当前平台构建未引用的产品升级实现和旧 USART 接口，作为兼容与实现参考。当前公共模块和平台工程使用 `code/app/bootloader/`、`code/comm/` 与 `code/interface/` 中的接口。
 
-运行时实现按目录完全拆分：
+## 4. 平台工程结构
+
+### 4.1 MCU 平台
+
+MCU 平台位于 `platform/<platform>/`。各平台根据实际工具链包含以下内容：
 
 | 目录 | 职责 |
-|------|------|
-| `baremetal/` | 裸机协作式任务调度 |
-| `srtos_m/` | Cortex-M PendSV 抢占、公共运行栈和公共现场池 |
-| `srtos_a9/` | Cortex-A9 SVC/IRQ 抢占、公共运行栈和公共现场池 |
+|---|---|
+| `bsp/` | 时钟、GPIO、ADC、PWM、通信和存储驱动 |
+| `src/` | 平台入口、中断、SysTick 和系统调用 |
+| `inc/` | 平台工程头文件 |
+| `gcc/`、`gcc_startup/`、`ldscripts/` | GCC 构建、启动和链接配置 |
+| `keil_mdk/`、`mdk/` | Keil 工程和链接配置 |
+| `bootloader/` | 平台 Bootloader 入口、FAL cfg 和 Flash 适配 |
+| `tools/` | 平台编译、下载和硬件验证脚本 |
+| `Firmware/`、`Libraries/`、`cmsis/` | 芯片厂商支持文件 |
 
-每个构建目标只编译一个目录中的 `section.c`，并优先包含同目录的 `section.h`。三套头文件保持相同的注册宏和业务调用接口，运行时选择不使用 `SRTOS` 预处理宏。`code/section/` 根目录保存三套实现共用的平台适配定义。
+平台构建文件通过相对路径引用 `code/` 中的公共模块。链接脚本或 scatter 文件定义启动地址、程序区、运行栈和保留内存。
 
-### 3.2 注册机制
+### 4.2 Zynq-7020 平台
 
-框架定义了 `reg_section_t` 统一描述符，包含 `section_type` 和 `p_str` 两个字段。每个模块使用 `REG_SECTION_FUNC` 宏将描述符放入 `.section` 段。链接脚本在 `.section` 段首尾放置 `SECTION_START` / `SECTION_STOP` 符号：
-
-```
-[ SECTION_START | reg_section_t | reg_section_t | ... | reg_section_t | SECTION_STOP ]
-```
-
-`AUTO_REG_SECTION` 属性将描述符放置在 `.section` 段。`section_init()` 在 `main()` 中调用，遍历 `SECTION_START` 到 `SECTION_STOP` 之间的所有描述符，按 `section_type` 分派到对应的有序链表：
-
-| 分段类型 | 运行时结构 | 插入方式 |
-|---------|----------|---------|
-| `SECTION_INIT` | `reg_init_t` 链表 | 按 `priority` 升序，同优先级保持编译顺序 |
-| `SECTION_TASK` | `reg_task_t` 链表 | 按编译顺序追加到尾部 |
-| `SECTION_INTERRUPT` | `reg_interrupt_t` 链表 | 按 `priority` 升序 |
-| `SECTION_LINK` | `section_link_t` 链表 | 按编译顺序追加 |
-| `SECTION_SHELL` | `section_shell_t` 链表 | 由 `shell_init` 独立扫描 |
-| `SECTION_SCOPE` | `scope_t` 链表 | 由 `scope_service_init` 独立扫描 |
-| `SECTION_PERF` | 由 `perf_insert` 处理 | perf 模块内部分派 |
-| `SECTION_COMM` | 由 `comm` 模块处理 | 通信协议注册 |
-| `SECTION_COMM_ROUTE` | 由 `comm` 模块处理 | 通信路由注册 |
-
-### 3.3 任务调度 (`run_task`)
-
-`run_task()` 在 `main()` 的 `while(1)` 循环中持续调用。裸机实现遍历 `p_task_first` 链表并执行到期任务；两套 SRTOS 实现把到期任务送入 Ready 队列，并在公共运行栈上调度。共同调度特性：
-
-- **周期驱动**：每个任务有 `t_period`（以 `SECTION_SYS_TICK` 为单位），`REG_TASK_MS` 宏将毫秒转为 tick。任务到期后 `time_last` 增加 `k * period`（`k = elapsed / period`），确保不积累延迟偏差。
-- **性能测量**：如启用 `PERF_TASK_ENABLE`，调度器在调用前后读取硬件计数器，计算任务执行时间并更新 `section_perf_record_t` 中的 `time`、`max_time`、`run_time`。ISR 在下一次任务调用之间打断的时间会被扣除。
-- **周期推进**：每个周期只登记或执行一次任务，不循环追赶历史周期。
-- **SRTOS 抢占**：长任务现场保存到公共现场池，新 Ready 任务优先，未完成任务按 FIFO 恢复。
-
-### 3.4 中断调度 (`section_interrupt`)
-
-`section_interrupt()` 在 HRPWM 溢出中断中调用。按优先级顺序遍历 `p_interrupt_first` 链表执行所有注册的中断回调。同样支持性能测量：如检测到当前正在执行一个 `run_task` 回调，ISR 执行时间会被累加到 `s_running_task_interrupt_time` 并在任务结束时从任务耗时中扣除。
-
-### 3.5 状态机 (`REG_FSM`)
-
-框架提供 `REG_FSM` 宏定义有限状态机。每个状态机有 `fsm_sta`（当前状态）、状态转移表（`in` / `exe` / `chk` / `out` 函数指针），以及事件变量。`section_fsm_func()` 在 1ms 周期任务中执行：进入状态时调用 `func_in`，每周期调用 `func_exe`，检测到事件时通过 `func_chk` 判断转移目标并执行 `func_out`。
-
-### 3.6 通信链路 (`section_link_t`)
-
-`section_link_t` 抽象串行通信通道。每个 link 包含 `rx_get_byte`（接收回调）、`handler_arr[]`（接收字节到回调的映射）、以及 `my_printf`（输出接口）。`section_link_task` 以 100us 周期轮询所有 link 的接收缓冲区，按字节分派到 handler。
-
-### 3.7 静态内存
-
-三套实现均不使用动态内存。裸机实现保存注册链表和协作式任务队列；Cortex-M 与 Cortex-A9 SRTOS 额外静态分配 `SECTION_TASK_RUNTIME_STACK_WORDS` 公共运行栈和 `SECTION_TASK_CONTEXT_POOL_WORDS` 公共现场池。具体镜像占用由目标工程链接报告给出。
-
-## 4. Shell 命令行模块（`code/dbg/shell.{c,h}` + `shell_service.{c,h}`）
-
-### 4.1 分层架构
-
-| 层 | 文件 | 职责 |
-|----|------|------|
-| 内核 | `shell.c/h` | 文本解析、命令匹配、变量读写、注册表维护 |
-| 服务 | `shell_service.c/h` | 二进制协议上报、list 异步打印、wave 波形流上报、状态周期执行 |
-
-内核层只依赖 `section.h`，不依赖通信协议或打印设施细节。服务层依赖 `comm.h` 并引入 `REG_COMM` 注册二进制协议处理函数。
-
-### 4.2 变量与命令注册
-
-`section_shell_t` 统一表示 shell 变量和命令。通过 `REG_SHELL_VAR` 和 `REG_SHELL_CMD` 宏注册，内部使用 `REG_SECTION_FUNC(SECTION_SHELL, ...)` 放入链接器 section。
-
-`section_shell_t` 关键字段：
-
-| 字段 | 说明 |
-|------|------|
-| `p_name` / `p_name_size` | 变量名和长度 |
-| `p_var` | 变量地址（命令为 NULL） |
-| `type` | `SHELL_TYPE_E`：支持 `INT8/UINT8/INT16/UINT16/INT32/UINT32/FP32/CMD` |
-| `p_max` / `p_min` | 上下限指针，写入时通过 `SHELL_UP_DN_LMT` 钳位 |
-| `func` | 命令回调或变量变更通知回调 |
-| `status` | 状态位（`SHELL_STA_AUTO = 1<<2` 表示周期自动上报） |
-| `my_printf` | 运行时缓存的输出接口 |
-
-`shell_init()` 在 `REG_INIT(0, shell_init)` 阶段扫描 `SECTION_SHELL` 构建 `p_shell_first` 链表。
-
-### 4.3 文本命令解析
-
-`shell_run()` 作为 link handler 接收逐字节输入。行缓冲器 128 字节，以 `\n` 触发解析：
-
-1. 先匹配内置命令：`time`（系统时间）、`reset`（复位）、`help`（列出所有注册项）
-2. 遍历 `p_shell_first` 链表，用 `strncmp` 按名称匹配
-3. 匹配后通过 `:` 分隔命令名和参数值
-4. 参数值支持 `-s N` 后缀设置 `status` 位（周期执行）
-
-### 4.4 表达式求值（SHELL_STRING_ENABLE）
-
-当 `SHELL_STRING_ENABLE == 1u` 时，shell 支持变量写入和表达式求值：
-
-- **`parse_integer`**：支持十进制、`0x` 十六进制、`0b` 二进制，以及简单算术表达式如 `1+2*3`
-- **`eval_expr`**：递归下降表达式求值器，支持 `+` `-` `*` `/` 四则运算和括号嵌套，使用 `strtof` 解析浮点数
-- **`shell_write_item_if_needed`**：按变量类型解析写入值，写入后钳位到 `[p_min, p_max]` 范围，然后调用 `func` 通知上层
-
-当 `SHELL_STRING_ENABLE == 0u` 时，`shell_run` 为空桩函数，变量只读且通过二进制协议访问。
-
-### 4.5 服务层
-
-`shell_service.c` 提供三种服务：
-
-| 功能 | 实现 | 说明 |
-|------|------|------|
-| 二进制列表上报 | `shell_data_num_act` + `shell_data_report_act` | 上位机查询全部 shell 项，分帧上报 |
-| 二进制读写 | `shell_read_data_act` / `shell_write_data_act` | 远程读写变量值 |
-| 波形流 | `shell_wave_start_act` + `shell_wave_report_task` | `SHELL_STA_AUTO` 选中的变量周期性流式上报 |
-| list 分步打印 | `list_print_start` + `list_print_step` | 非阻塞分页打印所有注册项 |
-
-list 分步打印和状态周期执行由 `SHELL_STRING_ENABLE` 宏控制。
-
-### 4.6 FLASH 与 RAM 用量
-
-| 模块 | Code | RO Data | FLASH | RW Data | ZI Data | RAM |
-|------|-----:|--------:|------:|--------:|--------:|----:|
-| `shell.o` | 142 | 12 | 154 | 8 | 12 | 20 |
-| `shell_service.o` | 1,246 | 26 | 1,272 | 125 | 220 | 345 |
-
-## 5. Scope 录波模块（`code/dbg/scope.{c,h}` + `scope_service.{c,h}`）
-
-### 5.1 分层架构
-
-| 层 | 文件 | 职责 |
-|----|------|------|
-| 内核 | `scope.c/h` | 多通道环形缓冲区管理、采样触发、状态机 |
-| 服务 | `scope_service.c/h` | 二进制协议（list/info/var/start/trigger/stop/reset/sample）、printf 数据输出、轮询检测 |
-
-### 5.2 数据模型
-
-`scope_t` 封装一个录波通道的全部状态。每个 scope 实例通过 `SCOPE_DEFINE` 宏一次声明：
-
-- **环形缓冲区**：`float scope_<name>_buffer[var_count][buf_size]`，多维数组，每变量一行
-- **变量指针数组**：`scope_<name>_var_ptrs[]`，指向各变量实例
-- **变量名数组**：`scope_<name>_var_names[]`，字符串化变量名
-
-`REG_SCOPE` 宏组合 `SCOPE_DEFINE` 和 `SECTION_SCOPE` 注册。`scope_service_init()` 在 `REG_INIT(0, ...)` 阶段遍历 `SECTION_SCOPE` 构建 `g_scope_first` 链表并分配 `scope_id`。
-
-### 5.3 状态机与触发
-
-scope 有三个状态：
-
-```
-IDLE ──start()──▶ RUNNING ──trigger()──▶ TRIGGERED ──缓冲填满──▶ IDLE
-                     │                      │
-                     └──stop()──▶ IDLE ◀──reset()──┘
+```text
+platform/zynq7020/
+├─ ps/
+│  ├─ bsp/                     PS 外设和 PL MMIO 驱动
+│  ├─ src/                     ARM 应用入口与平台服务
+│  ├─ srtos/                   Cortex-A9 上下文切换端口
+│  └─ bootloader/              Bootloader、FAL cfg 和启动镜像构建
+└─ pl/                         Vivado 工程、约束和 IP 打包脚本
 ```
 
-- **`scope_start()`**：进入 RUNNING，清除缓冲区和索引
-- **`scope_run()`**：ISR 中调用，将 `var_ptrs` 指向的变量值拷贝到当前 `write_index` 行，索引自增
-- **`scope_trigger()`**：记录 `trigger_index`，持续采集 `trigger_post_cnt` 次后回到 IDLE
-- **`scope_stop()`**：立即停止并回到 IDLE
-- **`scope_reset()`**：重置所有索引和标志位
+PS 工程提供裸机与 SRTOS 构建目标。PL 工程引用 `verilog/` 中的可复用 IP，并生成 PS 软件构建所需的硬件描述和 bitstream。
 
-### 5.4 服务层协议
+### 4.3 仿真平台
 
-`scope_service.c` 提供完整二进制协议：
+`platform/matlab/` 保存控制器分析、参数设计和时域模型；`platform/plecs/` 按拓扑保存开关级仿真工程。仿真平台复用 `code/ctrl/` 和 `code/lib/` 中的控制实现，使算法验证与嵌入式实现保持一致。
 
-| 命令 | 说明 |
-|------|------|
-| `SCOPE_LIST_QUERY` (0x18) | 枚举所有 scope 实例，分帧上报 |
-| `SCOPE_INFO_QUERY` (0x19) | 查询单个 scope 状态、缓冲区大小、触发位置 |
-| `SCOPE_VAR_QUERY` (0x1A) | 查询 scope 变量名称列表 |
-| `SCOPE_START` (0x1B) | 启动采样 |
-| `SCOPE_TRIGGER` (0x1C) | 触发 |
-| `SCOPE_STOP` (0x1D) | 停止 |
-| `SCOPE_RESET` (0x1E) | 复位 |
-| `SCOPE_SAMPLE_QUERY` (0x1F) | 按逻辑索引读取采样数据，支持 Normal 和 Force 两种模式 |
+## 5. Flash 与升级架构
 
-采样数据读出通过逻辑索引到物理索引的映射：在 Normal 模式下从 `trigger_index + trigger_post_cnt + 1` 开始环形读取；在 Force 模式下从当前 `write_index` 开始，允许在 RUNNING 期间强制读取。
+### 5.1 FAL
 
-`scope_service_poll_state()` 以 1ms 周期检测录波完成：当 `last_state == TRIGGERED` 且 `state == IDLE` 时，置 `data_ready = 1` 并递增 `capture_tag`，上位机通过轮询 `scope_info_query` 的 `data_ready` 位获知新数据。
+FAL Core 位于 `code/interface/fal/`，负责异步 Flash 请求和分区内地址管理。平台在自身 `fal_cfg.c/.h` 中定义：
 
-### 5.5 FLASH 与 RAM 用量
+- Flash 设备及容量、编程页、擦除块和读取分段参数；
+- 每个设备的连续分区表和访问权限；
+- 初始化、状态、读取、编程、擦除和同步操作；
+- FAL 实例的初始化与周期调度。
 
-| 模块 | Code | RO Data | FLASH | RW Data | ZI Data | RAM |
-|------|-----:|--------:|------:|--------:|--------:|----:|
-| `scope.o` | 196 | 0 | 196 | 0 | 0 | 0 |
-| `scope_service.o` | 1,710 | 12 | 1,722 | 112 | 180 | 292 |
+`fal_read()`、`fal_write()` 和 `fal_erase()` 提交请求，`fal_process()` 根据设备状态分段推进操作。FAL Core 负责配置、权限、边界、累计容量和整数溢出检查。
 
-## 6. Trace 追踪模块（`code/dbg/trace.{c,h}` + `trace_service.{c,h}`）
+### 5.2 Bootloader
 
-### 6.1 分层架构
+Bootloader 的 Flash 依赖链为：
 
-| 层 | 文件 | 职责 |
-|----|------|------|
-| 内核 | `trace.c/h` | FIFO 追踪缓冲、记录写入、清除、顺序读回 |
-| 服务 | `trace_service.c/h` | 二进制控制/上报、printf 打印输出 |
-
-### 6.2 数据模型与记录
-
-`dbg_trace_item_t` 包含两个字段：`line`（源码行号）和 `time`（绑定系统时间戳）。`DBG_TRACE_MARK()` 宏展开为 `dbg_trace_record(__LINE__)`，在 ISR 或任务中插入追踪点。
-
-FIFO 缓冲区固定 64 条记录（`DBG_TRACE_BUFFER_SIZE = 64`）。`write_count` 和 `read_count` 为单调递增计数器，通过位与运算映射到缓冲区索引：`index = count & (64 - 1)`。
-
-溢出处理：当 `write_count > read_count + 64` 时，`read_count` 被推到 `write_count - 64`，丢弃最旧记录。
-
-### 6.3 时间绑定
-
-`DBG_TRACE_BIND_TIME(p_system_time)` 绑定一个硬件计数器（如 HRPWM 时基）。每个追踪点使用 `DBG_TRACE_MARK()` 插入时自动采样该计数器。
-
-### 6.4 服务层
-
-服务层提供三种消费方式：
-
-| 功能 | 实现 | 说明 |
-|------|------|------|
-| printf 打印 | `dbg_trace_service_print_task` | Trace 开启后，以 50ms 周期逐条打印 FIFO 记录 |
-| 二进制上报 | `dbg_trace_service_binary_task` | 上位机通过 control 命令开启后，以 1ms 周期批量上报记录（每次最多 3 条） |
-| 清除 | `dbg_trace_clear_cmd` | shell 命令清除缓冲区 |
-
-### 6.5 FLASH 与 RAM 用量
-
-| 模块 | Code | RO Data | FLASH | RW Data | ZI Data | RAM |
-|------|-----:|--------:|------:|--------:|--------:|----:|
-| `trace.o` | 132 | 8 | 140 | 0 | 0 | 0 |
-| `trace_service.o` | 232 | 8 | 240 | 54 | 84 | 138 |
-
-## 7. Perf 性能监控模块（`code/dbg/perf.{c,h}` + `perf_service.{c,h}` + `record_dict`）
-
-### 7.1 分层架构
-
-| 层 | 文件 | 职责 |
-|----|------|------|
-| 内核 | `perf.c/h` | 硬件计数器绑定、记录插入、CPU 负载计算、度量接口 |
-| 服务 | `perf_service.c/h` | 二进制协议上报（list/info/record/reset peak） |
-| 辅助 | `record_dict.c/h` | 性能记录 ID 字典，轻量级 `malloc` 替代 |
-
-### 7.2 测量点注册
-
-perf 支持三类测量点，通过统一的 `REG_PERF_RECORD_EX` 宏注册：
-
-| 类型 | 宏 | 用途 |
-|------|-----|------|
-| `SECTION_PERF_RECORD_CODE` | `REG_PERF_RECORD` | 代码段级手动测量（`PERF_START`/`PERF_END` 成对调用） |
-| `SECTION_PERF_RECORD_TASK` | `REG_TASK_PERF_RECORD` | 任务执行时间自动测量 |
-| `SECTION_PERF_RECORD_INTERRUPT` | `REG_INTERRUPT_PERF_RECORD` | 中断服务时间自动测量 |
-
-任务和中断的 `RECORD` 由 `section` 框架在 `run_task()` 和 `section_interrupt()` 中自动完成测量（见 §3.3、§3.4），无需业务代码手动插桩。
-
-每个 record 包含 `start`/`end`/`time`（单次执行时间）、`max_time`（历史最大）、`run_time`（累计运行时间）、`load`/`load_max`（CPU 占用率）。
-
-### 7.3 CPU 负载计算
-
-`perf_cpu_load_calculate()` 以 `PERF_CPU_LOAD_PERIOD_MS`（500ms）周期执行。计算方式：
-
-```
-load = run_time / elapsed_perf_cnt
+```text
+Bootloader Core
+    ↓ bootloader_flash_ops_t
+平台 bootloader_fal_adapter.c
+    ↓ fal_read / fal_write / fal_erase / fal_state
+FAL Core
+    ↓ 平台 fal_cfg
+Flash 驱动
 ```
 
-其中 `elapsed_perf_cnt` 为硬件计数器在两个周期之间的增量。`load_max` 为历史最大负载。总负载 `perf_task_metric` 和 `perf_interrupt_metric` 分别聚合所有任务/中断的 `run_time` 占比。
+`bootloader_flash_ops_t` 提供逻辑区域查询、读、写、擦除和状态操作。平台适配器通过 `switch` 将 Bootloader 逻辑区域映射到本平台 FAL 分区，并把适配函数挂载到 Core。FAL 实例、设备配置和调度归平台管理。
 
-### 7.4 时间基准
+Bootloader Core 管理启动判断、直接升级、暂存升级、镜像校验、冗余元数据、掉电恢复和应用跳转决策。协议层处理 FRAME 的升级信息、就绪、数据和结束命令。IAP 服务处理升级触发、用户准备回调、升级请求保存和系统复位。
 
-perf 需要一个硬件计数器作为时间基准，通过 `REG_PERF_BASE_CNT(timer_cnt, period_s)` 注册。`timer_cnt` 指向硬件计数寄存器，`period_s` 表示一个计数 tick 的实际秒数。各平台按真实时钟树和分频填写该周期，perf 服务通过注册值换算时间和 CPU 占用率。
+## 6. FPGA IP 结构
 
-### 7.5 服务层协议
+每个 FPGA IP 使用一致的目录：
 
-`perf_service.c` 提供二进制协议：
-
-| 命令 | 说明 |
-|------|------|
-| `PERF_LIST_QUERY` | 枚举所有 perf 记录，分帧上报 |
-| `PERF_INFO_QUERY` | 查询 CPU 负载、字典版本、记录总数 |
-| `PERF_RECORD_QUERY` | 查询单个记录的运行时间、负载、ID |
-| `PERF_RECORD_RESET_PEAK` | 重置峰值统计数据 |
-
-Perf 开启后，printf 输出与二进制 service 同步启用，提供终端调试能力。
-
-### 7.6 FLASH 与 RAM 用量
-
-| 模块 | Code | RO Data | FLASH | RW Data | ZI Data | RAM |
-|------|-----:|--------:|------:|--------:|--------:|----:|
-| `perf.o` | 512 | 28 | 540 | 48 | 88 | 136 |
-| `perf_service.o` | 1,782 | 72 | 1,854 | 91 | 156 | 247 |
-| `record_dict.o` | 186 | 0 | 186 | 0 | 0 | 0 |
-
-## 8. 内核层与服务层分离模式
-
-dbg 的五个子模块（shell、scope、trace、perf）遵循统一的分层模式：
-
-```
-┌─────────────────────────────────────────┐
-│  服务层 (_service.c/h)                   │
-│  - 二进制协议解析 (REG_COMM)             │
-│  - shell 命令注册 (REG_SHELL_CMD)        │
-│  - 周期任务注册 (REG_TASK_MS)            │
-│  - printf 格式化输出 (宏隔离)            │
-├─────────────────────────────────────────┤
-│  内核层 (.c/h)                           │
-│  - 纯数据结构和算法                       │
-│  - 不依赖 section_link_tx_func_t / comm   │
-│  - ISR 可安全调用                         │
-└─────────────────────────────────────────┘
+```text
+verilog/<ip>/
+├─ rtl/                        Verilog-2001 可综合 RTL
+├─ sim/                        SystemVerilog 自检与综合脚本
+└─ doc/                        设计、测试和应用文档
 ```
 
-这种分层的设计原则：
+| IP | 职责 |
+|---|---|
+| `iir/` | 3P3Z IIR core 与 AXI4-Lite 外设 |
+| `uart_dma/` | UART、同步 FIFO、AXI 控制与 DDR 环形 DMA |
+| `oled_dma/` | OLED 帧缓存、DMA、SSD1306 协议与串行 PHY |
 
-- **依赖方向单向**：服务层依赖内核层和 `comm.h`/`section.h`，内核层不依赖服务层或通信框架
-- **功能开关统一**：Perf、Scope 和 Trace 只使用各自模块头文件中的功能开关；功能开启时同时提供配套 Shell 输出和二进制 service
-- **关闭行为一致**：功能关闭后，对应记录、缓冲区和 service 注册一起裁剪，不设置独立的 printf 输出开关
-- **内核 ISR 安全**：内核函数（`scope_run`、`dbg_trace_record`、`PERF_START`/`PERF_END` 等）不包含任何阻塞或重量级操作
+`platform/zynq7020/pl/` 中的 TCL 脚本读取各 IP 的 `rtl/` 文件完成 Vivado IP 打包和系统集成。
 
-## 9. 功能与编译配置
+## 7. 测试结构
 
-HC32F334 AC 平台提供两套当前可编译工程：Keil MDK 使用 ARM Compiler for Embedded 6.24 和 `-Oz` 优化；GCC 工程使用 Arm GNU Toolchain、C11 和 `-O2` 优化。两套工程共享同一组平台 BSP 与公共代码。
+主机测试位于 `tests/host/`：
 
-### 9.1 裁剪宏汇总
+| 测试工程 | 覆盖内容 |
+|---|---|
+| `fal_core/` | 多设备、分区换算、读写擦分段、权限、失败和多实例 |
+| `bootloader_core/` | 启动判断、下载方式、协议、镜像校验、元数据和掉电恢复 |
 
-| 宏 | 模块 | 默认值 | 关闭时行为 |
-|----|------|--------|-----------|
-| `SHELL_STRING_ENABLE` | shell | 1u | 只读变量，不解析表达式 |
-| `SCOPE_ENABLE` | scope | 1u | 不注册 Scope 实例，不分配采样缓冲区 |
-| `TRACE_ENABLE` | trace | 1u | Trace 记录宏为空，不分配记录缓冲区，不注册 service |
-| `PERF_CODE_ENABLE` | perf | 1u | 关闭 `PERF_START`/`PERF_END` 插桩 |
-| `PERF_TASK_ENABLE` | perf | 1u | 关闭任务自动测量 |
-| `PERF_INTERRUPT_ENABLE` | perf | 1u | 关闭中断自动测量 |
+主机测试使用 MinGW C11 和严格警告编译，并直接编译生产代码。平台构建负责验证工具链、链接布局和平台适配；Verilog `sim/` 负责 RTL 自检。
 
-## 10. Flash 抽象层（`code/interface/fal/`）
+## 8. 文档结构
 
-FAL Core 使用调用方持有的 `fal_t` 管理单个异步 Flash 操作。`fal_cfg_t` 挂载物理设备表，每个设备持有独立的有序分区表，并通过 `fal_flash_ops_t` 绑定初始化、状态查询、读取、编程、擦除和可选同步操作。分区配置只保存标识、大小和权限，Core 通过累加同一设备内的前序分区大小换算物理地址。`fal_process()` 遍历平台设备表，找到活动请求所属 Flash 后，根据设备配置的最大读取长度、program page 和 erase block 推进有限步状态机，并进行设备、分区、权限、累计容量、边界和整数溢出检查。
+```text
+docs/
+├─ ENGINEERING_DESIGN.md       当前工程结构与模块职责
+├─ INDEX.md                    文档统一入口
+├─ build/                      编译与下载
+├─ control/                    控制模块与仿真
+├─ debug/                      调试模块设计与使用
+├─ examples/                   公共功能示例
+├─ framework/                  Section 与 SRTOS
+├─ guides/                     综合使用说明
+├─ platform/                   平台说明与验证报告
+└─ porting/                    MCU 与 Bootloader 移植
+```
 
-平台 cfg 定义设备 ID、分区 ID、geometry、权限与底层驱动。逻辑地址按分区设备偏移转换为物理 Flash 地址。上层直接调用 FAL 公共函数提交请求。FAL Core 不注册调度任务，平台通过 `fal_process()` 推进操作。
+详细设计和操作方法由对应专题文档维护，统一入口为 [文档索引](INDEX.md)。
 
-`mingw/fal_core/` 使用 fake cfg 和 fake Flash 验证多设备地址换算、读写擦分段、权限与非法配置、设备 busy/失败、停止请求和多实例隔离。
+## 9. 构建与生成物
 
-## 11. Bootloader（`code/app/bootloader/`）
+构建入口随目标工程维护：MCU 工程使用 Makefile、Keil 工程或批处理脚本，Zynq 工程使用 Makefile、PowerShell 与 Vivado TCL，Verilog 仿真使用各 IP 的 `sim/` 脚本。
 
-`bootloader_core.h` 定义 Bootloader 自有的逻辑区枚举和 `bootloader_flash_ops_t` Flash 虚函数接口。Flash 虚函数不传递上下文，平台适配文件直接使用本平台唯一的 FAL 实例，通过 `switch case` 将 Bootloader 逻辑区映射到平台 `fal_cfg.h` 定义的 FAL 分区，实现区域查询、读、写、擦除和状态函数，并通过 `bootloader_flash_ops_init()` 挂载到 Bootloader Core。FAL 分区所属物理 Flash、设备配置和周期调度由平台维护。Bootloader 自身区域不出现在 Bootloader 逻辑区枚举中。
-
-Core 支持直接升级和暂存升级。直接升级在写入目标区前使 IAP 失效；暂存升级先完成分包 CRC、整包 CRC16 与 34 字节 footer 校验，再按擦除块复制至目标区并读回校验。footer 校验覆盖固件类型、版本、文件长度、模块 ID 和 footer CRC32。双份元数据使用序列号、记录 CRC 和提交标记保存下载与复制进度，启动时选择有效的新记录恢复未完成的暂存安装。无有效 IAP、存在升级请求、升级失败或 Flash 连续失败时，状态机停留在 Bootloader；有效 IAP 且无升级需求时通过平台跳转接口启动应用。
-
-`bootloader_protocol` 是 Bootloader 协议层，实现 `0x08`、`0x09`、`0x0A`、`0x0B` 升级命令、FRAME 通信注册、直接 ACK 和周期任务。每条命令使用独立的 `REG_COMM` 回调，回调声明对应的 ACK 结构并构造同命令应答帧；收到 ACK 帧时直接返回。`bootloader_protocol_types.h` 按 1 字节对齐定义请求与 ACK 负载，字段顺序与 `update.h` 一致，并通过编译期断言固定结构大小和关键字段偏移。`0x08` 请求和 ACK 分别为 10 字节和 3 字节，`0x09` ACK 为 1 字节，`0x0A` 请求为 1033 字节且包含 1024 字节数据区，`0x0A` ACK 为 1 字节，`0x0B` 请求和 ACK 分别为 2 字节和 1 字节。`bootloader_core` 是升级逻辑层，处理启动判断、下载、校验、复制、恢复和跳转决策。
-
-`mingw/bootloader_core/` 使用 fake Flash、fake FAL API 和 fake 平台接口验证启动判断、两种升级方式、重复数据包、失败重试、断电恢复、元数据切换、协议校验、逻辑分区映射和多层接口隔离。
-
-## 12. Zynq-7020 Bootloader 集成
-
-Zynq-7020 使用 16 MiB PS QSPI Flash，program page 为 256 字节，erase block 为 64 KiB。当前连续分区为：
-
-| 区域 | 起始偏移 | 大小 | 权限 |
-|------|---------:|-----:|------|
-| Boot image | `0x000000` | 5 MiB | 只读 |
-| IAP | `0x500000` | 3 MiB | 读写擦 |
-| Staging | `0x800000` | 3 MiB | 读写擦 |
-| Metadata A | `0xB00000` | 64 KiB | 读写擦 |
-| Metadata B | `0xB10000` | 64 KiB | 读写擦 |
-| Layout | `0xB20000` | 64 KiB | 只读 |
-
-独立 Bootloader 链接到 DDR `0x04000000`，IAP 链接到 `0x00100000`，PL DMA 区从 `0x1FF00000` 开始。`build_boot_image.ps1` 从当前 HDF 自动生成 FSBL，并将 FSBL、bitstream 与 Bootloader ELF 打包为 `BOOT.bin`；脚本检查镜像不超过 5 MiB 启动分区并输出 64 KiB 擦除边界对齐后的实际占用。`zynq_iap_update_service.c/.h` 独立处理 IAP 的 `0x08`、用户回调、OCM 启动原因和 Bootloader 切换，不依赖 Bootloader Core。
-
-## 13. HC32F334 Bootloader 集成
-
-HC32F334 使用 128 KiB 片内 EFM 和 8 MiB W25Q64。W25Q64 通过 PB5 SCK、PA0 MOSI、PA1 MISO 和 PA6 软件片选连接，SPI 工作于 Mode 0、15 MHz；命令阶段使用轮询传输，数据读写使用 DMA 通道 4 和 5。BSP 提供 JEDEC ID、状态查询、读取、256 字节页编程、4 KiB 扇区擦除，以及位于 `0x7FF000` 的跨页自检。
-
-FAL cfg 使用以下连续区域：
-
-| 设备 | 区域 | 起始偏移 | 大小 | 权限 |
-|------|------|---------:|-----:|------|
-| 片内 EFM | Bootloader | `0x000000` | 16 KiB | 只读 |
-| 片内 EFM | IAP | `0x004000` | 112 KiB | 读写擦 |
-| W25Q64 | Staging | `0x000000` | 128 KiB | 读写擦 |
-| W25Q64 | Metadata A | `0x020000` | 4 KiB | 读写擦 |
-| W25Q64 | Metadata B | `0x021000` | 4 KiB | 读写擦 |
-| W25Q64 | Layout | `0x022000` | 4 KiB | 只读 |
-
-Bootloader 使用独立 USART2 链路，PC10 为 TX、PC4 为 RX，波特率为 921600。`main.c` 只初始化时钟、SysTick 和 Section运行时。`bootloader_fal_adapter.c`在静态操作表中挂载FAL读写擦和状态接口，并保存Bootloader Core、协议实例及升级缓冲区。最小中断入口只保留SysTick，USART初始化直接配置固定时钟下的寄存器参数，GCC使用`-Os`与LTO，Keil使用Link-Time Optimization。GCC和Keil工程均链接到16 KiB Bootloader区，链接区域本身构成固件大小上限；默认升级模式为暂存升级，GCC构建参数`UPGRADE_MODE=direct`生成直接升级配置。
-
-`code/app/bootloader/iap_update_service.c/.h` 是 IAP 使用的纯软件升级切换服务，处理 `0x08`、弱定义用户准备回调、复位间保留的升级请求和 `SYSTEM_RESET`。通信回调保存升级信息并直接 ACK；周期任务轮询准备回调，准备进行中时保持 IAP 运行，准备失败时取消切换，准备完成后经过软件发送余量时间写入升级请求并复位。`bootloader_update_request.h` 定义 IAP 与 Bootloader 共享的 16 字节保留请求格式，记录完整模块号、版本、文件大小、升级类型、校验值和最后提交的有效标记。HC32 IAP 与 Bootloader 将该请求放在 SRAM `0x1FFFC008`，`hc32_boot_platform.c` 校验后通过平台操作表把升级信息交给 Bootloader Core；Core 完成元数据检查后直接建立会话。Bootloader 和 ISP 不编译 IAP 服务实现。GCC Makefile 仅在 `IS_IAP=1` 时定义 `IS_IAP` 并加入服务；GCC 构建生成带 34 字节 FRAME footer 的 `hc32f334_ac_update_iap.bin`。
+生成的对象文件、链接文件、镜像、日志、仿真目录和工具状态由 `.gitignore` 管理。仓库根目录的 `clean.bat` 统一清理 MCU、Zynq、PLECS、Verilog 和主机测试生成物。
