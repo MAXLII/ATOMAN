@@ -118,3 +118,9 @@ FRAME 兼容的最大 payload 回环命令为 `cmd_set=0x01`、
 `cmd_word=0x17`。命令直接 ACK 同一命令号并原样返回 payload；目标最大有效
 payload 为 497 字节，对应 512 字节完整协议帧。原有 `0x30/0x01` demo 回环
 命令保持不变。
+
+## 6. 关联导航
+
+### 应用文档
+
+- [PL UART DMA应用说明](../application/pl_uart_dma_application.md)

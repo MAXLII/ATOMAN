@@ -1,4 +1,4 @@
-# Zynq-7020 OLED Zero Player 设计与验证
+# Zynq-7020 OLED Zero Player 应用与验证
 
 ## 1. 硬件连接
 
@@ -46,3 +46,8 @@ y_end   = (row + 1) * 64 / 30
 - 100 ms与1000 ms自动刷新通过。
 - 正常路径IRQ、AXI错误、命令错误和DMA停止原因均为0。
 - 实体OLED的最终光学显示由开发板屏幕直接观察确认。
+
+## 5. 关联导航
+
+- 源码：[OLED DMA顶层](../../rtl/axi_oled_dma.v) · [Zynq OLED BSP](../../../../platform/zynq7020/ps/bsp/bsp_oled.c) · [Zero Player应用](../../../../platform/zynq7020/ps/src/zero_player_oled.c)
+- 设计：[PL OLED DMA设计](../design/zynq7020_pl_oled_dma_design.md)
