@@ -199,3 +199,8 @@ code/app/demo/demo_shell.c
 - `SHELL_FP32` 通过 4 字节浮点数据读写。
 - 字符串 Shell 使用每链路 128 字节输入缓冲。
 - 二进制协议访问不依赖 `SHELL_STRING_ENABLE` 是否开启。
+
+## 10. 关联导航
+
+- 源码：[Shell 核心](../../../../code/dbg/shell.c) · [Shell 服务](../../../../code/dbg/shell_service.c)
+- 设计：[Shell 设计](../../../design/debug/shell/shell_design.md) · [调试与观测系统总设计](../../../design/debug/debug_system_design.md)

@@ -120,3 +120,8 @@ REG_SCOPE_DATA_STEP_CMD(demo_scope)
 - `trig_post_cnt` 必须小于或等于缓冲长度。
 - 高频控制环中调用 `SCOPE_RUN()` 时，变量赋值应尽量简短。
 - Scope 是调试工具，不应把控制逻辑依赖在 Scope 状态上。
+
+## 9. 关联导航
+
+- 源码：[Scope 核心](../../../../code/dbg/scope.c) · [Scope 服务](../../../../code/dbg/scope_service.c)
+- 设计：[Scope 设计](../../../design/debug/scope/scope_design.md) · [调试与观测系统总设计](../../../design/debug/debug_system_design.md)

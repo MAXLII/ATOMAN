@@ -111,3 +111,9 @@ ISR 后采样：
 - 注入延迟最大 `SFRA_MAX_INJECT_DELAY_TICK`，当前 2。
 - 业务代码必须在控制环中调用 pre/post sample。
 - 注入幅值需要由用户保证不会破坏控制系统稳定性。
+
+## 8. 关联导航
+
+- 应用：[SFRA 使用文档](../../../application/debug/sfra/sfra_usage.md)
+- 总体设计：[调试与观测系统总设计](../debug_system_design.md)
+- 基础教材：[控制原理时域仿真说明](../../../tutorial/control/control_time_domain_simulations.md)
