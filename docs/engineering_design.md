@@ -93,7 +93,7 @@ code/ctrl/
 └─ pfc_i32/                   整数 PFC
 ```
 
-控制模块使用公共接口访问采样值和 PWM 输出，并复用 `code/lib/` 中的控制算法。后台参数构建、版本发布和实时同步的边界见[控制参数构建与发布设计](design/control/setpoint_publish_design.md)，接入方法见[控制参数发布使用方法](application/control/setpoint_publish_usage.md)。
+控制模块使用公共接口访问采样值和 PWM 输出，并复用 `code/lib/` 中的控制算法。采样指针、执行器回调、FSM 资源和保护锁存通过控制 HAL 在 Idle 阶段挂载，并在运行期间冻结；其生命周期见[控制 HAL 挂载与生命周期设计](design/control/hal_binding_lifecycle_design.md)，平台接入见[控制 HAL 平台挂载方法](application/control/hal_binding_usage.md)。后台参数构建、版本发布和实时同步的边界见[控制参数构建与发布设计](design/control/setpoint_publish_design.md)，接入方法见[控制参数发布使用方法](application/control/setpoint_publish_usage.md)。
 
 ### 3.4 算法库 `code/lib/`
 
@@ -220,7 +220,7 @@ Flash 驱动
 
 Bootloader Core 管理启动判断、直接升级、暂存升级、镜像校验、冗余元数据、掉电恢复和应用跳转决策。协议层处理 FRAME 的升级信息、就绪、数据和结束命令。IAP 服务处理升级触发、用户准备回调、升级请求保存和系统复位。
 
-升级安全不变量、持久化状态机和IAP交接见 [Bootloader升级与防变砖设计](design/bootloader/bootloader_design.md)，固件接入与运行流程见 [Bootloader升级接入与运行](application/bootloader/bootloader_upgrade_usage.md)。
+升级安全不变量、持久化状态机和IAP交接见 [Bootloader升级与防变砖设计](design/bootloader/bootloader_design.md)，固件运行和升级操作见 [Bootloader升级运行方法](application/bootloader/bootloader_upgrade_usage.md)，新平台适配见[Bootloader平台移植方法](application/porting/bootloader_platform_porting.md)。
 
 ## 6. FPGA IP 结构
 

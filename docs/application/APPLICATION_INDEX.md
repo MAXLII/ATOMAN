@@ -4,7 +4,7 @@
 
 ## 综合入口
 
-- [功能使用总览](guides/feature_usage_guide.md)
+- [公共功能接入总览](guides/feature_usage_guide.md)
 - [公共功能演示](examples/demo.md)
 
 ## 构建与移植
@@ -19,7 +19,7 @@
 - [FRAME通信接入](communication/frame_usage.md)
 - [通信命令开发方法](communication/command_development_usage.md)
 - [FAL平台配置与上层接入](storage/fal_usage.md)
-- [Bootloader升级接入与运行](bootloader/bootloader_upgrade_usage.md)
+- [Bootloader升级运行方法](bootloader/bootloader_upgrade_usage.md)
 
 ## 框架与调试
 
@@ -36,13 +36,14 @@
 ## 控制模块
 
 - [控制模块通用接入](control/ctrl_usage.md)
+- [控制 HAL 平台挂载方法](control/hal_binding_usage.md)
 - [控制参数发布使用方法](control/setpoint_publish_usage.md)
-- BB：[运行模式使用](control/bb/bb_mode_usage.md) · [控制使用](control/bb/ctrl_bb_usage.md) · [移植检查](control/bb/porting_checklist.md)
+- BB：[运行模式使用](control/bb/bb_mode_usage.md) · [控制使用](control/bb/ctrl_bb_usage.md)
 - Boost：[控制使用](control/boost/ctrl_boost_usage.md)
 - Buck：[控制使用](control/buck/ctrl_buck_usage.md)
 - CLLC：[控制使用](control/cllc/ctrl_cllc_usage.md)
-- INV：[控制使用](control/inv/ctrl_inv_usage.md) · [移植检查](control/inv/porting_checklist.md)
-- PFC：[控制使用](control/pfc/ctrl_pfc_usage.md) · [移植检查](control/pfc/porting_checklist.md)
+- INV：[控制使用](control/inv/ctrl_inv_usage.md)
+- PFC：[控制使用](control/pfc/ctrl_pfc_usage.md)
 
 ## 算法库
 
@@ -54,6 +55,6 @@
 
 FPGA IP 的应用文档与对应 RTL 共同维护：
 
-- [IIR 应用文档](../../verilog/iir/doc/application/)
-- [OLED DMA 应用文档](../../verilog/oled_dma/doc/application/)
-- [UART DMA 应用文档](../../verilog/uart_dma/doc/application/)
+- [IIR 应用文档](../../verilog/iir/doc/application/axi_iir_3p3z_usage.md)
+- [OLED DMA 应用文档](../../verilog/oled_dma/doc/application/zynq7020_oled_zero_player.md)
+- [UART DMA 应用文档](../../verilog/uart_dma/doc/application/pl_uart_dma_application.md)
