@@ -69,8 +69,9 @@ start、reset_state 或 clear_done 会清除。
 3) 写 CONTROL.reset_state。
 4) 写 INPUT。
 5) 写 CONTROL.start。
-6) 读取 OUTPUT 和 STATUS.saturated。
-7) 写 CONTROL.clear_done，或直接启动下一样点。
+6) 轮询 STATUS.done，并为轮询设置超时。
+7) done 置位后读取 OUTPUT 和 STATUS.saturated。
+8) 写 CONTROL.clear_done，或由下一次 CONTROL.start 清除旧 done。
 
 PS 可以像访问 MCU 外设寄存器一样直接操作任意已定义偏移：
 
@@ -96,9 +97,10 @@ run_sim.ps1 会生成：
     sim/iir_3p3z_core_numeric_results.csv
     sim/iir_3p3z_numeric_results.csv
 
-run_synth.ps1 使用 Vivado 2018.3 对 XC7Z020 做 50MHz OOC 综合，任何 IIR
-逻辑 DRC 或负时序裕量都会使脚本失败。ZPS7-1 是独立 PL core 不含 PS7 的
-唯一允许项，完整 PS+PL 构建中该项必须为零。
+run_synth.ps1 使用 Vivado 2018.3 对 XC7Z020 做 50MHz OOC 综合和
+`opt_design`，任何 IIR 逻辑 DRC 或负时序裕量都会使脚本失败。脚本同时报告
+DSP 数量；当前 core 使用组合 LUT 乘法器，报告值为 0。ZPS7-1 是独立 PL
+core 不含 PS7 的唯一允许项，完整 PS+PL 构建中该项必须为零。
 
 ## 7. 增加自定义 32 位寄存器
 
