@@ -9,7 +9,7 @@
 
 ## RTL 简图
 
-![AXI 3P3Z IIR RTL结构](axi_iir_3p3z_rtl.png)
+![AXI 3P3Z IIR RTL结构](axi_iir_3p3z_rtl_v2.png)
 
 AXI 封装保存软件可写配置并产生单周期控制脉冲。core 内部由 X/Y 历史、
 并行乘法器、加法树、定点缩放和限幅器组成；限幅后的输出同时进入状态寄存器
@@ -39,7 +39,10 @@ core 始终保持 `ready=1`、`busy=0`。`start` 在上升沿被接受时，当�
 
 连续每个时钟提供一个 `start` 时，core 可以每周期接受并完成一个样点。`clear_state` 的优先级高于 `start`，清除输出、历史、状态和样点计数。
 
-为满足单周期和无 DRC 警告的要求，7 个乘法器使用组合 LUT 实现，不使用需要内部流水级的 DSP48E1。50 MHz 完整布局布线 WNS 为正。
+为保持单周期组合计算，7 个乘法器通过 `use_dsp="no"` 约束为 LUT 实现，
+不使用带内部流水级的 DSP48E1。Vivado 2018.3 对 core 执行 50 MHz OOC
+综合和 `opt_design` 后，当前报告为 DSP 数量 0、WNS 4.290 ns；该结果是
+OOC 优化后的时序结果，不等同于完整平台布局布线结果。
 
 ## AXI4-Lite
 

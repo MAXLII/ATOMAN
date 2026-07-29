@@ -66,7 +66,9 @@ y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + b3*x[n-3]
 
 系数为有符号 Q2.30，输入和输出为有符号 32 位整数。样点的工程量比例由 PS 决定；PL 使用 7 个并行组合乘法器和 70 位平衡加法树，计算后算术右移 30 位，并限幅到 `LIMIT_LOWER..LIMIT_UPPER`。core 从接受 `start` 到结果锁存的固定延迟为 1 个 50MHz 时钟，并支持每时钟一个样点。最终限幅值作为输出并写入反馈历史 `y[n-1]`。
 
-32×32 位乘法器分解为 4 路 17×17 位部分积，映射到 4 个 DSP48E1。每路具有输入、乘法和输出流水寄存器。
+7 个 32×32 位乘法器通过 `use_dsp="no"` 约束为组合 LUT 实现，不占用
+DSP48E1。该结构以较大的组合逻辑资源换取 core 的单周期完成延迟；完整平台
+仍通过实现阶段的 WNS 检查确认 50MHz 时序。
 
 ### 4.1 AXI 寄存器
 
@@ -104,7 +106,9 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 3. 调用 `bsp_iir_process_sample()` 写入一个样点并等待完成。
 4. 检查返回状态和饱和标志，再处理下一个样点。
 
-`bsp_iir_self_test()` 会执行 8 点脉冲响应及正、负饱和测试。Shell 命令 `IIR_TEST` 触发相同的板上测试。
+`bsp_iir_self_test()` 会执行 8 点脉冲响应、正负溢出饱和、可配置上下限及
+限幅后反馈历史测试。自测会恢复系数、上下限和输入寄存器，但会清空原有
+X/Y 历史、输出和样点计数。Shell 命令 `IIR_TEST` 触发相同的板上测试。
 
 ## 5. 目录职责
 
@@ -144,7 +148,10 @@ AXI 写通道允许 AW 和 W 独立到达，支持 `WSTRB` 字节写。下一次
 
 `run_sim.ps1` 先执行纯 IIR core 参考模型比对，再执行 AXI4-Lite 协议与数值测试。CSV 结果保存在 `verilog/iir/sim/`。
 
-`run_synth.ps1` 以 50MHz 对 IIR core 做 Vivado OOC 综合，检查 DSP 映射、DRC 和时序。OOC 工程没有 PS7，因此仅豁免 Zynq 顶层规则 `ZPS7-1`；其他 DRC 均会使脚本失败。
+`run_synth.ps1` 以 50MHz 对 IIR core 做 Vivado OOC 综合和 `opt_design`，报告
+DSP 数量并检查 DRC 和优化后时序。当前结果为 DSP 数量 0、WNS 4.290 ns。
+OOC 工程没有 PS7，因此仅豁免 Zynq 顶层规则 `ZPS7-1`；其他 DRC 均会使
+脚本失败。完整平台的布局布线和最终 WNS 由 `build_pl.tcl` 单独检查。
 
 PL UART DMA 独立验证：
 
