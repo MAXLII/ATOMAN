@@ -3,10 +3,10 @@ AXI 3P3Z IIR 使用说明
 
 1. 文件
 
-src/iir_3p3z_core.v
+rtl/iir_3p3z_core.v
     单周期 3P3Z IIR 运算 core、并行乘法器、上下限幅和历史状态。
 
-src/axi_iir_3p3z.v
+rtl/axi_iir_3p3z.v
     AXI4-Lite 从设备、32 位寄存器组和 IIR core 封装。
 
 sim/tb_iir_3p3z_core.sv
@@ -105,7 +105,7 @@ run_synth.ps1 使用 Vivado 2018.3 对 XC7Z020 做 50MHz OOC 综合，任何 IIR
 
 增加寄存器时按同一个字节偏移同步修改：
 
-1) src/axi_iir_3p3z.v 的 AXI 读译码；可写寄存器还要加入写译码和 WSTRB。
+1) rtl/axi_iir_3p3z.v 的 AXI 读译码；可写寄存器还要加入写译码和 WSTRB。
 2) platform/zynq7020/pl/package_axi_iir_ip.tcl 的 IP-XACT 寄存器描述。
 3) platform/zynq7020/ps/bsp/bsp_iir.h 的偏移宏和需要的驱动接口。
 4) sim/tb_axi_iir_3p3z.sv 的读写、复位值和访问属性测试。

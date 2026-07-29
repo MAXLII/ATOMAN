@@ -22,9 +22,9 @@ RTL 位于 `verilog/uart_dma/`：
 
 | 文件 | 职责 |
 |------|------|
-| `src/uart_sync_fifo.v` | 16 字节同步 FIFO |
-| `src/uart_serial_core.v` | 16 倍采样 UART TX/RX、配置、错误检测和内部回环 |
-| `src/axi_uart_dma.v` | AXI4-Lite 控制、AXI Master DMA、DDR 环形缓冲和错误 IRQ |
+| `rtl/uart_sync_fifo.v` | 16 字节同步 FIFO |
+| `rtl/uart_serial_core.v` | 16 倍采样 UART TX/RX、配置、错误检测和内部回环 |
+| `rtl/axi_uart_dma.v` | AXI4-Lite 控制、AXI Master DMA、DDR 环形缓冲和错误 IRQ |
 | `sim/tb_uart_serial_core.sv` | UART 参数组合、采样、错误和连续帧自检 |
 | `sim/tb_axi_uart_dma.sv` | AXI、ring、错误、中断和 1 MiB PRBS 自检 |
 
