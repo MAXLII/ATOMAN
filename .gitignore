@@ -28,6 +28,9 @@ output_*/
 *.log
 tests/host/**/*.exe
 
+# Local test code
+/tests/
+
 # Local test documentation
 /docs/test/
 /verilog/*/doc/test/
