@@ -167,7 +167,6 @@ static void app_task(void)
 
     run_cmd = (plecs_get_input(PLECS_INPUT_RUN) > 0.5f) ? 1U : 0U;
     plecs_set_output(PLECS_OUTPUT_RUN_STATE, (float)run_sta);
-    plecs_set_output(PLECS_OUTPUT_DBG, app_v_bus);
 
     if ((run_cmd != 0U) && (app_v_bus >= APP_INV_START_VBUS_MIN_V))
     {
