@@ -81,35 +81,35 @@ typedef struct
 
 typedef struct
 {
-    pi_dual_compete_input_t  input;
-    pi_dual_compete_cfg_t    cfg;
-    pi_dual_compete_inter_t  inter;
+    pi_dual_compete_input_t input;
+    pi_dual_compete_cfg_t cfg;
+    pi_dual_compete_inter_t inter;
     pi_dual_compete_output_t output;
 } pi_dual_compete_t;
 
 bool pi_dual_compete_init(pi_dual_compete_t *p_str,
-                           float kp_a,
-                           float ki_a,
-                           float kp_b,
-                           float ki_b,
-                           float up_lmt,
-                           float dn_lmt,
-                           PI_DUAL_COMPETE_MODE_E mode,
-                           float *p_ref_a,
-                           float *p_act_a,
-                           float *p_ref_b,
-                           float *p_act_b);
+                          float kp_a,
+                          float ki_a,
+                          float kp_b,
+                          float ki_b,
+                          float up_lmt,
+                          float dn_lmt,
+                          PI_DUAL_COMPETE_MODE_E mode,
+                          float *p_ref_a,
+                          float *p_act_a,
+                          float *p_ref_b,
+                          float *p_act_b);
 
 bool pi_dual_compete_update_a(pi_dual_compete_t *p_str,
-                               float kp,
-                               float ki);
+                              float kp,
+                              float ki);
 
 bool pi_dual_compete_update_b(pi_dual_compete_t *p_str,
-                               float kp,
-                               float ki);
+                              float kp,
+                              float ki);
 
 bool pi_dual_compete_set_mode(pi_dual_compete_t *p_str,
-                               PI_DUAL_COMPETE_MODE_E mode);
+                              PI_DUAL_COMPETE_MODE_E mode);
 
 bool pi_dual_compete_cal(pi_dual_compete_t *p_str);
 
