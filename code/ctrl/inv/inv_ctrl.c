@@ -362,21 +362,6 @@ static void inv_ctrl_isr(void)
         UP_DN_LMT(vpwm, v_bus_fb, -v_bus_fb);
     }
 
-#ifdef IS_PLECS
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 0), v_d_ref);                /* D 轴电压给定，DLL:9。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 1), v_d_act);                /* D 轴电压反馈，DLL:10。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 2), volt_loop_d.output.val); /* D 轴电压环输出，DLL:11。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 3), v_q_ref);                /* Q 轴电压给定，DLL:12。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 4), v_q_act);                /* Q 轴电压反馈，DLL:13。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 5), volt_loop_q.output.val); /* Q 轴电压环输出，DLL:14。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 6), i_cap_ref);              /* 电容电流给定，DLL:15。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 7), i_cap_act);              /* 电容电流反馈，DLL:16。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 8), i_cap_inner_out);        /* 电流内环输出，DLL:17。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 9), harmonic_comp);          /* 谐波补偿输出，DLL:18。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 10), v_cap_beta);            /* APF 正交电压，DLL:19。 */
-    plecs_set_output((PLECS_OUTPUT_E)(PLECS_OUTPUT_DBG + 11), vpwm);                  /* PWM 电压命令，DLL:20。 */
-#endif                                                                                /* IS_PLECS */
-
     p_hal_isr->p_set_pwm_func(vpwm, v_bus_fb);
 
     phase_pu += freq_hz_ramped * inv_cfg_get_ctrl_ts();
