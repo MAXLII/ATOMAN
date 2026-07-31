@@ -79,8 +79,8 @@ void z2p2_init(z2p2_t *p_str,
 void z2p2_cal(z2p2_t *p_str)
 {
     p_str->inter.e[3] = p_str->inter.e[2];
-    p_str->inter.e[2] = p_str->inter.e[2];
-    p_str->inter.e[1] = p_str->inter.e[2];
+    p_str->inter.e[2] = p_str->inter.e[1];
+    p_str->inter.e[1] = p_str->inter.e[0];
     p_str->inter.e[0] = *p_str->input.p_ref - *p_str->input.p_act;
 
     p_str->inter.u[3] = p_str->inter.u[2];
