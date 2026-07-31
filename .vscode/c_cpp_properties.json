@@ -451,7 +451,20 @@
                 "IS_INV",
                 "TOOLCHAIN_GCC",
                 "__RAM_FUNC="
-            ]
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/platform/plecs/common",
+                    "${workspaceFolder}/platform/plecs/inv",
+                    "${workspaceFolder}/platform/plecs/inv/app",
+                    "${workspaceFolder}/platform/plecs/inv/bsp",
+                    "${workspaceFolder}/code/lib",
+                    "${workspaceFolder}/code/ctrl/inv",
+                    "${workspaceFolder}/code/section/baremetal",
+                    "${workspaceFolder}/code/section"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         },
         {
             "name": "plecs_dc",
