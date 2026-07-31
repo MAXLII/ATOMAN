@@ -431,10 +431,10 @@
         },
         {
             "name": "plecs_inv",
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64",
+            "intelliSenseMode": "windows-gcc-x64",
             "includePath": [
                 "${workspaceFolder}/platform/plecs/common",
                 "${workspaceFolder}/platform/plecs/inv",
