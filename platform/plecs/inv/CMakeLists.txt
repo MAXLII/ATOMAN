@@ -13,10 +13,12 @@ set(SOURCES
     ${PLECS_PROJECT_DIR}/app/app.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
     ${CODE_DIR}/section/baremetal/section.c
+    ${CODE_DIR}/lib/apf.c
     ${CODE_DIR}/lib/fll.c
     ${CODE_DIR}/lib/notch.c
     ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/lib/pr.c
+    ${CODE_DIR}/lib/resonant.c
     ${CODE_DIR}/lib/sogi.c
     ${CODE_DIR}/ctrl/inv/inv_cfg.c
     ${CODE_DIR}/ctrl/inv/inv_ctrl.c
