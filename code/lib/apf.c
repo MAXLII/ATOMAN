@@ -47,9 +47,9 @@ bool apf_update_frequency(apf_t *p_apf, float omega_radps)
 {
     float denominator = 0.0f; /**< Bilinear-transform denominator. */
 
-    if ((p_apf == NULL) ||      /* Filter instance must be valid. */
-        (p_apf->ts <= 0.0f) ||  /* Sample time must be configured. */
-        (omega_radps <= 0.0f))  /* Angular frequency must be positive. */
+    if ((p_apf == NULL) ||     /* Filter instance must be valid. */
+        (p_apf->ts <= 0.0f) || /* Sample time must be configured. */
+        (omega_radps <= 0.0f)) /* Angular frequency must be positive. */
     {
         return false;
     }
