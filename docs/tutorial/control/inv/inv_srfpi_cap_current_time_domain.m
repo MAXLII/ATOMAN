@@ -179,6 +179,73 @@ result_path = fullfile(tempdir, 'inv_srfpi_cap_current_result.png');
 exportgraphics(gcf, result_path, 'Resolution', 150);
 fprintf('Result figure: %s\n', result_path);
 
+%% 7. 满载投卸载电压瞬态
+load_voltage_zoom = full_load.t >= cfg.load_on_time - 0.04 & ...
+    full_load.t <= cfg.load_on_time + 0.12;
+unload_voltage_zoom = full_load.t >= cfg.load_off_time - 0.04 & ...
+    full_load.t <= cfg.load_off_time + 0.12;
+load_relative_time_ms = 1e3 * (full_load.t - cfg.load_on_time);
+unload_relative_time_ms = 1e3 * (full_load.t - cfg.load_off_time);
+
+figure('Name', 'Paper SRFPI full-load voltage transients', ...
+    'Color', 'w', 'Position', [110, 80, 1350, 850]);
+tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+nexttile;
+plot(load_relative_time_ms(load_voltage_zoom), ...
+    full_load.v_ref(load_voltage_zoom), '--', ...
+    load_relative_time_ms(load_voltage_zoom), ...
+    full_load.v_cap(load_voltage_zoom), 'LineWidth', 1.0);
+grid on;
+xline(0, '--', '投载', 'HandleVisibility', 'off');
+xlabel('相对投载时间 / ms');
+ylabel('电压 / V');
+title('6600 W 投载瞬时电压');
+legend('给定', '反馈', 'Location', 'best');
+
+nexttile;
+plot(load_relative_time_ms(load_voltage_zoom), ...
+    full_load.v_ref_rms(load_voltage_zoom), '--', ...
+    load_relative_time_ms(load_voltage_zoom), ...
+    full_load.v_cap_rms(load_voltage_zoom), 'LineWidth', 1.1);
+grid on;
+xline(0, '--', '投载', 'HandleVisibility', 'off');
+xlabel('相对投载时间 / ms');
+ylabel('单周期 RMS / V');
+title(sprintf('投载电压包络，最低 %.2f V', ...
+    full_load.load_transient_min_v));
+legend('给定', '反馈', 'Location', 'best');
+
+nexttile;
+plot(unload_relative_time_ms(unload_voltage_zoom), ...
+    full_load.v_ref(unload_voltage_zoom), '--', ...
+    unload_relative_time_ms(unload_voltage_zoom), ...
+    full_load.v_cap(unload_voltage_zoom), 'LineWidth', 1.0);
+grid on;
+xline(0, '--', '卸载', 'HandleVisibility', 'off');
+xlabel('相对卸载时间 / ms');
+ylabel('电压 / V');
+title('6600 W 卸载瞬时电压');
+legend('给定', '反馈', 'Location', 'best');
+
+nexttile;
+plot(unload_relative_time_ms(unload_voltage_zoom), ...
+    full_load.v_ref_rms(unload_voltage_zoom), '--', ...
+    unload_relative_time_ms(unload_voltage_zoom), ...
+    full_load.v_cap_rms(unload_voltage_zoom), 'LineWidth', 1.1);
+grid on;
+xline(0, '--', '卸载', 'HandleVisibility', 'off');
+xlabel('相对卸载时间 / ms');
+ylabel('单周期 RMS / V');
+title(sprintf('卸载电压包络，最高 %.2f V', ...
+    full_load.unload_transient_max_v));
+legend('给定', '反馈', 'Location', 'best');
+
+transient_result_path = fullfile(tempdir, ...
+    'inv_srfpi_cap_current_load_transient.png');
+exportgraphics(gcf, transient_result_path, 'Resolution', 150);
+fprintf('Transient figure: %s\n', transient_result_path);
+
 %% 本地函数
 function ctrl = design_paper_controller(cfg)
 % 按论文式 (8)、式 (13)、式 (15)计算双环参数。
