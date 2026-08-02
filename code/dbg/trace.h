@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    trace.h
- * @brief   Execution trace public interface.
+ * @brief   Execution trace compatibility adapter.
  * @details
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define trace record layout and trace buffer capacity
- *          - Expose APIs for time binding, trace insertion, clearing, and readback
- *          - Provide lightweight macros for binding a time source and writing into the FIFO trace buffer
+ *          - Preserve existing execution-trace APIs and instrumentation macros
+ *          - Forward trace storage operations to the portable Trace core
+ *          - Keep communication reporting outside the core implementation
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - ISR-safe path should be explicitly documented
- *          - Hardware access should be abstracted through HAL / BSP
+ *          - The portable implementation is available through trace_core.h
+ *          - Protocol handling belongs to trace_service.c
  *
  * @author  Max.Li
- * @date    2026-04-30
- * @version 1.0.0
+ * @date    2026-08-02
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -29,21 +29,7 @@
 #ifndef __TRACE_H__
 #define __TRACE_H__
 
-#include <stdint.h>
-
-#define TRACE_ENABLE 1u
-
-#if ((TRACE_ENABLE != 0u) && (TRACE_ENABLE != 1u))
-#error "TRACE_ENABLE must be 0 or 1."
-#endif
-
-typedef struct
-{
-    uint32_t line; /* Source line number captured at the trace point. */
-    uint32_t time; /* Snapshot of the bound system time counter. */
-} dbg_trace_item_t;
-
-#define DBG_TRACE_BUFFER_SIZE 64u
+#include "trace_core.h"
 
 void dbg_trace_bind_time(volatile uint32_t *p_system_time);
 void dbg_trace_record(uint32_t line);
@@ -55,11 +41,9 @@ const dbg_trace_item_t *dbg_trace_item_get(uint32_t index);
 uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
 
 #if (TRACE_ENABLE == 1u)
-/* Bind the external system time counter used by all trace records. */
 #define DBG_TRACE_BIND_TIME(p_system_time) \
     dbg_trace_bind_time((volatile uint32_t *)(p_system_time))
 
-/* Record the current source line into the internal trace buffer. */
 #define DBG_TRACE_MARK()            \
     do                              \
     {                               \
@@ -70,4 +54,4 @@ uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
 #define DBG_TRACE_MARK() ((void)0)
 #endif
 
-#endif
+#endif /* __TRACE_H__ */

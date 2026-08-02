@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Define SFRA service command words, payload layouts, and status codes
  *          - Keep communication protocol definitions separate from the SFRA core
- *          - Expose the service-owned linked list head for registered SFRA instances
+ *          - Use the adapter-owned registration list for instance discovery
  *
  *          Design notes:
  *          - C11 compatible
@@ -16,8 +16,8 @@
  *          - Hardware access should be abstracted through HAL / BSP
  *
  * @author  Max.Li
- * @date    2026-05-12
- * @version 1.0.0
+ * @date    2026-08-02
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -30,8 +30,6 @@
 #define __SFRA_SERVICE_H__
 
 #include "sfra.h"
-
-extern section_item_t *p_sfra_first;
 
 #define CMD_SET_SFRA 0x01
 

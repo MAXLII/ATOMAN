@@ -6,7 +6,7 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Build the scope list from SECTION_SCOPE entries at init
+ *          - Consume Scope registrations supplied by the Section adapter
  *          - Assign scope ids and translate scope state into shell or binary service responses
  *          - Own deferred scope data printing and communication helper code outside the capture core
  *
@@ -17,8 +17,8 @@
  *          - Hardware access should be abstracted through HAL / BSP
  *
  * @author  Max.Li
- * @date    2026-04-30
- * @version 1.0.0
+ * @date    2026-08-02
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -38,10 +38,6 @@
 #define SCOPE_SERVICE_VAR_COUNT_MAX 10u
 #define SCOPE_SERVICE_NAME_LEN_MAX 64u
 
-section_item_t *p_scope_first = NULL;
-static section_item_t *p_scope_tail = NULL;
-REG_DBG_LIST(scope, p_scope_first)
-
 static uint8_t g_scope_service_count = 0u;
 
 typedef struct
@@ -58,35 +54,20 @@ typedef struct
 
 static scope_list_ctx_t s_scope_list_ctx = {0};
 
-void scope_service_init(void)
+static void scope_service_init(void)
 {
-    uint8_t id = 0u;
+    section_item_t *p_item = p_scope_first;
 
-    p_scope_first = NULL;
-    p_scope_tail = NULL;
     g_scope_service_count = 0u;
-
-    for (reg_section_t *p = (reg_section_t *)&SECTION_START;
-         p < (reg_section_t *)&SECTION_STOP;
-         ++p)
+    while (p_item != NULL)
     {
-        if (p->section_type == SECTION_SCOPE)
+        scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj;
+
+        if ((p_registration != NULL) && (p_registration->p_scope != NULL))
         {
-            section_item_t *p_item = (section_item_t *)p->p_str;
-            scope_t *s = (scope_t *)p_item->p_obj;
-            s->scope_id = id++;
-            p_item->p_next = NULL;
-            if (p_scope_first == NULL)
-            {
-                p_scope_first = p_item;
-            }
-            else
-            {
-                p_scope_tail->p_next = p_item;
-            }
-            p_scope_tail = p_item;
             g_scope_service_count++;
         }
+        p_item = p_item->p_next;
     }
 }
 
@@ -122,32 +103,32 @@ static uint8_t scope_service_query_scope_id(section_packform_t *p_pack)
 }
 
 /* Helpers */
-static scope_t *scope_service_find_by_id(uint8_t scope_id)
+static scope_registration_t *scope_service_find_by_id(uint8_t scope_id)
 {
     section_item_t *p_item = p_scope_first;
     while (p_item != NULL)
     {
-        scope_t *s = (scope_t *)p_item->p_obj;
-        if (s->scope_id == scope_id)
+        scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj;
+        if ((p_registration != NULL) && (p_registration->scope_id == scope_id))
         {
-            return s;
+            return p_registration;
         }
         p_item = p_item->p_next;
     }
     return NULL;
 }
 
-static void scope_service_capture_tag_inc(scope_t *p_scope)
+static void scope_service_capture_tag_inc(scope_registration_t *p_registration)
 {
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         return;
     }
 
-    ++p_scope->capture_tag;
-    if (p_scope->capture_tag == 0u)
+    ++p_registration->capture_tag;
+    if (p_registration->capture_tag == 0u)
     {
-        ++p_scope->capture_tag;
+        ++p_registration->capture_tag;
     }
 }
 
@@ -238,13 +219,15 @@ static void scope_service_poll_state(void)
     section_item_t *p_item = p_scope_first;
     while (p_item != NULL)
     {
-        scope_t *s = (scope_t *)p_item->p_obj;
-        if ((s->last_state == SCOPE_STATE_TRIGGERED) && (s->state == SCOPE_STATE_IDLE))
+        scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj;
+        scope_t *p_scope = p_registration->p_scope;
+        if ((p_registration->last_state == SCOPE_STATE_TRIGGERED) &&
+            (p_scope->state == SCOPE_STATE_IDLE))
         {
-            s->data_ready = 1u;
-            scope_service_capture_tag_inc(s);
+            p_registration->data_ready = 1u;
+            scope_service_capture_tag_inc(p_registration);
         }
-        s->last_state = s->state;
+        p_registration->last_state = p_scope->state;
         p_item = p_item->p_next;
     }
 }
@@ -263,12 +246,12 @@ static void scope_service_poll_list(void)
         return;
     }
 
-    scope_t *s = (scope_t *)p_item->p_obj;
-    uint8_t name_len = scope_service_strnlen(s->p_name, SCOPE_SERVICE_NAME_LEN_MAX);
+    scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj;
+    uint8_t name_len = scope_service_strnlen(p_registration->p_name, SCOPE_SERVICE_NAME_LEN_MAX);
     uint8_t payload[sizeof(scope_list_item_t) + SCOPE_SERVICE_NAME_LEN_MAX];
     scope_list_item_t item;
 
-    item.scope_id = s->scope_id;
+    item.scope_id = p_registration->scope_id;
     item.is_last = (uint8_t)((s_scope_list_ctx.index + 1u) >= g_scope_service_count);
     item.name_len = name_len;
     item.reserved = 0u;
@@ -276,7 +259,7 @@ static void scope_service_poll_list(void)
     (void)memcpy(payload, &item, sizeof(item));
     if (name_len > 0u)
     {
-        (void)memcpy(&payload[sizeof(item)], s->p_name, name_len);
+        (void)memcpy(&payload[sizeof(item)], p_registration->p_name, name_len);
     }
 
     scope_service_send_active(&s_scope_list_ctx,
@@ -338,26 +321,27 @@ static void scope_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     scope_info_ack_t ack = {0};
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
 
     ack.scope_id = scope_id;
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
     }
     else
     {
+        scope_t *p_scope = p_registration->p_scope;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_OK;
         ack.state = (uint8_t)p_scope->state;
-        ack.data_ready = p_scope->data_ready;
+        ack.data_ready = p_registration->data_ready;
         ack.var_count = p_scope->var_count;
         ack.sample_count = p_scope->buffer_size;
         ack.write_index = p_scope->write_index;
         ack.trigger_index = p_scope->trigger_index;
         ack.trigger_post_cnt = p_scope->trigger_post_cnt;
         ack.trigger_display_index = scope_service_get_trigger_display_index(p_scope);
-        ack.sample_period_us = p_scope->sample_period_us;
-        ack.capture_tag = p_scope->capture_tag;
+        ack.sample_period_us = p_registration->sample_period_us;
+        ack.capture_tag = p_registration->capture_tag;
     }
 
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_INFO_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
@@ -379,12 +363,12 @@ static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         var_index = p_pack->p_data[1];
     }
 
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_var_ack_t ack = {0};
     ack.scope_id = scope_id;
     ack.var_index = var_index;
 
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
         ack.is_last = 1u;
@@ -392,6 +376,7 @@ static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
+    scope_t *p_scope = p_registration->p_scope;
     if (var_index >= p_scope->var_count)
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_VAR_INDEX_INVALID;
@@ -419,7 +404,7 @@ static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -427,7 +412,7 @@ static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.scope_id = scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -438,25 +423,26 @@ static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
+    scope_t *p_scope = p_registration->p_scope;
     if (p_scope->state != SCOPE_STATE_IDLE)
     {
-        ack.scope_id = p_scope->scope_id;
+        ack.scope_id = p_registration->scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_RUNNING_DENIED;
         ack.state = (uint8_t)p_scope->state;
-        ack.data_ready = p_scope->data_ready;
-        ack.capture_tag = p_scope->capture_tag;
+        ack.data_ready = p_registration->data_ready;
+        ack.capture_tag = p_registration->capture_tag;
     }
     else
     {
-        p_scope->data_ready = 0u;
-        scope_service_capture_tag_inc(p_scope);
+        p_registration->data_ready = 0u;
+        scope_service_capture_tag_inc(p_registration);
         scope_start(p_scope);
-        p_scope->last_state = p_scope->state;
-        ack.scope_id = p_scope->scope_id;
+        p_registration->last_state = p_scope->state;
+        ack.scope_id = p_registration->scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_OK;
         ack.state = (uint8_t)p_scope->state;
-        ack.data_ready = p_scope->data_ready;
-        ack.capture_tag = p_scope->capture_tag;
+        ack.data_ready = p_registration->data_ready;
+        ack.capture_tag = p_registration->capture_tag;
     }
 
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_START, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
@@ -465,7 +451,7 @@ static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -473,7 +459,7 @@ static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.scope_id = scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -484,22 +470,23 @@ static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
+    scope_t *p_scope = p_registration->p_scope;
     if (p_scope->state != SCOPE_STATE_RUNNING)
     {
-        ack.scope_id = p_scope->scope_id;
+        ack.scope_id = p_registration->scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_RUNNING_DENIED;
         ack.state = (uint8_t)p_scope->state;
-        ack.data_ready = p_scope->data_ready;
-        ack.capture_tag = p_scope->capture_tag;
+        ack.data_ready = p_registration->data_ready;
+        ack.capture_tag = p_registration->capture_tag;
     }
     else
     {
         scope_trigger(p_scope);
-        ack.scope_id = p_scope->scope_id;
+        ack.scope_id = p_registration->scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_OK;
         ack.state = (uint8_t)p_scope->state;
-        ack.data_ready = p_scope->data_ready;
-        ack.capture_tag = p_scope->capture_tag;
+        ack.data_ready = p_registration->data_ready;
+        ack.capture_tag = p_registration->capture_tag;
     }
 
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_TRIGGER, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
@@ -508,7 +495,7 @@ static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -516,7 +503,7 @@ static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.scope_id = scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -527,21 +514,22 @@ static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
+    scope_t *p_scope = p_registration->p_scope;
     scope_stop(p_scope);
-    p_scope->data_ready = 1u;
-    p_scope->last_state = p_scope->state;
-    ack.scope_id = p_scope->scope_id;
+    p_registration->data_ready = 1u;
+    p_registration->last_state = p_scope->state;
+    ack.scope_id = p_registration->scope_id;
     ack.status = (uint8_t)SCOPE_TOOL_STATUS_OK;
     ack.state = (uint8_t)p_scope->state;
-    ack.data_ready = p_scope->data_ready;
-    ack.capture_tag = p_scope->capture_tag;
+    ack.data_ready = p_registration->data_ready;
+    ack.capture_tag = p_registration->capture_tag;
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_STOP, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
 static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -549,7 +537,7 @@ static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.scope_id = scope_id;
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -560,15 +548,16 @@ static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
+    scope_t *p_scope = p_registration->p_scope;
     scope_reset(p_scope);
-    p_scope->data_ready = 0u;
-    scope_service_capture_tag_inc(p_scope);
-    p_scope->last_state = p_scope->state;
-    ack.scope_id = p_scope->scope_id;
+    p_registration->data_ready = 0u;
+    scope_service_capture_tag_inc(p_registration);
+    p_registration->last_state = p_scope->state;
+    ack.scope_id = p_registration->scope_id;
     ack.status = (uint8_t)SCOPE_TOOL_STATUS_OK;
     ack.state = (uint8_t)p_scope->state;
-    ack.data_ready = p_scope->data_ready;
-    ack.capture_tag = p_scope->capture_tag;
+    ack.data_ready = p_registration->data_ready;
+    ack.capture_tag = p_registration->capture_tag;
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_RESET, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
@@ -598,20 +587,21 @@ static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         read_mode = p_pack->p_data[1];
     }
 
-    scope_t *p_scope = scope_service_find_by_id(scope_id);
+    scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_sample_ack_t ack = {0};
     ack.scope_id = scope_id;
     ack.read_mode = read_mode;
     ack.sample_index = sample_index;
 
-    if (p_scope == NULL)
+    if (p_registration == NULL)
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
         scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_SAMPLE_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
         return;
     }
 
-    ack.capture_tag = p_scope->capture_tag;
+    scope_t *p_scope = p_registration->p_scope;
+    ack.capture_tag = p_registration->capture_tag;
     if ((read_mode != SCOPE_READ_MODE_NORMAL) && (read_mode != SCOPE_READ_MODE_FORCE))
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID;
@@ -620,11 +610,11 @@ static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_RUNNING_DENIED;
     }
-    else if ((expected_capture_tag != 0u) && (expected_capture_tag != p_scope->capture_tag))
+    else if ((expected_capture_tag != 0u) && (expected_capture_tag != p_registration->capture_tag))
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_CAPTURE_CHANGED;
     }
-    else if ((p_scope->data_ready == 0u) && (read_mode != SCOPE_READ_MODE_FORCE))
+    else if ((p_registration->data_ready == 0u) && (read_mode != SCOPE_READ_MODE_FORCE))
     {
         ack.status = (uint8_t)SCOPE_TOOL_STATUS_DATA_NOT_READY;
     }
@@ -820,7 +810,7 @@ REG_TASK_MS(1, scope_print_data)
 
 #pragma GCC diagnostic pop
 /* Registration */
-REG_INIT(0, scope_service_init)
+REG_INIT(1, scope_service_init)
 REG_TASK_MS(1, scope_service_poll_task)
 REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_LIST_QUERY, scope_list_query_act)
 REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_INFO_QUERY, scope_info_query_act)
@@ -832,13 +822,6 @@ REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_RESET, scope_reset_act)
 REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_SAMPLE_QUERY, scope_sample_query_act)
 
 #else
-
-section_item_t *p_scope_first = NULL;
-REG_DBG_LIST(scope, p_scope_first)
-
-void scope_service_init(void)
-{
-}
 
 void scope_printf_status(scope_t *scope, DEC_MY_PRINTF)
 {

@@ -17,8 +17,8 @@
  *          - Hardware access should be abstracted through HAL / BSP
  *
  * @author  Max.Li
- * @date    2026-05-01
- * @version 1.0.0
+ * @date    2026-08-02
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -61,7 +61,7 @@ void shell_status_run(void)
             /* Bit0 means "print me periodically" for variable-style entries. */
             if (p->type != SHELL_CMD)
             {
-                shell_item_print(p, p->my_printf);
+                shell_item_print(p, (section_link_tx_func_t *)p->my_printf);
             }
         }
 
@@ -323,7 +323,7 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         if (p->func != NULL)
         {
             /* Let the owner refresh its value before it is reported. */
-            p->func(my_printf);
+            p->func((shell_core_io_t *)my_printf);
         }
         shell_read_data_ret_t shell_read_data_ret = {0};
         shell_read_data_ret.name_len = (uint8_t)p->p_name_size;
@@ -462,7 +462,7 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
         if (p->func)
             /* Notify the owner after a successful remote update. */
-            p->func(my_printf);
+            p->func((shell_core_io_t *)my_printf);
     }
 }
 
@@ -482,7 +482,8 @@ static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINT
     {
         return;
     }
-    section_shell_t *p = shell_find(p_shell_wave_enable_param->name, p_shell_wave_enable_param->name_len);
+    section_shell_t *p = shell_find(p_shell_wave_enable_param->name,
+                                    p_shell_wave_enable_param->name_len);
 
     shell_wave_enable_param_ack_t shell_wave_enable_param_ack;
 
