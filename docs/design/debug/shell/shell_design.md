@@ -4,12 +4,13 @@
 
 Shell 模块用于把工程中的调试变量和调试命令统一注册成可发现、可查询、可读写的服务对象。
 
-当前实现分为两层：
+当前实现分为三层：
 
 | 层级 | 文件 | 职责 |
 | --- | --- | --- |
-| Shell 内核 | `code/dbg/shell.c`、`code/dbg/shell.h` | 注册项定义、链接段扫描、链表维护、名称查找、可选字符串命令解析 |
-| Shell 服务 | `code/dbg/shell_service.c`、`code/dbg/shell_service.h` | 二进制通信协议、变量列表上报、变量读写、波形自动上报 |
+| Shell Core | `code/dbg/shell_core.c`、`code/dbg/shell_core.h` | 条目定义、显式列表接口、名称查找、输出抽象和字符串解析 |
+| Shell Section 适配 | `code/dbg/shell.c`、`code/dbg/shell.h` | 注册宏、链接段扫描、链表维护和兼容 API |
+| Shell Service | `code/dbg/shell_service.c`、`code/dbg/shell_service.h` | 二进制通信协议、变量列表上报、变量读写和波形自动上报 |
 
 Shell 内核只维护“有哪些变量和命令”，不直接绑定具体串口、CAN 或其他物理链路。链路输入由 `interface/` 或平台侧把字节送入 `shell_run()`，二进制服务通过 `comm` 协议回包。
 
@@ -27,7 +28,8 @@ Shell 注册项统一使用 `section_shell_t` 描述：
 | `func` | 命令回调或变量写入后的通知回调 |
 | `status` | 状态位，当前 `SHELL_STA_AUTO` 用于波形自动上报选择 |
 | `my_printf` | 可缓存当前输出链路 |
-| `p_next` | 运行时链表指针 |
+
+Shell 条目不保存链表指针。适配层持有 `section_item_t` 链表，并通过 `shell_core_list_t` 的首项与下一项回调把条目传入 Core。
 
 注册宏有两个：
 
@@ -46,7 +48,7 @@ REG_SHELL_CMD(name, func)
 
 初始化时，`shell_init()` 扫描 `SECTION_START` 到 `SECTION_STOP` 之间的所有注册项，只处理 `SECTION_SHELL` 类型，把对应的 `section_shell_t` 插入到 `p_shell_first` 链表。
 
-插入时会检查同一个注册项是否已经存在，避免重复初始化导致链表重复挂载。
+初始化前会清空链表头和链表尾，再按链接段顺序重新连接注册项。
 
 运行时可通过以下接口访问注册表：
 
@@ -64,7 +66,7 @@ section_shell_t *shell_find(const char *p_name, uint8_t len);
 #define SHELL_STRING_ENABLE 1u
 ```
 
-当前默认值为 `0`，此时 `shell_run()` 是空实现，不解析输入字节。
+当前默认值为 `1`，`shell_run()` 解析输入字节。配置为 `0` 时保留空实现。
 
 当 `SHELL_STRING_ENABLE == 1u` 时，`shell_run()` 使用 `shell_ctx_t` 保存每条链路自己的输入缓冲：
 

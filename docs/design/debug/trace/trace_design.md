@@ -4,12 +4,13 @@
 
 Trace 模块用于记录代码执行路径中的时间戳和源码行号，适合定位流程顺序、异常路径和偶发事件。
 
-当前实现分为两层：
+当前实现分为三层：
 
 | 层级 | 文件 | 职责 |
 | --- | --- | --- |
-| Trace 内核 | `code/dbg/trace.c`、`code/dbg/trace.h` | 固定长度环形缓冲、时间源绑定、记录写入、记录读取 |
-| Trace 服务 | `code/dbg/trace_service.c`、`code/dbg/trace_service.h` | Shell 打印、清空命令、二进制上报 |
+| Trace Core | `code/dbg/trace_core.c`、`code/dbg/trace_core.h` | 固定长度环形缓冲、显式时间源、记录写入和读取 |
+| Trace 兼容适配 | `code/dbg/trace.c`、`code/dbg/trace.h` | 保留现有宏和函数接口并转发到 Core |
+| Trace Service | `code/dbg/trace_service.c`、`code/dbg/trace_service.h` | Shell 打印、清空命令和二进制上报 |
 
 Trace 只记录 `line` 和 `time`，不记录文件名和自定义文本。
 

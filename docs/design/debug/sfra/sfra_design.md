@@ -4,12 +4,13 @@
 
 SFRA 用于在控制系统中注入扫频正弦信号，采集响应信号，并计算每个频点的幅值和相位。
 
-当前实现分为两层：
+当前实现分为三层：
 
 | 层级 | 文件 | 职责 |
 | --- | --- | --- |
-| SFRA 内核 | `code/dbg/sfra.c`、`code/dbg/sfra.h` | 注入信号生成、采样缓冲、DFT 计算、扫频状态机 |
-| SFRA 服务 | `code/dbg/sfra_service.c`、`code/dbg/sfra_service.h` | 实例列表、配置、启停控制、频点结果查询和完成上报 |
+| SFRA Core | `code/dbg/sfra_core.c`、`code/dbg/sfra_core.h` | 注入信号生成、采样缓冲、DFT 计算和扫频状态机 |
+| SFRA Section 适配 | `code/dbg/sfra.c`、`code/dbg/sfra.h` | 注册描述符、Section 扫描、链表构建和兼容 API |
+| SFRA Service | `code/dbg/sfra_service.c`、`code/dbg/sfra_service.h` | 配置、启停控制、结果缓存、频点查询和完成上报 |
 
 SFRA 内核不直接访问 ADC 或 PWM。业务代码负责把 `p_inject` 加入控制量，并把被测响应写入 `p_collect`。
 
@@ -26,6 +27,7 @@ REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, prepare_cb, pre
 - 注入变量 `name_inject`
 - 响应变量 `name_collect`
 - `sfra_t` 实例
+- `sfra_registration_t` 注册描述符
 - `SECTION_SFRA` 注册项
 
 `ts` 是 ISR 采样周期，`delay_tick` 用于对齐注入与采集响应。
@@ -42,10 +44,8 @@ REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, prepare_cb, pre
 | `task` | 慢速扫频状态机 |
 | `cb` | 频点准备回调 |
 | `output` | 当前输出状态和最新频点结果 |
-| `result_cache` | 完成频点缓存 |
-| `sweep_tag` | 当前扫频批次标识 |
-| `sfra_id` | 服务层分配 ID |
-| `p_next` | 运行时链表 |
+
+`sfra_t` 只保存扫频算法状态。实例名称、`sfra_id`、`sweep_tag`、数据就绪状态和完成频点缓存保存在 `sfra_registration_t` 注册描述符中。
 
 ## 4. 状态机
 
@@ -81,11 +81,11 @@ ISR 后采样：
 - 推进稳定和采集计数。
 - 调用 DFT 计算注入和响应。
 - 计算传递函数幅值和相位。
-- 缓存每个频点结果。
+- 发布最新频点结果。
 
 ## 6. 服务层
 
-`sfra_service_init()` 通过 `REG_INIT(0, sfra_service_init)` 注册。初始化时扫描 `SECTION_SFRA`，构建 `g_sfra_first` 链表，并分配 `sfra_id`。
+`sfra_init_list()` 通过 `REG_INIT(0, sfra_init_list)` 注册，扫描 `SECTION_SFRA`、构建 `p_sfra_first` 链表并分配 `sfra_id`。`sfra_service_init()` 随后初始化结果缓存和通信状态。
 
 `sfra_service_poll_task()` 每 1 ms 运行一次，用于推进已注册实例的服务状态和完成上报。
 
@@ -107,7 +107,7 @@ ISR 后采样：
 
 - 不使用动态内存。
 - 频点表最大长度为 `SFRA_FREQ_TABLE_SIZE`，当前 300。
-- ISR 采样缓冲为 `SFRA_SAMPLE_BUFFER_SIZE`，当前 32。
+- ISR 采样缓冲为 `SFRA_SAMPLE_BUFFER_SIZE`，当前 384。
 - 注入延迟最大 `SFRA_MAX_INJECT_DELAY_TICK`，当前 2。
 - 业务代码必须在控制环中调用 pre/post sample。
 - 注入幅值需要由用户保证不会破坏控制系统稳定性。

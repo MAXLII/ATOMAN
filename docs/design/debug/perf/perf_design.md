@@ -4,12 +4,13 @@
 
 Perf 模块用于记录任务、代码段和中断阶段的运行时间，并把结果通过 Shell 或二进制通信协议提供给上位机。
 
-当前实现分为两层：
+当前实现分为三层：
 
 | 层级 | 文件 | 职责 |
 | --- | --- | --- |
-| Perf 内核 | `code/dbg/perf.c`、`code/dbg/perf.h` | 时间基准注册、record 注册、耗时累计、负载统计 |
-| Perf 服务 | `code/dbg/perf_service.c`、`code/dbg/perf_service.h` | Shell 打印、字典上报、采样上报、峰值清零 |
+| Perf Core | `code/dbg/perf_core.c`、`code/dbg/perf_core.h` | 显式时间基准和列表接口、耗时累计、字典与负载统计 |
+| Perf Section 适配 | `code/dbg/perf.c`、`code/dbg/perf.h` | 时间基准与 record 注册、Section 扫描、链表适配、兼容 API |
+| Perf Service | `code/dbg/perf_service.c`、`code/dbg/perf_service.h` | Shell 打印、字典上报、采样上报、峰值清零 |
 
 Perf 不直接初始化硬件定时器。平台 BSP 负责配置一个自由运行计数器，并通过 `REG_PERF_BASE_CNT()` 注册计数寄存器地址和真实 tick 周期。任务、中断和代码段的测量热路径只读取原始计数，单位换算在结果输出阶段执行。
 
@@ -52,7 +53,8 @@ Perf 使用 `section_perf_record_t` 表示一个测量对象。
 | `record_id` | 字典 ID |
 | `record_type` | `CODE` / `TASK` / `INTERRUPT` |
 | `p_cnt` | 指向当前 Perf 时间基准指针 |
-| `p_next` | 运行时链表指针 |
+
+record 本身不保存 Section 链表指针。适配层持有 `section_item_t` 链表，并通过 `perf_core_list_t` 的 `p_first/p_next` 回调把 record 传入 Core。
 
 record 类型：
 
@@ -84,12 +86,10 @@ record 类型：
 
 初始化时会：
 
-1. 清空 record 链表和统计值。
-2. 初始化 record 字典。
-3. 扫描 `SECTION_PERF`。
-4. 先记录时间基准，再把 record 插入链表。
-5. 给每个 record 分配 `record_id`。
-6. 把 record 的 `p_cnt` 指向全局时间基准指针。
+1. 适配层清空 record 链表并扫描 `SECTION_PERF`。
+2. 适配层提取时间基准并把 record 注册项接入链表。
+3. 适配层把链表访问接口、时间基准和系统 tick 传给 Core。
+4. Core 初始化 record 字典、分配 `record_id` 并绑定计数器指针。
 
 `perf_dict_version` 用于上位机判断 record 字典是否变化。
 

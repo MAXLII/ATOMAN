@@ -4,12 +4,13 @@
 
 Scope 模块用于捕获一组浮点变量的时间序列，支持启动、触发、停止、复位和按样本读取。
 
-当前实现分为两层：
+当前实现分为三层：
 
 | 层级 | 文件 | 职责 |
 | --- | --- | --- |
-| Scope 内核 | `code/dbg/scope.c`、`code/dbg/scope.h` | scope 对象定义、采样缓冲、触发后采样、状态切换 |
-| Scope 服务 | `code/dbg/scope_service.c`、`code/dbg/scope_service.h` | scope 列表、信息查询、变量名查询、样本读取、可选 Shell 打印 |
+| Scope Core | `code/dbg/scope_core.c`、`code/dbg/scope_core.h` | scope 对象、采样缓冲、触发后采样和状态切换 |
+| Scope Section 适配 | `code/dbg/scope.c`、`code/dbg/scope.h` | 注册描述符、Section 扫描、链表构建和兼容 API |
+| Scope Service | `code/dbg/scope_service.c`、`code/dbg/scope_service.h` | 信息查询、变量名查询、样本读取、协议状态和可选 Shell 打印 |
 
 Scope 不直接绑定 ADC、PWM 或控制环。业务代码在合适的周期调用 `SCOPE_RUN()`，Scope 读取注册变量当前值并写入内部缓冲。
 
@@ -28,12 +29,8 @@ Scope 不直接绑定 ADC、PWM 或控制环。业务代码在合适的周期调
 | `trigger_index` | 触发发生时的写入位置 |
 | `trigger_post_cnt` | 触发后继续采样数量 |
 | `state` | `IDLE` / `RUNNING` / `TRIGGERED` |
-| `data_ready` | 一帧数据是否可读 |
-| `sample_period_us` | 采样周期，用于上位机显示 |
-| `capture_tag` | 捕获批次标识 |
-| `scope_id` | 服务层分配的 ID |
-| `p_name` | scope 名称 |
-| `p_next` | 运行时链表指针 |
+
+`scope_t` 只保存采样算法状态。名称、采样周期、`scope_id`、`data_ready` 和 `capture_tag` 保存在 `scope_registration_t` 注册描述符中，Section 链表也只连接注册描述符。
 
 当前宏最多支持一次注册 10 个变量。
 
@@ -55,6 +52,7 @@ REG_SCOPE_EX(name, buf_size, trig_post_cnt, sample_period_us, var1, var2, ...)
 - 变量名称数组
 - 采样缓冲
 - `scope_t` 实例
+- `scope_registration_t` 注册描述符
 - `SECTION_SCOPE` 注册项
 
 ## 4. 运行状态
@@ -77,13 +75,11 @@ void scope_reset(scope_t *scope);
 void scope_run(scope_t *scope);
 ```
 
-`scope_run()` 在业务调用周期中执行。未触发时持续循环写入；触发后继续记录 `trigger_post_cnt` 个样本，然后置 `data_ready` 并停止。
+`scope_run()` 在业务调用周期中执行。未触发时持续循环写入；触发后继续记录 `trigger_post_cnt` 个样本并停止。Service 观察 Core 状态切换并更新 `data_ready` 和 `capture_tag`。
 
 ## 5. 服务初始化
 
-`scope_service_init()` 通过 `REG_INIT(0, scope_service_init)` 注册。
-
-初始化时扫描 `SECTION_SCOPE`，构建 `g_scope_first` 链表，并给每个 scope 分配 `scope_id`。
+`scope_init()` 通过 `REG_INIT(0, scope_init)` 注册，扫描 `SECTION_SCOPE`、构建 `p_scope_first` 链表并给注册描述符分配 `scope_id`。`scope_service_init()` 在随后阶段统计可用实例并初始化通信服务状态。
 
 ## 6. 二进制服务
 
