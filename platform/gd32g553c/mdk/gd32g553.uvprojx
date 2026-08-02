@@ -750,6 +750,11 @@
               <FilePath>..\..\..\code\dbg\perf.c</FilePath>
             </File>
             <File>
+              <FileName>perf_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\perf_core.c</FilePath>
+            </File>
+            <File>
               <FileName>perf_service.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\perf_service.c</FilePath>
@@ -758,6 +763,11 @@
               <FileName>scope.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\scope.c</FilePath>
+            </File>
+            <File>
+              <FileName>scope_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\scope_core.c</FilePath>
             </File>
             <File>
               <FileName>scope_service.c</FileName>
@@ -770,6 +780,11 @@
               <FilePath>..\..\..\code\dbg\sfra.c</FilePath>
             </File>
             <File>
+              <FileName>sfra_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\sfra_core.c</FilePath>
+            </File>
+            <File>
               <FileName>sfra_service.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\sfra_service.c</FilePath>
@@ -780,6 +795,11 @@
               <FilePath>..\..\..\code\dbg\trace.c</FilePath>
             </File>
             <File>
+              <FileName>trace_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\trace_core.c</FilePath>
+            </File>
+            <File>
               <FileName>trace_service.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\trace_service.c</FilePath>
@@ -788,6 +808,11 @@
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\shell.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\shell_core.c</FilePath>
             </File>
             <File>
               <FileName>shell_service.c</FileName>

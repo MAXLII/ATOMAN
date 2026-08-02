@@ -67,14 +67,19 @@ PROJECT_SOURCES = \
 ../../../code/lib/pi_tustin.c \
 ../../../code/lib/dft.c \
 ../../../code/dbg/perf.c \
+../../../code/dbg/perf_core.c \
 ../../../code/dbg/perf_service.c \
 ../../../code/dbg/scope.c \
+../../../code/dbg/scope_core.c \
 ../../../code/dbg/scope_service.c \
 ../../../code/dbg/shell.c \
+../../../code/dbg/shell_core.c \
 ../../../code/dbg/shell_service.c \
 ../../../code/dbg/sfra.c \
+../../../code/dbg/sfra_core.c \
 ../../../code/dbg/sfra_service.c \
 ../../../code/dbg/trace.c \
+../../../code/dbg/trace_core.c \
 ../../../code/dbg/trace_service.c
 
 PROJECT_SOURCES += $(IAP_SOURCES)
