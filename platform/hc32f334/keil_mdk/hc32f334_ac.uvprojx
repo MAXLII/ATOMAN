@@ -573,6 +573,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\systick.c</FilePath>
             </File>
+            <File>
+              <FileName>iap_update_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\app\bootloader\iap\iap_update_service.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1483,6 +1488,11 @@
               <FileName>hc32_ll_i2c.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>hc32_ll_icg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Firmware\HC32_LL_Driver\src\hc32_ll_icg.c</FilePath>
             </File>
             <File>
               <FileName>hc32_ll_interrupts.c</FileName>
