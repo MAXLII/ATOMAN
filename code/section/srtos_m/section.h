@@ -153,6 +153,8 @@ typedef struct
     uint32_t task_fault_policy;
     uint32_t task_context_required_words;
     uint32_t task_runtime_stack_used_words;
+    uint32_t task_activation_overrun_count;
+    uint32_t task_activation_overrun_max_ticks;
 } section_fault_debug_t;
 
 extern volatile section_fault_debug_t g_section_fault_debug;
@@ -183,7 +185,7 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #endif
 
 #ifndef SECTION_TASK_READY_BURST_MAX
-#define SECTION_TASK_READY_BURST_MAX 4u
+#define SECTION_TASK_READY_BURST_MAX 16u
 #endif
 
 #ifndef SECTION_CRITICAL_USE_PRIMASK

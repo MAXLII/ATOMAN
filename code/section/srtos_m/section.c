@@ -260,6 +260,7 @@ static uint32_t task_runtime_stack_used_words_get(uint32_t *sp);
 static void task_fault_set(uint32_t reason, const reg_task_t *task, uint32_t *sp, uint32_t required_words);
 static section_task_status_t section_task_run_current(void);
 static void section_task_continue_current(void);
+static uint32_t section_task_start_ready_new_inline(void);
 
 static void srtos_task_insert_init(reg_task_t *task)
 {
@@ -297,8 +298,21 @@ static void srtos_task_runtime_reset(void)
 
 static uint32_t srtos_task_activate_if_due(reg_task_t *task, uint32_t elapsed)
 {
-    if ((task == NULL) || (elapsed < task->t_period) || (task->state != (uint8_t)TASK_STACK_STATE_SLEEPING))
+    if ((task == NULL) || (elapsed < task->t_period))
     {
+        return 0u;
+    }
+
+    if (task->state != (uint8_t)TASK_STACK_STATE_SLEEPING)
+    {
+        const uint32_t periods_elapsed = elapsed / task->t_period;
+
+        g_section_fault_debug.task_activation_overrun_count += periods_elapsed;
+        if (elapsed > g_section_fault_debug.task_activation_overrun_max_ticks)
+        {
+            g_section_fault_debug.task_activation_overrun_max_ticks = elapsed;
+        }
+        srtos_task_schedule_next(task, elapsed);
         return 0u;
     }
 
@@ -1051,8 +1065,30 @@ static section_task_status_t section_task_run_current(void)
     return status;
 }
 
+static uint32_t section_task_start_ready_new_inline(void)
+{
+    /* A completed callback no longer owns live stack locals. Start the next
+     * new callback on the same runtime stack and avoid a redundant PendSV
+     * save/restore cycle. Suspended callbacks remain on the snapshot path. */
+    reg_task_t *next = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first,
+                                                     &p_srtos_task_ready_tail);
+
+    if (next == NULL)
+    {
+        return 0u;
+    }
+
+    next->is_running = 1u;
+    next->state = (uint8_t)TASK_STACK_STATE_RUNNING;
+    p_task_current = next;
+    task_slice_reset();
+    return 1u;
+}
+
 static void section_task_entry(void)
 {
+    uint32_t inline_ready_count = 0u;
+
     for (;;)
     {
         section_task_status_t status = SECTION_TASK_DONE;
@@ -1067,10 +1103,21 @@ static void section_task_entry(void)
         if (status == SECTION_TASK_RUNNING)
         {
             section_task_continue_current();
+            inline_ready_count = 0u;
         }
         else
         {
             section_task_complete_current();
+            if (((p_srtos_task_unfinished_first == NULL) ||
+                 (inline_ready_count < SECTION_TASK_READY_BURST_MAX)) &&
+                (section_task_start_ready_new_inline() != 0u))
+            {
+                /* Bound inline dispatch so a preempted long callback cannot
+                 * starve behind a continuously replenished ready queue. */
+                inline_ready_count++;
+                continue;
+            }
+            inline_ready_count = 0u;
         }
         section_task_yield();
     }
