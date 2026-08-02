@@ -265,8 +265,8 @@ static void perf_service_print_by_type(uint8_t record_type, DEC_MY_PRINTF)
                          (unsigned long)PERF_REPORT_UNIT_NS);
     my_printf->my_printf("Type\tPerf Name\tRun(100ns)\tMaxRun(100ns)\tEndToStart(100ns)\t"
                          "StartToStart(100ns)\tConfigPeriod(100ns)\tLoad(%%)\tPeak(%%)\r\n");
-    const section_item_t *p_list = &perf_list;
-    for (section_item_t *p_item = p_list->p_next; p_item != NULL; p_item = p_item->p_next)
+    const section_item_t *p_list = p_perf_first;
+    for (const section_item_t *p_item = p_list; p_item != NULL; p_item = p_item->p_next)
     {
         section_perf_record_t *record = perf_record_from_item(p_item);
         if (record == NULL)
@@ -359,7 +359,7 @@ static void perf_service_print_start(DEC_MY_PRINTF)
         return;
     }
 
-    s_perf_text_print_ctx.p_cur = perf_list.p_next;
+    s_perf_text_print_ctx.p_cur = p_perf_first;
     s_perf_text_print_ctx.my_printf = my_printf;
     s_perf_text_print_ctx.active = 1u;
 
@@ -464,7 +464,7 @@ static uint8_t perf_opt_record_protocol_type_get(void *record)
 
 static uint16_t perf_opt_record_count(uint8_t type_filter)
 {
-    return record_dict_count(perf_list.p_next,
+    return record_dict_count(p_perf_first,
                              type_filter,
                              PERF_OPT_TYPE_ALL,
                              perf_opt_record_next_get,
@@ -577,7 +577,7 @@ static uint8_t perf_opt_start_common(perf_opt_service_t *self,
     self->index = 0u;
     self->sequence = perf_opt_next_sequence();
     self->dict_version = perf_dict_version_get();
-    self->p_cur = perf_list.p_next;
+    self->p_cur = p_perf_first;
     self->status = PERF_OPT_END_OK;
     self->pending_end = 0u;
     perf_opt_capture_route(self, p_pack, my_printf);

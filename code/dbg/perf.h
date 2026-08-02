@@ -103,7 +103,7 @@ struct section_perf_record
 #include "section.h"
 
 extern uint32_t perf_dict_version;
-extern section_item_t perf_list;
+extern section_item_t *p_perf_first;
 section_perf_record_t *perf_record_from_item(const section_item_t *p_item);
 
 #ifndef PERF_CPU_LOAD_PERIOD_MS

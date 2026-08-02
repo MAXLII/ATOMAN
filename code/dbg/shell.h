@@ -184,7 +184,7 @@ typedef struct section_shell_t
 void shell_init(void);
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
 
-extern section_item_t shell_list;
+extern section_item_t *p_shell_first;
 void shell_item_print(section_shell_t *p, DEC_MY_PRINTF);
 uint32_t shell_count_get(void);
 section_shell_t *shell_find(const char *p_name, uint8_t len);

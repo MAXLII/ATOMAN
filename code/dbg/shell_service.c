@@ -40,10 +40,10 @@
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 void shell_status_run(void)
 {
-    const section_item_t *p_list = &shell_list;
+    const section_item_t *p_list = p_shell_first;
 
     /* Periodically service status-triggered shell items. */
-    for (section_item_t *p_item = p_list->p_next; p_item != NULL; p_item = p_item->p_next)
+    for (const section_item_t *p_item = p_list; p_item != NULL; p_item = p_item->p_next)
     {
         section_shell_t *p = (section_shell_t *)p_item->p_obj;
         if (p->status == 0u)
@@ -93,13 +93,13 @@ void list_print_start(DEC_MY_PRINTF)
     {
         return;
     }
-    const section_item_t *p_list = &shell_list;
+    const section_item_t *p_list = p_shell_first;
 
-    g_list_print_ctx.p_item = p_list->p_next;
+    g_list_print_ctx.p_item = (section_item_t *)p_list;
     g_list_print_ctx.my_printf = my_printf;
     g_list_print_ctx.active = 1u;
     size_t max_len = 0u;
-    for (section_item_t *p_item = p_list->p_next; p_item != NULL; p_item = p_item->p_next)
+    for (const section_item_t *p_item = p_list; p_item != NULL; p_item = p_item->p_next)
     {
         section_shell_t *s = (section_shell_t *)p_item->p_obj;
         size_t len = strlen(s->p_name);
@@ -251,7 +251,7 @@ static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     /* Save the routing information so the follow-up report task can stream data. */
     shell_report_ctx.active = 1u;
     shell_report_ctx.my_printf = my_printf;
-    shell_report_ctx.p_item = shell_list.p_next;
+    shell_report_ctx.p_item = p_shell_first;
     shell_report_ctx.src = pack_ret.src;
     shell_report_ctx.d_src = pack_ret.d_src;
     shell_report_ctx.dst = pack_ret.dst;
@@ -625,7 +625,7 @@ static void shell_wave_report_task(void)
         /* 0x55555555 marks the beginning of one streamed frame. */
         shell_wave_param.data = 0x55555555;
         shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
-        p_item = shell_list.p_next;
+        p_item = p_shell_first;
         shell_wave_fsm = SHELL_WAVE_FSM_DATA;
         delay_cnt = 10u;
         break;

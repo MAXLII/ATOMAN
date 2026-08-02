@@ -47,8 +47,9 @@
 #define SFRA_SERVICE_NOINLINE
 #endif
 
-section_item_t sfra_list = {0};
-REG_DBG_LIST(sfra, sfra_list)
+section_item_t *p_sfra_first = NULL;
+static section_item_t *p_sfra_tail = NULL;
+REG_DBG_LIST(sfra, p_sfra_first)
 
 static uint8_t g_sfra_service_count = 0u;
 
@@ -75,7 +76,8 @@ void sfra_service_init(void)
 {
     uint8_t id = 0u;
 
-    section_list_init(&sfra_list);
+    p_sfra_first = NULL;
+    p_sfra_tail = NULL;
     g_sfra_service_count = 0u;
 
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
@@ -94,7 +96,16 @@ void sfra_service_init(void)
             {
                 s->sweep_tag = 1u;
             }
-            section_list_push_back(&sfra_list, p_item);
+            p_item->p_next = NULL;
+            if (p_sfra_first == NULL)
+            {
+                p_sfra_first = p_item;
+            }
+            else
+            {
+                p_sfra_tail->p_next = p_item;
+            }
+            p_sfra_tail = p_item;
             g_sfra_service_count++;
         }
     }
@@ -197,7 +208,7 @@ static void sfra_service_send_report(uint8_t cmd_word, uint8_t *p_data, uint16_t
 
 static SFRA_SERVICE_NOINLINE sfra_t *sfra_service_find_by_id(uint8_t sfra_id)
 {
-    section_item_t *p_item = sfra_list.p_next;
+    section_item_t *p_item = p_sfra_first;
 
     while (p_item != NULL)
     {
@@ -399,7 +410,7 @@ static void sfra_service_send_empty_list(section_packform_t *p_pack, DEC_MY_PRIN
 
 static void sfra_service_poll_task(void)
 {
-    section_item_t *p_item = sfra_list.p_next;
+    section_item_t *p_item = p_sfra_first;
 
     while (p_item != NULL)
     {
@@ -438,7 +449,7 @@ static void sfra_service_poll_task(void)
 
 static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    section_item_t *p_item = sfra_list.p_next;
+    section_item_t *p_item = p_sfra_first;
     uint8_t index = 0u;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))

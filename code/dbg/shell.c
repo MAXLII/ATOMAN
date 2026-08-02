@@ -41,8 +41,8 @@
 #endif
 
 /* Runtime shell registration list built from SECTION_SHELL items. */
-section_item_t shell_list;
-REG_DBG_LIST(shell, shell_list)
+section_item_t *p_shell_first = NULL;
+REG_DBG_LIST(shell, p_shell_first)
 
 /* Number of shell entries inserted into the runtime list. */
 uint32_t shell_data_num = 0u;
@@ -56,13 +56,14 @@ static void shell_insert(section_item_t *p_item)
     }
 
     /* Insert at the head because ordering is not performance critical here. */
-    section_list_push_front(&shell_list, p_item);
+    p_item->p_next = p_shell_first;
+    p_shell_first = p_item;
     shell_data_num++;
 }
 
 void shell_init(void)
 {
-    section_list_init(&shell_list);
+    p_shell_first = NULL;
     shell_data_num = 0u;
 
     /* Scan the linker section and collect every shell command/variable entry. */
@@ -575,7 +576,7 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
     }
     if (strcmp(line, "help") == 0)
     {
-        for (section_item_t *p_item = shell_list.p_next; p_item != NULL; p_item = p_item->p_next)
+        for (section_item_t *p_item = p_shell_first; p_item != NULL; p_item = p_item->p_next)
         {
             section_shell_t *s = (section_shell_t *)p_item->p_obj;
             my_printf->my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
@@ -583,7 +584,7 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
         goto shell_done;
     }
 
-    for (section_item_t *p_item = shell_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_shell_first; p_item != NULL; p_item = p_item->p_next)
     {
         section_shell_t *p = (section_shell_t *)p_item->p_obj;
         /* Match exact command/variable name, then accept optional ":payload". */
@@ -627,7 +628,7 @@ section_shell_t *shell_find(const char *p_name, uint8_t len)
         return NULL;
     }
 
-    for (section_item_t *p_item = shell_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_shell_first; p_item != NULL; p_item = p_item->p_next)
     {
         section_shell_t *p = (section_shell_t *)p_item->p_obj;
         if (p->p_name_size != len)

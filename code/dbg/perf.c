@@ -31,8 +31,9 @@
 #include "record_dict.h"
 #include "section.h"
 
-section_item_t perf_list;
-REG_DBG_LIST(perf, perf_list)
+section_item_t *p_perf_first = NULL;
+static section_item_t *p_perf_tail = NULL;
+REG_DBG_LIST(perf, p_perf_first)
 
 uint32_t perf_dict_version = 1u;
 static record_dict_t s_perf_dict;
@@ -93,7 +94,16 @@ static void perf_insert(section_item_t *p_item)
         {
             p_record->p_cnt = &s_perf_cnt;
             p_record->record_id = record_dict_alloc_id(&s_perf_dict);
-            section_list_push_back(&perf_list, p_item);
+            p_item->p_next = NULL;
+            if (p_perf_first == NULL)
+            {
+                p_perf_first = p_item;
+            }
+            else
+            {
+                p_perf_tail->p_next = p_item;
+            }
+            p_perf_tail = p_item;
         }
         break;
 
@@ -104,7 +114,8 @@ static void perf_insert(section_item_t *p_item)
 
 static void perf_init(void)
 {
-    section_list_init(&perf_list);
+    p_perf_first = NULL;
+    p_perf_tail = NULL;
     s_perf_cnt = NULL;
     s_perf_cnt_period_s = PERF_COUNT_UNIT_US * 1.0e-6f;
     s_perf_task_metric = 0.0f;
@@ -318,7 +329,7 @@ uint16_t perf_record_count_get(void)
 {
     uint16_t count = 0u;
 
-    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_perf_first; p_item != NULL; p_item = p_item->p_next)
     {
         section_perf_record_t *p = perf_record_from_item(p_item);
         if (p == NULL)
@@ -338,7 +349,7 @@ uint16_t perf_record_count_by_type(uint8_t record_type)
 {
     uint16_t count = 0u;
 
-    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_perf_first; p_item != NULL; p_item = p_item->p_next)
     {
         section_perf_record_t *p = perf_record_from_item(p_item);
         if (p == NULL)
@@ -396,7 +407,7 @@ uint32_t perf_task_period_us_get(section_perf_record_t *record)
 
 void perf_reset_peak_value(void)
 {
-    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_perf_first; p_item != NULL; p_item = p_item->p_next)
     {
         section_perf_record_t *p = perf_record_from_item(p_item);
         if (p == NULL)
@@ -437,7 +448,7 @@ static void perf_cpu_load_calculate(void)
         return;
     }
 
-    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_perf_first; p_item != NULL; p_item = p_item->p_next)
     {
         section_perf_record_t *p = perf_record_from_item(p_item);
         if (p == NULL)

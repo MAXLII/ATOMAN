@@ -36,11 +36,13 @@
  * =============================================================================
  */
 
-section_item_t comm_command_list;
-section_item_t comm_route_list;
+section_item_t *p_comm_command_first = NULL;
+static section_item_t *p_comm_command_tail = NULL;
+section_item_t *p_comm_route_first = NULL;
+static section_item_t *p_comm_route_tail = NULL;
 
-REG_DBG_LIST(comm_command, comm_command_list)
-REG_DBG_LIST(comm_route, comm_route_list)
+REG_DBG_LIST(comm_command, p_comm_command_first)
+REG_DBG_LIST(comm_route, p_comm_route_first)
 
 /* section 链路表在 section.c 内维护，这里只使用其首指针 */
 
@@ -56,7 +58,16 @@ static void comm_insert(section_item_t *p_item)
         return;
     }
 
-    section_list_push_back(&comm_command_list, p_item);
+    p_item->p_next = NULL;
+    if (p_comm_command_first == NULL)
+    {
+        p_comm_command_first = p_item;
+    }
+    else
+    {
+        p_comm_command_tail->p_next = p_item;
+    }
+    p_comm_command_tail = p_item;
 }
 
 static void comm_route_insert(section_item_t *p_item)
@@ -66,14 +77,25 @@ static void comm_route_insert(section_item_t *p_item)
         return;
     }
 
-    section_list_push_back(&comm_route_list, p_item);
+    p_item->p_next = NULL;
+    if (p_comm_route_first == NULL)
+    {
+        p_comm_route_first = p_item;
+    }
+    else
+    {
+        p_comm_route_tail->p_next = p_item;
+    }
+    p_comm_route_tail = p_item;
 }
 
 static void comm_init(void)
 {
     /* 允许重复调用：清空锚点避免链表串接 */
-    section_list_init(&comm_command_list);
-    section_list_init(&comm_route_list);
+    p_comm_command_first = NULL;
+    p_comm_command_tail = NULL;
+    p_comm_route_first = NULL;
+    p_comm_route_tail = NULL;
 
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
          p < (reg_section_t *)&SECTION_STOP;
@@ -166,20 +188,28 @@ uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in)
 
 static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    section_item_t *p_item = comm_command_list.p_next;
+    section_item_t *p_item = p_comm_command_first;
+    section_item_t *p_prev = NULL;
 
     while (p_item != NULL)
     {
         section_com_t *p = (section_com_t *)p_item->p_obj;
         if ((p->cmd_set == cmd_set) && (p->cmd_word == cmd_word))
         {
-            if (p_item != comm_command_list.p_next)
+            if (p_prev != NULL)
             {
                 /* move-to-front：减少后续查找成本 */
-                section_list_move_to_front(&comm_command_list, p_item);
+                p_prev->p_next = p_item->p_next;
+                if (p_comm_command_tail == p_item)
+                {
+                    p_comm_command_tail = p_prev;
+                }
+                p_item->p_next = p_comm_command_first;
+                p_comm_command_first = p_item;
             }
             return p->func;
         }
+        p_prev = p_item;
         p_item = p_item->p_next;
     }
     return NULL;
@@ -192,10 +222,7 @@ static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packfor
 
 static const section_link_t *find_link_by_id(uint8_t link_id)
 {
-    const section_item_t *p_list = &link_list;
-    section_item_t *p_item = NULL;
-
-    SECTION_LIST_FOR_EACH(p_item, p_list)
+    for (section_item_t *p_item = p_link_first; p_item != NULL; p_item = p_item->p_next)
     {
         const section_link_t *p = (const section_link_t *)p_item->p_obj;
         if (p->link_id == link_id)
@@ -212,7 +239,7 @@ static void comm_route_run(comm_ctx_t *ctx)
     if (!ctx)
         return;
 
-    for (section_item_t *p_item = comm_route_list.p_next; p_item != NULL; p_item = p_item->p_next)
+    for (section_item_t *p_item = p_comm_route_first; p_item != NULL; p_item = p_item->p_next)
     {
         comm_route_t *r = (comm_route_t *)p_item->p_obj;
         if ((ctx->link_id == r->src_link_id) && (ctx->pack.dst == r->dst_addr))

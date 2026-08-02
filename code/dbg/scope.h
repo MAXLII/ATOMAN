@@ -128,7 +128,7 @@ void scope_stop(scope_t *scope);
 void scope_trigger(scope_t *scope);
 void scope_reset(scope_t *scope);
 
-extern section_item_t scope_list;
+extern section_item_t *p_scope_first;
 void scope_service_init(void);
 
 #if (SCOPE_ENABLE == 1u)
