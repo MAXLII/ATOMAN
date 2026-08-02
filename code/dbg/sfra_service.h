@@ -31,7 +31,7 @@
 
 #include "sfra.h"
 
-extern section_item_t sfra_list;
+extern section_item_t *p_sfra_first;
 
 #define CMD_SET_SFRA 0x01
 

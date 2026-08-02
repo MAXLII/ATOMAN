@@ -43,19 +43,6 @@ typedef struct section_item
     struct section_item *p_next; /* Next wrapper in one runtime registration list. */
 } section_item_t;
 
-#define SECTION_LIST_FOR_EACH(item, head_ptr) \
-    for ((item) = (head_ptr)->p_next; (item) != NULL; (item) = (item)->p_next)
-
-void section_list_init(section_item_t *p_head);
-uint32_t section_list_count(const section_item_t *p_head);
-void section_list_push_front(section_item_t *p_head, section_item_t *p_item);
-void section_list_push_back(section_item_t *p_head, section_item_t *p_item);
-void section_list_insert_after(section_item_t *p_head,
-                               section_item_t *p_prev,
-                               section_item_t *p_item);
-void section_list_move_to_front(section_item_t *p_head, section_item_t *p_item);
-section_item_t *section_list_at(const section_item_t *p_head, uint32_t index);
-
 #define SECTION_RUNTIME_PREEMPTIVE 1u
 
 typedef enum
@@ -114,7 +101,7 @@ typedef struct
 #define REG_DBG_LIST(name, list_head)                         \
     section_list_registration_t dbg_list_##name = {           \
         .p_name = #name,                                      \
-        .pp_head = &(list_head).p_next,                       \
+        .pp_head = &(list_head),                              \
     };                                                        \
     REG_SECTION_FUNC(SECTION_DBG_LIST, dbg_list_##name)
 
@@ -530,10 +517,10 @@ struct section_link_t
     uint8_t link_id;
 };
 
-extern section_item_t init_list;
-extern section_item_t task_list;
-extern section_item_t interrupt_list;
-extern section_item_t link_list;
+extern section_item_t *p_init_first;
+extern section_item_t *p_task_first;
+extern section_item_t *p_interrupt_first;
+extern section_item_t *p_link_first;
 
 #define REG_LINK(link, print, _rx_get_byte, _handler_arr, _handler_num) \
     section_link_t section_link_##link = {                              \

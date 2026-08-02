@@ -197,8 +197,8 @@ typedef struct comm_route_t
     uint8_t dst_addr;
 } comm_route_t;
 
-extern section_item_t comm_command_list;
-extern section_item_t comm_route_list;
+extern section_item_t *p_comm_command_first;
+extern section_item_t *p_comm_route_first;
 
 #define _REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr)          \
     comm_route_t comm_route_##_src_link_id##_dst_link_id##_dst_addr = { \
