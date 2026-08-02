@@ -74,16 +74,16 @@ int scope_printf_data_is_active(void);
     } while (0)
 
 /* Protocol command words and payload layouts */
-#define CMD_SET_SCOPE 0x01u
+#define CMD_SET_SCOPE 0x01
 
-#define CMD_WORD_SCOPE_LIST_QUERY 0x18u
-#define CMD_WORD_SCOPE_INFO_QUERY 0x19u
-#define CMD_WORD_SCOPE_VAR_QUERY 0x1Au
-#define CMD_WORD_SCOPE_START 0x1Bu
-#define CMD_WORD_SCOPE_TRIGGER 0x1Cu
-#define CMD_WORD_SCOPE_STOP 0x1Du
-#define CMD_WORD_SCOPE_RESET 0x1Eu
-#define CMD_WORD_SCOPE_SAMPLE_QUERY 0x1Fu
+#define CMD_WORD_SCOPE_LIST_QUERY 0x18
+#define CMD_WORD_SCOPE_INFO_QUERY 0x19
+#define CMD_WORD_SCOPE_VAR_QUERY 0x1A
+#define CMD_WORD_SCOPE_START 0x1B
+#define CMD_WORD_SCOPE_TRIGGER 0x1C
+#define CMD_WORD_SCOPE_STOP 0x1D
+#define CMD_WORD_SCOPE_RESET 0x1E
+#define CMD_WORD_SCOPE_SAMPLE_QUERY 0x1F
 
 typedef enum
 {

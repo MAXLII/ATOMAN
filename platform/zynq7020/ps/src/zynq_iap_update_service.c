@@ -38,8 +38,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define ZYNQ_IAP_CMD_SET             0x01u
-#define ZYNQ_IAP_CMD_INFO            0x08u
+#define ZYNQ_IAP_CMD_SET             0x01
+#define ZYNQ_IAP_CMD_INFO            0x08
 #define ZYNQ_IAP_INFO_LENGTH         10u
 #define ZYNQ_IAP_ACK_LENGTH          3u
 #define ZYNQ_IAP_ACK_ACCEPTED        1u
