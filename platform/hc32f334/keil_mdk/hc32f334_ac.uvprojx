@@ -779,6 +779,11 @@
               <FilePath>..\..\..\code\dbg\perf_service.c</FilePath>
             </File>
             <File>
+              <FileName>section_list_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\section_list_service.c</FilePath>
+            </File>
+            <File>
               <FileName>scope.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\scope.c</FilePath>
@@ -1593,6 +1598,11 @@
               <FileName>perf_service.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\code\dbg\perf_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>section_list_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\dbg\section_list_service.c</FilePath>
             </File>
             <File>
               <FileName>scope.c</FileName>
