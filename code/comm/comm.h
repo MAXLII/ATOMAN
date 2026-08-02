@@ -164,7 +164,6 @@ typedef struct section_com_t
     uint8_t cmd_set;
     uint8_t cmd_word;
     void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
-    struct section_com_t *p_next;
 } section_com_t;
 
 /**
@@ -172,6 +171,7 @@ typedef struct section_com_t
  *
  * 说明：
  * - 变量名使用 token paste：section_com_<cmd_set>_<cmd_word>
+ * - cmd_set 和 cmd_word 的十六进制定义或直接实参禁止添加 u/U 后缀
  * - 你已经自行解决了数值 token paste 的问题，这里保持原样
  */
 #define _REG_COMM(_cmd_set, _cmd_word, _func)              \
@@ -179,7 +179,6 @@ typedef struct section_com_t
         .cmd_set = (_cmd_set),                             \
         .cmd_word = (_cmd_word),                           \
         .func = (_func),                                   \
-        .p_next = NULL,                                    \
     };                                                     \
     REG_SECTION_FUNC(SECTION_COMM, section_com_##_cmd_set##_##_cmd_word)
 
@@ -196,15 +195,16 @@ typedef struct comm_route_t
     uint8_t src_link_id;
     uint8_t dst_link_id;
     uint8_t dst_addr;
-    struct comm_route_t *p_next;
 } comm_route_t;
+
+extern section_item_t comm_command_list;
+extern section_item_t comm_route_list;
 
 #define _REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr)          \
     comm_route_t comm_route_##_src_link_id##_dst_link_id##_dst_addr = { \
         .src_link_id = (_src_link_id),                                  \
         .dst_link_id = (_dst_link_id),                                  \
         .dst_addr = (_dst_addr),                                        \
-        .p_next = NULL,                                                 \
     };                                                                  \
     REG_SECTION_FUNC(SECTION_COMM_ROUTE, comm_route_##_src_link_id##_dst_link_id##_dst_addr)
 

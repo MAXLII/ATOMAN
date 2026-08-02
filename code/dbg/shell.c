@@ -40,37 +40,31 @@
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 #endif
 
-/* Head of the runtime shell registration list built from SECTION_SHELL items. */
-section_shell_t *p_shell_first;
+/* Runtime shell registration list built from SECTION_SHELL items. */
+section_item_t shell_list;
+REG_DBG_LIST(shell, shell_list)
 
 /* Number of shell entries inserted into the runtime list. */
 uint32_t shell_data_num = 0u;
 
-static void shell_insert(section_shell_t *shell)
+static void shell_insert(section_item_t *p_item)
 {
     /* Reject NULL input so the caller can scan sections without extra guards. */
-    if (shell == NULL)
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    /* Avoid inserting the same registration twice if init is called again. */
-    for (section_shell_t *p = p_shell_first; p != NULL; p = p->p_next)
-    {
-        if (p == shell)
-        {
-            return;
-        }
-    }
-
     /* Insert at the head because ordering is not performance critical here. */
-    shell->p_next = p_shell_first;
-    p_shell_first = shell;
+    section_list_push_front(&shell_list, p_item);
     shell_data_num++;
 }
 
 void shell_init(void)
 {
+    section_list_init(&shell_list);
+    shell_data_num = 0u;
+
     /* Scan the linker section and collect every shell command/variable entry. */
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
          p < (reg_section_t *)&SECTION_STOP;
@@ -79,7 +73,7 @@ void shell_init(void)
         switch (p->section_type)
         {
         case SECTION_SHELL:
-            shell_insert((section_shell_t *)p->p_str);
+            shell_insert((section_item_t *)p->p_str);
             break;
         default:
             break;
@@ -581,15 +575,17 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
     }
     if (strcmp(line, "help") == 0)
     {
-        for (section_shell_t *s = p_shell_first; s != NULL; s = s->p_next)
+        for (section_item_t *p_item = shell_list.p_next; p_item != NULL; p_item = p_item->p_next)
         {
+            section_shell_t *s = (section_shell_t *)p_item->p_obj;
             my_printf->my_printf("%s\t%s\r\n", s->p_name, s->type == SHELL_CMD ? "CMD" : "VAR");
         }
         goto shell_done;
     }
 
-    for (section_shell_t *p = p_shell_first; p != NULL; p = p->p_next)
+    for (section_item_t *p_item = shell_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_shell_t *p = (section_shell_t *)p_item->p_obj;
         /* Match exact command/variable name, then accept optional ":payload". */
         if (strncmp(line, p->p_name, p->p_name_size) != 0)
             continue;
@@ -619,11 +615,6 @@ void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx)
 
 #endif /* SHELL_STRING_ENABLE */
 
-section_shell_t *shell_first_get(void)
-{
-    return p_shell_first;
-}
-
 uint32_t shell_count_get(void)
 {
     return shell_data_num;
@@ -636,8 +627,9 @@ section_shell_t *shell_find(const char *p_name, uint8_t len)
         return NULL;
     }
 
-    for (section_shell_t *p = p_shell_first; p != NULL; p = p->p_next)
+    for (section_item_t *p_item = shell_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_shell_t *p = (section_shell_t *)p_item->p_obj;
         if (p->p_name_size != len)
         {
             continue;

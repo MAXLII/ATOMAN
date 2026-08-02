@@ -177,7 +177,7 @@ static float s_perf_service_interrupt_metric_max = 0.0f;
 
 typedef struct
 {
-    section_perf_record_t *cur;
+    section_item_t *p_cur;
     DEC_MY_PRINTF;
     uint8_t active;
 } perf_text_print_ctx_t;
@@ -265,8 +265,14 @@ static void perf_service_print_by_type(uint8_t record_type, DEC_MY_PRINTF)
                          (unsigned long)PERF_REPORT_UNIT_NS);
     my_printf->my_printf("Type\tPerf Name\tRun(100ns)\tMaxRun(100ns)\tEndToStart(100ns)\t"
                          "StartToStart(100ns)\tConfigPeriod(100ns)\tLoad(%%)\tPeak(%%)\r\n");
-    for (section_perf_record_t *record = p_perf_record_first; record != NULL; record = (section_perf_record_t *)record->p_next)
+    const section_item_t *p_list = &perf_list;
+    for (section_item_t *p_item = p_list->p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_perf_record_t *record = perf_record_from_item(p_item);
+        if (record == NULL)
+        {
+            continue;
+        }
         if (record->record_type == record_type)
         {
             perf_service_print_record_item(record, my_printf);
@@ -353,7 +359,7 @@ static void perf_service_print_start(DEC_MY_PRINTF)
         return;
     }
 
-    s_perf_text_print_ctx.cur = p_perf_record_first;
+    s_perf_text_print_ctx.p_cur = perf_list.p_next;
     s_perf_text_print_ctx.my_printf = my_printf;
     s_perf_text_print_ctx.active = 1u;
 
@@ -376,7 +382,7 @@ static void perf_service_print_step(void)
         return;
     }
 
-    if (s_perf_text_print_ctx.cur == NULL)
+    if (s_perf_text_print_ctx.p_cur == NULL)
     {
         if ((s_perf_text_print_ctx.my_printf != NULL) && (s_perf_text_print_ctx.my_printf->my_printf != NULL))
         {
@@ -386,8 +392,9 @@ static void perf_service_print_step(void)
         return;
     }
 
-    perf_service_print_record_item(s_perf_text_print_ctx.cur, s_perf_text_print_ctx.my_printf);
-    s_perf_text_print_ctx.cur = (section_perf_record_t *)s_perf_text_print_ctx.cur->p_next;
+    perf_service_print_record_item(perf_record_from_item(s_perf_text_print_ctx.p_cur),
+                                   s_perf_text_print_ctx.my_printf);
+    s_perf_text_print_ctx.p_cur = s_perf_text_print_ctx.p_cur->p_next;
 }
 
 static void perf_service_print_cancel(void)
@@ -440,7 +447,7 @@ static void *perf_opt_record_next_get(void *record)
         return NULL;
     }
 
-    return ((section_perf_record_t *)record)->p_next;
+    return ((section_item_t *)record)->p_next;
 }
 
 static uint8_t perf_opt_record_protocol_type_get(void *record)
@@ -450,25 +457,27 @@ static uint8_t perf_opt_record_protocol_type_get(void *record)
         return 0u;
     }
 
-    return perf_opt_record_type_to_protocol(((section_perf_record_t *)record)->record_type);
+    section_perf_record_t *p_perf_record = perf_record_from_item((section_item_t *)record);
+
+    return (p_perf_record == NULL) ? 0u : perf_opt_record_type_to_protocol(p_perf_record->record_type);
 }
 
 static uint16_t perf_opt_record_count(uint8_t type_filter)
 {
-    return record_dict_count(p_perf_record_first,
+    return record_dict_count(perf_list.p_next,
                              type_filter,
                              PERF_OPT_TYPE_ALL,
                              perf_opt_record_next_get,
                              perf_opt_record_protocol_type_get);
 }
 
-static section_perf_record_t *perf_opt_find_next(section_perf_record_t *record, uint8_t type_filter)
+static section_item_t *perf_opt_find_next(section_item_t *p_item, uint8_t type_filter)
 {
-    return (section_perf_record_t *)record_dict_find_next(record,
-                                                          type_filter,
-                                                          PERF_OPT_TYPE_ALL,
-                                                          perf_opt_record_next_get,
-                                                          perf_opt_record_protocol_type_get);
+    return (section_item_t *)record_dict_find_next(p_item,
+                                                   type_filter,
+                                                   PERF_OPT_TYPE_ALL,
+                                                   perf_opt_record_next_get,
+                                                   perf_opt_record_protocol_type_get);
 }
 
 static void perf_opt_send_response(section_packform_t *p_req,
@@ -568,7 +577,7 @@ static uint8_t perf_opt_start_common(perf_opt_service_t *self,
     self->index = 0u;
     self->sequence = perf_opt_next_sequence();
     self->dict_version = perf_dict_version_get();
-    self->cur = p_perf_record_first;
+    self->p_cur = perf_list.p_next;
     self->status = PERF_OPT_END_OK;
     self->pending_end = 0u;
     perf_opt_capture_route(self, p_pack, my_printf);
@@ -631,13 +640,15 @@ static void perf_opt_send_sample_end(perf_opt_service_t *self, uint8_t status)
 
 static void perf_opt_poll_dict(perf_opt_service_t *self)
 {
-    section_perf_record_t *record;
+    section_item_t *p_item = NULL;
+    section_perf_record_t *record = NULL;
     perf_dict_item_header_t item = {0};
     size_t name_len;
     uint16_t len;
 
-    record = perf_opt_find_next(self->cur, self->type_filter);
-    if (record == NULL)
+    p_item = perf_opt_find_next(self->p_cur, self->type_filter);
+    record = perf_record_from_item(p_item);
+    if ((p_item == NULL) || (record == NULL))
     {
         perf_opt_send_dict_end(self, (self->index == self->record_count) ? PERF_OPT_END_OK : PERF_OPT_END_INTERNAL_ERROR);
         self->active = 0u;
@@ -666,7 +677,7 @@ static void perf_opt_poll_dict(perf_opt_service_t *self)
 
     len = (uint16_t)(sizeof(item) + name_len);
     perf_opt_send_active(self, PERF_OPT_CMD_DICT_ITEM_REPORT, self->payload, len);
-    self->cur = (section_perf_record_t *)record->p_next;
+    self->p_cur = p_item->p_next;
     ++self->index;
 
     if (self->index >= self->record_count)
@@ -744,7 +755,8 @@ static uint16_t perf_opt_fill_sample_item(section_perf_record_t *record, uint8_t
 static void perf_opt_poll_sample(perf_opt_service_t *self)
 {
     perf_sample_batch_header_t header = {0};
-    section_perf_record_t *record;
+    section_item_t *p_item = NULL;
+    section_perf_record_t *record = NULL;
     uint16_t payload_len;
     uint16_t item_count;
 
@@ -768,8 +780,9 @@ static void perf_opt_poll_sample(perf_opt_service_t *self)
     {
         uint16_t item_size;
 
-        record = perf_opt_find_next(self->cur, self->type_filter);
-        if (record == NULL)
+        p_item = perf_opt_find_next(self->p_cur, self->type_filter);
+        record = perf_record_from_item(p_item);
+        if ((p_item == NULL) || (record == NULL))
         {
             break;
         }
@@ -777,7 +790,7 @@ static void perf_opt_poll_sample(perf_opt_service_t *self)
         item_size = perf_opt_sample_item_size(record);
         if (item_size == 0u)
         {
-            self->cur = (section_perf_record_t *)record->p_next;
+            self->p_cur = p_item->p_next;
             continue;
         }
 
@@ -788,7 +801,7 @@ static void perf_opt_poll_sample(perf_opt_service_t *self)
 
         payload_len = (uint16_t)(payload_len +
                                  perf_opt_fill_sample_item(record, &self->payload[payload_len]));
-        self->cur = (section_perf_record_t *)record->p_next;
+        self->p_cur = p_item->p_next;
         ++self->index;
         ++item_count;
     }

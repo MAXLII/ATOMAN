@@ -6,7 +6,7 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Build the g_scope_first linked list from SECTION_SCOPE entries at init
+ *          - Build the scope list from SECTION_SCOPE entries at init
  *          - Assign scope ids and translate scope state into shell or binary service responses
  *          - Own deferred scope data printing and communication helper code outside the capture core
  *
@@ -38,13 +38,14 @@
 #define SCOPE_SERVICE_VAR_COUNT_MAX 10u
 #define SCOPE_SERVICE_NAME_LEN_MAX 64u
 
-/* Linked list head built at init time from SECTION_SCOPE entries. */
-scope_t *g_scope_first = NULL;
+section_item_t scope_list = {0};
+REG_DBG_LIST(scope, scope_list)
+
 static uint8_t g_scope_service_count = 0u;
 
 typedef struct
 {
-    scope_t *p_cur;
+    section_item_t *p_cur;
     DEC_MY_PRINTF;
     uint8_t active;
     uint8_t index;
@@ -56,11 +57,12 @@ typedef struct
 
 static scope_list_ctx_t s_scope_list_ctx = {0};
 
-/* Traverse the section table and build the g_scope_first linked list. */
 void scope_service_init(void)
 {
-    scope_t **p_tail = &g_scope_first;
     uint8_t id = 0u;
+
+    section_list_init(&scope_list);
+    g_scope_service_count = 0u;
 
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
          p < (reg_section_t *)&SECTION_STOP;
@@ -68,11 +70,10 @@ void scope_service_init(void)
     {
         if (p->section_type == SECTION_SCOPE)
         {
-            scope_t *s = (scope_t *)p->p_str;
+            section_item_t *p_item = (section_item_t *)p->p_str;
+            scope_t *s = (scope_t *)p_item->p_obj;
             s->scope_id = id++;
-            s->p_next = NULL;
-            *p_tail = s;
-            p_tail = &s->p_next;
+            section_list_push_back(&scope_list, p_item);
             g_scope_service_count++;
         }
     }
@@ -112,14 +113,15 @@ static uint8_t scope_service_query_scope_id(section_packform_t *p_pack)
 /* Helpers */
 static scope_t *scope_service_find_by_id(uint8_t scope_id)
 {
-    scope_t *s = g_scope_first;
-    while (s != NULL)
+    section_item_t *p_item = scope_list.p_next;
+    while (p_item != NULL)
     {
+        scope_t *s = (scope_t *)p_item->p_obj;
         if (s->scope_id == scope_id)
         {
             return s;
         }
-        s = s->p_next;
+        p_item = p_item->p_next;
     }
     return NULL;
 }
@@ -220,19 +222,19 @@ static void scope_service_send_active(scope_list_ctx_t *p_ctx, uint8_t cmd_word,
     comm_send_data(&packform, p_ctx->my_printf);
 }
 
-/* Poll all instances in the g_scope_first linked list. */
 static void scope_service_poll_state(void)
 {
-    scope_t *s = g_scope_first;
-    while (s != NULL)
+    section_item_t *p_item = scope_list.p_next;
+    while (p_item != NULL)
     {
+        scope_t *s = (scope_t *)p_item->p_obj;
         if ((s->last_state == SCOPE_STATE_TRIGGERED) && (s->state == SCOPE_STATE_IDLE))
         {
             s->data_ready = 1u;
             scope_service_capture_tag_inc(s);
         }
         s->last_state = s->state;
-        s = s->p_next;
+        p_item = p_item->p_next;
     }
 }
 
@@ -243,13 +245,14 @@ static void scope_service_poll_list(void)
         return;
     }
 
-    scope_t *s = s_scope_list_ctx.p_cur;
-    if (s == NULL)
+    section_item_t *p_item = s_scope_list_ctx.p_cur;
+    if (p_item == NULL)
     {
         s_scope_list_ctx.active = 0u;
         return;
     }
 
+    scope_t *s = (scope_t *)p_item->p_obj;
     uint8_t name_len = scope_service_strnlen(s->p_name, SCOPE_SERVICE_NAME_LEN_MAX);
     uint8_t payload[sizeof(scope_list_item_t) + SCOPE_SERVICE_NAME_LEN_MAX];
     scope_list_item_t item;
@@ -271,7 +274,7 @@ static void scope_service_poll_list(void)
                               payload,
                               (uint16_t)(sizeof(item) + name_len));
 
-    s_scope_list_ctx.p_cur = s->p_next;
+    s_scope_list_ctx.p_cur = p_item->p_next;
     ++s_scope_list_ctx.index;
     if (item.is_last != 0u)
     {
@@ -302,13 +305,13 @@ static void scope_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
-    if (g_scope_first == NULL)
+    if (scope_list.p_next == NULL)
     {
         scope_service_send_empty_list(p_pack, my_printf);
         return;
     }
 
-    s_scope_list_ctx.p_cur = g_scope_first;
+    s_scope_list_ctx.p_cur = scope_list.p_next;
     s_scope_list_ctx.index = 0u;
     s_scope_list_ctx.active = 1u;
     scope_service_capture_route(&s_scope_list_ctx, p_pack, my_printf);
@@ -819,7 +822,8 @@ REG_COMM(CMD_SET_SCOPE, CMD_WORD_SCOPE_SAMPLE_QUERY, scope_sample_query_act)
 
 #else
 
-scope_t *g_scope_first = NULL;
+section_item_t scope_list = {0};
+REG_DBG_LIST(scope, scope_list)
 
 void scope_service_init(void)
 {

@@ -37,6 +37,25 @@
 
 #include "platform.h"
 
+typedef struct section_item
+{
+    void *p_obj;                 /* Business object owned by the registration module. */
+    struct section_item *p_next; /* Next wrapper in one runtime registration list. */
+} section_item_t;
+
+#define SECTION_LIST_FOR_EACH(item, head_ptr) \
+    for ((item) = (head_ptr)->p_next; (item) != NULL; (item) = (item)->p_next)
+
+void section_list_init(section_item_t *p_head);
+uint32_t section_list_count(const section_item_t *p_head);
+void section_list_push_front(section_item_t *p_head, section_item_t *p_item);
+void section_list_push_back(section_item_t *p_head, section_item_t *p_item);
+void section_list_insert_after(section_item_t *p_head,
+                               section_item_t *p_prev,
+                               section_item_t *p_item);
+void section_list_move_to_front(section_item_t *p_head, section_item_t *p_item);
+section_item_t *section_list_at(const section_item_t *p_head, uint32_t index);
+
 #define SECTION_RUNTIME_PREEMPTIVE 1u
 
 typedef enum
@@ -66,6 +85,7 @@ typedef enum
     SECTION_COMM_ROUTE, /* Communication-route registration entry. */
     SECTION_SCOPE,      /* Scope-instance registration entry. */
     SECTION_SFRA,       /* SFRA-instance registration entry. */
+    SECTION_DBG_LIST,   /* Debug-visible list-head registration entry. */
 } SECTION_E;
 
 typedef struct
@@ -74,12 +94,29 @@ typedef struct
     void *p_str;           /* Address of the registered object. */
 } reg_section_t;
 
-#define REG_SECTION_INIT(_section_type, _p_str) \
-    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_p_str)}
+#define REG_SECTION_INIT(_section_type, _item) \
+    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
 
-#define REG_SECTION_FUNC(_section_type, _p_str)                      \
-    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_p_str \
-        SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, _p_str);
+#define REG_SECTION_FUNC(_section_type, _obj)                    \
+    section_item_t section_item_##_obj = {                       \
+        .p_obj = (void *)&(_obj),                                \
+        .p_next = NULL,                                          \
+    };                                                           \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj \
+        SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, section_item_##_obj);
+
+typedef struct
+{
+    const char *p_name;
+    section_item_t *const *pp_head;
+} section_list_registration_t;
+
+#define REG_DBG_LIST(name, list_head)                         \
+    section_list_registration_t dbg_list_##name = {           \
+        .p_name = #name,                                      \
+        .pp_head = &(list_head).p_next,                       \
+    };                                                        \
+    REG_SECTION_FUNC(SECTION_DBG_LIST, dbg_list_##name)
 
 #include "perf.h"
 
@@ -281,11 +318,10 @@ typedef struct reg_init
 {
     int8_t priority;
     void (*p_func)(void);
-    struct reg_init *p_next;
 } reg_init_t;
 
 #define REG_INIT_RECORD(prio, func) \
-    {.priority = (int8_t)(prio), .p_func = (func), .p_next = NULL}
+    {.priority = (int8_t)(prio), .p_func = (func)}
 
 #define REG_INIT(prio, func)                                  \
     reg_init_t reg_init_##func = REG_INIT_RECORD(prio, func); \
@@ -324,7 +360,6 @@ typedef struct reg_task_t
     void *p_ctx;
     const char *p_name;
     SECTION_TASK_PERF_FIELD
-    struct reg_task_t *p_next;
     struct reg_task_t *p_ready_next;
     uint8_t is_ready;
     uint8_t is_running;
@@ -347,7 +382,6 @@ typedef struct reg_task_t
         .p_step_func = NULL,                  \
         .p_ctx = NULL,                        \
         .p_name = #func SECTION_TASK_PERF_INIT(func), \
-        .p_next = NULL,                       \
         .p_ready_next = NULL,                 \
         .is_ready = 0u,                       \
         .is_running = 0u SECTION_TASK_RUNTIME_INIT \
@@ -361,7 +395,6 @@ typedef struct reg_task_t
         .p_step_func = (func),                             \
         .p_ctx = (ctx),                                    \
         .p_name = #perf_name SECTION_TASK_PERF_INIT(perf_name), \
-        .p_next = NULL,                                    \
         .p_ready_next = NULL,                              \
         .is_ready = 0u,                                    \
         .is_running = 0u SECTION_TASK_RUNTIME_INIT           \
@@ -418,11 +451,10 @@ typedef struct reg_interrupt
     uint8_t priority;
     void (*p_func)(void);
     SECTION_INTERRUPT_PERF_FIELD
-    struct reg_interrupt *p_next;
 } reg_interrupt_t;
 
 #define REG_INTERRUPT_RECORD(priority_num, func) \
-    {.priority = (uint8_t)(priority_num), .p_func = (func) SECTION_INTERRUPT_PERF_INIT(func), .p_next = NULL}
+    {.priority = (uint8_t)(priority_num), .p_func = (func) SECTION_INTERRUPT_PERF_INIT(func)}
 
 #define REG_INTERRUPT(priority_num, func)                                            \
     REG_INTERRUPT_PERF_RECORD(func)                                                  \
@@ -493,19 +525,20 @@ struct section_link_t
 {
     uint8_t (*rx_get_byte)(uint8_t *p_data);
     DEC_MY_PRINTF;
-    struct section_link_t *p_next;
     const section_link_handler_item_t *handler_arr;
     uint32_t handler_num;
     uint8_t link_id;
 };
 
-const section_link_t *section_link_first_get(void);
+extern section_item_t init_list;
+extern section_item_t task_list;
+extern section_item_t interrupt_list;
+extern section_item_t link_list;
 
 #define REG_LINK(link, print, _rx_get_byte, _handler_arr, _handler_num) \
     section_link_t section_link_##link = {                              \
         .rx_get_byte = (_rx_get_byte),                                  \
         .my_printf = &(print),                                          \
-        .p_next = NULL,                                                 \
         .handler_arr = (_handler_arr),                                  \
         .handler_num = (uint32_t)(_handler_num),                        \
         .link_id = (uint8_t)(link),                                     \

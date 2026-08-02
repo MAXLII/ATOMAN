@@ -36,63 +36,44 @@
  * =============================================================================
  */
 
-section_com_t *p_com_first = NULL;
-comm_route_t *p_comm_route_first = NULL;
+section_item_t comm_command_list;
+section_item_t comm_route_list;
+
+REG_DBG_LIST(comm_command, comm_command_list)
+REG_DBG_LIST(comm_route, comm_route_list)
 
 /* section 链路表在 section.c 内维护，这里只使用其首指针 */
-
-/* 使用 tail 指针，将 insert 从 O(n) 降到 O(1) */
-static section_com_t *s_com_tail = NULL;
-static comm_route_t *s_route_tail = NULL;
 
 /* =============================================================================
  * Comm / Route 插入
  * =============================================================================
  */
 
-static void comm_insert(section_com_t *com)
+static void comm_insert(section_item_t *p_item)
 {
-    if (!com)
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    {
         return;
+    }
 
-    com->p_next = NULL;
-    if (!p_com_first)
-    {
-        p_com_first = com;
-        s_com_tail = com;
-    }
-    else
-    {
-        s_com_tail->p_next = com;
-        s_com_tail = com;
-    }
+    section_list_push_back(&comm_command_list, p_item);
 }
 
-static void comm_route_insert(comm_route_t *route)
+static void comm_route_insert(section_item_t *p_item)
 {
-    if (!route)
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    {
         return;
+    }
 
-    route->p_next = NULL;
-    if (!p_comm_route_first)
-    {
-        p_comm_route_first = route;
-        s_route_tail = route;
-    }
-    else
-    {
-        s_route_tail->p_next = route;
-        s_route_tail = route;
-    }
+    section_list_push_back(&comm_route_list, p_item);
 }
 
 static void comm_init(void)
 {
     /* 允许重复调用：清空锚点避免链表串接 */
-    p_com_first = NULL;
-    p_comm_route_first = NULL;
-    s_com_tail = NULL;
-    s_route_tail = NULL;
+    section_list_init(&comm_command_list);
+    section_list_init(&comm_route_list);
 
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
          p < (reg_section_t *)&SECTION_STOP;
@@ -101,10 +82,10 @@ static void comm_init(void)
         switch (p->section_type)
         {
         case SECTION_COMM:
-            comm_insert((section_com_t *)p->p_str);
+            comm_insert((section_item_t *)p->p_str);
             break;
         case SECTION_COMM_ROUTE:
-            comm_route_insert((comm_route_t *)p->p_str);
+            comm_route_insert((section_item_t *)p->p_str);
             break;
         default:
             break;
@@ -185,24 +166,21 @@ uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in)
 
 static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    section_com_t *p = p_com_first;
-    section_com_t *p_last = NULL;
+    section_item_t *p_item = comm_command_list.p_next;
 
-    while (p)
+    while (p_item != NULL)
     {
+        section_com_t *p = (section_com_t *)p_item->p_obj;
         if ((p->cmd_set == cmd_set) && (p->cmd_word == cmd_word))
         {
-            if (p_last)
+            if (p_item != comm_command_list.p_next)
             {
                 /* move-to-front：减少后续查找成本 */
-                p_last->p_next = p->p_next;
-                p->p_next = p_com_first;
-                p_com_first = p;
+                section_list_move_to_front(&comm_command_list, p_item);
             }
             return p->func;
         }
-        p_last = p;
-        p = p->p_next;
+        p_item = p_item->p_next;
     }
     return NULL;
 }
@@ -214,10 +192,12 @@ static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packfor
 
 static const section_link_t *find_link_by_id(uint8_t link_id)
 {
-    const section_link_t *p = section_link_first_get();
+    const section_item_t *p_list = &link_list;
+    section_item_t *p_item = NULL;
 
-    for (; p != NULL; p = p->p_next)
+    SECTION_LIST_FOR_EACH(p_item, p_list)
     {
+        const section_link_t *p = (const section_link_t *)p_item->p_obj;
         if (p->link_id == link_id)
         {
             return p;
@@ -232,8 +212,9 @@ static void comm_route_run(comm_ctx_t *ctx)
     if (!ctx)
         return;
 
-    for (comm_route_t *r = p_comm_route_first; r; r = r->p_next)
+    for (section_item_t *p_item = comm_route_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        comm_route_t *r = (comm_route_t *)p_item->p_obj;
         if ((ctx->link_id == r->src_link_id) && (ctx->pack.dst == r->dst_addr))
         {
             const section_link_t *dst_link = find_link_by_id(r->dst_link_id);

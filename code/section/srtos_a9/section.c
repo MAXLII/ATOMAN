@@ -36,12 +36,187 @@
 
 #define TASK_A9_CPSR_IRQ_MASK 0x00000080u
 
-static reg_task_t *p_task_first = NULL;
-static reg_task_t *p_task_tail = NULL;
-static reg_interrupt_t *p_interrupt_first = NULL;
-static section_link_t *p_link_first = NULL;
-static section_link_t *p_link_tail = NULL;
-static reg_init_t *p_init_first = NULL;
+section_item_t task_list;
+section_item_t interrupt_list;
+section_item_t link_list;
+section_item_t init_list;
+
+REG_DBG_LIST(init, init_list)
+REG_DBG_LIST(task, task_list)
+REG_DBG_LIST(interrupt, interrupt_list)
+REG_DBG_LIST(link, link_list)
+static uint8_t section_list_contains(const section_item_t *p_head,
+                                     const section_item_t *p_item)
+{
+    const section_item_t *p_cursor = NULL;
+
+    if ((p_head == NULL) || (p_item == NULL))
+    {
+        return 0u;
+    }
+
+    for (p_cursor = p_head->p_next; p_cursor != NULL; p_cursor = p_cursor->p_next)
+    {
+        if (p_cursor == p_item)
+        {
+            return 1u;
+        }
+    }
+
+    return 0u;
+}
+
+void section_list_init(section_item_t *p_head)
+{
+    if (p_head == NULL)
+    {
+        return;
+    }
+
+    p_head->p_obj = NULL;
+    p_head->p_next = NULL;
+}
+
+uint32_t section_list_count(const section_item_t *p_head)
+{
+    const section_item_t *p_cursor = NULL;
+    uint32_t count = 0u;
+
+    if (p_head == NULL)
+    {
+        return 0u;
+    }
+
+    for (p_cursor = p_head->p_next;
+         (p_cursor != NULL) && (count < UINT32_MAX);
+         p_cursor = p_cursor->p_next)
+    {
+        count++;
+    }
+    return count;
+}
+
+void section_list_push_front(section_item_t *p_head, section_item_t *p_item)
+{
+    if ((p_head == NULL) || (p_item == NULL) ||
+        (section_list_contains(p_head, p_item) == 1u))
+    {
+        return;
+    }
+
+    p_item->p_next = p_head->p_next;
+    p_head->p_next = p_item;
+}
+
+void section_list_push_back(section_item_t *p_head, section_item_t *p_item)
+{
+    section_item_t *p_tail = NULL;
+
+    if ((p_head == NULL) || (p_item == NULL) ||
+        (section_list_contains(p_head, p_item) == 1u))
+    {
+        return;
+    }
+
+    p_item->p_next = NULL;
+    p_tail = p_head;
+    while (p_tail->p_next != NULL)
+    {
+        p_tail = p_tail->p_next;
+    }
+    p_tail->p_next = p_item;
+}
+
+void section_list_insert_after(section_item_t *p_head,
+                               section_item_t *p_prev,
+                               section_item_t *p_item)
+{
+    if ((p_head == NULL) || (p_item == NULL) ||
+        (section_list_contains(p_head, p_item) == 1u))
+    {
+        return;
+    }
+
+    if (p_prev == NULL)
+    {
+        section_list_push_front(p_head, p_item);
+        return;
+    }
+
+    if (section_list_contains(p_head, p_prev) == 0u)
+    {
+        return;
+    }
+
+    p_item->p_next = p_prev->p_next;
+    p_prev->p_next = p_item;
+}
+
+static void section_list_remove(section_item_t *p_head, section_item_t *p_item)
+{
+    section_item_t *p_prev = NULL;
+    section_item_t *p_cursor = NULL;
+
+    if ((p_head == NULL) || (p_item == NULL))
+    {
+        return;
+    }
+
+    p_prev = p_head;
+    for (p_cursor = p_head->p_next; p_cursor != NULL; p_cursor = p_cursor->p_next)
+    {
+        if (p_cursor == p_item)
+        {
+            break;
+        }
+        p_prev = p_cursor;
+    }
+
+    if (p_cursor == NULL)
+    {
+        return;
+    }
+
+    p_prev->p_next = p_cursor->p_next;
+    p_cursor->p_next = NULL;
+}
+
+void section_list_move_to_front(section_item_t *p_head, section_item_t *p_item)
+{
+    if ((p_head == NULL) || (p_item == NULL) || (p_head->p_next == p_item))
+    {
+        return;
+    }
+
+    if (section_list_contains(p_head, p_item) == 0u)
+    {
+        return;
+    }
+
+    section_list_remove(p_head, p_item);
+    section_list_push_front(p_head, p_item);
+}
+
+section_item_t *section_list_at(const section_item_t *p_head, uint32_t index)
+{
+    section_item_t *p_item = NULL;
+    uint32_t current_index = 0u;
+
+    if (p_head == NULL)
+    {
+        return NULL;
+    }
+
+    p_item = p_head->p_next;
+    while ((p_item != NULL) && (current_index < index))
+    {
+        p_item = p_item->p_next;
+        current_index++;
+    }
+
+    return p_item;
+}
+
 static volatile uint8_t task_scheduler_ready = 0u;
 volatile section_fault_debug_t g_section_fault_debug;
 volatile section_critical_race_debug_t g_section_critical_race_debug;
@@ -1355,109 +1530,100 @@ static void section_critical_exit(uint32_t saved_cpsr)
     a9_section_port_irq_restore(saved_cpsr);
 }
 
-static void task_insert(reg_task_t *task)
+static void task_insert(section_item_t *p_item)
 {
-    if (task == NULL)
+    reg_task_t *p_task = NULL;
+
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    task->time_last = SECTION_SYS_TICK;
-    task->p_next = NULL;
-    task->p_ready_next = NULL;
-    task->is_ready = 0u;
-    task->is_running = 0u;
-    srtos_task_insert_init(task);
-    SECTION_TASK_PERF_PERIOD_SET(task);
-
-    if (p_task_first == NULL)
-    {
-        p_task_first = task;
-        p_task_tail = task;
-    }
-    else
-    {
-        p_task_tail->p_next = task;
-        p_task_tail = task;
-    }
+    p_task = (reg_task_t *)p_item->p_obj;
+    p_task->time_last = SECTION_SYS_TICK;
+    p_task->p_ready_next = NULL;
+    p_task->is_ready = 0u;
+    p_task->is_running = 0u;
+    srtos_task_insert_init(p_task);
+    SECTION_TASK_PERF_PERIOD_SET(p_task);
+    section_list_push_back(&task_list, p_item);
 }
 
-static void interrupt_insert(reg_interrupt_t *intr)
+static void interrupt_insert(section_item_t *p_item)
 {
-    if (intr == NULL)
+    reg_interrupt_t *p_interrupt = NULL;
+    section_item_t *p_prev = NULL;
+
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    intr->p_next = NULL;
+    p_interrupt = (reg_interrupt_t *)p_item->p_obj;
 
-    if ((p_interrupt_first == NULL) || (intr->priority < p_interrupt_first->priority))
+    if ((interrupt_list.p_next == NULL) ||
+        (p_interrupt->priority < ((reg_interrupt_t *)interrupt_list.p_next->p_obj)->priority))
     {
-        intr->p_next = p_interrupt_first;
-        p_interrupt_first = intr;
+        section_list_push_front(&interrupt_list, p_item);
     }
     else
     {
-        reg_interrupt_t *prev = p_interrupt_first;
-        while ((prev->p_next != NULL) && (prev->p_next->priority < intr->priority))
+        p_prev = interrupt_list.p_next;
+        while ((p_prev->p_next != NULL) &&
+               (((reg_interrupt_t *)p_prev->p_next->p_obj)->priority < p_interrupt->priority))
         {
-            prev = prev->p_next;
+            p_prev = p_prev->p_next;
         }
-        intr->p_next = prev->p_next;
-        prev->p_next = intr;
+        section_list_insert_after(&interrupt_list, p_prev, p_item);
     }
 }
 
-static void link_insert(section_link_t *link)
+static void link_insert(section_item_t *p_item)
 {
-    if (link == NULL)
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    link->p_next = NULL;
-
-    if (p_link_first == NULL)
-    {
-        p_link_first = link;
-        p_link_tail = link;
-    }
-    else
-    {
-        p_link_tail->p_next = link;
-        p_link_tail = link;
-    }
+    section_list_push_back(&link_list, p_item);
 }
 
-static void init_insert(reg_init_t *init)
+static void init_insert(section_item_t *p_item)
 {
-    if (init == NULL)
+    reg_init_t *p_init = NULL;
+    section_item_t *p_prev = NULL;
+
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    init->p_next = NULL;
+    p_init = (reg_init_t *)p_item->p_obj;
 
-    if ((p_init_first == NULL) || (init->priority < p_init_first->priority))
+    if ((init_list.p_next == NULL) ||
+        (p_init->priority < ((reg_init_t *)init_list.p_next->p_obj)->priority))
     {
-        init->p_next = p_init_first;
-        p_init_first = init;
+        section_list_push_front(&init_list, p_item);
     }
     else
     {
-        reg_init_t *prev = p_init_first;
-        while ((prev->p_next != NULL) && (prev->p_next->priority <= init->priority))
+        p_prev = init_list.p_next;
+        while ((p_prev->p_next != NULL) &&
+               (((reg_init_t *)p_prev->p_next->p_obj)->priority <= p_init->priority))
         {
-            prev = prev->p_next;
+            p_prev = p_prev->p_next;
         }
-        init->p_next = prev->p_next;
-        prev->p_next = init;
+        section_list_insert_after(&init_list, p_prev, p_item);
     }
 }
 
 void section_init(void)
 {
     section_runtime_reset();
+    section_list_init(&init_list);
+    section_list_init(&task_list);
+    section_list_init(&interrupt_list);
+    section_list_init(&link_list);
 
     for (const reg_section_t *p_entry = SECTION_REG_FIRST;
          p_entry < SECTION_REG_LAST;
@@ -1466,24 +1632,25 @@ void section_init(void)
         switch (p_entry->section_type)
         {
         case SECTION_INIT:
-            init_insert((reg_init_t *)p_entry->p_str);
+            init_insert((section_item_t *)p_entry->p_str);
             break;
         case SECTION_TASK:
-            task_insert((reg_task_t *)p_entry->p_str);
+            task_insert((section_item_t *)p_entry->p_str);
             break;
         case SECTION_INTERRUPT:
-            interrupt_insert((reg_interrupt_t *)p_entry->p_str);
+            interrupt_insert((section_item_t *)p_entry->p_str);
             break;
         case SECTION_LINK:
-            link_insert((section_link_t *)p_entry->p_str);
+            link_insert((section_item_t *)p_entry->p_str);
             break;
         default:
             break;
         }
     }
 
-    for (reg_init_t *p_init = p_init_first; p_init != NULL; p_init = p_init->p_next)
+    for (section_item_t *p_item = init_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        reg_init_t *p_init = (reg_init_t *)p_item->p_obj;
         if (p_init->p_func != NULL)
         {
             p_init->p_func();
@@ -1497,18 +1664,11 @@ void section_runtime_reset(void)
 {
     task_scheduler_ready = 0u;
     (void)memset((void *)&g_section_critical_race_debug, 0, sizeof(g_section_critical_race_debug));
-    p_task_first = NULL;
-    p_task_tail = NULL;
+    section_list_init(&task_list);
     srtos_task_runtime_reset();
-    p_interrupt_first = NULL;
-    p_link_first = NULL;
-    p_link_tail = NULL;
-    p_init_first = NULL;
-}
-
-const section_link_t *section_link_first_get(void)
-{
-    return p_link_first;
+    section_list_init(&interrupt_list);
+    section_list_init(&link_list);
+    section_list_init(&init_list);
 }
 
 static void task_activate_if_due(reg_task_t *task, uint32_t now)
@@ -1543,9 +1703,9 @@ void section_task_tick(void)
         return;
     }
 
-    for (reg_task_t *task = p_task_first; task != NULL; task = task->p_next)
+    for (section_item_t *p_item = task_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
-        task_activate_if_due(task, now);
+        task_activate_if_due((reg_task_t *)p_item->p_obj, now);
     }
 }
 
@@ -1556,8 +1716,9 @@ void run_task(void)
 
 void FUNC_RAM section_interrupt(void)
 {
-    for (reg_interrupt_t *p = p_interrupt_first; p != NULL; p = p->p_next)
+    for (section_item_t *p_item = interrupt_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        reg_interrupt_t *p = (reg_interrupt_t *)p_item->p_obj;
         if (p->p_func == NULL)
         {
             continue;
@@ -1591,9 +1752,9 @@ static void link_process(section_link_t *link)
 
 static void section_link_task(void)
 {
-    for (section_link_t *p = p_link_first; p != NULL; p = p->p_next)
+    for (section_item_t *p_item = link_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
-        link_process(p);
+        link_process((section_link_t *)p_item->p_obj);
     }
 }
 
