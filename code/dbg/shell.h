@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    shell.h
- * @brief   Shell core public interface.
+ * @brief   Shell Section adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define shell variable types, command descriptors, variable descriptors, and runtime context
- *          - Provide REG_SHELL_CMD and REG_SHELL_VAR registration macros for section-based discovery
- *          - Expose shell parser, registry lookup, item print, and metadata access APIs
+ *          - Preserve the existing Shell registration and runtime APIs
+ *          - Register Shell descriptors in SECTION_SHELL
+ *          - Adapt the Section-owned list to the pure shell_core interface
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - ISR-safe path should be explicitly documented
- *          - Hardware access should be abstracted through HAL / BSP
+ *          - Linker-section access is implemented only by shell.c
+ *          - Protocol handling belongs to shell_service.c
  *
  * @author  Max.Li
- * @date    2026-05-01
- * @version 1.0.0
+ * @date    2026-08-02
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -29,163 +29,48 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include "section.h"
+#include "shell_core.h"
 
-/**
- * @brief Define this macro to enable string expression parsing and variable writing.
- *
- * When defined, the shell supports:
- * - Value assignment to variables (e.g., "gain:3.5")
- * - Arithmetic expressions (e.g., "1+2*3")
- * - Hex/binary literals (0x1A, 0b1010)
- * - Status flag parsing (-s N)
- *
- * When not defined, the shell is read-only: variables can be printed but not written.
- */
-#define SHELL_STRING_ENABLE 1u
+typedef shell_core_item_t section_shell_t;
 
-#if ((SHELL_STRING_ENABLE != 0u) && (SHELL_STRING_ENABLE != 1u))
-#error "SHELL_STRING_ENABLE must be 0 or 1."
-#endif
-
-/* Shell: input parsing context (used by shell_run only)
- *
- * - shell_ctx_t is the private per-link, per-handler context for shell_run.
- * - The link layer passes ctx as void* transparently and does not inspect it.
- */
-typedef struct
-{
-    uint8_t shell_buffer[128];
-    uint8_t shell_index;
-} shell_ctx_t;
-
-/**
- * @brief Declare a shell ctx in one line inside a business module.
- * @note The ctx is typically bound as the handler_arr / shell_run ctx.
- */
-#define DECLARE_SHELL_CTX(name) \
-    static shell_ctx_t name = {0}
-
-/* Shell: variable / command registration
- *
- * Items are placed in the SECTION_SHELL linker section.
- * At runtime shell_init() scans the section and inserts each wrapper
- * into the shared shell list container.
- */
-
-typedef enum
-{
-    SHELL_INT8 = 0,
-    SHELL_UINT8,
-    SHELL_INT16,
-    SHELL_UINT16,
-    SHELL_INT32,
-    SHELL_UINT32,
-    SHELL_FP32,
-    SHELL_CMD,
-} SHELL_TYPE_E;
-
-#define SHELL_STR_SIZE_MAX 40u
-
-#define SHELL_STA_NULL (0u)
-#define SHELL_STA_AUTO (1u << 2)
-
-/**
- * @brief Shell registration entry (command or variable).
- *
- * - shell_init() inserts all SECTION_SHELL wrapper items into the runtime
- *   list container.
- * - shell_run() traverses this list to match and dispatch commands, and to
- *   read / write variables.
- *
- * The DEC_MY_PRINTF field is optional: implementations may use it to cache
- * or forward the transport output interface, but it is not mandatory.
- */
-typedef struct section_shell_t
-{
-    const char *p_name;
-    uint32_t p_name_size;
-
-    void *p_var;                 ///< Variable address (NULL for commands).
-    uint32_t type;               ///< SHELL_TYPE_E.
-    void *p_max;                 ///< Upper-limit pointer (optional).
-    void *p_min;                 ///< Lower-limit pointer (optional).
-    void (*func)(DEC_MY_PRINTF); ///< Callback (command exec, variable-changed notification, etc.).
-    uint32_t status;
-
-    DEC_MY_PRINTF; ///< Optional: cached / forwarded output interface at runtime.
-} section_shell_t;
-
-/**
- * @brief Variable clamping macro.
- */
-#define SHELL_UP_DN_LMT(var, p_up_lmt, p_dn_lmt)         \
-    do                                                   \
-    {                                                    \
-        if ((var) > *(__typeof__(var) *)(p_up_lmt))      \
-        {                                                \
-            (var) = *(__typeof__(var) *)(p_up_lmt);      \
-        }                                                \
-        else if ((var) < *(__typeof__(var) *)(p_dn_lmt)) \
-        {                                                \
-            (var) = *(__typeof__(var) *)(p_dn_lmt);      \
-        }                                                \
-    } while (0)
-
-/**
- * @brief Register a Shell variable.
- *
- * @param _name   Variable name (converted to a string as the shell command name).
- * @param _var    Variable instance.
- * @param _type   SHELL_TYPE_E.
- * @param _max    Maximum value (literal or same-type value).
- * @param _min    Minimum value (literal or same-type value).
- * @param _func   Optional callback (triggered after the variable is written).
- * @param _status Status bits (e.g. SHELL_STA_AUTO).
- */
 #define REG_SHELL_VAR(_name, _var, _type, _max, _min, _func, _status)                       \
     static __typeof__(_var) _name##_##max = (__typeof__(_var))(_max);                       \
     static __typeof__(_var) _name##_##min = (__typeof__(_var))(_min);                       \
     section_shell_t section_shell_##_name = {                                               \
         .p_name = #_name,                                                                   \
-        .p_name_size = (uint32_t)(sizeof(#_name) - 1),                                      \
+        .p_name_size = (uint32_t)(sizeof(#_name) - 1u),                                     \
         .p_var = (void *)&(_var),                                                           \
         .type = (uint32_t)(_type),                                                          \
         .p_max = (void *)&_name##_##max,                                                    \
         .p_min = (void *)&_name##_##min,                                                    \
-        .func = (_func),                                                                    \
+        .func = (shell_core_func_t)(_func),                                                 \
         .status = (uint32_t)(_status),                                                      \
+        .my_printf = NULL,                                                                  \
     };                                                                                      \
-    _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
+    _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1u), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 
-/**
- * @brief Register a Shell command.
- */
 #define REG_SHELL_CMD(_name, _func)                                                         \
     section_shell_t section_shell_##_name = {                                               \
         .p_name = #_name,                                                                   \
-        .p_name_size = (uint32_t)(sizeof(#_name) - 1),                                      \
+        .p_name_size = (uint32_t)(sizeof(#_name) - 1u),                                     \
         .p_var = NULL,                                                                      \
         .type = (uint32_t)SHELL_CMD,                                                        \
-        .func = (_func),                                                                    \
-        .status = 0,                                                                        \
+        .p_max = NULL,                                                                      \
+        .p_min = NULL,                                                                      \
+        .func = (shell_core_func_t)(_func),                                                 \
+        .status = 0u,                                                                       \
+        .my_printf = NULL,                                                                  \
     };                                                                                      \
-    _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
+    _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1u), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
 
-/* Shell: handler interface (for LINK dispatch)
- *
- * ctx convention: ctx points to a shell_ctx_t created by DECLARE_SHELL_CTX.
- */
-void shell_init(void);
-void shell_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
-
 extern section_item_t *p_shell_first;
-void shell_item_print(section_shell_t *p, DEC_MY_PRINTF);
+
+void shell_init(void);
+void shell_run(uint8_t data, DEC_MY_PRINTF, void *p_ctx);
+void shell_item_print(section_shell_t *p_item, DEC_MY_PRINTF);
 uint32_t shell_count_get(void);
 section_shell_t *shell_find(const char *p_name, uint8_t len);
 

@@ -6,7 +6,7 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Build the SFRA list from SECTION_SFRA entries at init
+ *          - Consume SFRA registrations supplied by the Section adapter
  *          - Translate SFRA protocol commands into core sfra_t operations
  *          - Poll registered SFRA instances and actively report new points and sweep completion
  *
@@ -16,8 +16,8 @@
  *          - Hardware access should be abstracted through HAL / BSP
  *
  * @author  Max.Li
- * @date    2026-05-12
- * @version 1.0.0
+ * @date    2026-08-02
+ * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
  * All rights reserved.
@@ -47,10 +47,6 @@
 #define SFRA_SERVICE_NOINLINE
 #endif
 
-section_item_t *p_sfra_first = NULL;
-static section_item_t *p_sfra_tail = NULL;
-REG_DBG_LIST(sfra, p_sfra_first)
-
 static uint8_t g_sfra_service_count = 0u;
 
 typedef struct
@@ -74,40 +70,25 @@ static sfra_report_ctx_t s_sfra_report_ctx = {0};
 
 void sfra_service_init(void)
 {
-    uint8_t id = 0u;
+    section_item_t *p_item = p_sfra_first;
 
-    p_sfra_first = NULL;
-    p_sfra_tail = NULL;
     g_sfra_service_count = 0u;
-
-    for (reg_section_t *p = (reg_section_t *)&SECTION_START;
-         p < (reg_section_t *)&SECTION_STOP;
-         ++p)
+    while (p_item != NULL)
     {
-        if (p->section_type == SECTION_SFRA)
+        sfra_registration_t *p_registration = (sfra_registration_t *)p_item->p_obj;
+
+        if ((p_registration != NULL) && (p_registration->p_sfra != NULL))
         {
-            section_item_t *p_item = (section_item_t *)p->p_str;
-            sfra_t *s = (sfra_t *)p_item->p_obj;
-            s->sfra_id = id++;
-            s->data_ready = 0u;
-            s->done_reported = 0u;
-            s->result_count = 0u;
-            if (s->sweep_tag == 0u)
+            p_registration->data_ready = 0u;
+            p_registration->done_reported = 0u;
+            p_registration->result_count = 0u;
+            if (p_registration->sweep_tag == 0u)
             {
-                s->sweep_tag = 1u;
+                p_registration->sweep_tag = 1u;
             }
-            p_item->p_next = NULL;
-            if (p_sfra_first == NULL)
-            {
-                p_sfra_first = p_item;
-            }
-            else
-            {
-                p_sfra_tail->p_next = p_item;
-            }
-            p_sfra_tail = p_item;
             g_sfra_service_count++;
         }
+        p_item = p_item->p_next;
     }
 }
 
@@ -206,16 +187,16 @@ static void sfra_service_send_report(uint8_t cmd_word, uint8_t *p_data, uint16_t
     comm_send_data(&packform, s_sfra_report_ctx.my_printf);
 }
 
-static SFRA_SERVICE_NOINLINE sfra_t *sfra_service_find_by_id(uint8_t sfra_id)
+static SFRA_SERVICE_NOINLINE sfra_registration_t *sfra_service_find_by_id(uint8_t sfra_id)
 {
     section_item_t *p_item = p_sfra_first;
 
     while (p_item != NULL)
     {
-        sfra_t *s = (sfra_t *)p_item->p_obj;
-        if (s->sfra_id == sfra_id)
+        sfra_registration_t *p_registration = (sfra_registration_t *)p_item->p_obj;
+        if ((p_registration != NULL) && (p_registration->sfra_id == sfra_id))
         {
-            return s;
+            return p_registration;
         }
         p_item = p_item->p_next;
     }
@@ -236,20 +217,20 @@ static SFRA_SERVICE_NOINLINE uint8_t sfra_service_is_busy(const sfra_t *sfra)
                       (sfra->task.state != SFRA_STATE_DONE)));
 }
 
-static SFRA_SERVICE_NOINLINE void sfra_service_sweep_tag_inc(sfra_t *sfra)
+static SFRA_SERVICE_NOINLINE void sfra_service_sweep_tag_inc(sfra_registration_t *p_registration)
 {
-    if (sfra == NULL)
+    if (p_registration == NULL)
     {
         return;
     }
 
-    ++sfra->sweep_tag;
-    if (sfra->sweep_tag == 0u)
+    ++p_registration->sweep_tag;
+    if (p_registration->sweep_tag == 0u)
     {
-        ++sfra->sweep_tag;
+        ++p_registration->sweep_tag;
     }
-    sfra->done_reported = 0u;
-    sfra->result_count = 0u;
+    p_registration->done_reported = 0u;
+    p_registration->result_count = 0u;
 }
 
 static SFRA_SERVICE_NOINLINE uint8_t sfra_service_core_status_to_tool(sfra_status_t status)
@@ -269,7 +250,7 @@ static SFRA_SERVICE_NOINLINE uint8_t sfra_service_core_status_to_tool(sfra_statu
 }
 
 static SFRA_SERVICE_NOINLINE void sfra_service_fill_ctrl_ack(sfra_ctrl_ack_t *p_ack,
-                                                             sfra_t *sfra,
+                                                             sfra_registration_t *p_registration,
                                                              uint8_t sfra_id,
                                                              uint8_t status)
 {
@@ -281,23 +262,24 @@ static SFRA_SERVICE_NOINLINE void sfra_service_fill_ctrl_ack(sfra_ctrl_ack_t *p_
     (void)memset(p_ack, 0, sizeof(*p_ack));
     p_ack->sfra_id = sfra_id;
     p_ack->status = status;
-    if (sfra == NULL)
+    if (p_registration == NULL)
     {
         return;
     }
 
+    sfra_t *sfra = p_registration->p_sfra;
     p_ack->state = (uint8_t)sfra->task.state;
     p_ack->busy = sfra_service_is_busy(sfra);
     p_ack->done = sfra->task.done;
-    p_ack->data_ready = sfra->data_ready;
+    p_ack->data_ready = p_registration->data_ready;
     p_ack->freq_index = sfra->task.freq_index;
     p_ack->freq_length = sfra->cfg.freq_length;
-    p_ack->table_length = sfra->result_count;
-    p_ack->sweep_tag = sfra->sweep_tag;
+    p_ack->table_length = p_registration->result_count;
+    p_ack->sweep_tag = p_registration->sweep_tag;
 }
 
 static void sfra_service_fill_info_ack(sfra_info_ack_t *p_ack,
-                                       sfra_t *sfra,
+                                       sfra_registration_t *p_registration,
                                        uint8_t sfra_id,
                                        uint8_t status)
 {
@@ -309,20 +291,21 @@ static void sfra_service_fill_info_ack(sfra_info_ack_t *p_ack,
     (void)memset(p_ack, 0, sizeof(*p_ack));
     p_ack->sfra_id = sfra_id;
     p_ack->status = status;
-    if (sfra == NULL)
+    if (p_registration == NULL)
     {
         return;
     }
 
+    sfra_t *sfra = p_registration->p_sfra;
     p_ack->state = (uint8_t)sfra->task.state;
     p_ack->busy = sfra_service_is_busy(sfra);
     p_ack->done = sfra->task.done;
-    p_ack->data_ready = sfra->data_ready;
+    p_ack->data_ready = p_registration->data_ready;
     p_ack->freq_index = sfra->task.freq_index;
     p_ack->freq_length = sfra->cfg.freq_length;
-    p_ack->table_length = sfra->result_count;
+    p_ack->table_length = p_registration->result_count;
     p_ack->inject_delay_tick = sfra->cfg.inject_delay_tick;
-    p_ack->sweep_tag = sfra->sweep_tag;
+    p_ack->sweep_tag = p_registration->sweep_tag;
     p_ack->current_freq_hz = sfra->output.current_freq_hz;
     p_ack->isr_freq_hz = sfra->cfg.isr_freq_hz;
     p_ack->freq_start_hz = sfra->cfg.freq_start_hz;
@@ -333,7 +316,7 @@ static void sfra_service_fill_info_ack(sfra_info_ack_t *p_ack,
 }
 
 static void sfra_service_fill_point_ack(sfra_point_ack_t *p_ack,
-                                        sfra_t *sfra,
+                                        sfra_registration_t *p_registration,
                                         uint16_t point_index,
                                         uint8_t status)
 {
@@ -345,36 +328,38 @@ static void sfra_service_fill_point_ack(sfra_point_ack_t *p_ack,
     (void)memset(p_ack, 0, sizeof(*p_ack));
     p_ack->status = status;
     p_ack->point_index = point_index;
-    if (sfra == NULL)
+    if (p_registration == NULL)
     {
         p_ack->sfra_id = 0xFFu;
         return;
     }
 
-    p_ack->sfra_id = sfra->sfra_id;
+    sfra_t *sfra = p_registration->p_sfra;
+    p_ack->sfra_id = p_registration->sfra_id;
     p_ack->point_count = sfra->cfg.freq_length;
-    p_ack->sweep_tag = sfra->sweep_tag;
+    p_ack->sweep_tag = p_registration->sweep_tag;
     p_ack->is_last = (uint8_t)((point_index + 1u) >= sfra->cfg.freq_length);
 
     if ((status == (uint8_t)SFRA_TOOL_STATUS_OK) &&
-        (point_index < sfra->result_count) &&
+        (point_index < p_registration->result_count) &&
         (point_index < SFRA_FREQ_TABLE_SIZE) &&
-        (sfra->result_cache[point_index].sweep_tag == sfra->sweep_tag))
+        (p_registration->result_cache[point_index].sweep_tag == p_registration->sweep_tag))
     {
-        p_ack->freq_hz = sfra->result_cache[point_index].freq_hz;
-        p_ack->magnitude = sfra->result_cache[point_index].magnitude;
-        p_ack->phase_deg = sfra->result_cache[point_index].phase_deg;
+        p_ack->freq_hz = p_registration->result_cache[point_index].freq_hz;
+        p_ack->magnitude = p_registration->result_cache[point_index].magnitude;
+        p_ack->phase_deg = p_registration->result_cache[point_index].phase_deg;
     }
 }
 
-static void sfra_service_cache_current_point(sfra_t *sfra)
+static void sfra_service_cache_current_point(sfra_registration_t *p_registration)
 {
     uint16_t point_index;
-    if (sfra == NULL)
+    if (p_registration == NULL)
     {
         return;
     }
 
+    sfra_t *sfra = p_registration->p_sfra;
     point_index = sfra->output.point_index;
     if ((point_index >= sfra->cfg.freq_length) ||
         (point_index >= SFRA_FREQ_TABLE_SIZE))
@@ -382,15 +367,15 @@ static void sfra_service_cache_current_point(sfra_t *sfra)
         return;
     }
 
-    sfra->result_cache[point_index].sweep_tag = sfra->sweep_tag;
-    sfra->result_cache[point_index].point_index = point_index;
-    sfra->result_cache[point_index].freq_hz = sfra->output.current_freq_hz;
-    sfra->result_cache[point_index].magnitude = sfra->output.mag;
-    sfra->result_cache[point_index].phase_deg = sfra->output.phase;
+    p_registration->result_cache[point_index].sweep_tag = p_registration->sweep_tag;
+    p_registration->result_cache[point_index].point_index = point_index;
+    p_registration->result_cache[point_index].freq_hz = sfra->output.current_freq_hz;
+    p_registration->result_cache[point_index].magnitude = sfra->output.mag;
+    p_registration->result_cache[point_index].phase_deg = sfra->output.phase;
 
-    if (sfra->result_count < (point_index + 1u))
+    if (p_registration->result_count < (point_index + 1u))
     {
-        sfra->result_count = (uint16_t)(point_index + 1u);
+        p_registration->result_count = (uint16_t)(point_index + 1u);
     }
 }
 
@@ -414,15 +399,16 @@ static void sfra_service_poll_task(void)
 
     while (p_item != NULL)
     {
-        sfra_t *s = (sfra_t *)p_item->p_obj;
+        sfra_registration_t *p_registration = (sfra_registration_t *)p_item->p_obj;
+        sfra_t *s = p_registration->p_sfra;
         if (s->output.point_done != 0u)
         {
             sfra_point_report_t report;
 
-            s->data_ready = 1u;
-            sfra_service_cache_current_point(s);
+            p_registration->data_ready = 1u;
+            sfra_service_cache_current_point(p_registration);
             sfra_service_fill_point_ack(&report,
-                                        s,
+                                        p_registration,
                                         s->output.point_index,
                                         (uint8_t)SFRA_TOOL_STATUS_OK);
             sfra_service_send_report(CMD_WORD_SFRA_POINT_REPORT,
@@ -431,13 +417,16 @@ static void sfra_service_poll_task(void)
             s->output.point_done = 0u;
         }
 
-        if ((s->done_reported == 0u) && (s->task.done != 0u))
+        if ((p_registration->done_reported == 0u) && (s->task.done != 0u))
         {
             sfra_ctrl_ack_t report;
 
-            s->data_ready = 1u;
-            s->done_reported = 1u;
-            sfra_service_fill_ctrl_ack(&report, s, s->sfra_id, (uint8_t)SFRA_TOOL_STATUS_OK);
+            p_registration->data_ready = 1u;
+            p_registration->done_reported = 1u;
+            sfra_service_fill_ctrl_ack(&report,
+                                       p_registration,
+                                       p_registration->sfra_id,
+                                       (uint8_t)SFRA_TOOL_STATUS_OK);
             sfra_service_send_report(CMD_WORD_SFRA_DONE_REPORT,
                                      (uint8_t *)&report,
                                      (uint16_t)sizeof(report));
@@ -466,19 +455,19 @@ static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     while (p_item != NULL)
     {
-        sfra_t *s = (sfra_t *)p_item->p_obj;
-        uint8_t name_len = sfra_service_strnlen(s->p_name, SFRA_SERVICE_NAME_LEN_MAX);
+        sfra_registration_t *p_registration = (sfra_registration_t *)p_item->p_obj;
+        uint8_t name_len = sfra_service_strnlen(p_registration->p_name, SFRA_SERVICE_NAME_LEN_MAX);
         uint8_t payload[sizeof(sfra_list_item_t) + SFRA_SERVICE_NAME_LEN_MAX];
         sfra_list_item_t item = {0};
 
-        item.sfra_id = s->sfra_id;
+        item.sfra_id = p_registration->sfra_id;
         item.is_last = (uint8_t)((index + 1u) >= g_sfra_service_count);
         item.name_len = name_len;
 
         (void)memcpy(payload, &item, sizeof(item));
         if (name_len > 0u)
         {
-            (void)memcpy(&payload[sizeof(item)], s->p_name, name_len);
+            (void)memcpy(&payload[sizeof(item)], p_registration->p_name, name_len);
         }
 
         sfra_service_reply(p_pack,
@@ -497,7 +486,7 @@ static void sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     sfra_info_query_t query;
     sfra_info_ack_t ack;
-    sfra_t *s;
+    sfra_registration_t *p_registration;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
@@ -506,12 +495,12 @@ static void sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     sfra_service_capture_route(p_pack, my_printf);
     sfra_service_copy_payload(&query, (uint16_t)sizeof(query), p_pack);
-    s = sfra_service_find_by_id(query.sfra_id);
+    p_registration = sfra_service_find_by_id(query.sfra_id);
     sfra_service_fill_info_ack(&ack,
-                               s,
+                               p_registration,
                                query.sfra_id,
-                               (s == NULL) ? (uint8_t)SFRA_TOOL_STATUS_SFRA_ID_INVALID
-                                           : (uint8_t)SFRA_TOOL_STATUS_OK);
+                               (p_registration == NULL) ? (uint8_t)SFRA_TOOL_STATUS_SFRA_ID_INVALID
+                                                        : (uint8_t)SFRA_TOOL_STATUS_OK);
     sfra_service_reply(p_pack,
                        my_printf,
                        CMD_WORD_SFRA_INFO_QUERY,
@@ -524,6 +513,7 @@ static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     sfra_cfg_set_t cfg;
     sfra_ctrl_ack_t ack;
+    sfra_registration_t *p_registration;
     sfra_t *s;
     uint8_t status = (uint8_t)SFRA_TOOL_STATUS_OK;
 
@@ -534,13 +524,14 @@ static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     sfra_service_capture_route(p_pack, my_printf);
     sfra_service_copy_payload(&cfg, (uint16_t)sizeof(cfg), p_pack);
-    s = sfra_service_find_by_id(cfg.sfra_id);
-    if (s == NULL)
+    p_registration = sfra_service_find_by_id(cfg.sfra_id);
+    if (p_registration == NULL)
     {
         sfra_service_fill_ctrl_ack(&ack, NULL, cfg.sfra_id, (uint8_t)SFRA_TOOL_STATUS_SFRA_ID_INVALID);
         sfra_service_reply(p_pack, my_printf, CMD_WORD_SFRA_CFG_SET, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
         return;
     }
+    s = p_registration->p_sfra;
 
     if (sfra_service_is_busy(s) != 0u)
     {
@@ -579,12 +570,12 @@ static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         status = sfra_service_core_status_to_tool(core_status);
         if (status == (uint8_t)SFRA_TOOL_STATUS_OK)
         {
-            s->data_ready = 0u;
-            sfra_service_sweep_tag_inc(s);
+            p_registration->data_ready = 0u;
+            sfra_service_sweep_tag_inc(p_registration);
         }
     }
 
-    sfra_service_fill_ctrl_ack(&ack, s, cfg.sfra_id, status);
+    sfra_service_fill_ctrl_ack(&ack, p_registration, cfg.sfra_id, status);
     sfra_service_reply(p_pack,
                        my_printf,
                        CMD_WORD_SFRA_CFG_SET,
@@ -597,6 +588,7 @@ static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     sfra_info_query_t query;
     sfra_ctrl_ack_t ack;
+    sfra_registration_t *p_registration;
     sfra_t *s;
     uint8_t status = (uint8_t)SFRA_TOOL_STATUS_OK;
     uint8_t cmd_word;
@@ -626,13 +618,14 @@ static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     sfra_service_capture_route(p_pack, my_printf);
     sfra_service_copy_payload(&query, (uint16_t)sizeof(query), p_pack);
-    s = sfra_service_find_by_id(query.sfra_id);
-    if (s == NULL)
+    p_registration = sfra_service_find_by_id(query.sfra_id);
+    if (p_registration == NULL)
     {
         sfra_service_fill_ctrl_ack(&ack, NULL, query.sfra_id, (uint8_t)SFRA_TOOL_STATUS_SFRA_ID_INVALID);
         sfra_service_reply(p_pack, my_printf, cmd_word, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
         return;
     }
+    s = p_registration->p_sfra;
 
     switch (ctrl)
     {
@@ -646,27 +639,27 @@ static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
             status = sfra_service_core_status_to_tool(sfra_start(s));
             if (status == (uint8_t)SFRA_TOOL_STATUS_OK)
             {
-                s->data_ready = 0u;
-                sfra_service_sweep_tag_inc(s);
+                p_registration->data_ready = 0u;
+                sfra_service_sweep_tag_inc(p_registration);
             }
         }
         break;
 
     case SFRA_SERVICE_CTRL_STOP:
         status = sfra_service_core_status_to_tool(sfra_stop(s));
-        s->data_ready = (uint8_t)(s->result_count > 0u);
-        s->done_reported = 0u;
+        p_registration->data_ready = (uint8_t)(p_registration->result_count > 0u);
+        p_registration->done_reported = 0u;
         break;
 
     case SFRA_SERVICE_CTRL_RESET:
     default:
         status = sfra_service_core_status_to_tool(sfra_reset(s));
-        s->data_ready = 0u;
-        sfra_service_sweep_tag_inc(s);
+        p_registration->data_ready = 0u;
+        sfra_service_sweep_tag_inc(p_registration);
         break;
     }
 
-    sfra_service_fill_ctrl_ack(&ack, s, query.sfra_id, status);
+    sfra_service_fill_ctrl_ack(&ack, p_registration, query.sfra_id, status);
     sfra_service_reply(p_pack, my_printf, cmd_word, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
@@ -674,6 +667,7 @@ static void sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     sfra_point_query_t query;
     sfra_point_ack_t ack;
+    sfra_registration_t *p_registration;
     sfra_t *s;
     uint8_t status = (uint8_t)SFRA_TOOL_STATUS_OK;
 
@@ -684,15 +678,17 @@ static void sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
     sfra_service_capture_route(p_pack, my_printf);
     sfra_service_copy_payload(&query, (uint16_t)sizeof(query), p_pack);
-    s = sfra_service_find_by_id(query.sfra_id);
-    if (s == NULL)
+    p_registration = sfra_service_find_by_id(query.sfra_id);
+    if (p_registration == NULL)
     {
         sfra_service_fill_point_ack(&ack, NULL, query.point_index, (uint8_t)SFRA_TOOL_STATUS_SFRA_ID_INVALID);
         ack.sfra_id = query.sfra_id;
     }
     else
     {
-        if ((query.expected_sweep_tag != 0u) && (query.expected_sweep_tag != s->sweep_tag))
+        s = p_registration->p_sfra;
+        if ((query.expected_sweep_tag != 0u) &&
+            (query.expected_sweep_tag != p_registration->sweep_tag))
         {
             status = (uint8_t)SFRA_TOOL_STATUS_SWEEP_CHANGED;
         }
@@ -700,15 +696,15 @@ static void sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         {
             status = (uint8_t)SFRA_TOOL_STATUS_POINT_INDEX_INVALID;
         }
-        else if ((s->data_ready == 0u) ||
-                 (query.point_index >= s->result_count) ||
+        else if ((p_registration->data_ready == 0u) ||
+                 (query.point_index >= p_registration->result_count) ||
                  (query.point_index >= SFRA_FREQ_TABLE_SIZE) ||
-                 (s->result_cache[query.point_index].sweep_tag != s->sweep_tag))
+                 (p_registration->result_cache[query.point_index].sweep_tag != p_registration->sweep_tag))
         {
             status = (uint8_t)SFRA_TOOL_STATUS_DATA_NOT_READY;
         }
 
-        sfra_service_fill_point_ack(&ack, s, query.point_index, status);
+        sfra_service_fill_point_ack(&ack, p_registration, query.point_index, status);
     }
 
     sfra_service_reply(p_pack,
@@ -719,7 +715,7 @@ static void sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                        (uint16_t)sizeof(ack));
 }
 
-REG_INIT(0, sfra_service_init)
+REG_INIT(1, sfra_service_init)
 REG_TASK_MS(1, sfra_service_poll_task)
 REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_LIST_QUERY, sfra_list_query_act)
 REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_INFO_QUERY, sfra_info_query_act)
