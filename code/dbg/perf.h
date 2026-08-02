@@ -98,13 +98,13 @@ struct section_perf_record
     uint8_t start_valid; /* Indicates that start contains a previous task-entry timestamp. */
     uint8_t end_valid;   /* Indicates that end contains a previous task-exit timestamp. */
     volatile uint32_t **p_cnt;
-    void *p_next;
 };
 
 #include "section.h"
 
-extern section_perf_record_t *p_perf_record_first;
 extern uint32_t perf_dict_version;
+extern section_item_t perf_list;
+section_perf_record_t *perf_record_from_item(const section_item_t *p_item);
 
 #ifndef PERF_CPU_LOAD_PERIOD_MS
 #define PERF_CPU_LOAD_PERIOD_MS 500UL
@@ -194,7 +194,6 @@ void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t
         .start_valid = 0,                                \
         .end_valid = 0,                                  \
         .p_cnt = NULL,                                   \
-        .p_next = NULL,                                  \
     };                                                   \
     section_perf_t section_perf_record_##name##_perf = { \
         .perf_type = SECTION_PERF_RECORD,                \

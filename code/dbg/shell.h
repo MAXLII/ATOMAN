@@ -72,8 +72,8 @@ typedef struct
 /* Shell: variable / command registration
  *
  * Items are placed in the SECTION_SHELL linker section.
- * At runtime section_init() scans the section and inserts each item
- * into the p_shell_first linked list.
+ * At runtime shell_init() scans the section and inserts each wrapper
+ * into the shared shell list container.
  */
 
 typedef enum
@@ -96,8 +96,8 @@ typedef enum
 /**
  * @brief Shell registration entry (command or variable).
  *
- * - section_init() inserts all SECTION_SHELL items into the p_shell_first
- *   linked list.
+ * - shell_init() inserts all SECTION_SHELL wrapper items into the runtime
+ *   list container.
  * - shell_run() traverses this list to match and dispatch commands, and to
  *   read / write variables.
  *
@@ -117,7 +117,6 @@ typedef struct section_shell_t
     uint32_t status;
 
     DEC_MY_PRINTF; ///< Optional: cached / forwarded output interface at runtime.
-    struct section_shell_t *p_next;
 } section_shell_t;
 
 /**
@@ -159,7 +158,6 @@ typedef struct section_shell_t
         .p_min = (void *)&_name##_##min,                                                    \
         .func = (_func),                                                                    \
         .status = (uint32_t)(_status),                                                      \
-        .p_next = NULL,                                                                     \
     };                                                                                      \
     _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
@@ -175,7 +173,6 @@ typedef struct section_shell_t
         .type = (uint32_t)SHELL_CMD,                                                        \
         .func = (_func),                                                                    \
         .status = 0,                                                                        \
-        .p_next = NULL,                                                                     \
     };                                                                                      \
     _Static_assert(sizeof(#_name) <= (SHELL_STR_SIZE_MAX + 1), #_name " String too long!"); \
     REG_SECTION_FUNC(SECTION_SHELL, section_shell_##_name)
@@ -187,8 +184,8 @@ typedef struct section_shell_t
 void shell_init(void);
 void shell_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
 
+extern section_item_t shell_list;
 void shell_item_print(section_shell_t *p, DEC_MY_PRINTF);
-section_shell_t *shell_first_get(void);
 uint32_t shell_count_get(void);
 section_shell_t *shell_find(const char *p_name, uint8_t len);
 

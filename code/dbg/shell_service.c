@@ -40,9 +40,12 @@
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 void shell_status_run(void)
 {
+    const section_item_t *p_list = &shell_list;
+
     /* Periodically service status-triggered shell items. */
-    for (section_shell_t *p = shell_first_get(); p != NULL; p = p->p_next)
+    for (section_item_t *p_item = p_list->p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_shell_t *p = (section_shell_t *)p_item->p_obj;
         if (p->status == 0u)
         {
             continue;
@@ -75,7 +78,7 @@ REG_TASK_MS(1000, shell_status_run)
 
 typedef struct
 {
-    section_shell_t *cur;
+    section_item_t *p_item;
     DEC_MY_PRINTF;
     uint8_t active;
     size_t max_name_len;
@@ -90,12 +93,15 @@ void list_print_start(DEC_MY_PRINTF)
     {
         return;
     }
-    g_list_print_ctx.cur = shell_first_get();
+    const section_item_t *p_list = &shell_list;
+
+    g_list_print_ctx.p_item = p_list->p_next;
     g_list_print_ctx.my_printf = my_printf;
     g_list_print_ctx.active = 1u;
     size_t max_len = 0u;
-    for (section_shell_t *s = shell_first_get(); s != NULL; s = s->p_next)
+    for (section_item_t *p_item = p_list->p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_shell_t *s = (section_shell_t *)p_item->p_obj;
         size_t len = strlen(s->p_name);
         if (len > max_len)
         {
@@ -121,7 +127,8 @@ int list_print_step(void)
 
     if (print_flag == 0u)
     {
-        section_shell_t *s = g_list_print_ctx.cur;
+        section_item_t *p_item = g_list_print_ctx.p_item;
+        section_shell_t *s = (p_item == NULL) ? NULL : (section_shell_t *)p_item->p_obj;
         if (s == NULL)
         {
             g_list_print_ctx.active = 0u;
@@ -194,7 +201,7 @@ int list_print_step(void)
             break;
         }
 
-        g_list_print_ctx.cur = s->p_next;
+        g_list_print_ctx.p_item = p_item->p_next;
         print_flag = 1u;
         return 1;
     }
@@ -244,7 +251,7 @@ static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     /* Save the routing information so the follow-up report task can stream data. */
     shell_report_ctx.active = 1u;
     shell_report_ctx.my_printf = my_printf;
-    shell_report_ctx.p_shell = shell_first_get();
+    shell_report_ctx.p_item = shell_list.p_next;
     shell_report_ctx.src = pack_ret.src;
     shell_report_ctx.d_src = pack_ret.d_src;
     shell_report_ctx.dst = pack_ret.dst;
@@ -259,7 +266,7 @@ static void shell_data_report_act(void)
 {
     if (shell_report_ctx.active != 0u)
     {
-        if (shell_report_ctx.p_shell == NULL)
+        if (shell_report_ctx.p_item == NULL)
         {
             /* End the report session when every shell item has been emitted. */
             shell_report_ctx.active = 0u;
@@ -267,16 +274,17 @@ static void shell_data_report_act(void)
         else
         {
             section_packform_t packform = {0};
+            section_shell_t *p_shell = (section_shell_t *)shell_report_ctx.p_item->p_obj;
 
             /* Convert the current shell entry into one compact report frame. */
             shell_report_list_t shell_report_list;
-            shell_report_list.name_len = (uint8_t)shell_report_ctx.p_shell->p_name_size;
-            shell_report_list.type = (uint8_t)shell_report_ctx.p_shell->type;
-            shell_report_list.data = *(uint32_t *)shell_report_ctx.p_shell->p_var;
-            shell_report_list.data_max = *(uint32_t *)shell_report_ctx.p_shell->p_max;
-            shell_report_list.data_min = *(uint32_t *)shell_report_ctx.p_shell->p_min;
-            memcpy(shell_report_list.name, shell_report_ctx.p_shell->p_name, shell_report_ctx.p_shell->p_name_size);
-            shell_report_list.auto_report = (shell_report_ctx.p_shell->status & (1u << 2)) ? 1u : 0u;
+            shell_report_list.name_len = (uint8_t)p_shell->p_name_size;
+            shell_report_list.type = (uint8_t)p_shell->type;
+            shell_report_list.data = *(uint32_t *)p_shell->p_var;
+            shell_report_list.data_max = *(uint32_t *)p_shell->p_max;
+            shell_report_list.data_min = *(uint32_t *)p_shell->p_min;
+            memcpy(shell_report_list.name, p_shell->p_name, p_shell->p_name_size);
+            shell_report_list.auto_report = (p_shell->status & (1u << 2)) ? 1u : 0u;
 
             packform.src = shell_report_ctx.src;
             packform.d_src = shell_report_ctx.d_src;
@@ -285,10 +293,10 @@ static void shell_data_report_act(void)
             packform.cmd_set = CMD_SET_SHELL_REPORT_LIST;
             packform.cmd_word = CMD_WORD_SHELL_REPORT_LIST;
             packform.is_ack = 0u;
-            packform.len = (uint16_t)(sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + shell_report_ctx.p_shell->p_name_size);
+            packform.len = (uint16_t)(sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + p_shell->p_name_size);
             packform.p_data = (uint8_t *)&shell_report_list;
             comm_send_data(&packform, shell_report_ctx.my_printf);
-            shell_report_ctx.p_shell = shell_report_ctx.p_shell->p_next;
+            shell_report_ctx.p_item = shell_report_ctx.p_item->p_next;
         }
     }
 }
@@ -604,7 +612,7 @@ static void shell_wave_report_task(void)
     static uint8_t delay_cnt = 0u;
     shell_wave_param_t shell_wave_param = {0};
     /* Cursor used to resume variable scanning across task ticks. */
-    static section_shell_t *p = NULL;
+    static section_item_t *p_item = NULL;
     switch (shell_wave_fsm)
     {
     case SHELL_WAVE_FSM_IDLE:
@@ -617,7 +625,7 @@ static void shell_wave_report_task(void)
         /* 0x55555555 marks the beginning of one streamed frame. */
         shell_wave_param.data = 0x55555555;
         shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
-        p = shell_first_get();
+        p_item = shell_list.p_next;
         shell_wave_fsm = SHELL_WAVE_FSM_DATA;
         delay_cnt = 10u;
         break;
@@ -631,8 +639,9 @@ static void shell_wave_report_task(void)
         {
             delay_cnt = 10u;
         }
-        while (p != NULL)
+        while (p_item != NULL)
         {
+            section_shell_t *p = (section_shell_t *)p_item->p_obj;
             if (p->status & (1u << 2))
             {
                 /* Bit2-selected shell variables are streamed one by one. */
@@ -640,13 +649,13 @@ static void shell_wave_report_task(void)
                 shell_wave_param.name_len = (uint8_t)p->p_name_size;
                 shell_wave_param.type = (uint8_t)p->type;
                 memcpy((uint8_t *)shell_wave_param.name, (uint8_t *)p->p_name, shell_wave_param.name_len);
-                p = p->p_next;
+                p_item = p_item->p_next;
                 shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
                 break;
             }
-            p = p->p_next;
+            p_item = p_item->p_next;
         }
-        if (p == NULL)
+        if (p_item == NULL)
         {
             shell_wave_fsm = SHELL_WAVE_FSM_END;
         }

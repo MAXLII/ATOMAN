@@ -6,7 +6,7 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Build the g_sfra_first linked list from SECTION_SFRA entries at init
+ *          - Build the SFRA list from SECTION_SFRA entries at init
  *          - Translate SFRA protocol commands into core sfra_t operations
  *          - Poll registered SFRA instances and actively report new points and sweep completion
  *
@@ -47,7 +47,9 @@
 #define SFRA_SERVICE_NOINLINE
 #endif
 
-sfra_t *g_sfra_first = NULL;
+section_item_t sfra_list = {0};
+REG_DBG_LIST(sfra, sfra_list)
+
 static uint8_t g_sfra_service_count = 0u;
 
 typedef struct
@@ -71,10 +73,9 @@ static sfra_report_ctx_t s_sfra_report_ctx = {0};
 
 void sfra_service_init(void)
 {
-    sfra_t **p_tail = &g_sfra_first;
     uint8_t id = 0u;
 
-    g_sfra_first = NULL;
+    section_list_init(&sfra_list);
     g_sfra_service_count = 0u;
 
     for (reg_section_t *p = (reg_section_t *)&SECTION_START;
@@ -83,7 +84,8 @@ void sfra_service_init(void)
     {
         if (p->section_type == SECTION_SFRA)
         {
-            sfra_t *s = (sfra_t *)p->p_str;
+            section_item_t *p_item = (section_item_t *)p->p_str;
+            sfra_t *s = (sfra_t *)p_item->p_obj;
             s->sfra_id = id++;
             s->data_ready = 0u;
             s->done_reported = 0u;
@@ -92,9 +94,7 @@ void sfra_service_init(void)
             {
                 s->sweep_tag = 1u;
             }
-            s->p_next = NULL;
-            *p_tail = s;
-            p_tail = &s->p_next;
+            section_list_push_back(&sfra_list, p_item);
             g_sfra_service_count++;
         }
     }
@@ -197,15 +197,16 @@ static void sfra_service_send_report(uint8_t cmd_word, uint8_t *p_data, uint16_t
 
 static SFRA_SERVICE_NOINLINE sfra_t *sfra_service_find_by_id(uint8_t sfra_id)
 {
-    sfra_t *s = g_sfra_first;
+    section_item_t *p_item = sfra_list.p_next;
 
-    while (s != NULL)
+    while (p_item != NULL)
     {
+        sfra_t *s = (sfra_t *)p_item->p_obj;
         if (s->sfra_id == sfra_id)
         {
             return s;
         }
-        s = s->p_next;
+        p_item = p_item->p_next;
     }
 
     return NULL;
@@ -398,10 +399,11 @@ static void sfra_service_send_empty_list(section_packform_t *p_pack, DEC_MY_PRIN
 
 static void sfra_service_poll_task(void)
 {
-    sfra_t *s = g_sfra_first;
+    section_item_t *p_item = sfra_list.p_next;
 
-    while (s != NULL)
+    while (p_item != NULL)
     {
+        sfra_t *s = (sfra_t *)p_item->p_obj;
         if (s->output.point_done != 0u)
         {
             sfra_point_report_t report;
@@ -430,13 +432,13 @@ static void sfra_service_poll_task(void)
                                      (uint16_t)sizeof(report));
         }
 
-        s = s->p_next;
+        p_item = p_item->p_next;
     }
 }
 
 static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
-    sfra_t *s = g_sfra_first;
+    section_item_t *p_item = sfra_list.p_next;
     uint8_t index = 0u;
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -445,14 +447,15 @@ static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     }
 
     sfra_service_capture_route(p_pack, my_printf);
-    if (s == NULL)
+    if (p_item == NULL)
     {
         sfra_service_send_empty_list(p_pack, my_printf);
         return;
     }
 
-    while (s != NULL)
+    while (p_item != NULL)
     {
+        sfra_t *s = (sfra_t *)p_item->p_obj;
         uint8_t name_len = sfra_service_strnlen(s->p_name, SFRA_SERVICE_NAME_LEN_MAX);
         uint8_t payload[sizeof(sfra_list_item_t) + SFRA_SERVICE_NAME_LEN_MAX];
         sfra_list_item_t item = {0};
@@ -474,7 +477,7 @@ static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                            payload,
                            (uint16_t)(sizeof(item) + name_len));
 
-        s = s->p_next;
+        p_item = p_item->p_next;
         index++;
     }
 }

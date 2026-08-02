@@ -101,7 +101,7 @@ struct perf_opt_service
     uint16_t index;
     uint32_t sequence;
     uint32_t dict_version;
-    section_perf_record_t *cur;
+    section_item_t *p_cur;
     uint8_t pending_end;
     DEC_MY_PRINTF;
     uint8_t src;

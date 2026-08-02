@@ -31,7 +31,9 @@
 #include "record_dict.h"
 #include "section.h"
 
-section_perf_record_t *p_perf_record_first = NULL;
+section_item_t perf_list;
+REG_DBG_LIST(perf, perf_list)
+
 uint32_t perf_dict_version = 1u;
 static record_dict_t s_perf_dict;
 static volatile uint32_t *s_perf_cnt = NULL;
@@ -44,46 +46,54 @@ static uint32_t s_perf_metric_last_sys_tick = 0u;
 static volatile section_perf_record_t *s_running_task_perf_record = NULL;
 static volatile uint32_t s_running_task_interrupt_time = 0u;
 
-static void perf_insert(section_perf_t *perf)
+section_perf_record_t *perf_record_from_item(const section_item_t *p_item)
 {
-    section_perf_base_t *base;
-    section_perf_record_t *rec;
-    static section_perf_record_t *s_perf_record_tail = NULL;
+    section_perf_t *p_perf = NULL;
 
-    if (perf == NULL)
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    {
+        return NULL;
+    }
+
+    p_perf = (section_perf_t *)p_item->p_obj;
+    if ((p_perf->perf_type != SECTION_PERF_RECORD) || (p_perf->p_perf == NULL))
+    {
+        return NULL;
+    }
+
+    return (section_perf_record_t *)p_perf->p_perf;
+}
+
+static void perf_insert(section_item_t *p_item)
+{
+    section_perf_t *p_perf = NULL;
+    section_perf_base_t *p_base = NULL;
+    section_perf_record_t *p_record = NULL;
+
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    switch (perf->perf_type)
+    p_perf = (section_perf_t *)p_item->p_obj;
+    switch (p_perf->perf_type)
     {
     case SECTION_PERF_BASE:
-        base = (section_perf_base_t *)perf->p_perf;
-        if ((base != NULL) && (base->p_cnt != NULL) && (base->cnt_period_s > 0.0f))
+        p_base = (section_perf_base_t *)p_perf->p_perf;
+        if ((p_base != NULL) && (p_base->p_cnt != NULL) && (p_base->cnt_period_s > 0.0f))
         {
-            s_perf_cnt = base->p_cnt;
-            s_perf_cnt_period_s = base->cnt_period_s;
+            s_perf_cnt = p_base->p_cnt;
+            s_perf_cnt_period_s = p_base->cnt_period_s;
         }
         break;
 
     case SECTION_PERF_RECORD:
-        rec = (section_perf_record_t *)perf->p_perf;
-        if (rec != NULL)
+        p_record = (section_perf_record_t *)p_perf->p_perf;
+        if (p_record != NULL)
         {
-            rec->p_cnt = &s_perf_cnt;
-            rec->p_next = NULL;
-            rec->record_id = record_dict_alloc_id(&s_perf_dict);
-
-            if (p_perf_record_first == NULL)
-            {
-                p_perf_record_first = rec;
-                s_perf_record_tail = rec;
-            }
-            else
-            {
-                s_perf_record_tail->p_next = rec;
-                s_perf_record_tail = rec;
-            }
+            p_record->p_cnt = &s_perf_cnt;
+            p_record->record_id = record_dict_alloc_id(&s_perf_dict);
+            section_list_push_back(&perf_list, p_item);
         }
         break;
 
@@ -94,7 +104,7 @@ static void perf_insert(section_perf_t *perf)
 
 static void perf_init(void)
 {
-    p_perf_record_first = NULL;
+    section_list_init(&perf_list);
     s_perf_cnt = NULL;
     s_perf_cnt_period_s = PERF_COUNT_UNIT_US * 1.0e-6f;
     s_perf_task_metric = 0.0f;
@@ -114,7 +124,7 @@ static void perf_init(void)
         switch (p->section_type)
         {
         case SECTION_PERF:
-            perf_insert((section_perf_t *)p->p_str);
+            perf_insert((section_item_t *)p->p_str);
             break;
         default:
             break;
@@ -308,8 +318,13 @@ uint16_t perf_record_count_get(void)
 {
     uint16_t count = 0u;
 
-    for (section_perf_record_t *p = p_perf_record_first; p != NULL; p = (section_perf_record_t *)p->p_next)
+    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_perf_record_t *p = perf_record_from_item(p_item);
+        if (p == NULL)
+        {
+            continue;
+        }
         if (count != UINT16_MAX)
         {
             ++count;
@@ -323,8 +338,13 @@ uint16_t perf_record_count_by_type(uint8_t record_type)
 {
     uint16_t count = 0u;
 
-    for (section_perf_record_t *p = p_perf_record_first; p != NULL; p = (section_perf_record_t *)p->p_next)
+    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_perf_record_t *p = perf_record_from_item(p_item);
+        if (p == NULL)
+        {
+            continue;
+        }
         if (p->record_type == record_type)
         {
             if (count != UINT16_MAX)
@@ -376,8 +396,13 @@ uint32_t perf_task_period_us_get(section_perf_record_t *record)
 
 void perf_reset_peak_value(void)
 {
-    for (section_perf_record_t *p = p_perf_record_first; p != NULL; p = (section_perf_record_t *)p->p_next)
+    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_perf_record_t *p = perf_record_from_item(p_item);
+        if (p == NULL)
+        {
+            continue;
+        }
         p->max_time = 0u;
         if ((p->record_type == SECTION_PERF_RECORD_TASK) ||
             (p->record_type == SECTION_PERF_RECORD_INTERRUPT))
@@ -412,8 +437,13 @@ static void perf_cpu_load_calculate(void)
         return;
     }
 
-    for (section_perf_record_t *p = p_perf_record_first; p != NULL; p = (section_perf_record_t *)p->p_next)
+    for (section_item_t *p_item = perf_list.p_next; p_item != NULL; p_item = p_item->p_next)
     {
+        section_perf_record_t *p = perf_record_from_item(p_item);
+        if (p == NULL)
+        {
+            continue;
+        }
         p->load = (float)p->run_time / (float)elapsed_perf_cnt;
         if (p->load > p->load_max)
         {

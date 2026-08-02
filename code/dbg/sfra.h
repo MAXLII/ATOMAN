@@ -261,8 +261,6 @@ typedef struct sfra_t
     uint32_t sweep_tag;
     /** User-readable SFRA instance name. */
     const char *p_name;
-    /** Linked-list pointer owned by sfra_service. */
-    struct sfra_t *p_next;
 } sfra_t;
 
 sfra_status_t sfra_init(sfra_t *sfra,

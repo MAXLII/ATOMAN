@@ -63,7 +63,7 @@ typedef struct
     uint8_t d_src;
     uint8_t dst;
     uint8_t d_dst;
-    section_shell_t *p_shell;
+    section_item_t *p_item;
 } shell_report_ctx_t;
 
 #pragma pack(push, 1)

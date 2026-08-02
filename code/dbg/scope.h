@@ -69,7 +69,6 @@ typedef struct scope_t
     uint32_t sample_period_us;
     uint32_t capture_tag;
     const char *p_name;
-    struct scope_t *p_next;
 } scope_t;
 
 #define SCOPE_ADDR(x) (&x)
@@ -121,7 +120,6 @@ typedef struct scope_t
         .sample_period_us = (sample_us),                                                                            \
         .capture_tag = 0u,                                                                                          \
         .p_name = #name,                                                                                            \
-        .p_next = NULL,                                                                                             \
     }
 
 void scope_run(scope_t *scope);
@@ -130,8 +128,7 @@ void scope_stop(scope_t *scope);
 void scope_trigger(scope_t *scope);
 void scope_reset(scope_t *scope);
 
-/* Scope linked list built at init from SECTION_SCOPE entries. */
-extern scope_t *g_scope_first;
+extern section_item_t scope_list;
 void scope_service_init(void);
 
 #if (SCOPE_ENABLE == 1u)
@@ -144,17 +141,11 @@ void scope_service_init(void);
 
 #define REG_SCOPE(name, buf_size, trig_post_cnt, ...)                \
     SCOPE_DEFINE(name, buf_size, trig_post_cnt, 1000u, __VA_ARGS__); \
-    const reg_section_t reg_scope_##name AUTO_REG_SECTION = {        \
-        .section_type = (uint32_t)SECTION_SCOPE,                     \
-        .p_str = (void *)&scope_##name,                              \
-    };
+    REG_SECTION_FUNC(SECTION_SCOPE, scope_##name)
 
 #define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...)        \
     SCOPE_DEFINE(name, buf_size, trig_post_cnt, (_sample_period_us), __VA_ARGS__); \
-    const reg_section_t reg_scope_##name AUTO_REG_SECTION = {                      \
-        .section_type = (uint32_t)SECTION_SCOPE,                                   \
-        .p_str = (void *)&scope_##name,                                            \
-    };
+    REG_SECTION_FUNC(SECTION_SCOPE, scope_##name)
 #else
 #define SCOPE_RUN(name) ((void)0)
 #define SCOPE_TRIGGER(name) ((void)0)
