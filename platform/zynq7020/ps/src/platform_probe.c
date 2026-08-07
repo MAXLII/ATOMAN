@@ -360,16 +360,19 @@ static platform_registry_counts_t registry_counts_get(void)
 
 static uint8_t interrupt_perf_has_run(void)
 {
-    section_perf_record_t *record = p_perf_record_first; /* 当前扫描的 Perf 记录。 */
+    section_item_t *p_item = p_perf_first; /* 当前扫描的 Perf 链表节点。 */
 
-    while (record != NULL)
+    while (p_item != NULL)
     {
-        if ((record->record_type == SECTION_PERF_RECORD_INTERRUPT) && /* 当前记录属于中断回调。 */
+        section_perf_record_t *record = perf_record_from_item(p_item);
+
+        if ((record != NULL) &&
+            (record->record_type == SECTION_PERF_RECORD_INTERRUPT) && /* 当前记录属于中断回调。 */
             (record->run_time > 0U))                                  /* 当前中断回调已经累计运行时间。 */
         {
             return 1U;
         }
-        record = record->p_next;
+        p_item = p_item->p_next;
     }
 
     return 0U;
@@ -439,11 +442,11 @@ static void platform_self_test_report(void)
     {
         passed = 0U;
     }
-    if (g_scope_first == NULL)
+    if (p_scope_first == NULL)
     {
         passed = 0U;
     }
-    if (g_sfra_first == NULL)
+    if (p_sfra_first == NULL)
     {
         passed = 0U;
     }
@@ -468,8 +471,8 @@ static void platform_self_test_report(void)
                          (unsigned)interrupt_ran,
                          (unsigned long)shell_items,
                          (unsigned)perf_ready,
-                         (g_scope_first != NULL) ? 1U : 0U,
-                         (g_sfra_first != NULL) ? 1U : 0U,
+                         (p_scope_first != NULL) ? 1U : 0U,
+                         (p_sfra_first != NULL) ? 1U : 0U,
                          (unsigned long)trace_records,
                          (unsigned)comm_loop_passed,
                          (unsigned)shell_loop_passed,
