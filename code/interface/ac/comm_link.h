@@ -17,6 +17,7 @@ typedef enum
     USART4_LINK,
     UART4_LINK = USART4_LINK,
     CAN_DBG_LINK,
+    ETHERNET_LINK,
 } USART_LINK_E;
 
 void comm_link_usart1_suspend(uint8_t suspended);
