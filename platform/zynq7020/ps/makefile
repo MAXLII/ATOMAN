@@ -12,12 +12,14 @@ SZ := arm-none-eabi-size
 
 C_SOURCES := \
 ./bsp/bsp_platform.c \
+./bsp/bsp_ethernet.c \
 ./bsp/bsp_iir.c \
 ./bsp/bsp_interrupt.c \
 ./bsp/bsp_oled.c \
 ./bsp/bsp_timer.c \
 ./bsp/bsp_usart.c \
 ./src/main.c \
+./src/ethernet_comm_link.c \
 ./src/platform_probe.c \
 ./src/zero_player_oled.c \
 ./src/zynq_iap_update_service.c \
@@ -38,6 +40,7 @@ $(PROJECT_ROOT)/code/dbg/sfra_service.c \
 $(PROJECT_ROOT)/code/dbg/trace.c \
 $(PROJECT_ROOT)/code/dbg/trace_core.c \
 $(PROJECT_ROOT)/code/dbg/trace_service.c \
+$(PROJECT_ROOT)/code/dbg/section_list_service.c \
 $(PROJECT_ROOT)/code/interface/ac/comm_link.c \
 $(PROJECT_ROOT)/code/app/zero_player.c \
 $(PROJECT_ROOT)/code/app/demo/demo.c \
@@ -88,7 +91,7 @@ LDFLAGS := $(CPU_FLAGS) -Wl,-build-id=none -specs=./Xilinx.spec \
            -Wl,-T,$(LD_SCRIPT) -Wl,-T,./zynq7020_sections.ld \
            -L$(BSP_LIB) -Wl,-Map,$(BUILD_DIR)/$(TARGET).map,--cref \
            -Wl,--gc-sections -Wl,--defsym,_SUPERVISOR_STACK_SIZE=0x2000
-LIBS := -Wl,--start-group,-lxil,-lgcc,-lc,-lm,--end-group
+LIBS := -Wl,--start-group,-llwip4,-lxil,-lgcc,-lc,-lm,--end-group
 
 OBJECTS := $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o))) \
            $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.S=.o)))

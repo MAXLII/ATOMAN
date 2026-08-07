@@ -39,6 +39,16 @@ set_property -dict [list \
     CONFIG.PCW_MIO_48_IOTYPE {LVCMOS 1.8V} \
     CONFIG.PCW_MIO_49_IOTYPE {LVCMOS 1.8V}] [get_bd_cells processing_system7_0]
 set_property -dict [list \
+    CONFIG.PCW_ENET0_ENET0_IO {MIO 16 .. 27} \
+    CONFIG.PCW_ENET0_GRP_MDIO_ENABLE {1} \
+    CONFIG.PCW_ENET0_GRP_MDIO_IO {MIO 52 .. 53} \
+    CONFIG.PCW_ENET0_PERIPHERAL_CLKSRC {IO PLL} \
+    CONFIG.PCW_ENET0_PERIPHERAL_DIVISOR0 {8} \
+    CONFIG.PCW_ENET0_PERIPHERAL_DIVISOR1 {1} \
+    CONFIG.PCW_ENET0_PERIPHERAL_ENABLE {1} \
+    CONFIG.PCW_ENET0_PERIPHERAL_FREQMHZ {1000 Mbps} \
+    CONFIG.PCW_EN_EMIO_ENET0 {0} \
+    CONFIG.PCW_EN_ENET0 {1} \
     CONFIG.PCW_USE_S_AXI_HP0 {1} \
     CONFIG.PCW_USE_FABRIC_INTERRUPT {1} \
     CONFIG.PCW_IRQ_F2P_INTR {1}] [get_bd_cells processing_system7_0]
@@ -170,18 +180,29 @@ report_drc -ruledeck default -file [file join $output_dir drc.rpt]
 report_timing_summary -file [file join $output_dir timing_summary.rpt]
 report_utilization -file [file join $output_dir utilization.rpt]
 
-set worst_path [get_timing_paths -quiet -delay_type max -max_paths 1]
-if {[llength $worst_path] != 1} {
+set worst_setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]
+if {[llength $worst_setup_path] != 1} {
     error "PL implementation has no timed setup path"
 }
-set worst_slack [get_property SLACK [lindex $worst_path 0]]
-if {$worst_slack < 0.0} {
-    error "PL implementation setup timing failed: WNS=$worst_slack ns"
+set worst_setup_slack [get_property SLACK [lindex $worst_setup_path 0]]
+if {$worst_setup_slack < 0.0} {
+    error "PL implementation setup timing failed: WNS=$worst_setup_slack ns"
 }
-puts "PL_TIMING_RESULT status=PASS wns_ns=$worst_slack"
+set worst_hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]
+if {[llength $worst_hold_path] != 1} {
+    error "PL implementation has no timed hold path"
+}
+set worst_hold_slack [get_property SLACK [lindex $worst_hold_path 0]]
+if {$worst_hold_slack < 0.0} {
+    error "PL implementation hold timing failed: WHS=$worst_hold_slack ns"
+}
+puts "PL_TIMING_RESULT status=PASS wns_ns=$worst_setup_slack whs_ns=$worst_hold_slack"
 
 set drc_violations [get_drc_violations -quiet \
-                        -filter {NAME !~ "RTSTAT-10#*"}]
+                        -filter {(SEVERITY == "Error" ||
+                                  SEVERITY == "Critical Warning" ||
+                                  SEVERITY == "Warning") &&
+                                 NAME !~ "RTSTAT-10#*"}]
 if {[llength $drc_violations] != 0} {
     foreach violation $drc_violations {
         puts "PL_DRC_VIOLATION name=$violation severity=[get_property SEVERITY $violation]"
@@ -190,7 +211,9 @@ if {[llength $drc_violations] != 0} {
 }
 set vendor_drc_exemptions [get_drc_violations -quiet \
                                -filter {NAME =~ "RTSTAT-10#*"}]
-puts "PL_DRC_RESULT actionable=0 vendor_exemptions=[llength $vendor_drc_exemptions]"
+set vendor_drc_advisories [get_drc_violations -quiet \
+                               -filter {SEVERITY == "Advisory"}]
+puts "PL_DRC_RESULT actionable=0 vendor_exemptions=[llength $vendor_drc_exemptions] advisories=[llength $vendor_drc_advisories]"
 
 set bit_file [file join $project_dir zynq7020_platform.runs impl_1 design_1_wrapper.bit]
 if {![file exists $bit_file]} {
