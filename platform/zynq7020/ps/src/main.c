@@ -6,7 +6,7 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Initialize PS UART1, PL UART DMA, GIC, and section time base
+ *          - Initialize PS UART1, PL UART DMA, PS GEM0, GIC, and section time base
  *          - Start linker-section discovery and registered initialization
  *          - Run the section implementation selected by the platform build
  *
@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 
+#include "bsp_ethernet.h"
 #include "bsp_interrupt.h"
 #include "bsp_oled.h"
 #include "bsp_timer.h"
@@ -41,6 +42,7 @@ int main(void)
     int32_t interrupt_status = XST_FAILURE; /* Shared GIC initialization result. */
     int32_t pl_uart_status = XST_FAILURE; /* PL UART DMA initialization result. */
     int32_t oled_status = XST_FAILURE; /* PL OLED transport initialization result. */
+    int32_t ethernet_status = XST_FAILURE; /* PS GEM0 and TCP service result. */
     int32_t timer_status = XST_FAILURE; /* 10 kHz section 中断定时器初始化结果。 */
 
     bsp_timer_init();                               /* 建立 section 的 100 us 单调时间基准。 */
@@ -86,6 +88,17 @@ int main(void)
         {
             /* OLED DMA failure prevents the requested local display function. */
         }
+    }
+
+    ethernet_status = bsp_ethernet_init(); /* Initialize PS GEM0, lwIP, and the FRAME TCP server. */
+    if (ethernet_status != XST_SUCCESS)
+    {
+        bsp_usart_dbg_printf("PS GEM0 init failed: %ld; UART links remain available\r\n",
+                             (long)ethernet_status);
+    }
+    else
+    {
+        bsp_usart_dbg_printf("PS GEM0 ready: 192.168.1.10:9000 TCP\r\n");
     }
 
     section_init();                                                   /* 发现并初始化全部 section 注册项。 */
