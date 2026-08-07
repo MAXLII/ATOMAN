@@ -13,6 +13,7 @@
 - `code/section/srtos_a9/` 与 A9 SVC/IRQ 上下文切换端口
 - PS UART1 的 COM6 日志、Shell 和故障诊断入口
 - PL UART DMA 的 COM7 业务通信、FRAME 协议和压测入口
+- PS GEM0 RGMII 千兆以太网、裸机 lwIP 和 FRAME TCP 通信入口
 
 平台不使用第三方 RTOS。
 
@@ -36,6 +37,13 @@ PL UART 使用 Bank 34：
 
 PL 串口枚举为 COM7。COM6 与 COM7 均使用 921600、8 数据位、无校验、1 停止位。
 
+以太网由 PS GEM0 直接驱动板载 RGMII PHY，RGMII 使用 MIO16～MIO27，MDIO/MDC
+使用 MIO52～MIO53。接口位于 PS Bank501，电压为 1.8V，不经过 PL 逻辑。
+
+PS 裸机 lwIP 使用静态地址 `192.168.1.10/24`、网关
+`192.168.1.1`，在 TCP 端口 `9000` 监听一个 FRAME 客户端。TCP payload 直接承载
+现有 `0xE8` 字节协议，不增加以太网专用协议封装。
+
 ## 3. PS+PL 地址空间
 
 PS7 的 `M_AXI_GP0` 通过 AXI Interconnect 连接以下 PL 外设：
@@ -48,9 +56,10 @@ PS7 的 `M_AXI_GP0` 通过 AXI Interconnect 连接以下 PL 外设：
 | AXI OLED DMA | `0x41220000` | DDR framebuffer DMA、SSD1306协议和串行PHY |
 | AXI 3P3Z IIR | `0x43C00000` | 系数、样点、状态和历史寄存器 |
 
-PL 时钟为 PS FCLK0 50MHz。PL UART DMA和OLED DMA控制口连接M_AXI_GP0，
-两个DMA Master通过同一个AXI Interconnect连接S_AXI_HP0。UART错误IRQ连接
-`IRQ_F2P[0]` / GIC SPI ID 61，OLED错误IRQ连接 `IRQ_F2P[1]` / GIC SPI ID 62。
+PS FCLK0 为 50MHz。PL UART DMA、OLED DMA 控制口连接 M_AXI_GP0，UART/OLED DMA
+Master 连接 S_AXI_HP0。UART错误IRQ连接 `IRQ_F2P[0]`，OLED错误IRQ连接
+`IRQ_F2P[1]`。PS GEM0 使用 PS 内部 DMA 和 GIC 中断，不占用 PL AXI、HP 端口或
+Fabric IRQ。
 RX ring 为 `0x1FF00000` 的64 KiB，TX ring为 `0x1FF10000` 的64 KiB，
 OLED framebuffer为 `0x1FF20000` 的1024字节；
 `0x1FF00000～0x1FFFFFFF` 整体保留并设置为 non-cacheable。
@@ -123,12 +132,14 @@ X/Y 历史、输出和样点计数。Shell 命令 `IIR_TEST` 触发相同的板�
 | `verilog/oled_dma/sim/` | OLED DMA SystemVerilog 自检和 OOC 综合脚本 |
 | `platform/zynq7020/ps/` | ARM 启动、BSP、应用入口、SRTOS 端口、编译、下载和板测 |
 | `platform/zynq7020/pl/` | Vivado 工程、PS7 硬件平台、自定义 IP、约束、bitstream/HDF 输出和 PL 自测 |
-| `platform/zynq7020/ps/bsp/` | PS UART、PL UART DMA、共享 GIC、定时器与 IIR MMIO 平台适配 |
+| `platform/zynq7020/ps/bsp/` | PS UART、PL UART DMA、PS GEM0/lwIP、共享 GIC、定时器与 IIR MMIO 平台适配 |
+| `platform/zynq7020/ps/bsp/bsp_ethernet.c/.h` | XEmacPs、lwIP TCP 服务、收发缓冲和状态接口 |
 | `platform/zynq7020/ps/bsp/bsp_oled.c/.h` | PL OLED DMA、DDR framebuffer、显示控制和错误IRQ |
 | `code/section/baremetal/section.c/.h` | 裸机 section 独立实现与统一注册接口 |
 | `code/section/srtos_a9/section.c/.h` | Cortex-A9 SRTOS 独立实现与统一注册接口 |
 | `platform/zynq7020/ps/srtos/a9_section_port.S` | A9 SVC/IRQ 上下文切换端口 |
 | `platform/zynq7020/ps/src/main.c` | 所选 section 运行时的统一平台入口 |
+| `platform/zynq7020/ps/src/ethernet_comm_link.c` | Ethernet TCP 字节流到 Shell/FRAME 协议的 Section 链路 |
 | `platform/zynq7020/ps/src/platform_probe.c` | 平台自主测试与 Shell 状态命令 |
 | `platform/zynq7020/ps/src/zero_player_oled.c` | 30x31 Zero Player 棋盘到 128x64 OLED 的映射 |
 | `platform/zynq7020/pl/package_axi_iir_ip.tcl` | 自定义 IIR IP 与 IP-XACT 寄存器描述 |
@@ -181,6 +192,8 @@ Vivado 输出位于 `pl/build/output/`：
 - `timing_summary.rpt`
 - `utilization.rpt`
 
+`ps/compile.ps1` 从当前 HDF 生成 standalone BSP，并接入 Xilinx lwIP 2.0.2。
+XEmacPs 适配层通过 MDIO 扫描 PHY，并通过自动协商确定链路速率。
 无 RTOS ARM 输出位于 `ps/build/`，编译 `code/section/baremetal/section.c`；SRTOS ARM 输出位于 `ps/build_srtos/`，编译 `code/section/srtos_a9/section.c` 并链接 A9 端口。两个 Makefile 都只定义平台与工具链宏，不定义运行时选择宏。`ps/compile.ps1` 的 `-Srtos 0/1` 仅用于选择对应 Makefile 和输出目录。构建启用 `-Werror`、`-Wconversion`、`-Wsign-conversion`、`-Wshadow`、`-Wcast-align`、`-Wstrict-prototypes`、`-Wmissing-prototypes` 和 `-Wundef`。
 
 ## 8. 下载与板上测试
@@ -211,6 +224,10 @@ cd D:\OneDrive\LWX\GD32\base\platform\zynq7020\ps
 
 PL UART DMA 验收脚本由两个独立进程分别独占 COM6 和 COM7，执行 11000 个
 497 字节 payload 回环帧，双向总量为 11264000 字节。
+
+以太网验证时将上位机网卡设置为 `192.168.1.x/24`，在 FRAME 顶部 Transport
+选择 `Ethernet`，Host 使用 `192.168.1.10`，TCP Port 使用 `9000`。连接建立后，
+参数、波形、SFRA、Perf、Trace、链表和 Shell 继续使用同一套 FRAME 协议服务。
 
 Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST`、`PL_UART_STATUS`、
 `PL_UART_RESET`、`PL_UART_DMA_TEST`、`PL_UART_ERROR_CLEAR` 和
