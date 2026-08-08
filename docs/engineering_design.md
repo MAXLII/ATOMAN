@@ -29,6 +29,7 @@ base/
 │  └─ section/                注册、初始化和任务调度框架
 ├─ platform/
 │  ├─ apm32/                  APM32 MCU 平台
+│  ├─ gd32e507/               GD32E507 GCC MCU 平台
 │  ├─ gd32g553c/              GD32G553C MCU 平台
 │  ├─ hc32f334/               HC32F334 MCU 平台
 │  ├─ hc32f558/               HC32F558 MCU 平台
