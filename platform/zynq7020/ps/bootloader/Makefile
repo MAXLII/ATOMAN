@@ -15,6 +15,7 @@ C_SOURCES := \
 ../bsp/bsp_interrupt.c \
 ../bsp/bsp_timer.c \
 ../bsp/bsp_usart.c \
+../bsp/bsp_ethernet.c \
 ../bsp/bsp_qspi_flash.c \
 main.c \
 bootloader_comm_link.c \
@@ -53,10 +54,10 @@ WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic \
 CFLAGS := -std=c11 $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) $(WARN_FLAGS) \
           -O2 -g3 -ffunction-sections -fdata-sections -MMD -MP
 LDFLAGS := $(CPU_FLAGS) -Wl,-build-id=none -specs=../Xilinx.spec \
-           -Wl,-T,$(LD_SCRIPT) -Wl,-T,../zynq7020_sections.ld \
+           -Wl,-T,../zynq7020_sections.ld -Wl,-T,$(LD_SCRIPT) \
            -L$(BSP_LIB) -Wl,-Map,$(BUILD_DIR)/$(TARGET).map,--cref \
            -Wl,--gc-sections -Wl,--defsym,_SUPERVISOR_STACK_SIZE=0x2000
-LIBS := -Wl,--start-group,-lxil,-lgcc,-lc,-lm,--end-group
+LIBS := -Wl,--start-group,-llwip4,-lxil,-lgcc,-lc,-lm,--end-group
 
 OBJECTS := $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 DEPS := $(OBJECTS:.o=.d)

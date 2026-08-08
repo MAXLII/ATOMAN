@@ -43,7 +43,9 @@ if (Test-Path -LiteralPath $bspWorkspace)
 New-Item -ItemType Directory -Force -Path $bspWorkspace | Out-Null
 & $xsct (Join-Path $projectRoot "build_bsp.tcl") $hardwareDefinition $bspWorkspace
 $generatedBsp = Join-Path $bspWorkspace "bootloader_bsp\ps7_cortexa9_0"
-if (($LASTEXITCODE -ne 0) -or !(Test-Path -LiteralPath (Join-Path $generatedBsp "lib\libxil.a")))
+if (($LASTEXITCODE -ne 0) -or
+    !(Test-Path -LiteralPath (Join-Path $generatedBsp "lib\libxil.a")) -or
+    !(Test-Path -LiteralPath (Join-Path $generatedBsp "lib\liblwip4.a")))
 {
     throw "Zynq-7020 bootloader BSP generation failed"
 }

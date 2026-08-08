@@ -90,7 +90,7 @@ CFLAGS := -std=c11 $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) $(WARN_FLAGS) \
 ASFLAGS := $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) \
            -g3 -ffunction-sections -fdata-sections
 LDFLAGS := $(CPU_FLAGS) -Wl,-build-id=none -specs=./Xilinx.spec \
-           -Wl,-T,$(LD_SCRIPT) -Wl,-T,./zynq7020_sections.ld \
+           -Wl,-T,./zynq7020_sections.ld -Wl,-T,$(LD_SCRIPT) \
            -L$(BSP_LIB) -Wl,-Map,$(BUILD_DIR)/$(TARGET).map,--cref \
            -Wl,--gc-sections -Wl,--defsym,_SUPERVISOR_STACK_SIZE=0x2000
 LIBS := -Wl,--start-group,-llwip4,-lxil,-lgcc,-lc,-lm,--end-group
