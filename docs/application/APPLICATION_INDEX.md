@@ -18,6 +18,7 @@
 
 - [FRAME通信接入](communication/frame_usage.md)
 - [通信命令开发方法](communication/command_development_usage.md)
+- [GD32E507以太网通信](communication/gd32e507_ethernet_usage.md)
 - [FAL平台配置与上层接入](storage/fal_usage.md)
 - [Bootloader升级运行方法](bootloader/bootloader_upgrade_usage.md)
 
