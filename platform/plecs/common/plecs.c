@@ -17,6 +17,7 @@
 static FILE *fp_plecs = NULL; /* 当前 PLECS DLL 实例使用的日志文件句柄。 */
 static double interrupt_time_last = 0.0; /* Simulation time of the latest committed control interrupt. */
 static uint8_t interrupt_time_valid = 0u; /* Nonzero after one control interrupt has run in this simulation. */
+static float output_time_last = 0.0f; /* Scheduler time already converted into 100 us ticks. */
 
 /**
  * @return DLL 目录中的日志文件句柄；路径解析或文件打开失败时返回 NULL。
@@ -75,6 +76,26 @@ static FILE *plecs_log_open(void)
 static struct SimulationState *plecs_astate;
 uint32_t plecs_time_100us = 0;
 
+__attribute__((weak)) void plecs_platform_start(void)
+{
+}
+
+__attribute__((weak)) void plecs_platform_terminate(void)
+{
+}
+
+__attribute__((weak)) void plecs_platform_dispatch_enter(void)
+{
+}
+
+__attribute__((weak)) void plecs_platform_dispatch_exit(void)
+{
+}
+
+__attribute__((weak)) void plecs_perf_counter_refresh(void)
+{
+}
+
 float plecs_get_input(PLECS_INPUT_E num)
 {
     if (num < PLECS_INPUT_MAX)
@@ -101,7 +122,7 @@ void plecs_printf(const char *file, int line, const char *format, ...)
     (void)line;
     if (fp_plecs != NULL)
     {
-        double time = plecs_astate->time; // unit: seconds
+        const double time = (double)__atomic_load_n(&plecs_time_100us, __ATOMIC_RELAXED) * 0.0001;
         fprintf(fp_plecs, "[%8.4f] ", time);
         va_list args;
         va_start(args, format);
@@ -122,6 +143,8 @@ DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 DLLEXPORT void plecsStart(struct SimulationState *aState)
 {
     plecs_astate = aState;
+    __atomic_store_n(&plecs_time_100us, 0u, __ATOMIC_RELAXED);
+    output_time_last = 0.0f;
     interrupt_time_last = 0.0;
     interrupt_time_valid = 0u;
     if (fp_plecs != NULL)
@@ -131,24 +154,29 @@ DLLEXPORT void plecsStart(struct SimulationState *aState)
     }
     fp_plecs = plecs_log_open(); /* 在当前 DLL 所在目录创建本次仿真的日志文件。 */
     section_init();
+    plecs_platform_start();
 }
 
 DLLEXPORT void plecsOutput(struct SimulationState *aState)
 {
     plecs_astate = aState;
-    static float time = 0.0f;
-    static float time_last = 0.0f;
-    time = (float)plecs_astate->time;
-    if ((time - time_last) > 0.0001f)
+    const float time = (float)plecs_astate->time;
+    if ((time - output_time_last) > 0.0001f)
     {
-        plecs_time_100us += (uint32_t)((time - time_last) * 10000.0f);
+        (void)__atomic_fetch_add(&plecs_time_100us,
+                                 (uint32_t)((time - output_time_last) * 10000.0f),
+                                 __ATOMIC_RELAXED);
+        plecs_platform_dispatch_enter();
         run_task();
-        time_last += 0.0001f;
+        plecs_platform_dispatch_exit();
+        output_time_last += 0.0001f;
     }
     if ((interrupt_time_valid == 0u) ||             /* Execute the initial sample exactly once. */
         (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
     {
+        plecs_platform_dispatch_enter();
         section_interrupt();
+        plecs_platform_dispatch_exit();
         interrupt_time_last = plecs_astate->time;
         interrupt_time_valid = 1u;
     }
@@ -161,6 +189,8 @@ DLLEXPORT void plecsOutput(struct SimulationState *aState)
 DLLEXPORT void plecsTerminate(struct SimulationState *aState)
 {
     (void)aState;
+
+    plecs_platform_terminate();
 
     if (fp_plecs != NULL)
     {

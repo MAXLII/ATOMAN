@@ -1,0 +1,636 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    comm.c
+ * @brief   PLECS communication protocol implementation.
+ * @details
+ *          This file is part of the base PLECS platform project.
+ *
+ *          Module responsibilities:
+ *          - Implement the 0xE8 framed protocol parser as a byte-by-byte state machine
+ *          - Build and send frames with address fields, command set/word, ACK flag, payload length, and CRC16
+ *          - Dispatch local registered commands or route frames across registered communication links
+ *          - Scan Windows linker sentinels and accept a wall-clock timestamp for TCP parser recovery
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - Windows linker sentinels delimit the registration table
+ *          - Protocol frame layout remains compatible with the MCU implementation
+ *
+ * @author  Max.Li
+ * @date    2026-08-08
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
+#include "comm.h"
+#include "section.h"
+
+#include <string.h>
+
+/* =============================================================================
+ * 全局注册表（由 section 扫描填充）
+ * =============================================================================
+ */
+
+section_item_t *p_comm_command_first = NULL;
+static section_item_t *p_comm_command_tail = NULL;
+section_item_t *p_comm_route_first = NULL;
+static section_item_t *p_comm_route_tail = NULL;
+
+REG_DBG_LIST(comm_command, p_comm_command_first)
+REG_DBG_LIST(comm_route, p_comm_route_first)
+
+/* section 链路表在 section.c 内维护，这里只使用其首指针 */
+
+/* =============================================================================
+ * Comm / Route 插入
+ * =============================================================================
+ */
+
+static void comm_insert(section_item_t *p_item)
+{
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    {
+        return;
+    }
+
+    p_item->p_next = NULL;
+    if (p_comm_command_first == NULL)
+    {
+        p_comm_command_first = p_item;
+    }
+    else
+    {
+        p_comm_command_tail->p_next = p_item;
+    }
+    p_comm_command_tail = p_item;
+}
+
+static void comm_route_insert(section_item_t *p_item)
+{
+    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    {
+        return;
+    }
+
+    p_item->p_next = NULL;
+    if (p_comm_route_first == NULL)
+    {
+        p_comm_route_first = p_item;
+    }
+    else
+    {
+        p_comm_route_tail->p_next = p_item;
+    }
+    p_comm_route_tail = p_item;
+}
+
+static void comm_init(void)
+{
+    extern const reg_section_t section_reg_start;
+    extern const reg_section_t section_reg_stop;
+    const reg_section_t *p_section_first = &section_reg_start + 1;
+    const reg_section_t *p_section_last = &section_reg_stop;
+
+    /* 允许重复调用：清空锚点避免链表串接 */
+    p_comm_command_first = NULL;
+    p_comm_command_tail = NULL;
+    p_comm_route_first = NULL;
+    p_comm_route_tail = NULL;
+
+    for (const reg_section_t *p_section = p_section_first;
+         p_section < p_section_last;
+         ++p_section)
+    {
+        switch (p_section->section_type)
+        {
+        case SECTION_COMM:
+            comm_insert((section_item_t *)p_section->p_str);
+            break;
+        case SECTION_COMM_ROUTE:
+            comm_route_insert((section_item_t *)p_section->p_str);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+REG_INIT(0, comm_init)
+
+/* =============================================================================
+ * CRC16（CCITT）
+ * =============================================================================
+ */
+
+static uint16_t crc16_table[256];
+static uint8_t s_crc16_table_ready = 0;
+
+static void crc16_init_table(void)
+{
+    if (s_crc16_table_ready)
+        return;
+
+    for (uint32_t i = 0; i < 256u; i++)
+    {
+        uint16_t crc = 0u;
+        uint16_t c = (uint16_t)(i << 8);
+
+        for (uint32_t j = 0; j < 8u; j++)
+        {
+            if (((crc ^ c) & 0x8000u) != 0u)
+            {
+                crc = (uint16_t)(((uint32_t)crc << 1u) ^ (uint32_t)CRC16_CCITT_POLY);
+            }
+            else
+            {
+                crc = (uint16_t)(crc << 1);
+            }
+            c = (uint16_t)(c << 1);
+        }
+        crc16_table[i] = crc;
+    }
+
+    s_crc16_table_ready = 1;
+}
+
+REG_INIT(0, crc16_init_table)
+
+uint16_t crc16_init(void) { return CRC16_CCITT_INIT; }
+
+uint16_t crc16_update(uint16_t crc, uint8_t data)
+{
+    const uint8_t table_index = (uint8_t)((crc >> 8) ^ data);
+    return (uint16_t)((crc << 8) ^ crc16_table[table_index]);
+}
+
+uint16_t crc16_final(uint16_t crc) { return crc; }
+
+uint16_t section_crc16(uint8_t *p_data, uint32_t len)
+{
+    uint16_t crc = crc16_init();
+    for (uint32_t i = 0; i < len; i++)
+        crc = crc16_update(crc, p_data[i]);
+    return crc16_final(crc);
+}
+
+uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in)
+{
+    uint16_t crc = crc_in;
+    for (uint32_t i = 0; i < len; i++)
+        crc = crc16_update(crc, p_data[i]);
+    return crc;
+}
+
+/* =============================================================================
+ * COMM 命令查找（move-to-front：对热点命令友好）
+ * =============================================================================
+ */
+
+static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    section_item_t *p_item = p_comm_command_first;
+    section_item_t *p_prev = NULL;
+
+    while (p_item != NULL)
+    {
+        section_com_t *p = (section_com_t *)p_item->p_obj;
+        if ((p->cmd_set == cmd_set) && (p->cmd_word == cmd_word))
+        {
+            if (p_prev != NULL)
+            {
+                /* move-to-front：减少后续查找成本 */
+                p_prev->p_next = p_item->p_next;
+                if (p_comm_command_tail == p_item)
+                {
+                    p_comm_command_tail = p_prev;
+                }
+                p_item->p_next = p_comm_command_first;
+                p_comm_command_first = p_item;
+            }
+            return p->func;
+        }
+        p_prev = p_item;
+        p_item = p_item->p_next;
+    }
+    return NULL;
+}
+
+/* =============================================================================
+ * 路由：根据 link_id + dst_addr 转发到目标链路
+ * =============================================================================
+ */
+
+static const section_link_t *find_link_by_id(uint8_t link_id)
+{
+    for (section_item_t *p_item = p_link_first; p_item != NULL; p_item = p_item->p_next)
+    {
+        const section_link_t *p = (const section_link_t *)p_item->p_obj;
+        if (p->link_id == link_id)
+        {
+            return p;
+        }
+    }
+
+    return NULL;
+}
+
+static void comm_route_run(comm_ctx_t *ctx)
+{
+    if (!ctx)
+        return;
+
+    for (section_item_t *p_item = p_comm_route_first; p_item != NULL; p_item = p_item->p_next)
+    {
+        comm_route_t *r = (comm_route_t *)p_item->p_obj;
+        if ((ctx->link_id == r->src_link_id) && (ctx->pack.dst == r->dst_addr))
+        {
+            const section_link_t *dst_link = find_link_by_id(r->dst_link_id);
+            if (dst_link != NULL)
+            {
+                comm_send_data(&ctx->pack, dst_link->my_printf);
+            }
+            /* 同一帧命中多个路由规则是否需要多播？
+             * 若你希望多播，就删掉 break。
+             */
+            break;
+        }
+    }
+}
+
+/* =============================================================================
+ * 协议解析状态机
+ * =============================================================================
+ */
+
+/* 固定字段 */
+#define COMM_SOP_BYTE 0xE8u
+#define COMM_VER_1 0x01u
+#define COMM_EOP_WORD 0x0A0Du
+#define COMM_FRAME_TIMEOUT_TICK (1000u)
+
+/* 对 dst/d_dst 的“本机接收”判定 */
+static inline uint8_t is_addr_match(uint8_t addr, uint8_t local)
+{
+    return (uint8_t)((addr == 0x00u) || (addr == local));
+}
+
+static inline void comm_reset_ctx(comm_ctx_t *ctx)
+{
+    ctx->status = SECTION_PACKFORM_STA_SOP;
+    ctx->index = 0;
+    ctx->len = 0;
+    ctx->crc = 0;
+    ctx->func = NULL;
+    ctx->src_flag = 0;
+    ctx->dst_flag = 0;
+    ctx->cmd_flag = 0;
+    ctx->len_flag = 0;
+    ctx->eop_flag = 0;
+    ctx->is_route = 0;
+}
+
+void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
+{
+    comm_run_with_time(data, my_printf, p, SECTION_SYS_TICK);
+}
+
+void comm_run_with_time(uint8_t data, DEC_MY_PRINTF, void *p, uint32_t current_time_ms)
+{
+    (void)my_printf;
+
+    comm_ctx_t *ctx = (comm_ctx_t *)p;
+    if (!ctx)
+        return;
+
+    if ((ctx->status != SECTION_PACKFORM_STA_SOP) &&
+        ((uint32_t)(current_time_ms - ctx->last_rx_tick) > COMM_FRAME_TIMEOUT_TICK))
+    {
+        comm_reset_ctx(ctx);
+    }
+    ctx->last_rx_tick = current_time_ms;
+
+    switch (ctx->status)
+    {
+    case SECTION_PACKFORM_STA_SOP:
+        if (data != COMM_SOP_BYTE)
+            return;
+
+        /* start */
+        ctx->crc = crc16_init();
+        ctx->crc = crc16_update(ctx->crc, data);
+        ctx->pack.sop = data;
+        ctx->pack.p_data = (uint8_t *)ctx->p_data_buffer;
+        ctx->index = 0;
+        ctx->len = 0;
+        ctx->func = NULL;
+        ctx->is_route = 0;
+        ctx->src_flag = 0;
+        ctx->dst_flag = 0;
+        ctx->cmd_flag = 0;
+        ctx->len_flag = 0;
+        ctx->eop_flag = 0;
+        ctx->status = SECTION_PACKFORM_STA_VER;
+        break;
+
+    case SECTION_PACKFORM_STA_VER:
+        ctx->pack.version = data;
+        ctx->crc = crc16_update(ctx->crc, data);
+        if (ctx->pack.version != COMM_VER_1)
+        {
+            comm_reset_ctx(ctx);
+            return;
+        }
+        ctx->status = SECTION_PACKFORM_STA_SRC;
+        ctx->src_flag = 0;
+        break;
+
+    case SECTION_PACKFORM_STA_SRC:
+        if (ctx->src_flag == 0u)
+        {
+            ctx->pack.src = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+            ctx->src_flag = 1u;
+        }
+        else
+        {
+            ctx->pack.d_src = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+            ctx->dst_flag = 0u;
+            ctx->status = SECTION_PACKFORM_STA_DST;
+        }
+        break;
+
+    case SECTION_PACKFORM_STA_DST:
+        if (ctx->dst_flag == 0u)
+        {
+            ctx->pack.dst = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+
+            /* dst 不匹配本机则标记路由 */
+            ctx->is_route = (uint8_t)(!is_addr_match(ctx->pack.dst, ctx->src));
+            ctx->dst_flag = 1u;
+        }
+        else
+        {
+            ctx->pack.d_dst = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+
+            /* d_dst 匹配本机动态地址则接收，否则若 dst 不匹配则允许路由 */
+            if (is_addr_match(ctx->pack.d_dst, ctx->d_src) || (ctx->is_route == 1u))
+            {
+                ctx->cmd_flag = 0u;
+                ctx->status = SECTION_PACKFORM_STA_CMD;
+            }
+            else
+            {
+                comm_reset_ctx(ctx);
+                return;
+            }
+        }
+        break;
+
+    case SECTION_PACKFORM_STA_CMD:
+        if (ctx->cmd_flag == 0u)
+        {
+            ctx->pack.cmd_set = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+            ctx->cmd_flag = 1u;
+        }
+        else
+        {
+            ctx->pack.cmd_word = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+
+            if (ctx->is_route == 0u)
+            {
+                ctx->func = find_comm_func(ctx->pack.cmd_set, ctx->pack.cmd_word);
+                if (!ctx->func)
+                {
+                    comm_reset_ctx(ctx);
+                    return;
+                }
+            }
+            ctx->status = SECTION_PACKFORM_STA_ACK;
+        }
+        break;
+
+    case SECTION_PACKFORM_STA_ACK:
+        ctx->pack.is_ack = data;
+        ctx->crc = crc16_update(ctx->crc, data);
+        ctx->pack.len = 0u;
+        ctx->len_flag = 0u;
+        ctx->status = SECTION_PACKFORM_STA_LEN;
+        break;
+
+    case SECTION_PACKFORM_STA_LEN:
+        if (ctx->len_flag == 0u)
+        {
+            ctx->pack.len = (uint16_t)(ctx->pack.len | (uint16_t)data);
+            ctx->crc = crc16_update(ctx->crc, data);
+            ctx->len_flag = 1u;
+        }
+        else
+        {
+            ctx->pack.len = (uint16_t)(ctx->pack.len | (uint16_t)(data << 8));
+            ctx->crc = crc16_update(ctx->crc, data);
+
+            ctx->len = ctx->pack.len;
+            ctx->index = 0u;
+            ctx->pack.p_data = ctx->p_data_buffer;
+            ctx->len_flag = 0u;
+
+            if (ctx->len > ctx->buffer_size)
+            {
+                comm_reset_ctx(ctx);
+                return;
+            }
+
+            ctx->status = SECTION_PACKFORM_STA_DATA;
+        }
+        break;
+
+    case SECTION_PACKFORM_STA_DATA:
+        if (ctx->len != 0u)
+        {
+            ctx->p_data_buffer[ctx->index++] = data;
+            ctx->crc = crc16_update(ctx->crc, data);
+            ctx->len--;
+        }
+        else
+        {
+            /* len==0：当前字节是 CRC low */
+            ctx->pack.crc = (uint16_t)data;
+            ctx->status = SECTION_PACKFORM_STA_CRC;
+        }
+        break;
+
+    case SECTION_PACKFORM_STA_CRC:
+        /* 当前字节是 CRC high */
+        ctx->pack.crc = (uint16_t)(ctx->pack.crc | (uint16_t)(data << 8));
+        ctx->crc = crc16_final(ctx->crc);
+
+        if (ctx->crc != ctx->pack.crc)
+        {
+            comm_reset_ctx(ctx);
+            return;
+        }
+
+        ctx->pack.eop = 0u;
+        ctx->eop_flag = 0u;
+        ctx->status = SECTION_PACKFORM_STA_EOP;
+        break;
+
+    case SECTION_PACKFORM_STA_EOP:
+        if (ctx->eop_flag == 0u)
+        {
+            ctx->pack.eop = (uint16_t)(ctx->pack.eop | (uint16_t)data);
+            ctx->eop_flag = 1u;
+        }
+        else
+        {
+            ctx->pack.eop = (uint16_t)(ctx->pack.eop | (uint16_t)(data << 8));
+            /* EOP 必须校验：否则“路由帧”会在任意 1 字节后触发转发（原代码的 bug） */
+            if (ctx->pack.eop == COMM_EOP_WORD)
+            {
+                if (ctx->is_route == 1u)
+                {
+                    comm_route_run(ctx);
+                }
+                else
+                {
+                    if (ctx->func)
+                        ctx->func(&ctx->pack, my_printf);
+                }
+            }
+            comm_reset_ctx(ctx);
+        }
+        break;
+
+    case SECTION_PACKFORM_STA_ROUTE:
+    default:
+        comm_reset_ctx(ctx);
+        break;
+    }
+}
+
+/* =============================================================================
+ * 发送
+ * =============================================================================
+ */
+
+#define COMM_TX_BUFFER_SIZE 512u
+#define COMM_TX_BUFFER_COUNT 4u
+
+typedef struct
+{
+    volatile uint8_t busy;
+    uint8_t data[COMM_TX_BUFFER_SIZE];
+} comm_tx_buffer_t;
+
+static comm_tx_buffer_t s_comm_tx_buffer[COMM_TX_BUFFER_COUNT];
+
+static comm_tx_buffer_t *comm_tx_buffer_acquire(void)
+{
+    for (;;)
+    {
+        for (uint32_t i = 0u; i < COMM_TX_BUFFER_COUNT; ++i)
+        {
+            if ((__LDREXB(&s_comm_tx_buffer[i].busy) == 0u) &&
+                (__STREXB(1u, &s_comm_tx_buffer[i].busy) == 0u))
+            {
+                __DMB();
+                return &s_comm_tx_buffer[i];
+            }
+        }
+    }
+}
+
+static void comm_tx_buffer_release(comm_tx_buffer_t *tx)
+{
+    if (tx == NULL)
+    {
+        return;
+    }
+
+    __DMB();
+    tx->busy = 0u;
+}
+
+static uint16_t crc16_update_block(uint16_t crc, const uint8_t *data, uint32_t len)
+{
+    for (uint32_t i = 0u; i < len; ++i)
+    {
+        crc = crc16_update(crc, data[i]);
+    }
+
+    return crc;
+}
+
+void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
+{
+    comm_tx_buffer_t *tx;
+    uint8_t *tx_buffer;
+    uint16_t crc;
+    uint16_t tx_len;
+    uint32_t crc_len;
+    uint32_t need;
+
+    if (!p_pack)
+        return;
+
+    if ((p_pack->len > 0u) && (p_pack->p_data == NULL))
+        return;
+
+    /* 基础帧长：15 字节（含 EOP、CRC），payload 不能超过 tx_buffer */
+    need = 15u + (uint32_t)p_pack->len;
+    if (need > COMM_TX_BUFFER_SIZE)
+        return;
+
+    tx = comm_tx_buffer_acquire();
+    tx_buffer = tx->data;
+
+    p_pack->version = COMM_VER_1;
+
+    tx_buffer[0] = COMM_SOP_BYTE;
+    tx_buffer[1] = p_pack->version;
+    tx_buffer[2] = p_pack->src;
+    tx_buffer[3] = p_pack->d_src;
+    tx_buffer[4] = p_pack->dst;
+    tx_buffer[5] = p_pack->d_dst;
+    tx_buffer[6] = p_pack->cmd_set;
+    tx_buffer[7] = p_pack->cmd_word;
+    tx_buffer[8] = p_pack->is_ack;
+    tx_buffer[9] = (uint8_t)(p_pack->len & 0xFFu);
+    tx_buffer[10] = (uint8_t)((p_pack->len >> 8) & 0xFFu);
+
+    /* DATA */
+    if (p_pack->p_data && p_pack->len)
+    {
+        (void)memcpy(&tx_buffer[11], p_pack->p_data, p_pack->len);
+    }
+    crc_len = 11u + (uint32_t)p_pack->len;
+    crc = crc16_update_block(crc16_init(), tx_buffer, crc_len);
+    p_pack->crc = crc16_final(crc);
+
+    /* CRC (LE) */
+    tx_buffer[crc_len] = (uint8_t)(p_pack->crc & 0xFFu);
+    tx_buffer[crc_len + 1u] = (uint8_t)((p_pack->crc >> 8) & 0xFFu);
+
+    /* EOP 0x0D 0x0A => word 0x0A0D */
+    tx_buffer[crc_len + 2u] = 0x0Du;
+    tx_buffer[crc_len + 3u] = 0x0Au;
+    tx_len = (uint16_t)(crc_len + 4u);
+
+    if (my_printf && my_printf->tx_by_dma)
+    {
+        my_printf->tx_by_dma((char *)tx_buffer, (int)tx_len);
+    }
+
+    comm_tx_buffer_release(tx);
+}

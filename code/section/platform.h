@@ -105,8 +105,13 @@ extern size_t __stop_section;
 #elif defined(IS_PLECS)
 #include "plecs.h"
 extern uint32_t plecs_time_100us;
-#define SECTION_SYS_TICK plecs_time_100us
+#define SECTION_SYS_TICK __atomic_load_n(&plecs_time_100us, __ATOMIC_RELAXED)
 #define SECTION_SYS_TICK_UNIT_US 100u
+#define PLATFORM_PERF_COUNTER_REFRESH() plecs_perf_counter_refresh()
+#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address) \
+    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
@@ -464,6 +469,10 @@ extern uint32_t __section_end;
 
 #ifndef PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 200UL
+#endif
+
+#ifndef PLATFORM_PERF_COUNTER_REFRESH
+#define PLATFORM_PERF_COUNTER_REFRESH() ((void)0)
 #endif
 
 #ifndef PLATFORM_COMM_LINK_ENABLE_ISO
