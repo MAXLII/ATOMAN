@@ -3,13 +3,13 @@
  * @file    frame_tcp_server.c
  * @brief   Windows TCP transport for FRAME-to-PLECS communication.
  * @details
- *          This file is part of the base project.
+ *          This file is part of the base PLECS common platform.
  *
  *          Module responsibilities:
  *          - Listen on TCP port 5000 for a FRAME Ethernet connection
  *          - Feed received bytes into the shared 0xE8 protocol parser
  *          - Queue protocol output so PLECS callbacks never block on socket transmission
- *          - Send queued frames and stop the worker during PLECS termination
+ *          - Send queued frames and expose dispatch serialization to PLECS projects
  *
  *          Design notes:
  *          - C11 compatible
@@ -31,7 +31,6 @@
 
 #include "comm.h"
 #include "comm_addr.h"
-#include "frame_bridge_app.h"
 #include "plecs.h"
 #include "shell_service.h"
 
@@ -492,23 +491,12 @@ void frame_tcp_server_stop(void)
     }
 }
 
-void plecs_platform_start(void)
-{
-    frame_bridge_state_reset();
-    frame_tcp_server_start();
-}
-
-void plecs_platform_terminate(void)
-{
-    frame_tcp_server_stop();
-}
-
-void plecs_platform_dispatch_enter(void)
+void frame_tcp_server_dispatch_enter(void)
 {
     EnterCriticalSection(&s_debug_lock);
 }
 
-void plecs_platform_dispatch_exit(void)
+void frame_tcp_server_dispatch_exit(void)
 {
     LeaveCriticalSection(&s_debug_lock);
 }
