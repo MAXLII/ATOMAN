@@ -16,6 +16,7 @@ PHDRS
 {
     flash PT_LOAD FLAGS(5);
     ram PT_LOAD FLAGS(6);
+    ram_func PT_LOAD FLAGS(5);
 }
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -116,7 +117,7 @@ SECTIONS
         *(.func_ram*)
         . = ALIGN(4);
         _efunc_ram = .;
-    } > RAM AT > FLASH :ram
+    } > RAM AT > FLASH :ram_func
 
     .bss (NOLOAD) :
     {
