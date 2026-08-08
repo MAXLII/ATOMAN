@@ -92,6 +92,7 @@ PROJECT_SOURCES := \
     ../../code/dbg/shell.c \
     ../../code/dbg/shell_core.c \
     ../../code/dbg/shell_service.c \
+    ../../code/dbg/section_list_service.c \
     ../../code/interface/ac/gpio.c \
     ../../code/interface/ac/comm_link.c \
     ../../code/section/srtos_m/section.c \
