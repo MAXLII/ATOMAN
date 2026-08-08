@@ -9,9 +9,15 @@ set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../code)
 
 set(SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
+    ${PLECS_COMMON_DIR}/comm/comm.c
+    ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
     ${PLECS_PROJECT_DIR}/app/app.c
+    ${PLECS_PROJECT_DIR}/app/buck_platform.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_adc.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
+    ${PLECS_COMMON_DIR}/dbg/shell/shell.c
+    ${PLECS_COMMON_DIR}/dbg/shell/shell_core.c
+    ${PLECS_COMMON_DIR}/dbg/shell/shell_service.c
     ${CODE_DIR}/section/baremetal/section.c
     ${CODE_DIR}/lib/pi_tustin_i32.c
     ${CODE_DIR}/ctrl/buck/buck_cfg.c
@@ -30,6 +36,10 @@ target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}/app
     ${PLECS_PROJECT_DIR}/bsp
     ${PLECS_COMMON_DIR}
+    ${PLECS_COMMON_DIR}/comm
+    ${PLECS_COMMON_DIR}/dbg/shell
+    ${CODE_DIR}/comm
+    ${CODE_DIR}/interface/common
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
     ${CODE_DIR}/dbg
@@ -37,6 +47,8 @@ target_include_directories(plecs PRIVATE
     ${CODE_DIR}/ctrl
     ${CODE_DIR}/ctrl/buck
 )
+
+target_link_libraries(plecs PRIVATE ws2_32)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
