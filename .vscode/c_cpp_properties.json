@@ -426,6 +426,48 @@
             }
         },
         {
+            "name": "plecs_buck",
+            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/buck",
+                "${workspaceFolder}/platform/plecs/buck/app",
+                "${workspaceFolder}/platform/plecs/buck/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/common/comm",
+                "${workspaceFolder}/platform/plecs/common/dbg/shell",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/buck"
+            ],
+            "defines": [
+                "IS_PLECS",
+                "IS_BUCK",
+                "TOOLCHAIN_GCC",
+                "__RAM_FUNC="
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/platform/plecs/buck",
+                    "${workspaceFolder}/platform/plecs/common",
+                    "${workspaceFolder}/code/comm",
+                    "${workspaceFolder}/code/interface/common",
+                    "${workspaceFolder}/code/section",
+                    "${workspaceFolder}/code/dbg",
+                    "${workspaceFolder}/code/lib",
+                    "${workspaceFolder}/code/ctrl/buck"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "plecs_ac",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
