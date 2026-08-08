@@ -26,7 +26,11 @@ INCLUDES := \
     -I./Firmware/CMSIS/GD/GD32E50x/Include \
     -I./Firmware/GD32E50x_standard_peripheral/Include \
     -I./inc \
-    -I./bsp/inc
+    -I./bsp/inc \
+    -I./enet/inc \
+    -I./third_party/lwip-2.2.1/src/include \
+    -I./third_party/lwip-2.2.1/port/GD32E50x \
+    -I./third_party/lwip-2.2.1/port/GD32E50x/Basic
 
 COMMON_CFLAGS := $(MCU_FLAGS) $(PROJECT_DEFINES) $(INCLUDES) \
     -std=c11 -ffunction-sections -fdata-sections -Wa,--noexecstack -MMD -MP
@@ -55,6 +59,8 @@ PROJECT_SOURCES := \
     bsp/src/bsp_gpio.c \
     bsp/src/bsp_timer.c \
     bsp/src/bsp_usart.c \
+    bsp/src/bsp_enet.c \
+    enet/src/enet_comm.c \
     ../../code/app/demo/demo.c \
     ../../code/app/demo/demo_comm.c \
     ../../code/app/demo/demo_interrupt.c \
@@ -91,9 +97,16 @@ PROJECT_SOURCES := \
     ../../code/section/srtos_m/section.c \
     ../../code/comm/comm.c
 
+LWIP_SOURCES := \
+    $(wildcard third_party/lwip-2.2.1/src/core/*.c) \
+    $(wildcard third_party/lwip-2.2.1/src/core/ipv4/*.c) \
+    third_party/lwip-2.2.1/src/netif/ethernet.c \
+    third_party/lwip-2.2.1/port/GD32E50x/Basic/ethernetif.c
+
 VENDOR_SOURCES := \
     Firmware/CMSIS/GD/GD32E50x/Source/system_gd32e50x.c \
-    $(filter-out %/gd32e50x_sdio.c,$(wildcard Firmware/GD32E50x_standard_peripheral/Source/*.c))
+    $(filter-out %/gd32e50x_sdio.c,$(wildcard Firmware/GD32E50x_standard_peripheral/Source/*.c)) \
+    $(LWIP_SOURCES)
 ASM_SOURCES := gcc_startup/startup_gd32e507.S
 
 PROJECT_OBJECTS := $(addprefix $(BUILD_DIR)/project/,$(notdir $(PROJECT_SOURCES:.c=.o)))
