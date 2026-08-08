@@ -1,0 +1,191 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file    scope_service.h
+ * @brief   Scope service public interface (protocol layer).
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Define scope service command words, payload layouts, read modes, and status codes
+ *          - Keep comm protocol definitions separate from the scope core (scope.h)
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - scope_service.h depends on scope.h + shell.h (one-way, no circular)
+ *
+ * @author  Max.Li
+ * @date    2026-04-30
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
+#ifndef __SCOPE_SERVICE_H__
+#define __SCOPE_SERVICE_H__
+
+#include "scope.h"
+#include "shell.h"
+
+void scope_printf_status(scope_t *scope, DEC_MY_PRINTF);
+void scope_printf_data(scope_t *scope, DEC_MY_PRINTF);
+void scope_printf_data_start(scope_t *scope, DEC_MY_PRINTF);
+int scope_printf_data_step(void);
+int scope_printf_data_is_active(void);
+
+#if (SCOPE_ENABLE == 1u)
+#define REG_SCOPE_STATUS_CMD(name)                     \
+    static void scope_status_##name(DEC_MY_PRINTF)     \
+    {                                                  \
+        scope_printf_status(&scope_##name, my_printf); \
+    }                                                  \
+    REG_SHELL_CMD(scp_sta_##name, scope_status_##name)
+
+#define REG_SCOPE_START_CMD(name)                  \
+    static void scope_start_##name(DEC_MY_PRINTF)  \
+    {                                              \
+        scope_start(&scope_##name);                \
+        my_printf->my_printf("Scope started\r\n"); \
+    }                                              \
+    REG_SHELL_CMD(scp_start_##name, scope_start_##name)
+
+#define SCOPE_DATA_STEP_START(name, my_printf) scope_printf_data_start(&scope_##name, my_printf)
+
+#define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
+    static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
+    REG_SHELL_CMD(scp_pf_##name, scope_data_step_##name)
+#else
+#define REG_SCOPE_STATUS_CMD(name)
+#define REG_SCOPE_START_CMD(name)
+#define SCOPE_DATA_STEP_START(name, my_printf) ((void)0)
+#define REG_SCOPE_DATA_STEP_CMD(name)
+#endif
+
+#define SCOPE_DATA_STEP_RUN()               \
+    do                                      \
+    {                                       \
+        if (scope_printf_data_is_active())  \
+        {                                   \
+            (void)scope_printf_data_step(); \
+        }                                   \
+    } while (0)
+
+/* Protocol command words and payload layouts */
+#define CMD_SET_SCOPE 0x01
+
+#define CMD_WORD_SCOPE_LIST_QUERY 0x18
+#define CMD_WORD_SCOPE_INFO_QUERY 0x19
+#define CMD_WORD_SCOPE_VAR_QUERY 0x1A
+#define CMD_WORD_SCOPE_START 0x1B
+#define CMD_WORD_SCOPE_TRIGGER 0x1C
+#define CMD_WORD_SCOPE_STOP 0x1D
+#define CMD_WORD_SCOPE_RESET 0x1E
+#define CMD_WORD_SCOPE_SAMPLE_QUERY 0x1F
+
+typedef enum
+{
+    SCOPE_READ_MODE_NORMAL = 0,
+    SCOPE_READ_MODE_FORCE = 1,
+} scope_read_mode_e;
+
+typedef enum
+{
+    SCOPE_TOOL_STATUS_OK = 0,
+    SCOPE_TOOL_STATUS_SCOPE_ID_INVALID = 1,
+    SCOPE_TOOL_STATUS_VAR_INDEX_INVALID = 2,
+    SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID = 3,
+    SCOPE_TOOL_STATUS_RUNNING_DENIED = 4,
+    SCOPE_TOOL_STATUS_DATA_NOT_READY = 5,
+    SCOPE_TOOL_STATUS_BUSY = 6,
+    SCOPE_TOOL_STATUS_CAPTURE_CHANGED = 7,
+} scope_tool_status_e;
+
+#pragma pack(push, 1)
+typedef struct
+{
+    uint8_t reserved;
+} scope_list_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t is_last;
+    uint8_t name_len;
+    uint8_t reserved;
+} scope_list_item_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t reserved[3];
+} scope_info_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t state;
+    uint8_t data_ready;
+    uint8_t var_count;
+    uint8_t reserved[3];
+    uint32_t sample_count;
+    uint32_t write_index;
+    uint32_t trigger_index;
+    uint32_t trigger_post_cnt;
+    uint32_t trigger_display_index;
+    uint32_t sample_period_us;
+    uint32_t capture_tag;
+} scope_info_ack_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t var_index;
+    uint8_t reserved[2];
+} scope_var_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t var_index;
+    uint8_t is_last;
+    uint8_t name_len;
+    uint8_t reserved[3];
+} scope_var_ack_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t state;
+    uint8_t data_ready;
+    uint32_t capture_tag;
+} scope_ctrl_ack_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t read_mode;
+    uint8_t reserved[2];
+    uint32_t sample_index;
+    uint32_t expected_capture_tag;
+} scope_sample_query_t;
+
+typedef struct
+{
+    uint8_t scope_id;
+    uint8_t status;
+    uint8_t read_mode;
+    uint8_t var_count;
+    uint32_t sample_index;
+    uint32_t capture_tag;
+    uint8_t is_last_sample;
+    uint8_t reserved[3];
+} scope_sample_ack_t;
+#pragma pack(pop)
+
+#endif
