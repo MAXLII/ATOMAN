@@ -1,0 +1,6 @@
+r
+h
+loadfile build/gd32e507_demo.hex
+r
+g
+q
