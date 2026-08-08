@@ -196,7 +196,21 @@ Vivado 输出位于 `pl/build/output/`：
 XEmacPs 适配层通过 MDIO 扫描 PHY，并通过自动协商确定链路速率。
 无 RTOS ARM 输出位于 `ps/build/`，编译 `code/section/baremetal/section.c`；SRTOS ARM 输出位于 `ps/build_srtos/`，编译 `code/section/srtos_a9/section.c` 并链接 A9 端口。两个 Makefile 都只定义平台与工具链宏，不定义运行时选择宏。`ps/compile.ps1` 的 `-Srtos 0/1` 仅用于选择对应 Makefile 和输出目录。构建启用 `-Werror`、`-Wconversion`、`-Wsign-conversion`、`-Wshadow`、`-Wcast-align`、`-Wstrict-prototypes`、`-Wmissing-prototypes` 和 `-Wundef`。
 
-## 8. 下载与板上测试
+## 8. Bootloader 与以太网升级
+
+`platform/zynq7020/ps/bootloader/` 构建独立 Bootloader，运行地址为 `0x04000000`。
+Bootloader BSP包含 lwIP 2.0.2，并复用 `bsp_ethernet` 在 PS GEM0 上提供
+`192.168.1.10:9000` TCP 升级链路。FRAME 升级命令 `0x01/0x08`～`0x01/0x0B`
+通过该链路传输。
+
+应用侧 `zynq_iap_update_service` 在 `0x0002FFF0` 的低地址 OCM 写入启动原因，等待 TCP
+ACK 发送完成后关闭 GEM0 服务并跳转 Bootloader。Bootloader 重新建立 TCP 监听，接收
+staging 固件，校验后安装到 QSPI IAP 分区并启动。
+
+Bootloader 的 Section 注册表位于 `.bss` 之前，未初始化的 lwIP RAM 不进入 BIN 和
+Bootgen 启动镜像。`build_boot_image.ps1` 校验生成的 `BOOT.bin` 不超过 5 MiB 启动分区。
+
+## 9. 下载与板上测试
 
 ```powershell
 # 一键完成下载、JTAG 和 COM6 检查
@@ -233,13 +247,13 @@ Shell 命令包括 `help`、`ZYNQ_STATUS`、`IIR_TEST`、`PL_UART_STATUS`、
 `PL_UART_RESET`、`PL_UART_DMA_TEST`、`PL_UART_ERROR_CLEAR` 和
 `DEMO_SHELL_PING`。
 
-## 9. section 运行模式
+## 10. section 运行模式
 
 裸机与 A9 SRTOS 是两套独立源码，构建时通过源文件和 include path 选择。两套头文件都名为 `section.h`，注册接口保持一致。裸机模式由 SCU 私有定时器产生 10kHz 中断，在 ISR 中调用 `section_interrupt()`，主循环持续调用 `run_task()`。
 
 SRTOS 模式使用 section 自带的任务表和调度器。Cortex-A9 端口保存通用寄存器、VFP 状态、返回 PC 与 CPSR，通过 SVC 启动/主动让出，通过 IRQ 退出路径执行时间片切换。
 
-## 10. 关联导航
+## 11. 关联导航
 
 ### 应用文档
 

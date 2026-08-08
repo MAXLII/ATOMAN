@@ -87,7 +87,41 @@ iap_update_prepare(const iap_update_info_t *p_info)
 
 IAP的`0x08` ACK只表示升级请求已接受，不表示已经复位或固件已经写入。
 
-## 6. 运行异常处理
+## 6. Zynq-7020 网线升级
+
+Zynq-7020 的 IAP 和 Bootloader 共用 PS GEM0 与 lwIP TCP 服务。设备固定地址为
+`192.168.1.10/24`，FRAME 连接端口为 `9000`。上位机网卡地址需要配置在同一网段。
+
+应用收到 `0x01/0x08` 后先通过当前 TCP 连接返回 ACK，保留 100 ms 发送窗口，然后主动
+终止连接并跳转到 DDR 地址 `0x04000000` 的 Bootloader。升级启动原因保存在有效低地址
+OCM 的 `0x0002FFF0`。Bootloader 重新初始化 GEM0 并监听相同地址和端口，FRAME 重连后
+继续执行 `0x08`～`0x0B`。
+
+Bootloader 使用 staged 模式。固件包先写入 QSPI staging 分区，完整 CRC16 与 34 字节
+footer 校验通过后复制到 IAP 分区，再从 QSPI 加载到 `0x00100000` 并启动。在线升级不会
+写入前 5 MiB 的受保护启动分区。
+
+构建和生成启动镜像：
+
+```powershell
+cd D:\OneDrive\LWX\GD32\base\platform\zynq7020\ps\bootloader
+.\compile.ps1
+.\build_boot_image.ps1
+```
+
+输出文件为 `build/zynq7020_bootloader.elf`、`build/zynq7020_bootloader.bin` 和
+`build/BOOT.bin`。`BOOT.bin` 包含 FSBL、PL bitstream 和 Bootloader。
+
+JTAG 调试时可执行：
+
+```powershell
+& C:\Xilinx\SDK\2018.3\bin\xsct.bat .\download.tcl
+```
+
+该脚本把 Bootloader 下载到 DDR，并写入 IAP 升级启动原因，使 Bootloader 驻留等待网线
+升级；它不修改 QSPI 启动分区。
+
+## 7. 运行异常处理
 
 - `0x08`被拒绝：检查模块ID、文件大小、升级模式和区域容量。
 - `0x09`长期未就绪：检查FAL是否周期推进及Flash状态函数是否退出busy。
@@ -96,7 +130,7 @@ IAP的`0x08` ACK只表示升级请求已接受，不表示已经复位或固件�
 - 暂存下载完成但不跳转：检查复制读回、完整CRC、footer及平台镜像首部。
 - 失败后设备驻留Bootloader属于安全行为，应重新发送完整镜像，不要强制跳转。
 
-## 7. 关联导航
+## 8. 关联导航
 
 ### 源代码
 
