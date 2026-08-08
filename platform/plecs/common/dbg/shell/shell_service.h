@@ -37,6 +37,9 @@
 #define CMD_SET_SHELL_REPORT_LIST 0x01
 #define CMD_WORD_SHELL_REPORT_LIST 0x04
 
+#define CMD_SET_SHELL_REPORT_LIST_BATCH 0x01
+#define CMD_WORD_SHELL_REPORT_LIST_BATCH 0x3F
+
 #define CMD_SET_SHELL_READ_DATA 0x01
 #define CMD_WORD_SHELL_READ_DATA 0x02
 
@@ -55,16 +58,8 @@
 #define CMD_SET_SHELL_WAVE_PARAM 0x01
 #define CMD_WORD_SHELL_WAVE_PARAM 0x07
 
-typedef struct
-{
-    uint8_t active;
-    DEC_MY_PRINTF;
-    uint8_t src;
-    uint8_t d_src;
-    uint8_t dst;
-    uint8_t d_dst;
-    section_item_t *p_item;
-} shell_report_ctx_t;
+#define CMD_SET_SHELL_WAVE_BATCH 0x01
+#define CMD_WORD_SHELL_WAVE_BATCH 0x40
 
 #pragma pack(push, 1)
 typedef struct
@@ -77,6 +72,13 @@ typedef struct
     uint8_t auto_report;
     char name[SHELL_STR_SIZE_MAX];
 } shell_report_list_t;
+
+typedef struct
+{
+    uint32_t total_count;
+    uint32_t first_index;
+    uint16_t item_count;
+} shell_report_list_batch_header_t;
 
 typedef struct
 {
@@ -133,6 +135,14 @@ typedef struct
 
 typedef struct
 {
+    uint32_t simulation_tick_100us;
+    uint32_t total_count;
+    uint32_t first_index;
+    uint16_t item_count;
+} shell_wave_batch_header_t;
+
+typedef struct
+{
     uint8_t start_report;
 } shell_wave_start_t;
 
@@ -150,7 +160,6 @@ typedef struct
 void shell_status_run(void);
 #if (SHELL_STRING_ENABLE == 1u)
 void list_print_start(DEC_MY_PRINTF);
-int list_print_step(void);
 #endif
 
 #endif /* __SHELL_SERVICE_H__ */

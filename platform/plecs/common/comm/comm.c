@@ -524,7 +524,7 @@ void comm_run_with_time(uint8_t data, DEC_MY_PRINTF, void *p, uint32_t current_t
  * =============================================================================
  */
 
-#define COMM_TX_BUFFER_SIZE 512u
+#define COMM_TX_BUFFER_SIZE COMM_MAX_FRAME_SIZE
 #define COMM_TX_BUFFER_COUNT 4u
 
 typedef struct

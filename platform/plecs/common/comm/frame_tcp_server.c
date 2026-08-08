@@ -40,10 +40,12 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 
-#define FRAME_TCP_RX_BUFFER_SIZE (512u)
-#define FRAME_TCP_TX_FRAME_SIZE (512u)
-#define FRAME_TCP_TX_PRIORITY_FRAME_COUNT (32u)
-#define FRAME_TCP_TX_STREAM_FRAME_COUNT (128u)
+#define FRAME_TCP_RX_BUFFER_SIZE COMM_MAX_PAYLOAD_SIZE
+#define FRAME_TCP_TX_FRAME_SIZE COMM_MAX_FRAME_SIZE
+/* PC-hosted PLECS can burst complete Shell registries without MCU RAM constraints. */
+#define FRAME_TCP_TX_PRIORITY_FRAME_COUNT (1024u)
+/* Keep one complete high-channel-count Shell wave round in the transport queue. */
+#define FRAME_TCP_TX_STREAM_FRAME_COUNT (1024u)
 #define FRAME_TCP_TX_FLUSH_BUDGET (32768u)
 #define FRAME_TCP_SOCKET_BUFFER_SIZE (262144)
 #define FRAME_TCP_SELECT_TIMEOUT_US (10000L)
@@ -55,9 +57,9 @@
 
 typedef struct
 {
-    uint16_t length;                    /**< Total valid bytes stored in this queued protocol frame. */
+    uint16_t length;                    /**< Total valid bytes stored in this queued TCP chunk. */
     uint16_t offset;                    /**< Bytes already accepted by the nonblocking socket. */
-    uint8_t data[FRAME_TCP_TX_FRAME_SIZE]; /**< Complete protocol frame copied from the shared encoder. */
+    uint8_t data[FRAME_TCP_TX_FRAME_SIZE]; /**< One or more complete protocol frames kept in wire order. */
 } frame_tcp_tx_frame_t;
 
 typedef struct
@@ -149,7 +151,8 @@ static frame_tcp_tx_queue_t *frame_tcp_tx_queue_select(const char *p_data, int l
 {
     if ((length > (int)FRAME_TCP_CMD_WORD_OFFSET) &&
         ((uint8_t)p_data[FRAME_TCP_CMD_SET_OFFSET] == CMD_SET_SHELL_WAVE_PARAM) &&
-        ((uint8_t)p_data[FRAME_TCP_CMD_WORD_OFFSET] == CMD_WORD_SHELL_WAVE_PARAM))
+        (((uint8_t)p_data[FRAME_TCP_CMD_WORD_OFFSET] == CMD_WORD_SHELL_WAVE_PARAM) ||
+         ((uint8_t)p_data[FRAME_TCP_CMD_WORD_OFFSET] == CMD_WORD_SHELL_WAVE_BATCH)))
     {
         return &tx_stream_queue;
     }
@@ -160,6 +163,7 @@ static void frame_tcp_send(char *p_data, int length)
 {
     frame_tcp_tx_frame_t *p_frame = NULL;
     frame_tcp_tx_queue_t *p_queue = NULL;
+    uint32_t previous_index = 0u;
     const SOCKET client_socket = frame_tcp_client_get();
 
     if ((p_data == NULL) ||
@@ -172,6 +176,20 @@ static void frame_tcp_send(char *p_data, int length)
 
     EnterCriticalSection(&s_tx_queue_lock);
     p_queue = frame_tcp_tx_queue_select(p_data, length);
+    if (p_queue->count > 0u)
+    {
+        previous_index = (p_queue->tail + p_queue->capacity - 1u) % p_queue->capacity;
+        p_frame = &p_queue->p_frames[previous_index];
+        if ((p_frame->offset == 0u) &&
+            ((uint32_t)p_frame->length + (uint32_t)length <= FRAME_TCP_TX_FRAME_SIZE))
+        {
+            (void)memcpy(&p_frame->data[p_frame->length], p_data, (size_t)length);
+            p_frame->length = (uint16_t)((uint32_t)p_frame->length + (uint32_t)length);
+            LeaveCriticalSection(&s_tx_queue_lock);
+            return;
+        }
+    }
+
     if (p_queue->count < p_queue->capacity)
     {
         p_frame = &p_queue->p_frames[p_queue->tail];

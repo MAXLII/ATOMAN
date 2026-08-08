@@ -30,8 +30,12 @@
 #ifndef PLECS_COMMON_COMM_H
 #define PLECS_COMMON_COMM_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#define COMM_MAX_PAYLOAD_SIZE (10u * 1024u)
+#define COMM_FRAME_OVERHEAD_SIZE (15u)
+#define COMM_MAX_FRAME_SIZE (COMM_MAX_PAYLOAD_SIZE + COMM_FRAME_OVERHEAD_SIZE)
 
 #include "section.h" // 仅依赖：REG_SECTION_FUNC / SECTION_COMM / SECTION_COMM_ROUTE / DEC_MY_PRINTF
 
