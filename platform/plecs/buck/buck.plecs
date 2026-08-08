@@ -3,7 +3,7 @@ Plecs {
   Version       "4.7"
   CircuitModel  "ContStateSpace"
   StartTime     "0.0"
-  TimeSpan      "1.0"
+  TimeSpan      "100"
   Timeout       ""
   Solver        "auto"
   MaxStep       "1e-3"
@@ -48,9 +48,9 @@ Plecs {
   ScriptsDialogGeometry ""
   ScriptsDialogSplitterPos "0"
   Schematic {
-    Location      [0, 27; 3440, 1346]
-    ZoomFactor    1.71498
-    SliderPosition [-1, -1]
+    Location      [1633, 229; 3206, 1093]
+    ZoomFactor    0.999998
+    SliderPosition [0, 0]
     ShowBrowser   off
     BrowserWidth  100
     Component {
@@ -205,7 +205,7 @@ Plecs {
       LabelPosition east
       Parameter {
         Variable      "R"
-        Value         "12/100"
+        Value         "12/1"
         Show          off
       }
     }
@@ -351,7 +351,7 @@ Plecs {
       Type          From
       Name          "From"
       Show          off
-      Position      [1150, 450]
+      Position      [1095, 475]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -370,7 +370,7 @@ Plecs {
       Type          From
       Name          "From1"
       Show          off
-      Position      [1150, 460]
+      Position      [1095, 485]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -389,7 +389,7 @@ Plecs {
       Type          From
       Name          "From2"
       Show          off
-      Position      [1150, 470]
+      Position      [1095, 495]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -408,108 +408,13 @@ Plecs {
       Type          From
       Name          "From3"
       Show          off
-      Position      [1150, 480]
+      Position      [1095, 505]
       Direction     right
       Flipped       off
       LabelPosition south
       Parameter {
         Variable      "Tag"
         Value         "ILB"
-        Show          off
-      }
-      Parameter {
-        Variable      "Visibility"
-        Value         "1"
-        Show          off
-      }
-    }
-    Component {
-      Type          From
-      Name          "From4"
-      Show          off
-      Position      [1150, 490]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Tag"
-        Value         "RUN"
-        Show          off
-      }
-      Parameter {
-        Variable      "Visibility"
-        Value         "1"
-        Show          off
-      }
-    }
-    Component {
-      Type          From
-      Name          "From5"
-      Show          off
-      Position      [1150, 500]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Tag"
-        Value         "PWR_LMT"
-        Show          off
-      }
-      Parameter {
-        Variable      "Visibility"
-        Value         "1"
-        Show          off
-      }
-    }
-    Component {
-      Type          From
-      Name          "From6"
-      Show          off
-      Position      [1150, 510]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Tag"
-        Value         "IN_CURR_LMT"
-        Show          off
-      }
-      Parameter {
-        Variable      "Visibility"
-        Value         "1"
-        Show          off
-      }
-    }
-    Component {
-      Type          From
-      Name          "From7"
-      Show          off
-      Position      [1150, 520]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Tag"
-        Value         "OUT_CURR_LMT"
-        Show          off
-      }
-      Parameter {
-        Variable      "Visibility"
-        Value         "1"
-        Show          off
-      }
-    }
-    Component {
-      Type          From
-      Name          "From8"
-      Show          off
-      Position      [1150, 530]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Tag"
-        Value         "OUT_VOLT_REF"
         Show          off
       }
       Parameter {
@@ -552,7 +457,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "Width"
-        Value         "9"
+        Value         "4"
         Show          off
       }
     }
@@ -2443,19 +2348,20 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [2078, 490; 3369, 1312]
+      Location      [1587, 366; 2878, 1196]
       State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
 "G0AQQByAGUAYQAAAAAA/////wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
-"///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAULAAAA7/w"
-"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQBAAAAAAAABQsAAABQAP///wAABQsAAAIoAAAA"
+"///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAULAAAAX/w"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQBAAAAAAAABQsAAABQAP///wAABQsAAALAAAAA"
 "BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
 "AAAAA=="
       SavedViews    "AAAAAgAAAAA="
-      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL8AMAAAAGAAAAC"
-"AAAAGQAAAAJAAAAZAAAAAQAAABkAAAABQAAAGQAAAAGAAAAZAAAAAcAAABkAAAFCwAAAAsBAAABAA"
-"AAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAACsAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAA"
-"AAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
-"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAMzAAAAAQAAAAAAAAPoAAAAABg="
+      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAC"
+"AAAAGQAAAAJAAAAZAAAAAYAAABkAAAABwAAAGQAAAAEAAAAZAAAAAUAAABkAAAAAgAAAGQAAAADAA"
+"AAZAAAAAEAAABkAAAE+gAAAAsBAAABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAACsAAA"
+"AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
+"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
+"AROAAAAAQAAAAAAAAPoAAAAABg="
       PlotPalettes  "AAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       Axes          "1"
       TimeRange     "0.0"
@@ -2639,18 +2545,19 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [1516, 367; 2799, 1037]
-      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAFrAAACg/wCAAAABPsAAAAUAEQAYQB0A"
-"GEAVwBpAGQAZwBlAHQBAAAAMQAAAoMAAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
+      Location      [1516, 367; 2799, 1045]
+      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAFrAAACi/wCAAAABPsAAAAUAEQAYQB0A"
+"GEAVwBpAGQAZwBlAHQBAAAAMQAAAosAAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
 "///wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA/////wAAAGYA////+wAAAAw"
-"AVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAA5QAAAKDAAAABAAAAAQAAAAIAAAACPwAAAAB"
+"AVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAA5QAAAKLAAAABAAAAAQAAAAIAAAACPwAAAAB"
 "AAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAAAAAAA=="
       SavedViews    "AAAAAgAAAAA="
-      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL8AMAAAAGAAAAC"
-"AAAAGQAAAAJAAAAZAAAAAQAAABkAAAABQAAAGQAAAAGAAAAZAAAAAcAAABkAAABpwAAAAsBAAABAA"
-"AAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAABjAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAA"
-"AAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
-"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAYAAAAAQAAAAAAAAPoAAAAABg="
+      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAC"
+"AAAAGQAAAAJAAAAZAAAAAYAAABkAAAABwAAAGQAAAAEAAAAZAAAAAUAAABkAAAAAgAAAGQAAAADAA"
+"AAZAAAAAEAAABkAAABawAAAAsBAAABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAABjAAA"
+"AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
+"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
+"AEIAAAAAQAAAAAAAAPoAAAAABg="
       PlotPalettes  "AAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       Axes          "1"
       TimeRange     "0.0"
@@ -2912,41 +2819,6 @@ Plecs {
       SrcTerminal   1
       DstComponent  "Mux"
       DstTerminal   5
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From4"
-      SrcTerminal   1
-      DstComponent  "Mux"
-      DstTerminal   6
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From5"
-      SrcTerminal   1
-      DstComponent  "Mux"
-      DstTerminal   7
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From6"
-      SrcTerminal   1
-      DstComponent  "Mux"
-      DstTerminal   8
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From7"
-      SrcTerminal   1
-      DstComponent  "Mux"
-      DstTerminal   9
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From8"
-      SrcTerminal   1
-      DstComponent  "Mux"
-      DstTerminal   10
     }
     Connection {
       Type          Signal
@@ -3222,4 +3094,4 @@ Plecs {
     }
   }
 }
-DemoSignature "u+mqZpiGaJcFCdUZ1F6xKX8j0C5mEhCXl3/pD2qOBzY="
+DemoSignature "nyqeMlcTwbHQUJ4dKn1SjUrvhc7QcBF1XBhBKg471rM="
