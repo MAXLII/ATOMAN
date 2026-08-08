@@ -377,6 +377,37 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     }
     p = shell_find(p_shell_write_data->name, p_shell_write_data->name_len);
     if ((p != NULL) &&
+        (p->type == SHELL_CMD) &&
+        (p->func != NULL))
+    {
+        shell_write_data_ret_t shell_write_data_ret = {0};
+        section_packform_t packform = {0};
+
+        /*
+         * FRAME represents command execution with the existing write-data
+         * request and zeroed value fields.  A binary transport has no Shell
+         * text stream, so execute without a print interface and return the
+         * normal write ACK shape expected by FRAME.
+         */
+        p->func(NULL);
+
+        shell_write_data_ret.name_len = (uint8_t)p->p_name_size;
+        shell_write_data_ret.type = (uint8_t)p->type;
+        memcpy(shell_write_data_ret.name, p->p_name, p->p_name_size);
+
+        packform.src = p_pack->dst;
+        packform.d_src = p_pack->d_dst;
+        packform.dst = p_pack->src;
+        packform.d_dst = p_pack->d_src;
+        packform.cmd_set = CMD_SET_SHELL_WRITE_DATA;
+        packform.cmd_word = CMD_WORD_SHELL_WRITE_DATA;
+        packform.is_ack = 1u;
+        packform.len = (uint16_t)(sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
+        packform.p_data = (uint8_t *)&shell_write_data_ret;
+
+        comm_send_data(&packform, my_printf);
+    }
+    else if ((p != NULL) &&
         (p->type != SHELL_CMD) &&
         (p->p_var != NULL) &&
         (p->p_max != NULL) &&
