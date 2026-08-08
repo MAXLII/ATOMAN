@@ -29,14 +29,11 @@
 
 #include "bootloader_core.h"
 #include "bootloader_protocol.h"
-#include "bsp_interrupt.h"
 #include "bsp_qspi_flash.h"
-#include "bsp_usart.h"
 #include "comm.h"
 #include "comm_addr.h"
 #include "fal_cfg.h"
 #include "section.h"
-#include "xstatus.h"
 #include "zynq_boot_platform.h"
 
 #include <stddef.h>
@@ -239,14 +236,7 @@ static void bootloader_fal_adapter_init(void)
 {
     bootloader_platform_ops_t platform_ops = {0}; /* Zynq boot-reason and IAP handoff callbacks. */
     fal_state_t fal_state = fal_state_get(&g_zynq7020_fal); /* FAL state established by priority 0 init. */
-    int32_t status = bsp_usart_init(); /* FRAME UART initialization result. */
-
-    if (status == XST_SUCCESS)
-    {
-        status = bsp_interrupt_init();
-    }
-    if ((status != XST_SUCCESS) ||
-        (fal_state == FAL_STATE_UNINITIALIZED) ||
+    if ((fal_state == FAL_STATE_UNINITIALIZED) ||
         (fal_state == FAL_STATE_ERROR) ||
         (fal_state == FAL_STATE_STOPPED))
     {

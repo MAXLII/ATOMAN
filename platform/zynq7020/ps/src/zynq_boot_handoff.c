@@ -31,7 +31,7 @@
 
 #include <stdint.h>
 
-#define ZYNQ_BOOT_REASON_ADDRESS 0x0003FFF0u
+#define ZYNQ_BOOT_REASON_ADDRESS 0x0002FFF0u
 #define ZYNQ_BOOT_REASON_MAGIC 0x42544C44u
 
 typedef struct

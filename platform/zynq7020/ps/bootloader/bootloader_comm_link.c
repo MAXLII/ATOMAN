@@ -7,14 +7,14 @@
  *
  *          Module responsibilities:
  *          - Allocate a bootloader-only 1033-byte FRAME receive payload context
- *          - Bind PS UART byte receive and transmit callbacks to comm_run
+ *          - Bind PS GEM0 TCP byte receive and transmit callbacks to comm_run
  *          - Keep the normal IAP communication context and common TX pool unchanged
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - Polling PS UART receive is advanced by the Section link task
- *          - Hardware access remains in bsp_usart
+ *          - lwIP input and timers are advanced by the Section task
+ *          - Hardware access remains in bsp_ethernet
  *
  * @author  Max.Li
  * @date    2026-07-27
@@ -27,7 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 
-#include "bsp_usart.h"
+#include "bsp_ethernet.h"
 #include "comm.h"
 #include "comm_addr.h"
 #include "section.h"
@@ -39,11 +39,14 @@
 
 static void bootloader_tx(char *p_data, int length)
 {
-    bsp_usart_dbg_tx(p_data, length);
+    if ((p_data != NULL) && (length > 0))
+    {
+        (void)bsp_ethernet_tx((const uint8_t *)p_data, (uint32_t)length);
+    }
 }
 
 static section_link_tx_func_t s_bootloader_tx = {
-    .my_printf = bsp_usart_dbg_printf,
+    .my_printf = bsp_ethernet_printf,
     .tx_by_dma = bootloader_tx,
 };
 
@@ -58,6 +61,13 @@ static const section_link_handler_item_t s_handlers[] = {
 
 REG_LINK(ZYNQ_BOOTLOADER_LINK_ID,
          s_bootloader_tx,
-         bsp_usart_dbg_rx_get_byte,
+         bsp_ethernet_rx_get_byte,
          s_handlers,
          sizeof(s_handlers) / sizeof(s_handlers[0]))
+
+static void bootloader_ethernet_poll(void)
+{
+    bsp_ethernet_poll();
+}
+
+REG_TASK_MS(1u, bootloader_ethernet_poll)
