@@ -188,6 +188,19 @@ PS 工程提供裸机与 SRTOS 构建目标。PL 工程引用 `verilog/` 中的�
 
 `platform/matlab/` 保存控制器分析、参数设计和时域模型；`platform/plecs/` 按拓扑保存开关级仿真工程。仿真平台复用 `code/ctrl/` 和 `code/lib/` 中的控制实现，使算法验证与嵌入式实现保持一致。
 
+`platform/plecs/common/` 保存 PLECS 工程共用的平台组件：
+
+| 目录或文件 | 职责 |
+|---|---|
+| `DllHeader.h`、`plecs.c`、`plecs.h` | PLECS DLL 接口、仿真时间和平台生命周期入口 |
+| `comm/` | PLECS FRAME 协议解析与 Windows TCP 传输 |
+| `dbg/perf/` | 性能统计、Section 适配和协议服务 |
+| `dbg/scope/` | Scope 核心、Section 适配和协议服务 |
+| `dbg/sfra/` | SFRA 核心、Section 适配和协议服务 |
+| `dbg/shell/` | Shell 核心、Section 适配和参数服务 |
+| `dbg/trace/` | Trace 核心、兼容适配和协议服务 |
+| `dbg/section_list/` | Section 注册链表目录与节点查询服务 |
+
 ## 5. Flash 与升级架构
 
 ### 5.1 FAL

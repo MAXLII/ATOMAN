@@ -15,10 +15,11 @@ platform/plecs/frame_bridge/
 | `frame_bridge.plecs` | 包含 DLL Block、输入常量和输出显示的 PLECS 模型 |
 | `CMakeLists.txt` | MinGW-w64 DLL 构建配置 |
 | `compile.bat` | Windows 编译入口 |
-| `../common/comm.c`、`../common/comm.h` | PLECS 专用协议解析、Windows section 扫描和 TCP 墙钟超时 |
-| `../common/dbg/` | PLECS 专用完整调试模块副本，包含 Scope、SFRA、Perf、Shell、Trace 和 Section 列表服务 |
+| `../common/comm/comm.c`、`../common/comm/comm.h` | PLECS 专用协议解析、Windows section 扫描和 TCP 墙钟超时 |
+| `../common/dbg/` | 按模块组织的 PLECS 调试组件，包含 Scope、SFRA、Perf、Shell、Trace 和 Section 列表服务 |
 | `app/` | 仿真输入输出、Scope、SFRA、Trace 和 Perf 计数器接入 |
-| `comm/` | FRAME TCP 服务 |
+| `../common/comm/` | PLECS 工程共用的 FRAME TCP 服务 |
+| `app/frame_bridge_platform.c` | FRAME Bridge 状态复位与共用 TCP 服务的生命周期适配 |
 
 ## 2. 通信结构
 
@@ -29,7 +30,7 @@ TCP 服务绑定 `0.0.0.0:5000`，允许 FRAME 使用 `127.0.0.1` 或运行 PLEC
 工程使用 `platform/plecs/common/dbg/` 中的完整调试模块副本，并在该副本中适配 Windows linker section。
 PLECS 仿真变量通过 `REG_SHELL_VAR` 注册，参数列表、单参数读写和实时波形统一由 Shell 服务处理：
 
-PLECS 构建使用 `platform/plecs/common/comm.c`，不编译 `code/comm/comm.c`。MCU 通信实现及其超时行为保持独立。
+PLECS 构建使用 `platform/plecs/common/comm/comm.c`，不编译 `code/comm/comm.c`。MCU 通信实现及其超时行为保持独立。
 PLECS 不引用或编译 `code/dbg/` 中的源文件和头文件，MCU 调试实现保持不变。
 
 | 命令集 | 命令字 | 功能 |
