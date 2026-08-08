@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    frame_tcp_server.h
- * @brief   FRAME TCP transport lifecycle for the PLECS bridge.
+ * @brief   Shared FRAME TCP transport for PLECS projects.
  * @details
- *          This file is part of the base project.
+ *          This file is part of the base PLECS common platform.
  *
  *          Module responsibilities:
  *          - Declare the TCP server port used by FRAME
- *          - Expose start and stop operations bound to the PLECS DLL lifecycle
+ *          - Expose transport lifecycle operations for PLECS project adapters
+ *          - Serialize simulation dispatch and FRAME protocol callbacks
  *          - Keep Windows socket details private to the transport implementation
  *
  *          Design notes:
@@ -33,5 +34,7 @@
 
 void frame_tcp_server_start(void);
 void frame_tcp_server_stop(void);
+void frame_tcp_server_dispatch_enter(void);
+void frame_tcp_server_dispatch_exit(void);
 
 #endif /* FRAME_TCP_SERVER_H */
