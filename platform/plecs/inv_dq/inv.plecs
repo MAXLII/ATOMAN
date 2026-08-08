@@ -3,7 +3,7 @@ Plecs {
   Version       "4.7"
   CircuitModel  "ContStateSpace"
   StartTime     "0.0"
-  TimeSpan      "5.0"
+  TimeSpan      "100"
   Timeout       ""
   Solver        "auto"
   MaxStep       "1e-3"
@@ -48,7 +48,7 @@ Plecs {
   ScriptsDialogGeometry ""
   ScriptsDialogSplitterPos "0"
   Schematic {
-    Location      [1071, 31; 2789, 1341]
+    Location      [1554, 60; 3272, 1367]
     ZoomFactor    0.999995
     SliderPosition [98, 152]
     ShowBrowser   off
@@ -1419,16 +1419,16 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [1179, 174; 2639, 1004]
-      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAIeAAADI/wCAAAABPsAAAAUAEQAYQB0A"
-"GEAVwBpAGQAZwBlAHQBAAAAMQAAAyMAAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
+      Location      [1721, 31; 3439, 1369]
+      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAIeAAAFH/wCAAAABPsAAAAUAEQAYQB0A"
+"GEAVwBpAGQAZwBlAHQBAAAAMQAABR8AAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
 "///wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwIAAAaGAAACtQAAAMgAAAB4+wAAAAw"
-"AVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAA5IAAAMjAAAABAAAAAQAAAAIAAAACPwAAAAB"
+"AVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAABJQAAAUfAAAABAAAAAQAAAAIAAAACPwAAAAB"
 "AAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAAAAAAA=="
       SavedViews    "AAAAAgAAAAEAAAAYAFMAYQB2AGUAZAAgAHYAaQBlAHcAIAAxAAAAAAAAA"
 "ABAFAAAAAAAAAAAAAEAf/gAAAAAAAB/+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
       HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAC"
-"QAAAGQAAAAIAAAAZAAAAAcAAABkAAAABgAAAGQAAAAFAAAAZAAAAAQAAABkAAAAAwAAAGQAAAACAA"
+"AAAAGQAAAAJAAAAZAAAAAYAAABkAAAABwAAAGQAAAAEAAAAZAAAAAUAAABkAAAAAgAAAGQAAAADAA"
 "AAZAAAAAEAAABkAAACHgAAAAsBAAABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAACsAAA"
 "AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
 "AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
@@ -1438,7 +1438,7 @@ Plecs {
       TimeRange     "0.0"
       ScrollingMode "1"
       SingleTimeAxis "1"
-      Open          "0"
+      Open          "1"
       Ts            "-1"
       SampleLimit   "0"
       XAxisLabel    "Time / s"
@@ -1762,7 +1762,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "Width"
-        Value         "4"
+        Value         "3"
         Show          off
       }
     }
@@ -1893,7 +1893,7 @@ Plecs {
       Type          PlecsProbe
       Name          "Probe"
       Show          on
-      Position      [550, 885]
+      Position      [550, 890]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -1917,7 +1917,7 @@ Plecs {
       Type          SignalDemux
       Name          "Demux1"
       Show          off
-      Position      [615, 885]
+      Position      [615, 890]
       Direction     right
       Flipped       on
       LabelPosition south
@@ -2011,7 +2011,7 @@ Plecs {
       LabelPosition west
       Parameter {
         Variable      "R"
-        Value         "220*220/33"
+        Value         "220*220/3300"
         Show          off
       }
     }
@@ -2039,7 +2039,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "Width"
-        Value         "4"
+        Value         "3"
         Show          off
       }
     }
@@ -2242,16 +2242,16 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [2011, 1076; 2361, 1327]
+      Location      [2011, 1076; 2361, 1335]
       State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
 "G0AQQByAGUAYQAAAAAA/////wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
 "///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAAAAAAAAPw"
-"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAAAV4AAADgAAAA"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAAAV4AAADoAAAA"
 "BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
 "AAAAA=="
       SavedViews    "AAAAAgAAAAA="
       HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAC"
-"QAAAGQAAAAIAAAAZAAAAAcAAABkAAAABgAAAGQAAAAFAAAAZAAAAAQAAABkAAAAAwAAAGQAAAACAA"
+"AAAAGQAAAAJAAAAZAAAAAYAAABkAAAABwAAAGQAAAAEAAAAZAAAAAUAAABkAAAAAgAAAGQAAAADAA"
 "AAZAAAAAEAAABkAAAAngAAAAsBAAABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAAsAAACGAAA"
 "AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
 "AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
@@ -2261,7 +2261,7 @@ Plecs {
       TimeRange     "0.0"
       ScrollingMode "1"
       SingleTimeAxis "1"
-      Open          "1"
+      Open          "0"
       Ts            "-1"
       SampleLimit   "0"
       XAxisLabel    "Time / s"
@@ -2293,35 +2293,6 @@ Plecs {
           KeepBaseline  off
           BaselineValue 0
         }
-      }
-    }
-    Component {
-      Type          Step
-      Name          "Step"
-      Show          on
-      Position      [525, 955]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Time"
-        Value         "0.2"
-        Show          off
-      }
-      Parameter {
-        Variable      "Before"
-        Value         "0"
-        Show          off
-      }
-      Parameter {
-        Variable      "After"
-        Value         "1"
-        Show          off
-      }
-      Parameter {
-        Variable      "DataType"
-        Value         "10"
-        Show          off
       }
     }
     Connection {
@@ -2599,6 +2570,7 @@ Plecs {
       Type          Signal
       SrcComponent  "From10"
       SrcTerminal   1
+      Points        [854, 1185]
       DstComponent  "Mux"
       DstTerminal   2
     }
@@ -2606,6 +2578,7 @@ Plecs {
       Type          Signal
       SrcComponent  "From11"
       SrcTerminal   1
+      Points        [854, 1195]
       DstComponent  "Mux"
       DstTerminal   3
     }
@@ -2613,6 +2586,7 @@ Plecs {
       Type          Signal
       SrcComponent  "From12"
       SrcTerminal   1
+      Points        [854, 1205]
       DstComponent  "Mux"
       DstTerminal   4
     }
@@ -2620,8 +2594,7 @@ Plecs {
       Type          Signal
       SrcComponent  "From13"
       SrcTerminal   1
-      DstComponent  "Mux"
-      DstTerminal   5
+      Points        [854, 1210]
     }
     Connection {
       Type          Signal
@@ -2811,14 +2784,6 @@ Plecs {
       DstComponent  "S4"
       DstTerminal   2
     }
-    Connection {
-      Type          Signal
-      SrcComponent  "Step"
-      SrcTerminal   1
-      Points        [635, 955; 635, 905]
-      DstComponent  "Mux1"
-      DstTerminal   5
-    }
   }
 }
-DemoSignature "AMI5PXtqkQwOv2E+LlAmZpNIc05gj4HVCuu+kGGdsuw="
+DemoSignature "FR+wqDTfv+iQ6cmkGkGyt8rSoIyYs8NYUYqty4m1S5E="
