@@ -12,12 +12,15 @@
 | `platform/plecs/buck/` | `buck.plecs` | `compile.bat` |
 | `platform/plecs/boost/` | `boost.plecs` | `compile.bat` |
 | `platform/plecs/cllc/` | `cllc.plecs` | `compile.bat` |
+| `platform/plecs/frame_bridge/` | `frame_bridge.plecs` | `compile.bat` |
 | `platform/plecs/inv/` | `inv.plecs` | `compile.bat` |
 | `platform/plecs/llc/` | `llc.plecs` | `compile.bat` |
 | `platform/plecs/pfc/` | `pfc.plecs` | `compile.bat` |
 | `platform/plecs/pfc_i32/` | `pfc.plecs` | `compile.bat` |
 
 公共 DLL 适配代码位于 `platform/plecs/common/`，控制算法代码复用 `code/` 目录下的模块。
+
+`platform/plecs/frame_bridge/` 在 DLL 内提供 FRAME Ethernet 参数服务。连接和参数说明见 [PLECS 与 FRAME 参数通信](../communication/plecs_frame_bridge.md)。
 
 ## 2. 必需软件
 
