@@ -44,6 +44,7 @@ typedef struct
 
 int32_t bsp_ethernet_init(void);
 void bsp_ethernet_poll(void);
+void bsp_ethernet_prepare_handoff(void);
 uint8_t bsp_ethernet_rx_get_byte(uint8_t *p_data);
 int32_t bsp_ethernet_tx(const uint8_t *p_data, uint32_t length);
 void bsp_ethernet_printf(const char *format, ...);

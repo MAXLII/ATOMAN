@@ -6,7 +6,7 @@
  *          This file is part of the base project.
  *
  *          Module responsibilities:
- *          - Initialize the Section time base and runtime port
+ *          - Initialize the Section time base, interrupts, UART log, and PS GEM0
  *          - Start the periodic Section interrupt source
  *          - Run registered services from the foreground loop
  *
@@ -28,14 +28,35 @@
  */
 
 #include "bsp_timer.h"
+#include "bsp_ethernet.h"
+#include "bsp_interrupt.h"
+#include "bsp_usart.h"
 #include "section.h"
 #include "xstatus.h"
 
 int main(void)
 {
-    bsp_timer_init();    /* Establish the monotonic time base used by Section. */
-    section_port_init(); /* Initialize the selected Section runtime port. */
-    section_init();      /* Initialize services registered in linker sections. */
+    int32_t status = XST_SUCCESS;
+
+    bsp_timer_init();
+    section_port_init();
+    status = bsp_usart_init();
+    if (status == XST_SUCCESS)
+    {
+        status = bsp_interrupt_init();
+    }
+    if (status == XST_SUCCESS)
+    {
+        status = bsp_ethernet_init();
+    }
+    if (status != XST_SUCCESS)
+    {
+        for (;;)
+        {
+        }
+    }
+    bsp_usart_dbg_printf("Zynq bootloader Ethernet ready: 192.168.1.10:9000\r\n");
+    section_init();
 
     if (bsp_timer_interrupt_start(10000u) != XST_SUCCESS)
     {

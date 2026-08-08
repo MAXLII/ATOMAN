@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Register and directly acknowledge only FRAME command 0x08
  *          - Invoke the mounted preparation callback and publish the boot request
- *          - Drain the UART response before transferring to the Bootloader image
+ *          - Drain the active response before transferring to the Bootloader image
  *
  *          Design notes:
  *          - C11 compatible
@@ -29,7 +29,8 @@
 
 #include "zynq_iap_update_service.h"
 
-#include "bsp_usart.h"
+#include "bsp_ethernet.h"
+#include "bsp_timer.h"
 #include "comm.h"
 #include "section.h"
 #include "xil_cache.h"
@@ -44,10 +45,11 @@
 #define ZYNQ_IAP_ACK_LENGTH          3u
 #define ZYNQ_IAP_ACK_ACCEPTED        1u
 #define ZYNQ_IAP_ACK_REJECTED        2u
-#define ZYNQ_BOOT_REASON_ADDRESS     0x0003FFF0u
+#define ZYNQ_BOOT_REASON_ADDRESS     0x0002FFF0u
 #define ZYNQ_BOOT_REASON_MAGIC       0x42544C44u
 #define ZYNQ_BOOT_REASON_IAP_REQUEST 1u
 #define ZYNQ_BOOTLOADER_ENTRY        0x04000000u
+#define ZYNQ_IAP_HANDOFF_DELAY_TICKS 1000u
 
 typedef struct
 {
@@ -60,6 +62,7 @@ static zynq_iap_prepare_t p_prepare_callback;
 static void *p_prepare_context;
 static uint8_t transfer_pending;
 static uint8_t transfer_called;
+static uint32_t transfer_request_tick;
 
 static uint32_t read_u32_le(const uint8_t *p_data)
 {
@@ -112,6 +115,7 @@ static void info_handle(section_packform_t *p_request, DEC_MY_PRINTF)
             boot_reason_set();
             transfer_pending = 1u;
             transfer_called = 0u;
+            transfer_request_tick = bsp_timer_gettime_100us();
             ack[0] = ZYNQ_IAP_ACK_ACCEPTED;
         }
     }
@@ -131,9 +135,11 @@ static void process(void)
 {
     if ((transfer_pending == 1u) &&
         (transfer_called == 0u) &&
-        (bsp_usart_dbg_tx_is_idle() == 1u))
+        ((bsp_timer_gettime_100us() - transfer_request_tick) >=
+         ZYNQ_IAP_HANDOFF_DELAY_TICKS))
     {
         transfer_called = 1u;
+        bsp_ethernet_prepare_handoff();
         Xil_DCacheFlush();
         Xil_ExceptionDisable();
         Xil_DCacheDisable();

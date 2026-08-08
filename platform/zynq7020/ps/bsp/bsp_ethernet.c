@@ -246,6 +246,25 @@ void bsp_ethernet_poll(void)
     }
 }
 
+void bsp_ethernet_prepare_handoff(void)
+{
+    if (s_ethernet.p_client != NULL)
+    {
+        tcp_abort(s_ethernet.p_client);
+        client_state_clear();
+    }
+    if (s_ethernet.p_listener != NULL)
+    {
+        tcp_abort(s_ethernet.p_listener);
+        s_ethernet.p_listener = NULL;
+    }
+    if (s_ethernet.status.initialized != 0U)
+    {
+        netif_set_down(&s_ethernet.network_interface);
+        s_ethernet.status.initialized = 0U;
+    }
+}
+
 uint8_t bsp_ethernet_rx_get_byte(uint8_t *p_data)
 {
     if ((p_data == NULL) || (s_ethernet.rx_count == 0U))
