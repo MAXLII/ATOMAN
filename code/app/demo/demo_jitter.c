@@ -29,7 +29,11 @@
 
 #include "demo_jitter.h"
 
+#if defined(IS_GD32E507)
+#include "gd32e50x.h"
+#else
 #include "gd32g5x3.h"
+#endif
 #include "section.h"
 
 #include <stdint.h>

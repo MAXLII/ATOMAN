@@ -180,6 +180,55 @@ extern uint32_t __section_end;
         }                        \
     } while (0)
 
+/* MCU: GD32E507 */
+#elif defined(IS_GD32E507)
+#include "systick.h"
+#include "gd32e50x.h"
+#define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US 100u
+#define PLATFORM_PERF_COUNT_UNIT_US 0.5f
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 200UL
+#define PLATFORM_COMM_LINK_ENABLE_ISO 0u
+#define PLATFORM_COMM_LINK_ENABLE_CAN 0u
+#define PLATFORM_CTRL_PWM_TIMER_FREQ_HZ 0UL
+extern uint32_t __section_start;
+extern uint32_t __section_end;
+#define SECTION_START __section_start
+#define SECTION_STOP __section_end
+#define SYSTEM_RESET NVIC_SystemReset()
+#ifndef PLECS_LOG
+#define PLECS_LOG(...)
+#endif
+#define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
+    do                                                         \
+    {                                                          \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;                    \
+        __DSB();                                               \
+        __ISB();                                               \
+    } while (0)
+#if defined(FPU) && (__FPU_PRESENT == 1U)
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()               \
+    do                                                         \
+    {                                                          \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;                    \
+    } while (0)
+#else
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()               \
+    do                                                         \
+    {                                                          \
+    } while (0)
+#endif
+#define SECTION_PORT_FAULT_HOOK(reason)                        \
+    do                                                         \
+    {                                                          \
+        (void)(reason);                                        \
+        __disable_irq();                                       \
+        for (;;)                                               \
+        {                                                      \
+        }                                                      \
+    } while (0)
+
 /* MCU: HC32F334 */
 #elif defined(IS_HC32F334)
 #include "systick.h"
