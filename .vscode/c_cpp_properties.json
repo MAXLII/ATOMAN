@@ -54,6 +54,54 @@
             }
         },
         {
+            "name": "gd32e507",
+            "compilerPath": "${ARM_GNU_ROOT}/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-mcpu=cortex-m33",
+                "-mthumb",
+                "-mfpu=fpv5-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "includePath": [
+                "${workspaceFolder}/code/app",
+                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/section/srtos_m",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/platform/gd32e507/Firmware/CMSIS",
+                "${workspaceFolder}/platform/gd32e507/Firmware/CMSIS/GD/GD32E50x/Include",
+                "${workspaceFolder}/platform/gd32e507/Firmware/GD32E50x_standard_peripheral/Include",
+                "${workspaceFolder}/platform/gd32e507/inc",
+                "${workspaceFolder}/platform/gd32e507/bsp/inc",
+                "${workspaceFolder}/platform/gd32e507/enet/inc",
+                "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/src/include",
+                "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/port/GD32E50x",
+                "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/port/GD32E50x/Basic"
+            ],
+            "defines": [
+                "GD32E50X",
+                "GD32E50X_CL",
+                "USE_STDPERIPH_DRIVER",
+                "IS_GD32E507",
+                "TOOLCHAIN_GCC"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/code",
+                    "${workspaceFolder}/platform/gd32e507"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "hc32f334_ac",
             "compilerPath": "${KEIL_ARMCLANG_ROOT}/armclang.exe",
             "cStandard": "c11",
