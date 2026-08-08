@@ -7,7 +7,7 @@ set /A "start_time=(((%%a*60)+%%b)*60)+%%c"
 
 set BUILD_DIR=./build
 set COMPILER_PATH=C:/mingw64/bin
-set CMAKE_COMMAND=cmake -G "MinGW Makefiles" -DCMAKE_C_COMPILER=%COMPILER_PATH%/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=%COMPILER_PATH%/x86_64-w64-mingw32-g++.exe ..
+set CMAKE_COMMAND=cmake -G "MinGW Makefiles" -DCMAKE_C_COMPILER=%COMPILER_PATH%/x86_64-w64-mingw32-gcc.exe ..
 set MAKE_COMMAND=%COMPILER_PATH%/mingw32-make.exe -j8
 
 if exist "%BUILD_DIR%" (
