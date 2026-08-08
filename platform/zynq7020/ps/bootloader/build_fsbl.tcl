@@ -13,7 +13,19 @@ setws $workspace
 createhw -name hw_platform -hwspec $hardware_definition
 createbsp -name fsbl_bsp -hwproject hw_platform -proc ps7_cortexa9_0 -os standalone
 setlib -bsp fsbl_bsp -lib xilffs
-regenbsp -bsp fsbl_bsp
+set bsp_regenerated 0
+set bsp_regen_error ""
+for {set attempt 1} {$attempt <= 10} {incr attempt} {
+    if {![catch {regenbsp -bsp fsbl_bsp} bsp_regen_error]} {
+        set bsp_regenerated 1
+        break
+    }
+    puts "FSBL_BSP_RETRY attempt=$attempt error=$bsp_regen_error"
+    after 1000
+}
+if {!$bsp_regenerated} {
+    error "FSBL BSP regeneration failed after 10 attempts: $bsp_regen_error"
+}
 createapp -name fsbl -hwproject hw_platform -proc ps7_cortexa9_0 \
     -os standalone -lang C -app {Zynq FSBL} -bsp fsbl_bsp
 projects -build -type all
