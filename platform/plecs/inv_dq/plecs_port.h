@@ -35,7 +35,6 @@ typedef enum
     PLECS_INPUT_I_L = 0,
     PLECS_INPUT_V_CAP,
     PLECS_INPUT_V_BUS,
-    PLECS_INPUT_RUN,
     PLECS_INPUT_MAX,
 } PLECS_INPUT_E;
 

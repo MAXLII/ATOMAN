@@ -2062,7 +2062,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "Width"
-        Value         "4"
+        Value         "3"
         Show          off
       }
     }
@@ -2316,35 +2316,6 @@ Plecs {
           KeepBaseline  off
           BaselineValue 0
         }
-      }
-    }
-    Component {
-      Type          Step
-      Name          "Step"
-      Show          on
-      Position      [525, 955]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Parameter {
-        Variable      "Time"
-        Value         "0.2"
-        Show          off
-      }
-      Parameter {
-        Variable      "Before"
-        Value         "0"
-        Show          off
-      }
-      Parameter {
-        Variable      "After"
-        Value         "1"
-        Show          off
-      }
-      Parameter {
-        Variable      "DataType"
-        Value         "10"
-        Show          off
       }
     }
     Component {
@@ -3182,14 +3153,6 @@ Plecs {
       Points        [720, 565; 720, 595]
       DstComponent  "S4"
       DstTerminal   2
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "Step"
-      SrcTerminal   1
-      Points        [635, 955; 635, 905]
-      DstComponent  "Mux1"
-      DstTerminal   5
     }
     Connection {
       Type          Signal

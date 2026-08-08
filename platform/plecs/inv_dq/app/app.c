@@ -7,7 +7,8 @@
  *
  *          Module responsibilities:
  *          - Bind simulated ADC and PWM signals to the inverter HAL
- *          - Translate the PLECS run input into inverter FSM start and stop commands
+ *          - Register inverter commands, setpoints, state, and feedback in Shell
+ *          - Translate the Shell RUN request into inverter FSM start and stop commands
  *          - Publish inverter run state and output relay state back to the PLECS output vector
  *
  *          Design notes:
@@ -30,21 +31,130 @@
 #include "app.h"
 #include "bsp_adc.h"
 #include "bsp_pwm.h"
+#include "frame_tcp_server.h"
 #include "inv_cfg.h"
 #include "inv_fsm.h"
 #include "inv_hal.h"
 #include "plecs.h"
 #include "section.h"
+#include "shell.h"
 #include "timing.h"
 
-#define APP_INV_START_VBUS_MIN_V (380.0f)
+#define APP_INV_START_VBUS_MIN_V (380.0f)                      /* Default DC-bus start threshold in volts. */
+#define APP_INV_FREQ_MAX_HZ (400.0f)                           /* Maximum Shell frequency reference in hertz. */
+#define APP_INV_FREQ_SLEW_MAX_HZPS (1000.0f)                  /* Maximum frequency slew in hertz per second. */
+#define APP_INV_RMS_REF_MAX_V (1000.0f)                       /* Maximum output RMS reference in volts. */
+#define APP_INV_RMS_SLEW_MAX_VPS (10000.0f)                   /* Maximum RMS slew in volts per second. */
+#define APP_INV_FEEDBACK_MAX (2000.0f)                        /* Maximum displayed analog feedback value. */
+#define APP_INV_FEEDBACK_MIN (-APP_INV_FEEDBACK_MAX)          /* Minimum displayed analog feedback value. */
+#define APP_INV_RUN_STATE_MAX ((uint32_t)inv_run_sta_run)     /* Maximum public inverter run state. */
+#define APP_INV_RUN_STATE_MIN ((uint32_t)inv_run_sta_init)    /* Minimum public inverter run state. */
 
+/* Tracks whether inverter HAL callbacks and feedback pointers are bound. */
 static uint8_t app_inv_hal_bound = 0U;
+/* Tracks whether inverter control timing has been configured. */
 static uint8_t app_inv_timing_bound = 0U;
+/* Desired inverter run state toggled through the Shell RUN command. */
+static uint8_t app_run_request = 0U;
+/* Public inverter run-state mirror for Shell and FRAME. */
+static uint32_t app_run_state = (uint32_t)inv_run_sta_init;
 
+/* Output-frequency reference configured through Shell, in hertz. */
+static float app_freq_hz = INV_CFG_DEFAULT_FREQ_HZ;
+/* Output-frequency slew configured through Shell, in hertz per second. */
+static float app_freq_slew_hzps = INV_CFG_DEFAULT_FREQ_SLEW_HZPS;
+/* Output RMS voltage reference configured through Shell, in volts. */
+static float app_rms_ref_v = INV_CFG_DEFAULT_RMS_REF_V;
+/* Output RMS voltage slew configured through Shell, in volts per second. */
+static float app_rms_slew_vps = INV_CFG_DEFAULT_RMS_SLEW_VPS;
+/* Minimum DC-bus voltage that permits an inverter start request. */
+static float app_start_vbus_min_v = APP_INV_START_VBUS_MIN_V;
+
+/* Capacitor-voltage feedback mirrored from the PLECS model. */
 static float app_v_cap = 0.0f;
+/* DC-bus-voltage feedback mirrored from the PLECS model. */
 static float app_v_bus = 0.0f;
+/* Inductor-current feedback mirrored from the PLECS model. */
 static float app_i_l = 0.0f;
+/* FRAME TCP server port exposed as a read-only Shell parameter. */
+static uint32_t app_frame_tcp_port = FRAME_TCP_SERVER_PORT;
+
+/**
+ * @brief Toggle the desired inverter run state from the Shell RUN command.
+ * @param[in] my_printf Shell transport interface associated with the command request.
+ */
+static void app_run_cmd(DEC_MY_PRINTF)
+{
+    app_run_request = (app_run_request == 0U) ? 1U : 0U;
+    PLECS_LOG("Shell RUN toggled inverter request to %u\n", (unsigned)app_run_request);
+
+    if ((my_printf != NULL) &&
+        (my_printf->my_printf != NULL))
+    {
+        my_printf->my_printf("RUN request=%u\r\n", (unsigned)app_run_request);
+    }
+}
+
+REG_SHELL_CMD(RUN, app_run_cmd)
+REG_SHELL_VAR(FREQ_HZ, app_freq_hz, SHELL_FP32, APP_INV_FREQ_MAX_HZ, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(FREQ_SLEW_HZPS,
+              app_freq_slew_hzps,
+              SHELL_FP32,
+              APP_INV_FREQ_SLEW_MAX_HZPS,
+              0.0f,
+              NULL,
+              SHELL_STA_NULL)
+REG_SHELL_VAR(RMS_REF_V, app_rms_ref_v, SHELL_FP32, APP_INV_RMS_REF_MAX_V, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(RMS_SLEW_VPS,
+              app_rms_slew_vps,
+              SHELL_FP32,
+              APP_INV_RMS_SLEW_MAX_VPS,
+              0.0f,
+              NULL,
+              SHELL_STA_NULL)
+REG_SHELL_VAR(START_VBUS_MIN_V,
+              app_start_vbus_min_v,
+              SHELL_FP32,
+              APP_INV_FEEDBACK_MAX,
+              0.0f,
+              NULL,
+              SHELL_STA_NULL)
+REG_SHELL_VAR(RUN_REQUEST, app_run_request, SHELL_UINT8, 1U, 0U, NULL, SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(RUN_STATE,
+              app_run_state,
+              SHELL_UINT32,
+              APP_INV_RUN_STATE_MAX,
+              APP_INV_RUN_STATE_MIN,
+              NULL,
+              SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(V_CAP,
+              app_v_cap,
+              SHELL_FP32,
+              APP_INV_FEEDBACK_MAX,
+              APP_INV_FEEDBACK_MIN,
+              NULL,
+              SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(V_BUS,
+              app_v_bus,
+              SHELL_FP32,
+              APP_INV_FEEDBACK_MAX,
+              APP_INV_FEEDBACK_MIN,
+              NULL,
+              SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(I_L,
+              app_i_l,
+              SHELL_FP32,
+              APP_INV_FEEDBACK_MAX,
+              APP_INV_FEEDBACK_MIN,
+              NULL,
+              SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(FRAME_TCP_PORT,
+              app_frame_tcp_port,
+              SHELL_UINT32,
+              FRAME_TCP_SERVER_PORT,
+              FRAME_TCP_SERVER_PORT,
+              NULL,
+              SHELL_STA_READ_ONLY)
 
 static void app_inv_rly_on(void)
 {
@@ -149,26 +259,26 @@ static void app_bind_inv_timing(void)
 
 static void app_update_setpoint(void)
 {
-    inv_cfg_set_freq_hz(INV_CFG_DEFAULT_FREQ_HZ);
-    inv_cfg_set_freq_slew_hzps(INV_CFG_DEFAULT_FREQ_SLEW_HZPS);
-    inv_cfg_set_rms_ref_v(INV_CFG_DEFAULT_RMS_REF_V);
-    inv_cfg_set_rms_slew_vps(INV_CFG_DEFAULT_RMS_SLEW_VPS);
+    inv_cfg_set_freq_hz(app_freq_hz);
+    inv_cfg_set_freq_slew_hzps(app_freq_slew_hzps);
+    inv_cfg_set_rms_ref_v(app_rms_ref_v);
+    inv_cfg_set_rms_slew_vps(app_rms_slew_vps);
     inv_cfg_publish_building();
 }
 
 static void app_task(void)
 {
-    uint8_t run_cmd = 0U;
     inv_run_sta_e run_sta = inv_fsm_get_run_sta();
 
     app_update_feedback();
     app_bind_inv_timing();
     app_update_setpoint();
 
-    run_cmd = (plecs_get_input(PLECS_INPUT_RUN) > 0.5f) ? 1U : 0U;
+    app_run_state = (uint32_t)run_sta;
     plecs_set_output(PLECS_OUTPUT_RUN_STATE, (float)run_sta);
 
-    if ((run_cmd != 0U) && (app_v_bus >= APP_INV_START_VBUS_MIN_V))
+    if ((app_run_request != 0U) &&
+        (app_v_bus >= app_start_vbus_min_v))
     {
         if (run_sta == inv_run_sta_idle)
         {
