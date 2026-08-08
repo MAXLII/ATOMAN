@@ -9,26 +9,27 @@ set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../code)
 
 set(SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
-    ${PLECS_COMMON_DIR}/comm.c
+    ${PLECS_COMMON_DIR}/comm/comm.c
+    ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
     ${CODE_DIR}/app/demo/demo_shell.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_app.c
-    ${PLECS_PROJECT_DIR}/comm/frame_tcp_server.c
-    ${PLECS_COMMON_DIR}/dbg/scope.c
-    ${PLECS_COMMON_DIR}/dbg/scope_core.c
-    ${PLECS_COMMON_DIR}/dbg/scope_service.c
-    ${PLECS_COMMON_DIR}/dbg/section_list_service.c
-    ${PLECS_COMMON_DIR}/dbg/sfra.c
-    ${PLECS_COMMON_DIR}/dbg/sfra_core.c
-    ${PLECS_COMMON_DIR}/dbg/sfra_service.c
-    ${PLECS_COMMON_DIR}/dbg/perf.c
-    ${PLECS_COMMON_DIR}/dbg/perf_core.c
-    ${PLECS_COMMON_DIR}/dbg/perf_service.c
-    ${PLECS_COMMON_DIR}/dbg/shell.c
-    ${PLECS_COMMON_DIR}/dbg/shell_core.c
-    ${PLECS_COMMON_DIR}/dbg/shell_service.c
-    ${PLECS_COMMON_DIR}/dbg/trace.c
-    ${PLECS_COMMON_DIR}/dbg/trace_core.c
-    ${PLECS_COMMON_DIR}/dbg/trace_service.c
+    ${PLECS_PROJECT_DIR}/app/frame_bridge_platform.c
+    ${PLECS_COMMON_DIR}/dbg/scope/scope.c
+    ${PLECS_COMMON_DIR}/dbg/scope/scope_core.c
+    ${PLECS_COMMON_DIR}/dbg/scope/scope_service.c
+    ${PLECS_COMMON_DIR}/dbg/section_list/section_list_service.c
+    ${PLECS_COMMON_DIR}/dbg/sfra/sfra.c
+    ${PLECS_COMMON_DIR}/dbg/sfra/sfra_core.c
+    ${PLECS_COMMON_DIR}/dbg/sfra/sfra_service.c
+    ${PLECS_COMMON_DIR}/dbg/perf/perf.c
+    ${PLECS_COMMON_DIR}/dbg/perf/perf_core.c
+    ${PLECS_COMMON_DIR}/dbg/perf/perf_service.c
+    ${PLECS_COMMON_DIR}/dbg/shell/shell.c
+    ${PLECS_COMMON_DIR}/dbg/shell/shell_core.c
+    ${PLECS_COMMON_DIR}/dbg/shell/shell_service.c
+    ${PLECS_COMMON_DIR}/dbg/trace/trace.c
+    ${PLECS_COMMON_DIR}/dbg/trace/trace_core.c
+    ${PLECS_COMMON_DIR}/dbg/trace/trace_service.c
     ${CODE_DIR}/lib/record_dict.c
     ${CODE_DIR}/lib/dft.c
     ${CODE_DIR}/section/baremetal/section.c
@@ -55,9 +56,14 @@ target_compile_options(plecs PRIVATE
 target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}
     ${PLECS_PROJECT_DIR}/app
-    ${PLECS_PROJECT_DIR}/comm
     ${PLECS_COMMON_DIR}
-    ${PLECS_COMMON_DIR}/dbg
+    ${PLECS_COMMON_DIR}/comm
+    ${PLECS_COMMON_DIR}/dbg/perf
+    ${PLECS_COMMON_DIR}/dbg/scope
+    ${PLECS_COMMON_DIR}/dbg/section_list
+    ${PLECS_COMMON_DIR}/dbg/sfra
+    ${PLECS_COMMON_DIR}/dbg/shell
+    ${PLECS_COMMON_DIR}/dbg/trace
     ${CODE_DIR}/comm
     ${CODE_DIR}/interface/common
     ${CODE_DIR}/lib
