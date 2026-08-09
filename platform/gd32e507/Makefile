@@ -9,7 +9,8 @@ SIZE := $(PREFIX)size
 
 MCU_FLAGS := -mcpu=cortex-m33 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard
 PROJECT_DEFINES := -DGD32E50X -DGD32E50X_CL -DUSE_STDPERIPH_DRIVER \
-    -DIS_GD32E507 -DTOOLCHAIN_GCC
+    -DIS_GD32E507 -DTOOLCHAIN_GCC \
+    -DENET_RXBUF_NUM=12 -DENET_TXBUF_NUM=4
 
 INCLUDES := \
     -I../../code/app \

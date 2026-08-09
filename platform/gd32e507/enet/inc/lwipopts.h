@@ -36,15 +36,15 @@
 #define LWIP_TIMERS_CUSTOM 0
 
 #define MEM_ALIGNMENT 4
-#define MEM_SIZE (12u * 1024u)
-#define MEMP_NUM_PBUF 12
+#define MEM_SIZE (4u * 1024u)
+#define MEMP_NUM_PBUF 8
 #define MEMP_NUM_UDP_PCB 4
 #define MEMP_NUM_TCP_PCB 4
 #define MEMP_NUM_TCP_PCB_LISTEN 2
-#define MEMP_NUM_TCP_SEG 12
+#define MEMP_NUM_TCP_SEG 16
 #define MEMP_NUM_SYS_TIMEOUT 8
 
-#define PBUF_POOL_SIZE 12
+#define PBUF_POOL_SIZE 4
 #define PBUF_POOL_BUFSIZE 1536
 #define IP_REASS_MAX_PBUFS 8
 
@@ -62,9 +62,10 @@
 #define TCP_TTL 64
 #define TCP_QUEUE_OOSEQ 0
 #define TCP_MSS 1460
-#define TCP_SND_BUF (2u * TCP_MSS)
-#define TCP_SND_QUEUELEN 8
-#define TCP_WND (2u * TCP_MSS)
+#define TCP_SND_BUF (4u * TCP_MSS)
+#define TCP_SND_QUEUELEN 16
+#define TCP_WND (4u * TCP_MSS)
+#define TCP_OVERSIZE TCP_MSS
 #define UDP_TTL 64
 
 #define LWIP_NETCONN 0
