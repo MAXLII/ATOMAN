@@ -6,6 +6,7 @@
 
 - [公共功能接入总览](guides/feature_usage_guide.md)
 - [公共功能演示](examples/demo.md)
+- FRAME Demo：[GD32G553串口联调](examples/frame_gd32g553_serial_demo.md) · [PLECS TCP联调](examples/frame_plecs_tcp_demo.md) · [CLI批处理](examples/frame_cli_batch_demo.md)
 
 ## 构建与移植
 
@@ -16,6 +17,7 @@
 
 ## 通信、存储与升级
 
+- [ATOMAN与FRAME配合使用](communication/frame_atoman_integration.md)
 - [FRAME通信接入](communication/frame_usage.md)
 - [通信命令开发方法](communication/command_development_usage.md)
 - [GD32E507以太网通信](communication/gd32e507_ethernet_usage.md)
