@@ -6,7 +6,7 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Implement the 0xE8 framed protocol parser as a byte-by-byte state machine
+ *          - Implement byte-stream and block-fed 0xE8 framed protocol parsing
  *          - Build and send frames with address fields, command set/word, ACK flag, payload length, and CRC16
  *          - Dispatch local registered commands or route frames across registered communication links
  *
@@ -43,6 +43,8 @@ static section_item_t *p_comm_route_tail = NULL;
 
 REG_DBG_LIST(comm_command, p_comm_command_first)
 REG_DBG_LIST(comm_route, p_comm_route_first)
+
+static uint16_t crc16_update_block(uint16_t crc, const uint8_t *p_data, uint32_t length);
 
 /* section 链路表在 section.c 内维护，这里只使用其首指针 */
 
@@ -510,6 +512,52 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *p)
     }
 }
 
+void comm_run_buffer(const uint8_t *p_data, uint32_t length, DEC_MY_PRINTF, void *p_context)
+{
+    comm_ctx_t *p_ctx = (comm_ctx_t *)p_context; /* Parser context owned by the active communication link. */
+    uint32_t offset = 0u;                       /* Next byte in the supplied transport block. */
+
+    if ((p_data == NULL) || /* The transport did not provide a readable block. */
+        (p_ctx == NULL))    /* The link has no parser state or payload storage. */
+    {
+        return;
+    }
+
+    while (offset < length)
+    {
+        if (p_ctx->status == SECTION_PACKFORM_STA_SOP)
+        {
+            const uint8_t *p_sop = (const uint8_t *)memchr(&p_data[offset], /* Next possible frame marker. */
+                                                           COMM_SOP_BYTE,
+                                                           length - offset);
+
+            if (p_sop == NULL)
+            {
+                return;
+            }
+            offset = (uint32_t)(p_sop - p_data);
+        }
+
+        if ((p_ctx->status == SECTION_PACKFORM_STA_DATA) && /* A validated payload is being received. */
+            (p_ctx->len > 0u))                             /* At least one payload byte remains. */
+        {
+            uint32_t available_length = length - offset; /* Bytes remaining in the transport block. */
+            uint32_t copy_length = (available_length < p_ctx->len) ? available_length : p_ctx->len;
+
+            (void)memcpy(&p_ctx->p_data_buffer[p_ctx->index], &p_data[offset], copy_length);
+            p_ctx->crc = crc16_update_block(p_ctx->crc, &p_data[offset], copy_length);
+            p_ctx->index = (uint16_t)((uint32_t)p_ctx->index + copy_length);
+            p_ctx->len = (uint16_t)((uint32_t)p_ctx->len - copy_length);
+            p_ctx->last_rx_tick = SECTION_SYS_TICK;
+            offset += copy_length;
+            continue;
+        }
+
+        comm_run(p_data[offset], my_printf, p_context);
+        offset++;
+    }
+}
+
 /* =============================================================================
  * 发送
  * =============================================================================
@@ -553,11 +601,11 @@ static void comm_tx_buffer_release(comm_tx_buffer_t *tx)
     tx->busy = 0u;
 }
 
-static uint16_t crc16_update_block(uint16_t crc, const uint8_t *data, uint32_t len)
+static uint16_t crc16_update_block(uint16_t crc, const uint8_t *p_data, uint32_t length)
 {
-    for (uint32_t i = 0u; i < len; ++i)
+    for (uint32_t index = 0u; index < length; ++index)
     {
-        crc = crc16_update(crc, data[i]);
+        crc = crc16_update(crc, p_data[index]);
     }
 
     return crc;

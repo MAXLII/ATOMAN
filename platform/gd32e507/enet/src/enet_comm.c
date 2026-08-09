@@ -7,14 +7,16 @@
  *
  *          Module responsibilities:
  *          - Start the standalone LwIP IPv4 stack on the GD32E507 ENET BSP
- *          - Poll received Ethernet frames and service protocol timers
+ *          - Poll received Ethernet frames at 100 us resolution and service protocol timers
  *          - Carry the existing FRAME binary protocol over a TCP byte stream
+ *          - Parse received FRAME bytes directly in the LwIP callback without an intermediate copy
+ *          - Keep queued TCP data in a stable ring until acknowledged for zero-copy submission
  *          - Provide a UDP echo endpoint for independent network-path testing
  *
  *          Design notes:
  *          - C11 compatible
  *          - LwIP uses its fixed-size internal heap
- *          - All raw-API callbacks run from the 1 ms background service task
+ *          - All raw-API callbacks run from the 100 us background service task
  *          - Hardware access is abstracted through the GD32E507 ENET BSP
  *
  * @author  Max.Li
@@ -51,23 +53,26 @@
 
 #include <stdint.h>
 
-#define ENET_COMM_RX_BUDGET 8u          /* Maximum frames processed by one 1 ms task invocation. */
+#define ENET_COMM_RX_BUDGET 8u          /* Maximum frames processed by one 100 us task invocation. */
 #define ENET_COMM_LINK_PERIOD_MS 250u   /* PHY link polling period. */
 #define ENET_COMM_RETRY_PERIOD_MS 1000u /* Hardware initialization retry period. */
-#define ENET_COMM_TCP_RX_RING_SIZE 2048u /* FRAME bytes waiting for the Section communication task. */
-#define ENET_COMM_TCP_TX_RING_SIZE 4096u /* FRAME bytes waiting for the LwIP TCP service task. */
+#define ENET_COMM_TCP_TX_RING_SIZE 8192u /* FRAME bytes retained until acknowledged by the peer. */
+#define ENET_COMM_TCP_TX_PUMP_BUDGET (4u * TCP_MSS) /* Bytes submitted during one bounded pump pass. */
 #define ENET_COMM_FRAME_PAYLOAD_SIZE 512u /* Maximum incoming FRAME payload accepted on Ethernet. */
+
+_Static_assert(ENET_COMM_TCP_TX_RING_SIZE > TCP_SND_BUF,
+               "TCP transmit ring must retain the complete LwIP send window");
+_Static_assert(ENET_COMM_TCP_TX_PUMP_BUDGET <= UINT16_MAX,
+               "TCP pump length must fit the raw API length type");
 
 static struct netif network_interface;       /* LwIP interface bound to the GD32 ENET MAC. */
 static struct tcp_pcb *p_tcp_listener = NULL; /* TCP FRAME listener owned by this service. */
 static struct tcp_pcb *p_tcp_connection = NULL; /* Active FRAME client; only one client is served. */
 static struct udp_pcb *p_udp_endpoint = NULL; /* UDP echo endpoint owned by this service. */
-static uint8_t tcp_rx_ring[ENET_COMM_TCP_RX_RING_SIZE]; /* Single-producer/single-consumer receive ring. */
-static volatile uint16_t tcp_rx_head = 0u; /* Next receive-ring position written by LwIP. */
-static volatile uint16_t tcp_rx_tail = 0u; /* Next receive-ring position consumed by Section. */
 static uint8_t tcp_tx_ring[ENET_COMM_TCP_TX_RING_SIZE]; /* Serialized protocol response queue. */
 static volatile uint16_t tcp_tx_head = 0u; /* Next transmit-ring position reserved by producers. */
-static volatile uint16_t tcp_tx_tail = 0u; /* Next transmit-ring position submitted to LwIP. */
+static volatile uint16_t tcp_tx_submit = 0u; /* Next queued byte that has not been submitted to LwIP. */
+static volatile uint16_t tcp_tx_tail = 0u; /* Oldest byte retained until the peer acknowledges it. */
 static uint8_t network_ready = 0u;            /* Network stack and endpoints are ready when set. */
 static uint8_t link_state = 0u;               /* Last reported PHY link state. */
 static uint32_t last_link_check_ms = 0u;       /* Millisecond time of the latest PHY poll. */
@@ -79,8 +84,9 @@ volatile uint32_t g_enet_rx_frame_count = 0u;        /* Ethernet frames accepted
 volatile uint32_t g_enet_rx_error_count = 0u;        /* Ethernet frames rejected by the adapter or LwIP. */
 volatile uint32_t g_enet_tcp_connection_count = 0u;  /* Accepted TCP FRAME connections. */
 volatile uint32_t g_enet_tcp_rx_byte_count = 0u;     /* FRAME bytes received by the TCP service. */
-volatile uint32_t g_enet_tcp_rx_drop_count = 0u;     /* TCP connections aborted after receive overflow. */
+volatile uint32_t g_enet_tcp_rx_drop_count = 0u;     /* TCP receive errors that required connection abort. */
 volatile uint32_t g_enet_tcp_tx_byte_count = 0u;     /* FRAME bytes accepted by the TCP send queue. */
+volatile uint32_t g_enet_tcp_tx_ack_byte_count = 0u; /* TCP bytes acknowledged and released from the queue. */
 volatile uint32_t g_enet_tcp_tx_drop_count = 0u;     /* Complete FRAME responses dropped before enqueue. */
 volatile uint32_t g_enet_tcp_tx_error_count = 0u;    /* TCP write or flush failures. */
 volatile uint32_t g_enet_udp_datagram_count = 0u;    /* Datagrams received by the UDP echo service. */
@@ -94,6 +100,7 @@ static void link_update(uint32_t now_ms);
 static void tcp_connection_error_callback(void *p_argument, err_t error);
 static err_t tcp_accept_callback(void *p_argument, struct tcp_pcb *p_connection, err_t error);
 static err_t tcp_receive_callback(void *p_argument, struct tcp_pcb *p_connection, struct pbuf *p_packet, err_t error);
+static err_t tcp_sent_callback(void *p_argument, struct tcp_pcb *p_connection, u16_t acknowledged_length);
 static void tcp_transmit_service(void);
 static void udp_receive_callback(void *p_argument,
                                  struct udp_pcb *p_endpoint,
@@ -136,9 +143,8 @@ static void tcp_rings_reset(void)
 {
     uint32_t primask = enet_comm_irq_lock();
 
-    tcp_rx_head = 0u;
-    tcp_rx_tail = 0u;
     tcp_tx_head = 0u;
+    tcp_tx_submit = 0u;
     tcp_tx_tail = 0u;
     ethernet_comm_ctx.status = SECTION_PACKFORM_STA_SOP;
     ethernet_comm_ctx.index = 0u;
@@ -156,18 +162,8 @@ static void tcp_rings_reset(void)
 
 static uint8_t ethernet_rx_get_byte(uint8_t *p_data)
 {
-    uint16_t tail = tcp_rx_tail;
-
-    if ((p_data == NULL) || (tail == tcp_rx_head))
-    {
-        return 0u;
-    }
-
-    *p_data = tcp_rx_ring[tail];
-    tail = (uint16_t)(((uint32_t)tail + 1u) % ENET_COMM_TCP_RX_RING_SIZE);
-    __DMB();
-    tcp_rx_tail = tail;
-    return 1u;
+    (void)p_data;
+    return 0u;
 }
 
 static void ethernet_tx_by_dma(char *p_data, int length)
@@ -232,45 +228,42 @@ static void tcp_connection_error_callback(void *p_argument, err_t error)
 
 static err_t tcp_receive_callback(void *p_argument, struct tcp_pcb *p_connection, struct pbuf *p_packet, err_t error)
 {
-    struct pbuf *p_segment = NULL; /* Current pbuf segment being copied into the protocol receive queue. */
-    uint16_t head = tcp_rx_head;   /* Private producer position published after the complete packet copy. */
-    uint16_t index = 0u;           /* Current byte within one pbuf segment. */
+    struct pbuf *p_segment = NULL; /* Current pbuf segment passed directly into the FRAME parser. */
     err_t close_status = ERR_OK;   /* Graceful close result after a peer shutdown. */
 
     LWIP_UNUSED_ARG(p_argument);
 
     if (p_packet == NULL)
     {
+        /* Zero-copy bytes remain owned by TCP until the peer acknowledges them. */
+        uint32_t has_pending_tx = (tcp_tx_tail == tcp_tx_head) ? 0u : 1u;
+
         if (p_tcp_connection == p_connection)
         {
             p_tcp_connection = NULL;
-            tcp_rings_reset();
         }
         tcp_arg(p_connection, NULL);
         tcp_recv(p_connection, NULL);
+        tcp_sent(p_connection, NULL);
         tcp_err(p_connection, NULL);
+        if (has_pending_tx == 1u)
+        {
+            tcp_abort(p_connection);
+            tcp_rings_reset();
+            return ERR_ABRT;
+        }
         close_status = tcp_close(p_connection);
         if (close_status != ERR_OK)
         {
             tcp_abort(p_connection);
+            tcp_rings_reset();
             return ERR_ABRT;
         }
+        tcp_rings_reset();
         return ERR_OK;
     }
 
     if (error != ERR_OK)
-    {
-        pbuf_free(p_packet);
-        if (p_tcp_connection == p_connection)
-        {
-            p_tcp_connection = NULL;
-            tcp_rings_reset();
-        }
-        tcp_abort(p_connection);
-        return ERR_ABRT;
-    }
-
-    if (ring_free(head, tcp_rx_tail, ENET_COMM_TCP_RX_RING_SIZE) < p_packet->tot_len)
     {
         g_enet_tcp_rx_drop_count++;
         pbuf_free(p_packet);
@@ -287,15 +280,12 @@ static err_t tcp_receive_callback(void *p_argument, struct tcp_pcb *p_connection
     {
         const uint8_t *p_bytes = (const uint8_t *)p_segment->payload;
 
-        for (index = 0u; index < p_segment->len; index++)
-        {
-            tcp_rx_ring[head] = p_bytes[index];
-            head = (uint16_t)(((uint32_t)head + 1u) % ENET_COMM_TCP_RX_RING_SIZE);
-        }
+        comm_run_buffer(p_bytes,
+                        (uint32_t)p_segment->len,
+                        &ethernet_tx_func,
+                        (void *)&ethernet_comm_ctx);
     }
 
-    __DMB();
-    tcp_rx_head = head;
     tcp_recved(p_connection, p_packet->tot_len);
     g_enet_tcp_rx_byte_count += (uint32_t)p_packet->tot_len;
     pbuf_free(p_packet);
@@ -321,64 +311,113 @@ static err_t tcp_accept_callback(void *p_argument, struct tcp_pcb *p_connection,
     tcp_rings_reset();
     tcp_arg(p_connection, p_connection);
     tcp_recv(p_connection, tcp_receive_callback);
+    tcp_sent(p_connection, tcp_sent_callback);
     tcp_err(p_connection, tcp_connection_error_callback);
     tcp_nagle_disable(p_connection);
     return ERR_OK;
 }
 
+static err_t tcp_sent_callback(void *p_argument,
+                               struct tcp_pcb *p_connection,
+                               u16_t acknowledged_length)
+{
+    uint32_t primask = 0u; /* Interrupt mask protecting transmit-ring ownership updates. */
+    uint16_t tail = 0u;    /* Oldest retained byte after releasing the acknowledged range. */
+
+    if ((p_connection != p_tcp_connection) || /* Ignore a callback from a connection being replaced. */
+        (p_argument != (void *)p_connection)) /* Require the callback context installed during accept. */
+    {
+        return ERR_OK;
+    }
+
+    primask = enet_comm_irq_lock();
+    tail = tcp_tx_tail;
+    tail = (uint16_t)(((uint32_t)tail + (uint32_t)acknowledged_length) % ENET_COMM_TCP_TX_RING_SIZE);
+    tcp_tx_tail = tail;
+    g_enet_tcp_tx_ack_byte_count += (uint32_t)acknowledged_length;
+    enet_comm_irq_unlock(primask);
+
+    tcp_transmit_service();
+    return ERR_OK;
+}
+
 static void tcp_transmit_service(void)
 {
-    uint16_t tail = tcp_tx_tail;
-    uint16_t queued_length = 0u;
-    uint16_t send_length = 0u;
-    u16_t send_capacity = 0u;
-    err_t write_status = ERR_OK;
+    uint16_t submit = tcp_tx_submit; /* First queued byte not yet owned by LwIP. */
+    uint32_t submitted_length = 0u;  /* Bytes submitted during this bounded service pass. */
+    uint8_t output_required = 0u;    /* Indicates that at least one tcp_write call succeeded. */
+    err_t write_status = ERR_OK;     /* LwIP zero-copy queue result. */
 
-    if ((p_tcp_connection == NULL) || (tail == tcp_tx_head))
+    if ((p_tcp_connection == NULL) || /* No active FRAME TCP client. */
+        (submit == tcp_tx_head))      /* Every queued byte is already submitted. */
     {
         return;
     }
 
-    if (tcp_tx_head > tail)
+    while (submitted_length < ENET_COMM_TCP_TX_PUMP_BUDGET)
     {
-        queued_length = (uint16_t)(tcp_tx_head - tail);
-    }
-    else
-    {
-        queued_length = (uint16_t)(ENET_COMM_TCP_TX_RING_SIZE - tail);
+        uint16_t head = tcp_tx_head;       /* Producer boundary published after a complete FRAME copy. */
+        uint16_t contiguous_length = 0u;   /* Stable bytes available before the ring wraps. */
+        uint16_t send_length = 0u;         /* Bytes selected for this tcp_write call. */
+        u16_t send_capacity = 0u;          /* LwIP send-window capacity currently available. */
+        uint32_t budget_remaining = ENET_COMM_TCP_TX_PUMP_BUDGET - submitted_length;
+
+        if (submit == head)
+        {
+            break;
+        }
+
+        if (head > submit)
+        {
+            contiguous_length = (uint16_t)(head - submit);
+        }
+        else
+        {
+            contiguous_length = (uint16_t)(ENET_COMM_TCP_TX_RING_SIZE - submit);
+        }
+
+        send_capacity = tcp_sndbuf(p_tcp_connection);
+        send_length = (contiguous_length < send_capacity) ? contiguous_length : send_capacity;
+        if ((uint32_t)send_length > budget_remaining)
+        {
+            send_length = (uint16_t)budget_remaining;
+        }
+        if (send_length == 0u)
+        {
+            break;
+        }
+
+        write_status = tcp_write(p_tcp_connection,
+                                 &tcp_tx_ring[submit],
+                                 send_length,
+                                 0u);
+        if (write_status == ERR_MEM)
+        {
+            break;
+        }
+        if (write_status != ERR_OK)
+        {
+            g_enet_tcp_tx_error_count++;
+            tcp_abort(p_tcp_connection);
+            p_tcp_connection = NULL;
+            tcp_rings_reset();
+            return;
+        }
+
+        submit = (uint16_t)(((uint32_t)submit + (uint32_t)send_length) % ENET_COMM_TCP_TX_RING_SIZE);
+        tcp_tx_submit = submit;
+        submitted_length += (uint32_t)send_length;
+        output_required = 1u;
     }
 
-    send_capacity = tcp_sndbuf(p_tcp_connection);
-    send_length = (queued_length < send_capacity) ? queued_length : send_capacity;
-    if (send_length == 0u)
+    if (output_required == 1u)
     {
-        return;
-    }
-
-    write_status = tcp_write(p_tcp_connection,
-                             &tcp_tx_ring[tail],
-                             send_length,
-                             TCP_WRITE_FLAG_COPY);
-    if (write_status == ERR_MEM)
-    {
-        return;
-    }
-    if (write_status != ERR_OK)
-    {
-        g_enet_tcp_tx_error_count++;
-        tcp_abort(p_tcp_connection);
-        p_tcp_connection = NULL;
-        tcp_rings_reset();
-        return;
-    }
-
-    tail = (uint16_t)(((uint32_t)tail + send_length) % ENET_COMM_TCP_TX_RING_SIZE);
-    __DMB();
-    tcp_tx_tail = tail;
-    write_status = tcp_output(p_tcp_connection);
-    if ((write_status != ERR_OK) && (write_status != ERR_MEM))
-    {
-        g_enet_tcp_tx_error_count++;
+        write_status = tcp_output(p_tcp_connection);
+        if ((write_status != ERR_OK) && /* The queued bytes could not be flushed normally. */
+            (write_status != ERR_MEM))  /* Temporary descriptor pressure is retried later. */
+        {
+            g_enet_tcp_tx_error_count++;
+        }
     }
 }
 
@@ -388,7 +427,8 @@ static void udp_receive_callback(void *p_argument,
                                  const ip_addr_t *p_remote_address,
                                  u16_t remote_port)
 {
-    err_t send_status = ERR_OK; /* UDP echo send result. */
+    bsp_enet_discovery_result_t discovery_result = BSP_ENET_DISCOVERY_NOT_HANDLED_E; /* BSP handling result. */
+    err_t send_status = ERR_OK; /* UDP discovery or echo send result. */
 
     LWIP_UNUSED_ARG(p_argument);
 
@@ -404,6 +444,20 @@ static void udp_receive_callback(void *p_argument,
 
     g_enet_udp_datagram_count++;
     g_enet_udp_rx_byte_count += (uint32_t)p_packet->tot_len;
+    discovery_result = bsp_enet_discovery_udp_process(p_endpoint,
+                                                      p_packet,
+                                                      p_remote_address,
+                                                      remote_port);
+    if (discovery_result != BSP_ENET_DISCOVERY_NOT_HANDLED_E)
+    {
+        if (discovery_result == BSP_ENET_DISCOVERY_RESPONSE_ERROR_E)
+        {
+            g_enet_udp_tx_error_count++;
+        }
+        pbuf_free(p_packet);
+        return;
+    }
+
     send_status = udp_sendto(p_endpoint, p_packet, p_remote_address, remote_port);
     if (send_status != ERR_OK)
     {
@@ -584,4 +638,4 @@ static void service_task(void)
 }
 
 REG_INIT(20, service_init)
-REG_TASK_MS(1, service_task)
+REG_TASK(1, service_task)

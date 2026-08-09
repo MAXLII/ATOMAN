@@ -219,6 +219,15 @@ extern section_item_t *p_comm_route_first;
  * - comm_run 作为 link handler 被调用：ctx 指向 comm_ctx_t
  */
 void comm_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
+
+/**
+ * @brief Feed a contiguous transport block into one communication parser context.
+ * @param[in] p_data Contiguous bytes received from the transport.
+ * @param[in] length Number of bytes available in p_data.
+ * @param[in] my_printf Output interface associated with the source link.
+ * @param[in,out] p_context Parser context created by DECLARE_COMM_CTX.
+ */
+void comm_run_buffer(const uint8_t *p_data, uint32_t length, DEC_MY_PRINTF, void *p_context);
 void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF);
 
 #endif /* __COMM_H__ */
