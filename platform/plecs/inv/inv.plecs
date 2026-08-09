@@ -48,7 +48,7 @@ Plecs {
   ScriptsDialogGeometry ""
   ScriptsDialogSplitterPos "0"
   Schematic {
-    Location      [1538, 85; 3256, 1392]
+    Location      [1538, 85; 3256, 1389]
     ZoomFactor    1.14436
     SliderPosition [204, 287]
     ShowBrowser   off
@@ -1419,11 +1419,11 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [1496, 327; 2956, 1165]
-      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAIeAAADK/wCAAAABPsAAAAUAEQAYQB0A"
-"GEAVwBpAGQAZwBlAHQBAAAAMQAAAq4AAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
+      Location      [1496, 327; 2956, 1173]
+      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAIeAAADM/wCAAAABPsAAAAUAEQAYQB0A"
+"GEAVwBpAGQAZwBlAHQBAAAAMQAAArUAAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
 "///wAAAFwA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwIAAAaGAAACtQAAAMgAAAB4+wAAAAw"
-"AVAByAGEAYwBlAHMBAAAC4wAAAHkAAABmAP///wAAA5IAAAMrAAAABAAAAAQAAAAIAAAACPwAAAAB"
+"AVAByAGEAYwBlAHMBAAAC6gAAAHoAAABmAP///wAAA5IAAAMzAAAABAAAAAQAAAAIAAAACPwAAAAB"
 "AAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAAAAAAA=="
       SavedViews    "AAAAAgAAAAEAAAAYAFMAYQB2AGUAZAAgAHYAaQBlAHcAIAAxAAAAAAAAA"
 "ABAFAAAAAAAAAAAAAIAf/gAAAAAAAB/+AAAAAAAAAB/+AAAAAAAAH/4AAAAAAAAAAAAAAAAAAAAAA"
@@ -1617,11 +1617,11 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [798, 271; 3004, 1227]
-      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAI5AAADofwCAAAABPsAAAAUAEQAYQB0A"
-"GEAVwBpAGQAZwBlAHQBAAAAMQAAA6EAAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
+      Location      [798, 271; 3004, 1235]
+      State         "AAAA/wAAAAD9AAAAAQAAAAEAAAI5AAADqfwCAAAABPsAAAAUAEQAYQB0A"
+"GEAVwBpAGQAZwBlAHQBAAAAMQAAA6kAAABbAP////sAAAAQAFoAbwBvAG0AQQByAGUAYQAAAAAA//"
 "///wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA/////wAAAGYA////+wAAAAw"
-"AVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAABmEAAAOhAAAABAAAAAQAAAAIAAAACPwAAAAB"
+"AVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAABmEAAAOpAAAABAAAAAQAAAAIAAAACPwAAAAB"
 "AAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAAAAAAA=="
       SavedViews    "AAAAAgAAAAA="
       HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAC"
@@ -1635,7 +1635,7 @@ Plecs {
       TimeRange     "0.0"
       ScrollingMode "1"
       SingleTimeAxis "1"
-      Open          "1"
+      Open          "0"
       Ts            "-1"
       SampleLimit   "0"
       XAxisLabel    "Time / s"
@@ -2034,7 +2034,7 @@ Plecs {
       LabelPosition west
       Parameter {
         Variable      "R"
-        Value         "230*230/66"
+        Value         "230*230/6600"
         Show          off
       }
     }
@@ -2265,11 +2265,11 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [2011, 1076; 2361, 1335]
+      Location      [2011, 1076; 2361, 1343]
       State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
 "G0AQQByAGUAYQAAAAAA/////wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
 "///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAAAAAAAAPw"
-"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAAAV4AAADoAAAA"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAAAV4AAADwAAAA"
 "BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
 "AAAAA=="
       SavedViews    "AAAAAgAAAAA="
@@ -2606,11 +2606,11 @@ Plecs {
       Direction     up
       Flipped       off
       LabelPosition south
-      Location      [0, 27; 3440, 1382]
+      Location      [0, 235; 3440, 1390]
       State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
 "G0AQQByAGUAYQAAAAAA/////wAAADQA////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
 "///wAAAGYA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABmAP///wAAAAMAAAAAAAAAAPw"
-"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAADXAAAAUwAAAA"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABQAP///wAADXAAAARoAAAA"
 "BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
 "AAAAA=="
       SavedViews    "AAAAAgAAAAA="
@@ -2625,7 +2625,7 @@ Plecs {
       TimeRange     "0.0"
       ScrollingMode "1"
       SingleTimeAxis "1"
-      Open          "1"
+      Open          "0"
       Ts            "-1"
       SampleLimit   "0"
       XAxisLabel    "Time / s"
@@ -3278,4 +3278,4 @@ Plecs {
     }
   }
 }
-DemoSignature "9CY/bZWY5ZNTSSbCIpOWt/coWEbjVvWr/07MV0NiEWk="
+DemoSignature "IOo/nJ6h5Rl5aUb+myh00RihVATW5KjgGI0qldJnGY4="
