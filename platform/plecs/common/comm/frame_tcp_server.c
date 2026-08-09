@@ -7,6 +7,7 @@
  *
  *          Module responsibilities:
  *          - Listen on TCP port 5000 for a FRAME Ethernet connection
+ *          - Answer FRAME UDP broadcast discovery requests on port 5000
  *          - Feed received bytes into the shared 0xE8 protocol parser
  *          - Queue protocol output so PLECS callbacks never block on socket transmission
  *          - Send queued frames and expose dispatch serialization to PLECS projects
@@ -54,6 +55,12 @@
 #define FRAME_TCP_LINK_ID (1u)
 #define FRAME_TCP_CMD_SET_OFFSET (6u)
 #define FRAME_TCP_CMD_WORD_OFFSET (7u)
+#define FRAME_UDP_DISCOVERY_POLL_BUDGET (8u) /* Maximum discovery datagrams handled per worker pass. */
+
+static const char frame_udp_discovery_request[] = "FRAME_DISCOVER_V1"; /**< Exact FRAME discovery probe. */
+static const char frame_udp_discovery_response[] =
+    "FRAME_DEVICE_V1;name=PLECS-SIM;ip=127.0.0.1;tcp_port=5000;"
+    "mac=02:00:00:00:00:02;fw_version=1.0.0;protocol_version=1"; /**< PLECS device identity. */
 
 typedef struct
 {
@@ -99,6 +106,98 @@ static frame_tcp_tx_queue_t tx_stream_queue = {
 };
 static volatile LONG tx_drop_count = 0; /**< Frames dropped instead of blocking the simulation thread. */
 static volatile LONG tx_would_block_count = 0; /**< Nonblocking sends deferred because Winsock was full. */
+
+static SOCKET frame_udp_discovery_open(void)
+{
+    struct sockaddr_in address = {0}; /* Local UDP discovery endpoint bound to every PC interface. */
+    SOCKET discovery_socket = INVALID_SOCKET; /* Nonblocking socket that receives FRAME broadcasts. */
+    u_long nonblocking = 1u; /* Winsock mode that prevents discovery from stalling simulation traffic. */
+
+    discovery_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (discovery_socket == INVALID_SOCKET)
+    {
+        PLECS_LOG("FRAME UDP discovery: socket creation failed: %d\n", WSAGetLastError());
+        return INVALID_SOCKET;
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons((u_short)FRAME_TCP_SERVER_PORT);
+    if (bind(discovery_socket,
+             (const struct sockaddr *)&address,
+             (int)sizeof(address)) == SOCKET_ERROR)
+    {
+        PLECS_LOG("FRAME UDP discovery: bind port %u failed: %d\n",
+                  FRAME_TCP_SERVER_PORT,
+                  WSAGetLastError());
+        (void)closesocket(discovery_socket);
+        return INVALID_SOCKET;
+    }
+    if (ioctlsocket(discovery_socket, (long)FIONBIO, &nonblocking) == SOCKET_ERROR)
+    {
+        PLECS_LOG("FRAME UDP discovery: nonblocking mode failed: %d\n", WSAGetLastError());
+        (void)closesocket(discovery_socket);
+        return INVALID_SOCKET;
+    }
+
+    PLECS_LOG("FRAME UDP discovery: listening on 0.0.0.0:%u\n", FRAME_TCP_SERVER_PORT);
+    return discovery_socket;
+}
+
+static void frame_udp_discovery_poll(SOCKET discovery_socket)
+{
+    uint32_t datagram_index = 0u; /* Datagrams processed during this bounded worker pass. */
+
+    if (discovery_socket == INVALID_SOCKET)
+    {
+        return;
+    }
+
+    for (datagram_index = 0u;
+         datagram_index < FRAME_UDP_DISCOVERY_POLL_BUDGET;
+         datagram_index++)
+    {
+        char request_buffer[64] = {0}; /* Candidate discovery request plus space for unrelated datagrams. */
+        struct sockaddr_in remote_address = {0}; /* FRAME host address receiving the direct response. */
+        int remote_address_length = (int)sizeof(remote_address); /* Mutable Winsock address length. */
+        int received_length = 0; /* Number of request bytes returned by recvfrom. */
+        int sent_length = 0; /* Number of discovery response bytes accepted by Winsock. */
+
+        received_length = recvfrom(discovery_socket,
+                                   request_buffer,
+                                   (int)sizeof(request_buffer),
+                                   0,
+                                   (struct sockaddr *)&remote_address,
+                                   &remote_address_length);
+        if (received_length == SOCKET_ERROR)
+        {
+            if (WSAGetLastError() != WSAEWOULDBLOCK)
+            {
+                PLECS_LOG("FRAME UDP discovery: receive failed: %d\n", WSAGetLastError());
+            }
+            return;
+        }
+
+        if ((received_length != (int)(sizeof(frame_udp_discovery_request) - 1u)) || /* Require exact probe length. */
+            (memcmp(request_buffer,
+                    frame_udp_discovery_request,
+                    sizeof(frame_udp_discovery_request) - 1u) != 0)) /* Reject unrelated UDP traffic. */
+        {
+            continue;
+        }
+
+        sent_length = sendto(discovery_socket,
+                             frame_udp_discovery_response,
+                             (int)(sizeof(frame_udp_discovery_response) - 1u),
+                             0,
+                             (const struct sockaddr *)&remote_address,
+                             remote_address_length);
+        if (sent_length != (int)(sizeof(frame_udp_discovery_response) - 1u))
+        {
+            PLECS_LOG("FRAME UDP discovery: response failed: %d\n", WSAGetLastError());
+        }
+    }
+}
 
 static uint32_t frame_tcp_time_get_ms(void)
 {
@@ -326,6 +425,7 @@ static DWORD WINAPI frame_tcp_worker(void *context)
     struct sockaddr_in address = {0};
     SOCKET listen_socket = INVALID_SOCKET;
     SOCKET client_socket = INVALID_SOCKET;
+    SOCKET discovery_socket = INVALID_SOCKET; /* UDP discovery socket owned by the TCP worker lifecycle. */
     u_long nonblocking = 1u;
 
     (void)context;
@@ -353,9 +453,11 @@ static DWORD WINAPI frame_tcp_worker(void *context)
     }
     (void)ioctlsocket(listen_socket, (long)FIONBIO, &nonblocking);
     PLECS_LOG("FRAME TCP: listening on 0.0.0.0:%u\n", FRAME_TCP_SERVER_PORT);
+    discovery_socket = frame_udp_discovery_open();
 
     while (InterlockedCompareExchange(&s_stop_requested, 0, 0) == 0)
     {
+        frame_udp_discovery_poll(discovery_socket);
         client_socket = accept(listen_socket, NULL, NULL);
         if (client_socket == INVALID_SOCKET)
         {
@@ -400,6 +502,7 @@ static DWORD WINAPI frame_tcp_worker(void *context)
                                    (has_tx_data == 1u) ? &write_set : NULL,
                                    &error_set,
                                    &timeout);
+            frame_udp_discovery_poll(discovery_socket);
             if ((select_result == SOCKET_ERROR) || FD_ISSET(client_socket, &error_set))
             {
                 break;
@@ -444,6 +547,10 @@ static DWORD WINAPI frame_tcp_worker(void *context)
                   InterlockedCompareExchange(&tx_would_block_count, 0, 0));
     }
 
+    if (discovery_socket != INVALID_SOCKET)
+    {
+        (void)closesocket(discovery_socket);
+    }
     (void)closesocket(listen_socket);
     return 0u;
 }

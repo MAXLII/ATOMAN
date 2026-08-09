@@ -7,6 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare the TCP server port used by FRAME
+ *          - Advertise the active PLECS simulation through UDP device discovery
  *          - Expose transport lifecycle operations for PLECS project adapters
  *          - Serialize simulation dispatch and FRAME protocol callbacks
  *          - Keep Windows socket details private to the transport implementation
