@@ -23,7 +23,7 @@ typedef struct
 #define DEVICE_VENDOR 2 // 设备商代码
 
 // 发布版本 (低8位中的高4位)
-#define RELEASE_VER 33 // release version 33
+#define RELEASE_VER 34 // release version 34
 
 // 调试版本 (低8位中的低4位)
 #define DEBUG_VER 0 // debug version 0
