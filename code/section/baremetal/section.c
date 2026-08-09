@@ -274,7 +274,10 @@ static void task_insert(section_item_t *p_item)
     p_task = (reg_task_t *)p_item->p_obj;
     p_task->time_last = SECTION_SYS_TICK;
     p_task->is_ready = 0u;
-    SECTION_TASK_PERF_PERIOD_SET(p_task);
+    do
+    {
+        section_perf_task_period_set((p_task)->p_perf_record, (p_task)->t_period * 100u);
+    } while (0);
     p_item->p_next = NULL;
 
     if (p_task_first == NULL)
