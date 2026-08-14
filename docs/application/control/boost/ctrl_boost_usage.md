@@ -18,8 +18,6 @@ boost_cfg_set_in_volt_lmt(24.0f);
 boost_cfg_set_pwr_lmt(1000.0f);
 boost_cfg_set_in_curr_lmt(50.0f);
 boost_cfg_set_out_curr_lmt(50.0f);
-boost_cfg_set_run_allowed(0u);
-boost_cfg_publish_building();
 ```
 
 ## 2. HAL 绑定
@@ -55,6 +53,7 @@ boost_fsm_set_cmd(boost_fsm_cmd_stop);
 - `update_adc_feedback()` 负责整理 Boost 控制反馈。
 - 电感电流通道号小于 `BOOST_CTRL_IND_CURR_CH_NUM`。
 - PWM setter 输出 compare 和上下管使能。
+- 应用只设置 building 参数并发送 FSM start/stop 命令；FSM 在启动边界统一发布配置。
 
 ## 5. 关联导航
 

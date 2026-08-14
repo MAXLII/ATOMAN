@@ -21,7 +21,7 @@
 
 | 层 | 文件 | 职责 |
 | --- | --- | --- |
-| 配置层 | `*_cfg.c/h` | timing、setpoint、active/building 双缓冲、物理量到代码域转换 |
+| 配置层 | `*_cfg.c/h`、`*_cfg_fsm.h` | timing、setpoint、active/building 双缓冲、物理量到代码域转换和 FSM 私有发布接口 |
 | HAL 层 | `*_hal.c/h` | 采样指针、PWM 回调、保护回调、运行进入/退出回调 |
 | 控制层 | `*_ctrl.c/h` | 初始化、运行准备、反馈采样整理、ISR 控制、慢速任务 |
 | FSM 层 | `*_fsm.c/h` | init、idle、run 相关状态和 start/stop 命令 |
@@ -44,7 +44,7 @@
 | `building` | 上层写入配置 |
 | `active` | 控制侧读取配置 |
 
-`*_cfg_set_*()` 写入 building buffer。`*_cfg_publish_building()` 发布配置。控制侧通过 `*_cfg_sync_building_to_active()` 或 fast sync 同步到 active。
+`*_cfg_set_*()` 写入 building buffer。应用发送 start 命令后，FSM 通过私有 `*_cfg_fsm.h` 接口设置 `run_allowed` 并发布完整配置。控制侧通过 `*_cfg_sync_building_to_active()` 或 fast sync 同步到 active。
 
 Buck 和 Boost 的配置接口接收物理量，内部保存为整数代码域。PFC、INV 和 BB 保存浮点物理量。
 
@@ -68,13 +68,13 @@ PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pf
 平台接入控制模块时完成以下动作：
 
 1. 初始化平台硬件并保持 PWM 关闭。
-2. 配置 timing，写入 setpoint building buffer 并 publish。
+2. 配置 timing，写入 setpoint building buffer。
 3. 调用 `section_init()`，由主循环推进 FSM 进入 Idle。
 4. 在 Idle 解锁 HAL，绑定采样指针、PWM 回调、保护回调和状态机资源。
 5. 通过 `*_hal_is_ready()` 验证后锁定 HAL。
 6. 主循环持续调用 `run_task()`。
 7. 控制 ISR 中调用 `section_interrupt()`。
-8. 通过模块 FSM 命令启动或停止。
+8. 通过模块 FSM 命令启动或停止；FSM 统一管理发布、运行许可和 HAL 生命周期调用顺序。
 
 进入 run 时，FSM 调用 `*_ctrl_prepare_run()` 重新初始化控制状态。
 

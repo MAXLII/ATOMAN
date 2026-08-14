@@ -16,8 +16,6 @@ cllc_cfg_set_battery_voltage_ref(48.0f);
 cllc_cfg_set_battery_current_limit(165.0f);
 cllc_cfg_set_bus_voltage_ref(450.0f);
 cllc_cfg_set_direction(CLLC_DIRECTION_FORWARD);
-cllc_cfg_set_run_allowed(0u);
-cllc_cfg_publish_building();
 ```
 
 `ctrl_ts` 是正向共享积分 PI 和反向 Tustin PI 的实际调用周期。`task_ts` 是 FSM 的调用周期，用于把默认启动延时换算为 tick。
@@ -50,7 +48,6 @@ void cllc_pwm_set_normalized(CLLC_DIRECTION_E direction, float u);
 cllc_cfg_set_direction(CLLC_DIRECTION_FORWARD);
 cllc_cfg_set_battery_voltage_ref(48.0f);
 cllc_cfg_set_battery_current_limit(165.0f);
-cllc_cfg_publish_building();
 cllc_fsm_set_cmd(CLLC_FSM_CMD_START);
 ```
 
@@ -61,7 +58,6 @@ cllc_fsm_set_cmd(CLLC_FSM_CMD_START);
 ```c
 cllc_cfg_set_direction(CLLC_DIRECTION_REVERSE);
 cllc_cfg_set_bus_voltage_ref(450.0f);
-cllc_cfg_publish_building();
 cllc_fsm_set_cmd(CLLC_FSM_CMD_START);
 ```
 
@@ -77,12 +73,11 @@ cllc_fsm_set_cmd(CLLC_FSM_CMD_STOP);
 if (cllc_fsm_get_run_state() == CLLC_RUN_STATE_IDLE)
 {
     cllc_cfg_set_direction(CLLC_DIRECTION_REVERSE);
-    cllc_cfg_publish_building();
     cllc_fsm_set_cmd(CLLC_FSM_CMD_START);
 }
 ```
 
-`cllc_cfg_set_direction()` 只在 FSM 处于 idle 时接受新方向。startup、run 和 fault 状态下调用该接口时，新方向会被忽略，building setpoint 与实际桥臂方向均保持不变。`direction_mismatch` 保留为配置缓冲区被外部直接改写时的防御性诊断量。
+`cllc_cfg_set_direction()` 只在 FSM 处于 idle 时接受新方向。startup、run 和 fault 状态下调用该接口时，新方向会被忽略，building setpoint 与实际桥臂方向均保持不变。应用完成参数修改后只发送 start 命令，FSM 在接受启动时统一发布配置并锁存方向。`direction_mismatch` 保留为配置缓冲区被外部直接改写时的防御性诊断量。
 
 ## 6. 保护与复位
 

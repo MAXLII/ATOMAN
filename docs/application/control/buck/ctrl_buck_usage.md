@@ -17,8 +17,6 @@ buck_cfg_set_in_volt_lmt(24.0f);
 buck_cfg_set_pwr_lmt(1000.0f);
 buck_cfg_set_in_curr_lmt(50.0f);
 buck_cfg_set_out_curr_lmt(50.0f);
-buck_cfg_set_run_allowed(0u);
-buck_cfg_publish_building();
 ```
 
 ## 2. HAL 绑定
@@ -55,6 +53,7 @@ buck_fsm_set_cmd(buck_fsm_cmd_stop);
 - HAL 采样指针类型为 `int32_t *`。
 - 电感电流通道号小于 `BUCK_CTRL_IND_CURR_CH_NUM`。
 - PWM setter 输出 compare 和上下管使能。
+- 应用只设置 building 参数并发送 FSM start/stop 命令；FSM 在启动边界统一发布配置。
 
 ## 5. 关联导航
 

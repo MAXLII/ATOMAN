@@ -1,58 +1,73 @@
 # 控制参数发布使用方法
 
-## 1. 适用场景
+## 1. 应用层职责
 
-控制参数发布接口用于把后台任务、通信命令或状态机产生的一组新参数，作为一个版本交给实时控制路径。当前 Buck、Boost、LLC、CLLC 和 PFC 配置模块均采用 `building` 与 `active` 两份参数对象。
+控制参数使用 `building` 与 `active` 两份对象。应用层只负责：
 
-## 2. 基本接入顺序
+1. 在初始化阶段设置 timing，并按模块需要绑定 building 对象。
+2. 通过 `*_cfg_set_*()` 修改候选参数。
+3. 参数准备完成后调用 `*_fsm_set_cmd(...start)` 请求启动。
+4. 通过 `*_fsm_set_cmd(...stop)` 请求停止。
 
-1. 在模块初始化阶段准备调用方持有的 `building` 对象。
-2. 调用对应的 `*_cfg_set_p_building()` 绑定对象。
-3. 后台只通过 `*_cfg_set_*()` 修改 `building`。
-4. 一组相关字段写完后调用 `*_cfg_publish_building()`。
-5. 控制中断在一次控制计算开始前调用 `*_cfg_sync_building_to_active()`。
-6. 控制算法在本周期内只读取 `*_cfg_get_p_active()` 返回的对象。
+应用层不得调用 `*_cfg_publish_building()`，也不得直接设置 `run_allowed`。这两个接口位于 `*_cfg_fsm.h`，仅供同模块 FSM 使用。
 
 ```c
-static buck_ctrl_setpoint_t s_buck_building = {0};
+static buck_ctrl_setpoint_t buck_building = {0};
 
 void app_control_cfg_init(void)
 {
-    buck_cfg_set_p_building(&s_buck_building);
+    buck_cfg_set_p_building(&buck_building);
     buck_cfg_set_out_volt_ref(12.0f);
     buck_cfg_set_in_curr_lmt(20.0f);
-    buck_cfg_set_run_allowed(0U);
-    buck_cfg_publish_building();
 }
 
-void app_control_isr(void)
+void app_control_start(void)
 {
-    buck_cfg_sync_building_to_active_fast();
-    /* 本周期控制计算只使用 active 参数。 */
+    buck_fsm_set_cmd(buck_fsm_cmd_start);
 }
 ```
 
-## 3. 发布边界
+## 2. FSM 发布边界
 
-多个有关联的字段必须连续写入 `building` 后再发布，不能每修改一个字段就发布一次。发布函数表达“这一组参数已经完整”，而不是单个赋值动作。
+FSM 收到 start 后先检查配置、HAL 绑定和保护状态。启动条件全部满足时，FSM 设置运行许可并发布完整 building 快照，然后才调用进入运行的 HAL 回调。
 
-当前实现要求同一个配置对象只有一个后台写入者，且发布与实时同步不会并发复制同一对象。若一个平台存在多个写入者，应先在应用层串行化，不能依靠 `volatile` 解决一致性。
+停止时序固定为：
 
-## 4. 各模块接口
+```text
+stop / hard protect
+  → 立即关闭 PWM 或结束功率传输
+  → FSM 撤销 run_allowed
+  → FSM 发布停止配置
+  → 返回 idle 或进入 fault
+```
 
-| 模块 | 后台绑定与发布 | 实时同步 |
+带继电器或预充状态的模块可以在接受 start 时先发布 `run_allowed = 0` 的参数快照，在真正进入 run 前再由 FSM 发布 `run_allowed = 1`。这样参数能够在启动序列中锁存，同时不会提前开放控制输出。
+
+## 3. 参数生效规则
+
+- app 的多次 setter 调用只修改 building，不会逐字段影响 active。
+- FSM 接受 start 时发布当时完整的 building。
+- run 状态继续修改 building 时，修改内容保留到下一次被 FSM 接受的 start。
+- stop 和硬保护不依赖 app 发布，FSM 会统一撤销运行许可。
+- 控制入口通过 `*_cfg_sync_building_to_active()` 或 fast sync 消费已发布版本。
+
+## 4. 各模块应用接口
+
+| 模块 | 应用侧配置 | 启动命令 |
 |---|---|---|
-| Buck | `buck_cfg_set_p_building()`、`buck_cfg_publish_building()` | `buck_cfg_sync_building_to_active()` / `buck_cfg_sync_building_to_active_fast()` |
-| Boost | `boost_cfg_set_p_building()`、`boost_cfg_publish_building()` | `boost_cfg_sync_building_to_active()` / 快速同步接口 |
-| LLC | `llc_cfg_set_p_building()`、`llc_cfg_publish_building()` | `llc_cfg_sync_building_to_active()` |
-| CLLC | `cllc_cfg_set_p_building()`、`cllc_cfg_publish_building()` | `cllc_cfg_sync_building_to_active()` |
-| PFC | `pfc_cfg_set_p_building()`、`pfc_cfg_publish_building()` | `pfc_cfg_sync_building_to_active()` |
+| Buck | `buck_cfg_set_p_building()`、`buck_cfg_set_*()` | `buck_fsm_set_cmd(buck_fsm_cmd_start)` |
+| Boost | `boost_cfg_set_p_building()`、`boost_cfg_set_*()` | `boost_fsm_set_cmd(boost_fsm_cmd_start)` |
+| BB | `bb_cfg_set_p_building()`、`bb_cfg_set_*()` | `bb_fsm_set_cmd(bb_fsm_cmd_start)` |
+| LLC | `llc_cfg_set_p_building()`、`llc_cfg_set_*()` | `llc_fsm_set_cmd(llc_fsm_cmd_start)` |
+| CLLC | `cllc_cfg_set_p_building()`、`cllc_cfg_set_*()` | `cllc_fsm_set_cmd(CLLC_FSM_CMD_START)` |
+| PFC | `pfc_cfg_set_p_building()`、`pfc_cfg_set_*()` | `pfc_fsm_set_cmd(pfc_fsm_cmd_start)` |
+| INV | `inv_cfg_set_p_building()`、`inv_cfg_set_*()` | `inv_fsm_set_cmd(inv_fsm_cmd_start)` |
 
 调用前应查看目标模块头文件，以该模块实际暴露的字段设置函数为准。
 
 ## 5. CLLC 方向参数
 
-CLLC 的方向会改变控制结构和能量流向。应用应在空闲状态调用 `cllc_cfg_unlock_direction()`，设置方向并发布；离开空闲状态前调用 `cllc_cfg_lock_direction()`。运行期间不得用普通参数更新路径改变方向。
+CLLC 方向会改变控制结构和能量流向。应用在 idle 状态设置方向并发送 start。FSM 接受 start 时统一发布配置并锁存方向；startup、run 和 fault 期间拒绝方向修改。停止回到 idle 后才能设置并启动另一个方向。
 
 ## 6. 参数对象生命周期
 
@@ -60,5 +75,5 @@ CLLC 的方向会改变控制结构和能量流向。应用应在空闲状态调
 
 ## 7. 关联导航
 
-- 源码：[Buck 配置](../../../code/ctrl/buck/buck_cfg.c) · [PFC 配置](../../../code/ctrl/pfc/pfc_cfg.c) · [CLLC 配置](../../../code/ctrl/cllc/cllc_cfg.c)
+- 源码：[Buck FSM](../../../code/ctrl/buck/buck_fsm.c) · [PFC FSM](../../../code/ctrl/pfc/pfc_fsm.c) · [CLLC FSM](../../../code/ctrl/cllc/cllc_fsm.c)
 - 设计：[控制参数构建与发布设计](../../design/control/setpoint_publish_design.md) · [控制模块总设计](../../design/control/ctrl_design.md)

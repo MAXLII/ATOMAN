@@ -15,8 +15,6 @@ inv_cfg_set_freq_hz(50.0f);
 inv_cfg_set_freq_slew_hzps(10.0f);
 inv_cfg_set_rms_ref_v(230.0f);
 inv_cfg_set_rms_slew_vps(212.0f);
-inv_cfg_set_run_allowed(0u);
-inv_cfg_publish_building();
 ```
 
 ## 2. HAL 绑定
@@ -51,6 +49,7 @@ inv_fsm_set_cmd(inv_fsm_cmd_stop);
 - INV PWM setter 接收 `v_pwm` 和 `v_bus`。
 - 频率和电压参考按配置斜率变化。
 - 采样更新需要先于 INV 控制 ISR。
+- 应用只设置 building 参数并发送 FSM start/stop 命令；FSM 管理配置发布和运行许可。
 
 ## 5. 拓扑移植重点
 
