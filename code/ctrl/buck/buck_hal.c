@@ -27,7 +27,6 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "buck_hal.h"
-#include "buck_cfg.h"
 #include "buck_ctrl.h"
 #include "buck_fsm.h"
 #include "section.h"
@@ -46,9 +45,6 @@ static void buck_hal_enter_run(void)
 {
     PLECS_LOG("buck_hal enter run\n");
     buck_ctrl_prepare_run();
-
-    buck_cfg_set_run_allowed(1U);
-    buck_cfg_publish_building();
 }
 
 static void buck_hal_exit_run(void)
@@ -60,8 +56,6 @@ static void buck_hal_exit_run(void)
         buck_ctrl_hal.p_pwm_disable();
     }
 
-    buck_cfg_set_run_allowed(0U);
-    buck_cfg_publish_building();
 }
 
 static buck_fsm_hal_t buck_fsm_hal = {
@@ -92,8 +86,7 @@ void buck_hal_hard_protect_trip(void)
         *buck_fsm_hal.p_latched = 1U;
     }
 
-    buck_cfg_set_run_allowed(0U);
-    buck_cfg_publish_building();
+    buck_fsm_set_cmd(buck_fsm_cmd_stop);
 }
 
 void buck_hal_hard_protect_clear(void)

@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Hold inverter controller and FSM HAL binding objects for platform callbacks
- *          - Manage run permission, PWM disable, and hard-protection trip handling
+ *          - Manage PWM disable and hard-protection trip handling
  *          - Lock and validate inverter HAL bindings before allowing state-machine run transitions
  *
  *          Design notes:
@@ -29,7 +29,6 @@
 #include "inv_hal.h"
 #include "inv_ctrl.h"
 #include "inv_fsm.h"
-#include "inv_cfg.h"
 #include "my_math.h"
 
 static void inv_hal_enter_run(void);
@@ -55,8 +54,6 @@ static void inv_hal_enter_run(void)
     {
         inv_ctrl_hal.p_pwm_enable();
     }
-    inv_cfg_set_run_allowed(1U);
-    inv_cfg_publish_building();
 }
 
 static void inv_hal_exit_run(void)
@@ -66,8 +63,6 @@ static void inv_hal_exit_run(void)
     {
         inv_ctrl_hal.p_pwm_disable();
     }
-    inv_cfg_set_run_allowed(0U);
-    inv_cfg_publish_building();
 }
 
 static void inv_hal_rly_on(void)
@@ -98,8 +93,7 @@ void inv_hal_hard_protect_trip(void)
         inv_ctrl_hal.p_pwm_disable();
     }
 
-    inv_cfg_set_run_allowed(0U);
-    inv_cfg_publish_building();
+    inv_fsm_set_cmd(inv_fsm_cmd_stop);
 }
 
 uint8_t inv_hal_is_ready(void)

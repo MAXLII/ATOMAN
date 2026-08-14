@@ -28,6 +28,7 @@
  */
 #include "llc_fsm.h"
 #include "llc_cfg.h"
+#include "llc_cfg_fsm.h"
 #include "llc_hal.h"
 #include "my_math.h"
 #include <stddef.h>
@@ -41,7 +42,7 @@ typedef enum
 } llc_fsm_ev_e;
 
 static uint32_t fsm_ev = llc_fsm_ev_null;
-static llc_fsm_cmd_e fsm_cmd = llc_fsm_cmd_null;
+static volatile llc_fsm_cmd_e fsm_cmd = llc_fsm_cmd_null;
 static uint32_t startup_cnt = 0U;
 static uint8_t is_ups_trig = 0U;
 
@@ -106,12 +107,14 @@ static void idle_exe(void)
 {
     if (get_cmd() == llc_fsm_cmd_start)
     {
-        if ((llc_hal_is_ready() == 0U) ||
-            (llc_cfg_is_ready() == 0U))
+        if ((llc_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
+            (llc_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
         {
             return;
         }
 
+        llc_cfg_set_run_allowed(1U);
+        llc_cfg_publish_building();
         fsm_ev = llc_fsm_ev_to_startup;
     }
 }
@@ -145,6 +148,13 @@ static void startup_exe(void)
 {
     if (get_cmd() == llc_fsm_cmd_stop)
     {
+        if ((p_hal != NULL) &&
+            (p_hal->p_exit_run_func != NULL))
+        {
+            p_hal->p_exit_run_func();
+        }
+        llc_cfg_set_run_allowed(0U);
+        llc_cfg_publish_building();
         fsm_ev = llc_fsm_ev_to_idle;
         return;
     }
@@ -201,6 +211,9 @@ static void run_out(void)
     {
         p_hal->p_exit_run_func();
     }
+
+    llc_cfg_set_run_allowed(0U);
+    llc_cfg_publish_building();
 }
 
 REG_FSM(llc_fsm, llc_fsm_sta_init, fsm_ev,

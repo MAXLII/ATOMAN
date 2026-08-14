@@ -170,13 +170,11 @@ static void app_update_setpoint(void)
 {
     pfc_cfg_set_vbus_ref_v(PFC_CFG_DEFAULT_VBUS_REF_V);
     pfc_cfg_set_vbus_slew_vps(PFC_CFG_DEFAULT_VBUS_SLEW_VPS);
-    pfc_cfg_publish_building();
 
     inv_cfg_set_freq_hz(INV_CFG_DEFAULT_FREQ_HZ);
     inv_cfg_set_freq_slew_hzps(INV_CFG_DEFAULT_FREQ_SLEW_HZPS);
     inv_cfg_set_rms_ref_v(INV_CFG_DEFAULT_RMS_REF_V);
     inv_cfg_set_rms_slew_vps(INV_CFG_DEFAULT_RMS_SLEW_VPS);
-    inv_cfg_publish_building();
 }
 
 static void app_feedback_isr(void)

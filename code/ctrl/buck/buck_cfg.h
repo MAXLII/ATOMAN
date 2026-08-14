@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare buck setpoint data structures and manager handles
- *          - Expose APIs for staging, publishing, and reading buck control references
+ *          - Expose application APIs for staging and reading buck control references
  *          - Define scaling constants and loop parameters used by the controller
  *
  *          Design notes:
@@ -430,14 +430,11 @@ extern buck_ctrl_setpoint_mgr_t buck_cfg_setpoint_mgr;
 void buck_cfg_set_p_building(buck_ctrl_setpoint_t *p_data);
 buck_ctrl_setpoint_t *buck_cfg_get_p_active(void);
 buck_ctrl_setpoint_t *buck_cfg_get_p_building(void);
-void buck_cfg_set_run_allowed(uint8_t run_allowed);
 void buck_cfg_set_pwr_lmt(float pwr_lmt);
 void buck_cfg_set_out_volt_ref(float out_volt_ref);
 void buck_cfg_set_in_volt_lmt(float in_volt_lmt);
 void buck_cfg_set_in_curr_lmt(float in_curr_lmt);
 void buck_cfg_set_out_curr_lmt(float out_curr_lmt);
-void buck_cfg_publish_building(void);
-void buck_cfg_building_version_inc(void);
 uint8_t buck_cfg_is_ready(void);
 const buck_ctrl_setpoint_mgr_t *buck_cfg_get_mgr(void);
 

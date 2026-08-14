@@ -30,7 +30,6 @@
 #include "my_math.h"
 #include "pfc_ctrl.h"
 #include "pfc_fsm.h"
-#include "pfc_cfg.h"
 
 static void pfc_hal_enter_run(void);
 static void pfc_hal_exit_run(void);
@@ -47,15 +46,11 @@ static void pfc_hal_enter_run(void)
 {
     PLECS_LOG("pfc_hal enter run\n");
     pfc_ctrl_prepare_run();
-    pfc_cfg_set_run_allowed(1);
-    pfc_cfg_publish_building();
 }
 
 static void pfc_hal_exit_run(void)
 {
     PLECS_LOG("pfc_hal exit run\n");
-    pfc_cfg_set_run_allowed(0);
-    pfc_cfg_publish_building();
 }
 
 pfc_ctrl_hal_t *pfc_hal_get_ctrl(void)
@@ -75,8 +70,7 @@ void pfc_hal_hard_protect_trip(void)
         pfc_ctrl_hal.p_pwm_disable();
     }
 
-    pfc_cfg_set_run_allowed(0U);
-    pfc_cfg_publish_building();
+    pfc_fsm_set_cmd(pfc_fsm_cmd_stop);
 }
 
 uint8_t pfc_hal_is_ready(void)

@@ -263,7 +263,6 @@ static void app_update_setpoint(void)
     inv_cfg_set_freq_slew_hzps(app_freq_slew_hzps);
     inv_cfg_set_rms_ref_v(app_rms_ref_v);
     inv_cfg_set_rms_slew_vps(app_rms_slew_vps);
-    inv_cfg_publish_building();
 }
 
 static void app_task(void)

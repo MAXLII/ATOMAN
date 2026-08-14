@@ -27,7 +27,6 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "boost_hal.h"
-#include "boost_cfg.h"
 #include "boost_ctrl.h"
 #include "boost_fsm.h"
 #include "section.h"
@@ -44,9 +43,6 @@ static boost_ctrl_hal_t ctrl_hal = {0};
 static void enter_run(void)
 {
     boost_ctrl_prepare_run();
-
-    boost_cfg_set_run_allowed(1U);
-    boost_cfg_publish_building();
 }
 
 static void exit_run(void)
@@ -56,8 +52,6 @@ static void exit_run(void)
         ctrl_hal.p_pwm_disable();
     }
 
-    boost_cfg_set_run_allowed(0U);
-    boost_cfg_publish_building();
 }
 
 static boost_fsm_hal_t fsm_hal = {

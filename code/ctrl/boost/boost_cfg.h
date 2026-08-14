@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare BOOST setpoint data structures and manager handles
- *          - Expose APIs for staging, publishing, and reading BOOST control references
+ *          - Expose application APIs for staging and reading BOOST control references
  *          - Define scaling constants and loop parameters used by the controller
  *
  *          Design notes:
@@ -416,14 +416,11 @@ extern boost_ctrl_setpoint_mgr_t boost_cfg_setpoint_mgr;
 void boost_cfg_set_p_building(boost_ctrl_setpoint_t *p_data);
 boost_ctrl_setpoint_t *boost_cfg_get_p_active(void);
 boost_ctrl_setpoint_t *boost_cfg_get_p_building(void);
-void boost_cfg_set_run_allowed(uint8_t run_allowed);
 void boost_cfg_set_pwr_lmt(float pwr_lmt);
 void boost_cfg_set_out_volt_ref(float out_volt_ref);
 void boost_cfg_set_in_volt_lmt(float in_volt_lmt);
 void boost_cfg_set_in_curr_lmt(float in_curr_lmt);
 void boost_cfg_set_out_curr_lmt(float out_curr_lmt);
-void boost_cfg_publish_building(void);
-void boost_cfg_building_version_inc(void);
 uint8_t boost_cfg_is_ready(void);
 const boost_ctrl_setpoint_mgr_t *boost_cfg_get_mgr(void);
 

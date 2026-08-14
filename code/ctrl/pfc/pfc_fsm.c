@@ -28,6 +28,7 @@
  */
 #include "pfc_fsm.h"
 #include "pfc_cfg.h"
+#include "pfc_cfg_fsm.h"
 #include "section.h"
 #include "my_math.h"
 
@@ -36,7 +37,7 @@ static uint32_t soft_start_dly = 0;
 static uint32_t main_rly_dly = 0;
 static pfc_fsm_ev_e fsm_ev = pfc_fsm_ev_null;
 #define p_hal (pfc_hal_get_fsm())
-static pfc_fsm_cmd_e fsm_cmd = pfc_fsm_cmd_null;
+static volatile pfc_fsm_cmd_e fsm_cmd = pfc_fsm_cmd_null;
 
 void pfc_fsm_set_cmd(pfc_fsm_cmd_e cmd)
 {
@@ -126,6 +127,8 @@ static void pfc_fsm_idle_exe(void)
             return;
         }
 
+        pfc_cfg_set_run_allowed(0U);
+        pfc_cfg_publish_building();
         PLECS_LOG("pfc_fsm idle got start, goto soft_start\n");
         fsm_ev = pfc_fsm_ev_to_soft_start;
     }
@@ -280,6 +283,9 @@ static void pfc_fsm_run_in(void)
 {
     PLECS_LOG("pfc_fsm enter run\n");
 
+    pfc_cfg_set_run_allowed(1U);
+    pfc_cfg_publish_building();
+
     if (p_hal == NULL)
     {
         PLECS_LOG("pfc_fsm run entry skipped: fsm hal is null\n");
@@ -338,10 +344,8 @@ static void pfc_fsm_run_out(void)
     if (p_hal == NULL)
     {
         PLECS_LOG("pfc_fsm run exit skipped: fsm hal is null\n");
-        return;
     }
-
-    if (p_hal->p_exit_run_func != NULL)
+    else if (p_hal->p_exit_run_func != NULL)
     {
         p_hal->p_exit_run_func();
         PLECS_LOG("pfc_fsm control disabled\n");
@@ -351,7 +355,8 @@ static void pfc_fsm_run_out(void)
         PLECS_LOG("pfc_fsm run exit skipped: exit_run hook is null\n");
     }
 
-    if (p_hal->p_main_rly_off_func != NULL)
+    if ((p_hal != NULL) &&
+        (p_hal->p_main_rly_off_func != NULL))
     {
         p_hal->p_main_rly_off_func();
         PLECS_LOG("pfc_fsm main relay off\n");
@@ -360,6 +365,9 @@ static void pfc_fsm_run_out(void)
     {
         PLECS_LOG("pfc_fsm run exit skipped: main relay off hook is null\n");
     }
+
+    pfc_cfg_set_run_allowed(0U);
+    pfc_cfg_publish_building();
 }
 
 REG_FSM(PFC_FSM, pfc_fsm_sta_init, fsm_ev,

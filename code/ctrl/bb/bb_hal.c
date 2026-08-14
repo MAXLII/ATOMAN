@@ -27,7 +27,6 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "bb_hal.h"
-#include "bb_cfg.h"
 #include "bb_ctrl.h"
 #include "bb_fsm.h"
 
@@ -41,21 +40,18 @@ static bb_ctrl_hal_t bb_ctrl_hal = {0}; /* bb_ctrl_hal: control HAL instance pop
 /**
  * @brief Enter-run callback used by the FSM.
  * @param None.
- * @return None. Controller states are prepared and run permission is published.
+ * @return None. Controller states are prepared for the FSM-owned start sequence.
  */
 static void bb_hal_enter_run(void)
 {
     PLECS_LOG("bb_hal enter run\n");
     bb_ctrl_prepare_run();
-
-    bb_cfg_set_run_allowed(1U);
-    bb_cfg_publish_building();
 }
 
 /**
  * @brief Exit-run callback used by the FSM.
  * @param None.
- * @return None. PWM is disabled and run permission is cleared.
+ * @return None. PWM is disabled before the FSM publishes the stopped state.
  */
 static void bb_hal_exit_run(void)
 {
@@ -66,8 +62,6 @@ static void bb_hal_exit_run(void)
         bb_ctrl_hal.p_pwm_disable();
     }
 
-    bb_cfg_set_run_allowed(0U);
-    bb_cfg_publish_building();
 }
 
 static bb_fsm_hal_t bb_fsm_hal = {
@@ -99,8 +93,7 @@ void bb_hal_hard_protect_trip(void)
         *bb_fsm_hal.p_latched = 1U;
     }
 
-    bb_cfg_set_run_allowed(0U);
-    bb_cfg_publish_building();
+    bb_fsm_set_cmd(bb_fsm_cmd_stop);
 }
 
 void bb_hal_hard_protect_clear(void)

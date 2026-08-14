@@ -27,8 +27,8 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "llc_hal.h"
-#include "llc_cfg.h"
 #include "llc_ctrl.h"
+#include "llc_fsm.h"
 #include <stddef.h>
 
 static void llc_hal_enter_run(void);
@@ -52,15 +52,11 @@ static void llc_hal_enter_run(void)
         llc_ctrl_hal.p_pwm_enable();
     }
 
-    llc_cfg_set_run_allowed(1U);
-    llc_cfg_publish_building();
 }
 
 static void llc_hal_exit_run(void)
 {
     llc_hal_pwm_disable();
-    llc_cfg_set_run_allowed(0U);
-    llc_cfg_publish_building();
 }
 
 llc_ctrl_hal_t *llc_hal_get_ctrl(void)
@@ -112,8 +108,7 @@ void llc_hal_hard_protect_trip(void)
         *llc_fsm_hal.p_latched = 1U;
     }
 
-    llc_cfg_set_run_allowed(0U);
-    llc_cfg_publish_building();
+    llc_fsm_set_cmd(llc_fsm_cmd_stop);
 }
 
 void llc_hal_hard_protect_clear(void)

@@ -28,10 +28,11 @@
  */
 #include "inv_fsm.h"
 #include "inv_cfg.h"
+#include "inv_cfg_fsm.h"
 #include "my_math.h"
 
 #define p_hal (inv_hal_get_fsm())
-static inv_fsm_cmd_e fsm_cmd = inv_fsm_cmd_null;
+static volatile inv_fsm_cmd_e fsm_cmd = inv_fsm_cmd_null;
 static uint32_t init_dly = 0U;
 static uint32_t inv_rly_on_dly = 0U;
 static uint32_t fsm_ev = (uint32_t)inv_fsm_ev_null;
@@ -118,6 +119,8 @@ static void inv_fsm_idle_exe(void)
             return;
         }
 
+        inv_cfg_set_run_allowed(0U);
+        inv_cfg_publish_building();
         PLECS_LOG("inv_fsm idle got start, goto relay_on\n");
         fsm_ev = inv_fsm_ev_to_rly_on;
     }
@@ -197,6 +200,9 @@ static void inv_fsm_run_in(void)
 {
     PLECS_LOG("inv_fsm enter run\n");
 
+    inv_cfg_set_run_allowed(1U);
+    inv_cfg_publish_building();
+
     if ((p_hal != NULL) &&
         (p_hal->p_enter_run_func != NULL))
     {
@@ -234,6 +240,9 @@ static void inv_fsm_run_out(void)
         p_hal->p_exit_run_func();
         PLECS_LOG("inv_fsm control disabled\n");
     }
+
+    inv_cfg_set_run_allowed(0U);
+    inv_cfg_publish_building();
 }
 
 REG_FSM(INV_FSM, inv_fsm_sta_init, fsm_ev,

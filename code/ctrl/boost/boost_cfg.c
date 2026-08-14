@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "boost_cfg.h"
+#include "boost_cfg_fsm.h"
 #include <stddef.h>
 
 static boost_ctrl_setpoint_t setpoint_active = {0};
@@ -243,11 +244,6 @@ void boost_cfg_publish_building(void)
         return;
     }
 
-    boost_cfg_setpoint_mgr.building.version++;
-}
-
-void boost_cfg_building_version_inc(void)
-{
     boost_cfg_setpoint_mgr.building.version++;
 }
 

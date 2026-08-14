@@ -124,7 +124,6 @@ static void app_update_boost_setpoint(void)
     boost_cfg_set_out_curr_lmt(plecs_get_input(PLECS_INPUT_OUT_CURR_LMT));
     boost_cfg_set_out_volt_ref(plecs_get_input(PLECS_INPUT_OUT_VOLT_REF));
     boost_cfg_set_in_volt_lmt(plecs_get_input(PLECS_INPUT_IN_VOLT_LMT));
-    boost_cfg_publish_building();
 }
 
 static void app_task(void)

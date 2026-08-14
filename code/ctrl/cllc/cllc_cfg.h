@@ -192,8 +192,6 @@ void cllc_cfg_set_p_building(cllc_ctrl_setpoint_t *p_data);
 cllc_ctrl_setpoint_t *cllc_cfg_get_p_active(void);
 /** @brief Get the staging setpoint. @return Building buffer pointer or NULL. */
 cllc_ctrl_setpoint_t *cllc_cfg_get_p_building(void);
-/** @brief Stage internal run permission. @param run_allowed 0 stops; nonzero enables. */
-void cllc_cfg_set_run_allowed(uint8_t run_allowed);
 /** @brief Stage the next run direction while the FSM is idle. @param direction Forward or reverse. */
 void cllc_cfg_set_direction(CLLC_DIRECTION_E direction);
 /** @brief Reject subsequent direction updates until the FSM returns to idle. */
@@ -206,8 +204,6 @@ void cllc_cfg_set_battery_voltage_ref(float voltage_v);
 void cllc_cfg_set_battery_current_limit(float current_a);
 /** @brief Stage reverse bus reference. @param voltage_v High-voltage-bus reference in volts. */
 void cllc_cfg_set_bus_voltage_ref(float voltage_v);
-/** @brief Publish the staged setpoint by incrementing its version. */
-void cllc_cfg_publish_building(void);
 /** @brief Check timing and buffer bindings. @return 1 when ready, otherwise 0. */
 uint8_t cllc_cfg_is_ready(void);
 /** @brief Get the setpoint manager. @return Read-only active/building manager. */

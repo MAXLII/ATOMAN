@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "bb_cfg.h"
+#include "bb_cfg_fsm.h"
 #include <stddef.h>
 
 static bb_ctrl_setpoint_t setpoint_active = {0};   /* setpoint_active: snapshot consumed by control logic */
@@ -210,16 +211,6 @@ void bb_cfg_publish_building(void)
     setpoint_mgr.building.version++;
     *setpoint_mgr.active.p_data = *setpoint_mgr.building.p_data;
     setpoint_mgr.active.version = setpoint_mgr.building.version;
-}
-
-/**
- * @brief Increment the building-buffer version counter.
- * @param None.
- * @return None.
- */
-void bb_cfg_building_version_inc(void)
-{
-    setpoint_mgr.building.version++;
 }
 
 /**

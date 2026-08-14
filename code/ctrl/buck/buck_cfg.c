@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "buck_cfg.h"
+#include "buck_cfg_fsm.h"
 #include <stddef.h>
 
 static buck_ctrl_setpoint_t setpoint_active = {0};
@@ -241,11 +242,6 @@ void buck_cfg_publish_building(void)
         return;
     }
 
-    buck_cfg_setpoint_mgr.building.version++;
-}
-
-void buck_cfg_building_version_inc(void)
-{
     buck_cfg_setpoint_mgr.building.version++;
 }
 
