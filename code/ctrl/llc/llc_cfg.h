@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare LLC setpoint data structures and manager handles
- *          - Expose APIs for staging, publishing, and reading control references
+ *          - Expose application APIs for staging and reading control references
  *          - Define voltage-loop tuning, startup, filter, and limit parameters used by the controller
  *
  *          Design notes:
@@ -85,10 +85,7 @@ uint32_t llc_cfg_get_startup_delay_ticks(void);
 void llc_cfg_set_p_building(llc_ctrl_setpoint_t *p_data);
 llc_ctrl_setpoint_t *llc_cfg_get_p_active(void);
 llc_ctrl_setpoint_t *llc_cfg_get_p_building(void);
-void llc_cfg_set_run_allowed(uint8_t run_allowed);
 void llc_cfg_set_v_out_ref(float v_out_ref_v);
-void llc_cfg_publish_building(void);
-void llc_cfg_building_version_inc(void);
 uint8_t llc_cfg_is_ready(void);
 const llc_ctrl_setpoint_mgr_t *llc_cfg_get_mgr(void);
 

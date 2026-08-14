@@ -27,10 +27,12 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "buck_fsm.h"
+#include "buck_cfg.h"
+#include "buck_cfg_fsm.h"
 #include <stddef.h>
 
 static uint32_t fsm_ev = buck_fsm_ev_null;
-static buck_fsm_cmd_e fsm_cmd = buck_fsm_cmd_null;
+static volatile buck_fsm_cmd_e fsm_cmd = buck_fsm_cmd_null;
 #define p_hal (buck_hal_get_fsm())
 
 void buck_fsm_set_cmd(buck_fsm_cmd_e cmd)
@@ -90,7 +92,8 @@ static void buck_fsm_idle_exe(void)
 {
     if (buck_fsm_get_cmd() == buck_fsm_cmd_start)
     {
-        if (buck_hal_is_ready() == 0U)
+        if ((buck_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
+            (buck_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
         {
             PLECS_LOG("buck_fsm start rejected by hal binding invalid\n");
             return;
@@ -102,6 +105,8 @@ static void buck_fsm_idle_exe(void)
             return;
         }
 
+        buck_cfg_set_run_allowed(1U);
+        buck_cfg_publish_building();
         PLECS_LOG("buck_fsm idle got start, goto run\n");
         fsm_ev = buck_fsm_ev_to_run;
     }
@@ -162,6 +167,9 @@ static void buck_fsm_run_out(void)
         p_hal->p_exit_run_func();
         PLECS_LOG("buck_fsm control stopped\n");
     }
+
+    buck_cfg_set_run_allowed(0U);
+    buck_cfg_publish_building();
 }
 
 REG_FSM(BUCK_FSM, buck_fsm_sta_init, fsm_ev,

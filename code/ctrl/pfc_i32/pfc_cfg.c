@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "pfc_cfg.h"
+#include "pfc_cfg_fsm.h"
 #include <stddef.h>
 
 static pfc_ctrl_setpoint_t setpoint_active = {0};
@@ -138,11 +139,6 @@ void pfc_cfg_publish_building(void)
     pfc_cfg_setpoint_mgr.building.version++;
     *pfc_cfg_setpoint_mgr.active.p_data = *pfc_cfg_setpoint_mgr.building.p_data;
     pfc_cfg_setpoint_mgr.active.version = pfc_cfg_setpoint_mgr.building.version;
-}
-
-void pfc_cfg_building_version_inc(void)
-{
-    pfc_cfg_setpoint_mgr.building.version++;
 }
 
 uint8_t pfc_cfg_is_ready(void)

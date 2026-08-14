@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Define PFC setpoint structures and configuration manager types
- *          - Expose APIs for staging, publishing, and reading PFC control references
+ *          - Expose application APIs for staging and reading PFC control references
  *          - Provide the configuration contract shared by PFC control, FSM, and HAL glue
  *
  *          Design notes:
@@ -69,10 +69,6 @@ pfc_ctrl_setpoint_t *pfc_cfg_get_p_building(void);
 
 void pfc_cfg_set_vbus_ref_v(float vbus_ref_v);
 void pfc_cfg_set_vbus_slew_vps(float vbus_slew_vps);
-void pfc_cfg_set_run_allowed(uint8_t run_allowed);
-
-void pfc_cfg_publish_building(void);
-void pfc_cfg_building_version_inc(void);
 
 uint8_t pfc_cfg_is_ready(void);
 void pfc_cfg_sync_building_to_active(void);

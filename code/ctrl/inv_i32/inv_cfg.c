@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "inv_cfg.h"
+#include "inv_cfg_fsm.h"
 
 #include <limits.h>
 #include <stddef.h>
@@ -210,11 +211,6 @@ void inv_cfg_publish_building(void)
     setpoint_mgr.building.version++;
     *setpoint_mgr.active.p_data = *setpoint_mgr.building.p_data;
     setpoint_mgr.active.version = setpoint_mgr.building.version;
-}
-
-void inv_cfg_building_version_inc(void)
-{
-    setpoint_mgr.building.version++;
 }
 
 uint8_t inv_cfg_is_ready(void)

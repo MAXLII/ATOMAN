@@ -218,7 +218,6 @@ static void update_setpoint(void)
     inv_cfg_set_freq_slew_hzps(INV_CFG_DEFAULT_FREQ_SLEW_HZPS);
     inv_cfg_set_rms_ref_v(INV_CFG_DEFAULT_RMS_REF_V);
     inv_cfg_set_rms_slew_vps(INV_CFG_DEFAULT_RMS_SLEW_VPS);
-    inv_cfg_publish_building();
 }
 
 static void app_task(void)

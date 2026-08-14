@@ -218,11 +218,8 @@ uint32_t pfc_cfg_get_ctrl_freq_hz(void);
 void pfc_cfg_set_p_building(pfc_ctrl_setpoint_t *p_data);
 pfc_ctrl_setpoint_t *pfc_cfg_get_p_active(void);
 pfc_ctrl_setpoint_t *pfc_cfg_get_p_building(void);
-void pfc_cfg_set_run_allowed(uint8_t run_allowed);
 void pfc_cfg_set_vbus_ref_v(float vbus_ref_v);
 void pfc_cfg_set_vbus_slew_vps(float vbus_slew_vps);
-void pfc_cfg_publish_building(void);
-void pfc_cfg_building_version_inc(void);
 uint8_t pfc_cfg_is_ready(void);
 const pfc_ctrl_setpoint_mgr_t *pfc_cfg_get_mgr(void);
 

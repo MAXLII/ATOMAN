@@ -28,7 +28,7 @@
  */
 #include "pfc_hal.h"
 #include "pfc_ctrl.h"
-#include "pfc_cfg.h"
+#include "pfc_fsm.h"
 #include "section.h"
 #include <stddef.h>
 
@@ -45,8 +45,6 @@ static void pfc_hal_enter_run(void)
 {
     PLECS_LOG("PFC_hal enter run\n");
     pfc_ctrl_prepare_run();
-    pfc_cfg_set_run_allowed(1U);
-    pfc_cfg_publish_building();
 
     if (pfc_ctrl_hal.p_pwm_enable != NULL)
     {
@@ -57,8 +55,6 @@ static void pfc_hal_enter_run(void)
 static void pfc_hal_exit_run(void)
 {
     PLECS_LOG("PFC_hal exit run\n");
-    pfc_cfg_set_run_allowed(0U);
-    pfc_cfg_publish_building();
 
     if (pfc_ctrl_hal.p_pwm_disable != NULL)
     {
@@ -83,8 +79,7 @@ void pfc_hal_hard_protect_trip(void)
         pfc_ctrl_hal.p_pwm_disable();
     }
 
-    pfc_cfg_set_run_allowed(0U);
-    pfc_cfg_publish_building();
+    pfc_fsm_set_cmd(pfc_fsm_cmd_stop);
 }
 
 uint8_t pfc_hal_is_ready(void)

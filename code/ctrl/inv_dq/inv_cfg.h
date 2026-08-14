@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Define inverter DQ setpoint structures and configuration manager types
- *          - Expose APIs for staging, publishing, and reading inverter control references
+ *          - Expose application APIs for staging and reading inverter control references
  *          - Provide the configuration contract consumed by inverter control, FSM, and HAL glue
  *
  *          Design notes:
@@ -74,14 +74,10 @@ void inv_cfg_set_p_building(inv_ctrl_setpoint_t *p_data);
 inv_ctrl_setpoint_t *inv_cfg_get_p_active(void);
 inv_ctrl_setpoint_t *inv_cfg_get_p_building(void);
 
-void inv_cfg_set_run_allowed(uint8_t run_allowed);
 void inv_cfg_set_freq_hz(float freq_hz);
 void inv_cfg_set_freq_slew_hzps(float freq_slew_hzps);
 void inv_cfg_set_rms_ref_v(float rms_ref_v);
 void inv_cfg_set_rms_slew_vps(float rms_slew_vps);
-
-void inv_cfg_publish_building(void);
-void inv_cfg_building_version_inc(void);
 
 uint8_t inv_cfg_is_ready(void);
 void inv_cfg_sync_building_to_active(void);

@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare buck-boost setpoint data structures and manager handles
- *          - Expose APIs for staging, publishing, and reading buck-boost control references
+ *          - Expose application APIs for staging and reading buck-boost control references
  *          - Define the configuration contract used by the controller, FSM, and HAL glue
  *
  *          Design notes:
@@ -88,7 +88,6 @@ bb_ctrl_setpoint_t *bb_cfg_get_p_building(void);
  * @param run_allowed 1 enables run, 0 disables run.
  * @return None.
  */
-void bb_cfg_set_run_allowed(uint8_t run_allowed);
 
 /**
  * @brief Update the staged input-power limit in the building buffer.
@@ -124,20 +123,6 @@ void bb_cfg_set_in_curr_lmt(float in_curr_lmt);
  * @return None.
  */
 void bb_cfg_set_out_curr_lmt(float out_curr_lmt);
-
-/**
- * @brief Publish the building buffer into the active buffer immediately.
- * @param None.
- * @return None. Active version is synchronized to the new building version.
- */
-void bb_cfg_publish_building(void);
-
-/**
- * @brief Increment the building-buffer version without copying data to active.
- * @param None.
- * @return None.
- */
-void bb_cfg_building_version_inc(void);
 
 /**
  * @brief Check whether both active and building buffers are valid.

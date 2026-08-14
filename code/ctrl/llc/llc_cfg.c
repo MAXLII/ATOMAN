@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "llc_cfg.h"
+#include "llc_cfg_fsm.h"
 #include <stddef.h>
 
 static llc_ctrl_setpoint_t setpoint_active = {0};
@@ -138,11 +139,6 @@ void llc_cfg_publish_building(void)
         return;
     }
 
-    llc_cfg_setpoint_mgr.building.version++;
-}
-
-void llc_cfg_building_version_inc(void)
-{
     llc_cfg_setpoint_mgr.building.version++;
 }
 

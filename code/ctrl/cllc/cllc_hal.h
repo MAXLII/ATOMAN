@@ -54,7 +54,7 @@ typedef struct
 typedef struct
 {
     void (*p_enter_run)(CLLC_DIRECTION_E direction); /* Prepare and enable the selected direction. */
-    void (*p_exit_run)(void);                         /* Disable power transfer and clear run permission. */
+    void (*p_exit_run)(void);                         /* Disable power transfer before the FSM commits stop. */
     uint8_t *p_latched;                               /* Nonzero blocks start and requests fault state. */
 } cllc_fsm_hal_t;
 
@@ -70,7 +70,7 @@ void cllc_hal_lock_binding(void);
 void cllc_hal_unlock_binding(void);
 /** @brief Immediately invoke the platform all-bridge disable hook. */
 void cllc_hal_pwm_disable(void);
-/** @brief Disable PWM, latch protection, and revoke run permission. */
+/** @brief Disable PWM, latch protection, and request an FSM stop. */
 void cllc_hal_hard_protect_trip(void);
 /** @brief Clear the currently bound protection latch. */
 void cllc_hal_hard_protect_clear(void);

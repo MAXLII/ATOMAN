@@ -28,6 +28,7 @@
  */
 #include "cllc_fsm.h"
 
+#include "cllc_cfg_fsm.h"
 #include "cllc_hal.h"
 #include "section.h"
 
@@ -44,7 +45,7 @@ typedef enum
 } CLLC_FSM_EVENT_E;
 
 static uint32_t fsm_event = CLLC_FSM_EVENT_NULL;                /* Pending transition event. */
-static CLLC_FSM_CMD_E fsm_command = CLLC_FSM_CMD_NULL;          /* Pending external command. */
+static volatile CLLC_FSM_CMD_E fsm_command = CLLC_FSM_CMD_NULL; /* Command shared with protection context. */
 static uint32_t startup_count = 0u;                             /* Remaining bridge-settling FSM ticks. */
 static CLLC_DIRECTION_E run_direction = CLLC_DIRECTION_FORWARD; /* Direction latched at start. */
 static uint8_t init_wait_logged = 0u;                           /* Prevent repeated dependency-wait log messages. */
@@ -147,15 +148,13 @@ static void idle_in(void)
 static void idle_execute(void)
 {
     CLLC_FSM_CMD_E command = get_command();  /* Command consumed by the idle state. */
-    cllc_ctrl_setpoint_t *p_setpoint = NULL; /* Published start configuration. */
+    cllc_ctrl_setpoint_t *p_setpoint = NULL; /* Staged start configuration. */
 
     if (command != CLLC_FSM_CMD_START)
     {
         return;
     }
     PLECS_LOG("cllc_fsm idle received start command\n");
-    cllc_cfg_sync_building_to_active();
-    p_setpoint = cllc_cfg_get_p_active();
     if (cllc_hal_is_ready() == 0u)
     {
         PLECS_LOG("cllc_fsm start rejected: HAL binding is not ready\n");
@@ -172,7 +171,8 @@ static void idle_execute(void)
         fsm_event = CLLC_FSM_EVENT_FAULT;
         return;
     }
-    if ((p_setpoint == NULL) ||                             /* Start requires a published configuration. */
+    p_setpoint = cllc_cfg_get_p_building();
+    if ((p_setpoint == NULL) ||                             /* Start requires a complete staged configuration. */
         (p_setpoint->direction < CLLC_DIRECTION_FORWARD) || /* Reject negative enum values. */
         (p_setpoint->direction >= CLLC_DIRECTION_MAX))      /* Start requires one defined direction. */
     {
@@ -180,6 +180,10 @@ static void idle_execute(void)
         return;
     }
 
+    cllc_cfg_set_run_allowed(1u);
+    cllc_cfg_publish_building();
+    cllc_cfg_sync_building_to_active();
+    p_setpoint = cllc_cfg_get_p_active();
     run_direction = p_setpoint->direction;
     PLECS_LOG("cllc_fsm start accepted: direction=%u, goto startup\n", (unsigned int)run_direction);
     fsm_event = CLLC_FSM_EVENT_STARTUP;
@@ -237,6 +241,8 @@ static void startup_execute(void)
         {
             p_hal->p_exit_run();
         }
+        cllc_cfg_set_run_allowed(0u);
+        cllc_cfg_publish_building();
         fsm_event = CLLC_FSM_EVENT_FAULT;
         return;
     }
@@ -248,6 +254,8 @@ static void startup_execute(void)
         {
             p_hal->p_exit_run();
         }
+        cllc_cfg_set_run_allowed(0u);
+        cllc_cfg_publish_building();
         fsm_event = CLLC_FSM_EVENT_IDLE;
         return;
     }
@@ -336,6 +344,9 @@ static void run_out(void)
     {
         p_hal->p_exit_run();
     }
+
+    cllc_cfg_set_run_allowed(0u);
+    cllc_cfg_publish_building();
 }
 
 /** Keep PWM disabled while faulted. */
@@ -343,6 +354,8 @@ static void fault_in(void)
 {
     cllc_cfg_lock_direction();
     cllc_hal_pwm_disable();
+    cllc_cfg_set_run_allowed(0u);
+    cllc_cfg_publish_building();
     PLECS_LOG("cllc_fsm enter fault, PWM disabled\n");
 }
 

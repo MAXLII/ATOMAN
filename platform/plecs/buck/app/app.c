@@ -293,7 +293,6 @@ static void app_update_buck_setpoint(void)
     buck_cfg_set_in_curr_lmt(app_in_curr_lmt);
     buck_cfg_set_out_curr_lmt(app_out_curr_lmt);
     buck_cfg_set_out_volt_ref(app_out_volt_ref);
-    buck_cfg_publish_building();
 }
 
 static void app_task(void)

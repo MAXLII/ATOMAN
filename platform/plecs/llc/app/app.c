@@ -48,7 +48,6 @@ static void app_update_llc_setpoint(void)
     float v_out_ref = plecs_get_input(PLECS_INPUT_V_OUT_REF);
 
     llc_cfg_set_v_out_ref(v_out_ref);
-    llc_cfg_publish_building();
 }
 
 static inline void app_update_adc_feedback(void)

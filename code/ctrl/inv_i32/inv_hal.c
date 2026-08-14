@@ -30,7 +30,6 @@
 
 #include <stddef.h>
 
-#include "inv_cfg.h"
 #include "inv_ctrl.h"
 #include "inv_fsm.h"
 #include "my_math.h"
@@ -56,8 +55,6 @@ static void enter_run(void)
     {
         ctrl_hal.p_pwm_enable();
     }
-    inv_cfg_set_run_allowed(1U);
-    inv_cfg_publish_building();
 }
 
 static void exit_run(void)
@@ -66,8 +63,6 @@ static void exit_run(void)
     {
         ctrl_hal.p_pwm_disable();
     }
-    inv_cfg_set_run_allowed(0U);
-    inv_cfg_publish_building();
 }
 
 static void relay_on_unbound(void)
@@ -96,8 +91,7 @@ void inv_hal_hard_protect_trip(void)
     {
         ctrl_hal.p_pwm_disable();
     }
-    inv_cfg_set_run_allowed(0U);
-    inv_cfg_publish_building();
+    inv_fsm_set_cmd(inv_fsm_cmd_stop);
 }
 
 uint8_t inv_hal_is_ready(void)

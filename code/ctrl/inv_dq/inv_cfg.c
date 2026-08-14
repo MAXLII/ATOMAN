@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "inv_cfg.h"
+#include "inv_cfg_fsm.h"
 #include <stddef.h>
 #include "section.h"
 
@@ -193,12 +194,6 @@ void inv_cfg_publish_building(void)
               setpoint_mgr.active.p_data->freq_slew_hzps,
               setpoint_mgr.active.p_data->rms_ref_v,
               setpoint_mgr.active.p_data->rms_slew_vps);
-}
-
-void inv_cfg_building_version_inc(void)
-{
-    setpoint_mgr.building.version++;
-    PLECS_LOG("inv_cfg building version inc: %u\n", setpoint_mgr.building.version);
 }
 
 uint8_t inv_cfg_is_ready(void)

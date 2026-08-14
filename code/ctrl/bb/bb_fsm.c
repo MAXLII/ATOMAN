@@ -27,9 +27,11 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "bb_fsm.h"
+#include "bb_cfg.h"
+#include "bb_cfg_fsm.h"
 
 static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null;    /* fsm_ev: pending transition event consumed by REG_FSM */
-static bb_fsm_cmd_e fsm_cmd = bb_fsm_cmd_null; /* fsm_cmd: latched external command */
+static volatile bb_fsm_cmd_e fsm_cmd = bb_fsm_cmd_null; /* fsm_cmd: command shared with protection context */
 #define p_hal (bb_hal_get_fsm())
 
 /**
@@ -134,7 +136,8 @@ static void bb_fsm_idle_exe(void)
 {
     if (bb_fsm_get_cmd() == bb_fsm_cmd_start)
     {
-        if (bb_hal_is_ready() == 0U)
+        if ((bb_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
+            (bb_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
         {
             PLECS_LOG("bb_fsm start rejected by hal binding invalid\n");
             return;
@@ -146,6 +149,8 @@ static void bb_fsm_idle_exe(void)
             return;
         }
 
+        bb_cfg_set_run_allowed(1U);
+        bb_cfg_publish_building();
         PLECS_LOG("bb_fsm idle got start, goto run\n");
         fsm_ev = bb_fsm_ev_to_run;
     }
@@ -236,6 +241,9 @@ static void bb_fsm_run_out(void)
         p_hal->p_exit_run_func();
         PLECS_LOG("bb_fsm control stopped\n");
     }
+
+    bb_cfg_set_run_allowed(0U);
+    bb_cfg_publish_building();
 }
 
 REG_FSM(BB_FSM, bb_fsm_sta_init, fsm_ev,

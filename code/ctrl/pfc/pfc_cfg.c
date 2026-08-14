@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "pfc_cfg.h"
+#include "pfc_cfg_fsm.h"
 #include <stddef.h>
 #include "section.h"
 
@@ -153,12 +154,6 @@ void pfc_cfg_publish_building(void)
               setpoint_mgr.active.p_data->run_allowed,
               setpoint_mgr.active.p_data->vbus_ref_v,
               setpoint_mgr.active.p_data->vbus_slew_vps);
-}
-
-void pfc_cfg_building_version_inc(void)
-{
-    setpoint_mgr.building.version++;
-    PLECS_LOG("pfc_cfg building version inc: %u\n", setpoint_mgr.building.version);
 }
 
 uint8_t pfc_cfg_is_ready(void)

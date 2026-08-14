@@ -27,6 +27,7 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "cllc_cfg.h"
+#include "cllc_cfg_fsm.h"
 
 #include <stddef.h>
 

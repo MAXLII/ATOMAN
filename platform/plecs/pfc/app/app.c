@@ -202,7 +202,6 @@ static void app_update_setpoint(void)
 {
     pfc_cfg_set_vbus_ref_v(PFC_CFG_DEFAULT_VBUS_REF_V);
     pfc_cfg_set_vbus_slew_vps(PFC_CFG_DEFAULT_VBUS_SLEW_VPS);
-    pfc_cfg_publish_building();
 }
 
 static void app_task(void)

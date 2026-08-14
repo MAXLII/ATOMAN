@@ -29,6 +29,7 @@
 #include "cllc_hal.h"
 
 #include "cllc_ctrl.h"
+#include "cllc_fsm.h"
 
 #include <stddef.h>
 
@@ -44,7 +45,7 @@ static cllc_fsm_hal_t fsm_hal = {         /* FSM lifecycle bindings. */
     .p_latched = &hard_protect_latched,
 };
 
-/** Prepare controller state, enable the selected bridge, and publish run permission. */
+/** Prepare controller state and enable the bridge selected by the FSM. */
 static void enter_run(CLLC_DIRECTION_E direction)
 {
     cllc_ctrl_prepare_run(direction);
@@ -52,16 +53,12 @@ static void enter_run(CLLC_DIRECTION_E direction)
     {
         ctrl_hal.p_pwm_enable(direction);
     }
-    cllc_cfg_set_run_allowed(1u);
-    cllc_cfg_publish_building();
 }
 
-/** Disable both bridges and revoke control-loop run permission. */
+/** Disable both bridges before the FSM publishes the stopped state. */
 static void exit_run(void)
 {
     cllc_hal_pwm_disable();
-    cllc_cfg_set_run_allowed(0u);
-    cllc_cfg_publish_building();
 }
 
 cllc_ctrl_hal_t *cllc_hal_get_ctrl(void)
@@ -136,8 +133,7 @@ void cllc_hal_hard_protect_trip(void)
     {
         *fsm_hal.p_latched = 1u;
     }
-    cllc_cfg_set_run_allowed(0u);
-    cllc_cfg_publish_building();
+    cllc_fsm_set_cmd(CLLC_FSM_CMD_STOP);
 }
 
 void cllc_hal_hard_protect_clear(void)

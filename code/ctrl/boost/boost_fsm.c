@@ -27,10 +27,12 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "boost_fsm.h"
+#include "boost_cfg.h"
+#include "boost_cfg_fsm.h"
 #include <stddef.h>
 
 static uint32_t fsm_ev = boost_fsm_ev_null;
-static boost_fsm_cmd_e fsm_cmd = boost_fsm_cmd_null;
+static volatile boost_fsm_cmd_e fsm_cmd = boost_fsm_cmd_null;
 #define p_hal (boost_hal_get_fsm())
 
 void boost_fsm_set_cmd(boost_fsm_cmd_e cmd)
@@ -92,11 +94,14 @@ static void idle_exe(void)
 {
     if (get_cmd() == boost_fsm_cmd_start)
     {
-        if (boost_hal_is_ready() == 0U)
+        if ((boost_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
+            (boost_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
         {
             return;
         }
 
+        boost_cfg_set_run_allowed(1U);
+        boost_cfg_publish_building();
         fsm_ev = boost_fsm_ev_to_run;
     }
 }
@@ -148,6 +153,9 @@ static void run_out(void)
     {
         p_hal->p_exit_run_func();
     }
+
+    boost_cfg_set_run_allowed(0U);
+    boost_cfg_publish_building();
 }
 
 REG_FSM(boost_fsm, boost_fsm_sta_init, fsm_ev,

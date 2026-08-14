@@ -120,7 +120,6 @@ static void publish_setpoint(void)
     cllc_cfg_set_battery_voltage_ref(plecs_get_input(PLECS_INPUT_V_BATTERY_REF));
     cllc_cfg_set_battery_current_limit(plecs_get_input(PLECS_INPUT_I_BATTERY_LIMIT));
     cllc_cfg_set_bus_voltage_ref(plecs_get_input(PLECS_INPUT_V_BUS_REF));
-    cllc_cfg_publish_building();
 }
 
 /** Process external hard-fault and reset edges without continuously reposting commands. */
