@@ -6,14 +6,13 @@
 
 1. 设置模块 timing。
 2. 设置模块 setpoint。
-3. 调用 `*_cfg_publish_building()` 发布配置。
-4. 解锁 HAL 绑定。
-5. 绑定采样变量、PWM 回调、保护回调和状态机回调。
-6. 锁定 HAL 绑定。
-7. 调用 `section_init()`。
-8. 主循环持续调用 `run_task()`。
-9. 控制 ISR 中调用 `section_interrupt()`。
-10. 通过模块 FSM 下发 start/stop 命令。
+3. 解锁 HAL 绑定。
+4. 绑定采样变量、PWM 回调、保护回调和状态机回调。
+5. 锁定 HAL 绑定。
+6. 调用 `section_init()`。
+7. 主循环持续调用 `run_task()`。
+8. 控制 ISR 中调用 `section_interrupt()`。
+9. 通过模块 FSM 下发 start/stop 命令；FSM 在接受 start 时统一发布配置。
 
 ## 2. 调度要求
 
@@ -48,6 +47,8 @@ xxx_fsm_set_cmd(xxx_fsm_cmd_start);
 ```c
 xxx_fsm_set_cmd(xxx_fsm_cmd_stop);
 ```
+
+应用层不得调用 `*_cfg_publish_building()` 或修改 `run_allowed`。应用只通过 `*_cfg_set_*()` 构造 building 参数，并通过 FSM 命令决定配置何时生效。
 
 保护触发时调用模块 HAL 的 hard protect 接口：
 

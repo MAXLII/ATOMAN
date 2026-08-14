@@ -12,8 +12,6 @@ pfc_cfg_set_timing(&timing);
 
 pfc_cfg_set_vbus_ref_v(400.0f);
 pfc_cfg_set_vbus_slew_vps(200.0f);
-pfc_cfg_set_run_allowed(0u);
-pfc_cfg_publish_building();
 ```
 
 ## 2. HAL 绑定
@@ -52,6 +50,7 @@ pfc_fsm_set_cmd(pfc_fsm_cmd_stop);
 - PFC PWM setter 接收 `v_pwm` 和 `v_bus`。
 - 主继电器闭合后 PFC 快速环路才进入运行门控。
 - 母线参考和斜率使用 V、V/s。
+- 应用只设置 building 参数并发送 FSM start/stop 命令；FSM 管理配置发布和运行许可。
 
 ## 5. 拓扑移植重点
 

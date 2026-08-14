@@ -15,8 +15,6 @@ bb_cfg_set_pwr_lmt(1000.0f);
 bb_cfg_set_in_volt_lmt(20.0f);
 bb_cfg_set_in_curr_lmt(50.0f);
 bb_cfg_set_out_curr_lmt(50.0f);
-bb_cfg_set_run_allowed(0u);
-bb_cfg_publish_building();
 ```
 
 ## 2. HAL 绑定
@@ -50,6 +48,7 @@ bb_fsm_set_cmd(bb_fsm_cmd_stop);
 - `bb_ctrl_update_feedback()` 负责整理输入/输出电压电流和电感电流采样。
 - BB PWM setter 同时处理 buck 和 boost 两组 duty 与上下管使能。
 - `bb_ctrl_in_curr_lmt_task()` 以 1 ms 周期把输入功率限制换算成输入电流限制。
+- 应用只设置 building 参数并发送 FSM start/stop 命令；FSM 在启动边界统一发布配置。
 
 ## 5. 拓扑移植重点
 

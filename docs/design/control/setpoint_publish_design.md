@@ -16,12 +16,16 @@
 ```mermaid
 flowchart LR
     A["应用、通信、参数管理"] -->|"set_*"| B["building\n编辑中的候选配置"]
-    B -->|"publish / version++"| P["发布边界"]
+    A -->|"start / stop cmd"| F["FSM\n时序与发布所有者"]
+    B -->|"FSM publish / version++"| P["发布边界"]
+    F --> P
     P -->|"sync"| C["active\n控制侧稳定快照"]
     C --> I["控制ISR"]
 ```
 
-building由应用侧拥有。多个setter可以依次修改功率限值、电压参考、电流限值和运行许可，期间active保持不变。publish表示候选配置已经完整，控制侧随后把它复制到active。
+building由应用侧编辑。多个setter可以依次修改功率限值、电压参考和电流限值，期间active保持不变。应用完成修改后只发送FSM命令，不直接发布。
+
+FSM拥有发布时机和 `run_allowed`。start条件满足时，FSM发布完整候选配置后再进入硬件启动路径；stop或保护触发时，FSM在硬件停止后撤销运行许可并发布停止配置。
 
 active由控制侧消费。控制算法不直接引用通信payload、Shell变量或参数存储区，避免外部数据生命周期和实时计算耦合。
 
@@ -38,19 +42,19 @@ version是发布代次，不是单个字段的修改次数，也不是持久化�
 
 版本号回绕不会破坏“不相等即需要同步”的判断；但它不能统计错过了多少版，也不能证明中间版本都被控制侧使用。该模型有意采用“只消费最新配置”的邮箱语义。
 
-## 4. 两种当前发布路径
+## 4. 两种当前同步实现
 
 仓库中存在两种实现形态：
 
 ### 4.1 延迟到控制侧同步
 
-Buck、Boost、LLC和CLLC等模块的publish主要递增building.version，控制入口调用`*_cfg_sync_building_to_active()`或fast版本完成复制。
+Buck、Boost、LLC和CLLC等模块的publish主要递增building.version，控制入口调用`*_cfg_sync_building_to_active()`或fast版本完成复制。publish调用者统一为FSM。
 
 优点是active只在控制侧选定的边界变化，时间归属清晰。代价是一次结构体复制进入控制执行预算。
 
 ### 4.2 发布时立即复制
 
-PFC等模块的`*_cfg_publish_building()`会递增版本并立即把building复制到active，控制侧sync只处理发布后的后续变化。
+PFC等模块的内部`*_cfg_publish_building()`会递增版本并立即把building复制到active，控制侧sync只处理发布后的后续变化。FSM只在启动、停止和保护收敛边界调用该接口。
 
 优点是控制入口减少一次等待；代价是应用任务可能直接写active，必须保证发布不会与ISR读取同一结构体并发。
 
@@ -62,9 +66,9 @@ C语言的整个结构体赋值通常被编译成多次字或字节访问，不�
 
 当前模型成立依赖以下并发契约：
 
-- building只有一个逻辑写者；
-- setter和publish在同一串行执行域内调用；
-- publish完成后，应用在控制侧sync完成前不继续修改building；
+- building只有一个应用侧逻辑写者；
+- setter与FSM命令投递之间具有明确的串行顺序；
+- FSM发布完成后，应用在控制侧sync完成前不继续修改building；
 - 立即复制型publish不能与控制ISR并发读取active；
 - 更换building指针时，旧、新缓冲区都具有足够生命周期。
 
@@ -72,14 +76,14 @@ C语言的整个结构体赋值通常被编译成多次字或字节访问，不�
 
 ## 6. 发布时机
 
-合理发布点通常是：
+当前发布点由FSM固定管理：
 
-- 一条完整通信命令的所有字段已校验并写入building；
-- 参数文件全部读取并完成单位转换；
-- FSM允许新的运行配置生效；
-- 控制环进入本周期计算之前。
+- start被接受时发布完整运行配置；
+- 带预充或继电器过程的模块先发布关闭状态参数，在真正进入run前发布运行许可；
+- stop退出硬件运行后发布关闭状态；
+- hard protect立即关闭硬件，并由FSM在后续调度中发布关闭状态。
 
-不应在每个setter内部自动publish。多个相关字段如果逐个发布，控制侧可能使用“新电压参考 + 旧功率限值”的组合。
+setter内部不自动publish。多个相关字段可以连续写入building，直到下一次被FSM接受的start才整体生效。
 
 ## 7. 物理量与代码域
 
