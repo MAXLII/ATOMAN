@@ -40,7 +40,8 @@ typedef struct
     uint32_t module_count;      /**< Number of registered modules executed. */
     uint32_t case_count;        /**< Number of registered cases executed. */
     uint32_t passed_case_count; /**< Number of cases that passed. */
-    uint32_t failed_case_count; /**< Number of cases that failed or timed out. */
+    uint32_t completed_case_count; /**< Number of cases completed without a verdict. */
+    uint32_t failed_case_count; /**< Number of cases that failed. */
 } testbench_summary_t;
 
 /**
@@ -138,20 +139,20 @@ static uint8_t case_configuration_valid(const testbench_module_t *p_module, cons
  * @brief Execute one test case against its owning DUT module.
  * @param p_module DUT module associated with the case.
  * @param p_case Registered test case to execute.
- * @return PASS or FAIL result reported by the test case.
+ * @return COMPLETE, PASS, or FAIL result reported by the test case.
  */
 static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const testbench_case_t *p_case)
 {
     uint32_t run_count = 1u; /**< Current execution beat; beat 0 is reserved for the initial condition. */
     double elapsed_time_s = 0.0; /**< Simulated time of the current execution beat, in seconds. */
 
-    TESTBENCH_CASE_STATE_E case_state = TESTBENCH_CASE_RUNNING_E; /**< State returned after a DUT run. */
+    TESTBENCH_CASE_STATE_E case_state = TESTBENCH_CASE_RUNNING; /**< State returned after a DUT run. */
 
     std::cout << "  CASE " << p_case->p_case_name << '\n';
     if (case_configuration_valid(p_module, p_case) == 0u)
     {
         std::cout << "    RESULT FAIL | invalid module or case configuration\n";
-        return TESTBENCH_CASE_FAIL_E;
+        return TESTBENCH_CASE_FAIL;
     }
 
     p_case->p_init();
@@ -163,7 +164,7 @@ static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const
         p_case->p_before_dut(elapsed_time_s);
         p_module->p_dut_run();
         case_state = p_case->p_after_dut(elapsed_time_s);
-        if (case_state != TESTBENCH_CASE_RUNNING_E)
+        if (case_state != TESTBENCH_CASE_RUNNING)
         {
             break;
         }
@@ -171,21 +172,27 @@ static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const
         elapsed_time_s = static_cast<double>(run_count) * p_module->run_period_s;
     }
 
-    if ((case_state != TESTBENCH_CASE_PASS_E) && /* The case did not report successful completion. */
-        (case_state != TESTBENCH_CASE_FAIL_E))   /* The case did not report an assertion failure. */
+    if ((case_state != TESTBENCH_CASE_COMPLETE) && /* The case did not report neutral completion. */
+        (case_state != TESTBENCH_CASE_PASS) &&     /* The case did not report successful completion. */
+        (case_state != TESTBENCH_CASE_FAIL))       /* The case did not report an assertion failure. */
     {
         std::cout << "    RESULT FAIL | invalid case state="
                   << static_cast<unsigned int>(case_state) << '\n';
-        return TESTBENCH_CASE_FAIL_E;
+        return TESTBENCH_CASE_FAIL;
     }
-    if (case_state == TESTBENCH_CASE_FAIL_E)
+    if (case_state == TESTBENCH_CASE_FAIL)
     {
         std::cout << "    RESULT FAIL | time_s=" << elapsed_time_s << '\n';
-        return TESTBENCH_CASE_FAIL_E;
+        return TESTBENCH_CASE_FAIL;
+    }
+    if (case_state == TESTBENCH_CASE_COMPLETE)
+    {
+        std::cout << "    RESULT COMPLETE | time_s=" << elapsed_time_s << '\n';
+        return TESTBENCH_CASE_COMPLETE;
     }
 
     std::cout << "    RESULT PASS | time_s=" << elapsed_time_s << '\n';
-    return TESTBENCH_CASE_PASS_E;
+    return TESTBENCH_CASE_PASS;
 }
 
 /**
@@ -196,7 +203,7 @@ static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const
 static void run_module(const testbench_module_t *p_module, testbench_summary_t *p_summary)
 {
     const testbench_case_t *p_case = nullptr;              /**< Case currently being executed. */
-    TESTBENCH_CASE_STATE_E result = TESTBENCH_CASE_FAIL_E; /**< Result of the current case. */
+    TESTBENCH_CASE_STATE_E result = TESTBENCH_CASE_FAIL; /**< Result of the current case. */
 
     p_summary->module_count++;
     std::cout << "MODULE " << p_module->p_name << '\n';
@@ -212,9 +219,13 @@ static void run_module(const testbench_module_t *p_module, testbench_summary_t *
     {
         p_summary->case_count++;
         result = run_case(p_module, p_case);
-        if (result == TESTBENCH_CASE_PASS_E)
+        if (result == TESTBENCH_CASE_PASS)
         {
             p_summary->passed_case_count++;
+        }
+        else if (result == TESTBENCH_CASE_COMPLETE)
+        {
+            p_summary->completed_case_count++;
         }
         else
         {
@@ -248,6 +259,7 @@ int main(void)
     std::cout << "TESTBENCH SUMMARY | modules=" << summary.module_count
               << " cases=" << summary.case_count
               << " passed=" << summary.passed_case_count
+              << " completed=" << summary.completed_case_count
               << " failed=" << summary.failed_case_count << '\n';
 
     if (summary.failed_case_count == 0u)

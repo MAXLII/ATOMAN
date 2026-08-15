@@ -146,6 +146,7 @@ static void dut_init(void)
 {
     (void)memset(&fixture.dut, 0, sizeof(fixture.dut));
     ac_loss_det_init(&fixture.dut, &fixture.voltage_v, &fixture.ac_is_ok);
+    process_record(0.0); /* Record the initialized environment and DUT state as beat 0. */
 }
 
 /**
@@ -154,11 +155,6 @@ static void dut_init(void)
 static void environment_before_dut(double time_s)
 {
     (void)time_s;
-    if (fixture.sample_index == 0u)
-    {
-        process_record(0.0); /* Preserve the initialized environment and DUT state as beat 0. */
-    }
-
     if (fixture.scenario == AC_LOSS_DET_TEST_RESET_E)
     {
         fixture.dut.inter.sta = AC_LOSS_DET_STA_DET_NEG;
@@ -535,9 +531,9 @@ static TESTBENCH_CASE_STATE_E assertion_state_get(uint8_t assertion_passed)
 {
     if (assertion_passed == 1u)
     {
-        return TESTBENCH_CASE_PASS_E;
+        return TESTBENCH_CASE_PASS;
     }
-    return TESTBENCH_CASE_FAIL_E;
+    return TESTBENCH_CASE_FAIL;
 }
 
 static TESTBENCH_CASE_STATE_E unavailable_after_dut(double time_s)
@@ -545,7 +541,7 @@ static TESTBENCH_CASE_STATE_E unavailable_after_dut(double time_s)
     process_record(time_s);
     if (unavailable_finished(time_s) == 0u)
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(unavailable_assert());
 }
@@ -555,7 +551,7 @@ static TESTBENCH_CASE_STATE_E healthy_after_dut(double time_s)
     process_record(time_s);
     if (healthy_finished(time_s) == 0u)
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(healthy_assert());
 }
@@ -565,7 +561,7 @@ static TESTBENCH_CASE_STATE_E frozen_after_dut(double time_s)
     process_record(time_s);
     if (frozen_finished(time_s) == 0u)
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(frozen_assert());
 }
@@ -575,7 +571,7 @@ static TESTBENCH_CASE_STATE_E reset_after_dut(double time_s)
     process_record(time_s);
     if (reset_finished(time_s) == 0u)
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(reset_assert());
 }
