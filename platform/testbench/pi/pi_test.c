@@ -42,7 +42,7 @@
 #define PI_TEST_CONTROL_PERIOD_S (1.0f / PI_TEST_CONTROL_FREQ_HZ)
 #define PI_TEST_BANDWIDTH_HZ (10000.0f)
 #define PI_TEST_PHASE_MARGIN_DEG (45.0f)
-#define PI_TEST_STEP_SAMPLE UINT32_C(20)
+#define PI_TEST_STEP_TIME_S (200.0e-6f)
 #define PI_TEST_STEP_CURRENT_A (10.0f)
 #define PI_TEST_STABLE_ERROR_A (0.01f)
 #define PI_TEST_STABLE_SAMPLE_COUNT UINT32_C(100)
@@ -157,8 +157,12 @@ static void dut_init(void)
                                          -PI_TEST_OUTPUT_LIMIT_V,
                                          &fixture.current_ref_a,
                                          &fixture.pi_feedback_a)
-                              ? 1u
-                              : 0u;
+                               ? 1u
+                               : 0u;
+    if (fixture.scenario == PI_TEST_STEP_RESPONSE_E)
+    {
+        step_record(0.0); /* Record the initialized step-response state as beat 0. */
+    }
 }
 
 static void dut_run(void)
@@ -240,15 +244,9 @@ static void sfra_open_loop_init(void)
 
 static void step_before_dut(double time_s)
 {
-    (void)time_s;
-    if (fixture.sample_index == 0u)
-    {
-        step_record(0.0); /* Preserve the initialized current and voltage as beat 0. */
-    }
-
     plant_update(); /* Apply the preceding beat's PI voltage before sampling the current beat. */
     fixture.pi_feedback_a = fixture.current_a;
-    if (fixture.sample_index >= PI_TEST_STEP_SAMPLE)
+    if (time_s >= (double)PI_TEST_STEP_TIME_S)
     {
         fixture.current_ref_a = PI_TEST_STEP_CURRENT_A;
     }
@@ -290,7 +288,6 @@ static void plant_update(void)
 {
     fixture.current_a +=
         (fixture.voltage_v / PI_TEST_INDUCTANCE_H) * PI_TEST_CONTROL_PERIOD_S;
-    fixture.sample_index++;
     if (fixture.current_a > fixture.max_current_a)
     {
         fixture.max_current_a = fixture.current_a;
@@ -301,7 +298,7 @@ static void step_response_evaluate(double time_s)
 {
     const float error_a = fabsf(fixture.current_ref_a - fixture.current_a);
 
-    if ((time_s >= ((double)PI_TEST_STEP_SAMPLE * (double)PI_TEST_CONTROL_PERIOD_S)) &&
+    if ((time_s >= (double)PI_TEST_STEP_TIME_S) &&
         (error_a <= PI_TEST_STABLE_ERROR_A))
     {
         fixture.stable_sample_count++;
@@ -518,9 +515,9 @@ static TESTBENCH_CASE_STATE_E assertion_state_get(uint8_t assertion_passed)
 {
     if (assertion_passed == 1u)
     {
-        return TESTBENCH_CASE_PASS_E;
+        return TESTBENCH_CASE_PASS;
     }
-    return TESTBENCH_CASE_FAIL_E;
+    return TESTBENCH_CASE_FAIL;
 }
 
 static TESTBENCH_CASE_STATE_E step_after_dut(double time_s)
@@ -531,7 +528,7 @@ static TESTBENCH_CASE_STATE_E step_after_dut(double time_s)
     if ((fixture.dut_init_ok == 1u) &&     /* The production PI initialized successfully. */
         (step_finished(time_s) == 0u))     /* The response still requires additional DUT runs. */
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(step_assert());
 }
@@ -547,7 +544,7 @@ static TESTBENCH_CASE_STATE_E sfra_closed_loop_after_dut(double time_s)
     sfra_record(time_s);
     if (sfra_finished(time_s) == 0u)
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(sfra_closed_loop_assert());
 }
@@ -563,7 +560,7 @@ static TESTBENCH_CASE_STATE_E sfra_open_loop_after_dut(double time_s)
     sfra_record(time_s);
     if (sfra_finished(time_s) == 0u)
     {
-        return TESTBENCH_CASE_RUNNING_E;
+        return TESTBENCH_CASE_RUNNING;
     }
     return assertion_state_get(sfra_open_loop_assert());
 }

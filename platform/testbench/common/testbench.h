@@ -38,9 +38,10 @@
  */
 typedef enum
 {
-    TESTBENCH_CASE_RUNNING_E = 0, /**< Continue running the current test case. */
-    TESTBENCH_CASE_PASS_E,        /**< Stop because all final assertions passed. */
-    TESTBENCH_CASE_FAIL_E         /**< Stop because a final assertion failed. */
+    TESTBENCH_CASE_RUNNING = 0, /**< Continue running the current test case. */
+    TESTBENCH_CASE_COMPLETE,    /**< Stop without assigning a PASS or FAIL verdict. */
+    TESTBENCH_CASE_PASS,        /**< Stop because all final assertions passed. */
+    TESTBENCH_CASE_FAIL         /**< Stop because a final assertion failed. */
 } TESTBENCH_CASE_STATE_E;
 
 /**
@@ -121,7 +122,7 @@ extern testbench_module_t __stop_testbench_module[];
 
 /**
  * @brief Register one DUT module in the common testbench module section.
- * @param test_name C identifier used for the descriptor symbol, display name, and case section.
+ * @param test_name Identifier used for token concatenation, the descriptor symbol, display name, and case section.
  * @param period_s Interval between adjacent DUT calls, in seconds.
  * @param dut_init DUT initialization function called before each test case.
  * @param dut_run DUT body function called once per registered run period.
@@ -143,8 +144,8 @@ extern testbench_module_t __stop_testbench_module[];
 
 /**
  * @brief Register one test case in its DUT module-specific testbench section.
- * @param test_name C identifier matching the owning TESTBENCH_REGISTER invocation.
- * @param case_name C identifier used for the descriptor symbol and display name.
+ * @param test_name Identifier matching the owning TESTBENCH_REGISTER invocation.
+ * @param case_name Identifier used for macro token concatenation, the descriptor symbol, and display name.
  * @param init Case environment and recording initialization function.
  * @param before_dut Environment generation function called before every DUT run.
  * @param after_dut Environment feedback, recording, completion, and assertion function.

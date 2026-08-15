@@ -57,7 +57,6 @@ typedef struct pi_test_fixture
     float crossover_magnitude;
     float crossover_phase_deg;
     float max_current_a;
-    uint32_t sample_index;
     uint32_t stable_sample_count;
     uint16_t sfra_recorded_point_count;
     uint8_t dut_init_ok;
