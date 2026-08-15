@@ -72,8 +72,35 @@
 /* - SECTION_PORT_FAULT_HOOK: Cortex-M scheduler fault action                   */
 /* -------------------------------------------------------------------------- */
 
+/* Host testbench */
+#ifdef IS_TESTBENCH
+#define SECTION_SYS_TICK 0u
+#define SECTION_SYS_TICK_UNIT_US 1u
+extern size_t __start_section;
+extern size_t __stop_section;
+#define SECTION_START __start_section
+#define SECTION_STOP __stop_section
+#define SYSTEM_RESET
+#ifndef PLECS_LOG
+#define PLECS_LOG(...)
+#endif
+#define FUNC_RAM
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+    } while (0)
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
+    } while (0)
+#define SECTION_PORT_FAULT_HOOK(reason) \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+    } while (0)
+
 /* Simulation: MATLAB */
-#ifdef IS_MATLAB
+#elif defined(IS_MATLAB)
 #include "sim_sfunc.h"
 extern uint32_t sim_time_100us;
 #define SECTION_SYS_TICK sim_time_100us
