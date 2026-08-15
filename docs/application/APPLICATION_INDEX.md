@@ -12,6 +12,7 @@
 
 - [MCU 编译与下载](build/mcu_build_download_guide.md)
 - [PLECS 构建](build/plecs_build_guide.md)
+- GCC Host Testbench：[English](build/testbench_usage.md) · [中文](build/testbench_usage_zh.md) · [AI 落地 Prompt](build/testbench_implementation_prompt.md)
 - [MCU 平台移植](porting/mcu_platform_porting.md)
 - [Bootloader 平台移植](porting/bootloader_platform_porting.md)
 
