@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img"
+     aria-labelledby="title description">
+  <title id="title">多物理链路与多协议交叉绑定矩阵</title>
+  <desc id="description">矩阵行表示物理链路，列表示共享协议函数，高亮单元格表示链路与协议之间存在静态绑定。</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="760" fill="#ffffff"/>
+
+  <text x="640" y="46" text-anchor="middle" font-family="Segoe UI, Microsoft YaHei, sans-serif"
+        font-size="28" font-weight="700" fill="#0f172a">物理链路 × 协议处理器：静态交叉绑定矩阵</text>
+  <text x="640" y="80" text-anchor="middle" font-family="Segoe UI, Microsoft YaHei, sans-serif"
+        font-size="16" fill="#475569">每个高亮单元格表示一个 section_link_handler_item_t 绑定</text>
+
+  <g filter="url(#shadow)">
+    <rect x="100" y="120" width="980" height="500" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+
+    <rect x="100" y="120" width="260" height="110" rx="10" fill="#1e293b"/>
+    <rect x="360" y="120" width="240" height="110" fill="#1d4ed8"/>
+    <rect x="600" y="120" width="240" height="110" fill="#15803d"/>
+    <rect x="840" y="120" width="240" height="110" rx="10" fill="#c2410c"/>
+
+    <rect x="100" y="230" width="260" height="130" fill="#e2e8f0"/>
+    <rect x="100" y="360" width="260" height="130" fill="#e2e8f0"/>
+    <rect x="100" y="490" width="260" height="130" rx="10" fill="#e2e8f0"/>
+
+    <rect x="374" y="244" width="212" height="102" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <rect x="614" y="244" width="212" height="102" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <rect x="854" y="244" width="212" height="102" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="7 7"/>
+
+    <rect x="374" y="374" width="212" height="102" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <rect x="614" y="374" width="212" height="102" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <rect x="854" y="374" width="212" height="102" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
+
+    <rect x="374" y="504" width="212" height="102" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="7 7"/>
+    <rect x="614" y="504" width="212" height="102" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <rect x="854" y="504" width="212" height="102" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="7 7"/>
+
+    <line x1="360" y1="120" x2="360" y2="620" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="600" y1="120" x2="600" y2="620" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="840" y1="120" x2="840" y2="620" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="100" y1="230" x2="1080" y2="230" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="100" y1="360" x2="1080" y2="360" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="100" y1="490" x2="1080" y2="490" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+
+  <g font-family="Segoe UI, Microsoft YaHei, sans-serif" text-anchor="middle">
+    <text x="230" y="168" font-size="18" font-weight="700" fill="#ffffff">物理链路</text>
+    <text x="230" y="196" font-size="15" fill="#cbd5e1">Link</text>
+
+    <text x="480" y="162" font-size="19" font-weight="700" fill="#ffffff">Shell</text>
+    <text x="480" y="194" font-size="16" fill="#dbeafe">shell_run</text>
+    <text x="720" y="162" font-size="19" font-weight="700" fill="#ffffff">COMM</text>
+    <text x="720" y="194" font-size="16" fill="#dcfce7">comm_run</text>
+    <text x="960" y="162" font-size="19" font-weight="700" fill="#ffffff">Custom Protocol</text>
+    <text x="960" y="194" font-size="16" fill="#ffedd5">custom_run</text>
+
+    <text x="230" y="303" font-size="20" font-weight="600" fill="#0f172a">USART0 Link</text>
+    <text x="230" y="433" font-size="20" font-weight="600" fill="#0f172a">USART2 Link</text>
+    <text x="230" y="563" font-size="20" font-weight="600" fill="#0f172a">CAN Byte Link</text>
+
+    <g font-size="18" font-weight="700">
+      <text x="480" y="302" fill="#1d4ed8">● 已绑定</text>
+      <text x="720" y="302" fill="#15803d">● 已绑定</text>
+      <text x="960" y="302" fill="#94a3b8">—</text>
+
+      <text x="480" y="432" fill="#1d4ed8">● 已绑定</text>
+      <text x="720" y="432" fill="#15803d">● 已绑定</text>
+      <text x="960" y="432" fill="#c2410c">● 已绑定</text>
+
+      <text x="480" y="562" fill="#94a3b8">—</text>
+      <text x="720" y="562" fill="#15803d">● 已绑定</text>
+      <text x="960" y="562" fill="#94a3b8">—</text>
+    </g>
+  </g>
+
+  <line x1="370" y1="680" x2="1060" y2="680" stroke="#475569" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="715" y="660" text-anchor="middle" font-family="Segoe UI, Microsoft YaHei, sans-serif"
+        font-size="17" font-weight="600" fill="#334155">一条物理链路可以横向绑定多个协议</text>
+
+  <line x1="1130" y1="235" x2="1130" y2="605" stroke="#475569" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="1160" y="375" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="16" font-weight="600" fill="#334155">
+    <tspan x="1160" dy="0">同一个协议函数</tspan>
+    <tspan x="1160" dy="26">可以纵向复用到</tspan>
+    <tspan x="1160" dy="26">多条物理链路</tspan>
+  </text>
+</svg>

@@ -51,40 +51,7 @@ typedef struct
 
 因此系统不是“一条链路对应一个协议”，而是可以构造任意静态交叉组合：
 
-```mermaid
-flowchart LR
-    subgraph PHY["物理链路层"]
-        U0["USART0 Link"]
-        U2["USART2 Link"]
-        CAN["CAN Byte Link"]
-    end
-
-    subgraph FANOUT["Section Link 字节扇出"]
-        D0["handler_arr[USART0]"]
-        D2["handler_arr[USART2]"]
-        DC["handler_arr[CAN]"]
-    end
-
-    subgraph PROTOCOL["协议实例层"]
-        S0["shell_run + shell_ctx_0"]
-        S2["shell_run + shell_ctx_2"]
-        C0["comm_run + comm_ctx_0"]
-        C2["comm_run + comm_ctx_2"]
-        CC["comm_run + comm_ctx_can"]
-        X2["custom_run + custom_ctx_2"]
-    end
-
-    U0 --> D0
-    U2 --> D2
-    CAN --> DC
-
-    D0 --> S0
-    D0 --> C0
-    D2 --> S2
-    D2 --> C2
-    D2 --> X2
-    DC --> CC
-```
+![多物理链路与多协议交叉绑定矩阵](images/link_protocol_cross_matrix.svg)
 
 上图同时表达了三种复用关系：
 
@@ -152,14 +119,14 @@ flowchart LR
 
 ### 4.2 接收缓存到 Link
 
-`section_link_task` 通过 `REG_TASK(10, section_link_task)` 进入普通任务链。每次运行时，它按链表顺序遍历全部链路，并对当前链路重复调用 `rx_get_byte()`，直到接口返回 0。
+`section_link_task` 通过 `REG_TASK(10, section_link_task)` 进入普通任务链。每次运行时，它按链表顺序遍历全部链路，并对当前链路重复调用 `rx_get_byte()`，直到接口返回 0 或达到 `SECTION_LINK_RX_BYTE_BUDGET` 字节预算。默认预算为 128 字节，目标工程可以在编译期覆盖。
 
 因此当前模型是“任务主动拉取”，不是驱动向协议层推送：
 
 - ISR 和 DMA 只负责尽快收下数据；
 - Link 任务决定何时消费缓存；
 - 协议处理不占用硬件 ISR 的执行路径；
-- 一次调度会尽量排空当前链路，再访问下一条链路。
+- 一次调度最多从每条链路提取固定预算的字节，然后访问下一条链路。
 
 ### 4.3 Link 到 handler
 
@@ -176,16 +143,16 @@ handler 调用是同步的。当前字节的全部 handler 返回后，Link 才�
 ```mermaid
 sequenceDiagram
     participant HW as "硬件接收缓存"
-    participant Link as "Section Link"
+    participant LinkLayer as "Section Link"
     participant Comm as "comm_run + comm_ctx_t"
     participant Table as "SECTION_COMM 命令表"
     participant Biz as "业务命令回调"
     participant Tx as "当前 Link 发送接口"
 
-    loop "缓存中仍有字节"
-        Link->>HW: "rx_get_byte(&data)"
-        HW-->>Link: "data"
-        Link->>Comm: "handler(data, my_printf, ctx)"
+    loop "缓存中仍有字节且未达到本轮预算"
+        LinkLayer->>HW: "rx_get_byte(&data)"
+        HW-->>LinkLayer: "data"
+        LinkLayer->>Comm: "handler(data, my_printf, ctx)"
         Comm->>Comm: "推进帧解析状态与 CRC"
     end
     Comm->>Table: "按 cmd_set/cmd_word 查找"
@@ -231,7 +198,7 @@ Section Link 不保存路由表，也不决定地址是否匹配。它只提供�
 1. Link 链表采用链接段扫描顺序追加；
 2. 单条 Link 内的 handler 采用数组声明顺序执行。
 
-每次处理会排空当前链路，吞吐优先于链路间公平。持续有数据的前序链路可能延后后序链路的处理；耗时 handler 也会放大这种影响。系统因此依赖平台接收缓存吸收调度间隔，并依赖 handler 保持有限、非阻塞的执行时间。
+每轮处理按链表顺序访问全部链路，每条链路最多消费 `SECTION_LINK_RX_BYTE_BUDGET` 字节。持续有数据的前序链路到达预算后会让出执行权，后序链路在同一轮任务中仍能获得处理机会。固定预算限制了单条链路占用的最长字节分发时间，但系统仍依赖平台接收缓存吸收调度间隔，并依赖 handler 保持有限、非阻塞的执行时间。
 
 ## 9. 数据所有权与生命周期
 
