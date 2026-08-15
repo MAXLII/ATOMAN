@@ -12,7 +12,6 @@
 
 - [MCU 编译与下载](build/mcu_build_download_guide.md)
 - [PLECS 构建](build/plecs_build_guide.md)
-- GCC Host Testbench：[English](build/testbench_usage.md) · [中文](build/testbench_usage_zh.md) · [AI 落地 Prompt](build/testbench_implementation_prompt.md)
 - [MCU 平台移植](porting/mcu_platform_porting.md)
 - [Bootloader 平台移植](porting/bootloader_platform_porting.md)
 
@@ -28,6 +27,7 @@
 ## 框架与调试
 
 - [公共组件接入方法](framework/component_integration.md)
+- GCC Host Testbench：[English](framework/testbench/testbench_usage.md) · [中文](framework/testbench/testbench_usage_zh.md) · [AI 落地 Prompt](build/testbench_implementation_prompt.md)
 - Section：[使用](framework/section/section_usage.md)
 - SRTOS：[使用](framework/srtos/srtos_usage.md) · [M 系列接入](framework/srtos/srtos_m_porting.md) · [A 系列接入](framework/srtos/srtos_a_porting.md)
 - Perf：[使用](debug/perf/perf_usage.md)
