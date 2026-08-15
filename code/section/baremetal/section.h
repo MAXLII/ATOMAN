@@ -37,6 +37,15 @@
 
 #include "platform.h"
 
+/* Maximum bytes consumed from one Link during one section_link_task round. */
+#ifndef SECTION_LINK_RX_BYTE_BUDGET
+#define SECTION_LINK_RX_BYTE_BUDGET 128u
+#endif
+
+#if (SECTION_LINK_RX_BYTE_BUDGET == 0u)
+#error "SECTION_LINK_RX_BYTE_BUDGET must be greater than zero."
+#endif
+
 typedef struct section_item
 {
     void *p_obj;                 /* Business object owned by the registration module. */

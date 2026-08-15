@@ -531,25 +531,36 @@ void FUNC_RAM section_interrupt(void)
     }
 }
 
-static void link_process(section_link_t *link)
+static void link_process(section_link_t *p_link)
 {
-    uint8_t data = 0u;
+    uint8_t data = 0u;                  /* Byte dispatched during the current Link round. */
+    uint32_t processed_byte_count = 0u; /* Bytes consumed from this Link during the current round. */
+    uint32_t handler_index = 0u;        /* Handler receiving the current byte. */
 
-    if ((link == NULL) || (link->rx_get_byte == NULL) || (link->handler_arr == NULL))
+    if ((p_link == NULL) ||                     /* No Link descriptor is available. */
+        (p_link->rx_get_byte == NULL) ||        /* The Link cannot provide received bytes. */
+        (p_link->handler_arr == NULL))          /* The Link has no byte consumers. */
     {
         return;
     }
 
-    while (link->rx_get_byte(&data) != 0u)
+    while (processed_byte_count < SECTION_LINK_RX_BYTE_BUDGET)
     {
-        for (uint32_t i = 0; i < link->handler_num; ++i)
+        if (p_link->rx_get_byte(&data) == 0u)
         {
-            const section_link_handler_item_t *it = &link->handler_arr[i];
-            if (it->func != NULL)
+            break;
+        }
+
+        for (handler_index = 0u; handler_index < p_link->handler_num; ++handler_index)
+        {
+            const section_link_handler_item_t *p_handler =
+                &p_link->handler_arr[handler_index]; /* Handler bound to the current Link. */
+            if (p_handler->func != NULL)
             {
-                it->func(data, link->my_printf, it->ctx);
+                p_handler->func(data, p_link->my_printf, p_handler->ctx);
             }
         }
+        processed_byte_count++;
     }
 }
 
