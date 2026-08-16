@@ -37,11 +37,11 @@
  */
 typedef struct
 {
-    uint32_t module_count;      /**< Number of registered modules executed. */
-    uint32_t case_count;        /**< Number of registered cases executed. */
-    uint32_t passed_case_count; /**< Number of cases that passed. */
+    uint32_t module_count;         /**< Number of registered modules executed. */
+    uint32_t case_count;           /**< Number of registered cases executed. */
+    uint32_t passed_case_count;    /**< Number of cases that passed. */
     uint32_t completed_case_count; /**< Number of cases completed without a verdict. */
-    uint32_t failed_case_count; /**< Number of cases that failed. */
+    uint32_t failed_case_count;    /**< Number of cases that failed. */
 } testbench_summary_t;
 
 /**
@@ -143,7 +143,7 @@ static uint8_t case_configuration_valid(const testbench_module_t *p_module, cons
  */
 static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const testbench_case_t *p_case)
 {
-    uint32_t run_count = 1u; /**< Current execution beat; beat 0 is reserved for the initial condition. */
+    uint32_t run_count = 1u;     /**< Current execution beat; beat 0 is reserved for the initial condition. */
     double elapsed_time_s = 0.0; /**< Simulated time of the current execution beat, in seconds. */
 
     TESTBENCH_CASE_STATE_E case_state = TESTBENCH_CASE_RUNNING; /**< State returned after a DUT run. */
@@ -202,7 +202,7 @@ static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const
  */
 static void run_module(const testbench_module_t *p_module, testbench_summary_t *p_summary)
 {
-    const testbench_case_t *p_case = nullptr;              /**< Case currently being executed. */
+    const testbench_case_t *p_case = nullptr;            /**< Case currently being executed. */
     TESTBENCH_CASE_STATE_E result = TESTBENCH_CASE_FAIL; /**< Result of the current case. */
 
     p_summary->module_count++;
