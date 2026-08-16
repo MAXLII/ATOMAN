@@ -75,4 +75,4 @@ inv_fsm_set_cmd(inv_fsm_cmd_stop);
 ## 7. 关联导航
 
 - 源码：[INV 控制](../../../../code/ctrl/inv/inv_ctrl.c) · [INV HAL](../../../../code/ctrl/inv/inv_hal.c) · [INV FSM](../../../../code/ctrl/inv/inv_fsm.c)
-- 设计：[INV 控制设计](../../../design/control/inv/ctrl_inv_design.md) · [控制 HAL 挂载与生命周期设计](../../../design/control/hal_binding_lifecycle_design.md)
+- 设计：[INV 控制设计](../../../design/control/inv/ctrl_inv_design.md) · [INV 整型控制设计](../../../design/control/inv/inv_integer_control_design.md) · [控制 HAL 挂载与生命周期设计](../../../design/control/hal_binding_lifecycle_design.md)

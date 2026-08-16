@@ -103,3 +103,14 @@ APF 和谐振器在右移后检查 `int32_t` 范围。发生饱和时清除小�
 `code/ctrl/inv_i32/`。
 
 该工程保留浮点 INV 模型的输入、输出端口和电路结构，因此两种控制器可以使用相同模型接口分别构建。
+
+## 9. 关联导航
+
+### 应用文档
+
+- [INV 控制使用](../../../application/control/inv/ctrl_inv_usage.md)
+- [控制算法库使用方法](../../../application/library/control_blocks_usage.md)
+
+### 基础教材
+
+- [控制原理时域仿真说明](../../../tutorial/control/control_time_domain_simulations.md)
