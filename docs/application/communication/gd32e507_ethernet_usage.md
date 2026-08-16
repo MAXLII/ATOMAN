@@ -101,4 +101,4 @@ GD32E507Z-EVAL 与电脑有线网卡直连验证结果：
 
 - [GD32E507 平台工程](../../../platform/gd32e507/)
 - [MCU 编译与下载](../build/mcu_build_download_guide.md)
-- [工程设计](../../ENGINEERING_DESIGN.md)
+- [工程设计](../../engineering_design.md)
