@@ -18,7 +18,7 @@
 - Boost：[控制设计](control/boost/ctrl_boost_design.md)
 - Buck：[整数控制设计](control/buck/buck_integer_control_design.md) · [控制设计](control/buck/ctrl_buck_design.md)
 - CLLC：[控制设计](control/cllc/ctrl_cllc_design.md)
-- INV：[控制设计](control/inv/ctrl_inv_design.md)
+- INV：[整型控制设计](control/inv/inv_integer_control_design.md) · [控制设计](control/inv/ctrl_inv_design.md)
 - PFC：[控制设计](control/pfc/ctrl_pfc_design.md)
 
 ## 框架与调试
