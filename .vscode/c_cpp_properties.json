@@ -35,6 +35,31 @@
             }
         },
         {
+            "name": "test_bench_sogi",
+            "compilerPath": "C:/MinGW/bin/g++.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "windows-gcc-x86",
+            "includePath": [
+                "${workspaceFolder}/platform/testbench/sogi",
+                "${workspaceFolder}/platform/testbench/common",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "IS_TESTBENCH"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/platform/testbench/sogi",
+                    "${workspaceFolder}/platform/testbench/common",
+                    "${workspaceFolder}/code/lib",
+                    "${workspaceFolder}/code/section"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "gd32g553",
             "compilerPath": "${ARM_GNU_ROOT}/arm-none-eabi-gcc.exe",
             "cStandard": "c11",
