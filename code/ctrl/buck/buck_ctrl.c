@@ -28,11 +28,11 @@
  */
 #include "buck_ctrl.h"
 #include "buck_cfg.h"
+#include "buck_fsm.h"
 #include "pi_tustin_i32.h"
 #include "section.h"
-#include <stddef.h>
 
-#define p_hal (p_ctrl_hal)
+#define p_hal (buck_hal_get_ctrl())
 
 static pi_tustin_i32_t out_volt_loop = {0};
 static pi_tustin_i32_t in_volt_lmt_loop = {0};
@@ -48,9 +48,14 @@ typedef struct
     uint8_t dn_en;
 } buck_ctrl_isr_param_t;
 
-static buck_ctrl_hal_t *p_ctrl_hal = NULL;
-static buck_ctrl_setpoint_t buck_ctrl_safe_setpoint = {0};
-static buck_ctrl_setpoint_t *p_ctrl_active_setpoint = &buck_ctrl_safe_setpoint;
+static buck_ctrl_setpoint_t buck_ctrl_active_setpoint = {
+    .run_allowed = 0U,
+    .out_volt_ref = BUCK_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(BUCK_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V),
+    .in_volt_lmt = BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V),
+    .pwr_lmt = BUCK_CTRL_IN_PWR_LMT_TO_CODE(BUCK_CTRL_IN_PWR_LMT_DEFAULT_W),
+    .in_curr_lmt = BUCK_CTRL_IN_CURR_LMT_TO_CODE(BUCK_CTRL_IN_CURR_LMT_DEFAULT_A),
+    .out_curr_lmt = BUCK_CTRL_OUT_CURR_LMT_TO_CODE(BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A),
+};
 static volatile buck_ctrl_isr_param_t buck_ctrl_isr_param = {
     .i_l_lmt = 0,
     .up_en = 1U,
@@ -89,27 +94,6 @@ static inline void buck_ctrl_isr_param_request_update(buck_ctrl_isr_param_t para
     buck_ctrl_isr_param_pending[pending_idx].dn_en = param.dn_en;
     buck_ctrl_isr_param_pending_idx = pending_idx;
     buck_ctrl_isr_param_publish_seq++;
-}
-
-static uint8_t buck_ctrl_channel_ready(void)
-{
-    uint32_t ch = 0U;
-
-    if (p_hal == NULL)
-    {
-        return 0U;
-    }
-
-    for (ch = 0U; ch < BUCK_CTRL_IND_CURR_CH_NUM; ch++)
-    {
-        if ((p_hal->p_i_l[ch] == NULL) ||
-            (p_hal->p_set_pwm_func[ch] == NULL))
-        {
-            return 0U;
-        }
-    }
-
-    return 1U;
 }
 
 static inline int32_t buck_ctrl_limit_cmp(int32_t cmp)
@@ -209,25 +193,11 @@ static inline int32_t buck_ctrl_limit_pos_i32(int32_t val)
 
 static void buck_ctrl_reinit_states(void)
 {
-    buck_ctrl_setpoint_t *p_active_setpoint = NULL;
     uint32_t ch = 0U;
 
-    p_ctrl_hal = buck_hal_get_ctrl();
-    buck_cfg_sync_building_to_active();
-    p_active_setpoint = buck_cfg_get_p_active();
-
-    if ((p_hal == NULL) ||
-        (buck_cfg_is_ready() == 0U) ||
-        (p_active_setpoint == NULL) ||
-        (p_hal->p_v_in == NULL) ||
-        (p_hal->p_v_out == NULL) ||
-        (buck_ctrl_channel_ready() == 0U))
-    {
-        return;
-    }
+    (void)buck_fsm_read_published(&buck_ctrl_active_setpoint);
 
     buck_ctrl_run_active = 0U;
-    p_ctrl_active_setpoint = p_active_setpoint;
     ind_curr_ref = 0;
 
     (void)pi_tustin_i32_init(&out_volt_loop,
@@ -236,7 +206,7 @@ static void buck_ctrl_reinit_states(void)
                              BUCK_CTRL_TS,
                              BUCK_CTRL_OUT_VOLT_LOOP_UP_LMT,
                              BUCK_CTRL_OUT_VOLT_LOOP_DN_LMT,
-                             &p_active_setpoint->out_volt_ref,
+                             &buck_ctrl_active_setpoint.out_volt_ref,
                              p_hal->p_v_out);
 
     (void)pi_tustin_i32_init(&in_volt_lmt_loop,
@@ -246,7 +216,7 @@ static void buck_ctrl_reinit_states(void)
                              BUCK_CTRL_IN_VOLT_LMT_LOOP_UP_LMT,
                              BUCK_CTRL_IN_VOLT_LMT_LOOP_DN_LMT,
                              p_hal->p_v_in,
-                             &p_active_setpoint->in_volt_lmt);
+                             &buck_ctrl_active_setpoint.in_volt_lmt);
 
     for (ch = 0U; ch < BUCK_CTRL_IND_CURR_CH_NUM; ch++)
     {
@@ -282,7 +252,17 @@ static void FUNC_RAM buck_ctrl_isr(void)
     int32_t i_l_ref_total = 0;
     int32_t v_out_ff = 0;
 
-    buck_cfg_sync_building_to_active_fast();
+    (void)buck_fsm_read_published(&buck_ctrl_active_setpoint);
+
+    if (buck_hal_hard_protect_is_latched() != 0U)
+    {
+        if (buck_ctrl_run_active != 0U)
+        {
+            p_hal->p_pwm_disable();
+            buck_ctrl_run_active = 0U;
+        }
+        return;
+    }
 
     /* Commit the task-built ISR parameter snapshot at the PWM update point. */
     publish_seq = buck_ctrl_isr_param_publish_seq;
@@ -295,7 +275,7 @@ static void FUNC_RAM buck_ctrl_isr(void)
         buck_ctrl_isr_param_applied_seq = publish_seq;
     }
 
-    if (p_ctrl_active_setpoint->run_allowed == 0U)
+    if (buck_ctrl_active_setpoint.run_allowed == 0U)
     {
         if (buck_ctrl_run_active != 0U)
         {
@@ -440,6 +420,7 @@ REG_INTERRUPT(3, buck_ctrl_isr)
 static void buck_ctrl_task(void)
 {
     buck_ctrl_isr_param_t param = {0};
+    buck_ctrl_setpoint_t task_setpoint = {0};
     int32_t v_in = 0;
     int32_t v_out = 0;
     int32_t cmp = 0;
@@ -450,7 +431,12 @@ static void buck_ctrl_task(void)
     int32_t in_volt_i_l_lmt = 0;
     int32_t i_l_lmt = 0;
 
-    if (p_ctrl_active_setpoint->run_allowed == 0U)
+    if (buck_fsm_read_published(&task_setpoint) == 0U)
+    {
+        return;
+    }
+
+    if (task_setpoint.run_allowed == 0U)
     {
         return;
     }
@@ -459,9 +445,10 @@ static void buck_ctrl_task(void)
     v_out = *p_hal->p_v_out;
 
     cmp = buck_ctrl_calc_cmp(0, v_in, v_out);
-    pwr_i_in_lmt = buck_ctrl_div_pos_i32(p_ctrl_active_setpoint->pwr_lmt, v_in);
-    in_curr_i_in_lmt = buck_ctrl_min_i32(p_ctrl_active_setpoint->in_curr_lmt, pwr_i_in_lmt);
+    pwr_i_in_lmt = buck_ctrl_div_pos_i32(task_setpoint.pwr_lmt, v_in);
+    in_curr_i_in_lmt = buck_ctrl_min_i32(task_setpoint.in_curr_lmt, pwr_i_in_lmt);
 
+    in_volt_lmt_loop.input.p_act = &task_setpoint.in_volt_lmt;
     pi_tustin_i32_cal_a1_neg1_inline(&in_volt_lmt_loop);
     in_volt_i_l_lmt = buck_ctrl_limit_pos_i32(in_volt_lmt_loop.output.val);
 
@@ -469,7 +456,7 @@ static void buck_ctrl_task(void)
     in_curr_i_l_lmt = buck_ctrl_scale_ind_curr_to_k2(
         buck_ctrl_div_by_cmp_i32(in_curr_i_in_lmt, cmp));
     out_curr_i_l_lmt = buck_ctrl_scale_ind_curr_to_k2(
-        buck_ctrl_limit_pos_i32(p_ctrl_active_setpoint->out_curr_lmt));
+        buck_ctrl_limit_pos_i32(task_setpoint.out_curr_lmt));
 
     i_l_lmt = buck_ctrl_min_i32(in_volt_i_l_lmt, in_curr_i_l_lmt);
     i_l_lmt = buck_ctrl_min_i32(i_l_lmt, out_curr_i_l_lmt);
@@ -481,11 +468,6 @@ static void buck_ctrl_task(void)
 }
 
 REG_TASK(1, buck_ctrl_task)
-
-void buck_ctrl_set_p_hal(buck_ctrl_hal_t *p)
-{
-    (void)p;
-}
 
 void buck_ctrl_prepare_run(void)
 {

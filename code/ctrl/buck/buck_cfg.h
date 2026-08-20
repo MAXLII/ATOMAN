@@ -6,8 +6,8 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Declare buck setpoint data structures and manager handles
- *          - Expose application APIs for staging and reading buck control references
+ *          - Declare Buck application parameters and internal control setpoints
+ *          - Expose parameter setters and the application run-request interface
  *          - Define scaling constants and loop parameters used by the controller
  *
  *          Design notes:
@@ -32,23 +32,9 @@
 /* Header guard marker for buck_cfg.h. */
 #define __BUCK_CFG_H
 
-#include <stddef.h>
 #include <stdint.h>
 #include "my_math.h"
 #include "buck_hw_param.h"
-
-typedef struct
-{
-    float ctrl_ts;
-    float task_ts;
-    int32_t pwm_cmp_max;
-} buck_ctrl_timing_t;
-
-void buck_cfg_set_timing(const buck_ctrl_timing_t *p_timing);
-const buck_ctrl_timing_t *buck_cfg_get_timing(void);
-float buck_cfg_get_ctrl_ts(void);
-float buck_cfg_get_task_ts(void);
-int32_t buck_cfg_get_pwm_cmp_max(void);
 
 /* Output voltage-loop reference maximum integer code. */
 #define BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX ((int32_t)(0x1000 - 1))
@@ -177,11 +163,11 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
                 (BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN / 2LL)) / \
                BUCK_CTRL_K3_IND_CURR_PI_GAIN_K_DEN))
 
-/* Control-loop sample time supplied by buck_cfg_set_timing(). */
-#define BUCK_CTRL_TS (buck_cfg_get_ctrl_ts())
+/* Control-loop sample time supplied by the project timing configuration. */
+#define BUCK_CTRL_TS (CTRL_TS)
 
-/* Slow control-task sample time supplied by buck_cfg_set_timing(). */
-#define BUCK_CTRL_TASK_TS (buck_cfg_get_task_ts())
+/* Slow Buck control-task sample time. */
+#define BUCK_CTRL_TASK_TS (100.0e-6f)
 
 /* Common PI tuning formula: kp = sin(PM) * wcut * OBJ, ki = kp * wcut / tan(PM). */
 /* K keeps kp/ki as scaled float values before pi_tustin_i32_update generates int32_t b0/b1. */
@@ -391,7 +377,7 @@ int32_t buck_cfg_get_pwm_cmp_max(void);
                (int64_t)BUCK_CTRL_K4_V_OUT_FF_K))
 
 /* Maximum PWM compare command accepted by the buck controller. */
-#define BUCK_CTRL_CMP_MAX (buck_cfg_get_pwm_cmp_max())
+#define BUCK_CTRL_CMP_MAX (CTRL_PWM_CMP_MAX)
 
 /* Minimum PWM compare command accepted by the buck controller. */
 #define BUCK_CTRL_CMP_MIN (0)
@@ -414,54 +400,38 @@ typedef struct
 
 typedef struct
 {
-    buck_ctrl_setpoint_t *p_data;
-    unsigned int version;
-} buck_ctrl_setpoint_buf_t;
+    /* Output voltage reference in volts. */
+    float out_volt_ref;
+    /* Input voltage limit in volts. */
+    float in_volt_lmt;
+    /* Input power limit in watts. */
+    float pwr_lmt;
+    /* Input current limit in amperes. */
+    float in_curr_lmt;
+    /* Output current limit in amperes. */
+    float out_curr_lmt;
+    /* Application run request normalized to 0U or 1U. */
+    uint8_t run_request;
+} buck_cfg_t;
 
-typedef struct
+typedef enum
 {
-    buck_ctrl_setpoint_buf_t active;
-    buck_ctrl_setpoint_buf_t building;
-} buck_ctrl_setpoint_mgr_t;
+    buck_run_sta_init = 0,
+    buck_run_sta_idle,
+    buck_run_sta_run,
+} buck_run_sta_e;
 
-extern buck_ctrl_setpoint_mgr_t buck_cfg_setpoint_mgr;
+/* Application-facing configuration and run-request interfaces. */
+uint8_t buck_cfg_set_out_volt_ref(float out_volt_ref);
+uint8_t buck_cfg_set_in_volt_lmt(float in_volt_lmt);
+uint8_t buck_cfg_set_pwr_lmt(float pwr_lmt);
+uint8_t buck_cfg_set_in_curr_lmt(float in_curr_lmt);
+uint8_t buck_cfg_set_out_curr_lmt(float out_curr_lmt);
+uint8_t buck_cfg_set_run_request(uint8_t run_request);
+buck_run_sta_e buck_cfg_get_run_state(void);
 
-/* Setter APIs accept physical SI-unit values and store integer codes in the building setpoint. */
-void buck_cfg_set_p_building(buck_ctrl_setpoint_t *p_data);
-buck_ctrl_setpoint_t *buck_cfg_get_p_active(void);
-buck_ctrl_setpoint_t *buck_cfg_get_p_building(void);
-void buck_cfg_set_pwr_lmt(float pwr_lmt);
-void buck_cfg_set_out_volt_ref(float out_volt_ref);
-void buck_cfg_set_in_volt_lmt(float in_volt_lmt);
-void buck_cfg_set_in_curr_lmt(float in_curr_lmt);
-void buck_cfg_set_out_curr_lmt(float out_curr_lmt);
-uint8_t buck_cfg_is_ready(void);
-const buck_ctrl_setpoint_mgr_t *buck_cfg_get_mgr(void);
-
-/* Called from the control side to atomically consume the latest published building setpoint. */
-static inline void buck_cfg_sync_building_to_active(void)
-{
-    if ((buck_cfg_setpoint_mgr.building.p_data == NULL) ||
-        (buck_cfg_setpoint_mgr.active.p_data == NULL))
-    {
-        return;
-    }
-
-    if (buck_cfg_setpoint_mgr.active.version != buck_cfg_setpoint_mgr.building.version)
-    {
-        *buck_cfg_setpoint_mgr.active.p_data = *buck_cfg_setpoint_mgr.building.p_data;
-        buck_cfg_setpoint_mgr.active.version = buck_cfg_setpoint_mgr.building.version;
-    }
-}
-
-/* Fast ISR-side setpoint sync; caller guarantees active/building pointers are valid. */
-static inline void buck_cfg_sync_building_to_active_fast(void)
-{
-    if (buck_cfg_setpoint_mgr.active.version != buck_cfg_setpoint_mgr.building.version)
-    {
-        *buck_cfg_setpoint_mgr.active.p_data = *buck_cfg_setpoint_mgr.building.p_data;
-        buck_cfg_setpoint_mgr.active.version = buck_cfg_setpoint_mgr.building.version;
-    }
-}
+/* Buck-internal read interfaces used by FSM. */
+uint8_t buck_cfg_get_run_request(void);
+const buck_ctrl_setpoint_t *buck_cfg_get_p_building(void);
 
 #endif

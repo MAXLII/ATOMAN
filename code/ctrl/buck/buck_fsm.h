@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Define buck FSM states, commands, events, and HAL callback contract
- *          - Expose command and HAL-binding entry points for the buck state machine
- *          - Provide the public state-machine interface used by platform and control glue
+ *          - Define the internal Buck lifecycle states and transition events
+ *          - Consume configuration run requests and protection state
+ *          - Expose read-only access to the FSM-published control snapshot
  *
  *          Design notes:
  *          - C11 compatible
@@ -29,6 +29,7 @@
 #ifndef __BUCK_FSM_H
 #define __BUCK_FSM_H
 
+#include "buck_cfg.h"
 #include "buck_hal.h"
 #include "section.h"
 #include <stdint.h>
@@ -49,22 +50,7 @@ typedef enum
     buck_fsm_ev_to_run,
 } buck_fsm_ev_e;
 
-typedef enum
-{
-    buck_fsm_cmd_null = 0,
-    buck_fsm_cmd_start,
-    buck_fsm_cmd_stop,
-} buck_fsm_cmd_e;
-
-typedef enum
-{
-    buck_run_sta_init = 0,
-    buck_run_sta_idle,
-    buck_run_sta_run,
-} buck_run_sta_e;
-
-void buck_fsm_set_cmd(buck_fsm_cmd_e cmd);
 buck_run_sta_e buck_fsm_get_run_sta(void);
-void buck_fsm_set_p_hal(buck_fsm_hal_t *p);
+uint8_t buck_fsm_read_published(buck_ctrl_setpoint_t *p_setpoint);
 
 #endif

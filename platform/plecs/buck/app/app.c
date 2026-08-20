@@ -8,8 +8,8 @@
  *          Module responsibilities:
  *          - Bind simulated ADC and PWM interface objects to the buck HAL
  *          - Register Buck commands, setpoints, state, and analog values in Shell
- *          - Translate the Shell RUN request into buck FSM start and stop commands
- *          - Publish the buck FSM state to Shell and the PLECS output vector
+ *          - Write the Buck run request and setpoints through the configuration interface
+ *          - Publish the Buck run state to Shell and the PLECS output vector
  *
  *          Design notes:
  *          - C11 compatible
@@ -31,7 +31,6 @@
 #include "bsp_adc.h"
 #include "bsp_pwm.h"
 #include "buck_cfg.h"
-#include "buck_fsm.h"
 #include "buck_hal.h"
 #include "frame_tcp_server.h"
 #include "plecs.h"
@@ -60,9 +59,6 @@
 
 /* Tracks whether the PLECS application has already attempted HAL binding. */
 static uint8_t app_buck_hal_bound = 0U;
-
-/* Tracks whether Buck control timing has already been configured. */
-static uint8_t app_buck_timing_bound = 0U;
 
 /* Desired Buck run state toggled by the Shell RUN command. */
 static uint8_t app_run_request = 0U;
@@ -267,32 +263,16 @@ static void app_bind_buck_hal(void)
     buck_hal_set_pwm_setter(1U, bsp_pwm_set_b_cmp);
     buck_hal_set_pwm_disable(bsp_pwm_disable);
 
-    app_buck_hal_bound = buck_hal_is_ready();
-}
-
-static void app_bind_buck_timing(void)
-{
-    buck_ctrl_timing_t timing = {
-        .ctrl_ts = CTRL_TS,
-        .task_ts = 100.0e-6f,
-        .pwm_cmp_max = CTRL_PWM_CMP_MAX,
-    };
-
-    if (app_buck_timing_bound != 0U)
-    {
-        return;
-    }
-
-    buck_cfg_set_timing(&timing);
-    app_buck_timing_bound = buck_cfg_is_ready();
+    app_buck_hal_bound = 1U;
 }
 
 static void app_update_buck_setpoint(void)
 {
-    buck_cfg_set_pwr_lmt(app_pwr_lmt);
-    buck_cfg_set_in_curr_lmt(app_in_curr_lmt);
-    buck_cfg_set_out_curr_lmt(app_out_curr_lmt);
-    buck_cfg_set_out_volt_ref(app_out_volt_ref);
+    (void)buck_cfg_set_out_volt_ref(app_out_volt_ref);
+    (void)buck_cfg_set_in_volt_lmt(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V);
+    (void)buck_cfg_set_pwr_lmt(app_pwr_lmt);
+    (void)buck_cfg_set_in_curr_lmt(app_in_curr_lmt);
+    (void)buck_cfg_set_out_curr_lmt(app_out_curr_lmt);
 }
 
 static void app_task(void)
@@ -301,29 +281,13 @@ static void app_task(void)
     buck_run_sta_e run_sta = buck_run_sta_init;
 
     app_update_adc_feedback();
-    app_bind_buck_timing();
+    app_bind_buck_hal();
     app_update_buck_setpoint();
 
-    run_sta = buck_fsm_get_run_sta();
+    (void)buck_cfg_set_run_request(app_run_request);
+    run_sta = buck_cfg_get_run_state();
     app_run_state = (uint32_t)run_sta;
     plecs_set_output(PLECS_OUTPUT_RUN_STATE, (float)run_sta);
-
-    if (app_run_request != 0U)
-    {
-        if (run_sta == buck_run_sta_idle)
-        {
-            app_bind_buck_hal();
-            buck_fsm_set_cmd(buck_fsm_cmd_start);
-        }
-    }
-    else
-    {
-        app_buck_hal_bound = 0U;
-        if (run_sta != buck_run_sta_idle)
-        {
-            buck_fsm_set_cmd(buck_fsm_cmd_stop);
-        }
-    }
 }
 
 REG_TASK_MS(1, app_task)

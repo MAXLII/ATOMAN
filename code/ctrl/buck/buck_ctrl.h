@@ -6,9 +6,9 @@
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Declare buck controller public runtime hooks
+ *          - Declare Buck controller internal runtime hooks
  *          - Expose controller preparation before entering run state
- *          - Provide the interface shared by buck configuration, HAL binding, and runtime control
+ *          - Keep control-algorithm lifecycle entry points inside the Buck module
  *
  *          Design notes:
  *          - C11 compatible
@@ -31,7 +31,6 @@
 
 #include "buck_hal.h"
 
-void buck_ctrl_set_p_hal(buck_ctrl_hal_t *p);
 void buck_ctrl_prepare_run(void);
 
 #endif
