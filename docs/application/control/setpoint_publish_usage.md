@@ -2,34 +2,38 @@
 
 ## 1. 应用层职责
 
-控制参数使用 `building` 与 `active` 两份对象。应用层只负责：
+控制参数由配置层保存。应用层只负责：
 
-1. 在初始化阶段设置 timing，并按模块需要绑定 building 对象。
-2. 通过 `*_cfg_set_*()` 修改候选参数。
-3. 参数准备完成后调用 `*_fsm_set_cmd(...start)` 请求启动。
-4. 通过 `*_fsm_set_cmd(...stop)` 请求停止。
+1. 按模块需要绑定参数对象和 HAL。
+2. Buck 通过字段 setter 更新统一配置；其他模块通过各自 setter 修改候选参数。
+3. 通过模块对外提供的启停接口设置运行请求。
 
-应用层不得调用 `*_cfg_publish_building()`，也不得直接设置 `run_allowed`。这两个接口位于 `*_cfg_fsm.h`，仅供同模块 FSM 使用。
+除 Buck 外，应用层不得调用 `*_cfg_publish_building()`，也不得直接设置 `run_allowed`；这些接口位于对应模块的 `*_cfg_fsm.h`，仅供同模块 FSM 使用。Buck 的发布函数只存在于 `buck_fsm.c` 内部，cfg仅保存参数与启停请求，应用层和其他模块无法调用发布操作。
 
 ```c
-static buck_ctrl_setpoint_t buck_building = {0};
-
 void app_control_cfg_init(void)
 {
-    buck_cfg_set_p_building(&buck_building);
-    buck_cfg_set_out_volt_ref(12.0f);
-    buck_cfg_set_in_curr_lmt(20.0f);
+    (void)buck_cfg_set_out_volt_ref(12.0f);
+    (void)buck_cfg_set_in_volt_lmt(24.0f);
+    (void)buck_cfg_set_pwr_lmt(1000.0f);
+    (void)buck_cfg_set_in_curr_lmt(20.0f);
+    (void)buck_cfg_set_out_curr_lmt(20.0f);
 }
 
 void app_control_start(void)
 {
-    buck_fsm_set_cmd(buck_fsm_cmd_start);
+    buck_cfg_set_run_request(1U);
+}
+
+void app_control_stop(void)
+{
+    buck_cfg_set_run_request(0U);
 }
 ```
 
 ## 2. FSM 发布边界
 
-FSM 收到 start 后先检查配置、HAL 绑定和保护状态。启动条件全部满足时，FSM 设置运行许可并发布完整 building 快照，然后才调用进入运行的 HAL 回调。
+FSM 收到 start 后先检查配置、HAL 绑定和保护状态。启动条件全部满足时，Buck FSM 发布完整 building 配置，其他模块 FSM 发布完整 building 快照，然后才调用进入运行的 HAL 回调。
 
 停止时序固定为：
 
@@ -45,17 +49,17 @@ stop / hard protect
 
 ## 3. 参数生效规则
 
-- app 的多次 setter 调用只修改 building，不会逐字段影响 active。
-- FSM 接受 start 时发布当时完整的 building。
-- run 状态继续修改 building 时，修改内容保留到下一次被 FSM 接受的 start。
+- Buck 每个字段 setter 只修改 building 中的对应参数；其他模块的多次 setter 调用也只修改 building。
+- FSM 接受 start 时，Buck 和其他模块都发布当时完整的 building。
+- Buck 在run状态的FSM执行点发布新快照；其他模块的修改内容保留到下一次被FSM接受的start。
 - stop 和硬保护不依赖 app 发布，FSM 会统一撤销运行许可。
-- 控制入口通过 `*_cfg_sync_building_to_active()` 或 fast sync 消费已发布版本。
+- Buck控制入口只读FSM独占提交的published快照；其他模块通过各自的sync接口消费已发布版本。
 
 ## 4. 各模块应用接口
 
 | 模块 | 应用侧配置 | 启动命令 |
 |---|---|---|
-| Buck | `buck_cfg_set_p_building()`、`buck_cfg_set_*()` | `buck_fsm_set_cmd(buck_fsm_cmd_start)` |
+| Buck | `buck_cfg_set_*()` | `buck_cfg_set_run_request(1U)` |
 | Boost | `boost_cfg_set_p_building()`、`boost_cfg_set_*()` | `boost_fsm_set_cmd(boost_fsm_cmd_start)` |
 | BB | `bb_cfg_set_p_building()`、`bb_cfg_set_*()` | `bb_fsm_set_cmd(bb_fsm_cmd_start)` |
 | LLC | `llc_cfg_set_p_building()`、`llc_cfg_set_*()` | `llc_fsm_set_cmd(llc_fsm_cmd_start)` |
