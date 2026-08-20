@@ -40,9 +40,7 @@
 
 ```c
 static int32_t s_v_in_code = 0;
-static int32_t s_i_in_code = 0;
 static int32_t s_v_out_code = 0;
-static int32_t s_i_out_code = 0;
 static int32_t s_i_l_code[BUCK_CTRL_IND_CURR_CH_NUM] = {0};
 static const buck_pwm_setter_t s_pwm_setters[] = {
     platform_pwm_ch0_set,
@@ -53,15 +51,13 @@ _Static_assert((sizeof(s_pwm_setters) / sizeof(s_pwm_setters[0])) ==
                    BUCK_CTRL_IND_CURR_CH_NUM,
                "PWM setter count mismatch");
 
-static uint8_t platform_bind_buck_hal(void)
+static void platform_bind_buck_hal(void)
 {
     uint32_t ch = 0U;
 
     buck_hal_unlock_binding();
     buck_hal_set_v_in_ptr(&s_v_in_code);
-    buck_hal_set_i_in_ptr(&s_i_in_code);
     buck_hal_set_v_out_ptr(&s_v_out_code);
-    buck_hal_set_i_out_ptr(&s_i_out_code);
     buck_hal_set_pwm_disable(platform_pwm_disable);
 
     for (ch = 0U; ch < BUCK_CTRL_IND_CURR_CH_NUM; ch++)
@@ -70,18 +66,11 @@ static uint8_t platform_bind_buck_hal(void)
         buck_hal_set_pwm_setter(ch, s_pwm_setters[ch]);
     }
 
-    if (buck_hal_is_ready() == 0U)
-    {
-        platform_pwm_disable();
-        return 0U;
-    }
-
     buck_hal_lock_binding();
-    return 1U;
 }
 ```
 
-示例按当前默认的两个 Buck 通道列出回调。通道数量变化时，静态断言会要求平台同步修改映射。控制 ISR 通过已经冻结的 HAL 数组直接调用回调，不在运行时查找硬件。
+示例按当前默认的两个 Buck 通道列出回调。通道数量变化时，静态断言会要求平台同步修改映射。控制 ISR 通过已经冻结的 HAL 数组直接调用回调，不在运行时查找硬件。Buck FSM在init状态逐一检查所有必需绑定，发现空指针时记录具体字段并停留在init；其他Buck路径不重复检查。
 
 ## 5. 采样更新
 
