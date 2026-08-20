@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    buck_cfg.c
- * @brief   buck_cfg control module.
+ * @brief   Buck configuration module.
  * @details
  *          This file is part of the digital power framework project.
  *
  *          Module responsibilities:
- *          - Maintain active/building buck setpoint buffers with versioned publishing
- *          - Provide setters for run permission, voltage/current references, and power limits
- *          - Keep configuration updates caller-owned and allocation-free for control-loop use
+ *          - Store the application-visible Buck parameters and run request
+ *          - Convert physical parameters into controller code domains
+ *          - Provide read access to the complete building configuration
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - ISR-safe path should be explicitly documented
- *          - Hardware access should be abstracted through HAL / BSP
+ *          - Configuration publication and lifecycle decisions belong to the FSM
+ *          - Hardware access is abstracted through the Buck HAL
  *
  * @author  Max.Li
  * @date    2026-05-23
@@ -27,10 +27,17 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "buck_cfg.h"
-#include "buck_cfg_fsm.h"
-#include <stddef.h>
+#include "buck_fsm.h"
 
-static buck_ctrl_setpoint_t setpoint_active = {0};
+static buck_cfg_t buck_cfg = {
+    .out_volt_ref = BUCK_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V,
+    .in_volt_lmt = BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V,
+    .pwr_lmt = BUCK_CTRL_IN_PWR_LMT_DEFAULT_W,
+    .in_curr_lmt = BUCK_CTRL_IN_CURR_LMT_DEFAULT_A,
+    .out_curr_lmt = BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A,
+    .run_request = 0U,
+};
+
 static buck_ctrl_setpoint_t setpoint_building = {
     .run_allowed = 0U,
     .out_volt_ref = BUCK_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(BUCK_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V),
@@ -40,60 +47,6 @@ static buck_ctrl_setpoint_t setpoint_building = {
     .out_curr_lmt = BUCK_CTRL_OUT_CURR_LMT_TO_CODE(BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A),
 };
 
-static buck_ctrl_timing_t ctrl_timing = {0};
-
-buck_ctrl_setpoint_mgr_t buck_cfg_setpoint_mgr = {
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0U,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0U,
-    },
-};
-
-static uint8_t buck_cfg_timing_is_valid(const buck_ctrl_timing_t *p_timing)
-{
-    return (p_timing != NULL) &&
-           (p_timing->ctrl_ts > 0.0f) &&
-           (p_timing->task_ts > 0.0f) &&
-           (p_timing->pwm_cmp_max > 0);
-}
-
-void buck_cfg_set_timing(const buck_ctrl_timing_t *p_timing)
-{
-    if (buck_cfg_timing_is_valid(p_timing) == 0U)
-    {
-        ctrl_timing.ctrl_ts = 0.0f;
-        ctrl_timing.task_ts = 0.0f;
-        ctrl_timing.pwm_cmp_max = 0;
-        return;
-    }
-
-    ctrl_timing = *p_timing;
-}
-
-const buck_ctrl_timing_t *buck_cfg_get_timing(void)
-{
-    return &ctrl_timing;
-}
-
-float buck_cfg_get_ctrl_ts(void)
-{
-    return ctrl_timing.ctrl_ts;
-}
-
-float buck_cfg_get_task_ts(void)
-{
-    return ctrl_timing.task_ts;
-}
-
-int32_t buck_cfg_get_pwm_cmp_max(void)
-{
-    return ctrl_timing.pwm_cmp_max;
-}
-
 static int32_t buck_cfg_float_to_code(float val, float val_max, int32_t code_max)
 {
     float code = 0.0f;
@@ -102,157 +55,140 @@ static int32_t buck_cfg_float_to_code(float val, float val_max, int32_t code_max
     {
         return 0;
     }
-
     if (val >= val_max)
     {
         return code_max;
     }
 
     code = (val / val_max) * (float)code_max;
-
     return (int32_t)(code + 0.5f);
 }
 
-static int32_t buck_cfg_float_to_bipolar_code(float val, float val_abs_max, int32_t code_abs_max)
+static int32_t buck_cfg_float_to_bipolar_code(float val,
+                                              float val_abs_max,
+                                              int32_t code_abs_max)
 {
-    /* Signed code value before integer conversion. */
     float code = 0.0f;
 
     if ((val_abs_max <= 0.0f) || (code_abs_max <= 0))
     {
         return 0;
     }
-
     if (val >= val_abs_max)
     {
         return code_abs_max;
     }
-
     if (val <= -val_abs_max)
     {
         return -code_abs_max;
     }
 
     code = (val / val_abs_max) * (float)code_abs_max;
+    return (code >= 0.0f) ? (int32_t)(code + 0.5f) : (int32_t)(code - 0.5f);
+}
 
-    if (code >= 0.0f)
+uint8_t buck_cfg_set_out_volt_ref(float out_volt_ref)
+{
+    int32_t code = 0;
+
+    if (out_volt_ref != out_volt_ref)
     {
-        return (int32_t)(code + 0.5f);
+        return 0U;
     }
 
-    return (int32_t)(code - 0.5f);
+    code = buck_cfg_float_to_code(out_volt_ref,
+                                  BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V,
+                                  BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
+    buck_cfg.out_volt_ref = out_volt_ref;
+    setpoint_building.out_volt_ref = code;
+    return 1U;
 }
 
-void buck_cfg_set_p_building(buck_ctrl_setpoint_t *p_data)
+uint8_t buck_cfg_set_in_volt_lmt(float in_volt_lmt)
 {
-    if (p_data != NULL)
+    int32_t code = 0;
+
+    if (in_volt_lmt != in_volt_lmt)
     {
-        buck_cfg_setpoint_mgr.building.p_data = p_data;
-    }
-}
-
-buck_ctrl_setpoint_t *buck_cfg_get_p_active(void)
-{
-    return buck_cfg_setpoint_mgr.active.p_data;
-}
-
-buck_ctrl_setpoint_t *buck_cfg_get_p_building(void)
-{
-    return buck_cfg_setpoint_mgr.building.p_data;
-}
-
-void buck_cfg_set_run_allowed(uint8_t run_allowed)
-{
-    if (buck_cfg_setpoint_mgr.building.p_data == NULL)
-    {
-        return;
+        return 0U;
     }
 
-    buck_cfg_setpoint_mgr.building.p_data->run_allowed = run_allowed;
+    code = buck_cfg_float_to_code(in_volt_lmt,
+                                  BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V,
+                                  BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX);
+    buck_cfg.in_volt_lmt = in_volt_lmt;
+    setpoint_building.in_volt_lmt = code;
+    return 1U;
 }
 
-void buck_cfg_set_pwr_lmt(float pwr_lmt)
+uint8_t buck_cfg_set_pwr_lmt(float pwr_lmt)
 {
-    if (buck_cfg_setpoint_mgr.building.p_data == NULL)
+    int32_t code = 0;
+
+    if (pwr_lmt != pwr_lmt)
     {
-        return;
+        return 0U;
     }
 
-    buck_cfg_setpoint_mgr.building.p_data->pwr_lmt =
-        buck_cfg_float_to_code(pwr_lmt, BUCK_CTRL_IN_PWR_LMT_MAX_W, BUCK_CTRL_IN_PWR_LMT_CODE_MAX);
+    code = buck_cfg_float_to_code(pwr_lmt,
+                                  BUCK_CTRL_IN_PWR_LMT_MAX_W,
+                                  BUCK_CTRL_IN_PWR_LMT_CODE_MAX);
+    buck_cfg.pwr_lmt = pwr_lmt;
+    setpoint_building.pwr_lmt = code;
+    return 1U;
 }
 
-void buck_cfg_set_out_volt_ref(float out_volt_ref)
+uint8_t buck_cfg_set_in_curr_lmt(float in_curr_lmt)
 {
-    if (buck_cfg_setpoint_mgr.building.p_data == NULL)
+    int32_t code = 0;
+
+    if (in_curr_lmt != in_curr_lmt)
     {
-        return;
+        return 0U;
     }
 
-    buck_cfg_setpoint_mgr.building.p_data->out_volt_ref =
-        buck_cfg_float_to_code(out_volt_ref,
-                               BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V,
-                               BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
+    code = buck_cfg_float_to_bipolar_code(in_curr_lmt,
+                                          BUCK_CTRL_IN_CURR_LMT_MAX_A,
+                                          BUCK_CTRL_IN_CURR_LMT_CODE_MAX);
+    buck_cfg.in_curr_lmt = in_curr_lmt;
+    setpoint_building.in_curr_lmt = code;
+    return 1U;
 }
 
-void buck_cfg_set_in_volt_lmt(float in_volt_lmt)
+uint8_t buck_cfg_set_out_curr_lmt(float out_curr_lmt)
 {
-    if (buck_cfg_setpoint_mgr.building.p_data == NULL)
+    int32_t code = 0;
+
+    if (out_curr_lmt != out_curr_lmt)
     {
-        return;
+        return 0U;
     }
 
-    buck_cfg_setpoint_mgr.building.p_data->in_volt_lmt =
-        buck_cfg_float_to_code(in_volt_lmt,
-                               BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V,
-                               BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX);
+    code = buck_cfg_float_to_bipolar_code(out_curr_lmt,
+                                          BUCK_CTRL_OUT_CURR_LMT_MAX_A,
+                                          BUCK_CTRL_OUT_CURR_LMT_CODE_MAX);
+    buck_cfg.out_curr_lmt = out_curr_lmt;
+    setpoint_building.out_curr_lmt = code;
+    return 1U;
 }
 
-void buck_cfg_set_in_curr_lmt(float in_curr_lmt)
+uint8_t buck_cfg_set_run_request(uint8_t run_request)
 {
-    if (buck_cfg_setpoint_mgr.building.p_data == NULL)
-    {
-        return;
-    }
-
-    buck_cfg_setpoint_mgr.building.p_data->in_curr_lmt =
-        buck_cfg_float_to_bipolar_code(in_curr_lmt,
-                                       BUCK_CTRL_IN_CURR_LMT_MAX_A,
-                                       BUCK_CTRL_IN_CURR_LMT_CODE_MAX);
+    buck_cfg.run_request = (run_request != 0U) ? 1U : 0U;
+    return 1U;
 }
 
-void buck_cfg_set_out_curr_lmt(float out_curr_lmt)
+buck_run_sta_e buck_cfg_get_run_state(void)
 {
-    if (buck_cfg_setpoint_mgr.building.p_data == NULL)
-    {
-        return;
-    }
-
-    buck_cfg_setpoint_mgr.building.p_data->out_curr_lmt =
-        buck_cfg_float_to_bipolar_code(out_curr_lmt,
-                                       BUCK_CTRL_OUT_CURR_LMT_MAX_A,
-                                       BUCK_CTRL_OUT_CURR_LMT_CODE_MAX);
+    return buck_fsm_get_run_sta();
 }
 
-void buck_cfg_publish_building(void)
+uint8_t buck_cfg_get_run_request(void)
 {
-    if ((buck_cfg_setpoint_mgr.building.p_data == NULL) ||
-        (buck_cfg_setpoint_mgr.active.p_data == NULL))
-    {
-        return;
-    }
-
-    buck_cfg_setpoint_mgr.building.version++;
+    return buck_cfg.run_request;
 }
 
-uint8_t buck_cfg_is_ready(void)
+const buck_ctrl_setpoint_t *buck_cfg_get_p_building(void)
 {
-    return (buck_cfg_setpoint_mgr.active.p_data != NULL) &&
-           (buck_cfg_setpoint_mgr.building.p_data != NULL) &&
-           (buck_cfg_timing_is_valid(&ctrl_timing) != 0U);
-}
-
-const buck_ctrl_setpoint_mgr_t *buck_cfg_get_mgr(void)
-{
-    return &buck_cfg_setpoint_mgr;
+    return &setpoint_building;
 }

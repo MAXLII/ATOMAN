@@ -7,7 +7,7 @@
  *
  *          Module responsibilities:
  *          - Declare buck HAL binding accessors and protection-control APIs
- *          - Expose binding lock, unlock, and readiness checks for platform integration
+ *          - Expose binding lock and unlock control for platform integration
  *          - Provide the bridge between hardware callbacks and buck control/FSM modules
  *
  *          Design notes:
@@ -44,9 +44,7 @@ typedef void (*buck_pwm_setter_t)(int32_t cmp, uint8_t up_en, uint8_t dn_en);
 typedef struct
 {
     int32_t *p_v_in;
-    int32_t *p_i_in;
     int32_t *p_v_out;
-    int32_t *p_i_out;
     int32_t *p_i_l[BUCK_CTRL_IND_CURR_CH_NUM];
     buck_pwm_setter_t p_set_pwm_func[BUCK_CTRL_IND_CURR_CH_NUM];
     void (*p_pwm_disable)(void);
@@ -56,25 +54,19 @@ typedef struct
 {
     void (*p_enter_run_func)(void);
     void (*p_exit_run_func)(void);
-    uint8_t *p_latched;
 } buck_fsm_hal_t;
 
 buck_ctrl_hal_t *buck_hal_get_ctrl(void);
 buck_fsm_hal_t *buck_hal_get_fsm(void);
 void buck_hal_hard_protect_trip(void);
 void buck_hal_hard_protect_clear(void);
-uint8_t buck_hal_is_ready(void);
+uint8_t buck_hal_hard_protect_is_latched(void);
 void buck_hal_lock_binding(void);
 void buck_hal_unlock_binding(void);
 void buck_hal_set_v_in_ptr(int32_t *p);
-void buck_hal_set_i_in_ptr(int32_t *p);
 void buck_hal_set_v_out_ptr(int32_t *p);
-void buck_hal_set_i_out_ptr(int32_t *p);
 void buck_hal_set_i_l_ptr(uint32_t ch, int32_t *p);
 void buck_hal_set_pwm_setter(uint32_t ch, buck_pwm_setter_t p);
 void buck_hal_set_pwm_disable(void (*p)(void));
-void buck_hal_set_enter_run_func(void (*p)(void));
-void buck_hal_set_exit_run_func(void (*p)(void));
-void buck_hal_set_latched_ptr(uint8_t *p);
 
 #endif

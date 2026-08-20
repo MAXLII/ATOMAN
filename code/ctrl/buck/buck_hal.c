@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Hold buck controller and FSM HAL binding objects for platform callbacks
  *          - Manage run-entry/run-exit actions, PWM disable, and hard-protection latch handling
- *          - Lock and validate HAL binding state before the buck FSM allows operation
+ *          - Allow the Buck FSM init state to validate the complete binding objects
  *
  *          Design notes:
  *          - C11 compatible
@@ -28,18 +28,14 @@
  */
 #include "buck_hal.h"
 #include "buck_ctrl.h"
-#include "buck_fsm.h"
 #include "section.h"
-#include <stddef.h>
 
 static void buck_hal_enter_run(void);
 static void buck_hal_exit_run(void);
-static uint8_t buck_hal_ind_curr_ready(void);
-static uint8_t buck_hal_pwm_setter_ready(void);
-static uint8_t hard_protect_latched;
-static uint8_t buck_hal_binding_locked = 1U;
+static volatile uint8_t hard_protect_latched;
+static uint8_t buck_hal_binding_locked = 0U;
 
-static buck_ctrl_hal_t buck_ctrl_hal = {0};
+buck_ctrl_hal_t buck_ctrl_hal = {0};
 
 static void buck_hal_enter_run(void)
 {
@@ -50,18 +46,12 @@ static void buck_hal_enter_run(void)
 static void buck_hal_exit_run(void)
 {
     PLECS_LOG("buck_hal exit run\n");
-
-    if (buck_ctrl_hal.p_pwm_disable != NULL)
-    {
-        buck_ctrl_hal.p_pwm_disable();
-    }
-
+    buck_ctrl_hal.p_pwm_disable();
 }
 
-static buck_fsm_hal_t buck_fsm_hal = {
+buck_fsm_hal_t buck_fsm_hal = {
     .p_enter_run_func = buck_hal_enter_run,
     .p_exit_run_func = buck_hal_exit_run,
-    .p_latched = &hard_protect_latched,
 };
 
 buck_ctrl_hal_t *buck_hal_get_ctrl(void)
@@ -76,64 +66,18 @@ buck_fsm_hal_t *buck_hal_get_fsm(void)
 
 void buck_hal_hard_protect_trip(void)
 {
-    if (buck_ctrl_hal.p_pwm_disable != NULL)
-    {
-        buck_ctrl_hal.p_pwm_disable();
-    }
-
-    if (*buck_fsm_hal.p_latched == 0U)
-    {
-        *buck_fsm_hal.p_latched = 1U;
-    }
-
-    buck_fsm_set_cmd(buck_fsm_cmd_stop);
+    buck_ctrl_hal.p_pwm_disable();
+    hard_protect_latched = 1U;
 }
 
 void buck_hal_hard_protect_clear(void)
 {
-    *buck_fsm_hal.p_latched = 0U;
+    hard_protect_latched = 0U;
 }
 
-static uint8_t buck_hal_ind_curr_ready(void)
+uint8_t buck_hal_hard_protect_is_latched(void)
 {
-    uint32_t ch = 0U;
-
-    for (ch = 0U; ch < BUCK_CTRL_IND_CURR_CH_NUM; ch++)
-    {
-        if (buck_ctrl_hal.p_i_l[ch] == NULL)
-        {
-            return 0U;
-        }
-    }
-
-    return 1U;
-}
-
-static uint8_t buck_hal_pwm_setter_ready(void)
-{
-    uint32_t ch = 0U;
-
-    for (ch = 0U; ch < BUCK_CTRL_IND_CURR_CH_NUM; ch++)
-    {
-        if (buck_ctrl_hal.p_set_pwm_func[ch] == NULL)
-        {
-            return 0U;
-        }
-    }
-
-    return 1U;
-}
-
-uint8_t buck_hal_is_ready(void)
-{
-    return (uint8_t)((buck_ctrl_hal.p_v_in != NULL) &&
-                     (buck_ctrl_hal.p_v_out != NULL) &&
-                     (buck_hal_ind_curr_ready() != 0U) &&
-                     (buck_hal_pwm_setter_ready() != 0U) &&
-                     (buck_ctrl_hal.p_pwm_disable != NULL) &&
-                     (buck_fsm_hal.p_enter_run_func != NULL) &&
-                     (buck_fsm_hal.p_exit_run_func != NULL) &&
-                     (buck_fsm_hal.p_latched != NULL));
+    return hard_protect_latched;
 }
 
 void buck_hal_lock_binding(void)
@@ -155,15 +99,6 @@ void buck_hal_set_v_in_ptr(int32_t *p)
     buck_ctrl_hal.p_v_in = p;
 }
 
-void buck_hal_set_i_in_ptr(int32_t *p)
-{
-    if (buck_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    buck_ctrl_hal.p_i_in = p;
-}
-
 void buck_hal_set_v_out_ptr(int32_t *p)
 {
     if (buck_hal_binding_locked != 0U)
@@ -171,15 +106,6 @@ void buck_hal_set_v_out_ptr(int32_t *p)
         return;
     }
     buck_ctrl_hal.p_v_out = p;
-}
-
-void buck_hal_set_i_out_ptr(int32_t *p)
-{
-    if (buck_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    buck_ctrl_hal.p_i_out = p;
 }
 
 void buck_hal_set_i_l_ptr(uint32_t ch, int32_t *p)
@@ -209,31 +135,4 @@ void buck_hal_set_pwm_disable(void (*p)(void))
         return;
     }
     buck_ctrl_hal.p_pwm_disable = p;
-}
-
-void buck_hal_set_enter_run_func(void (*p)(void))
-{
-    if (buck_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    buck_fsm_hal.p_enter_run_func = p;
-}
-
-void buck_hal_set_exit_run_func(void (*p)(void))
-{
-    if (buck_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    buck_fsm_hal.p_exit_run_func = p;
-}
-
-void buck_hal_set_latched_ptr(uint8_t *p)
-{
-    if (buck_hal_binding_locked != 0U)
-    {
-        return;
-    }
-    buck_fsm_hal.p_latched = p;
 }
