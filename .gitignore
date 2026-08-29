@@ -74,3 +74,4 @@ verilog/*/sim/.Xil/
 verilog/*/sim/*.jou
 xsim.dir/
 xvlog.pb
+docs/reference
