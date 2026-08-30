@@ -61,7 +61,7 @@
 static const char frame_udp_discovery_request[] = "FRAME_DISCOVER_V1"; /**< Exact FRAME discovery probe. */
 static const char frame_udp_discovery_response[] =
     "FRAME_DEVICE_V1;name=PLECS-SIM;ip=127.0.0.1;tcp_port=5000;"
-    "mac=02:00:00:00:00:02;fw_version=1.0.0;protocol_version=1"; /**< PLECS device identity. */
+    "mac=02:00:00:00:00:02;fw_version=1.1.0;protocol_version=1"; /**< PLECS device identity. */
 
 typedef struct
 {
