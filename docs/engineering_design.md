@@ -193,12 +193,16 @@ PS 工程提供裸机与 SRTOS 构建目标。PL 工程引用 `verilog/` 中的�
 | 目录或文件 | 职责 |
 |---|---|
 | `DllHeader.h`、`plecs.c`、`plecs.h` | PLECS DLL 接口、仿真时间和平台生命周期入口 |
-| `comm/` | PLECS FRAME 协议解析与 Windows TCP 传输 |
+| `comm/` | PLECS FRAME 协议解析、DLL 级调度锁、Frame TCP 服务和节点间 TCP 链路 |
 | `dbg/perf/` | 性能统计、Section 适配和协议服务 |
 | `dbg/scope/` | Scope 核心、Section 适配和协议服务 |
 | `dbg/sfra/` | SFRA 核心、Section 适配和协议服务 |
 | `dbg/shell/` | Shell 核心、Section 适配和参数服务 |
 | `dbg/trace/` | Trace 核心、兼容适配和协议服务 |
+
+`platform/plecs/frame_bridge/` 提供节点 `0x02` 的单 DLL FRAME 调试模型。
+`platform/plecs/frame_route_bridge/` 提供节点 `0x02`、`0x03` 的双 DLL 模型；节点 `0x02` 同时维护
+Frame 链路和节点间链路，并通过 Section 路由表转发跨节点报文。
 | `dbg/section_list/` | Section 注册链表目录与节点查询服务 |
 
 ## 5. Flash 与升级架构
