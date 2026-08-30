@@ -11,6 +11,7 @@ set(SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
     ${PLECS_COMMON_DIR}/comm/comm.c
     ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
+    ${PLECS_COMMON_DIR}/comm/plecs_dispatch_lock.c
     ${CODE_DIR}/app/demo/demo_shell.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_app.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_platform.c
