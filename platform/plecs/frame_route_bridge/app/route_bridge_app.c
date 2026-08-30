@@ -53,7 +53,7 @@ typedef struct
     uint32_t node_value; /**< Value written through FRAME and shown in the PLECS model. */
     uint32_t loopback_count; /**< Valid loopback requests handled by this node. */
     uint32_t peer_connected; /**< Normalized internal TCP connection state. */
-    uint32_t frame_connected; /**< Normalized FRAME TCP connection state for node 0x02. */
+    uint32_t frame_connected; /**< Normalized FRAME TCP connection state for this node. */
 } route_bridge_state_t;
 
 static route_bridge_state_t route_state = {
@@ -81,7 +81,6 @@ REG_SHELL_VAR(PEER_CONNECTED,
               NULL,
               SHELL_STA_READ_ONLY)
 
-#if (PLECS_NODE_ADDR == 0x02)
 REG_SHELL_VAR(FRAME_CONNECTED,
               route_state.frame_connected,
               SHELL_UINT32,
@@ -90,7 +89,11 @@ REG_SHELL_VAR(FRAME_CONNECTED,
               NULL,
               SHELL_STA_READ_ONLY)
 
+#if (PLECS_NODE_ADDR == 0x02)
 REG_COMM_ROUTE(1, 2, 0x03)
+REG_COMM_ROUTE(2, 1, 0x01)
+#else
+REG_COMM_ROUTE(1, 2, 0x02)
 REG_COMM_ROUTE(2, 1, 0x01)
 #endif /* PLECS_NODE_ADDR */
 
@@ -132,11 +135,7 @@ REG_COMM(0x30, 0x01, loopback_act)
 static void route_bridge_sample(void)
 {
     route_state.peer_connected = (uint32_t)peer_tcp_link_is_connected();
-#if (PLECS_NODE_ADDR == 0x02)
     route_state.frame_connected = (uint32_t)frame_tcp_server_is_connected();
-#else
-    route_state.frame_connected = 0u;
-#endif /* PLECS_NODE_ADDR */
 
     plecs_set_output(PLECS_OUTPUT_NODE_VALUE, (float)route_state.node_value);
     plecs_set_output(PLECS_OUTPUT_PEER_CONNECTED, (float)route_state.peer_connected);
