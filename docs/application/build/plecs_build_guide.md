@@ -23,8 +23,9 @@
 
 `platform/plecs/frame_bridge/` 在 DLL 内提供 FRAME Ethernet 参数服务。连接和参数说明见 [PLECS 与 FRAME 参数通信](../communication/plecs_frame_bridge.md)。
 
-`platform/plecs/frame_route_bridge/` 同时构建节点 `0x02` 和 `0x03` 两个 DLL。FRAME 连接节点
-`0x02` 的 TCP `5000` 端口，节点间通信使用回环 TCP `5001` 端口。构建、测试和联调方法见
+`platform/plecs/frame_route_bridge/` 同时构建节点 `0x02` 和 `0x03` 两个 DLL。FRAME 搜索结果使用
+`PLECS-SIM-02` 和 `PLECS-SIM-03` 区分节点，可分别连接 TCP `5000` 和 `5002`；节点间通信使用回环
+TCP `5001`。任一 Frame 入口均可通过另一个节点的目标地址完成路由访问。构建、测试和联调方法见
 [PLECS 双节点 TCP 路由 Demo](../examples/frame_plecs_route_bridge_demo.md)。
 
 ## 2. 必需软件

@@ -201,8 +201,9 @@ PS 工程提供裸机与 SRTOS 构建目标。PL 工程引用 `verilog/` 中的�
 | `dbg/trace/` | Trace 核心、兼容适配和协议服务 |
 
 `platform/plecs/frame_bridge/` 提供节点 `0x02` 的单 DLL FRAME 调试模型。
-`platform/plecs/frame_route_bridge/` 提供节点 `0x02`、`0x03` 的双 DLL 模型；节点 `0x02` 同时维护
-Frame 链路和节点间链路，并通过 Section 路由表转发跨节点报文。
+`platform/plecs/frame_route_bridge/` 提供节点 `0x02`、`0x03` 的双 DLL 模型；两个节点分别维护独立的
+Frame TCP 入口，并通过节点间 TCP 链路和对称 Section 路由表转发跨节点报文。UDP 发现结果使用带
+节点地址的设备名区分两个 Frame 入口。
 | `dbg/section_list/` | Section 注册链表目录与节点查询服务 |
 
 ## 5. Flash 与升级架构
