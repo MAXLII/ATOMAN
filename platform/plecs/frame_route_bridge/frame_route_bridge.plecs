@@ -273,7 +273,7 @@ Plecs {
       DstTerminal   1
     }
     Annotation {
-      Name          "<html><body><p>FRAME: TCP 127.0.0.1:5000 -&gt; node 0x02</p><p>Peer: node 0x02 -&gt; TCP 127.0.0.1:5001 -&gt; node 0x03</p><p>Set Target Address to 0x02 or 0x03 without reconnecting FRAME.</p></body></html>"
+      Name          "<html><body><p>FRAME search: PLECS-SIM-02 at TCP :5000; PLECS-SIM-03 at TCP :5002</p><p>Peer: node 0x02 -&gt; TCP 127.0.0.1:5001 -&gt; node 0x03</p><p>Either FRAME entry routes requests to the other node by target address.</p></body></html>"
       Position      [300, 120]
     }
   }
