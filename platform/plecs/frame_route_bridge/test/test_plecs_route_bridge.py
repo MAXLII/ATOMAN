@@ -13,7 +13,9 @@ from pathlib import Path
 
 
 FRAME_HOST = "127.0.0.1"
-FRAME_PORT = 5000
+DISCOVERY_PORT = 5000
+NODE02_FRAME_PORT = 5000
+NODE03_FRAME_PORT = 5002
 PC_ADDR = 0x01
 NODE02_ADDR = 0x02
 NODE03_ADDR = 0x03
@@ -248,36 +250,70 @@ def assert_ack(frame: DecodedFrame, expected_src: int, expected_payload: bytes) 
         raise AssertionError(f"unexpected ACK: actual={actual!r}, expected={expected!r}")
 
 
-def connect_frame(timeout: float = 5.0) -> socket.socket:
-    """Connect to node 0x02 after its worker starts listening."""
+def discover_nodes(timeout: float = 2.0) -> dict[str, dict[str, str]]:
+    """Request and parse all address-specific PLECS discovery records."""
+
+    discovered: dict[str, dict[str, str]] = {}
+    deadline = time.monotonic() + timeout
+    next_probe_time = 0.0
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
+        udp_socket.bind((FRAME_HOST, 0))
+        while time.monotonic() < deadline and len(discovered) < 2:
+            current_time = time.monotonic()
+            if current_time >= next_probe_time:
+                udp_socket.sendto(b"FRAME_DISCOVER_V1", (FRAME_HOST, DISCOVERY_PORT))
+                next_probe_time = current_time + 0.1
+            udp_socket.settimeout(min(0.1, max(0.01, deadline - current_time)))
+            try:
+                payload, _ = udp_socket.recvfrom(512)
+            except (ConnectionResetError, socket.timeout):
+                continue
+            fields = payload.decode("ascii").split(";")
+            if not fields or fields[0] != "FRAME_DEVICE_V1":
+                continue
+            record = dict(field.split("=", 1) for field in fields[1:] if "=" in field)
+            name = record.get("name")
+            if name is not None:
+                discovered[name] = record
+    return discovered
+
+
+def connect_frame(port: int, timeout: float = 5.0) -> socket.socket:
+    """Connect to one node's FRAME listener after its worker starts."""
 
     deadline = time.monotonic() + timeout
     last_error: OSError | None = None
     while time.monotonic() < deadline:
         try:
-            tcp_socket = socket.create_connection((FRAME_HOST, FRAME_PORT), timeout=0.5)
+            tcp_socket = socket.create_connection((FRAME_HOST, port), timeout=0.5)
             tcp_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             return tcp_socket
         except OSError as exc:
             last_error = exc
             time.sleep(0.05)
-    raise ConnectionError(f"could not connect to {FRAME_HOST}:{FRAME_PORT}: {last_error}")
+    raise ConnectionError(f"could not connect to {FRAME_HOST}:{port}: {last_error}")
 
 
-def wait_for_routed_ack(tcp_socket: socket.socket, stream: FrameStream, payload: bytes, timeout: float = 5.0) -> None:
+def wait_for_routed_ack(
+    tcp_socket: socket.socket,
+    stream: FrameStream,
+    target_addr: int,
+    payload: bytes,
+    timeout: float = 5.0,
+) -> None:
     """Retry routed requests until the internal link is established."""
 
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        tcp_socket.sendall(encode_frame(NODE03_ADDR, payload))
+        tcp_socket.sendall(encode_frame(target_addr, payload))
         try:
             frame = stream.receive(timeout=0.3)
         except TimeoutError:
             continue
         if frame.payload == payload:
-            assert_ack(frame, NODE03_ADDR, payload)
+            assert_ack(frame, target_addr, payload)
             return
-    raise TimeoutError("node 0x02 did not restore the routed connection to node 0x03")
+    raise TimeoutError(f"routed connection to node 0x{target_addr:02x} was not restored")
 
 
 def run_smoke_test(dll_dir: Path) -> None:
@@ -295,7 +331,21 @@ def run_smoke_test(dll_dir: Path) -> None:
     try:
         node03.start()
         node02.start()
-        tcp_socket = connect_frame()
+        discovery_records = discover_nodes()
+        expected_discovery = {
+            "PLECS-SIM-02": {"tcp_port": str(NODE02_FRAME_PORT), "mac": "02:00:00:00:00:02"},
+            "PLECS-SIM-03": {"tcp_port": str(NODE03_FRAME_PORT), "mac": "02:00:00:00:00:03"},
+        }
+        for name, expected_fields in expected_discovery.items():
+            record = discovery_records.get(name)
+            if record is None:
+                raise AssertionError(f"missing discovery record {name}: {discovery_records}")
+            for field_name, expected_value in expected_fields.items():
+                if record.get(field_name) != expected_value:
+                    raise AssertionError(f"invalid {name} discovery record: {record}")
+        print("PASS discovery returns PLECS-SIM-02 and PLECS-SIM-03 with distinct endpoints")
+
+        tcp_socket = connect_frame(NODE02_FRAME_PORT)
         stream = FrameStream(tcp_socket)
 
         bad_frame = encode_frame(NODE02_ADDR, b"bad-crc", corrupt_crc=True)
@@ -319,7 +369,7 @@ def run_smoke_test(dll_dir: Path) -> None:
         assert_ack(replies_by_payload[routed_payload], NODE03_ADDR, routed_payload)
         print("PASS consecutive direct and routed frames")
 
-        for target_addr, expected_count in ((NODE02_ADDR, 8), (NODE03_ADDR, 7)):
+        for target_addr, expected_count in ((NODE02_ADDR, 8), (NODE03_ADDR, 8)):
             tcp_socket.sendall(encode_frame(target_addr, b"", cmd_set=0x01, cmd_word=0x01))
             count_ack = stream.receive()
             list_batch = stream.receive()
@@ -387,8 +437,51 @@ def run_smoke_test(dll_dir: Path) -> None:
             raise AssertionError(f"received routed response while node 0x03 was stopped: {offline_reply}")
 
         node03.start()
-        wait_for_routed_ack(tcp_socket, stream, b"after-reconnect")
+        wait_for_routed_ack(tcp_socket, stream, NODE03_ADDR, b"after-reconnect")
         print("PASS node 0x03 restart and node 0x02 automatic reconnect")
+
+        tcp_socket.close()
+        tcp_socket = connect_frame(NODE03_FRAME_PORT)
+        stream = FrameStream(tcp_socket)
+        direct_payload = b"node03-direct"
+        routed_payload = b"node03-routes-node02"
+        tcp_socket.sendall(
+            encode_frame(NODE03_ADDR, direct_payload) + encode_frame(NODE02_ADDR, routed_payload)
+        )
+        replies = [stream.receive(), stream.receive()]
+        replies_by_payload = {reply.payload: reply for reply in replies}
+        assert_ack(replies_by_payload[direct_payload], NODE03_ADDR, direct_payload)
+        assert_ack(replies_by_payload[routed_payload], NODE02_ADDR, routed_payload)
+        print("PASS node 0x03 FRAME entry handles local and routed node 0x02 requests")
+
+        tcp_socket.sendall(encode_frame(NODE02_ADDR, b"", cmd_set=0x01, cmd_word=0x01))
+        count_ack = stream.receive()
+        list_batch = stream.receive()
+        if (
+            count_ack.src != NODE02_ADDR
+            or count_ack.is_ack != 0x01
+            or struct.unpack("<I", count_ack.payload)[0] != 8
+            or list_batch.src != NODE02_ADDR
+            or list_batch.cmd_word != 0x3F
+            or list_batch.is_ack != 0x00
+            or b"FRAME_CONNECTED" not in list_batch.payload
+        ):
+            raise AssertionError("node 0x02 parameter list did not route through node 0x03")
+        print("PASS node 0x02 parameter ACK and ordinary report route through node 0x03")
+
+        node02.terminate()
+        time.sleep(0.3)
+        tcp_socket.sendall(encode_frame(NODE02_ADDR, b"node02-offline"))
+        try:
+            offline_reply = stream.receive(timeout=0.3)
+        except TimeoutError:
+            offline_reply = None
+        if offline_reply is not None:
+            raise AssertionError(f"received routed response while node 0x02 was stopped: {offline_reply}")
+
+        node02.start()
+        wait_for_routed_ack(tcp_socket, stream, NODE02_ADDR, b"node02-after-reconnect")
+        print("PASS node 0x02 restart restores routing through the node 0x03 FRAME entry")
     finally:
         if tcp_socket is not None:
             tcp_socket.close()
