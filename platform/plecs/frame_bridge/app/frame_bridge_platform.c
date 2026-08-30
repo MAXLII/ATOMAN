@@ -30,9 +30,11 @@
 
 #include "frame_tcp_server.h"
 #include "plecs.h"
+#include "plecs_dispatch_lock.h"
 
 void plecs_platform_start(void)
 {
+    plecs_dispatch_lock_start();
     frame_bridge_state_reset();
     frame_tcp_server_start();
 }
@@ -40,6 +42,7 @@ void plecs_platform_start(void)
 void plecs_platform_terminate(void)
 {
     frame_tcp_server_stop();
+    plecs_dispatch_lock_stop();
 }
 
 void plecs_platform_dispatch_enter(void)
