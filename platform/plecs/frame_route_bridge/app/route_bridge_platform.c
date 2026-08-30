@@ -14,7 +14,7 @@
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - Node 0x02 owns the Frame server while both nodes own one peer link
+ *          - Each node owns one Frame server while both nodes own one peer link
  *          - Hardware access is not used by this simulation project
  *
  * @author  Max.Li
@@ -42,18 +42,14 @@ void plecs_platform_start(void)
 {
     plecs_dispatch_lock_start();
     route_bridge_state_reset();
-#if (PLECS_NODE_ADDR == 0x02)
     frame_tcp_server_start();
-#endif /* PLECS_NODE_ADDR */
     peer_tcp_link_start();
 }
 
 void plecs_platform_terminate(void)
 {
     peer_tcp_link_stop();
-#if (PLECS_NODE_ADDR == 0x02)
     frame_tcp_server_stop();
-#endif /* PLECS_NODE_ADDR */
     plecs_dispatch_lock_stop();
 }
 

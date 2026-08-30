@@ -6,7 +6,7 @@
  *          This file is part of the base PLECS common platform.
  *
  *          Module responsibilities:
- *          - Declare the TCP server port used by FRAME
+ *          - Declare the default TCP server port used by FRAME
  *          - Advertise the active PLECS simulation through UDP device discovery
  *          - Expose transport lifecycle operations for PLECS project adapters
  *          - Serialize simulation dispatch and FRAME protocol callbacks
@@ -33,7 +33,9 @@
 
 #include <stdint.h>
 
+#ifndef FRAME_TCP_SERVER_PORT
 #define FRAME_TCP_SERVER_PORT (5000u)
+#endif
 
 void frame_tcp_server_start(void);
 void frame_tcp_server_stop(void);

@@ -6,8 +6,8 @@
  *          This file is part of the base PLECS common platform.
  *
  *          Module responsibilities:
- *          - Listen on TCP port 5000 for a FRAME Ethernet connection
- *          - Answer FRAME UDP broadcast discovery requests on port 5000
+ *          - Listen on the configured TCP port for a FRAME Ethernet connection
+ *          - Answer FRAME UDP broadcast discovery requests with one or more node identities
  *          - Feed received bytes into the shared 0xE8 protocol parser
  *          - Queue protocol output so PLECS callbacks never block on socket transmission
  *          - Send queued frames and expose dispatch serialization to PLECS projects
@@ -36,6 +36,7 @@
 #include "plecs_dispatch_lock.h"
 #include "shell_service.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <winsock2.h>
@@ -56,12 +57,23 @@
 #define FRAME_TCP_LINK_ID (1u)
 #define FRAME_TCP_CMD_SET_OFFSET (6u)
 #define FRAME_TCP_CMD_WORD_OFFSET (7u)
+#define FRAME_UDP_DISCOVERY_PORT (5000u)
 #define FRAME_UDP_DISCOVERY_POLL_BUDGET (8u) /* Maximum discovery datagrams handled per worker pass. */
+#define FRAME_UDP_DISCOVERY_RESPONSE_SIZE (160u) /* Maximum formatted device identity including terminator. */
+
+#ifndef FRAME_TCP_DISCOVERY_ENABLED
+#define FRAME_TCP_DISCOVERY_ENABLED (1)
+#endif
+
+#ifndef FRAME_TCP_DISCOVERY_PEER_ADDR
+#define FRAME_TCP_DISCOVERY_PEER_ADDR (0u)
+#endif
+
+#ifndef FRAME_TCP_DISCOVERY_PEER_PORT
+#define FRAME_TCP_DISCOVERY_PEER_PORT (0u)
+#endif
 
 static const char frame_udp_discovery_request[] = "FRAME_DISCOVER_V1"; /**< Exact FRAME discovery probe. */
-static const char frame_udp_discovery_response[] =
-    "FRAME_DEVICE_V1;name=PLECS-SIM;ip=127.0.0.1;tcp_port=5000;"
-    "mac=02:00:00:00:00:02;fw_version=1.1.0;protocol_version=1"; /**< PLECS device identity. */
 
 typedef struct
 {
@@ -122,13 +134,13 @@ static SOCKET frame_udp_discovery_open(void)
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons((u_short)FRAME_TCP_SERVER_PORT);
+    address.sin_port = htons((u_short)FRAME_UDP_DISCOVERY_PORT);
     if (bind(discovery_socket,
              (const struct sockaddr *)&address,
              (int)sizeof(address)) == SOCKET_ERROR)
     {
         PLECS_LOG("FRAME UDP discovery: bind port %u failed: %d\n",
-                  FRAME_TCP_SERVER_PORT,
+                  FRAME_UDP_DISCOVERY_PORT,
                   WSAGetLastError());
         (void)closesocket(discovery_socket);
         return INVALID_SOCKET;
@@ -140,8 +152,60 @@ static SOCKET frame_udp_discovery_open(void)
         return INVALID_SOCKET;
     }
 
-    PLECS_LOG("FRAME UDP discovery: listening on 0.0.0.0:%u\n", FRAME_TCP_SERVER_PORT);
+    PLECS_LOG("FRAME UDP discovery: listening on 0.0.0.0:%u\n", FRAME_UDP_DISCOVERY_PORT);
     return discovery_socket;
+}
+
+/**
+ * @brief Format and send one address-specific PLECS discovery record.
+ * @param[in] discovery_socket UDP socket that received the FRAME probe.
+ * @param[in] p_remote_address FRAME endpoint that receives the unicast response.
+ * @param[in] remote_address_length Size of the supplied endpoint structure.
+ * @param[in] node_addr Static FRAME node address advertised by this record.
+ * @param[in] tcp_port TCP port on which the advertised node accepts FRAME.
+ */
+static void frame_udp_discovery_send(SOCKET discovery_socket,
+                                     const struct sockaddr_in *p_remote_address,
+                                     int remote_address_length,
+                                     uint8_t node_addr,
+                                     uint16_t tcp_port)
+{
+    char response[FRAME_UDP_DISCOVERY_RESPONSE_SIZE] = {0}; /* Bounded address-specific discovery payload. */
+    int response_length = 0; /* Formatted response length excluding the string terminator. */
+    int sent_length = 0; /* Number of discovery response bytes accepted by Winsock. */
+
+    if (p_remote_address == NULL)
+    {
+        return;
+    }
+
+    response_length = snprintf(response,
+                               sizeof(response),
+                               "FRAME_DEVICE_V1;name=PLECS-SIM-%02X;ip=127.0.0.1;tcp_port=%u;"
+                               "mac=02:00:00:00:00:%02X;fw_version=1.1.0;protocol_version=1",
+                               (unsigned int)node_addr,
+                               (unsigned int)tcp_port,
+                               (unsigned int)node_addr);
+    if ((response_length <= 0) ||
+        ((size_t)response_length >= sizeof(response)))
+    {
+        PLECS_LOG("FRAME UDP discovery: response formatting failed for node 0x%02X\n",
+                  (unsigned int)node_addr);
+        return;
+    }
+
+    sent_length = sendto(discovery_socket,
+                         response,
+                         response_length,
+                         0,
+                         (const struct sockaddr *)p_remote_address,
+                         remote_address_length);
+    if (sent_length != response_length)
+    {
+        PLECS_LOG("FRAME UDP discovery: node 0x%02X response failed: %d\n",
+                  (unsigned int)node_addr,
+                  WSAGetLastError());
+    }
 }
 
 static void frame_udp_discovery_poll(SOCKET discovery_socket)
@@ -161,7 +225,6 @@ static void frame_udp_discovery_poll(SOCKET discovery_socket)
         struct sockaddr_in remote_address = {0}; /* FRAME host address receiving the direct response. */
         int remote_address_length = (int)sizeof(remote_address); /* Mutable Winsock address length. */
         int received_length = 0; /* Number of request bytes returned by recvfrom. */
-        int sent_length = 0; /* Number of discovery response bytes accepted by Winsock. */
 
         received_length = recvfrom(discovery_socket,
                                    request_buffer,
@@ -186,16 +249,18 @@ static void frame_udp_discovery_poll(SOCKET discovery_socket)
             continue;
         }
 
-        sent_length = sendto(discovery_socket,
-                             frame_udp_discovery_response,
-                             (int)(sizeof(frame_udp_discovery_response) - 1u),
-                             0,
-                             (const struct sockaddr *)&remote_address,
-                             remote_address_length);
-        if (sent_length != (int)(sizeof(frame_udp_discovery_response) - 1u))
-        {
-            PLECS_LOG("FRAME UDP discovery: response failed: %d\n", WSAGetLastError());
-        }
+        frame_udp_discovery_send(discovery_socket,
+                                 &remote_address,
+                                 remote_address_length,
+                                 (uint8_t)HOST_ADDR,
+                                 (uint16_t)FRAME_TCP_SERVER_PORT);
+#if (FRAME_TCP_DISCOVERY_PEER_ADDR != 0u)
+        frame_udp_discovery_send(discovery_socket,
+                                 &remote_address,
+                                 remote_address_length,
+                                 (uint8_t)FRAME_TCP_DISCOVERY_PEER_ADDR,
+                                 (uint16_t)FRAME_TCP_DISCOVERY_PEER_PORT);
+#endif /* FRAME_TCP_DISCOVERY_PEER_ADDR */
     }
 }
 
@@ -463,7 +528,10 @@ static DWORD WINAPI frame_tcp_worker(void *context)
     }
     (void)ioctlsocket(listen_socket, (long)FIONBIO, &nonblocking);
     PLECS_LOG("FRAME TCP: listening on 0.0.0.0:%u\n", FRAME_TCP_SERVER_PORT);
-    discovery_socket = frame_udp_discovery_open();
+    if (FRAME_TCP_DISCOVERY_ENABLED == 1)
+    {
+        discovery_socket = frame_udp_discovery_open();
+    }
 
     while (InterlockedCompareExchange(&s_stop_requested, 0, 0) == 0)
     {
