@@ -10,6 +10,7 @@ set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../code)
 set(ROUTE_NODE_COMMON_SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
     ${PLECS_COMMON_DIR}/comm/comm.c
+    ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
     ${PLECS_COMMON_DIR}/comm/peer_tcp_link.c
     ${PLECS_COMMON_DIR}/comm/plecs_dispatch_lock.c
     ${PLECS_COMMON_DIR}/dbg/shell/shell.c
@@ -48,7 +49,15 @@ set(ROUTE_NODE_WARNING_FLAGS
     -Wundef
 )
 
-function(configure_route_node target_name output_name node_addr peer_role)
+function(configure_route_node
+         target_name
+         output_name
+         node_addr
+         peer_role
+         frame_port
+         discovery_enabled
+         discovery_peer_addr
+         discovery_peer_port)
     target_compile_features(${target_name} PRIVATE c_std_11)
     target_compile_definitions(${target_name} PRIVATE
         IS_PLECS
@@ -57,6 +66,10 @@ function(configure_route_node target_name output_name node_addr peer_role)
         HOST_ADDR=${node_addr}
         PLECS_NODE_ADDR=${node_addr}
         PLECS_PEER_ROLE=${peer_role}
+        FRAME_TCP_SERVER_PORT=${frame_port}
+        FRAME_TCP_DISCOVERY_ENABLED=${discovery_enabled}
+        FRAME_TCP_DISCOVERY_PEER_ADDR=${discovery_peer_addr}
+        FRAME_TCP_DISCOVERY_PEER_PORT=${discovery_peer_port}
     )
     target_compile_options(${target_name} PRIVATE ${ROUTE_NODE_WARNING_FLAGS})
     target_include_directories(${target_name} PRIVATE ${ROUTE_NODE_INCLUDE_DIRS})
@@ -70,14 +83,11 @@ function(configure_route_node target_name output_name node_addr peer_role)
     )
 endfunction()
 
-add_library(plecs_node02 SHARED
-    ${ROUTE_NODE_COMMON_SOURCES}
-    ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
-)
-configure_route_node(plecs_node02 plecs_node02 0x02 PEER_TCP_ROLE_CLIENT)
+add_library(plecs_node02 SHARED ${ROUTE_NODE_COMMON_SOURCES})
+configure_route_node(plecs_node02 plecs_node02 0x02 PEER_TCP_ROLE_CLIENT 5000 1 0x03 5002)
 
 add_library(plecs_node03 SHARED ${ROUTE_NODE_COMMON_SOURCES})
-configure_route_node(plecs_node03 plecs_node03 0x03 PEER_TCP_ROLE_SERVER)
+configure_route_node(plecs_node03 plecs_node03 0x03 PEER_TCP_ROLE_SERVER 5002 0 0 0)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/plecs_node02)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/plecs_node03)
