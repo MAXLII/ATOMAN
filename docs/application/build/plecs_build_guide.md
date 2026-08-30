@@ -13,6 +13,7 @@
 | `platform/plecs/boost/` | `boost.plecs` | `compile.bat` |
 | `platform/plecs/cllc/` | `cllc.plecs` | `compile.bat` |
 | `platform/plecs/frame_bridge/` | `frame_bridge.plecs` | `compile.bat` |
+| `platform/plecs/frame_route_bridge/` | `frame_route_bridge.plecs` | `compile.bat` |
 | `platform/plecs/inv/` | `inv.plecs` | `compile.bat` |
 | `platform/plecs/llc/` | `llc.plecs` | `compile.bat` |
 | `platform/plecs/pfc/` | `pfc.plecs` | `compile.bat` |
@@ -21,6 +22,10 @@
 公共 DLL 适配代码位于 `platform/plecs/common/`，控制算法代码复用 `code/` 目录下的模块。
 
 `platform/plecs/frame_bridge/` 在 DLL 内提供 FRAME Ethernet 参数服务。连接和参数说明见 [PLECS 与 FRAME 参数通信](../communication/plecs_frame_bridge.md)。
+
+`platform/plecs/frame_route_bridge/` 同时构建节点 `0x02` 和 `0x03` 两个 DLL。FRAME 连接节点
+`0x02` 的 TCP `5000` 端口，节点间通信使用回环 TCP `5001` 端口。构建、测试和联调方法见
+[PLECS 双节点 TCP 路由 Demo](../examples/frame_plecs_route_bridge_demo.md)。
 
 ## 2. 必需软件
 
@@ -201,6 +206,8 @@ DLL 运行时日志文件与当前加载的 `libplecs.dll` 位于同一目录：
 | LLC | `platform/plecs/llc/build/bin/plecs_log.txt` |
 | PFC | `platform/plecs/pfc/build/bin/plecs_log.txt` |
 | PFC_I32 | `platform/plecs/pfc_i32/build/bin/plecs_log.txt` |
+| FRAME Route Bridge 0x02 | `platform/plecs/frame_route_bridge/build/bin/plecs_node02/plecs_log.txt` |
+| FRAME Route Bridge 0x03 | `platform/plecs/frame_route_bridge/build/bin/plecs_node03/plecs_log.txt` |
 
 Windows 构建使用宽字符系统接口读取当前 DLL 的完整路径，再在其目录下创建 `plecs_log.txt`。仓库路径包含中文时也不依赖本地 ANSI 代码页。日志路径解析失败时，仿真继续运行，但日志文件不会创建。
 

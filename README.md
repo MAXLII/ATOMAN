@@ -165,6 +165,7 @@ PLECS 工程直接编译所需的公共控制与算法代码：
 
 ```bat
 platform\plecs\buck\compile.bat
+platform\plecs\frame_route_bridge\compile.bat
 platform\plecs\pfc\compile.bat
 platform\plecs\inv\compile.bat
 platform\plecs\llc\compile.bat
