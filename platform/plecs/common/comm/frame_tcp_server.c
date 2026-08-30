@@ -33,6 +33,7 @@
 #include "comm.h"
 #include "comm_addr.h"
 #include "plecs.h"
+#include "plecs_dispatch_lock.h"
 #include "shell_service.h"
 
 #include <string.h>
@@ -83,7 +84,6 @@ DECLARE_COMM_CTX(s_frame_comm_ctx, FRAME_TCP_RX_BUFFER_SIZE, HOST_ADDR, FRAME_TC
 static HANDLE s_worker = NULL;
 static volatile LONG s_stop_requested = 0;
 static SRWLOCK s_socket_lock = SRWLOCK_INIT;
-static CRITICAL_SECTION s_debug_lock;
 static CRITICAL_SECTION s_tx_queue_lock;
 static SOCKET s_client_socket = INVALID_SOCKET;
 static uint8_t s_winsock_ready = 0u;
@@ -367,6 +367,16 @@ static section_link_tx_func_t s_frame_io = {
     .tx_by_dma = frame_tcp_send,
 };
 
+static section_link_t frame_tcp_section_link = {
+    .rx_get_byte = NULL,
+    .my_printf = &s_frame_io,
+    .handler_arr = NULL,
+    .handler_num = 0u,
+    .link_id = FRAME_TCP_LINK_ID,
+};
+
+REG_SECTION_FUNC(SECTION_LINK, frame_tcp_section_link)
+
 static void frame_tcp_parser_reset(void)
 {
     s_frame_comm_ctx.index = 0u;
@@ -523,12 +533,12 @@ static DWORD WINAPI frame_tcp_worker(void *context)
                     }
                     break;
                 }
-                EnterCriticalSection(&s_debug_lock);
+                plecs_dispatch_lock_enter();
                 for (i = 0; i < received; ++i)
                 {
                     comm_run_with_time(rx_buffer[i], &s_frame_io, &s_frame_comm_ctx, receive_time_ms);
                 }
-                LeaveCriticalSection(&s_debug_lock);
+                plecs_dispatch_lock_exit();
             }
 
             if ((has_tx_data == 1u) &&
@@ -565,7 +575,6 @@ void frame_tcp_server_start(void)
     }
     if (s_critical_sections_ready == 0u)
     {
-        InitializeCriticalSection(&s_debug_lock);
         InitializeCriticalSection(&s_tx_queue_lock);
         s_critical_sections_ready = 1u;
     }
@@ -611,17 +620,21 @@ void frame_tcp_server_stop(void)
     if (s_critical_sections_ready != 0u)
     {
         DeleteCriticalSection(&s_tx_queue_lock);
-        DeleteCriticalSection(&s_debug_lock);
         s_critical_sections_ready = 0u;
     }
 }
 
 void frame_tcp_server_dispatch_enter(void)
 {
-    EnterCriticalSection(&s_debug_lock);
+    plecs_dispatch_lock_enter();
 }
 
 void frame_tcp_server_dispatch_exit(void)
 {
-    LeaveCriticalSection(&s_debug_lock);
+    plecs_dispatch_lock_exit();
+}
+
+uint8_t frame_tcp_server_is_connected(void)
+{
+    return (frame_tcp_client_get() != INVALID_SOCKET) ? 1u : 0u;
 }

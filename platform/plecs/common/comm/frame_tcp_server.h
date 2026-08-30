@@ -31,11 +31,14 @@
 #ifndef FRAME_TCP_SERVER_H
 #define FRAME_TCP_SERVER_H
 
+#include <stdint.h>
+
 #define FRAME_TCP_SERVER_PORT (5000u)
 
 void frame_tcp_server_start(void);
 void frame_tcp_server_stop(void);
 void frame_tcp_server_dispatch_enter(void);
 void frame_tcp_server_dispatch_exit(void);
+uint8_t frame_tcp_server_is_connected(void);
 
 #endif /* FRAME_TCP_SERVER_H */
