@@ -115,6 +115,11 @@ PROJECT_SOURCES := \
     ../../code/section/srtos_m/section.c \
     ../../code/data_source/comm/comm.c
 
+# Explicit opt-in hardware tests; the default firmware never starts this task.
+ifeq ($(FAL_BOARD_TEST),1)
+PROJECT_SOURCES += tests/fal_board_test.c
+endif
+
 LWIP_SOURCES := \
     $(wildcard third_party/lwip-2.2.1/src/core/*.c) \
     $(wildcard third_party/lwip-2.2.1/src/core/ipv4/*.c) \
