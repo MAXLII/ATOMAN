@@ -227,12 +227,6 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define SECTION_TASK_CONTEXT_POOL_FULL_POLICY SECTION_TASK_CONTEXT_POOL_FAULT
 #endif
 
-#if defined(__GNUC__) || defined(__ARMCC_VERSION)
-#define SECTION_TASK_STACK_ATTR __attribute__((aligned(8)))
-#else
-#define SECTION_TASK_STACK_ATTR
-#endif
-
 #define SECTION_TASK_RUNTIME_FIELDS   \
     uint32_t *p_sp;                   \
     uint32_t *p_stack;                \
@@ -273,23 +267,6 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #endif
 
 typedef struct section_link_t section_link_t;
-
-#if defined(_MSC_VER) && !defined(__clang__)
-#define SECTION_STATIC_ASSERT_JOIN_(a, b) a##b
-#define SECTION_STATIC_ASSERT_JOIN(a, b) SECTION_STATIC_ASSERT_JOIN_(a, b)
-#define SECTION_STATIC_ASSERT(cond, msg) \
-    typedef char SECTION_STATIC_ASSERT_JOIN(section_static_assert_, __LINE__)[(cond) ? 1 : -1]
-#else
-#define SECTION_STATIC_ASSERT(cond, msg) _Static_assert((cond), msg)
-#endif
-
-#ifdef __GNUC__
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#else
-#define likely(x) (x)
-#define unlikely(x) (x)
-#endif
 
 typedef struct reg_init
 {

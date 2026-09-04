@@ -217,23 +217,6 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 
 typedef struct section_link_t section_link_t;
 
-#if defined(_MSC_VER) && !defined(__clang__)
-#define SECTION_STATIC_ASSERT_JOIN_(a, b) a##b
-#define SECTION_STATIC_ASSERT_JOIN(a, b) SECTION_STATIC_ASSERT_JOIN_(a, b)
-#define SECTION_STATIC_ASSERT(cond, msg) \
-    typedef char SECTION_STATIC_ASSERT_JOIN(section_static_assert_, __LINE__)[(cond) ? 1 : -1]
-#else
-#define SECTION_STATIC_ASSERT(cond, msg) _Static_assert((cond), msg)
-#endif
-
-#ifdef __GNUC__
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#else
-#define likely(x) (x)
-#define unlikely(x) (x)
-#endif
-
 typedef struct reg_init
 {
     int8_t priority;
