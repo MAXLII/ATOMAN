@@ -87,5 +87,5 @@ The same demo source files are also listed in:
 
 ## 关联导航
 
-- 源码：[示例入口](../../../code/app/demo/demo.c) · [示例接口](../../../code/app/demo/demo.h)
+- 源码：[示例入口](../../../code/business/demo/demo.c) · [示例接口](../../../code/business/demo/demo.h)
 - 设计：[公共软件组件模型](../../design/framework/component_model.md) · [Section 设计](../../design/framework/section/section_design.md)

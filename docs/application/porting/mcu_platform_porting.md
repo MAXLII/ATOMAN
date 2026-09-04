@@ -72,7 +72,7 @@ bsp_pwm.c/.h
 
 - `code/section/baremetal`、`code/section/srtos_m` 或 `code/section/srtos_a9` 中的一套 `section.c/.h`
 - `code/section` 公共平台适配头
-- `code/comm`
+- `code/data_source/comm`
 - `code/dbg`
 - `code/interface`
 - 当前需要的 `code/app` demo 或业务模块
@@ -250,10 +250,10 @@ BSP 完成后，需要确认 `code/interface` 能在新平台编译通过。
 
 重点检查：
 
-- `interface/ac/gpio.c` 中继电器逻辑名是否存在
-- `interface/ac/adc.h` 中 ADC 宏是否完整
-- `interface/ac/pwm.c` 中 PWM API 是否完整
-- `interface/ac/comm_link.c` 中串口 TX/RX 是否注册到正确链路
+- `interface/demo/common/gpio.c` 中继电器逻辑名是否存在
+- `interface/ac/common/adc.h` 中 ADC 宏是否完整
+- `interface/ac/common/pwm.c` 中 PWM API 是否完整
+- `interface/demo/common/comm_link.c` 中串口 TX/RX 是否注册到正确链路
 - `HOST_ADDR` 是否符合模块地址约定
 
 当前 HC32F558 默认模块地址为 `0x02`。
@@ -328,5 +328,5 @@ HC32F558 本次接入形成了以下经验：
 
 ## 15. 关联导航
 
-- 源码：[HC32F334平台入口](../../../platform/hc32f334/src/main.c) · [Zynq-7020平台入口](../../../platform/zynq7020/ps/src/main.c) · [通用ADC接口](../../../code/interface/ac/adc.h) · [Section平台定义](../../../code/section/platform.h)
+- 源码：[HC32F334平台入口](../../../platform/hc32f334/src/main.c) · [Zynq-7020平台入口](../../../platform/zynq7020/ps/src/main.c) · [通用ADC接口](../../../code/interface/ac/common/adc.h) · [Section平台定义](../../../code/section/platform.h)
 - 设计：[工程设计](../../engineering_design.md) · [公共软件组件模型](../../design/framework/component_model.md)

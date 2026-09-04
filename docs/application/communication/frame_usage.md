@@ -15,8 +15,8 @@
 公共源码为：
 
 ```text
-code/comm/comm.c
-code/comm/comm.h
+code/data_source/comm/comm.c
+code/data_source/comm/comm.h
 ```
 
 ## 2. 为每条链路声明上下文
@@ -81,8 +81,8 @@ REG_COMM_ROUTE(DEBUG_LINK_ID, FIELD_LINK_ID, FIELD_DEVICE_ADDR)
 
 ### 源代码
 
-- [FRAME公共接口](../../../code/comm/comm.h)
-- [FRAME解析与路由实现](../../../code/comm/comm.c)
+- [FRAME公共接口](../../../code/data_source/comm/comm.h)
+- [FRAME解析与路由实现](../../../code/data_source/comm/comm.c)
 - [Section Link接口](../../../code/section/baremetal/section.h)
 
 ### 设计文档

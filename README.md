@@ -16,7 +16,7 @@ ATOMAN 是一套面向数字电源控制、嵌入式平台适配、仿真和软�
 FRAME Windows 上位机 <──── 通信与调试协议 ────> MCU / PLECS / Zynq
 ```
 
-公共代码通过 HAL、BSP 和接口函数访问外部资源。硬件寄存器、启动过程、链接布局和工具链留在具体平台中；控制和算法模块不携带芯片依赖。
+功能模块通过项目 Interface 调用 Platform BSP，协议与业务通过数据池交换数据。SECTION 与 DBG 通过统一的 `platform.h` 契约使用平台时基、链接段、复位和编译工具能力。
 
 ## 主要能力
 
@@ -61,26 +61,27 @@ handler 接收到三个信息：当前字节、当前链路的发送能力以及
 
 这套设计把“字节从哪里来”“字节代表什么”“解析状态保存在哪里”“响应从哪里发出”分成四个彼此独立的问题。完整设计见 [Section Link 设计文档](docs/design/framework/section/link_design.md)，接入方法见 [Section 使用文档](docs/application/framework/section/section_usage.md)。
 
-## 软件分层
+## 一衍架构
 
 ```text
-应用与产品流程                code/app
-功率拓扑控制                  code/ctrl
-通信与调试服务                code/comm + code/dbg
-调度、注册与通用算法          code/section + code/lib
-统一硬件接口                  code/interface
-平台驱动、链接与工程入口      platform/<target>
+功能模块：数据源 / 业务 / 控制 / 公共库
+                  ↕ 项目数据
+               数据池
+
+功能模块 ── 项目 Interface ── Platform BSP
+框架（SECTION / DBG）── platform.h ── Platform
 ```
 
 各层职责如下：
 
-- `code/app/` 组织应用流程、保护策略、状态管理和升级业务。
+- `code/data_source/` 组织通信、协议与存储数据源。
+- `code/business/demo/` 组织当前 demo 业务。
+- `code/data_pool/` 按项目提供私有数据、exchange API 和 business API。
 - `code/ctrl/` 维护功率拓扑控制器、运行状态机、参数配置和 HAL 绑定。
-- `code/comm/` 与 `code/dbg/` 提供通信协议、数据观测和调试服务。
-- `code/lib/` 提供硬件无关的控制、信号处理和通用算法。
-- `code/section/` 负责静态注册、初始化、调度、FSM，以及以 `link_process()` 为核心的链路分发。
-- `code/interface/` 定义 ADC、PWM、GPIO、USART 和存储等统一接口。
-- `platform/` 完成芯片驱动、接口挂载、构建系统和运行入口。
+- `code/lib/` 提供硬件无关的控制、信号处理和通用算法，并服务控制与业务代码。
+- `code/section/` 与 `code/dbg/` 构成注册、调度和调试框架。
+- `code/interface/<project>/` 按项目定义功能模块访问 Platform 的接口。
+- `platform/` 提供 BSP、平台入口、链接布局与构建目标。
 
 ## 仓库结构
 
@@ -88,8 +89,10 @@ handler 接收到三个信息：当前字节、当前链路的发送能力以及
 ATOMAN/
 ├─ code/                       公共嵌入式软件与算法
 │  ├─ app/                     应用流程与业务状态
-│  ├─ comm/                    通信协议与路由
+│  ├─ business/                当前业务项目
 │  ├─ ctrl/                    数字电源控制模块
+│  ├─ data_pool/               项目数据池
+│  ├─ data_source/             协议、通信与存储数据源
 │  ├─ dbg/                     调试与观测服务
 │  ├─ interface/               硬件接口抽象
 │  ├─ lib/                     控制和信号算法
@@ -216,7 +219,8 @@ FPGA IP 的设计与应用文档位于对应的 `verilog/<ip>/doc/` 目录。
 ## 工程约定
 
 - 公共 C 模块以 C11 为基础，核心实时路径不依赖动态内存。
-- 平台差异通过 BSP、HAL 和接口层适配，不进入共享控制算法。
+- 功能模块通过项目 Interface 调用 Platform BSP。
+- SECTION 与 DBG 通过 `platform.h` 使用 Platform 契约。
 - 生产代码、PLECS 与 Testbench 尽量复用同一份模块实现。
 - Section 用于静态注册和统一调度，平台链接配置负责保留对应段。
 - 通信协议扩展在已发布结构体尾部追加字段，并按实际数据长度兼容解析。

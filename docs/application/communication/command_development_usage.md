@@ -66,5 +66,5 @@ if (copy_len >= EXAMPLE_REQUEST_MIN_SIZE)
 
 ## 7. 关联导航
 
-- 源码：[FRAME 核心](../../../code/comm/comm.c) · [SFRA 服务](../../../code/dbg/sfra_service.c) · [Bootloader 协议类型](../../../code/app/bootloader/protocol/bootloader_protocol_types.h)
+- 源码：[FRAME 核心](../../../code/data_source/comm/comm.c) · [SFRA 服务](../../../code/dbg/sfra_service.c) · [Bootloader 协议类型](../../../code/app/bootloader/protocol/bootloader_protocol_types.h)
 - 设计：[协议演进与兼容设计](../../design/communication/protocol_evolution_design.md) · [FRAME通信核心设计](../../design/communication/frame_design.md)

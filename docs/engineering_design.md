@@ -2,7 +2,7 @@
 
 ## 1. 工程定位
 
-本仓库是数字电源公共软件、硬件平台、控制仿真和 FPGA IP 的统一工程。代码按照公共能力与平台适配分层组织，使控制算法、通信、调试、升级和调度模块能够在不同目标工程中复用。
+本仓库是数字电源公共软件、硬件平台、控制仿真和 FPGA IP 的统一工程。软件主体按照一衍架构组织为功能模块、数据池、框架和 Platform 四个大类。
 
 工程由五类内容组成：
 
@@ -12,7 +12,7 @@
 - `tests/host/`：公共软件的主机测试。
 - `docs/`：设计、应用、教材和其他工程文档。
 
-公共软件通过接口和函数表使用平台能力，平台工程负责硬件初始化、驱动绑定、链接布局、编译目标和运行入口。各目标工程只选取自身需要的公共模块。
+功能模块中的业务、协议和算法通过数据池交换业务数据。功能模块访问外部资源时经过项目 Interface，Interface 调用对应 Platform 的 BSP。SECTION 与 DBG 构成框架，并统一通过 `code/section/platform.h` 使用 Platform 提供的运行时契约。
 
 ## 2. 仓库结构
 
@@ -20,11 +20,13 @@
 base/
 ├─ code/
 │  ├─ app/                    应用流程和业务状态机
-│  ├─ comm/                   FRAME 通信与命令分发
+│  ├─ business/               当前业务项目
 │  ├─ ctrl/                   电源拓扑控制模块
+│  ├─ data_pool/              项目数据池
+│  ├─ data_source/            协议、通信与存储数据源
 │  ├─ dbg/                    调试、观测和在线分析
-│  ├─ interface/              公共硬件接口与 Flash 抽象层
-│  ├─ legacy/                 历史兼容和参考实现
+│  ├─ interface/              按项目组织的平台交互接口
+│  ├─ legacy/                 USART 接口参考实现
 │  ├─ lib/                    通用算法与基础组件
 │  └─ section/                注册、初始化和任务调度框架
 ├─ platform/
@@ -52,17 +54,17 @@ base/
 
 ## 3. 公共软件结构
 
-### 3.1 应用层 `code/app/`
+### 3.1 功能模块
 
-应用层组织面向完整功能流程的状态机和服务。
+功能模块由数据源、业务、控制与公共库组成。
 
 | 目录或模块 | 职责 |
 |---|---|
-| `ac/` | AC 应用流程 |
-| `llc/`、`pfc/` | 对应拓扑的应用逻辑 |
-| `demo/` | Section、通信和调试功能演示 |
-| `bootloader/` | 平台无关升级核心、协议和 IAP 切换服务 |
-| 根目录应用模块 | 故障、告警、上电、时间片、LED 和状态管理 |
+| `code/data_source/` | 外部通信、协议解析与存储数据源 |
+| `code/business/demo/` | demo 项目的任务、中断和框架功能演示 |
+| `code/ctrl/` | 电源拓扑控制器、控制状态和参数配置 |
+| `code/lib/` | 算法与可复用软件能力，同时服务控制和业务代码 |
+| `code/app/` | Bootloader 与 Zynq Zero Player 应用模块 |
 
 Bootloader 目录进一步按职责划分：
 
@@ -74,13 +76,17 @@ code/app/bootloader/
 └─ common/                    IAP 与 Bootloader 共享数据契约
 ```
 
-### 3.2 通信层 `code/comm/`
+### 3.2 数据源 `code/data_source/`
 
-通信层实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。业务模块通过 `REG_COMM` 注册命令处理函数，平台通过 Section link 提供字节收发能力。
+`code/data_source/comm/` 实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。`code/data_source/demo/` 定义 demo 协议并将解析后的值写入 demo 数据池。`code/data_source/storage/fal/` 提供异步 Flash 请求与分区内地址管理。
 
 FRAME 的解析上下文、命令发现、地址判定和路由边界见 [FRAME通信核心设计](design/communication/frame_design.md)，工程接入见 [FRAME通信接入](application/communication/frame_usage.md)。字段追加、长度解析、字节布局与 ACK 语义见[协议演进与兼容设计](design/communication/protocol_evolution_design.md)，新增命令按[通信命令开发方法](application/communication/command_development_usage.md)接入。
 
-### 3.3 控制层 `code/ctrl/`
+### 3.3 数据池 `code/data_pool/`
+
+数据池按项目组织私有数据对象、交换侧 API 和业务侧 API。`code/data_pool/demo/` 拥有一个私有 demo 快照，协议数据源通过 exchange API 发布，demo 业务通过 business API 读取。单写者使用奇偶序列发布，读者只接收完整稳定的快照。
+
+### 3.4 控制模块 `code/ctrl/`
 
 控制层按电源拓扑组织闭环控制和运行状态：
 
@@ -98,11 +104,17 @@ code/ctrl/
 
 控制模块使用公共接口访问采样值和 PWM 输出，并复用 `code/lib/` 中的控制算法。采样指针、执行器回调、FSM 资源和保护锁存通过控制 HAL 在 Idle 阶段挂载，并在运行期间冻结；其生命周期见[控制 HAL 挂载与生命周期设计](design/control/hal_binding_lifecycle_design.md)，平台接入见[控制 HAL 平台挂载方法](application/control/hal_binding_usage.md)。后台参数构建、版本发布和实时同步的边界见[控制参数构建与发布设计](design/control/setpoint_publish_design.md)，接入方法见[控制参数发布使用方法](application/control/setpoint_publish_usage.md)。
 
-### 3.4 算法库 `code/lib/`
+### 3.5 公共库 `code/lib/`
 
-算法库保存可独立复用的计算组件，包括 PI/PID、PR、SOGI、PLL/FLL、DFT、RMS、Notch、2P2Z、MPPT、线性插值、继电器时序和电网检测。模块使用调用方持有的状态对象和显式参数，不保存平台硬件配置。现有模块按使用语境整理为[控制算法库](application/library/control_blocks_usage.md)、[信号处理算法库](application/library/signal_processing_usage.md)和[检测与时序算法库](application/library/detection_sequence_usage.md)三份接入文档。
+算法库保存可独立复用的计算组件，包括 PI/PID、PR、SOGI、PLL/FLL、DFT、RMS、Notch、2P2Z、MPPT、线性插值、继电器时序、电网检测、在线超时、按键事件和状态位锁存。模块使用调用方持有的状态对象和显式参数，不保存平台硬件配置。现有模块按使用语境整理为[控制算法库](application/library/control_blocks_usage.md)、[信号处理算法库](application/library/signal_processing_usage.md)和[检测与时序算法库](application/library/detection_sequence_usage.md)三份接入文档。
 
-### 3.5 调试层 `code/dbg/`
+### 3.6 框架 `code/section/` 与 `code/dbg/`
+
+SECTION 提供静态注册、初始化、周期任务、中断、有限状态机和链路调度。DBG 提供 Shell、Scope、Trace、Perf 与 SFRA 调试能力。两者共同构成框架。
+
+框架与 Platform 的统一连接点是 `code/section/platform.h`。构建目标定义唯一的 `PLATFORM_*` 平台身份和 `TOOLCHAIN_*` 编译工具身份，`platform.h` 据此形成时基、复位、链接段、原子操作、性能计数与编译属性契约。SECTION 与 DBG 使用归一后的契约宏。
+
+#### DBG 结构
 
 调试层按可移植核心、Section 适配和通信服务三层组织：
 
@@ -118,20 +130,19 @@ code/ctrl/
 
 各调试工具的观测维度、实时边界和组合方法见[调试与观测系统总设计](design/debug/debug_system_design.md)。处理器异常、任务现场和调度资源的统一取证模型见[故障现场诊断设计](design/debug/fault_diagnosis_design.md)，现场使用步骤见[故障现场诊断使用方法](application/debug/fault_diagnosis_usage.md)。
 
-### 3.6 接口层 `code/interface/`
+### 3.7 项目 Interface `code/interface/`
 
-接口层定义公共软件访问硬件和平台资源的统一边界：
+Interface 是功能模块与 Platform 的交互通道。一级为 Interface，二级为项目，三级为 `common` 或实际 Platform 名称。公共实现调用各 Platform 同名 BSP API；存在实现差异时，代码放在对应实际 Platform 目录。
 
 | 目录 | 职责 |
 |---|---|
-| `common/` | 公共 GPIO、PWM 和基础接口契约 |
-| `ac/` | AC 平台通信链路和接口绑定 |
-| `cllc/` | CLLC 使用的接口定义 |
-| `fal/` | Flash Abstraction Layer 核心 |
+| `demo/common/` | demo 的通信链路、GPIO 和定时观测接口 |
+| `ac/common/` | AC 项目的 ADC 与 PWM 接口 |
+| `cllc/common/` | CLLC 项目的 ADC 与 PWM 接口 |
 
-平台 BSP 实现接口要求，应用和控制模块通过接口读取采样、更新 PWM、发送通信数据或访问 Flash。
+一套 Platform 项目选择唯一一组项目 Interface。MCU、PLECS 与其他 Platform 在能力一致时保持同名 API。Interface 只调用 BSP，BSP 完成寄存器、厂商库、DLL 端口与模型信号访问。
 
-### 3.7 Section 框架 `code/section/`
+### 3.8 Section 运行时
 
 Section 框架通过链接段收集模块注册项，统一完成初始化、周期任务、中断、有限状态机、通信链路和调试对象的调度。
 
@@ -140,7 +151,7 @@ code/section/
 ├─ baremetal/                 裸机协作式调度
 ├─ srtos_m/                   Cortex-M SRTOS 运行时
 ├─ srtos_a9/                  Cortex-A9 SRTOS 运行时
-├─ platform.h                平台能力入口
+├─ platform.h                 框架与 Platform 的统一契约入口
 ├─ timing.h                  时间换算定义
 └─ my_math.h                 公共数学辅助定义
 ```
@@ -149,9 +160,9 @@ code/section/
 
 公共Core、Service、Adapter、Cfg与Driver之间的职责关系见 [公共软件组件模型设计](design/framework/component_model.md)，新增模块的接入方法见 [公共组件接入方法](application/framework/component_integration.md)。
 
-### 3.8 Legacy `code/legacy/`
+### 3.9 Legacy `code/legacy/`
 
-Legacy 目录保存当前平台构建未引用的产品升级实现和旧 USART 接口，作为兼容与实现参考。当前公共模块和平台工程使用 `code/app/bootloader/`、`code/comm/` 与 `code/interface/` 中的接口。
+Legacy 目录保存 USART 接口参考实现。
 
 ## 4. 平台工程结构
 
@@ -216,7 +227,7 @@ Frame TCP 入口，并通过节点间 TCP 链路和对称 Section 路由表转�
 
 ### 5.1 FAL
 
-FAL Core 位于 `code/interface/fal/`，负责异步 Flash 请求和分区内地址管理。平台在自身 `fal_cfg.c/.h` 中定义：
+FAL Core 位于 `code/data_source/storage/fal/`，负责异步 Flash 请求和分区内地址管理。平台在自身 `fal_cfg.c/.h` 中定义：
 
 - Flash 设备及容量、编程页、擦除块和读取分段参数；
 - 每个设备的连续分区表和访问权限；

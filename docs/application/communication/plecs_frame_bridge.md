@@ -30,7 +30,7 @@ TCP 服务绑定 `0.0.0.0:5000`，允许 FRAME 使用 `127.0.0.1` 或运行 PLEC
 工程使用 `platform/plecs/common/dbg/` 中的完整调试模块副本，并在该副本中适配 Windows linker section。
 PLECS 仿真变量通过 `REG_SHELL_VAR` 注册，参数列表、单参数读写和实时波形统一由 Shell 服务处理：
 
-PLECS 构建使用 `platform/plecs/common/comm/comm.c`，不编译 `code/comm/comm.c`。MCU 通信实现及其超时行为保持独立。
+PLECS 构建使用 `platform/plecs/common/comm/comm.c`，MCU 通信实现位于 `code/data_source/comm/comm.c`。
 PLECS 不引用或编译 `code/dbg/` 中的源文件和头文件，MCU 调试实现保持不变。
 
 | 命令集 | 命令字 | 功能 |
@@ -107,7 +107,7 @@ SIM_OUTPUT = SIM_INPUT * SIM_GAIN + SIM_OFFSET
 
 FRAME 修改 `SIM_GAIN` 或 `SIM_OFFSET` 后，PLECS 模型输出从下一个采样点开始使用新值。
 
-工程直接编译 `code/app/demo/demo_shell.c`，该文件保持原样。`DEMO_SHELL_PING` 命令也会注册到 Shell
+工程直接编译 `code/business/demo/demo_shell.c`。`DEMO_SHELL_PING` 命令也会注册到 Shell
 链表，并以 `SHELL_CMD` 类型随完整 Shell 列表上报；命令节点的数据和范围字段为 0。
 
 ## 6. 实时波形

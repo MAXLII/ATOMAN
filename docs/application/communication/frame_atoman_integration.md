@@ -23,7 +23,7 @@ FRAME GUI / CLI
 ATOMAN 平台通信链路
         │
         ▼
-code/comm FRAME 解析与命令分发
+code/data_source/comm FRAME 解析与命令分发
         │
         ├─ Shell / 参数与实时波形
         ├─ Scope / SFRA / Perf / Trace
@@ -128,8 +128,8 @@ FRAME 的通用安装、页面和命令说明在 FRAME 仓库维护：
 FRAME 协议接入的代码入口为：
 
 ```text
-code/comm/comm.c
-code/comm/comm.h
+code/data_source/comm/comm.c
+code/data_source/comm/comm.h
 ```
 
 底层接入细节见：
