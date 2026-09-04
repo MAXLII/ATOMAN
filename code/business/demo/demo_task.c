@@ -29,12 +29,14 @@
 
 #include "section.h"
 #include "comm_link.h"
+#include "demo_data_pool_business.h"
 
 #include <stdint.h>
 #include <string.h>
 
 static uint32_t s_demo_task_10ms_count = 0u;
 static uint32_t s_demo_task_tick_count = 0u;
+static demo_data_pool_snapshot_t s_demo_task_data_snapshot;
 
 #ifndef DEMO_TASK_DEAD_LOOP_ENABLE
 #define DEMO_TASK_DEAD_LOOP_ENABLE SECTION_RUNTIME_PREEMPTIVE
@@ -50,6 +52,7 @@ static uint32_t s_demo_task_tick_count = 0u;
 
 static void demo_task_10ms(void)
 {
+    demo_data_pool_business_read(&s_demo_task_data_snapshot);
     s_demo_task_10ms_count++;
 }
 

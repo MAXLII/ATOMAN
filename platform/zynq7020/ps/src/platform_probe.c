@@ -34,7 +34,7 @@
 #include "comm.h"
 #include "comm_addr.h"
 #include "comm_link.h"
-#include "demo.h"
+#include "demo_protocol.h"
 #include "perf.h"
 #include "scope.h"
 #include "section.h"
