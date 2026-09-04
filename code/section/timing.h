@@ -86,8 +86,12 @@
 #endif
 
 #if defined(PWM_FREQ) && !defined(CTRL_PWM_CMP_MAX)
-#if (PLATFORM_CTRL_PWM_TIMER_FREQ_HZ > 0UL)
-#define CTRL_PWM_CMP_MAX ((int32_t)((((float)PLATFORM_CTRL_PWM_TIMER_FREQ_HZ * 64.0f) / PWM_FREQ / 2.0f) + 0.5f))
+#ifndef CTRL_PWM_TIMER_FREQ_HZ
+#define CTRL_PWM_TIMER_FREQ_HZ 0UL
+#endif
+
+#if (CTRL_PWM_TIMER_FREQ_HZ > 0UL)
+#define CTRL_PWM_CMP_MAX ((int32_t)((((float)CTRL_PWM_TIMER_FREQ_HZ * 64.0f) / PWM_FREQ / 2.0f) + 0.5f))
 #else
 #define CTRL_PWM_CMP_MAX ((int32_t)65535)
 #endif

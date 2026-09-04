@@ -28,15 +28,13 @@
  */
 #include "shell_core.h"
 
+#include "platform.h"
+
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
 
-#if defined(__GNUC__) && !defined(__CC_ARM)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
-#endif
+DBG_FLOAT_DIAGNOSTIC_BEGIN
 
 static void *shell_core_list_begin(const shell_core_list_t *p_list,
                                    shell_core_list_iterator_t *p_iterator)
@@ -646,6 +644,4 @@ shell_core_item_t *shell_core_find(const shell_core_list_t *p_list, const char *
     return NULL;
 }
 
-#if defined(__GNUC__) && !defined(__CC_ARM)
-#pragma GCC diagnostic pop
-#endif
+DBG_FLOAT_DIAGNOSTIC_END
