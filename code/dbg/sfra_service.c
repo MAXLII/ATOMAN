@@ -29,6 +29,7 @@
 #include "sfra_service.h"
 
 #include "comm.h"
+#include "platform.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -41,11 +42,7 @@
  * LIST/INFO/CFG/CTRL/POINT handlers and saves Flash without changing protocol
  * behavior.
  */
-#if defined(__GNUC__) || defined(__clang__)
-#define SFRA_SERVICE_NOINLINE __attribute__((noinline))
-#else
-#define SFRA_SERVICE_NOINLINE
-#endif
+#define SFRA_SERVICE_NOINLINE DBG_NOINLINE
 
 static uint8_t g_sfra_service_count = 0u;
 

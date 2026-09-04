@@ -28,6 +28,8 @@
  */
 #include "scope_service.h"
 
+#include "platform.h"
+
 #include "comm.h"
 
 #include <stddef.h>
@@ -655,9 +657,7 @@ static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 /* Printf helpers */
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
+DBG_FLOAT_DIAGNOSTIC_BEGIN
 
 void scope_printf_status(scope_t *scope, DEC_MY_PRINTF)
 {
@@ -808,7 +808,7 @@ static void scope_print_data(void)
 
 REG_TASK_MS(1, scope_print_data)
 
-#pragma GCC diagnostic pop
+DBG_FLOAT_DIAGNOSTIC_END
 /* Registration */
 REG_INIT(1, scope_service_init)
 REG_TASK_MS(1, scope_service_poll_task)

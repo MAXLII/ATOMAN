@@ -30,14 +30,13 @@
 
 #include "comm.h"
 #include "my_math.h"
+#include "platform.h"
 
 #include <string.h>
 
 #if SHELL_STRING_ENABLE == 1u
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
+DBG_FLOAT_DIAGNOSTIC_BEGIN
 void shell_status_run(void)
 {
     const section_item_t *p_list = p_shell_first;
@@ -221,7 +220,7 @@ static void list_print_task(void)
 
 REG_TASK_MS(10, list_print_task)
 
-#pragma GCC diagnostic pop
+DBG_FLOAT_DIAGNOSTIC_END
 
 #endif /* SHELL_STRING_ENABLE */
 
