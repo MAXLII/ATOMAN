@@ -94,7 +94,60 @@ download.bat AC D:\firmware\hc32f334_ac.hex
 platform/hc32f334/keil_mdk/download_ac.log
 ```
 
-## 3. 环境要求
+## 3. TI C2000 Section Demo
+
+工程目录：
+
+```text
+platform/tms320f280049c/
+platform/tms320f28p55/
+```
+
+两个工程使用 TI C2000 编译器、C2000Ware DriverLib、裸机 Section 运行时和 FRAME 串口服务。F280049C 工程从仓库根目录编译：
+
+```bat
+platform\tms320f280049c\compile.bat
+```
+
+输出文件位于：
+
+```text
+platform/tms320f280049c/build/section_task_demo.out
+platform/tms320f280049c/build/section_task_demo.map
+```
+
+F280049C 的链接命令文件为 `platform/tms320f280049c/linker/f280049c_ram_lnk.cmd`。程序入口、代码、常量、Section 自动注册段、栈和数据均放置在片内 RAM；该工程生成的是调试 RAM 镜像，断电后不会保留。
+
+连接 LAUNCHXL-F280049C 的板载 XDS110 后下载并运行：
+
+```bat
+platform\tms320f280049c\download.bat
+```
+
+下载脚本使用 `targetConfigs/TMS320F280049C_LaunchPad.ccxml` 和 CCS `loadti`。当电脑同时连接多块 XDS110 时，应在 CCS 目标配置中选择对应探针序列号，再加载同一个 `.out` 文件。
+
+板载 XDS110 Application/User UART 连接到 SCIA GPIO28/GPIO29，串口参数为 115200、8N1。在 FRAME 工程根目录验证参数、Section 链路及调度记录：
+
+```powershell
+.\frame.ps1 param list --port COM9 --baud 115200 --timeout 3
+.\frame.ps1 perf dict --port COM9 --baud 115200 --timeout 3
+.\frame.ps1 perf sample --port COM9 --baud 115200 --timeout 3 --filter task
+```
+
+`COM9` 是示例端口。实际端口通过以下命令识别：
+
+```powershell
+.\frame.ps1 serial ports
+```
+
+F28P55 使用对应目录下相同名称的脚本：
+
+```bat
+platform\tms320f28p55\compile.bat
+platform\tms320f28p55\download.bat
+```
+
+## 4. 环境要求
 
 HC32F334 GCC 编译与下载链路使用以下工具：
 
@@ -112,7 +165,16 @@ HC32F334 GCC 编译与下载链路使用以下工具：
 set GCC_PATH=C:\ArmGNU\bin
 ```
 
-## 4. 下载结果判定
+TI C2000 工程使用以下工具：
+
+| 工具 | 用途 |
+| --- | --- |
+| Code Composer Studio 21 | 提供 `gmake`、调试服务器和 `loadti` |
+| TI C2000 Compiler 25.11.1.LTS | 编译与链接 C28x EABI 程序 |
+| C2000Ware 5.04.00.00 | 提供 F28004x/F28P55x Device Support 和 DriverLib |
+| XDS110 | JTAG 下载和 Application/User UART 通信 |
+
+## 5. 下载结果判定
 
 脚本不以 J-Link Commander 的进程退出码单独判断烧录成功。下载必须满足：
 
@@ -123,7 +185,15 @@ set GCC_PATH=C:\ArmGNU\bin
 
 `Cortex-M4` 连接成功只说明调试内核可访问，不能替代片内 Flash 编程与校验结果。
 
-## 5. 关联导航
+C2000 RAM 下载必须满足：
 
-- 源码：[HC32F334 GCC 构建脚本](../../../platform/hc32f334/gcc/compile.bat) · [HC32F334 Keil 构建脚本](../../../platform/hc32f334/keil_mdk/compile.bat) · [HC32F334 下载脚本](../../../platform/hc32f334/keil_mdk/download.bat)
+1. `loadti` 按目标芯片配置连接成功。
+2. `.out` 文件加载完成。
+3. 日志包含 `Target running...`。
+4. FRAME 能读取参数列表和 Perf 字典。
+5. Perf 采样中包含 `section_link_task` 和当前平台的 Demo 周期任务。
+
+## 6. 关联导航
+
+- 源码：[HC32F334 GCC 构建脚本](../../../platform/hc32f334/gcc/compile.bat) · [HC32F334 Keil 构建脚本](../../../platform/hc32f334/keil_mdk/compile.bat) · [HC32F334 下载脚本](../../../platform/hc32f334/keil_mdk/download.bat) · [F280049C 构建脚本](../../../platform/tms320f280049c/compile.bat) · [F280049C 下载脚本](../../../platform/tms320f280049c/download.bat)
 - 设计：[工程设计](../../engineering_design.md)
