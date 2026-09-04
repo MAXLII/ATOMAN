@@ -29,8 +29,8 @@ FAL 由平台持有并初始化。Bootloader 通过 Flash 虚函数使用 FAL，
 新平台工程直接加入：
 
 ```text
-code/interface/fal/fal_core.c
-code/interface/fal/fal_core.h
+code/data_source/storage/fal/fal_core.c
+code/data_source/storage/fal/fal_core.h
 ```
 
 FAL Core的设备模型、分段状态机和平台配置方法统一见[FAL平台配置与上层接入](../storage/fal_usage.md)。Bootloader移植只确认平台FAL已经独立初始化并持续调度，不在Adapter中复制FAL逻辑或接管其生命周期。
@@ -73,7 +73,7 @@ code/app/bootloader/core/bootloader_metadata.h
 ```text
 code/app/bootloader/protocol/bootloader_protocol.c
 code/app/bootloader/protocol/bootloader_protocol.h
-code/comm/comm.c
+code/data_source/comm/comm.c
 ```
 
 协议层处理：
@@ -614,7 +614,7 @@ platform/zynq7020/ps/bootloader/
 ### 源代码
 
 - [Bootloader Core接口](../../../code/app/bootloader/core/bootloader_core.h)
-- [FAL Core接口](../../../code/interface/fal/fal_core.h)
+- [FAL Core接口](../../../code/data_source/storage/fal/fal_core.h)
 - [HC32F334适配器参考](../../../platform/hc32f334/bootloader/bootloader_fal_adapter.c)
 - [Zynq-7020适配器参考](../../../platform/zynq7020/ps/bootloader/bootloader_fal_adapter.c)
 

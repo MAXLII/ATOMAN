@@ -64,7 +64,7 @@ void control_irq_handler(void)
 
 ## 5. 示例入口
 
-`code/app/demo/` 提供静态注册、任务、通信、Shell、Perf、Scope、Trace 和 SFRA 的最小代码样例。样例清单与构建入口见[公共功能演示](../examples/demo.md)。
+`code/business/demo/` 提供静态注册、任务、Shell、Perf、Scope、Trace 和 SFRA 的最小代码样例；通信协议位于 `code/data_source/demo/`。样例清单与构建入口见[公共功能演示](../examples/demo.md)。
 
 示例用于查看调用形态，不替代模块应用文档中的容量、并发、安全和生命周期要求。
 
@@ -80,5 +80,5 @@ void control_irq_handler(void)
 
 ## 7. 关联导航
 
-- 源码：[Section接口](../../../code/section/baremetal/section.h) · [通信接口](../../../code/comm/comm.h) · [Perf接口](../../../code/dbg/perf.h) · [示例入口](../../../code/app/demo/demo.c)
+- 源码：[Section接口](../../../code/section/baremetal/section.h) · [通信接口](../../../code/data_source/comm/comm.h) · [Perf接口](../../../code/dbg/perf.h) · [示例入口](../../../code/business/demo/demo.c)
 - 设计：[工程设计](../../engineering_design.md) · [公共软件组件模型](../../design/framework/component_model.md) · [Section 设计](../../design/framework/section/section_design.md)

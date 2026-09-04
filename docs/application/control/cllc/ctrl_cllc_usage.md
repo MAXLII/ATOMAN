@@ -103,7 +103,7 @@ cllc_ctrl_get_debug(&debug);
 
 ## 8. PLECS 工程
 
-`platform/plecs/cllc/` 通过 `code/interface/cllc/adc.c` 和 `pwm.c` 接入本模块。编译命令：
+`platform/plecs/cllc/` 通过 `code/interface/cllc/common/adc.c` 和 `pwm.c` 接入本模块。编译命令：
 
 ```bat
 cd platform\plecs\cllc

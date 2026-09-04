@@ -179,7 +179,7 @@ Shell 服务通过 `comm` 协议提供二进制访问能力。业务模块不需
 当前 demo 里可以参考：
 
 ```text
-code/app/demo/demo_shell.c
+code/business/demo/demo_shell.c
 ```
 
 该文件演示了：

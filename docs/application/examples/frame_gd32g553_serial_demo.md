@@ -1,18 +1,18 @@
 # GD32G553 串口与 FRAME 联调 Demo
 
-本文使用 ATOMAN 的 `platform/gd32g553c/` 工程和 `code/app/demo/` 公共示例，通过 FRAME 验证串口协议回环、参数读写、实时波形和 Scope。
+本文使用 ATOMAN 的 `platform/gd32g553c/` 工程和 `code/business/demo/` 公共示例，通过 FRAME 验证串口协议回环、参数读写、实时波形和 Scope。
 
 ## 1. Demo 配置
 
 当前 GD32G553 工程已经编译通信与调试 Demo：
 
 ```text
-code/app/demo/demo_comm.c
-code/app/demo/demo_shell.c
-code/app/demo/demo_scope.c
-code/app/demo/demo_perf.c
-code/app/demo/demo_sfra.c
-code/app/demo/demo_trace.c
+code/data_source/demo/demo_comm.c
+code/business/demo/demo_shell.c
+code/business/demo/demo_scope.c
+code/business/demo/demo_perf.c
+code/business/demo/demo_sfra.c
+code/business/demo/demo_trace.c
 ```
 
 固定通信配置为：
@@ -192,6 +192,6 @@ CLI 可先检查列表：
 
 - [ATOMAN 与 FRAME 配合使用](../communication/frame_atoman_integration.md)
 - [公共 Demo 总览](demo.md)
-- [Demo 通信源码](../../../code/app/demo/demo_comm.c)
-- [Demo 参数源码](../../../code/app/demo/demo_shell.c)
-- [Demo Scope 源码](../../../code/app/demo/demo_scope.c)
+- [Demo 通信源码](../../../code/data_source/demo/demo_comm.c)
+- [Demo 参数源码](../../../code/business/demo/demo_shell.c)
+- [Demo Scope 源码](../../../code/business/demo/demo_scope.c)

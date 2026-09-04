@@ -7,8 +7,8 @@
 公共代码直接复用：
 
 ```text
-code/interface/fal/fal_core.c
-code/interface/fal/fal_core.h
+code/data_source/storage/fal/fal_core.c
+code/data_source/storage/fal/fal_core.h
 ```
 
 平台准备：
@@ -230,8 +230,8 @@ FAL会把范围扩展到完整擦除块。调用者必须确认同一擦除块�
 
 ### 源代码
 
-- [FAL公共接口](../../../code/interface/fal/fal_core.h)
-- [FAL状态机实现](../../../code/interface/fal/fal_core.c)
+- [FAL公共接口](../../../code/data_source/storage/fal/fal_core.h)
+- [FAL状态机实现](../../../code/data_source/storage/fal/fal_core.c)
 - [HC32F334配置参考](../../../platform/hc32f334/bootloader/fal_cfg.c)
 - [Zynq-7020配置参考](../../../platform/zynq7020/ps/bootloader/fal_cfg.c)
 
