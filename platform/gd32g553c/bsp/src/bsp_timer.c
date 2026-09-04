@@ -40,4 +40,19 @@ void bsp_timer_init(void)
     timer_enable(TIMER1);
 }
 
+uint32_t bsp_timer_jitter_count_get(void)
+{
+    return TIMER_CNT(TIMER2) & 0x0000FFFFu;
+}
+
+uint32_t bsp_timer_jitter_clock_hz_get(void)
+{
+    return SystemCoreClock;
+}
+
+uint32_t bsp_timer_jitter_period_ticks_get(void)
+{
+    return (TIMER_CAR(TIMER2) & 0x0000FFFFu) + 1u;
+}
+
 REG_INIT(0, bsp_timer_init)
