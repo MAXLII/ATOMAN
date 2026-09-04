@@ -25,7 +25,7 @@ zynq_boot_platform.c \
 fal_cfg.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
 $(PROJECT_ROOT)/code/data_source/comm/comm.c \
-$(PROJECT_ROOT)/code/data_source/storage/fal/fal_core.c \
+$(PROJECT_ROOT)/code/lib/fal/fal_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_metadata.c \
 $(PROJECT_ROOT)/code/app/bootloader/protocol/bootloader_protocol.c
@@ -38,7 +38,7 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/section \
 -I$(PROJECT_ROOT)/code/data_source/comm \
 -I$(PROJECT_ROOT)/code/dbg \
--I$(PROJECT_ROOT)/code/data_source/storage/fal \
+-I$(PROJECT_ROOT)/code/lib/fal \
 -I$(PROJECT_ROOT)/code/app/bootloader/core \
 -I$(PROJECT_ROOT)/code/app/bootloader/protocol \
 -I$(PROJECT_ROOT)/code/app/bootloader/common \
