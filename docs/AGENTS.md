@@ -6,6 +6,14 @@
 - Put new Markdown documentation files under `docs/`.
 - Engineering design notes, module descriptions, protocol documents, operation manuals, and AI-facing instructions should live in `docs/`.
 
+## Platform Macro Boundary
+
+- Centralize all platform-level macro recognition and capability mapping in `platform.h`. Platform-level inputs include compiler built-ins, normalized toolchain macros, MCU identity macros, host-environment macros, and simulation-platform macros.
+- Build systems may define the minimum platform-selection inputs, but architecture and shared modules must not consume those identity macros directly. `platform.h` is the single boundary that translates platform identity into architecture-facing capability macros.
+- Architecture code, including Section runtimes, may use only the semantic interfaces exported by `platform.h`, such as linker-section attributes, weak linkage, alignment, static assertions, system tick, reset, synchronization, and hardware capability values.
+- Do not add compiler-, MCU-, host-, or simulation-specific `#if` branches outside `platform.h`. When supporting a new platform or toolchain, extend the `platform.h` contract instead of adding identity checks to architecture code.
+- Business-level configuration macros are outside this rule. Product and topology selections such as `IS_BUCK`, `IS_BOOST`, and `IS_CLLC` remain in business or project configuration and must not be moved into `platform.h`.
+
 ## Git Commit Workflow
 
 - When the user says to commit code, inspect the actual current code changes and split them into meaningful batches before committing.
