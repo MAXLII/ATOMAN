@@ -14,6 +14,15 @@
 - Do not add compiler-, MCU-, host-, or simulation-specific `#if` branches outside `platform.h`. When supporting a new platform or toolchain, extend the `platform.h` contract instead of adding identity checks to architecture code.
 - Business-level configuration macros are outside this rule. Product and topology selections such as `IS_BUCK`, `IS_BOOST`, and `IS_CLLC` remain in business or project configuration and must not be moved into `platform.h`.
 
+## Demo Platform Compatibility Exception
+
+- This repository's `code/business/demo/` directory contains shared executable examples built by multiple Platform projects.
+- A demo source may include `platform.h` and use its normalized `PLATFORM_*` identity macros when a demonstrated function is unavailable on part of the supported Platforms.
+- Use the platform branch to include, exclude, or replace only the unsupported demo function; keep code shared when its behavior is supported consistently.
+- Demo platform operations continue to use the demo project Interface and the selected Platform BSP.
+- Compiler built-ins, raw MCU macros, host macros, simulation macros, and toolchain recognition remain centralized in `platform.h`.
+- This exception is a local project rule for demo compatibility and is not part of the 一衍 architecture rules.
+
 ## Git Commit Workflow
 
 - When the user says to commit code, inspect the actual current code changes and split them into meaningful batches before committing.
