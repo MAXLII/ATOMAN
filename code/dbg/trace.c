@@ -28,6 +28,18 @@
  */
 #include "trace.h"
 
+#include "section.h"
+
+static uint32_t dbg_trace_platform_time_get(void)
+{
+    return SECTION_SYS_TICK;
+}
+
+static void dbg_trace_platform_time_init(void)
+{
+    dbg_trace_core_bind_time_getter(dbg_trace_platform_time_get);
+}
+
 void dbg_trace_bind_time(volatile uint32_t *p_system_time)
 {
     dbg_trace_core_bind_time(p_system_time);
@@ -67,3 +79,5 @@ uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line)
 {
     return dbg_trace_core_read(p_time, p_line);
 }
+
+REG_INIT(-20, dbg_trace_platform_time_init)
