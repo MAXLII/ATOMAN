@@ -27,42 +27,19 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "sogi_i32.h"
-#ifdef IS_PLECS
-#include "plecs.h"
-#endif
 #include <limits.h>
 #include <stddef.h>
 
 #define SOGI_I32_NUM_GAIN (128LL)
 
-#define SOGI_I32_SAT_LOG_PERIOD_TICKS (1000U)
-
-static uint32_t sogi_i32_sat_log_cnt = 0U;
-
 static int32_t sogi_i32_sat_i64_to_i32(int64_t val)
 {
     if (val > (int64_t)INT32_MAX)
     {
-#ifdef IS_PLECS
-        sogi_i32_sat_log_cnt++;
-        if (sogi_i32_sat_log_cnt >= SOGI_I32_SAT_LOG_PERIOD_TICKS)
-        {
-            sogi_i32_sat_log_cnt = 0U;
-            PLECS_LOG("sogi_i32 sat high val=%lld\n", (long long)val);
-        }
-#endif
         return INT32_MAX;
     }
     else if (val < (int64_t)INT32_MIN)
     {
-#ifdef IS_PLECS
-        sogi_i32_sat_log_cnt++;
-        if (sogi_i32_sat_log_cnt >= SOGI_I32_SAT_LOG_PERIOD_TICKS)
-        {
-            sogi_i32_sat_log_cnt = 0U;
-            PLECS_LOG("sogi_i32 sat low val=%lld\n", (long long)val);
-        }
-#endif
         return INT32_MIN;
     }
 
