@@ -153,6 +153,27 @@ typedef struct
     uint8_t sync_issued;              /**< Final optional sync has been issued. */
 } fal_t;
 
+typedef struct
+{
+    fal_t *p_instances;          /**< Caller-owned, initially zeroed independent instances. */
+    const fal_cfg_t *p_configs;  /**< Configuration array paired one-to-one with instances. */
+    uint16_t instance_count;     /**< Number of entries in both arrays; bounds each scheduling pass. */
+} fal_runtime_t;
+
+/** @param p_runtime Immutable binding with initially zeroed instances.
+ * @return SUCCESS when all mount, BUSY without changes if any request is active,
+ * otherwise the first failure. Other independent instances are still initialized.
+ * @note All runtime and request APIs require the same serialized task context. */
+fal_result_t fal_runtime_init(const fal_runtime_t *p_runtime);
+/** @param p_runtime Runtime binding; arrays and configuration outlive every request.
+ * @param instance_index Instance to remount.
+ * @return Mount outcome; BUSY preserves an active request. */
+fal_result_t fal_runtime_mount(const fal_runtime_t *p_runtime, uint16_t instance_index);
+/** @param p_runtime Runtime binding for one bounded pass over all instances.
+ * @return SUCCESS for a completed scheduling pass, INVALID_ARGUMENT for an invalid binding.
+ * Inspect fal_result_get() on each instance for its asynchronous operation outcome. */
+fal_result_t fal_runtime_process(const fal_runtime_t *p_runtime);
+
 fal_result_t fal_init(fal_t *p_fal, const fal_cfg_t *p_cfg);
 void fal_process(fal_t *p_fal);
 fal_result_t fal_zone_info_get(const fal_t *p_fal, fal_zone_id_t zone_id, fal_zone_info_t *p_info);
