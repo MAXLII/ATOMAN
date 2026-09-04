@@ -182,7 +182,7 @@ static void frame_udp_discovery_send(SOCKET discovery_socket,
     response_length = snprintf(response,
                                sizeof(response),
                                "FRAME_DEVICE_V1;name=PLECS-SIM-%02X;ip=127.0.0.1;tcp_port=%u;"
-                               "mac=02:00:00:00:00:%02X;fw_version=1.4.1;protocol_version=1",
+                               "mac=02:00:00:00:00:%02X;fw_version=1.5.0;protocol_version=1",
                                (unsigned int)node_addr,
                                (unsigned int)tcp_port,
                                (unsigned int)node_addr);
