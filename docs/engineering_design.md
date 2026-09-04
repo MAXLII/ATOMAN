@@ -33,6 +33,7 @@ base/
 │  ├─ gd32g553c/              GD32G553C MCU 平台
 │  ├─ hc32f334/               HC32F334 MCU 平台
 │  ├─ hc32f558/               HC32F558 MCU 平台
+│  ├─ tms320f28p55/           TI C2000 F28P55 C28x MCU 平台
 │  ├─ zynq7020/               Zynq-7020 PS/PL 平台
 │  ├─ matlab/                 MATLAB 分析与时域仿真
 │  └─ plecs/                  PLECS 开关级仿真
@@ -169,6 +170,8 @@ MCU 平台位于 `platform/<platform>/`。各平台根据实际工具链包含�
 | `Firmware/`、`Libraries/`、`cmsis/` | 芯片厂商支持文件 |
 
 平台构建文件通过相对路径引用 `code/` 中的公共模块。链接脚本或 scatter 文件定义启动地址、程序区、运行栈和保留内存。
+
+`platform/tms320f28p55/` 使用 TI C2000 编译器、C2000Ware DriverLib 和裸机 Section 运行时。平台通过 XDS110 Application/User UART 接入 CommLink，并为参数、Scope、Perf、Trace、SFRA 和 Section 链表调试服务提供 C28x 逻辑八位组编解码、SCI 中断队列、ERAD 计时基准、RAM 链接布局及下载配置。
 
 ### 4.2 Zynq-7020 平台
 
