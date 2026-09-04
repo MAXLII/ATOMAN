@@ -35,7 +35,9 @@ static float s_demo_sfra_ref = 0.0f;
 static float s_demo_sfra_fbk = 0.0f;
 static pi_tustin_t s_demo_sfra_pi;
 
+#ifndef DEMO_SFRA_ISR_DIVIDER
 #define DEMO_SFRA_ISR_DIVIDER 6u
+#endif
 
 static void demo_sfra_prepare_freq(void *p_ctx);
 

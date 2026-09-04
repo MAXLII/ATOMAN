@@ -27,10 +27,8 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "pi_tustin.h"
-#include "my_math.h"
-#include "section.h"
-#include <stdbool.h>
-#include <math.h>
+
+#include <stddef.h>
 
 bool pi_tustin_init(pi_tustin_t *p_str,
                     float kp,
