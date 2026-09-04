@@ -100,6 +100,8 @@ ATOMAN/
 │  ├─ gd32g553c/               GD32G553C MCU 工程
 │  ├─ hc32f334/                HC32F334 MCU 工程
 │  ├─ hc32f558/                HC32F558 MCU 工程
+│  ├─ tms320f280049c/          TI C2000 F280049C MCU 工程
+│  ├─ tms320f28p55/            TI C2000 F28P55 MCU 工程
 │  ├─ zynq7020/                Zynq-7020 PS/PL 工程
 │  ├─ matlab/                  参数分析与离线模型
 │  ├─ plecs/                   功率级与控制联合仿真
@@ -151,6 +153,8 @@ platform\gd32g553c\compile.bat
 platform\gd32e507\compile.bat
 platform\hc32f334\gcc\compile.bat
 platform\apm32\compile.bat
+platform\tms320f280049c\compile.bat
+platform\tms320f28p55\compile.bat
 ```
 
 HC32F334 同时提供 Keil MDK 构建入口：
