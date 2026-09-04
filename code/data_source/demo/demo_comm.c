@@ -28,11 +28,10 @@
  */
 
 #include "comm.h"
-#include "demo.h"
+#include "demo_data_pool_exchange.h"
+#include "demo_protocol.h"
 
 #include <string.h>
-
-static demo_comm_frame_t s_demo_comm_last_frame;
 
 static void demo_comm_frame_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
@@ -59,6 +58,8 @@ static void demo_comm_frame_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
 static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     section_packform_t ack = {0};
+    demo_comm_frame_t frame = {0};
+    demo_data_pool_snapshot_t snapshot = {0};
     uint16_t copy_len;
 
     if ((p_pack == NULL) || (p_pack->p_data == NULL))
@@ -66,9 +67,13 @@ static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
-    memset(&s_demo_comm_last_frame, 0, sizeof(s_demo_comm_last_frame));
-    copy_len = (p_pack->len < sizeof(s_demo_comm_last_frame)) ? p_pack->len : sizeof(s_demo_comm_last_frame);
-    memcpy(&s_demo_comm_last_frame, p_pack->p_data, copy_len);
+    copy_len = (p_pack->len < sizeof(frame)) ? p_pack->len : sizeof(frame);
+    memcpy(&frame, p_pack->p_data, copy_len);
+
+    snapshot.counter = frame.counter;
+    snapshot.led_mask = frame.led_mask;
+    snapshot.temperature_x10 = frame.temperature_x10;
+    demo_data_pool_exchange_write(&snapshot);
 
     ack.src = p_pack->dst;
     ack.d_src = p_pack->d_dst;
@@ -77,8 +82,8 @@ static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
     ack.cmd_set = p_pack->cmd_set;
     ack.cmd_word = p_pack->cmd_word;
     ack.is_ack = 1u;
-    ack.len = sizeof(s_demo_comm_last_frame);
-    ack.p_data = (uint8_t *)&s_demo_comm_last_frame;
+    ack.len = sizeof(frame);
+    ack.p_data = (uint8_t *)&frame;
     comm_send_data(&ack, my_printf);
 }
 

@@ -1,8 +1,6 @@
 #ifndef __DEMO_H__
 #define __DEMO_H__
 
-#include <stdint.h>
-
 /*
  * section framework guide
  *
@@ -92,24 +90,8 @@
  *     _dst_addr    : destination device address.
  *
  * This demo mainly exercises INIT/TASK/SHELL/COMM/PERF/SCOPE/TRACE/INTERRUPT.
- * LINK is provided by interface/usart.c.
+ * LINK is provided by code/interface/demo/common/comm_link.c.
  * COMM_ROUTE is described here as an extension point.
  */
-
-typedef struct
-{
-    uint32_t counter;
-    uint8_t led_mask;
-    int16_t temperature_x10;
-} demo_comm_frame_t;
-
-#define DEMO_CMD_SET_LOOPBACK 0x30
-#define DEMO_CMD_WORD_LOOPBACK 0x01
-
-#define DEMO_CMD_SET_FRAME_LOOPBACK 0x01
-#define DEMO_CMD_WORD_FRAME_LOOPBACK 0x17
-
-#define DEMO_CMD_SET_CONTROL 0x30
-#define DEMO_CMD_WORD_CONTROL 0x02
 
 #endif
