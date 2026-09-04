@@ -63,7 +63,7 @@ base/
 | `code/data_source/` | 外部通信、协议解析与存储数据源 |
 | `code/business/demo/` | demo 项目的任务、中断和框架功能演示 |
 | `code/ctrl/` | 电源拓扑控制器、控制状态和参数配置 |
-| `code/lib/` | 算法与可复用软件能力，同时服务控制和业务代码 |
+| `code/lib/` | 算法与可复用软件能力，同时服务控制和业务代码；`fal/` 提供异步 Flash 请求与分区内地址管理 |
 | `code/app/` | Bootloader 与 Zynq Zero Player 应用模块 |
 
 Bootloader 目录进一步按职责划分：
@@ -78,7 +78,7 @@ code/app/bootloader/
 
 ### 3.2 数据源 `code/data_source/`
 
-`code/data_source/comm/` 实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。`code/data_source/demo/` 定义 demo 协议并将解析后的值写入 demo 数据池。`code/data_source/storage/fal/` 提供异步 Flash 请求与分区内地址管理。
+`code/data_source/comm/` 实现 FRAME 数据帧解析、CRC 校验、命令注册、ACK 发送和通信路由。`code/data_source/demo/` 定义 demo 协议并将解析后的值写入 demo 数据池。
 
 FRAME 的解析上下文、命令发现、地址判定和路由边界见 [FRAME通信核心设计](design/communication/frame_design.md)，工程接入见 [FRAME通信接入](application/communication/frame_usage.md)。字段追加、长度解析、字节布局与 ACK 语义见[协议演进与兼容设计](design/communication/protocol_evolution_design.md)，新增命令按[通信命令开发方法](application/communication/command_development_usage.md)接入。
 
@@ -227,7 +227,7 @@ Frame TCP 入口，并通过节点间 TCP 链路和对称 Section 路由表转�
 
 ### 5.1 FAL
 
-FAL Core 位于 `code/data_source/storage/fal/`，负责异步 Flash 请求和分区内地址管理。平台在自身 `fal_cfg.c/.h` 中定义：
+FAL Core 位于 `code/lib/fal/`，负责异步 Flash 请求和分区内地址管理。平台在自身 `fal_cfg.c/.h` 中定义：
 
 - Flash 设备及容量、编程页、擦除块和读取分段参数；
 - 每个设备的连续分区表和访问权限；
@@ -237,6 +237,8 @@ FAL Core 位于 `code/data_source/storage/fal/`，负责异步 Flash 请求和�
 `fal_read()`、`fal_write()` 和 `fal_erase()` 提交请求，`fal_process()` 根据设备状态分段推进操作。FAL Core 负责配置、权限、边界、累计容量和整数溢出检查。
 
 FAL的设备模型、区域寻址、异步状态和停止语义见 [FAL分区与异步Flash管理设计](design/storage/fal_design.md)，平台配置与上层使用见 [FAL平台配置与上层接入](application/storage/fal_usage.md)。
+
+GD32E507 demo 的 `code/business/demo/fal_cfg.c/.h` 定义 NOR、NAND 操作适配与注册、分区表以及两个独立 FAL 实例的配置绑定。`code/lib/fal/` 的 runtime 接口负责实例初始化与遍历推进，`demo_storage_section.c` 注册初始化和周期调用。`interface/demo/common/flash_port.c` 提供初始化、状态、读、编程、擦除和几何查询函数，使用独立的 Interface 类型调用 BSP。`demo_storage_service.c` 使用已注册实例管理参数 A/B、测试区及循环日志；`demo_storage_pool.c` 保存 RAM 参数、冻结请求和完成状态，`demo_fal.c` 提供 Shell 管理与参数计算演示。FAL 按 `program_unit_size` 检查写入地址及长度对齐。
 
 ### 5.2 Bootloader
 

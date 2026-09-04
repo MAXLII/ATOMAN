@@ -135,7 +135,7 @@ REG_TASK_MS(1u, module_service_process)
 
 ### 源代码
 
-- [FAL Core接口](../../../code/data_source/storage/fal/fal_core.h)
+- [FAL Core接口](../../../code/lib/fal/fal_core.h)
 - [Bootloader Core接口](../../../code/app/bootloader/core/bootloader_core.h)
 - [HC32F334 Bootloader-FAL适配器](../../../platform/hc32f334/bootloader/bootloader_fal_adapter.c)
 - [Perf Core](../../../code/dbg/perf.c)
