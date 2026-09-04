@@ -117,6 +117,7 @@ typedef struct
     const fal_zone_cfg_t *p_zones;   /**< Ordered zones located on this device. */
     uint16_t zone_count;             /**< Number of zones on this device. */
     fal_flash_ops_t ops;             /**< Mounted platform Flash operations. */
+    uint32_t program_unit_size;      /**< Required address/length alignment; 0 means 1 for existing NOR adapters. */
 } fal_device_cfg_t;
 
 typedef struct

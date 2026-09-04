@@ -114,6 +114,13 @@ static fal_result_t device_validate(const fal_cfg_t *p_cfg, uint16_t device_inde
         return FAL_RESULT_CONFIG_ERROR;
     }
 
+    if ((p_device->program_unit_size != 0u) && /* Zero retains the byte-write contract. */
+        (((p_device->program_page_size % p_device->program_unit_size) != 0u) ||
+         ((p_device->erase_block_size % p_device->program_unit_size) != 0u)))
+    {
+        return FAL_RESULT_CONFIG_ERROR;
+    }
+
     for (compare_index = 0u; compare_index < device_index; compare_index++)
     {
         if (p_cfg->p_devices[compare_index].device_id == p_device->device_id)
@@ -612,6 +619,13 @@ fal_result_t fal_write(fal_t *p_fal,
     {
         p_fal->result = FAL_RESULT_SUCCESS;
         return FAL_RESULT_SUCCESS;
+    }
+
+    if ((p_device->program_unit_size != 0u) && /* NAND adapters require complete program units. */
+        ((((device_offset + offset) % p_device->program_unit_size) != 0u) ||
+         ((length % p_device->program_unit_size) != 0u)))
+    {
+        return FAL_RESULT_INVALID_ARGUMENT;
     }
 
     request_begin(p_fal,
