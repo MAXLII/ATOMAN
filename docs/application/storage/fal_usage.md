@@ -7,8 +7,8 @@
 公共代码直接复用：
 
 ```text
-code/data_source/storage/fal/fal_core.c
-code/data_source/storage/fal/fal_core.h
+code/lib/fal/fal_core.c
+code/lib/fal/fal_core.h
 ```
 
 平台准备：
@@ -74,6 +74,10 @@ static const fal_zone_cfg_t s_external_zones[] = {
 ```
 
 同一设备的区域按真实地址从低到高排列。FAL使用前序区域大小累加起点，因此不要给表预留没有区域描述的地址空洞。需要空洞时，应把它定义成具有明确权限的区域。
+
+`fal_device_cfg_t.program_unit_size` 指定写入地址与长度的最小对齐单位；0 与 1 均表示允许字节粒度请求。需要整页编程的 NAND 将它设为页大小，例如 2048。该值须整除 program page 和 erase block，`fal_write()` 在调用硬件前拒绝不对齐请求。零长度请求保留原有成功语义。
+
+GD32E507 demo 在 `code/business/demo/fal_cfg.c/.h` 中注册 Flash 操作、设备、分区和 FAL 实例。Interface 提供独立于 FAL 的基本 Flash 函数，由 `fal_cfg.c` 适配成 `fal_flash_ops_t` 回调。操作说明见 [GD32E507 双 Flash 与数据池 Demo](gd32e507_fal_demo.md)。
 
 区域大小和累计起点必须满足设备erase block对齐。容量表达优先使用“块数 × 基本块大小”，使布局边界可以直接审查。
 
@@ -230,8 +234,8 @@ FAL会把范围扩展到完整擦除块。调用者必须确认同一擦除块�
 
 ### 源代码
 
-- [FAL公共接口](../../../code/data_source/storage/fal/fal_core.h)
-- [FAL状态机实现](../../../code/data_source/storage/fal/fal_core.c)
+- [FAL公共接口](../../../code/lib/fal/fal_core.h)
+- [FAL状态机实现](../../../code/lib/fal/fal_core.c)
 - [HC32F334配置参考](../../../platform/hc32f334/bootloader/fal_cfg.c)
 - [Zynq-7020配置参考](../../../platform/zynq7020/ps/bootloader/fal_cfg.c)
 

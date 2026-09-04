@@ -12,17 +12,19 @@ FAL把不同Flash设备的容量、编程页、擦除块和异步驱动统一成
 - 初始化时拒绝有歧义或不可安全寻址的配置。
 - 不使用动态内存，运行上下文由调用方持有。
 
-## 2. 三层责任
+## 2. Core 边界与工程装配
 
 ```mermaid
 flowchart TD
-    U["上层存储使用者\n参数、日志、Bootloader适配器"] -->|"zone + offset"| C["FAL Core\n校验、换算、分段、状态机"]
-    C -->|"device + physical address"| CFG["平台fal_cfg\n设备表、区域表、geometry、ops"]
-    CFG --> D0["片内Flash驱动"]
-    CFG --> D1["SPI/QSPI Flash驱动"]
+    U["上层存储使用者"] -->|"zone + offset"| C["lib/fal Core\n校验、换算、分段、状态机"]
+    CFG["项目 fal_cfg\n设备、分区、ops 与实例绑定"] -->|"配置注入"| C
+    C -->|"已挂载的操作回调"| I["项目 Interface"]
+    I --> D["平台 BSP / Flash"]
 ```
 
-FAL Core不包含平台头文件。平台cfg可以包含FAL公共类型和平台驱动头文件，把硬件差异收束在设备操作函数中。
+Core 通过配置与操作回调获得设备能力。项目 Interface 提供独立类型的普通函数；fal_cfg 引入 FAL 公共类型，完成操作适配、设备描述与分区绑定。完整职责和工程组织见 [FAL 分层工程方案](fal_architecture.md)。
+
+GD32E507 demo 的配置由 `code/business/demo/fal_cfg.c` 定义：Interface 提供基础 Flash 函数，demo cfg 将这些函数适配为 `fal_flash_ops_t`，注册到设备表并关联分区表。BSP 与该 Interface 使用独立的类型，FAL Core 通过 cfg 中注册的回调访问设备。
 
 ## 3. 设备与区域模型
 
@@ -30,6 +32,7 @@ FAL Core不包含平台头文件。平台cfg可以包含FAL公共类型和平台
 
 - 设备ID和总容量；
 - program page大小；
+- program unit 大小：写入地址和长度的最小对齐单位，0 按 1 字节处理；
 - erase block大小；
 - 单次最大读取长度；
 - 本设备的有序区域表；
@@ -64,6 +67,7 @@ physical_address = zone_offset[n] + request_offset
 - 配置、设备表和运行上下文非空；
 - 设备ID不重复；
 - 容量、program page和erase block合法；
+- 非零 program unit 能整除 program page 和 erase block；
 - 必需驱动函数存在；
 - 每个设备具有非空区域表；
 - 区域ID在所有设备中唯一；

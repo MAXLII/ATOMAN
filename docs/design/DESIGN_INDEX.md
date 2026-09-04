@@ -39,6 +39,7 @@
 - [FRAME通信核心设计](communication/frame_design.md)
 - [协议演进与兼容设计](communication/protocol_evolution_design.md)
 - [FAL分区与异步Flash管理设计](storage/fal_design.md)
+- [FAL 分层工程方案](storage/fal_architecture.md)
 - [Bootloader升级与防变砖设计](bootloader/bootloader_design.md)
 
 ## 平台
