@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+#define COMM_LINK_ENABLE_ISO BSP_COMM_LINK_ENABLE_ISO
+#define COMM_LINK_ENABLE_CAN BSP_COMM_LINK_ENABLE_CAN
+#define COMM_LINK_ENABLE_PL BSP_COMM_LINK_ENABLE_PL
+
 #if (COMM_LINK_ENABLE_CAN == 1)
 #include "bsp_can.h"
 #endif
@@ -32,7 +36,7 @@ static volatile uint8_t usart1_suspended = 0U; /* USART1 background link suspens
 void comm_link_usart1_suspend(uint8_t suspended)
 {
     usart1_suspended = (suspended != 0U) ? 1U : 0U;
-    __DMB();
+    bsp_comm_memory_barrier();
 }
 
 static void usart_dbg_tx_by_dma_cb(char *ptr, int len)
