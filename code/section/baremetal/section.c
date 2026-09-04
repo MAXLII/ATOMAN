@@ -185,7 +185,7 @@ SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop = {0u, NULL};
 #define SECTION_REG_LAST ((const reg_section_t *)&SECTION_STOP)
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__TI_COMPILER_VERSION__)
 #define SECTION_WEAK __attribute__((weak))
 #elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
 #define SECTION_WEAK __weak
