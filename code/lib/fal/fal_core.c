@@ -732,3 +732,79 @@ uint8_t fal_is_stopped(const fal_t *p_fal)
 {
     return ((p_fal != NULL) && (p_fal->state == FAL_STATE_STOPPED)) ? 1u : 0u;
 }
+
+/* Entity: a runtime binds independent instances to their configurations.
+ * Prior: an active request owns its buffer and cannot be discarded by remount.
+ * Time: one scheduling pass advances each instance once; the caller supplies cadence.
+ */
+/** @param p_runtime Caller-owned array binding. @return 1 for a usable descriptor, otherwise 0. */
+static uint8_t runtime_valid(const fal_runtime_t *p_runtime)
+{
+    if (p_runtime == NULL)
+    {
+        return 0u;
+    }
+    if ((p_runtime->p_instances == NULL) || /* Require writable runtime storage. */
+        (p_runtime->p_configs == NULL) || /* Require a configuration for every instance. */
+        (p_runtime->instance_count == 0u)) /* Reject an empty scheduling group. */
+    {
+        return 0u;
+    }
+    return 1u;
+}
+
+fal_result_t fal_runtime_mount(const fal_runtime_t *p_runtime, uint16_t instance_index)
+{
+    if (runtime_valid(p_runtime) == 0u)
+    {
+        return FAL_RESULT_INVALID_ARGUMENT;
+    }
+    if (instance_index >= p_runtime->instance_count)
+    {
+        return FAL_RESULT_INVALID_ARGUMENT;
+    }
+    if (fal_is_busy(&p_runtime->p_instances[instance_index]) == 1u)
+    {
+        return FAL_RESULT_BUSY;
+    }
+    return fal_init(&p_runtime->p_instances[instance_index], &p_runtime->p_configs[instance_index]);
+}
+
+fal_result_t fal_runtime_init(const fal_runtime_t *p_runtime)
+{
+    fal_result_t first_error = FAL_RESULT_SUCCESS; /* First failure, with per-instance details retained. */
+    if (runtime_valid(p_runtime) == 0u)
+    {
+        return FAL_RESULT_INVALID_ARGUMENT;
+    }
+    for (uint16_t index = 0u; index < p_runtime->instance_count; index++)
+    {
+        if (fal_is_busy(&p_runtime->p_instances[index]) == 1u)
+        {
+            return FAL_RESULT_BUSY; /* Preflight the whole group before resetting any instance. */
+        }
+    }
+    for (uint16_t index = 0u; index < p_runtime->instance_count; index++)
+    {
+        fal_result_t result = fal_runtime_mount(p_runtime, index); /* Mount each independent device group. */
+        if ((first_error == FAL_RESULT_SUCCESS) && /* Preserve the earliest failure. */
+            (result != FAL_RESULT_SUCCESS)) /* Record only a failed mount. */
+        {
+            first_error = result;
+        }
+    }
+    return first_error;
+}
+
+fal_result_t fal_runtime_process(const fal_runtime_t *p_runtime)
+{
+    if (runtime_valid(p_runtime) == 0u)
+    {
+        return FAL_RESULT_INVALID_ARGUMENT;
+    }
+    for (uint16_t index = 0u; index < p_runtime->instance_count; index++)
+    {
+        fal_process(&p_runtime->p_instances[index]); /* Advance one bounded state-machine step per instance. */
+    }
+    return FAL_RESULT_SUCCESS;
+}
