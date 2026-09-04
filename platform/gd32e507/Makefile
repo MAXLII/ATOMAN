@@ -9,20 +9,20 @@ SIZE := $(PREFIX)size
 
 MCU_FLAGS := -mcpu=cortex-m33 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard
 PROJECT_DEFINES := -DGD32E50X -DGD32E50X_CL -DUSE_STDPERIPH_DRIVER \
-    -DIS_GD32E507 -DTOOLCHAIN_GCC \
+    -DPLATFORM_GD32E507 -DTOOLCHAIN_GCC \
     -DENET_RXBUF_NUM=12 -DENET_TXBUF_NUM=4
 
 INCLUDES := \
-    -I../../code/app \
-    -I../../code/app/demo \
+    -I../../code/business/demo \
+    -I../../code/data_source/demo \
+    -I../../code/data_pool/demo \
     -I../../code/lib \
     -I../../code/dbg \
-    -I../../code/interface/ac \
-    -I../../code/interface/common \
+    -I../../code/interface/demo/common \
     -I../../code/interface \
     -I../../code/section/srtos_m \
     -I../../code/section \
-    -I../../code/comm \
+    -I../../code/data_source/comm \
     -I./Firmware/CMSIS \
     -I./Firmware/CMSIS/GD/GD32E50x/Include \
     -I./Firmware/GD32E50x_standard_peripheral/Include \
@@ -62,17 +62,18 @@ PROJECT_SOURCES := \
     bsp/src/bsp_usart.c \
     bsp/src/bsp_enet.c \
     enet/src/enet_comm.c \
-    ../../code/app/demo/demo.c \
-    ../../code/app/demo/demo_comm.c \
-    ../../code/app/demo/demo_interrupt.c \
-    ../../code/app/demo/demo_jitter.c \
-    ../../code/app/demo/demo_rtos_risk.c \
-    ../../code/app/demo/demo_perf.c \
-    ../../code/app/demo/demo_scope.c \
-    ../../code/app/demo/demo_sfra.c \
-    ../../code/app/demo/demo_shell.c \
-    ../../code/app/demo/demo_task.c \
-    ../../code/app/demo/demo_trace.c \
+    ../../code/business/demo/demo.c \
+    ../../code/data_source/demo/demo_comm.c \
+    ../../code/business/demo/demo_interrupt.c \
+    ../../code/business/demo/demo_jitter.c \
+    ../../code/business/demo/demo_rtos_risk.c \
+    ../../code/business/demo/demo_perf.c \
+    ../../code/business/demo/demo_scope.c \
+    ../../code/business/demo/demo_sfra.c \
+    ../../code/business/demo/demo_shell.c \
+    ../../code/business/demo/demo_task.c \
+    ../../code/business/demo/demo_trace.c \
+    ../../code/data_pool/demo/demo_data_pool.c \
     ../../code/lib/dft.c \
     ../../code/lib/pi_tustin.c \
     ../../code/lib/pr.c \
@@ -94,10 +95,11 @@ PROJECT_SOURCES := \
     ../../code/dbg/shell_core.c \
     ../../code/dbg/shell_service.c \
     ../../code/dbg/section_list_service.c \
-    ../../code/interface/ac/gpio.c \
-    ../../code/interface/ac/comm_link.c \
+    ../../code/interface/demo/common/gpio.c \
+    ../../code/interface/demo/common/comm_link.c \
+    ../../code/interface/demo/common/jitter.c \
     ../../code/section/srtos_m/section.c \
-    ../../code/comm/comm.c
+    ../../code/data_source/comm/comm.c
 
 LWIP_SOURCES := \
     $(wildcard third_party/lwip-2.2.1/src/core/*.c) \

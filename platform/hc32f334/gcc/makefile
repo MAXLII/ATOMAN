@@ -22,10 +22,11 @@ IAP_SOURCES =
 endif
 
 PROJECT_DEFINES = -D$(PROJECT_MCU) \
-                  -DIS_$(PROJECT_MCU) \
+                  -DPLATFORM_$(PROJECT_MCU) \
                   -DTOOLCHAIN_$(PROJECT_TOOLCHAIN) \
                   -DUSE_DDL_DRIVER \
                   -DIS_AC \
+                  -DCTRL_PWM_TIMER_FREQ_HZ=120000000UL \
                   $(PROJECT_TARGET_DEFINES)
 
 TARGET = hc32f334_ac_$(BUILD_TARGET)
@@ -49,20 +50,20 @@ PROJECT_SOURCES = \
 ../src/hc32f334_it.c \
 ../src/syscalls.c \
 ../src/systick.c \
-../../../code/app/demo/demo.c \
-../../../code/app/demo/demo_comm.c \
-../../../code/app/demo/demo_interrupt.c \
-../../../code/app/demo/demo_perf.c \
-../../../code/app/demo/demo_scope.c \
-../../../code/app/demo/demo_sfra.c \
-../../../code/app/demo/demo_shell.c \
-../../../code/app/demo/demo_task.c \
-../../../code/app/demo/demo_trace.c \
-../../../code/interface/ac/gpio.c \
-../../../code/interface/ac/pwm.c \
-../../../code/interface/ac/comm_link.c \
+../../../code/business/demo/demo.c \
+../../../code/data_source/demo/demo_comm.c \
+../../../code/business/demo/demo_interrupt.c \
+../../../code/business/demo/demo_perf.c \
+../../../code/business/demo/demo_scope.c \
+../../../code/business/demo/demo_sfra.c \
+../../../code/business/demo/demo_shell.c \
+../../../code/business/demo/demo_task.c \
+../../../code/business/demo/demo_trace.c \
+../../../code/data_pool/demo/demo_data_pool.c \
+../../../code/interface/demo/common/gpio.c \
+../../../code/interface/demo/common/comm_link.c \
 ../../../code/section/srtos_m/section.c \
-../../../code/comm/comm.c \
+../../../code/data_source/comm/comm.c \
 ../../../code/lib/record_dict.c \
 ../../../code/lib/pi_tustin.c \
 ../../../code/lib/dft.c \
@@ -116,17 +117,17 @@ C_INCLUDES = \
 -I../Firmware/CMSIS/Include \
 -I../Firmware/CMSIS/HDSC/hc32f3xx/Include \
 -I../Firmware/HC32_LL_Driver/inc \
--I../../../code/app \
--I../../../code/app/demo \
+-I../../../code/business/demo \
+-I../../../code/data_source/demo \
+-I../../../code/data_pool/demo \
 -I../../../code/app/bootloader/iap \
 -I../../../code/app/bootloader/protocol \
 -I../../../code/app/bootloader/common \
 -I../../../code/section/srtos_m \
 -I../../../code/section \
--I../../../code/comm \
+-I../../../code/data_source/comm \
 -I../../../code/interface \
--I../../../code/interface/ac \
--I../../../code/interface/common \
+-I../../../code/interface/demo/common \
 -I../../../code/lib \
 -I../../../code/dbg
 

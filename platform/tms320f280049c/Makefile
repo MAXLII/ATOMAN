@@ -17,16 +17,16 @@ INCLUDES := \
 	--include_path="$(DRIVERLIB_DIR)" \
 	--include_path="code/section" \
 	--include_path="code/section/baremetal" \
-	--include_path="code/comm" \
+	--include_path="code/data_source/comm" \
 	--include_path="code/dbg" \
 	--include_path="code/lib" \
-	--include_path="code/interface/common" \
-	--include_path="code/app/demo"
+	--include_path="code/business/demo"
 
 CFLAGS := -v28 -ml -mt --abi=eabi --c11 --float_support=fpu32 \
 	--tmu_support=tmu0 --gen_func_subsections=on --display_error_number \
 	--diag_warning=225 --diag_suppress=303 --define=DEBUG --define=RAM --define=CPU1 \
 	--define=REV_ID=1 --define=DEMO_SFRA_ISR_DIVIDER=1 \
+	--define=PLATFORM_TMS320F280049C --define=TOOLCHAIN_TI_C2000 \
 	--preinclude=platform.h \
 	--define=_LAUNCHXL_F280049C $(INCLUDES)
 
@@ -107,7 +107,7 @@ $(BUILD_DIR)/section_task_demo.obj: $(PLATFORM_DIR)/src/section_task_demo.c | $(
 $(BUILD_DIR)/section.obj: code/section/baremetal/section.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
-$(BUILD_DIR)/comm.obj: code/comm/comm.c | $(BUILD_DIR)
+$(BUILD_DIR)/comm.obj: code/data_source/comm/comm.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
 $(BUILD_DIR)/section_list_service.obj: code/dbg/section_list_service.c | $(BUILD_DIR)
@@ -146,19 +146,19 @@ $(BUILD_DIR)/dft.obj: code/lib/dft.c | $(BUILD_DIR)
 $(BUILD_DIR)/pi_tustin.obj: code/lib/pi_tustin.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
-$(BUILD_DIR)/demo_shell.obj: code/app/demo/demo_shell.c | $(BUILD_DIR)
+$(BUILD_DIR)/demo_shell.obj: code/business/demo/demo_shell.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
-$(BUILD_DIR)/demo_scope.obj: code/app/demo/demo_scope.c | $(BUILD_DIR)
+$(BUILD_DIR)/demo_scope.obj: code/business/demo/demo_scope.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
-$(BUILD_DIR)/demo_perf.obj: code/app/demo/demo_perf.c | $(BUILD_DIR)
+$(BUILD_DIR)/demo_perf.obj: code/business/demo/demo_perf.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
-$(BUILD_DIR)/demo_trace.obj: code/app/demo/demo_trace.c | $(BUILD_DIR)
+$(BUILD_DIR)/demo_trace.obj: code/business/demo/demo_trace.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
-$(BUILD_DIR)/demo_sfra.obj: code/app/demo/demo_sfra.c | $(BUILD_DIR)
+$(BUILD_DIR)/demo_sfra.obj: code/business/demo/demo_sfra.c | $(BUILD_DIR)
 	"$(CL2000)" $(CFLAGS) --compile_only --output_file="$@" "$<"
 
 $(BUILD_DIR)/device.obj: $(C2000WARE_ROOT)/device_support/f28004x/common/source/device.c | $(BUILD_DIR)

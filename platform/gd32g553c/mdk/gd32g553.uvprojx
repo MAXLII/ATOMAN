@@ -338,9 +338,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>GD32G5X3,IS_GD32G553,TOOLCHAIN_MDK,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000</Define>
+              <Define>GD32G5X3,PLATFORM_GD32G553C,TOOLCHAIN_MDK,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\code\app;..\..\..\code\app\demo;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
+              <IncludePath>..\..\..\code\business\demo;..\..\..\code\data_source\demo;..\..\..\code\data_pool\demo;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\interface\demo\common;..\..\..\code\interface;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\data_source\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -356,9 +356,9 @@
             <ClangAsOpt>1</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>GD32G5X3,IS_GD32G553,TOOLCHAIN_MDK,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000</Define>
+              <Define>GD32G5X3,PLATFORM_GD32G553C,TOOLCHAIN_MDK,FIRMWARE_TYPE_ISP,APP_START_ADDR=0x08000000</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\code\app;..\..\..\code\app\demo;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\interface\ac;..\..\..\code\interface;..\..\..\code\interface\common;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
+              <IncludePath>..\..\..\code\business\demo;..\..\..\code\data_source\demo;..\..\..\code\data_pool\demo;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\interface\demo\common;..\..\..\code\interface;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\data_source\comm;..\Firmware\CMSIS;..\Firmware\CMSIS\GD\GD32G5x3\Include;..\Firmware\GD32G5x3_standard_peripheral\Include;..\inc;..\bsp\inc</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -657,57 +657,62 @@
             <File>
               <FileName>demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo.c</FilePath>
             </File>
             <File>
               <FileName>demo_comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\demo\demo_comm.c</FilePath>
             </File>
             <File>
               <FileName>demo_interrupt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_interrupt.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_interrupt.c</FilePath>
             </File>
             <File>
               <FileName>demo_jitter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_jitter.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_jitter.c</FilePath>
             </File>
             <File>
               <FileName>demo_rtos_risk.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_rtos_risk.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_rtos_risk.c</FilePath>
             </File>
             <File>
               <FileName>demo_perf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_perf.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_perf.c</FilePath>
             </File>
             <File>
               <FileName>demo_scope.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_scope.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_scope.c</FilePath>
             </File>
             <File>
               <FileName>demo_sfra.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_sfra.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_sfra.c</FilePath>
             </File>
             <File>
               <FileName>demo_shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_shell.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_shell.c</FilePath>
             </File>
             <File>
               <FileName>demo_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_task.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_data_pool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\data_pool\demo\demo_data_pool.c</FilePath>
             </File>
             <File>
               <FileName>demo_trace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_trace.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_trace.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -827,12 +832,17 @@
             <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\gpio.c</FilePath>
+              <FilePath>..\..\..\code\interface\demo\common\gpio.c</FilePath>
             </File>
             <File>
               <FileName>comm_link.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\comm_link.c</FilePath>
+              <FilePath>..\..\..\code\interface\demo\common\comm_link.c</FilePath>
+            </File>
+            <File>
+              <FileName>jitter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\interface\demo\common\jitter.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -852,7 +862,7 @@
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\comm\comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\comm\comm.c</FilePath>
             </File>
           </Files>
         </Group>

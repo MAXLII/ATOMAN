@@ -24,7 +24,7 @@ C_SOURCES := \
 ./src/zero_player_oled.c \
 ./src/zynq_iap_update_service.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
-$(PROJECT_ROOT)/code/comm/comm.c \
+$(PROJECT_ROOT)/code/data_source/comm/comm.c \
 $(PROJECT_ROOT)/code/dbg/shell.c \
 $(PROJECT_ROOT)/code/dbg/shell_core.c \
 $(PROJECT_ROOT)/code/dbg/shell_service.c \
@@ -41,17 +41,18 @@ $(PROJECT_ROOT)/code/dbg/trace.c \
 $(PROJECT_ROOT)/code/dbg/trace_core.c \
 $(PROJECT_ROOT)/code/dbg/trace_service.c \
 $(PROJECT_ROOT)/code/dbg/section_list_service.c \
-$(PROJECT_ROOT)/code/interface/ac/comm_link.c \
+$(PROJECT_ROOT)/code/interface/demo/common/comm_link.c \
 $(PROJECT_ROOT)/code/app/zero_player.c \
-$(PROJECT_ROOT)/code/app/demo/demo.c \
-$(PROJECT_ROOT)/code/app/demo/demo_comm.c \
-$(PROJECT_ROOT)/code/app/demo/demo_interrupt.c \
-$(PROJECT_ROOT)/code/app/demo/demo_perf.c \
-$(PROJECT_ROOT)/code/app/demo/demo_scope.c \
-$(PROJECT_ROOT)/code/app/demo/demo_sfra.c \
-$(PROJECT_ROOT)/code/app/demo/demo_shell.c \
-$(PROJECT_ROOT)/code/app/demo/demo_task.c \
-$(PROJECT_ROOT)/code/app/demo/demo_trace.c \
+$(PROJECT_ROOT)/code/business/demo/demo.c \
+$(PROJECT_ROOT)/code/data_source/demo/demo_comm.c \
+$(PROJECT_ROOT)/code/business/demo/demo_interrupt.c \
+$(PROJECT_ROOT)/code/business/demo/demo_perf.c \
+$(PROJECT_ROOT)/code/business/demo/demo_scope.c \
+$(PROJECT_ROOT)/code/business/demo/demo_sfra.c \
+$(PROJECT_ROOT)/code/business/demo/demo_shell.c \
+$(PROJECT_ROOT)/code/business/demo/demo_task.c \
+$(PROJECT_ROOT)/code/business/demo/demo_trace.c \
+$(PROJECT_ROOT)/code/data_pool/demo/demo_data_pool.c \
 $(PROJECT_ROOT)/code/lib/dft.c \
 $(PROJECT_ROOT)/code/lib/pi_tustin.c \
 $(PROJECT_ROOT)/code/lib/pr.c \
@@ -65,12 +66,13 @@ C_INCLUDES := \
 -I./src \
 -I$(PROJECT_ROOT)/code/section/baremetal \
 -I$(PROJECT_ROOT)/code/section \
--I$(PROJECT_ROOT)/code/comm \
+-I$(PROJECT_ROOT)/code/data_source/comm \
+-I$(PROJECT_ROOT)/code/data_source/demo \
+-I$(PROJECT_ROOT)/code/data_pool/demo \
 -I$(PROJECT_ROOT)/code/dbg \
--I$(PROJECT_ROOT)/code/interface/ac \
--I$(PROJECT_ROOT)/code/interface/common \
+-I$(PROJECT_ROOT)/code/interface/demo/common \
 -I$(PROJECT_ROOT)/code/app \
--I$(PROJECT_ROOT)/code/app/demo \
+-I$(PROJECT_ROOT)/code/business/demo \
 -I$(PROJECT_ROOT)/code/app/bootloader/core \
 -I$(PROJECT_ROOT)/code/app/bootloader/protocol \
 -I$(PROJECT_ROOT)/code/app/bootloader/common \
@@ -78,7 +80,7 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/lib \
 -isystem $(BSP_INCLUDE)
 
-C_DEFS := -DIS_ZYNQ7020 -DIS_IAP -DTOOLCHAIN_GCC
+C_DEFS := -DPLATFORM_ZYNQ7020 -DIS_IAP -DTOOLCHAIN_GCC
 CPU_FLAGS := -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic \
               -Wconversion -Wsign-conversion -Wshadow -Wcast-align \
