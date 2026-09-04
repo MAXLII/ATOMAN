@@ -32,6 +32,10 @@
 
 #include "hc32_ll.h"
 
+#define BSP_COMM_LINK_ENABLE_ISO 0u
+#define BSP_COMM_LINK_ENABLE_CAN 0u
+#define BSP_COMM_LINK_ENABLE_PL 0u
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,6 +45,7 @@ void bsp_usart_dbg_tx(const char *ptr, int len);
 uint32_t bsp_usart_dbg_tx_dma(const uint8_t *data, uint32_t len);
 void bsp_usart_dbg_printf(const char *format, ...);
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *data);
+void bsp_comm_memory_barrier(void);
 
 #ifdef __cplusplus
 }

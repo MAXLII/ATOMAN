@@ -32,6 +32,10 @@
 
 #include <stdint.h>
 
+#define BSP_COMM_LINK_ENABLE_ISO 0u
+#define BSP_COMM_LINK_ENABLE_CAN 0u
+#define BSP_COMM_LINK_ENABLE_PL 0u
+
 extern volatile uint32_t g_bsp_usart_dbg_tx_drop_count;
 extern volatile uint32_t g_bsp_usart_dbg_rx_drop_count;
 extern volatile uint32_t g_bsp_usart_dbg_rx_error_count;
@@ -40,6 +44,7 @@ void bsp_usart_dbg_printf(const char *p_format, ...);
 void bsp_usart_dbg_tx(char *p_data, int length);
 int bsp_usart_dbg_tx_dma(const uint8_t *p_data, uint32_t length);
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data);
+void bsp_comm_memory_barrier(void);
 void bsp_usart_dbg_irq_handler(void);
 
 void bsp_usart_iso_printf(const char *p_format, ...);

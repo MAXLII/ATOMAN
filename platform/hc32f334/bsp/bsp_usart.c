@@ -67,6 +67,11 @@
 #define BSP_USART_TEST_LONG_PRINTF_PERIOD (31UL)
 #endif
 
+void bsp_comm_memory_barrier(void)
+{
+    __DMB();
+}
+
 /* USART RX/TX use DMA plus polling service tasks; no USART/DMA NVIC interrupt is enabled here. */
 typedef struct
 {

@@ -288,3 +288,8 @@ uint8_t bsp_usart_iso_rx_get_byte(uint8_t *p_data)
     (void)p_data;
     return 0u;
 }
+
+void bsp_comm_memory_barrier(void)
+{
+    __DMB();
+}
