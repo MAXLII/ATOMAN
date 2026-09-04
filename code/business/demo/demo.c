@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Register startup callbacks with SECTION_INIT
  *          - Demonstrate init callback execution order
- *          - Bind the trace time base used by the trace demo
+ *          - Keep demo initialization state independent from Platform resources
  *
  *          Design notes:
  *          - C11 compatible
@@ -34,11 +34,8 @@
 
 static uint32_t s_demo_init_count = 0u;
 
-extern volatile uint32_t sys_tick_100us;
-
-static void demo_init_trace_time(void)
+static void demo_init_early_state(void)
 {
-    DBG_TRACE_BIND_TIME(&sys_tick_100us);
     s_demo_init_count++;
 }
 
@@ -47,5 +44,5 @@ static void demo_init_runtime_state(void)
     s_demo_init_count++;
 }
 
-REG_INIT(-10, demo_init_trace_time)
+REG_INIT(-10, demo_init_early_state)
 REG_INIT(10, demo_init_runtime_state)

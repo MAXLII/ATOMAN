@@ -35,6 +35,7 @@
 typedef struct
 {
     volatile uint32_t *p_system_time; /* External time counter used for trace timestamps. */
+    dbg_trace_time_get_t p_time_get;  /* Framework time getter used by the active Platform contract. */
     uint32_t write_count;             /* Total number of records written. */
     uint32_t read_count;              /* Total number of records consumed by the read API. */
 } dbg_trace_ctx_t;
@@ -45,6 +46,13 @@ static dbg_trace_ctx_t g_dbg_trace_ctx = {0};                            /* Runt
 void dbg_trace_core_bind_time(volatile uint32_t *p_system_time)
 {
     g_dbg_trace_ctx.p_system_time = p_system_time;
+    g_dbg_trace_ctx.p_time_get = NULL;
+}
+
+void dbg_trace_core_bind_time_getter(dbg_trace_time_get_t p_time_get)
+{
+    g_dbg_trace_ctx.p_time_get = p_time_get;
+    g_dbg_trace_ctx.p_system_time = NULL;
 }
 
 void dbg_trace_core_record(uint32_t line)
@@ -52,7 +60,8 @@ void dbg_trace_core_record(uint32_t line)
     dbg_trace_item_t *p_item = NULL; /* Target record slot for the current trace mark. */
     uint32_t write_index;
 
-    if (g_dbg_trace_ctx.p_system_time == NULL)
+    if ((g_dbg_trace_ctx.p_time_get == NULL) &&
+        (g_dbg_trace_ctx.p_system_time == NULL))
     {
         return;
     }
@@ -60,7 +69,9 @@ void dbg_trace_core_record(uint32_t line)
     write_index = g_dbg_trace_ctx.write_count & (DBG_TRACE_BUFFER_SIZE - 1u);
     p_item = &g_dbg_trace_buffer[write_index];
     p_item->line = line;
-    p_item->time = *(g_dbg_trace_ctx.p_system_time);
+    p_item->time = (g_dbg_trace_ctx.p_time_get != NULL) ?
+                       g_dbg_trace_ctx.p_time_get() :
+                       *(g_dbg_trace_ctx.p_system_time);
 
     g_dbg_trace_ctx.write_count++;
 
@@ -141,6 +152,11 @@ uint8_t dbg_trace_core_read(uint32_t *p_time, uint32_t *p_line)
 void dbg_trace_core_bind_time(volatile uint32_t *p_system_time)
 {
     (void)p_system_time;
+}
+
+void dbg_trace_core_bind_time_getter(dbg_trace_time_get_t p_time_get)
+{
+    (void)p_time_get;
 }
 
 void dbg_trace_core_record(uint32_t line)
