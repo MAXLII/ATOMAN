@@ -473,3 +473,8 @@ void bsp_usart_pl_error_clear(void)
     s_pl_error_irq_count = 0U;
     s_pl_error_irq_latched = 0U;
 }
+
+void bsp_comm_memory_barrier(void)
+{
+    __asm__ volatile("dmb sy" ::: "memory");
+}

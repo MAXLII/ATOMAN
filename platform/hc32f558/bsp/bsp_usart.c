@@ -432,3 +432,8 @@ uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *data)
 
     return 1U;
 }
+
+void bsp_comm_memory_barrier(void)
+{
+    __DMB();
+}

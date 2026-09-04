@@ -33,6 +33,10 @@
 
 #include <stdint.h>
 
+#define BSP_COMM_LINK_ENABLE_ISO 0u
+#define BSP_COMM_LINK_ENABLE_CAN 0u
+#define BSP_COMM_LINK_ENABLE_PL 1u
+
 typedef enum
 {
     BSP_USART_PL_PARITY_NONE = 0,
@@ -70,6 +74,7 @@ void bsp_usart_dbg_printf(const char *format, ...);
 void bsp_usart_dbg_tx(char *data, int length);
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *data);
 uint8_t bsp_usart_dbg_tx_is_idle(void);
+void bsp_comm_memory_barrier(void);
 
 int32_t bsp_usart_pl_init(void);
 int32_t bsp_usart_pl_configure(const bsp_usart_pl_config_t *config);

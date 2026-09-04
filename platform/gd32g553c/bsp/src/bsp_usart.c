@@ -611,3 +611,8 @@ int bsp_usart_dbg_tx_dma(const uint8_t *p_data, uint32_t len)
     bsp_usart_dbg_tx((char *)p_data, (int)len);
     return 0;
 }
+
+void bsp_comm_memory_barrier(void)
+{
+    __DMB();
+}
