@@ -12,7 +12,7 @@ set(SOURCES
     ${PLECS_COMMON_DIR}/comm/comm.c
     ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
     ${PLECS_COMMON_DIR}/comm/plecs_dispatch_lock.c
-    ${CODE_DIR}/app/demo/demo_shell.c
+    ${CODE_DIR}/business/demo/demo_shell.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_app.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_platform.c
     ${PLECS_COMMON_DIR}/dbg/scope/scope.c
@@ -39,7 +39,7 @@ set(SOURCES
 add_library(plecs SHARED ${SOURCES})
 
 target_compile_features(plecs PRIVATE c_std_11)
-target_compile_definitions(plecs PRIVATE IS_PLECS TOOLCHAIN_GCC __RAM_FUNC=)
+target_compile_definitions(plecs PRIVATE PLATFORM_PLECS IS_PLECS TOOLCHAIN_GCC __RAM_FUNC=)
 target_compile_options(plecs PRIVATE
     -Wall
     -Wextra
@@ -65,8 +65,7 @@ target_include_directories(plecs PRIVATE
     ${PLECS_COMMON_DIR}/dbg/sfra
     ${PLECS_COMMON_DIR}/dbg/shell
     ${PLECS_COMMON_DIR}/dbg/trace
-    ${CODE_DIR}/comm
-    ${CODE_DIR}/interface/common
+    ${CODE_DIR}/data_source/comm
     ${CODE_DIR}/lib
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section

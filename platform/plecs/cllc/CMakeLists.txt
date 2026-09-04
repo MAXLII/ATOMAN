@@ -9,8 +9,8 @@ set(CLLC_PROJECT_SOURCES
     ${PLECS_PROJECT_DIR}/app/app.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_adc.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
-    ${CODE_DIR}/interface/cllc/adc.c
-    ${CODE_DIR}/interface/cllc/pwm.c
+    ${CODE_DIR}/interface/cllc/common/adc.c
+    ${CODE_DIR}/interface/cllc/common/pwm.c
     ${CODE_DIR}/lib/pi_dual_compete.c
     ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/lib/pr.c
@@ -30,6 +30,7 @@ add_library(plecs SHARED ${SOURCES})
 
 target_compile_features(plecs PRIVATE c_std_11)
 target_compile_definitions(plecs PRIVATE
+    PLATFORM_PLECS
     IS_PLECS
     IS_CLLC
     TOOLCHAIN_GCC
@@ -41,7 +42,7 @@ target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}/app
     ${PLECS_PROJECT_DIR}/bsp
     ${PLECS_COMMON_DIR}
-    ${CODE_DIR}/interface/cllc
+    ${CODE_DIR}/interface/cllc/common
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
     ${CODE_DIR}/dbg

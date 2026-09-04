@@ -53,7 +53,7 @@ end
 
 mexArgs = {};
 mexArgs = [mexArgs, {'-R2018a', '-outdir', projectDir, '-output', 'sfunc'}];
-mexArgs = [mexArgs, {'-DS_FUNCTION_NAME=sfunc', '-DIS_MATLAB', '-DIS_PLL', toolchainArg, '-D__RAM_FUNC='}];
+mexArgs = [mexArgs, {'-DS_FUNCTION_NAME=sfunc', '-DPLATFORM_MATLAB', '-DIS_MATLAB', '-DIS_PLL', toolchainArg, '-D__RAM_FUNC='}];
 mexArgs = [mexArgs, warningArgs];
 mexArgs = [mexArgs, includeArgs, sources];
 

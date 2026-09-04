@@ -32,7 +32,7 @@ INCLUDE_DIRS := $(COMMON) \
 
 # ==================== User modification section end ====================
 
-CPPFLAGS := $(addprefix -I,$(INCLUDE_DIRS)) -DIS_TESTBENCH
+CPPFLAGS := $(addprefix -I,$(INCLUDE_DIRS)) -DPLATFORM_TESTBENCH
 CFLAGS := -std=c11
 CXXFLAGS := -std=c++14
 LDLIBS := -lm

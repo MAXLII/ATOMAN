@@ -28,8 +28,7 @@ set(ROUTE_NODE_INCLUDE_DIRS
     ${PLECS_COMMON_DIR}/comm
     ${PLECS_COMMON_DIR}/dbg/perf
     ${PLECS_COMMON_DIR}/dbg/shell
-    ${CODE_DIR}/comm
-    ${CODE_DIR}/interface/common
+    ${CODE_DIR}/data_source/comm
     ${CODE_DIR}/lib
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
@@ -60,6 +59,7 @@ function(configure_route_node
          discovery_peer_port)
     target_compile_features(${target_name} PRIVATE c_std_11)
     target_compile_definitions(${target_name} PRIVATE
+        PLATFORM_PLECS
         IS_PLECS
         TOOLCHAIN_GCC
         __RAM_FUNC=
