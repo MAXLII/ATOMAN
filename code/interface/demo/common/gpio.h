@@ -1,7 +1,6 @@
 #ifndef __GPIO_H
 #define __GPIO_H
 
-#include "bsp_gpio.h"
 #include <stdint.h>
 
 void gpio_set_ss_rly_sta(uint8_t sta);

@@ -1,5 +1,7 @@
 #include "gpio.h"
 
+#include "bsp_gpio.h"
+
 void gpio_set_ac_in_rly_sta(uint8_t sta)
 {
     bsp_gpio_set_bit(LED3, sta);
