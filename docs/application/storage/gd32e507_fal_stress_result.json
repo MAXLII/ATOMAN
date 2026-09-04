@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-05",
+  "board": "GD32E507ZE",
+  "jlink_serial": "69409716",
+  "batch": "board_stress_target_02",
+  "start_unix": 1788554620.3051229,
+  "end_unix": 1788555127.2340877,
+  "elf_sha256": "e5dd075ad09a274da894ed5d219ce7442dd539f7a03c7dc0fbbe55f7a50bd0e1",
+  "hex_sha256": "252913d955c54b2293e1bbb3483e130e38676168164d0be1308b7dedd5b416bd",
+  "jsonl_sha256": "258ed674af1558750c5e057256288b2eab71af1cc923a57b83cbad6e7231c80d",
+  "passed": true,
+  "full": {
+    "status": 2,
+    "passed_by_case": [0, 1, 100, 100, 100, 2, 2, 7, 1, 0],
+    "failure": 0,
+    "max_demo_us": 3024100,
+    "corrected": 0,
+    "bad_blocks": 0
+  },
+  "reset_cycles": 5,
+  "reset_test_transactions": 10,
+  "reset_max_demo_us": [2412400, 2294300, 2437300, 2638200, 2381500],
+  "default_firmware_restored": true,
+  "default_hex_sha256": "dfdf9a904e4420084f00f1a57d4ac91e606956237b67eece2ba40e7f55720a3b",
+  "restored_nor_health": [13123605, 0, 0, 0],
+  "restored_nand_id_hex": "C8F1801D",
+  "restored_nand_errors": 0,
+  "restored_fal_instances_idle": true,
+  "limitations": ["serial command path unverified", "no physical power cut", "no hardware ECC bit injection", "test partition contents overwritten without backup"]
+}
