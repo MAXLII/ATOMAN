@@ -15,6 +15,7 @@ PROJECT_DEFINES := -DGD32E50X -DGD32E50X_CL -DUSE_STDPERIPH_DRIVER \
 INCLUDES := \
     -I../../code/business/demo \
     -I../../code/data_source/demo \
+    -I../../code/lib/fal \
     -I../../code/data_pool/demo \
     -I../../code/lib \
     -I../../code/dbg \
@@ -61,6 +62,19 @@ PROJECT_SOURCES := \
     bsp/src/bsp_timer.c \
     bsp/src/bsp_usart.c \
     bsp/src/bsp_enet.c \
+    bsp/src/bsp_flash.c \
+    bsp/src/bsp_nor_flash.c \
+    bsp/src/bsp_nand_flash.c \
+    ../../code/lib/bch4.c \
+    ../../code/lib/flash_integrity.c \
+    ../../code/lib/fal/fal_core.c \
+    ../../code/data_source/demo/demo_storage_record.c \
+    ../../code/data_source/demo/demo_storage_service.c \
+    ../../code/data_source/demo/demo_storage_section.c \
+    ../../code/data_pool/demo/demo_storage_pool.c \
+    ../../code/interface/demo/common/flash_port.c \
+    ../../code/business/demo/demo_fal.c \
+    ../../code/business/demo/fal_cfg.c \
     enet/src/enet_comm.c \
     ../../code/business/demo/demo.c \
     ../../code/data_source/demo/demo_comm.c \
