@@ -339,9 +339,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_ISP,IS_AC</Define>
+              <Define>HC32F334,PLATFORM_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_ISP,IS_AC,CTRL_PWM_TIMER_FREQ_HZ=120000000UL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader\iap;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
+              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\data_source\comm;..\..\..\code\data_source\demo;..\..\..\code\data_pool\demo;..\..\..\code\interface\demo\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\business\demo;..\..\..\code\app\bootloader\iap;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -416,47 +416,52 @@
             <File>
               <FileName>demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo.c</FilePath>
             </File>
             <File>
               <FileName>demo_comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\demo\demo_comm.c</FilePath>
             </File>
             <File>
               <FileName>demo_interrupt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_interrupt.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_interrupt.c</FilePath>
             </File>
             <File>
               <FileName>demo_perf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_perf.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_perf.c</FilePath>
             </File>
             <File>
               <FileName>demo_scope.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_scope.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_scope.c</FilePath>
             </File>
             <File>
               <FileName>demo_sfra.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_sfra.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_sfra.c</FilePath>
             </File>
             <File>
               <FileName>demo_shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_shell.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_shell.c</FilePath>
             </File>
             <File>
               <FileName>demo_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_task.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_data_pool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\data_pool\demo\demo_data_pool.c</FilePath>
             </File>
             <File>
               <FileName>demo_trace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_trace.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_trace.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -501,17 +506,12 @@
             <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\gpio.c</FilePath>
-            </File>
-            <File>
-              <FileName>pwm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\pwm.c</FilePath>
+              <FilePath>..\..\..\code\interface\demo\common\gpio.c</FilePath>
             </File>
             <File>
               <FileName>comm_link.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\comm_link.c</FilePath>
+              <FilePath>..\..\..\code\interface\demo\common\comm_link.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -531,7 +531,7 @@
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\comm\comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\comm\comm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1185,9 +1185,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,IS_IAP,IS_AC</Define>
+              <Define>HC32F334,PLATFORM_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,IS_IAP,IS_AC,CTRL_PWM_TIMER_FREQ_HZ=120000000UL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\interface\ac;..\..\..\code\interface\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\app\demo;..\..\..\code\app\bootloader\iap;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
+              <IncludePath>..\src;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\srtos_m;..\..\..\code\section;..\..\..\code\data_source\comm;..\..\..\code\data_source\demo;..\..\..\code\data_pool\demo;..\..\..\code\interface\demo\common;..\..\..\code\lib;..\..\..\code\dbg;..\..\..\code\business\demo;..\..\..\code\app\bootloader\iap;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1262,47 +1262,52 @@
             <File>
               <FileName>demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo.c</FilePath>
             </File>
             <File>
               <FileName>demo_comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\demo\demo_comm.c</FilePath>
             </File>
             <File>
               <FileName>demo_interrupt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_interrupt.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_interrupt.c</FilePath>
             </File>
             <File>
               <FileName>demo_perf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_perf.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_perf.c</FilePath>
             </File>
             <File>
               <FileName>demo_scope.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_scope.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_scope.c</FilePath>
             </File>
             <File>
               <FileName>demo_sfra.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_sfra.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_sfra.c</FilePath>
             </File>
             <File>
               <FileName>demo_shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_shell.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_shell.c</FilePath>
             </File>
             <File>
               <FileName>demo_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_task.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_data_pool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\code\data_pool\demo\demo_data_pool.c</FilePath>
             </File>
             <File>
               <FileName>demo_trace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\app\demo\demo_trace.c</FilePath>
+              <FilePath>..\..\..\code\business\demo\demo_trace.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1347,17 +1352,12 @@
             <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\gpio.c</FilePath>
-            </File>
-            <File>
-              <FileName>pwm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\pwm.c</FilePath>
+              <FilePath>..\..\..\code\interface\demo\common\gpio.c</FilePath>
             </File>
             <File>
               <FileName>comm_link.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\ac\comm_link.c</FilePath>
+              <FilePath>..\..\..\code\interface\demo\common\comm_link.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1377,7 +1377,7 @@
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\comm\comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\comm\comm.c</FilePath>
             </File>
           </Files>
         </Group>

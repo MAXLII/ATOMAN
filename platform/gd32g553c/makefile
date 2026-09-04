@@ -19,7 +19,7 @@ PROJECT_APP_START_ADDR = 0x08000000
 LD_SCRIPT = ./ldscripts/gd32g5x3_flash.ld
 
 PROJECT_DEFINES = -D$(PROJECT_DEVICE_FAMILY) \
-                  -DIS_$(PROJECT_MCU) \
+                  -DPLATFORM_GD32G553C \
                   -DTOOLCHAIN_$(PROJECT_TOOLCHAIN) \
                   -DFIRMWARE_TYPE_$(PROJECT_FW_TYPE) \
                   -DAPP_START_ADDR=$(PROJECT_APP_START_ADDR)
@@ -108,17 +108,18 @@ C_SOURCES =  \
 ./src/gd32g5x3_it.c \
 ./src/main.c \
 ./src/systick.c \
-../../code/app/demo/demo.c \
-../../code/app/demo/demo_comm.c \
-../../code/app/demo/demo_interrupt.c \
-../../code/app/demo/demo_jitter.c \
-../../code/app/demo/demo_rtos_risk.c \
-../../code/app/demo/demo_perf.c \
-../../code/app/demo/demo_scope.c \
-../../code/app/demo/demo_sfra.c \
-../../code/app/demo/demo_shell.c \
-../../code/app/demo/demo_task.c \
-../../code/app/demo/demo_trace.c \
+../../code/business/demo/demo.c \
+../../code/data_source/demo/demo_comm.c \
+../../code/business/demo/demo_interrupt.c \
+../../code/business/demo/demo_jitter.c \
+../../code/business/demo/demo_rtos_risk.c \
+../../code/business/demo/demo_perf.c \
+../../code/business/demo/demo_scope.c \
+../../code/business/demo/demo_sfra.c \
+../../code/business/demo/demo_shell.c \
+../../code/business/demo/demo_task.c \
+../../code/business/demo/demo_trace.c \
+../../code/data_pool/demo/demo_data_pool.c \
 ../../code/lib/dft.c \
 ../../code/lib/pi_tustin.c \
 ../../code/lib/pr.c \
@@ -139,10 +140,11 @@ C_SOURCES =  \
 ../../code/dbg/shell.c \
 ../../code/dbg/shell_core.c \
 ../../code/dbg/shell_service.c \
-../../code/interface/ac/gpio.c \
-../../code/interface/ac/comm_link.c \
+../../code/interface/demo/common/gpio.c \
+../../code/interface/demo/common/comm_link.c \
+../../code/interface/demo/common/jitter.c \
 ../../code/section/srtos_m/section.c \
-../../code/comm/comm.c \
+../../code/data_source/comm/comm.c \
 
 # ASM sources
 ASM_SOURCES =  \
@@ -206,16 +208,16 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
--I../../code/app \
--I../../code/app/demo \
+-I../../code/business/demo \
+-I../../code/data_source/demo \
+-I../../code/data_pool/demo \
 -I../../code/lib \
 -I../../code/dbg \
--I../../code/interface/ac \
+-I../../code/interface/demo/common \
 -I../../code/interface \
--I../../code/interface/common \
 -I../../code/section/srtos_m \
 -I../../code/section \
--I../../code/comm \
+-I../../code/data_source/comm \
 -I./Firmware/CMSIS \
 -I./Firmware/CMSIS/GD/GD32G5x3/Include \
 -I./Firmware/GD32G5x3_standard_peripheral/Include \

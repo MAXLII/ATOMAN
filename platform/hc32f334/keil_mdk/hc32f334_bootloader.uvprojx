@@ -339,9 +339,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HC32F334,IS_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE,HC32F334_IAP_BASE=0x00004000UL</Define>
+              <Define>HC32F334,PLATFORM_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE,HC32F334_IAP_BASE=0x00004000UL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\comm;..\..\..\code\dbg;..\..\..\code\interface\fal;..\..\..\code\interface\common;..\..\..\code\app\bootloader\core;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
+              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\data_source\comm;..\..\..\code\dbg;..\..\..\code\data_source\storage\fal;..\..\..\code\app\bootloader\core;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -458,12 +458,12 @@
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\comm\comm.c</FilePath>
+              <FilePath>..\..\..\code\data_source\comm\comm.c</FilePath>
             </File>
             <File>
               <FileName>fal_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\code\interface\fal\fal_core.c</FilePath>
+              <FilePath>..\..\..\code\data_source\storage\fal\fal_core.c</FilePath>
             </File>
             <File>
               <FileName>bootloader_core.c</FileName>

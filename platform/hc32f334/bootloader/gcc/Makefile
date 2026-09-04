@@ -27,8 +27,8 @@ $(PLATFORM_ROOT)/bsp/bsp_efm_flash.c \
 $(PLATFORM_ROOT)/bsp/bsp_w25q64.c \
 $(PLATFORM_ROOT)/src/systick.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
-$(PROJECT_ROOT)/code/comm/comm.c \
-$(PROJECT_ROOT)/code/interface/fal/fal_core.c \
+$(PROJECT_ROOT)/code/data_source/comm/comm.c \
+$(PROJECT_ROOT)/code/data_source/storage/fal/fal_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_metadata.c \
 $(PROJECT_ROOT)/code/app/bootloader/protocol/bootloader_protocol.c
@@ -50,7 +50,7 @@ $(PLATFORM_ROOT)/Firmware/HC32_LL_Driver/src/hc32_ll_utility.c
 ASM_SOURCES := $(PLATFORM_ROOT)/gcc/startup_hc32f334.S
 
 MCU_FLAGS := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-C_DEFS := -DHC32F334 -DIS_HC32F334 -DTOOLCHAIN_GCC -DUSE_DDL_DRIVER \
+C_DEFS := -DHC32F334 -DPLATFORM_HC32F334 -DTOOLCHAIN_GCC -DUSE_DDL_DRIVER \
           -DFIRMWARE_TYPE_BOOTLOADER -DBOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE \
           -DHC32F334_IAP_BASE=0x00004000UL
 ifeq ($(UPGRADE_MODE),direct)
@@ -67,10 +67,9 @@ C_INCLUDES := \
 -I$(PLATFORM_ROOT)/Firmware/HC32_LL_Driver/inc \
 -I$(PROJECT_ROOT)/code/section/baremetal \
 -I$(PROJECT_ROOT)/code/section \
--I$(PROJECT_ROOT)/code/comm \
+-I$(PROJECT_ROOT)/code/data_source/comm \
 -I$(PROJECT_ROOT)/code/dbg \
--I$(PROJECT_ROOT)/code/interface/fal \
--I$(PROJECT_ROOT)/code/interface/common \
+-I$(PROJECT_ROOT)/code/data_source/storage/fal \
 -I$(PROJECT_ROOT)/code/app/bootloader/core \
 -I$(PROJECT_ROOT)/code/app/bootloader/protocol \
 -I$(PROJECT_ROOT)/code/app/bootloader/common

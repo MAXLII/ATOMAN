@@ -24,8 +24,8 @@ zynq_boot_platform.c \
 ../src/zynq_boot_handoff.c \
 fal_cfg.c \
 $(PROJECT_ROOT)/code/section/baremetal/section.c \
-$(PROJECT_ROOT)/code/comm/comm.c \
-$(PROJECT_ROOT)/code/interface/fal/fal_core.c \
+$(PROJECT_ROOT)/code/data_source/comm/comm.c \
+$(PROJECT_ROOT)/code/data_source/storage/fal/fal_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_core.c \
 $(PROJECT_ROOT)/code/app/bootloader/core/bootloader_metadata.c \
 $(PROJECT_ROOT)/code/app/bootloader/protocol/bootloader_protocol.c
@@ -36,16 +36,15 @@ C_INCLUDES := \
 -I../src \
 -I$(PROJECT_ROOT)/code/section/baremetal \
 -I$(PROJECT_ROOT)/code/section \
--I$(PROJECT_ROOT)/code/comm \
+-I$(PROJECT_ROOT)/code/data_source/comm \
 -I$(PROJECT_ROOT)/code/dbg \
--I$(PROJECT_ROOT)/code/interface/fal \
--I$(PROJECT_ROOT)/code/interface/common \
+-I$(PROJECT_ROOT)/code/data_source/storage/fal \
 -I$(PROJECT_ROOT)/code/app/bootloader/core \
 -I$(PROJECT_ROOT)/code/app/bootloader/protocol \
 -I$(PROJECT_ROOT)/code/app/bootloader/common \
 -isystem $(BSP_INCLUDE)
 
-C_DEFS := -DIS_ZYNQ7020 -DTOOLCHAIN_GCC -DBOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE \
+C_DEFS := -DPLATFORM_ZYNQ7020 -DTOOLCHAIN_GCC -DBOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE \
           -DHYP_GUEST=0 -DEL1_NONSECURE=0 -DXEN_USE_PV_CONSOLE=0
 CPU_FLAGS := -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic \
