@@ -42,6 +42,15 @@
 
 #include "tms320f28p55_platform.h"
 
+#define TOOLCHAIN_TI_C2000 1
+
+/* Section compiler capability contract supplied by the F28P55 platform. */
+#define SECTION_WEAK __attribute__((weak))
+#define SECTION_TASK_STACK_ATTR __attribute__((aligned(8)))
+#define SECTION_STATIC_ASSERT(condition, message) _Static_assert((condition), message)
+#define likely(condition) (condition)
+#define unlikely(condition) (condition)
+
 extern const uint16_t __section_start;
 extern const uint16_t __section_end;
 

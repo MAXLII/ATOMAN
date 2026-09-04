@@ -55,6 +55,43 @@
 #endif
 
 /* -------------------------------------------------------------------------- */
+/* Section compiler capability contract                                       */
+/*                                                                            */
+/* Section runtime code consumes only these normalized macros. Raw compiler    */
+/* identification remains inside the platform boundary.                       */
+/* -------------------------------------------------------------------------- */
+#if defined(__GNUC__)
+#define SECTION_WEAK __attribute__((weak))
+#elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
+#define SECTION_WEAK __weak
+#else
+#define SECTION_WEAK
+#endif
+
+#if defined(__GNUC__) || defined(__ARMCC_VERSION)
+#define SECTION_TASK_STACK_ATTR __attribute__((aligned(8)))
+#else
+#define SECTION_TASK_STACK_ATTR
+#endif
+
+#if defined(_MSC_VER) && !defined(__clang__)
+#define SECTION_STATIC_ASSERT_JOIN_(a, b) a##b
+#define SECTION_STATIC_ASSERT_JOIN(a, b) SECTION_STATIC_ASSERT_JOIN_(a, b)
+#define SECTION_STATIC_ASSERT(condition, message)                                      \
+    typedef char SECTION_STATIC_ASSERT_JOIN(section_static_assert_, __LINE__)[(condition) ? 1 : -1]
+#else
+#define SECTION_STATIC_ASSERT(condition, message) _Static_assert((condition), message)
+#endif
+
+#if defined(__GNUC__)
+#define likely(condition) __builtin_expect(!!(condition), 1)
+#define unlikely(condition) __builtin_expect(!!(condition), 0)
+#else
+#define likely(condition) (condition)
+#define unlikely(condition) (condition)
+#endif
+
+/* -------------------------------------------------------------------------- */
 /* Runtime platform contract                                                  */
 /*                                                                            */
 /* Porting boundary: each platform block should provide the complete section   */

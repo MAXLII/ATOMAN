@@ -29,11 +29,7 @@
 #ifndef __MY_MATH_H
 #define __MY_MATH_H
 
-#ifdef IS_PLECS
 #include "math.h"
-#else
-#include "math.h"
-#endif
 #include <stdint.h>
 #include <stddef.h>
 #include "timing.h"
