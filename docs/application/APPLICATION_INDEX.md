@@ -22,6 +22,8 @@
 - [通信命令开发方法](communication/command_development_usage.md)
 - [GD32E507以太网通信](communication/gd32e507_ethernet_usage.md)
 - [FAL平台配置与上层接入](storage/fal_usage.md)
+- [GD32E507 双 Flash Demo](storage/gd32e507_fal_demo.md)
+- [GD32E507 FAL 板上压力测试](storage/gd32e507_fal_stress.md)
 - [Bootloader升级运行方法](bootloader/bootloader_upgrade_usage.md)
 
 ## 框架与调试
