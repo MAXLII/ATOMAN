@@ -28,12 +28,7 @@
  */
 
 #include "demo_jitter.h"
-
-#if defined(IS_GD32E507)
-#include "gd32e50x.h"
-#else
-#include "gd32g5x3.h"
-#endif
+#include "jitter.h"
 #include "section.h"
 
 #include <stdint.h>
@@ -202,15 +197,15 @@ DEMO_JITTER_TASK_DEFINE4(236, 1487u, 237, 1489u, 238, 1493u, 239, 1499u)
 void demo_jitter_timer2_isr_entry(void)
 {
 #if (DEMO_JITTER_CAPTURE_ENABLE == 1u)
-    const uint32_t entry_count = TIMER_CNT(TIMER2) & 0x0000FFFFu;
+    const uint32_t entry_count = demo_jitter_timer_count_get();
     const uint32_t index = g_demo_jitter_debug.write_index % DEMO_JITTER_SAMPLE_COUNT;
 
     g_demo_jitter_timer2_count[index] = entry_count;
     g_demo_jitter_debug.write_index++;
     g_demo_jitter_debug.sample_count = DEMO_JITTER_SAMPLE_COUNT;
-    g_demo_jitter_debug.timer2_counter_hz = SystemCoreClock;
+    g_demo_jitter_debug.timer2_counter_hz = demo_jitter_timer_clock_hz_get();
     g_demo_jitter_debug.timer2_hz = DEMO_JITTER_TIMER2_HZ;
-    g_demo_jitter_debug.timer2_period_ticks = (TIMER_CAR(TIMER2) & 0x0000FFFFu) + 1u;
+    g_demo_jitter_debug.timer2_period_ticks = demo_jitter_timer_period_ticks_get();
     g_demo_jitter_debug.last_entry_count = entry_count;
 
     if ((g_demo_jitter_debug.min_entry_count == 0u) || (entry_count < g_demo_jitter_debug.min_entry_count))
