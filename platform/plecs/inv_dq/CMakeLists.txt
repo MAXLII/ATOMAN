@@ -34,7 +34,7 @@ set(SOURCES
 add_library(plecs SHARED ${SOURCES})
 
 target_compile_features(plecs PRIVATE c_std_11)
-target_compile_definitions(plecs PRIVATE IS_PLECS IS_INV_DQ TOOLCHAIN_GCC __RAM_FUNC=)
+target_compile_definitions(plecs PRIVATE PLATFORM_PLECS IS_PLECS IS_INV_DQ TOOLCHAIN_GCC __RAM_FUNC=)
 
 target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}
@@ -43,8 +43,7 @@ target_include_directories(plecs PRIVATE
     ${PLECS_COMMON_DIR}
     ${PLECS_COMMON_DIR}/comm
     ${PLECS_COMMON_DIR}/dbg/shell
-    ${CODE_DIR}/comm
-    ${CODE_DIR}/interface/common
+    ${CODE_DIR}/data_source/comm
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
     ${CODE_DIR}/dbg

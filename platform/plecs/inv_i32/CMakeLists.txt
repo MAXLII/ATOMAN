@@ -26,7 +26,7 @@ set(SOURCES
 add_library(plecs SHARED ${SOURCES})
 
 target_compile_features(plecs PRIVATE c_std_11)
-target_compile_definitions(plecs PRIVATE IS_PLECS IS_INV_I32 TOOLCHAIN_GCC __RAM_FUNC=)
+target_compile_definitions(plecs PRIVATE PLATFORM_PLECS IS_PLECS IS_INV_I32 TOOLCHAIN_GCC __RAM_FUNC=)
 target_compile_options(plecs PRIVATE
     -Wall
     -Wextra
