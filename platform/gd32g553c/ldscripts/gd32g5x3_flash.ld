@@ -9,6 +9,7 @@ PHDRS
 {
   flash PT_LOAD FLAGS(5);
   ram PT_LOAD FLAGS(6);
+  ram_exec PT_LOAD FLAGS(5);
 }
 
 ENTRY(Reset_Handler)
@@ -131,7 +132,7 @@ SECTIONS
     *(.func_ram*)
     . = ALIGN(4);
     _efunc_ram = .;
-  } > RAM AT> FLASH :ram
+  } > RAM AT> FLASH :ram_exec
 
   /* provide some necessary symbols for uninitialized data */
   . = ALIGN(4);
