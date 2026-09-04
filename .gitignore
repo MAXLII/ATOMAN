@@ -27,6 +27,9 @@ output_*/
 *.build_log.htm
 *.log
 tests/host/**/*.exe
+platform/testbench/fal_demo/*.exe
+platform/testbench/fal_core/*.exe
+platform/gd32e507/tests/__pycache__/
 
 # Local test code
 /tests/
