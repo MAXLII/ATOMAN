@@ -32,6 +32,7 @@
 
 #include "enet_config.h"
 #include "gd32e50x.h"
+#include "lwip/ip4_addr.h"
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 
@@ -62,6 +63,7 @@ static uint8_t response_append_hex_u8(uint8_t *p_response,
                                       uint8_t value);
 static uint16_t discovery_response_build(const uint8_t *p_request,
                                          uint16_t request_length,
+                                         const struct ip4_addr *p_local_address,
                                          uint8_t *p_response,
                                          uint16_t response_capacity);
 
@@ -223,6 +225,7 @@ uint8_t bsp_enet_rx_frame_pending(void)
 
 static uint16_t discovery_response_build(const uint8_t *p_request,
                                          uint16_t request_length,
+                                         const struct ip4_addr *p_local_address,
                                          uint8_t *p_response,
                                          uint16_t response_capacity)
 {
@@ -230,6 +233,8 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
     uint16_t response_length = 0u; /* Number of valid ASCII response bytes produced for the caller. */
 
     if ((p_request == NULL) || /* The UDP adapter did not provide request bytes. */
+        (p_local_address == NULL) || /* The active interface address is unavailable. */
+        ip4_addr_isany_val(*p_local_address) || /* Address acquisition is still in progress. */
         (p_response == NULL) || /* The UDP adapter did not provide response storage. */
         (request_length != BSP_ENET_DISCOVERY_REQUEST_LENGTH) || /* Only the complete probe is accepted. */
         (memcmp(p_request, discovery_request, BSP_ENET_DISCOVERY_REQUEST_LENGTH) != 0)) /* Reject UDP Echo traffic. */
@@ -247,7 +252,7 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
     if (response_append_u16(p_response,
                             response_capacity,
                             &response_length,
-                            ENET_CONFIG_IP_ADDR0) == 0u)
+                            ip4_addr1(p_local_address)) == 0u)
     {
         return 0u;
     }
@@ -258,7 +263,7 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
     if (response_append_u16(p_response,
                             response_capacity,
                             &response_length,
-                            ENET_CONFIG_IP_ADDR1) == 0u)
+                            ip4_addr2(p_local_address)) == 0u)
     {
         return 0u;
     }
@@ -269,7 +274,7 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
     if (response_append_u16(p_response,
                             response_capacity,
                             &response_length,
-                            ENET_CONFIG_IP_ADDR2) == 0u)
+                            ip4_addr3(p_local_address)) == 0u)
     {
         return 0u;
     }
@@ -280,7 +285,7 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
     if (response_append_u16(p_response,
                             response_capacity,
                             &response_length,
-                            ENET_CONFIG_IP_ADDR3) == 0u)
+                            ip4_addr4(p_local_address)) == 0u)
     {
         return 0u;
     }
@@ -357,6 +362,7 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
 
 bsp_enet_discovery_result_t bsp_enet_discovery_udp_process(struct udp_pcb *p_endpoint,
                                                             const struct pbuf *p_packet,
+                                                            const struct ip4_addr *p_local_address,
                                                             const struct ip4_addr *p_remote_address,
                                                             uint16_t remote_port)
 {
@@ -369,6 +375,7 @@ bsp_enet_discovery_result_t bsp_enet_discovery_udp_process(struct udp_pcb *p_end
 
     if ((p_endpoint == NULL) || /* The UDP service did not provide its bound endpoint. */
         (p_packet == NULL) || /* The UDP service did not provide a datagram. */
+        (p_local_address == NULL) || /* The interface has no reportable address. */
         (p_remote_address == NULL) || /* The response destination is unavailable. */
         (p_packet->tot_len != BSP_ENET_DISCOVERY_REQUEST_LENGTH)) /* Unrelated UDP traffic remains Echo data. */
     {
@@ -386,6 +393,7 @@ bsp_enet_discovery_result_t bsp_enet_discovery_udp_process(struct udp_pcb *p_end
 
     response_length = discovery_response_build(request,
                                                BSP_ENET_DISCOVERY_REQUEST_LENGTH,
+                                               p_local_address,
                                                response,
                                                BSP_ENET_DISCOVERY_RESPONSE_MAX_LENGTH);
     if (response_length == 0u)

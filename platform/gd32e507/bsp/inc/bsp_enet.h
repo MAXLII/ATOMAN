@@ -56,12 +56,14 @@ uint8_t bsp_enet_rx_frame_pending(void);
  * @brief Recognize and answer one BSP-owned FRAME UDP discovery request.
  * @param[in] p_endpoint Bound UDP endpoint used to send the response.
  * @param[in] p_packet Received datagram retained by the caller for the complete call.
+ * @param[in] p_local_address Active local IPv4 address reported to FRAME.
  * @param[in] p_remote_address Source IPv4 address that receives the response.
  * @param[in] remote_port Source UDP port that receives the response.
  * @return BSP discovery handling result; the caller always retains p_packet ownership.
  */
 bsp_enet_discovery_result_t bsp_enet_discovery_udp_process(struct udp_pcb *p_endpoint,
                                                             const struct pbuf *p_packet,
+                                                            const struct ip4_addr *p_local_address,
                                                             const struct ip4_addr *p_remote_address,
                                                             uint16_t remote_port);
 

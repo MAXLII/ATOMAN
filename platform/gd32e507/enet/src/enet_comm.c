@@ -41,6 +41,7 @@
 #include "ethernetif.h"
 
 #include "lwip/init.h"
+#include "lwip/dhcp.h"
 #include "lwip/ip4_addr.h"
 #include "lwip/netif.h"
 #include "lwip/pbuf.h"
@@ -446,6 +447,7 @@ static void udp_receive_callback(void *p_argument,
     g_enet_udp_rx_byte_count += (uint32_t)p_packet->tot_len;
     discovery_result = bsp_enet_discovery_udp_process(p_endpoint,
                                                       p_packet,
+                                                      netif_ip4_addr(&network_interface),
                                                       p_remote_address,
                                                       remote_port);
     if (discovery_result != BSP_ENET_DISCOVERY_NOT_HANDLED_E)
@@ -468,9 +470,9 @@ static void udp_receive_callback(void *p_argument,
 
 static uint8_t stack_start(void)
 {
-    ip4_addr_t ip_address = {0};      /* Static local IPv4 address. */
-    ip4_addr_t network_mask = {0};    /* Static IPv4 subnet mask. */
-    ip4_addr_t gateway_address = {0}; /* Static IPv4 gateway; zero for a direct link. */
+    ip4_addr_t ip_address = {0};      /* Zero until DHCP or AutoIP assigns an address. */
+    ip4_addr_t network_mask = {0};    /* Assigned together with the runtime address. */
+    ip4_addr_t gateway_address = {0}; /* Assigned by DHCP; zero on a direct AutoIP link. */
     err_t bind_status = ERR_OK;       /* Endpoint bind result. */
 
     if (bsp_enet_init() == 0u)
@@ -480,22 +482,6 @@ static uint8_t stack_start(void)
     }
 
     lwip_init();
-    IP4_ADDR(&ip_address,
-             ENET_CONFIG_IP_ADDR0,
-             ENET_CONFIG_IP_ADDR1,
-             ENET_CONFIG_IP_ADDR2,
-             ENET_CONFIG_IP_ADDR3);
-    IP4_ADDR(&network_mask,
-             ENET_CONFIG_NETMASK_ADDR0,
-             ENET_CONFIG_NETMASK_ADDR1,
-             ENET_CONFIG_NETMASK_ADDR2,
-             ENET_CONFIG_NETMASK_ADDR3);
-    IP4_ADDR(&gateway_address,
-             ENET_CONFIG_GATEWAY_ADDR0,
-             ENET_CONFIG_GATEWAY_ADDR1,
-             ENET_CONFIG_GATEWAY_ADDR2,
-             ENET_CONFIG_GATEWAY_ADDR3);
-
     if (netif_add(&network_interface,
                   &ip_address,
                   &network_mask,
@@ -518,6 +504,12 @@ static uint8_t stack_start(void)
     else
     {
         netif_set_link_down(&network_interface);
+    }
+
+    if (dhcp_start(&network_interface) != ERR_OK)
+    {
+        bsp_usart_dbg_printf("enet: DHCP/AutoIP start failed\r\n");
+        return 0u;
     }
 
     p_tcp_listener = tcp_new_ip_type(IPADDR_TYPE_V4);
@@ -561,9 +553,7 @@ static uint8_t stack_start(void)
     }
     udp_recv(p_udp_endpoint, udp_receive_callback, NULL);
 
-    etharp_gratuitous(&network_interface); /* Announce the static address and verify the RMII transmit path. */
-
-    bsp_usart_dbg_printf("enet: ready IP 192.168.1.101, TCP FRAME/UDP echo port 5000\r\n");
+    bsp_usart_dbg_printf("enet: ready DHCP/AutoIP, TCP FRAME/UDP discovery port 5000\r\n");
     bsp_usart_dbg_printf("enet: link %s\r\n", (link_state == 1u) ? "up" : "down");
     return 1u;
 }
@@ -587,7 +577,6 @@ static void link_update(uint32_t now_ms)
     if (link_state == 1u)
     {
         netif_set_link_up(&network_interface);
-        etharp_gratuitous(&network_interface); /* Refresh the peer ARP cache after link recovery. */
         bsp_usart_dbg_printf("enet: link up\r\n");
     }
     else
