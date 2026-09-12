@@ -64,30 +64,30 @@ static route_bridge_state_t route_state = {
     .frame_connected = 0u,
 }; /**< Mutable state owned by one independently loaded node DLL. */
 
-REG_SHELL_VAR(NODE_ADDR, route_state.node_addr, SHELL_UINT32, 0u, 0u, NULL, SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(NODE_ADDR, route_state.node_addr, SHELL_UINT32, 255u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(NODE_VALUE, route_state.node_value, SHELL_UINT32, 1000000u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(LOOPBACK_COUNT,
               route_state.loopback_count,
               SHELL_UINT32,
-              0u,
+              UINT32_MAX,
               0u,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(PEER_CONNECTED,
               route_state.peer_connected,
               SHELL_UINT32,
-              0u,
+              1u,
               0u,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 
 REG_SHELL_VAR(FRAME_CONNECTED,
               route_state.frame_connected,
               SHELL_UINT32,
-              0u,
+              1u,
               0u,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 
 #if (PLECS_NODE_ADDR == 0x02)
 REG_COMM_ROUTE(1, 2, 0x03)

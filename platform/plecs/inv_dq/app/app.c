@@ -119,42 +119,42 @@ REG_SHELL_VAR(START_VBUS_MIN_V,
               0.0f,
               NULL,
               SHELL_STA_NULL)
-REG_SHELL_VAR(RUN_REQUEST, app_run_request, SHELL_UINT8, 1U, 0U, NULL, SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(RUN_REQUEST, app_run_request, SHELL_UINT8, 1U, 0U, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(RUN_STATE,
               app_run_state,
               SHELL_UINT32,
               APP_INV_RUN_STATE_MAX,
               APP_INV_RUN_STATE_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(V_CAP,
               app_v_cap,
               SHELL_FP32,
               APP_INV_FEEDBACK_MAX,
               APP_INV_FEEDBACK_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(V_BUS,
               app_v_bus,
               SHELL_FP32,
               APP_INV_FEEDBACK_MAX,
               APP_INV_FEEDBACK_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(I_L,
               app_i_l,
               SHELL_FP32,
               APP_INV_FEEDBACK_MAX,
               APP_INV_FEEDBACK_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(FRAME_TCP_PORT,
               app_frame_tcp_port,
               SHELL_UINT32,
-              FRAME_TCP_SERVER_PORT,
-              FRAME_TCP_SERVER_PORT,
+              65535u,
+              1u,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 
 static void app_inv_rly_on(void)
 {

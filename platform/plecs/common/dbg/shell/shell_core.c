@@ -360,10 +360,6 @@ static void shell_write_item_if_needed(shell_core_item_t *p, const char *value_s
     {
         return;
     }
-    if ((p->status & SHELL_STA_READ_ONLY) != 0u)
-    {
-        return;
-    }
 
     int32_t intval = 0;
 

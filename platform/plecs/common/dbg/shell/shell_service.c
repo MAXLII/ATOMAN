@@ -423,8 +423,7 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         (p->type != SHELL_CMD) &&
         (p->p_var != NULL) &&
         (p->p_max != NULL) &&
-        (p->p_min != NULL) &&
-        ((p->status & SHELL_STA_READ_ONLY) == 0u))
+        (p->p_min != NULL))
     {
         /* Remote write shares the same data model as the local shell entry. */
         switch (p->type)

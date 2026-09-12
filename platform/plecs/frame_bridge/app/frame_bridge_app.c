@@ -26,6 +26,9 @@
  * This file is licensed under the MIT License.
  * See the LICENSE file in the project root for full license text.
  */
+#include <float.h>
+#include <stdint.h>
+
 #include "frame_bridge_app.h"
 
 #include "plecs.h"
@@ -84,11 +87,11 @@ static void frame_bridge_parameter_changed(shell_core_io_t *p_io)
 REG_SHELL_VAR(SIM_TIME_S,
               s_state.sim_time_s,
               SHELL_FP32,
-              0.0f,
+              FLT_MAX,
               0.0f,
               NULL,
-              SHELL_STA_READ_ONLY)
-REG_SHELL_VAR(SIM_INPUT, s_state.input, SHELL_FP32, 0.0f, 0.0f, NULL, SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
+REG_SHELL_VAR(SIM_INPUT, s_state.input, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(SIM_GAIN, s_state.gain, SHELL_FP32, 10.0f, -10.0f, frame_bridge_parameter_changed, SHELL_STA_NULL)
 REG_SHELL_VAR(SIM_OFFSET,
               s_state.offset,
@@ -97,9 +100,9 @@ REG_SHELL_VAR(SIM_OFFSET,
               -100.0f,
               frame_bridge_parameter_changed,
               SHELL_STA_NULL)
-REG_SHELL_VAR(SIM_OUTPUT, s_state.output, SHELL_FP32, 0.0f, 0.0f, NULL, SHELL_STA_READ_ONLY)
-REG_SHELL_VAR(SIM_STEP_COUNT, s_state.step_count, SHELL_UINT32, 0u, 0u, NULL, SHELL_STA_READ_ONLY)
-REG_SHELL_VAR(FRAME_TCP_PORT, frame_tcp_port, SHELL_UINT32, 0u, 0u, NULL, SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(SIM_OUTPUT, s_state.output, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(SIM_STEP_COUNT, s_state.step_count, SHELL_UINT32, UINT32_MAX, 0u, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(FRAME_TCP_PORT, frame_tcp_port, SHELL_UINT32, 65535u, 1u, NULL, SHELL_STA_NULL)
 
 REG_SCOPE_EX(frame_simulation,
              512u,
