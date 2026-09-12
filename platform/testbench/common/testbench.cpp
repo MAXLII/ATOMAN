@@ -88,7 +88,7 @@ static testbench_module_t *link_testbench_modules(void)
     testbench_module_t *p_module = nullptr; /**< Module currently being linked. */
     testbench_module_t *p_next = nullptr;   /**< Next module address derived from section order. */
 
-    if (__start_testbench_module >= __stop_testbench_module)
+    if (&__start_testbench_module[0] >= &__stop_testbench_module[0])
     {
         return nullptr;
     }
