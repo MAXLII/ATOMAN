@@ -107,7 +107,6 @@ typedef enum
 
 #define SHELL_STA_NULL (0u)
 #define SHELL_STA_AUTO (1u << 2)
-#define SHELL_STA_READ_ONLY (1u << 3)
 
 /**
  * @brief Shell registration entry (command or variable).

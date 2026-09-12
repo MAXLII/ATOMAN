@@ -150,77 +150,77 @@ REG_SHELL_VAR(OUT_VOLT_REF,
               0.0f,
               NULL,
               SHELL_STA_NULL)
-REG_SHELL_VAR(RUN_REQUEST, app_run_request, SHELL_UINT8, 1U, 0U, NULL, SHELL_STA_READ_ONLY)
+REG_SHELL_VAR(RUN_REQUEST, app_run_request, SHELL_UINT8, 1U, 0U, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(RUN_STATE,
               app_run_state,
               SHELL_UINT32,
               APP_RUN_STATE_MAX,
               APP_RUN_STATE_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(HV,
               app_hv,
               SHELL_FP32,
               BSP_ADC_VOLT_MAX_V,
               BSP_ADC_VOLT_MIN_V,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(LV,
               app_lv,
               SHELL_FP32,
               BSP_ADC_VOLT_MAX_V,
               BSP_ADC_VOLT_MIN_V,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(ILA,
               app_ila,
               SHELL_FP32,
               BSP_ADC_IND_CURR_MAX_A,
               BSP_ADC_IND_CURR_MIN_A,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(ILB,
               app_ilb,
               SHELL_FP32,
               BSP_ADC_IND_CURR_MAX_A,
               BSP_ADC_IND_CURR_MIN_A,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(HV_CODE,
               app_adc_hv,
               SHELL_INT32,
               APP_ADC_VOLT_CODE_MAX,
               0,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(LV_CODE,
               app_adc_lv,
               SHELL_INT32,
               APP_ADC_VOLT_CODE_MAX,
               0,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(ILA_CODE,
               app_adc_ila,
               SHELL_INT32,
               APP_ADC_IND_CURR_CODE_MAX,
               APP_ADC_IND_CURR_CODE_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(ILB_CODE,
               app_adc_ilb,
               SHELL_INT32,
               APP_ADC_IND_CURR_CODE_MAX,
               APP_ADC_IND_CURR_CODE_MIN,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 REG_SHELL_VAR(FRAME_TCP_PORT,
               app_frame_tcp_port,
               SHELL_UINT32,
-              FRAME_TCP_SERVER_PORT,
-              FRAME_TCP_SERVER_PORT,
+              65535u,
+              1u,
               NULL,
-              SHELL_STA_READ_ONLY)
+              SHELL_STA_NULL)
 
 static inline void app_update_adc_feedback(void)
 {
