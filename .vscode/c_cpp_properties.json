@@ -476,6 +476,44 @@
             }
         },
         {
+            "name": "plecs_npc",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/npc",
+                "${workspaceFolder}/platform/plecs/npc/app",
+                "${workspaceFolder}/platform/plecs/npc/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/platform/plecs/common/comm",
+                "${workspaceFolder}/platform/plecs/common/dbg/shell",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/npc/common",
+                "${workspaceFolder}/code/ctrl/npc",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/section"
+            ],
+            "defines": [
+                "PLATFORM_PLECS"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/platform/plecs/npc",
+                    "${workspaceFolder}/platform/plecs/common",
+                    "${workspaceFolder}/code/interface/npc/common",
+                    "${workspaceFolder}/code/ctrl/npc",
+                    "${workspaceFolder}/code/lib",
+                    "${workspaceFolder}/code/section",
+                    "${workspaceFolder}/code/data_source/comm",
+                    "${workspaceFolder}/code/dbg"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
             "name": "plecs_buck",
             "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
             "cStandard": "c11",
