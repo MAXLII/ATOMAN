@@ -1265,8 +1265,9 @@ static void interrupt_insert(section_item_t *p_item)
     else
     {
         p_prev = p_interrupt_first;
+        /* Preserve registration order among callbacks with equal priority. */
         while ((p_prev->p_next != NULL) &&
-               (((reg_interrupt_t *)p_prev->p_next->p_obj)->priority < p_interrupt->priority))
+               (((reg_interrupt_t *)p_prev->p_next->p_obj)->priority <= p_interrupt->priority))
         {
             p_prev = p_prev->p_next;
         }

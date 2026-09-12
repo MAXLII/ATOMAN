@@ -589,4 +589,10 @@ extern const uint16_t __section_end;
 #define SECTION_REG_ATTR_PREFIX
 #endif
 
+#if defined(PLATFORM_PLECS) && defined(TOOLCHAIN_GCC)
+/* Keep registration records in declaration order within each translation unit.
+ * Cross-file order follows linker inputs; runtime priority rules still apply. */
+#define SECTION_REG_ATTR_SUFFIX AUTO_REG_SECTION __attribute__((no_reorder))
+#else
 #define SECTION_REG_ATTR_SUFFIX AUTO_REG_SECTION
+#endif
