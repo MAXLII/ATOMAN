@@ -245,7 +245,7 @@ bool pll_cal(pll_t *p_pll)
            p_pll->inter.vq);
 
     p_pll->inter.pi_ref = 0.0f;
-    p_pll->inter.pi_act = p_pll->inter.vq;
+    p_pll->inter.pi_act = -p_pll->inter.vq; /* PI uses ref-act: positive vq must increase the estimated angle. */
 
     if (!pi_tustin_cal(&p_pll->pi))
     {
