@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" role="img" aria-labelledby="title desc">
+  <title id="title">NPC 正负序 dq 电压外环与电流内环控制框图</title>
+  <desc id="desc">输入三相输出电压、电感电流、外部相位和正序 d 轴电压幅值。采样经过 Clarke、DSOGI 序分离和正负向 Park 变换。正负序分别经 dq 电压 PI 外环、电流 PI 内环，再反变换并合成 alpha beta 电压指令。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#42556c"/></marker>
+    <style>
+      text{font-family:'Microsoft YaHei','Noto Sans CJK SC',Arial,sans-serif;fill:#20324a;font-size:20px}
+      .title{font-size:32px;font-weight:700}.subtitle{font-size:18px;fill:#61748a}
+      .h{font-size:23px;font-weight:700}.small{font-size:17px}.tiny{font-size:16px}.label{font-size:19px;font-weight:600}
+      .box{fill:white;stroke:#9aaabd;stroke-width:1.7;rx:12}
+      .pos{fill:#eff7ff;stroke:#4386c4;stroke-width:1.8;rx:12}.neg{fill:#fff5e9;stroke:#cc8c43;stroke-width:1.8;rx:12}
+      .phase{fill:#f5f0ff;stroke:#9672c4;stroke-width:1.8;rx:12}
+      .wire{fill:none;stroke:#42556c;stroke-width:2;marker-end:url(#arrow)}
+      .bus{fill:none;stroke:#8965b7;stroke-width:2;stroke-dasharray:7 5;marker-end:url(#arrow)}
+      .sum{fill:white;stroke:#42556c;stroke-width:2}.panel{fill:#f7f9fc;stroke:#dce3ed;stroke-width:1.5;rx:18}
+    </style>
+  </defs>
+  <rect width="1800" height="1200" fill="#fff"/>
+  <text x="50" y="57" class="title">NPC 正负序 dq 双闭环控制</text>
+  <text x="50" y="92" class="subtitle">结构方案 · 外部相位输入 · 电压外环 → 电感电流内环 · 5 kHz / Tₛ = 200 μs</text>
+
+  <rect x="40" y="120" width="1720" height="300" class="panel"/>
+  <text x="62" y="154" class="h">01　输入接口与反馈预处理</text>
+  <rect x="65" y="183" width="265" height="118" class="box"/>
+  <text x="85" y="215" class="label">模拟采样</text>
+  <text x="85" y="249">输出电压：vₐ, vᵦ, v꜀</text>
+  <text x="85" y="279">电感电流：iLₐ, iLᵦ, iL꜀</text>
+  <path d="M330 242 H385" class="wire"/>
+  <rect x="385" y="193" width="170" height="98" class="box"/>
+  <text x="470" y="231" text-anchor="middle" class="label">Clarke × 2</text>
+  <text x="470" y="267" text-anchor="middle">abc → αβ</text>
+  <path d="M555 242 H630" class="wire"/>
+  <rect x="630" y="183" width="285" height="118" class="box"/>
+  <text x="772" y="216" text-anchor="middle" class="label">DSOGI + 正负序分离 × 2</text>
+  <text x="772" y="250" text-anchor="middle">电压：vαβ⁺、vαβ⁻</text>
+  <text x="772" y="280" text-anchor="middle">电流：iLαβ⁺、iLαβ⁻</text>
+  <path d="M915 220 H980 V208 H1015" class="wire"/>
+  <path d="M915 267 H980 V293 H1015" class="wire"/>
+  <rect x="1015" y="176" width="245" height="64" class="pos"/>
+  <text x="1137" y="216" text-anchor="middle">正序 Park(+θ) × 2</text>
+  <rect x="1015" y="261" width="245" height="64" class="neg"/>
+  <text x="1137" y="301" text-anchor="middle">负序 Park(−θ) × 2</text>
+  <path d="M1260 208 H1320" class="wire"/>
+  <path d="M1260 293 H1320" class="wire"/>
+  <rect x="1320" y="176" width="410" height="64" class="pos"/>
+  <text x="1525" y="216" text-anchor="middle">正序反馈：vdq⁺、iLdq⁺</text>
+  <rect x="1320" y="261" width="410" height="64" class="neg"/>
+  <text x="1525" y="301" text-anchor="middle">负序反馈：vdq⁻、iLdq⁻</text>
+  <rect x="65" y="334" width="265" height="62" class="phase"/>
+  <text x="197" y="373" text-anchor="middle">外部相位 θ [rad]</text>
+  <path d="M330 365 H1045 V325" class="bus"/>
+  <path d="M955 365 V250 H1045 V240" class="bus"/>
+  <text x="370" y="351" class="small">相位分发：+θ / −θ；与本次模拟采样对齐</text>
+  <text x="1120" y="371" class="small">同名反馈信号连接到下方对应减号端</text>
+  <text x="1120" y="399" class="tiny">电压为相电压；电流正方向：桥臂 → 输出端</text>
+
+  <rect x="40" y="445" width="1720" height="245" class="pos"/>
+  <text x="62" y="480" class="h">02　正序控制　σ = +</text>
+  <rect x="65" y="519" width="245" height="101" class="box"/>
+  <text x="187" y="549" text-anchor="middle" class="label">幅值输入 Vd⁺* [V]</text>
+  <text x="187" y="580" text-anchor="middle">vd* = Vd⁺*</text>
+  <text x="187" y="606" text-anchor="middle">vq* = 0</text>
+  <path d="M310 570 H363" class="wire"/>
+  <circle cx="385" cy="570" r="22" class="sum"/><text x="369" y="577">+</text><text x="381" y="588" class="tiny">−</text>
+  <path d="M407 570 H450" class="wire"/>
+  <rect x="450" y="524" width="235" height="92" class="box"/>
+  <text x="567" y="556" text-anchor="middle" class="label">dq 电压外环</text>
+  <text x="567" y="589" text-anchor="middle">PI_vd⁺　PI_vq⁺</text>
+  <path d="M685 570 H808" class="wire"/><text x="727" y="548" class="small">iLdq⁺*</text>
+  <circle cx="830" cy="570" r="22" class="sum"/><text x="814" y="577">+</text><text x="826" y="588" class="tiny">−</text>
+  <path d="M852 570 H905" class="wire"/>
+  <rect x="905" y="524" width="235" height="92" class="box"/>
+  <text x="1022" y="556" text-anchor="middle" class="label">dq 电流内环</text>
+  <text x="1022" y="589" text-anchor="middle">PI_id⁺　PI_iq⁺</text>
+  <path d="M1140 570 H1275" class="wire"/><text x="1180" y="548" class="small">udq⁺*</text>
+  <rect x="1275" y="524" width="235" height="92" class="box"/>
+  <text x="1392" y="556" text-anchor="middle" class="label">反 Park(+θ)</text>
+  <text x="1392" y="589" text-anchor="middle">dq⁺ → αβ</text>
+  <path d="M1510 570 H1590" class="wire"/><text x="1600" y="577">uαβ⁺*</text>
+  <path d="M385 650 V592" class="wire"/><text x="332" y="674" class="small">vdq⁺ 反馈</text>
+  <path d="M830 650 V592" class="wire"/><text x="777" y="674" class="small">iLdq⁺ 反馈</text>
+  <path d="M1392 650 V616" class="bus"/><text x="1380" y="674" class="small">+θ</text>
+
+  <rect x="40" y="712" width="1720" height="245" class="neg"/>
+  <text x="62" y="747" class="h">03　负序控制　σ = −</text>
+  <rect x="65" y="786" width="245" height="101" class="box"/>
+  <text x="187" y="816" text-anchor="middle" class="label">负序电压给定</text>
+  <text x="187" y="847" text-anchor="middle">vd* = 0</text>
+  <text x="187" y="873" text-anchor="middle">vq* = 0</text>
+  <path d="M310 837 H363" class="wire"/>
+  <circle cx="385" cy="837" r="22" class="sum"/><text x="369" y="844">+</text><text x="381" y="855" class="tiny">−</text>
+  <path d="M407 837 H450" class="wire"/>
+  <rect x="450" y="791" width="235" height="92" class="box"/>
+  <text x="567" y="823" text-anchor="middle" class="label">dq 电压外环</text>
+  <text x="567" y="856" text-anchor="middle">PI_vd⁻　PI_vq⁻</text>
+  <path d="M685 837 H808" class="wire"/><text x="727" y="815" class="small">iLdq⁻*</text>
+  <circle cx="830" cy="837" r="22" class="sum"/><text x="814" y="844">+</text><text x="826" y="855" class="tiny">−</text>
+  <path d="M852 837 H905" class="wire"/>
+  <rect x="905" y="791" width="235" height="92" class="box"/>
+  <text x="1022" y="823" text-anchor="middle" class="label">dq 电流内环</text>
+  <text x="1022" y="856" text-anchor="middle">PI_id⁻　PI_iq⁻</text>
+  <path d="M1140 837 H1275" class="wire"/><text x="1180" y="815" class="small">udq⁻*</text>
+  <rect x="1275" y="791" width="235" height="92" class="box"/>
+  <text x="1392" y="823" text-anchor="middle" class="label">反 Park(−θ)</text>
+  <text x="1392" y="856" text-anchor="middle">dq⁻ → αβ</text>
+  <path d="M1510 837 H1590" class="wire"/><text x="1600" y="844">uαβ⁻*</text>
+  <path d="M385 917 V859" class="wire"/><text x="332" y="941" class="small">vdq⁻ 反馈</text>
+  <path d="M830 917 V859" class="wire"/><text x="777" y="941" class="small">iLdq⁻ 反馈</text>
+  <path d="M1392 917 V883" class="bus"/><text x="1380" y="941" class="small">−θ</text>
+
+  <rect x="40" y="980" width="1720" height="175" class="panel"/>
+  <text x="62" y="1015" class="h">04　电压指令合成与输出</text>
+  <text x="100" y="1057">uαβ⁺*</text><path d="M185 1050 H270 V1070 H308" class="wire"/>
+  <text x="100" y="1115">uαβ⁻*</text><path d="M185 1108 H270 V1080 H308" class="wire"/>
+  <circle cx="331" cy="1075" r="23" class="sum"/><text x="321" y="1083">+</text>
+  <path d="M354 1075 H405" class="wire"/>
+  <rect x="405" y="1035" width="300" height="80" class="box"/>
+  <text x="555" y="1067" text-anchor="middle" class="label">控制器输出</text>
+  <text x="555" y="1098" text-anchor="middle">uα*、uβ* [V]</text>
+  <path d="M705 1075 H790" class="wire"/>
+  <rect x="790" y="1035" width="290" height="80" class="box" stroke-dasharray="7 5"/>
+  <text x="935" y="1067" text-anchor="middle" class="label">后级三电平 SVPWM</text>
+  <text x="935" y="1098" text-anchor="middle" class="small">正 / 负占空比 → BSP</text>
+  <text x="1140" y="1054" class="small">共 8 个 PI：4 个电压 PI + 4 个电流 PI</text>
+  <text x="1140" y="1085" class="small">dq 块表示 d、q 两路；负序电流给定由外环生成</text>
+  <text x="1140" y="1116" class="small">相位由外部提供；本图为结构方案，增益待分析</text>
+  <text x="50" y="1184" class="tiny">约定：d = α cos θ + β sin θ，q = −α sin θ + β cos θ；Vd⁺* 为相电压峰值，690 V 线电压 RMS 对应约 563.4 V。</text>
+</svg>
