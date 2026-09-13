@@ -1,0 +1,6 @@
+interface:
+  display_name: "Base 控制拓扑固定格式"
+  short_description: "按统一的配置、HAL、状态机和控制职责实现新拓扑，并核对采样保护发波顺序"
+  default_prompt: "使用 $base-ctrl-topology，为新的电力电子拓扑按本仓库固定格式实现 cfg、hal、fsm、ctrl 及必要的平台接入。"
+policy:
+  allow_implicit_invocation: true
