@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 ROOT := ../../..
 CC := C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe
 TARGET := test_demo_storage.exe
@@ -7,12 +10,21 @@ SOURCES := test_demo_storage.c fake_flash.c $(ROOT)/code/lib/bch4.c $(ROOT)/code
 CFLAGS := -std=c11 -O2 -g $(WARN) $(INCLUDES) -I$(ROOT)/code/business/demo
 SOURCES += $(ROOT)/code/business/demo/fal_cfg.c
 CFG_SOURCES := test_fal_cfg.c fake_flash.c $(ROOT)/code/business/demo/fal_cfg.c $(ROOT)/code/lib/fal/fal_core.c $(ROOT)/code/interface/demo/common/flash_port.c
+OBJECTS := $(notdir $(SOURCES:.c=.o))
+CFG_OBJECTS := $(notdir $(CFG_SOURCES:.c=.o))
+vpath %.c $(sort $(dir $(SOURCES) $(CFG_SOURCES)))
 .PHONY: all test
 all: $(TARGET) test_fal_cfg.exe
-$(TARGET): $(SOURCES)
-	$(CC) $(CFLAGS) $(SOURCES) -o $@
-test_fal_cfg.exe: $(CFG_SOURCES)
-	$(CC) $(CFLAGS) $(CFG_SOURCES) -o $@
+$(TARGET): $(OBJECTS)
+	$(CC) $^ -o $@
+test_fal_cfg.exe: $(CFG_OBJECTS)
+	$(CC) $^ -o $@
+
+%.o: %.c
+	$(CC) $(call testbench_cflags,$<) -c $< -o $@
 test: $(TARGET) test_fal_cfg.exe
 	powershell.exe -NoProfile -Command "& { .\test_fal_cfg.exe 2>&1 | Tee-Object -FilePath test_fal_cfg.log; exit $$LASTEXITCODE }"
 	powershell.exe -NoProfile -Command "& { .\$(TARGET) 2>&1 | Tee-Object -FilePath test_demo_storage.log; exit $$LASTEXITCODE }"
+
+# Test sources may use double; production sources retain single-precision diagnostics.
+include $(BASE_FP_MAKE_DIR)../common/float_policy.mk

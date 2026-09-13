@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 PROJECT_ROOT := ../../..
 TARGET ?= zynq7020_section_comm_srtos
 BUILD_DIR ?= build_srtos
@@ -135,3 +138,6 @@ clean:
 	@if exist "$(BUILD_DIR)\$(TARGET).map" del /Q "$(BUILD_DIR)\$(TARGET).map"
 
 -include $(DEPS)
+
+# Enforce the shared GCC single-precision diagnostics for project C compilation.
+include $(BASE_FP_MAKE_DIR)../../gcc_float_policy.mk

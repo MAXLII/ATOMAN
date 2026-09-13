@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 PROJECT_ROOT := ../../../..
 PLATFORM_ROOT := ../..
 TARGET := hc32f334_bootloader
@@ -127,3 +130,6 @@ clean:
 	@if exist "$(subst /,\,$(BUILD_DIR))" rmdir /s /q "$(subst /,\,$(BUILD_DIR))"
 
 -include $(DEPS)
+
+# Enforce the shared GCC single-precision diagnostics for project C compilation.
+include $(BASE_FP_MAKE_DIR)../../../gcc_float_policy.mk

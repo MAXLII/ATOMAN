@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+
+
 #define TEST_TS (0.0002) /* 5 kHz sampling. */
 #define TEST_PI (3.14159265358979323846) /* Double precision reference constant. */
 static dsogi_t filter; /* Production DSOGI instance. */
@@ -249,4 +251,3 @@ TESTBENCH_CASE(dsogi, phase_jump, phase_init, before_dut, after_dut)
 TESTBENCH_CASE(dsogi, sag, sag_init, before_dut, after_dut)
 TESTBENCH_CASE(dsogi, harmonics, harmonic_init, before_dut, after_dut)
 TESTBENCH_CASE(dsogi, recovery, fault_init, before_dut, after_dut)
-

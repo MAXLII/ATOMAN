@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 CC := gcc
 CXX := g++
 
@@ -50,7 +53,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDLIBS) -o $@
 
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(call testbench_cflags,$<) -c $< -o $@
 
 $(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
@@ -60,3 +63,6 @@ $(BUILD_DIR):
 
 test: prepare $(TARGET)
 	$(TARGET)
+
+# Test sources may use double; production sources retain single-precision diagnostics.
+include $(BASE_FP_MAKE_DIR)../common/float_policy.mk
