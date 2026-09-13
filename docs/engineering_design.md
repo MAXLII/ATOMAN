@@ -2,7 +2,7 @@
 
 ## 1. 工程定位
 
-本仓库是数字电源公共软件、硬件平台、控制仿真和 FPGA IP 的统一工程。软件主体按照一衍架构组织为功能模块、数据池、框架和 Platform 四个大类。
+本仓库是数字电源公共软件、硬件平台、控制仿真和 FPGA IP 的统一工程。软件主体按职责组织为功能模块、数据池、框架和 Platform 四个大类。
 
 工程由五类内容组成：
 
@@ -64,7 +64,7 @@ base/
 | `code/business/demo/` | demo 项目的任务、中断和框架功能演示 |
 | `code/ctrl/` | 电源拓扑控制器、控制状态和参数配置 |
 | `code/lib/` | 算法与可复用软件能力，同时服务控制和业务代码；`fal/` 提供异步 Flash 请求与分区内地址管理 |
-| `code/app/` | Bootloader 与 Zynq Zero Player 应用模块 |
+| `code/app/` | 应用流程与保护策略，包括 Bootloader、NPC 保护等模块 |
 
 Bootloader 目录进一步按职责划分：
 
@@ -97,7 +97,10 @@ code/ctrl/
 ├─ buck/                      Buck
 ├─ cllc/                      CLLC
 ├─ inv/                       逆变器
+├─ inv_dq/                    DQ 逆变控制
+├─ inv_i32/                   整数逆变控制
 ├─ llc/                       LLC
+├─ npc/                       三电平 NPC 控制
 ├─ pfc/                       浮点 PFC
 └─ pfc_i32/                   整数 PFC
 ```

@@ -1,82 +1,67 @@
-# CTRL 控制模块设计总览
+# CTRL 控制模块组织架构
 
 ## 1. 模块定位
 
-`code/ctrl/` 存放硬件无关的功率级控制模块。当前包含：
+`code/ctrl/` 按功率拓扑组织控制代码。控制器通过 HAL 获取采样和调用发波接口，复用 `code/lib/` 算法，不直接操作 MCU 寄存器。
 
-| 目录 | 模块 | 控制域 |
-| --- | --- | --- |
-| `code/ctrl/pfc/` | 交流侧 PFC 控制 | 浮点物理量 |
-| `code/ctrl/inv/` | 逆变输出控制 | 浮点物理量 |
-| `code/ctrl/bb/` | Buck-Boost 控制 | 浮点物理量 |
-| `code/ctrl/cllc/` | 双向 CLLC 控制 | 浮点物理量 |
-| `code/ctrl/buck/` | Buck 控制 | 整数代码域 |
-| `code/ctrl/boost/` | Boost 控制 | 整数代码域 |
+| 目录 | 用途 | 主要控制域 |
+|---|---|---|
+| `buck/`、`boost/` | 降压、升压控制 | 整数代码域 |
+| `bb/` | Buck-Boost 模式与控制 | 浮点物理量 |
+| `llc/`、`cllc/` | 谐振与双向谐振控制 | 浮点物理量 |
+| `pfc/`、`pfc_i32/` | PFC 控制 | 浮点／整数实现 |
+| `inv/`、`inv_dq/`、`inv_i32/` | 逆变输出控制 | 浮点、DQ 与整数实现 |
+| `npc/` | 三电平 NPC 正负序控制 | 浮点物理量 |
 
-控制模块不直接访问 MCU 寄存器。平台采样、PWM 输出、继电器和保护动作通过 HAL 绑定进入控制模块。
+## 2. 四类文件的职责
 
-## 2. 通用分层
+```text
+应用参数 ── cfg ── 待发布参数 ── fsm ── 完整参数与运行许可
+                                  │                 │
+                            生命周期动作           ▼
+平台采样 ── HAL 指针 ── 本拍采样 ── 保护 ── ctrl 算法并发波
+                                             │          │
+                                        code/app    HAL 回调
+                                                        │
+                                                Interface → BSP
+```
 
-每个控制模块按四层组织：
+| 文件 | 负责什么 |
+|---|---|
+| `*_cfg.c/.h` | 运行请求、软起动参数、控制配置及待发布参数；不持有算法积分历史 |
+| `*_hal.c/.h` | 挂载模拟采样指针、必要的实时幅值/相位、发波停波和生命周期回调 |
+| `*_fsm.c/.h` | 初始化、待机、运行及拓扑特有启动时序，决定参数提交与运行许可 |
+| `*_ctrl.c/.h` | 采样快照、斜坡和算法状态、控制计算、限幅及发波 |
 
-| 层 | 文件 | 职责 |
-| --- | --- | --- |
-| 配置层 | `*_cfg.c/h`、`*_cfg_fsm.h` | timing、setpoint、active/building 双缓冲、物理量到代码域转换和 FSM 私有发布接口 |
-| HAL 层 | `*_hal.c/h` | 采样指针、PWM 回调、保护回调、运行进入/退出回调 |
-| 控制层 | `*_ctrl.c/h` | 初始化、运行准备、反馈采样整理、ISR 控制、慢速任务 |
-| FSM 层 | `*_fsm.c/h` | init、idle、run 相关状态和 start/stop 命令 |
+保护判据和恢复策略属于 `code/app/`；控制层提供停止、抑制执行等机制。Interface 适配控制输出的语义，BSP 负责具体硬件或仿真端口。
 
-控制层通过 Section 注册到统一调度入口。典型注册包括：
+## 3. 参数与实时数据
 
-| 注册 | 作用 |
-| --- | --- |
-| `REG_INIT()` | 初始化控制对象 |
-| `REG_INTERRUPT()` | 控制 ISR 阶段执行快速环路 |
-| `REG_TASK()` / `REG_TASK_MS()` | 慢速计算、参数发布、辅助状态更新 |
-| `REG_FSM()` | 状态机任务 |
+应用提出运行请求，FSM 根据生命周期条件授予运行许可，两者分开。参数先构建、再完整发布，控制中断只消费一致的快照。
 
-## 3. 配置双缓冲
+现有模块有两种实现：部分使用 cfg 的 active/building 缓冲和 `*_cfg_fsm.h` 私有提交接口；Buck、NPC 由 FSM 发布并提供有界快照读取。两者的共同目标是明确写入者和生效时刻，不让控制器读到半新半旧参数。
 
-控制设定值使用 active/building 双缓冲：
+HAL 保存长期有效的采样地址和动作回调。实时幅值或相位如果通过 HAL 输入，就不再增加第二个独立可写来源；软起动配置放 cfg，实际斜坡状态放 ctrl。
 
-| 缓冲 | 用途 |
-| --- | --- |
-| `building` | 上层写入配置 |
-| `active` | 控制侧读取配置 |
+## 4. 生命周期与执行顺序
 
-`*_cfg_set_*()` 写入 building buffer。应用发送 start 命令后，FSM 通过私有 `*_cfg_fsm.h` 接口设置 `run_allowed` 并发布完整配置。控制侧通过 `*_cfg_sync_building_to_active()` 或 fast sync 同步到 active。
+新拓扑采用以下顺序：
 
-Buck 和 Boost 的配置接口接收物理量，内部保存为整数代码域。PFC、INV 和 BB 保存浮点物理量。
+1. 平台保持输出关闭，在 INIT 阶段完成绑定和配置。
+2. INIT 检查依赖与初始化结果，通过后锁定绑定并进入 IDLE。
+3. FSM 响应启动请求，完成必要时序、准备算法状态并发布运行许可。
+4. 每拍依次执行采样、应用保护、控制计算与发波。
+5. 停止或故障时撤销执行许可并停止输出；需要重绑时返回初始化流程。
 
-## 4. HAL 与采样整理
+状态函数按进入、执行、转移检查、退出组织。PFC 可包含软启动和继电器等待，LLC/CLLC 可包含桥臂启动等待，双向拓扑还需要明确方向切换边界。
 
-HAL 层绑定平台提供的采样变量和回调函数。控制 ISR 不直接表达平台拓扑差异，而是在控制层入口整理采样：
+Section 通过 `REG_INIT`、`REG_INTERRUPT`、`REG_TASK`/`REG_TASK_MS` 和 `REG_FSM` 组织执行。NPC 已分别注册采样、应用保护、控制发波三阶段；其他历史模块仍存在合并 ISR 和不同优先级，不能假定已全部统一。具体任务周期和中断顺序由目标工程核对。
 
-| 模块 | 采样整理 |
-| --- | --- |
-| PFC | `pfc_ctrl_update_feedback()` 整理 `v_g`、`v_cap`、`i_l`、`v_bus`、`v_rms` 和主继电器反馈 |
-| INV | `inv_ctrl_update_feedback()` 整理 `v_cap`、`i_l`、`v_bus` |
-| BB | `bb_ctrl_update_feedback()` 整理 `v_in`、`i_in`、`v_out`、`i_out`、`i_l` |
-| CLLC | `cllc_ctrl` 整理 `v_battery`、`i_battery`、`v_bus`，按 FSM 锁存方向选择正向或反向控制集 |
-| Boost | `update_adc_feedback()` 整理 `v_in_fb`、`v_out_fb`、`i_l_fb[]` |
-| Buck | ISR 和任务直接读取整数代码域采样 |
+## 5. 新增拓扑
 
-PFC 在 PLECS 中与 INV 复用拓扑产生的电感电流方向适配放在 `pfc_ctrl_update_feedback()` 内。控制框图只体现整理后的控制方向。
+沿用 cfg/HAL/FSM/ctrl 的职责与数据流，根据实际拓扑替换采样量、控制计算、调制接口和必要状态，不照搬其他功率级的系数。详细固定格式见[仓库控制拓扑技能](../../../.agents/skills/base-ctrl-topology/SKILL.md)。
 
-## 5. 运行入口
-
-平台接入控制模块时完成以下动作：
-
-1. 初始化平台硬件并保持 PWM 关闭。
-2. 配置 timing，写入 setpoint building buffer。
-3. 调用 `section_init()`，由主循环推进 FSM 进入 Idle。
-4. 在 Idle 解锁 HAL，绑定采样指针、PWM 回调、保护回调和状态机资源。
-5. 通过 `*_hal_is_ready()` 验证后锁定 HAL。
-6. 主循环持续调用 `run_task()`。
-7. 控制 ISR 中调用 `section_interrupt()`。
-8. 通过模块 FSM 命令启动或停止；FSM 统一管理发布、运行许可和 HAL 生命周期调用顺序。
-
-进入 run 时，FSM 调用 `*_ctrl_prepare_run()` 重新初始化控制状态。
+本页说明总体组织；函数和结构体规范、并发发布机制及平台挂载细节分别在技能和下列文档中展开。
 
 ## 6. 文档索引
 

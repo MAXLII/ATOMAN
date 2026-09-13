@@ -1,230 +1,72 @@
 # ATOMAN — 数字电源公共工程
 
-ATOMAN 是一套面向数字电源控制、嵌入式平台适配、仿真和软件验证的公共工程。本地工程通常称为 `base`，GitHub 仓库名称为 [ATOMAN](https://github.com/MAXLII/ATOMAN)。
+ATOMAN 是面向数字电源的嵌入式公共工程，本地通常称为 `base`。仓库集中维护控制算法、应用流程、通信与调试框架，通过平台适配用于 MCU、Zynq、PLECS 和主机测试。
 
-仓库不绑定单一产品或芯片。控制算法、通信、调试、调度和基础组件集中维护在 `code/`，MCU、Zynq、PLECS、MATLAB 与 GCC Host Testbench 在 `platform/` 中提供不同的运行环境。目标是让同一份核心软件可以先分析、再仿真、再测试，最后进入真实硬件。
+## 仓库组织架构
 
-## 工程思路
+仓库按公共软件、运行平台、可编程逻辑和工程资料组织。公共软件由目标工程选择和接入，硬件差异通过接口与 BSP 适配。
 
-```text
-                           ┌─ MATLAB：参数分析与离线计算
-                           ├─ PLECS：控制与功率级联合仿真
-公共软件 code/ ────────────┼─ Testbench：纯软件 DUT 主机验证
-                           ├─ MCU：实时控制与产品工程
-                           └─ Zynq：PS 软件与 PL 可编程逻辑
-
-FRAME Windows 上位机 <──── 通信与调试协议 ────> MCU / PLECS / Zynq
-```
-
-功能模块通过项目 Interface 调用 Platform BSP，协议与业务通过数据池交换数据。SECTION 与 DBG 通过统一的 `platform.h` 契约使用平台时基、链接段、复位和编译工具能力。
-
-## 主要能力
-
-| 领域 | 当前内容 |
+| 一级目录 | 有些什么 |
 |---|---|
-| 功率控制 | Buck、Boost、Buck-Boost、PFC、LLC、CLLC、逆变器以及浮点、整数控制实现 |
-| 控制与信号算法 | PI、PR、SOGI、DFT、RMS、滤波、查表、插值、检测和时序组件 |
-| 应用与框架 | 应用流程、保护、故障与告警、Section 静态注册、FSM、任务与中断调度 |
-| 通信 | 以 `link_process()` 为核心的字节流分发、FRAME 协议、CRC、命令处理和跨链路路由 |
-| 调试与观测 | Scope、SFRA、Perf、Trace、Shell、Black Box 和 Section 链表查询 |
-| 存储与升级 | Flash 适配、Bootloader、IAP、镜像校验和升级恢复 |
-| 仿真与验证 | MATLAB、PLECS、GCC Host Testbench、独立主机测试和 SystemVerilog 自检 |
-| 可编程逻辑 | Zynq-7020 PS/PL 集成以及 IIR、UART DMA、OLED DMA 等 Verilog IP |
+| `code/` | 应用与业务、功率控制、公共算法、通信数据源、数据池、硬件接口、注册调度和调试服务；另保留少量历史参考实现 |
+| `platform/` | APM32、GD32、HC32、TI C2000、Zynq 工程，以及 MATLAB 分析、PLECS 仿真和 GCC Testbench |
+| `verilog/` | IIR、UART DMA、OLED DMA 等 FPGA IP 及配套仿真 |
+| `tests/` | 独立主机测试、黄金数据和硬件验证资源，部分内容仅在本地维护 |
+| `docs/` | 设计、接入、构建、测试、教材和辅助文档 |
+| `references/` | 工程参考资料 |
 
-## 通信的核心：`link_process()`
+各模块的内部文件和调用流程在独立文档中说明，README 只列内容与入口。
 
-`link_process()` 是 ATOMAN 通信体系中最小、也最关键的连接点。它不理解帧头、地址、CRC 或业务命令，只做两层循环：从当前物理链路不断取出字节，再把每个字节同步交给这条链路注册的全部 handler。
+## 主要内容与文档入口
 
-```text
-UART / CAN / TCP / 仿真接口
-            │
-            ▼
-      rx_get_byte()
-            │
-            ▼
-      link_process()
-            │ 每个字节都携带当前链路的发送接口
-            ├─ Shell handler + 独立上下文
-            ├─ FRAME handler + 独立上下文
-            └─ 自定义协议 handler + 独立上下文
-```
+| 内容 | 简介 | 文档 |
+|---|---|---|
+| 应用与业务 | 产品流程、保护策略和功能演示 | [工程设计](docs/engineering_design.md) · [功能接入总览](docs/application/guides/feature_usage_guide.md) |
+| 功率控制 | Buck、Boost、BB、LLC、CLLC、PFC、逆变器和 NPC，包含浮点与整数实现 | [CTRL 组织架构](docs/design/control/ctrl_design.md) |
+| 公共算法 | PI/PR、SOGI/DSOGI、SVPWM、滤波、RMS、查表、检测和时序组件 | [控制算法](docs/application/library/control_blocks_usage.md) · [信号处理](docs/application/library/signal_processing_usage.md) · [检测与时序](docs/application/library/detection_sequence_usage.md) |
+| 通信与数据 | 多链路、多协议分发，FRAME 通信，以及项目数据交换 | [Link / link_process](docs/design/framework/section/link_design.md) · [FRAME](docs/design/communication/frame_design.md) · [数据池与模块边界](docs/engineering_design.md) |
+| 注册与调度 | 初始化、周期任务、中断、状态机和静态模块注册 | [Section 组织架构](docs/design/framework/section/section_design.md) |
+| 调试与观测 | 参数、波形、频响、性能、运行轨迹和故障现场 | [调试系统](docs/design/debug/debug_system_design.md) |
+| 存储与升级 | Flash 分区与访问、Bootloader、IAP、镜像校验和恢复 | [FAL](docs/design/storage/fal_design.md) · [Bootloader](docs/design/bootloader/bootloader_design.md) |
+| 接口与平台 | 项目接口、BSP、平台入口及构建适配 | [工程设计](docs/engineering_design.md) · [MCU 移植](docs/application/porting/mcu_platform_porting.md) · [Zynq](docs/design/platform/zynq7020/zynq7020_platform.md) |
+| 分析与验证 | MATLAB、PLECS、主机测试和 FPGA 仿真 | [应用文档](docs/application/APPLICATION_INDEX.md) |
+| FPGA IP | 可复用逻辑模块、接口和验证资源 | [FPGA 设计入口](docs/design/DESIGN_INDEX.md#fpga-ip) |
 
-handler 接收到三个信息：当前字节、当前链路的发送能力以及自己的解析上下文。这三个参数形成了通信复用的基础：
+不同目标选择所需模块，不表示每个平台均已接入全部能力。
 
-- 一条物理链路可以同时承载 Shell、FRAME 和其他协议。
-- 同一个协议函数可以挂到多条链路，只需为每个实例绑定独立上下文。
-- handler 不需要知道底层是 UART、CAN、TCP 还是仿真接口。
-- 请求从哪条链路进入，响应就可以通过随字节传入的发送接口返回原链路。
-- 跨链路转发只依赖静态注册的 `link_id` 和目标链路发送接口，不侵入协议解析器。
-
-`REG_LINK()` 在编译期声明物理链路、发送接口和 handler 组合，Section 初始化后形成链表；`section_link_task()` 遍历全部 Link，`link_process()` 每轮最多处理当前链路的固定字节预算，再让出执行权给下一条链路。新增硬件链路不需要修改协议，新增协议也不需要修改调度器，改变的只是静态绑定关系。
-
-这套设计把“字节从哪里来”“字节代表什么”“解析状态保存在哪里”“响应从哪里发出”分成四个彼此独立的问题。完整设计见 [Section Link 设计文档](docs/design/framework/section/link_design.md)，接入方法见 [Section 使用文档](docs/application/framework/section/section_usage.md)。
-
-## 一衍架构
-
-```text
-功能模块：数据源 / 业务 / 控制 / 公共库
-                  ↕ 项目数据
-               数据池
-
-功能模块 ── 项目 Interface ── Platform BSP
-框架（SECTION / DBG）── platform.h ── Platform
-```
-
-各层职责如下：
-
-- `code/data_source/` 组织通信、协议与存储数据源。
-- `code/business/demo/` 组织当前 demo 业务。
-- `code/data_pool/` 按项目提供私有数据、exchange API 和 business API。
-- `code/ctrl/` 维护功率拓扑控制器、运行状态机、参数配置和 HAL 绑定。
-- `code/lib/` 提供硬件无关的控制、信号处理和通用算法，并服务控制与业务代码。
-- `code/section/` 与 `code/dbg/` 构成注册、调度和调试框架。
-- `code/interface/<project>/` 按项目定义功能模块访问 Platform 的接口。
-- `platform/` 提供 BSP、平台入口、链接布局与构建目标。
-
-## 仓库结构
-
-```text
-ATOMAN/
-├─ code/                       公共嵌入式软件与算法
-│  ├─ app/                     应用流程与业务状态
-│  ├─ business/                当前业务项目
-│  ├─ ctrl/                    数字电源控制模块
-│  ├─ data_pool/               项目数据池
-│  ├─ data_source/             协议、通信与存储数据源
-│  ├─ dbg/                     调试与观测服务
-│  ├─ interface/               硬件接口抽象
-│  ├─ lib/                     控制和信号算法
-│  └─ section/                 注册、调度与 FSM 框架
-├─ platform/
-│  ├─ apm32/                   APM32 MCU 工程
-│  ├─ gd32e507/                GD32E507 MCU 工程
-│  ├─ gd32g553c/               GD32G553C MCU 工程
-│  ├─ hc32f334/                HC32F334 MCU 工程
-│  ├─ hc32f558/                HC32F558 MCU 工程
-│  ├─ tms320f280049c/          TI C2000 F280049C MCU 工程
-│  ├─ tms320f28p55/            TI C2000 F28P55 MCU 工程
-│  ├─ zynq7020/                Zynq-7020 PS/PL 工程
-│  ├─ matlab/                  参数分析与离线模型
-│  ├─ plecs/                   功率级与控制联合仿真
-│  └─ testbench/               GCC 主机测试框架与 DUT 工程
-├─ verilog/                    RTL、仿真与 FPGA IP
-├─ tests/                      独立主机测试、黄金数据和硬件验证资源
-├─ docs/                       设计、应用、测试和教材文档
-├─ references/                 工程参考资料
-├─ check.bat                   仓库与文档检查入口
-└─ clean.bat                   生成物清理入口
-```
-
-完整目录职责见 [工程设计](docs/engineering_design.md)。
-
-## 从哪里开始
-
-根据当前目标选择入口：
+## 开始使用
 
 | 目标 | 入口 |
 |---|---|
-| 了解仓库架构与模块边界 | [工程设计](docs/engineering_design.md) |
-| 查找已有能力并接入工程 | [公共功能接入总览](docs/application/guides/feature_usage_guide.md) |
-| 使用控制、调试、通信或算法模块 | [应用文档总纲](docs/application/APPLICATION_INDEX.md) |
-| 理解模块内部设计 | [设计文档总纲](docs/design/DESIGN_INDEX.md) |
-| 为纯软件模块建立 GCC 测试 | [GCC Host Testbench 中文指南](docs/application/framework/testbench/testbench_usage_zh.md) |
-| 让 AI 从零落地 Testbench | [Testbench Implementation Prompt](docs/application/build/testbench_implementation_prompt.md) |
-| 接入新的 MCU 平台 | [MCU 平台移植](docs/application/porting/mcu_platform_porting.md) |
-| 联调 ATOMAN 与 FRAME | [ATOMAN 与 FRAME 配合使用](docs/application/communication/frame_atoman_integration.md) |
+| 查找功能及接入方式 | [公共功能接入总览](docs/application/guides/feature_usage_guide.md) |
+| 构建 PLECS 工程 | [PLECS 构建指南](docs/application/build/plecs_build_guide.md) |
+| 新增或适配 MCU 平台 | [MCU 平台移植](docs/application/porting/mcu_platform_porting.md) |
+| 建立算法主机测试 | [GCC Host Testbench 指南](docs/application/framework/testbench/testbench_usage_zh.md) |
+| 连接上位机调试 | [ATOMAN 与 FRAME 配合使用](docs/application/communication/frame_atoman_integration.md) |
 
-## 构建与验证
-
-各目标独立维护构建入口。以下命令均从仓库根目录执行。
-
-### GCC Host Testbench
-
-`platform/testbench/common/` 提供公共 runner。DUT 和测试用例通过宏注册，每个测试工程生成一个可执行文件，并在一次运行中执行该工程注册的全部用例。测试环境可以记录 CSV 波形。
-
-```powershell
-mingw32-make -C platform/testbench/ac_loss_det test
-mingw32-make -C platform/testbench/pi test
-```
-
-Testbench 支持直接编译仓库中的真实 C/C++ 软件模块。详细用法见 [中文指南](docs/application/framework/testbench/testbench_usage_zh.md) 或 [English Guide](docs/application/framework/testbench/testbench_usage.md)。
-
-### MCU
+各平台独立维护构建入口。下面是从仓库根目录运行的示例，其余目标按对应平台文档操作：
 
 ```bat
-platform\gd32g553c\compile.bat
+platform\plecs\npc\compile.bat
 platform\gd32e507\compile.bat
-platform\hc32f334\gcc\compile.bat
-platform\apm32\compile.bat
-platform\tms320f280049c\compile.bat
-platform\tms320f28p55\compile.bat
 ```
 
-HC32F334 同时提供 Keil MDK 构建入口：
-
-```bat
-platform\hc32f334\keil_mdk\compile.bat
-```
-
-### PLECS
-
-PLECS 工程直接编译所需的公共控制与算法代码：
-
-```bat
-platform\plecs\buck\compile.bat
-platform\plecs\frame_route_bridge\compile.bat
-platform\plecs\pfc\compile.bat
-platform\plecs\inv\compile.bat
-platform\plecs\llc\compile.bat
-```
-
-具体环境配置见 [PLECS 构建指南](docs/application/build/plecs_build_guide.md)。
-
-### Zynq-7020
-
-```powershell
-.\platform\zynq7020\ps\compile.ps1
-.\platform\zynq7020\pl\build_pl.ps1
-```
-
-### 独立主机测试
-
-`tests/host/` 保存面向特定边界的独立测试工程，当前包括 FAL、Bootloader、Section 链表和整数逆变控制等测试。进入对应目录后使用该目录的 Makefile 构建和运行。
-
-提交前可执行仓库检查：
-
-```bat
-check.bat
-```
+`check.bat` 提供仓库与文档检查入口，`clean.bat` 用于清理生成物。主机构建、仿真与真实硬件验证分别记录，不能相互替代。
 
 ## 与 FRAME 配合
 
-[FRAME](https://github.com/MAXLII/FRAME) 是与 ATOMAN 配套的 Windows 上位机，负责设备连接、命令交互、参数读写、数据观察和调试操作。FRAME 数据进入 ATOMAN 后，先由 `link_process()` 从具体物理链路分发给独立的 COMM 上下文，再完成帧校验、命令查找、业务调用和原链路响应。ATOMAN 维护下位机协议、调试服务、硬件平台和 PLECS 通信端。
+[FRAME](https://github.com/MAXLII/FRAME) 是配套 Windows 上位机，负责设备连接、参数读写、波形显示与在线调试。ATOMAN 提供设备侧协议、调试服务和平台接口；同一套协议可用于 MCU 与 PLECS 联调。
 
-- ATOMAN：<https://github.com/MAXLII/ATOMAN>
-- FRAME：<https://github.com/MAXLII/FRAME>
-- 联调说明：[ATOMAN 与 FRAME 配合使用](docs/application/communication/frame_atoman_integration.md)
+## 文档导航
 
-## 文档体系
+从 [文档总览](docs/DOCUMENT_INDEX.md) 进入，或按需要选择：
 
-[文档总览](docs/DOCUMENT_INDEX.md) 将仓库资料分为四个主要入口：
+- [设计文档](docs/design/DESIGN_INDEX.md)：组织结构、模块职责和接口关系。
+- [应用文档](docs/application/APPLICATION_INDEX.md)：接入、构建、移植与操作方法。
+- [教材](docs/tutorial/TUTORIAL_INDEX.md)：控制原理、参数分析与学习资料。
+- [其他资料](docs/other/OTHER_INDEX.md)：厂商资料及辅助说明。
 
-- [设计文档](docs/design/DESIGN_INDEX.md)：工程架构、模块内部设计、接口关系与平台结构。
-- [应用文档](docs/application/APPLICATION_INDEX.md)：模块接入、构建下载、平台移植与操作方法。
-- [教材](docs/tutorial/TUTORIAL_INDEX.md)：控制原理、参数整定、MATLAB 脚本与学习资料。
-- [其他资料](docs/other/OTHER_INDEX.md)：厂商资料与辅助说明。
-
-FPGA IP 的设计与应用文档位于对应的 `verilog/<ip>/doc/` 目录。
-
-## 工程约定
-
-- 公共 C 模块以 C11 为基础，核心实时路径不依赖动态内存。
-- 功能模块通过项目 Interface 调用 Platform BSP。
-- SECTION 与 DBG 通过 `platform.h` 使用 Platform 契约。
-- 生产代码、PLECS 与 Testbench 尽量复用同一份模块实现。
-- Section 用于静态注册和统一调度，平台链接配置负责保留对应段。
-- 通信协议扩展在已发布结构体尾部追加字段，并按实际数据长度兼容解析。
-- 设计文档只描述仓库当前存在的目录、模块和行为。
+FPGA IP 的文档位于对应 `verilog/模块/doc/`。新增控制拓扑也可使用仓库内的 [控制拓扑技能](.agents/skills/base-ctrl-topology/SKILL.md)，统一代码组织格式。
 
 ## 技术合作
 
