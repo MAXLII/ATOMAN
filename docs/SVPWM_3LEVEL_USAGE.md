@@ -20,7 +20,45 @@ O/P: duty_p = (v_i + z) / v_dc_p
 N/O: duty_n = -(v_i + z) / v_dc_n
 ```
 
-公共偏移不会改变 αβ 电压。首选符号扇区不可行时，依固定顺序检查其他电平对组合，最多检查 6 个扇区。此扩展保证平均电压合成，不保证中点电压平衡或最优谐波性能。
+公共偏移不会改变 αβ 电压。以下区间组合搜索适用于 `average_balance=false`：关闭中点平衡时，首选符号组合不可行才依固定顺序检查其他电平对组合；启用平衡后比较全部可行组合的中点电流误差，最多检查 6 个组合。当前 NPC 使用 `average_balance=true` 的平均平衡分支，直接在整个可行偏移区间内调节，见下文。两者均不采用显式 36 分区查表。
+
+## 中点电压平衡
+
+输入 `i_a/i_b/i_c`，单位 A，正方向为**桥臂流向交流侧**，采用本拍更新的三相基波电流，不能直接传入载波边界的含开关纹波原始采样。NPC 控制层复用现有 DSOGI，将正序与负序电流相加后逆 Clarke，随电压指令一起交给 PWM 回调；原始采样仍供保护使用。`midpoint_kp` 单位 A/V，设为 0 关闭所选分支的中点平衡；平均分支同时清除积分，保留中心偏移。调用方保证电流为有限值、增益为有限非负值。
+
+传统分支（`average_balance=false`）采用压差比例反馈和可行域内的中点电流分配：
+
+```text
+delta_v = v_dc_p - v_dc_n
+i_mid_ref = -midpoint_kp * delta_v
+i_mid = duty_o_a * i_a + duty_o_b * i_b + duty_o_c * i_c
+```
+
+在每个可行电平对组合中，`i_mid` 对 z 是一次函数。计算能逼近目标电流的 z，限制在该组合的可行区间，再比较所有可行组合的电流误差。近似相等时保留先尝试的组合，避免浮点误差引起无意义的组合切换。不会为了平衡而修改目标 αβ 或突破驻留比例边界，也没有积分饱和状态。
+
+输出新增 `midpoint_current_ref`、`midpoint_current`、`common_mode_v`，分别是目标中点电流、按本拍电流预测的平均中点电流和实际选取的 z（V）。`midpoint_current` 是估计值，不是中点传感器测量值。
+
+`sum(duty_o * i)` 是周期内电流近似恒定时的估算。实际中点电荷要积分 `O 状态指示量 × 瞬时电流`；开关纹波、一拍延迟和死区会造成差异。直接用载波边界采样挑选 z，可能把纹波引起的电流偏差当成可利用的充放电能力，反而增大母线压差。参见[本次开关模型复现与修正记录](design/npc_midpoint_ripple_fix.md)。
+
+NPC 自动 CSV 末尾增加 `np_kp/np_i_ref/np_i_est/np_offset` 和 `ia_fundamental/ib_fundamental/ic_fundamental`，与原始 `ia/ib/ic` 分别记录，便于验证调制实际使用的电流。
+
+当前 NPC 选择平均平衡分支（`average_balance=true`）。它将母线压差和三相基波电流绝对值之和作 10 Hz 低通，压差 PI 经有方向的中点调节灵敏度换算为额外共同偏移；额外偏移限幅 ±150 V，并受实际可行区间约束。调节能力不足时暂停积分，偏移限幅时作抗饱和回算。每相仍只使用 O/P 或 N/O。
+
+当前默认 `midpoint_kp=0.06×2π×2≈0.75398 A/V`，积分增益为 `midpoint_ki=midpoint_kp×2π×0.5≈2.3687 A/(V·s)`。60 mF 是增益设计基准，用户当前模型 C4/C5 为 66/60 mF；公式不能解释为保证的实际闭环带宽。复用配置函数为 `pwm_make_modulator_cfg()`；库的平均分支还需设置 `ts`、`midpoint_filter_hz`、`midpoint_ki`、`midpoint_kaw`、`midpoint_current_min`、`midpoint_slope_floor_ratio` 和 `midpoint_offset_max`，不能只打开布尔开关而省略配置。
+
+NPC 保持 6 路占空比加使能。接口层对理想 P/N 占空比施加与模型 **2 µs** 一致的死区补偿；轻载暂停补偿，门极死区仍由 PLECS 生成。库输出的 P/O/N 是补偿前理想驻留比例，不能与补偿后门极指令混用来验证理想电压重构。
+
+| Shell 参数 | 含义 |
+|---|---|
+| `NP_BAL_KP` | 平衡增益，默认约 0.75398 A/V；0 同时关闭比例和积分 |
+| `NP_I_REF` | 目标中点电流，A |
+| `NP_I_EST` | 预测中点电流，A |
+| `NP_OFFSET` | 所选共同偏移 z，V |
+| `NP_DELTA_AVG` | 低通后的母线压差，V |
+| `NP_CORRECTION` | 相对中心偏移的额外校正，V |
+| `NP_CURRENT_MAG` | 三相基波电流绝对值之和的低通值，A |
+
+增益变更在下一次 5 kHz 更新重新配置调制器。停波、reset 会清空调制诊断和平均分支积分。传统分支零参考输出 OOO；平均分支零参考仍可能有共同偏移，不能假定必为 OOO。零电流、区间收缩或可用中点电流不足时，不能保证压差立即消除。输入电流方向必须正确。正式 2 µs DLL 的三负载实际 PLECS 结果和验证边界见[修正记录第 12 节](design/npc_midpoint_ripple_fix.md#12-用户确认-2-µs-后的正式交付)。
 
 ## 输入与输出
 
@@ -31,18 +69,25 @@ N/O: duty_n = -(v_i + z) / v_dc_n
 
 允许范围是实际母线对应的六边形：逆 Clarke 三相指令的最大值减最小值不超过 `v_dc_p + v_dc_n`。不裁剪指令、不实现过调制模式。旋转圆形指令若要求整周可实现，幅值应不超过总母线电压除以 `sqrt(3)`；六边形顶点方向的瞬时可实现幅值可以更大。
 
-边界比较允许 `8 * FLT_EPSILON * max(v_dc_p, v_dc_n)` 的电压舍入误差，最终占空比限幅仅用于消除该误差。NaN、Inf、半母线欠压和归一化母线比下溢会报错。构建时不要启用 `-ffast-math` 或 `-ffinite-math-only`，以保留非有限数检查。
+边界比较允许 `8 * FLT_EPSILON * max(v_dc_p, v_dc_n)` 的电压舍入误差，最终占空比限幅仅用于消除该误差。原始电压的 NaN、Inf 和半母线欠压会报错；归一化母线比下溢的独立检查已按要求删除。构建时不要启用 `-ffast-math` 或 `-ffinite-math-only`，以保留已有非有限数检查。
 
 ## 调用
 
 ```c
 svpwm_3level_t mod = {0};                    /* 调用方持有的调制实例。 */
-const svpwm_3level_cfg_t cfg = {20.0f};      /* 每个半母线最低有效电压，V。 */
+const svpwm_3level_cfg_t cfg = {            /* 基准调用示例，关闭中点平衡。 */
+    .v_dc_half_min = 20.0f,
+    .midpoint_kp = 0.0f
+};
 
 if (svpwm_3level_init(&mod, &cfg) == true)
 {
     /* 每个 PWM 周期，写入同一次采样对应的完整快照。 */
-    mod.input = (svpwm_3level_input_t){300.0f, 100.0f, 350.0f, 350.0f};
+    mod.input = (svpwm_3level_input_t){
+        .v_alpha = 300.0f, .v_beta = 100.0f,
+        .v_dc_p = 350.0f, .v_dc_n = 350.0f,
+        .i_a = 0.0f, .i_b = 0.0f, .i_c = 0.0f
+    };
     if (svpwm_3level_cal(&mod) == SVPWM_3LEVEL_OK)
     {
         /* 由实际 PWM 适配层消费 mod.output，并同步装载三相结果。 */
@@ -87,4 +132,18 @@ if (svpwm_3level_init(&mod, &cfg) == true)
 
 CSV 包含时间、αβ 给定、半母线电压、状态、三相 P/O/N 占空比及重构电压。错误期间的重构电压和误差记为 NaN，避免将失效输出解释成实际施加的零电压。上述误差是占空比对应的理想平均电压误差，不代表开关纹波或硬件测量精度。
 
-本次未接入平台工程源文件清单或修改 PLECS 模型。接入时需将 `svpwm_3level.c` 加入实际目标，配置 `code/lib`、`code/section` 头文件路径及实际平台宏；需要显式数学库链接的平台应链接 `libm`。主机测试不覆盖目标 ISR 执行时间、实际死区或硬件换流。
+初版验证时尚未接入平台工程源文件清单。移植到其他目标时，需将 `svpwm_3level.c` 加入实际目标，配置 `code/lib`、`code/section` 头文件路径及实际平台宏；需要显式数学库链接的平台应链接 `libm`。主机测试不覆盖目标 ISR 执行时间、实际死区或硬件换流。当前 NPC 接入及新增平衡验证见下节。
+
+### 2026-09-13 中点平衡增量验证
+
+以下是传统分支的历史验证，不能当作新增平均分支的测试结果。`mingw32-make test` 执行 `test_midpoint_balance.c`：720 个角度/正反电流工况与独立的 513 点偏移扫描比较，检查电压重构、占空比约束和中点电流；用双精度电容电荷守恒模型运行 5 个闭环工况，每个 3 s、5 kHz。
+
+60 mF 等值电容、固定 1330 V 总母线下，初始 ±100 V 压差在 ±100 A 正反功率方向，以及 3000 A 工况中，最后一个工频周期的最大压差均小于 0.001 V。此数值是理想平均模型结果，不是硬件精度或 PLECS 开关仿真的承诺。新测试共 1,666,602 项检查通过；原有 2,940,069 项检查和 4 个 runner 工况也通过。
+
+原有极端母线比、零参考用例已与此前删除下溢检查的行为对齐：此时返回有效 OOO，不再期待已删除分支的错误码。新结构体尾部增加了字段，源码调用需重新编译；测试初始化已改为指定成员，避免遗漏字段产生警告。
+
+## 关联导航
+
+- [从物理原理到源码实现](design/svpwm_3level_walkthrough.md)
+- [中点平衡测试](../platform/testbench/svpwm_3level/test_midpoint_balance.c)
+- [Imperix TN129：中点电压平衡与共同偏移](https://imperix.com/doc/implementation/balancing-of-npc-converters)介绍了利用冗余状态改变中点充放电、并保持平均线电压的原理。本文采用基于三相电流的可行区间求解，并非直接照搬其增益或控制公式。
