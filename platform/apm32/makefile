@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 ##########################################################################################################################
 # APM32F402 demo firmware makefile
 ##########################################################################################################################
@@ -175,3 +178,6 @@ clean:
 	-rm -fR $(BUILD_DIR)
 
 -include $(wildcard $(BUILD_DIR)/*.d)
+
+# Enforce the shared GCC single-precision diagnostics for project C compilation.
+include $(BASE_FP_MAKE_DIR)../gcc_float_policy.mk

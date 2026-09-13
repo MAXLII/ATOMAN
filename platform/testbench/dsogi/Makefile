@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 CC := gcc
 CXX := g++
 ROOT := ../../..
@@ -14,7 +17,7 @@ all: $(TARGET)
 build:
 	powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path build | Out-Null"
 build/%.o: %.c | build
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(call testbench_cflags,$<) -c $< -o $@
 build/testbench.o: ../common/testbench.cpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 $(TARGET): $(OBJECTS)
@@ -23,3 +26,5 @@ test: $(TARGET)
 	./$(TARGET)
 -include $(OBJECTS:.o=.d)
 
+# Test sources may use double; production sources retain single-precision diagnostics.
+include $(BASE_FP_MAKE_DIR)../common/float_policy.mk

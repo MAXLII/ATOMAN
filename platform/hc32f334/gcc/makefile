@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 PROJECT_MCU = HC32F334
 PROJECT_TOOLCHAIN = GCC
 PROJECT_MAKEFILE := $(lastword $(MAKEFILE_LIST))
@@ -217,3 +220,6 @@ endif
 -include $(wildcard $(BUILD_DIR)/vendor/*.d)
 
 .PHONY: all clean
+
+# Enforce the shared GCC single-precision diagnostics for project C compilation.
+include $(BASE_FP_MAKE_DIR)../../gcc_float_policy.mk

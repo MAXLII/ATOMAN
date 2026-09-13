@@ -1,3 +1,6 @@
+# Capture this makefile before generated .d includes change MAKEFILE_LIST.
+BASE_FP_MAKE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 TARGET := gd32e507_demo
 BUILD_DIR := build
 
@@ -187,3 +190,6 @@ clean:
 endif
 
 -include $(DEPS)
+
+# Enforce the shared GCC single-precision diagnostics for project C compilation.
+include $(BASE_FP_MAKE_DIR)../gcc_float_policy.mk

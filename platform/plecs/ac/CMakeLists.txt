@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(plecs_ac LANGUAGES C)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../gcc_float_policy.cmake")
+
 set(CMAKE_C_COMPILER "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe")
 set(CMAKE_CXX_COMPILER "C:/mingw64/bin/x86_64-w64-mingw32-g++.exe")
 
