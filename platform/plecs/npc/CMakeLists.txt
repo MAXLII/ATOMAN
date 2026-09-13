@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(plecs_npc LANGUAGES C)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../gcc_float_policy.cmake")
+
 set(CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../code")
 set(COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../common")
 # Source order defines cross-file registration order in the linked DLL.
@@ -9,6 +11,7 @@ set(NPC_SOURCES
     app/npc_platform.c
     bsp/bsp_pwm.c
     ${CODE_DIR}/interface/npc/common/pwm.c
+    ${CODE_DIR}/app/npc/npc_protect.c
     ${CODE_DIR}/ctrl/npc/npc_ctrl.c
     ${CODE_DIR}/ctrl/npc/npc_cfg.c
     ${CODE_DIR}/ctrl/npc/npc_fsm.c
@@ -35,6 +38,7 @@ set(NPC_INCLUDES
     ${CODE_DIR}/dbg
     ${CODE_DIR}/interface/npc/common
     ${CODE_DIR}/ctrl/npc
+    ${CODE_DIR}/app/npc
     ${CODE_DIR}/lib
     ${CODE_DIR}/section
 )
