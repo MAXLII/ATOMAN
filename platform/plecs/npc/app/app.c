@@ -26,10 +26,16 @@
 #include "npc_cfg.h"
 #include "npc_fsm.h"
 #include "npc_hal.h"
+#include "npc_protect.h"
 #include "npc_platform.h"
 #include "shell.h"
 #include "frame_tcp_server.h"
 #include "plecs_dispatch_lock.h"
+#include "my_math.h"
+
+#define NPC_MIDPOINT_CAPACITANCE_F (0.06f) /* Each DC-link capacitor in the current NPC model, F. */
+#define NPC_MIDPOINT_BANDWIDTH_HZ (2.0f) /* Averaged balance target; 150 Hz ripple is not a tracking target. */
+#define NPC_MIDPOINT_KP (NPC_MIDPOINT_CAPACITANCE_F * M_2PI * NPC_MIDPOINT_BANDWIDTH_HZ) /* A/V. */
 
 #define NPC_TIME_TOLERANCE_S (1.0e-9)               /* 1 ns base tolerance, far below the 200 us control period. */
 #define NPC_TWO_PI (6.28318530717958647692)         /* One electrical revolution, radians. */
@@ -55,6 +61,14 @@ static double phase_cycle;                   /* Shared phase in [0,1), advanced 
 static uint8_t run_enable = 1;               /* Shell run request: 0 disabled, 1 enabled. */
 static float v_dc_half_min = 20.0f;          /* Shell minimum valid half-bus voltage, V. */
 static float applied_half_min;               /* Threshold currently configured in the modulator, V. */
+static float midpoint_kp = NPC_MIDPOINT_KP;   /* Shell balance gain, A/V; 0 disables balancing. */
+static float applied_midpoint_kp;            /* Gain currently configured in the modulator, A/V. */
+static float midpoint_current_ref;           /* Requested mean current out of the midpoint, A. */
+static float midpoint_current;               /* Predicted mean current out of the midpoint, A. */
+static float midpoint_offset;                /* Selected common-mode voltage, V. */
+static float midpoint_delta_filtered;        /* Averaged bus difference; excludes most 150 Hz ripple, V. */
+static float midpoint_correction;            /* Actual balance shift around centered modulation, V. */
+static float midpoint_current_magnitude;     /* Current magnitude controlling dead-time compensation, A. */
 static uint32_t ctrl_ticks;                  /* Number of entered 5 kHz updates, wraps after about 9.9 days. */
 static uint32_t ctrl_status;                 /* Last control-chain state code exposed through Shell. */
 static uint32_t ctrl_detail;                 /* Failed input index or SVPWM return status, when applicable. */
@@ -123,6 +137,13 @@ REG_SHELL_VAR(IQ_NEG_REF, control_monitor.output.i_ref[3], SHELL_FP32, FLT_MAX, 
 REG_SHELL_VAR(FREQ_HZ, freq_hz, SHELL_FP32, 795.0f, 1.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(RUN_ENABLE, run_enable, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(V_DC_HALF_MIN, v_dc_half_min, SHELL_FP32, 1000000.0f, 0.001f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_BAL_KP, midpoint_kp, SHELL_FP32, 1000.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_I_REF, midpoint_current_ref, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_I_EST, midpoint_current, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_OFFSET, midpoint_offset, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_DELTA_AVG, midpoint_delta_filtered, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_CORRECTION, midpoint_correction, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(NP_CURRENT_MAG, midpoint_current_magnitude, SHELL_FP32, FLT_MAX, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CTRL_TICKS, ctrl_ticks, SHELL_UINT32, UINT32_MAX, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CTRL_STATUS, ctrl_status, SHELL_UINT32, 12u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CTRL_DETAIL, ctrl_detail, SHELL_UINT32, UINT32_MAX, 0u, NULL, SHELL_STA_NULL)
@@ -130,8 +151,8 @@ REG_SHELL_VAR(LOG_READY, log_ready, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TRACE_ENABLE, trace_enable, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TRACE_STATE, trace_state, SHELL_UINT8, 4u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TRACE_ROWS, trace_rows, SHELL_UINT32, 100000u, 0u, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(V_DC_P, v_dc_p, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(V_DC_N, v_dc_n, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(V_DC_P, v_dc_p, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_AUTO)
+REG_SHELL_VAR(V_DC_N, v_dc_n, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_AUTO)
 
 /** @param status New control-chain state. @param detail Failed channel or modulation return value.
  *  @param time_s Simulation timestamp of the transition. */
@@ -159,11 +180,29 @@ static inline bool finite_value(double value)
 }
 
 /** @param alpha Alpha voltage. @param beta Beta voltage. @param vdc_p Positive half bus.
- * @param vdc_n Negative half bus. @return Detailed PWM status, zero on success. */
-static uint32_t platform_pwm_write(float alpha, float beta, float vdc_p, float vdc_n)
+ * @param vdc_n Negative half bus. @param p_current Same-update A/B/C fundamental currents.
+ * @return Detailed PWM status, zero on success. */
+static uint32_t platform_pwm_write(float alpha, float beta, float vdc_p, float vdc_n,
+                                   const float *p_current)
 {
-    const svpwm_3level_input_t input = {.v_alpha = alpha, .v_beta = beta, .v_dc_p = vdc_p, .v_dc_n = vdc_n};
-    SVPWM_3LEVEL_STATUS_E status = pwm_update(&input);
+    const svpwm_3level_input_t input = { /* Voltage command and ripple-rejected currents from this calculation. */
+        .v_alpha = alpha,
+        .v_beta = beta,
+        .v_dc_p = vdc_p,
+        .v_dc_n = vdc_n,
+        .i_a = p_current[0],
+        .i_b = p_current[1],
+        .i_c = p_current[2]
+    };
+    SVPWM_3LEVEL_STATUS_E status = pwm_update(&input); /* Compute duties and midpoint-current diagnostics. */
+    const svpwm_3level_output_t *p_output = pwm_get_output(); /* Completed modulator result. */
+
+    midpoint_current_ref = p_output->midpoint_current_ref;
+    midpoint_current = p_output->midpoint_current;
+    midpoint_offset = p_output->common_mode_v;
+    midpoint_delta_filtered = p_output->midpoint_delta_filtered;
+    midpoint_correction = p_output->midpoint_correction_v;
+    midpoint_current_magnitude = p_output->midpoint_current_magnitude;
     if (status == SVPWM_3LEVEL_OK)
     {
         v_alpha_pwm = alpha;
@@ -176,6 +215,12 @@ static uint32_t platform_pwm_write(float alpha, float beta, float vdc_p, float v
 static void platform_pwm_disable(void)
 {
     pwm_disable();
+    midpoint_current_ref = 0.0f;
+    midpoint_current = 0.0f;
+    midpoint_offset = 0.0f;
+    midpoint_delta_filtered = 0.0f;
+    midpoint_correction = 0.0f;
+    midpoint_current_magnitude = 0.0f;
     v_alpha_pwm = 0.0f;
     v_beta_pwm = 0.0f;
 }
@@ -239,6 +284,10 @@ void plecsSetSizes(struct SimulationSizes *p_sizes)
     }
 }
 
+/* PLECS uses double timestamps; initialize the host clock and phase without narrowing. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
 void plecsStart(struct SimulationState *p_state)
 {
     npc_ctrl_cfg_t cfg = npc_cfg_default(); /* Platform uses the shared validated candidate parameters. */
@@ -255,7 +304,7 @@ void plecsStart(struct SimulationState *p_state)
               "current_peak=%.9g overvoltage_trip=off dll_delay_samples=0 trace_hz=5000\n",
               __DATE__, __TIME__, (double)cfg.kp_v, (double)cfg.ki_v,
               (double)cfg.kp_i, (double)cfg.ki_i, (double)cfg.current_peak);
-    trip_current = NPC_CFG_TRIP_CURRENT_FACTOR * cfg.current_peak;
+    trip_current = NPC_PROTECT_CURRENT_FACTOR * cfg.current_peak;
     v_dc_p = 0.0f;
     v_dc_n = 0.0f;
     plecs_dispatch_lock_start();
@@ -289,12 +338,17 @@ void plecsStart(struct SimulationState *p_state)
     run_enable = 0u;
     v_dc_half_min = 20.0f;
     applied_half_min = v_dc_half_min;
+    midpoint_kp = NPC_MIDPOINT_KP;
+    applied_midpoint_kp = midpoint_kp;
     __atomic_store_n(&plecs_time_100us, 0u, __ATOMIC_RELAXED);
-    initialized = pwm_init(applied_half_min);
+    initialized = pwm_init(applied_half_min, applied_midpoint_kp);
     if (npc_cfg_set_ctrl_ts((float)PLECS_NPC_CONTROL_PERIOD_S) == 0U) initialized = false;
     section_init(); /* Registers lifecycle tasks and the 5 kHz controller callback. */
-    if ((npc_hal_is_ready() == 0U) || (npc_cfg_is_ready() == 0U) ||
-        (npc_ctrl_get_monitor()->status == 7U)) initialized = false;
+    if ((npc_cfg_is_ready() == 0u) ||                         /* Control period and frequency must agree. */
+        (npc_ctrl_get_monitor()->status == NPC_CTRL_CONTROL)) /* Controller initialization must succeed. */
+    {
+        initialized = false;
+    }
     last_call_time = p_state->time;
     update_origin = p_state->time;
     update_index = 0u;
@@ -310,6 +364,12 @@ void plecsStart(struct SimulationState *p_state)
     }
 }
 
+#pragma GCC diagnostic pop
+
+/* The host phase reference accumulates in double independently of the float controller. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
 /* The controller's external phase input uses the same published frequency as its DSOGIs. */
 static void generate_reference(void)
 {
@@ -320,6 +380,12 @@ static void generate_reference(void)
     if (phase_cycle >= 1.0) phase_cycle -= 1.0;
 }
 
+#pragma GCC diagnostic pop
+
+/* The PLECS ABI supplies double samples; validate representability before converting to float. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
 /** @param value Host feedback sample. @return Float sample, or NaN for invalid/out-of-range input. */
 static inline float sample_feedback(double value)
 {
@@ -330,6 +396,8 @@ static inline float sample_feedback(double value)
     }
     return (float)value;
 }
+
+#pragma GCC diagnostic pop
 
 /** @param p_state Current 5 kHz host snapshot; no control state lives in app. */
 static void update(const struct SimulationState *p_state)
@@ -353,15 +421,18 @@ static void update(const struct SimulationState *p_state)
         report_status(NPC_APP_REFERENCE, 0U, p_state->time);
         return;
     }
-    if (v_dc_half_min != applied_half_min)
+    if ((v_dc_half_min != applied_half_min) || /* Apply a changed half-bus threshold. */
+        (midpoint_kp != applied_midpoint_kp))  /* Apply a changed balance gain without stale configuration. */
     {
-        if ((npc_cfg_set_v_dc_half_min(v_dc_half_min) == 0U) || !pwm_init(v_dc_half_min))
+        if ((npc_cfg_set_v_dc_half_min(v_dc_half_min) == 0U) || /* Publish the bus threshold. */
+            (pwm_init(v_dc_half_min, midpoint_kp) == false))  /* Reload modulation parameters. */
         {
             disable_control();
             report_status(NPC_APP_PWM_CONFIG, 0U, p_state->time);
             return;
         }
         applied_half_min = v_dc_half_min;
+        applied_midpoint_kp = midpoint_kp;
     }
     generate_reference();
     section_interrupt();
@@ -395,13 +466,20 @@ static void trace_sample(double time_s)
         control_monitor.integral_v[0], control_monitor.integral_v[1], control_monitor.integral_v[2], control_monitor.integral_v[3],
         control_monitor.integral_i[0], control_monitor.integral_i[1], control_monitor.integral_i[2], control_monitor.integral_i[3],
         control_monitor.output.current_limited ? 1.0f : 0.0f, control_monitor.output.voltage_limited ? 1.0f : 0.0f,
-        output_frame[0], output_frame[1], output_frame[2], output_frame[3], output_frame[4], output_frame[5], output_frame[6]};
+        output_frame[0], output_frame[1], output_frame[2], output_frame[3], output_frame[4], output_frame[5], output_frame[6],
+        midpoint_kp, midpoint_current_ref, midpoint_current, midpoint_offset,
+        control_monitor.output.i_fundamental[0], control_monitor.output.i_fundamental[1], control_monitor.output.i_fundamental[2],
+        control_monitor.output.i_bias_ab[0], control_monitor.output.i_bias_ab[1],
+        control_monitor.output.v_damping_ab[0], control_monitor.output.v_damping_ab[1],
+        midpoint_delta_filtered, midpoint_correction, midpoint_current_magnitude};
     static const char header[] =
         "time_s,run,status,detail,vdc_p,vdc_n,va,vb,vc,ia,ib,ic,theta,ref,ref_actual,"
         "vd_pos,vq_pos,vd_neg,vq_neg,id_pos,iq_pos,id_neg,iq_neg,"
         "id_pos_ref,iq_pos_ref,id_neg_ref,iq_neg_ref,alpha,beta,alpha_pwm,beta_pwm,"
         "integral_vdp,integral_vqp,integral_vdn,integral_vqn,integral_idp,integral_iqp,integral_idn,integral_iqn,"
-        "current_limited,voltage_limited,duty_a_pos,duty_a_neg,duty_b_pos,duty_b_neg,duty_c_pos,duty_c_neg,pwm_enable";
+        "current_limited,voltage_limited,duty_a_pos,duty_a_neg,duty_b_pos,duty_b_neg,duty_c_pos,duty_c_neg,pwm_enable,"
+        "np_kp,np_i_ref,np_i_est,np_offset,ia_fundamental,ib_fundamental,ic_fundamental,i_bias_alpha,i_bias_beta,"
+        "v_damping_alpha,v_damping_beta,np_delta_avg,np_correction,np_current_magnitude";
     if (trace_enable != 1u)
     {
         if (trace_state == 2u)
@@ -446,6 +524,10 @@ static void trace_sample(double time_s)
     }
 }
 
+/* The 200 us scheduler must retain PLECS absolute-time precision over long simulations. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
 /** @param p_state Current callback; caller holds the shared Shell dispatch lock. */
 static void output_locked(struct SimulationState *p_state)
 {
@@ -503,6 +585,8 @@ static void output_locked(struct SimulationState *p_state)
     }
     publish(p_state);
 }
+
+#pragma GCC diagnostic pop
 
 void plecsOutput(struct SimulationState *p_state)
 {

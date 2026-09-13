@@ -23,15 +23,16 @@
 static svpwm_3level_t modulator; /* One NPC bridge controlled by this interface. */
 
 /** @param p_phase Valid SVPWM phase output. @param p_duty Destination for P and N fractions. */
-static inline void map_phase(const svpwm_3level_phase_output_t *p_phase, bsp_pwm_phase_duty_t *p_duty)
+static inline void map_phase(const svpwm_3level_phase_output_t *p_phase,
+                             float current, bsp_pwm_phase_duty_t *p_duty)
 {
-    p_duty->positive_duty = p_phase->duty_p;
-    p_duty->negative_duty = p_phase->duty_n;
+    pwm_correct_phase_duty(p_phase, current, modulator.inter.current_filtered,
+                           &p_duty->positive_duty, &p_duty->negative_duty);
 }
 
-bool pwm_init(float v_dc_half_min)
+bool pwm_init(float v_dc_half_min, float midpoint_kp)
 {
-    const svpwm_3level_cfg_t cfg = {.v_dc_half_min = v_dc_half_min}; /* Per-half-bus voltage floor. */
+    const svpwm_3level_cfg_t cfg = pwm_make_modulator_cfg(v_dc_half_min, midpoint_kp);
     bsp_pwm_disable();
     return svpwm_3level_init(&modulator, &cfg);
 }
@@ -40,6 +41,11 @@ void pwm_disable(void)
 {
     bsp_pwm_disable();
     svpwm_3level_reset(&modulator);
+}
+
+const svpwm_3level_output_t *pwm_get_output(void)
+{
+    return &modulator.output;
 }
 
 SVPWM_3LEVEL_STATUS_E FUNC_RAM pwm_update(const svpwm_3level_input_t *p_input)
@@ -58,9 +64,9 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM pwm_update(const svpwm_3level_input_t *p_input)
         bsp_pwm_disable();
         return status;
     }
-    map_phase(&modulator.output.phase_a, &duty[0]);
-    map_phase(&modulator.output.phase_b, &duty[1]);
-    map_phase(&modulator.output.phase_c, &duty[2]);
+    map_phase(&modulator.output.phase_a, p_input->i_a, &duty[0]);
+    map_phase(&modulator.output.phase_b, p_input->i_b, &duty[1]);
+    map_phase(&modulator.output.phase_c, p_input->i_c, &duty[2]);
     if (bsp_pwm_set_duty(duty) == false)
     {
         pwm_disable();

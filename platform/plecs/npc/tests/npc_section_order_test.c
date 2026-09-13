@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Linker boundary symbols are inspected only by this Section infrastructure test. */
 extern const reg_section_t section_reg_start; /* Production registration range boundary. */
 extern const reg_section_t section_reg_stop; /* Production registration range boundary. */
 static char calls[32]; /* Observed callback execution sequence. */
@@ -41,13 +42,40 @@ static void record(char tag)
 }
 
 /** @brief Harmless replacement for non-fixture callbacks. */
-static void idle(void) {}
-static void init_a(void) { record('a'); }
-static void init_b(void) { record('b'); }
-static void init_c(void) { record('c'); }
-static void init_d(void) { record('d'); }
-static void init_e(void) { record('e'); }
-static void init_f(void) { record('f'); }
+static void idle(void)
+{
+    /* Intentionally leave the isolated application callback inactive. */
+}
+/** @brief Record init fixture a when the production dispatcher invokes it. */
+static void init_a(void)
+{
+    record('a');
+}
+/** @brief Record init fixture b when the production dispatcher invokes it. */
+static void init_b(void)
+{
+    record('b');
+}
+/** @brief Record init fixture c when the production dispatcher invokes it. */
+static void init_c(void)
+{
+    record('c');
+}
+/** @brief Record init fixture d when the production dispatcher invokes it. */
+static void init_d(void)
+{
+    record('d');
+}
+/** @brief Record init fixture e when the production dispatcher invokes it. */
+static void init_e(void)
+{
+    record('e');
+}
+/** @brief Record init fixture f when the production dispatcher invokes it. */
+static void init_f(void)
+{
+    record('f');
+}
 REG_INIT(5, init_a)
 REG_INIT(2, init_b)
 REG_INIT(5, init_c)
@@ -55,12 +83,36 @@ REG_INIT(-2, init_d)
 REG_INIT(5, init_e)
 REG_INIT(2, init_f)
 
-static void irq_a(void) { record('a'); }
-static void irq_b(void) { record('b'); }
-static void irq_c(void) { record('c'); }
-static void irq_d(void) { record('d'); }
-static void irq_e(void) { record('e'); }
-static void irq_f(void) { record('f'); }
+/** @brief Record irq fixture a when the production dispatcher invokes it. */
+static void irq_a(void)
+{
+    record('a');
+}
+/** @brief Record irq fixture b when the production dispatcher invokes it. */
+static void irq_b(void)
+{
+    record('b');
+}
+/** @brief Record irq fixture c when the production dispatcher invokes it. */
+static void irq_c(void)
+{
+    record('c');
+}
+/** @brief Record irq fixture d when the production dispatcher invokes it. */
+static void irq_d(void)
+{
+    record('d');
+}
+/** @brief Record irq fixture e when the production dispatcher invokes it. */
+static void irq_e(void)
+{
+    record('e');
+}
+/** @brief Record irq fixture f when the production dispatcher invokes it. */
+static void irq_f(void)
+{
+    record('f');
+}
 REG_INTERRUPT(5, irq_a)
 REG_INTERRUPT(2, irq_b)
 REG_INTERRUPT(5, irq_c)
@@ -68,9 +120,21 @@ REG_INTERRUPT(0, irq_d)
 REG_INTERRUPT(5, irq_e)
 REG_INTERRUPT(2, irq_f)
 
-static void task_a(void) { record('a'); }
-static void task_b(void) { record('b'); }
-static void task_c(void) { record('c'); }
+/** @brief Record task fixture a when the production dispatcher invokes it. */
+static void task_a(void)
+{
+    record('a');
+}
+/** @brief Record task fixture b when the production dispatcher invokes it. */
+static void task_b(void)
+{
+    record('b');
+}
+/** @brief Record task fixture c when the production dispatcher invokes it. */
+static void task_c(void)
+{
+    record('c');
+}
 REG_TASK_MS(5, task_a)
 REG_TASK_MS(1, task_b)
 REG_TASK_MS(3, task_c)
@@ -120,20 +184,29 @@ static void isolate_callbacks(void)
     }
 }
 
-/** @param p_node Runtime wrapper. @return Its index in the linked registration table. */
+/**
+ * @param p_node Runtime wrapper.
+ * @return Its index in the linked registration table.
+ */
 static size_t registration_index(const section_item_t *p_node)
 {
     size_t index = 0u; /* Registration rank independent of runtime list pointers. */
     for (const reg_section_t *p_reg = &section_reg_start + 1; p_reg < &section_reg_stop; ++p_reg)
     {
-        if (p_reg->p_str == p_node) return index;
+        if (p_reg->p_str == p_node)
+        {
+            return index;
+        }
         ++index;
     }
     check(0);
     return 0u;
 }
 
-/** @param p_head Runtime list head. @param kind Registration category used for priority comparison. */
+/**
+ * @param p_head Runtime list head.
+ * @param kind Registration category used for priority comparison.
+ */
 static void check_list(const section_item_t *p_head, SECTION_E kind)
 {
     int previous_priority = -129; /* Below the signed initialization priority range. */
@@ -143,10 +216,19 @@ static void check_list(const section_item_t *p_head, SECTION_E kind)
     {
         int priority = 0; /* Task and link lists retain registration order without priorities. */
         size_t index = registration_index(p_node); /* Original registration position. */
-        if (kind == SECTION_INIT) priority = ((const reg_init_t *)p_node->p_obj)->priority;
-        if (kind == SECTION_INTERRUPT) priority = ((const reg_interrupt_t *)p_node->p_obj)->priority;
+        if (kind == SECTION_INIT)
+        {
+            priority = ((const reg_init_t *)p_node->p_obj)->priority;
+        }
+        if (kind == SECTION_INTERRUPT)
+        {
+            priority = ((const reg_interrupt_t *)p_node->p_obj)->priority;
+        }
         check(priority >= previous_priority);
-        if (priority == previous_priority) check(index > previous_index);
+        if (priority == previous_priority)
+        {
+            check(index > previous_index);
+        }
         previous_priority = priority;
         previous_index = index;
         ++count;
@@ -166,7 +248,7 @@ static void clear_calls(void)
 int main(void)
 {
     isolate_callbacks();
-    for (unsigned int pass = 0u; pass < 2u; ++pass) /* Reinitialization must preserve order too. */
+    for (uint32_t pass = 0u; pass < 2u; ++pass) /* Reinitialization must preserve order too. */
     {
         clear_calls();
         section_init();
