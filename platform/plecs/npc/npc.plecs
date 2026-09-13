@@ -8,7 +8,7 @@ Plecs {
   Solver        "auto"
   MaxStep       "1e-3"
   InitStep      "-1"
-  FixedStep     "1e-3"
+  FixedStep     "1e-6"
   Refine        "1"
   ZCStepSize    "1e-9"
   RelTol        "1e-5"
@@ -29,7 +29,7 @@ Plecs {
   AssertionAction "1"
   FixedPointDatatypeOverride "1"
   InitializationCommands "ctrl_freq = 5e3\nctrl_ts = 1/ctrl_freq\npwm_freq = 5"
-"e3\ndead_time = 10e-6"
+"e3\ndead_time = 2e-6"
   InitialState  "1"
   SystemState   ""
   JacobianComputation "2"
@@ -72,9 +72,9 @@ Plecs {
   InvalidNetlistFunctionEvaluationMsg "1"
   IncompatibleInitialConditionMsg "2"
   Schematic {
-    Location      [1704, 603; 2995, 1195]
-    ZoomFactor    1
-    SliderPosition [1323, 617]
+    Location      [847, 237; 2138, 829]
+    ZoomFactor    1.49863
+    SliderPosition [1027, 912]
     ShowBrowser   off
     BrowserWidth  100
     Component {
@@ -318,7 +318,7 @@ Plecs {
       LabelPosition west
       Parameter {
         Variable      "C"
-        Value         "60e-3"
+        Value         "66e-3"
         Show          off
       }
       Parameter {
@@ -3051,169 +3051,6 @@ Plecs {
       }
     }
     Component {
-      Type          PlecsProbe
-      Name          "Probe3"
-      Show          on
-      Position      [2095, 925]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-    }
-    Component {
-      Type          Reference
-      SrcComponent  "Components/Control/Filters/RMS Value"
-      Name          "RMS Value"
-      Show          on
-      Position      [2175, 925]
-      Direction     up
-      Flipped       off
-      LabelPosition south
-      Frame         [-15, -15; 15, 15]
-      Parameter {
-        Variable      "x0"
-        Value         "0"
-        Show          off
-      }
-      Parameter {
-        Variable      "ts"
-        Value         "0"
-        Show          off
-      }
-      Parameter {
-        Variable      "fs"
-        Value         "50"
-        Show          off
-      }
-      Terminal {
-        Type          Input
-        Position      [-15, 0]
-        Direction     left
-      }
-      Terminal {
-        Type          Output
-        Position      [19, 0]
-        Direction     right
-      }
-    }
-    Component {
-      Type          Display
-      Name          "Display"
-      Show          on
-      Position      [2305, 925]
-      Direction     up
-      Flipped       off
-      LabelPosition south
-      Frame         [-66, -11; 66, 11]
-      Parameter {
-        Variable      "Notation"
-        Value         "1"
-        Show          off
-      }
-      Parameter {
-        Variable      "Precision"
-        Value         "4"
-        Show          off
-      }
-    }
-    Component {
-      Type          PlecsProbe
-      Name          "Probe4"
-      Show          on
-      Position      [2095, 830]
-      Direction     right
-      Flipped       off
-      LabelPosition south
-      Probe {
-        Component     "C1"
-        Path          ""
-        Signals       {"Capacitor voltage"}
-      }
-    }
-    Component {
-      Type          Reference
-      SrcComponent  "Components/Control/Filters/RMS Value"
-      Name          "RMS Value1"
-      Show          on
-      Position      [2175, 830]
-      Direction     up
-      Flipped       off
-      LabelPosition south
-      Frame         [-15, -15; 15, 15]
-      Parameter {
-        Variable      "x0"
-        Value         "0"
-        Show          off
-      }
-      Parameter {
-        Variable      "ts"
-        Value         "0"
-        Show          off
-      }
-      Parameter {
-        Variable      "fs"
-        Value         "50"
-        Show          off
-      }
-      Terminal {
-        Type          Input
-        Position      [-15, 0]
-        Direction     left
-      }
-      Terminal {
-        Type          Output
-        Position      [19, 0]
-        Direction     right
-      }
-    }
-    Component {
-      Type          Display
-      Name          "Display1"
-      Show          on
-      Position      [2270, 830]
-      Direction     up
-      Flipped       off
-      LabelPosition south
-      Frame         [-31, -11; 31, 11]
-      Parameter {
-        Variable      "Notation"
-        Value         "1"
-        Show          off
-      }
-      Parameter {
-        Variable      "Precision"
-        Value         "4"
-        Show          off
-      }
-    }
-    Component {
-      Type          Resistor
-      Name          "R13"
-      Show          on
-      Position      [1040, 445]
-      Direction     down
-      Flipped       off
-      LabelPosition west
-      Parameter {
-        Variable      "R"
-        Value         "1e-3"
-        Show          off
-      }
-    }
-    Component {
-      Type          Resistor
-      Name          "R14"
-      Show          on
-      Position      [1040, 505]
-      Direction     down
-      Flipped       off
-      LabelPosition west
-      Parameter {
-        Variable      "R"
-        Value         "1e-3"
-        Show          off
-      }
-    }
-    Component {
       Type          Reference
       SrcComponent  "Components/Electrical/Transformers/Yd Trafo"
       Name          "Yd Trafo"
@@ -3319,7 +3156,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "R"
-        Value         "34.5e3*34.5e3/1"
+        Value         "34.5e3*34.5e3/1e6"
         Show          off
       }
     }
@@ -3333,7 +3170,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "R"
-        Value         "34.5e3*34.5e3/1"
+        Value         "34.5e3*34.5e3/1e6"
         Show          off
       }
     }
@@ -3347,7 +3184,7 @@ Plecs {
       LabelPosition south
       Parameter {
         Variable      "R"
-        Value         "34.5e3*34.5e3/1"
+        Value         "34.5e3*34.5e3/1e6"
         Show          off
       }
     }
@@ -5843,6 +5680,414 @@ Plecs {
         Show          off
       }
     }
+    Component {
+      Type          Resistor
+      Name          "R13"
+      Show          on
+      Position      [1015, 435]
+      Direction     down
+      Flipped       off
+      LabelPosition west
+      Parameter {
+        Variable      "R"
+        Value         "1e4"
+        Show          off
+      }
+    }
+    Component {
+      Type          Resistor
+      Name          "R14"
+      Show          on
+      Position      [1015, 515]
+      Direction     down
+      Flipped       off
+      LabelPosition west
+      Parameter {
+        Variable      "R"
+        Value         "1.1e4"
+        Show          off
+      }
+    }
+    Component {
+      Type          Resistor
+      Name          "R15"
+      Show          on
+      Position      [1040, 435]
+      Direction     down
+      Flipped       off
+      LabelPosition west
+      Parameter {
+        Variable      "R"
+        Value         "1e-3"
+        Show          off
+      }
+    }
+    Component {
+      Type          Resistor
+      Name          "R16"
+      Show          on
+      Position      [1040, 515]
+      Direction     down
+      Flipped       off
+      LabelPosition west
+      Parameter {
+        Variable      "R"
+        Value         "1e-3"
+        Show          off
+      }
+    }
+    Component {
+      Type          Scope
+      Name          "Scope"
+      Show          on
+      Position      [870, 875]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-15, -20; 15, 20]
+      Location      [48, 23; 3440, 1420]
+      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAC0AAAFVvwCAAAAA/sAAAAQAFoAbwBvA"
+"G0AQQByAGUAYQAAAAAA/////wAAAH8A////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
+"///wAAAGEA////+wAAAAwAVAByAGEAYwBlAHMBAAAAMwAABVYAAABhAP///wAAAAMAAAAAAAAAAPw"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABEAP///wAADIYAAAVWAAAA"
+"BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
+"AAAAA=="
+      SavedViews    "AAAAAgAAAAA="
+      HeaderState   "{\"DefaultSecSize\":0,\"FirstSecSize\":174,\"Labels\":[],"
+"\"VisualIdxs\":[]}"
+      PlotPalettes  "AAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+"=="
+      Axes          "3"
+      TimeRange     "0"
+      ScrollingMode "1"
+      SingleTimeAxis "1"
+      Open          "1"
+      Ts            "-1"
+      SampleLimit   "0"
+      XAxisLabel    "Time / s"
+      ShowLegend    "1"
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Fourier {
+        SingleXAxis       on
+        AxisLabel         "Frequency / Hz"
+        Scaling           0
+        PhaseDisplay      0
+        ShowFourierLegend off
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+      }
+    }
+    Component {
+      Type          PlecsProbe
+      Name          "Probe5"
+      Show          on
+      Position      [1930, 670]
+      Direction     right
+      Flipped       off
+      LabelPosition south
+      Probe {
+        Component     "R2"
+        Path          ""
+        Signals       {"Resistor voltage"}
+      }
+      Probe {
+        Component     "R3"
+        Path          ""
+        Signals       {"Resistor voltage"}
+      }
+      Probe {
+        Component     "R4"
+        Path          ""
+        Signals       {"Resistor voltage"}
+      }
+    }
+    Component {
+      Type          Scope
+      Name          "Scope1"
+      Show          on
+      Position      [2035, 670]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-15, -15; 15, 15]
+      Location      [48, 24; 3440, 1421]
+      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
+"G0AQQByAGUAYQAAAAAA/////wAAAC8A////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
+"///wAAAGEA////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAABhAP///wAAAAMAAAAAAAAAAPw"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABEAP///wAADUAAAAVWAAAA"
+"BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
+"AAAAA=="
+      SavedViews    "AAAAAgAAAAA="
+      HeaderState   "{\"DefaultSecSize\":0,\"FirstSecSize\":165,\"Labels\":[],"
+"\"VisualIdxs\":[]}"
+      PlotPalettes  "AAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      Axes          "1"
+      TimeRange     "0.0"
+      ScrollingMode "1"
+      SingleTimeAxis "1"
+      Open          "1"
+      Ts            "-1"
+      SampleLimit   "0"
+      XAxisLabel    "Time / s"
+      ShowLegend    "1"
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Fourier {
+        SingleXAxis       on
+        AxisLabel         "Frequency / Hz"
+        Scaling           0
+        PhaseDisplay      0
+        ShowFourierLegend off
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+      }
+    }
+    Component {
+      Type          Reference
+      SrcComponent  "Components/Control/Filters/Total Harmonic\\nDistortion"
+      Name          "Total Harmonic\nDistortion"
+      Show          on
+      Position      [2115, 720]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-15, -15; 15, 15]
+      Parameter {
+        Variable      "ts"
+        Value         "0"
+        Show          off
+      }
+      Parameter {
+        Variable      "fs"
+        Value         "50"
+        Show          off
+      }
+      Terminal {
+        Type          Input
+        Position      [-15, 0]
+        Direction     left
+      }
+      Terminal {
+        Type          Output
+        Position      [19, 0]
+        Direction     right
+      }
+    }
+    Component {
+      Type          SignalDemux
+      Name          "Demux3"
+      Show          off
+      Position      [2015, 790]
+      Direction     right
+      Flipped       on
+      LabelPosition south
+      Frame         [-7, -75; 2, 75]
+      Parameter {
+        Variable      "Width"
+        Value         "3"
+        Show          off
+      }
+    }
+    Component {
+      Type          Reference
+      SrcComponent  "Components/Control/Filters/Total Harmonic\\nDistortion"
+      Name          "Total Harmonic\nDistortion1"
+      Show          on
+      Position      [2115, 790]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-15, -15; 15, 15]
+      Parameter {
+        Variable      "ts"
+        Value         "0"
+        Show          off
+      }
+      Parameter {
+        Variable      "fs"
+        Value         "50"
+        Show          off
+      }
+      Terminal {
+        Type          Input
+        Position      [-15, 0]
+        Direction     left
+      }
+      Terminal {
+        Type          Output
+        Position      [19, 0]
+        Direction     right
+      }
+    }
+    Component {
+      Type          Reference
+      SrcComponent  "Components/Control/Filters/Total Harmonic\\nDistortion"
+      Name          "Total Harmonic\nDistortion2"
+      Show          on
+      Position      [2115, 860]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-15, -15; 15, 15]
+      Parameter {
+        Variable      "ts"
+        Value         "0"
+        Show          off
+      }
+      Parameter {
+        Variable      "fs"
+        Value         "50"
+        Show          off
+      }
+      Terminal {
+        Type          Input
+        Position      [-15, 0]
+        Direction     left
+      }
+      Terminal {
+        Type          Output
+        Position      [19, 0]
+        Direction     right
+      }
+    }
+    Component {
+      Type          Display
+      Name          "Display"
+      Show          on
+      Position      [2245, 720]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-31, -11; 31, 11]
+      Parameter {
+        Variable      "Notation"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "Precision"
+        Value         "4"
+        Show          off
+      }
+    }
+    Component {
+      Type          Display
+      Name          "Display1"
+      Show          on
+      Position      [2245, 790]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-31, -11; 31, 11]
+      Parameter {
+        Variable      "Notation"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "Precision"
+        Value         "4"
+        Show          off
+      }
+    }
+    Component {
+      Type          Display
+      Name          "Display2"
+      Show          on
+      Position      [2245, 860]
+      Direction     up
+      Flipped       off
+      LabelPosition south
+      Frame         [-31, -11; 31, 11]
+      Parameter {
+        Variable      "Notation"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "Precision"
+        Value         "4"
+        Show          off
+      }
+    }
     Connection {
       Type          Wire
       SrcComponent  "C2"
@@ -5869,8 +6114,15 @@ Plecs {
         DstTerminal   1
       }
       Branch {
-        DstComponent  "R1"
-        DstTerminal   1
+        Points        [1015, 360]
+        Branch {
+          DstComponent  "R1"
+          DstTerminal   1
+        }
+        Branch {
+          DstComponent  "R13"
+          DstTerminal   2
+        }
       }
     }
     Connection {
@@ -5883,9 +6135,16 @@ Plecs {
         DstTerminal   2
       }
       Branch {
-        Points        [935, 590]
-        DstComponent  "V_dc"
-        DstTerminal   2
+        Points        [1015, 590]
+        Branch {
+          Points        [935, 590]
+          DstComponent  "V_dc"
+          DstTerminal   2
+        }
+        Branch {
+          DstComponent  "R14"
+          DstTerminal   1
+        }
       }
     }
     Connection {
@@ -6229,87 +6488,40 @@ Plecs {
     }
     Connection {
       Type          Signal
-      SrcComponent  "Probe"
-      SrcTerminal   1
-      DstComponent  "Mux1"
-      DstTerminal   2
-    }
-    Connection {
-      Type          Signal
       SrcComponent  "Mux1"
       SrcTerminal   1
       DstComponent  "DLL"
       DstTerminal   1
     }
     Connection {
-      Type          Signal
-      SrcComponent  "Probe1"
-      SrcTerminal   1
-      DstComponent  "Mux1"
-      DstTerminal   4
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "Probe2"
-      SrcTerminal   1
-      DstComponent  "Mux1"
-      DstTerminal   3
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "Probe3"
-      SrcTerminal   1
-      DstComponent  "RMS Value"
-      DstTerminal   1
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "RMS Value"
-      SrcTerminal   2
-      DstComponent  "Display"
-      DstTerminal   1
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "Probe4"
-      SrcTerminal   1
-      DstComponent  "RMS Value1"
-      DstTerminal   1
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "RMS Value1"
-      SrcTerminal   2
-      DstComponent  "Display1"
-      DstTerminal   1
-    }
-    Connection {
       Type          Wire
-      SrcComponent  "R13"
-      SrcTerminal   1
+      SrcComponent  "NPC3"
+      SrcTerminal   18
       Points        [1040, 475]
       Branch {
-        DstComponent  "R14"
-        DstTerminal   2
+        Points        [1040, 460]
+        Branch {
+          Points        [1015, 460]
+          DstComponent  "R13"
+          DstTerminal   1
+        }
+        Branch {
+          DstComponent  "R15"
+          DstTerminal   1
+        }
       }
       Branch {
-        DstComponent  "NPC3"
-        DstTerminal   18
+        Points        [1040, 490]
+        Branch {
+          Points        [1015, 490]
+          DstComponent  "R14"
+          DstTerminal   2
+        }
+        Branch {
+          DstComponent  "R16"
+          DstTerminal   2
+        }
       }
-    }
-    Connection {
-      Type          Wire
-      SrcComponent  "R13"
-      SrcTerminal   2
-      DstComponent  "C4"
-      DstTerminal   2
-    }
-    Connection {
-      Type          Wire
-      SrcComponent  "C5"
-      SrcTerminal   1
-      DstComponent  "R14"
-      DstTerminal   1
     }
     Connection {
       Type          Wire
@@ -6423,6 +6635,122 @@ Plecs {
       DstComponent  "R8"
       DstTerminal   1
     }
+    Connection {
+      Type          Wire
+      SrcComponent  "C4"
+      SrcTerminal   2
+      DstComponent  "R15"
+      DstTerminal   2
+    }
+    Connection {
+      Type          Wire
+      SrcComponent  "C5"
+      SrcTerminal   1
+      DstComponent  "R16"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Probe"
+      SrcTerminal   1
+      Points        [790, 715]
+      Branch {
+        DstComponent  "Mux1"
+        DstTerminal   2
+      }
+      Branch {
+        Points        [790, 865]
+        DstComponent  "Scope"
+        DstTerminal   1
+      }
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Probe2"
+      SrcTerminal   1
+      Points        [805, 765]
+      Branch {
+        DstComponent  "Mux1"
+        DstTerminal   3
+      }
+      Branch {
+        Points        [805, 875]
+        DstComponent  "Scope"
+        DstTerminal   2
+      }
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Probe1"
+      SrcTerminal   1
+      Points        [820, 815]
+      Branch {
+        DstComponent  "Mux1"
+        DstTerminal   4
+      }
+      Branch {
+        Points        [820, 885]
+        DstComponent  "Scope"
+        DstTerminal   3
+      }
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Demux3"
+      SrcTerminal   2
+      DstComponent  "Total Harmonic\nDistortion"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Demux3"
+      SrcTerminal   4
+      DstComponent  "Total Harmonic\nDistortion2"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Demux3"
+      SrcTerminal   3
+      DstComponent  "Total Harmonic\nDistortion1"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Probe5"
+      SrcTerminal   1
+      Points        [1970, 670]
+      Branch {
+        DstComponent  "Scope1"
+        DstTerminal   1
+      }
+      Branch {
+        Points        [1970, 790]
+        DstComponent  "Demux3"
+        DstTerminal   1
+      }
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Total Harmonic\nDistortion"
+      SrcTerminal   2
+      DstComponent  "Display"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Total Harmonic\nDistortion1"
+      SrcTerminal   2
+      DstComponent  "Display1"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Total Harmonic\nDistortion2"
+      SrcTerminal   2
+      DstComponent  "Display2"
+      DstTerminal   1
+    }
   }
 }
-DemoSignature "DDkkce8fr2KGK04dCHRGUPTr8qhvNX3waM/DvsCtgWE="
+DemoSignature "1gaEmgE2ZGc3rJSuWRR/CnBKfwyCxVty9JhlO1DMppg="
