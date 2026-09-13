@@ -21,7 +21,7 @@
 - Use the platform branch to include, exclude, or replace only the unsupported demo function; keep code shared when its behavior is supported consistently.
 - Demo platform operations continue to use the demo project Interface and the selected Platform BSP.
 - Compiler built-ins, raw MCU macros, host macros, simulation macros, and toolchain recognition remain centralized in `platform.h`.
-- This exception is a local project rule for demo compatibility and is not part of the 一衍 architecture rules.
+- This exception is a local project rule for demo compatibility; the general platform boundary still applies elsewhere.
 
 ## Git Commit Workflow
 
