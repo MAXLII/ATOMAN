@@ -14,6 +14,7 @@
 - [控制模块总设计](control/ctrl_design.md)
 - [控制 HAL 挂载与生命周期设计](control/hal_binding_lifecycle_design.md)
 - [控制参数构建与发布设计](control/setpoint_publish_design.md)
+- [三电平 SVPWM 源码讲解与手算](svpwm_3level_walkthrough.md)
 - BB：[运行模式设计](control/bb/bb_mode_design.md) · [控制设计](control/bb/ctrl_bb_design.md)
 - Boost：[控制设计](control/boost/ctrl_boost_design.md)
 - Buck：[整数控制设计](control/buck/buck_integer_control_design.md) · [控制设计](control/buck/ctrl_buck_design.md)
