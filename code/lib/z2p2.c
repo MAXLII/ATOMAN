@@ -48,8 +48,8 @@ void z2p2_init(z2p2_t *p_str,
     float wp1 = 2.0f * M_PI * fp;
     float wp2 = 2.0f * M_PI * fp;
 
-    float n3 = k * ts * wp1 * wp2 * (4 - 2 * ts * wz1 - ts * wz2 + ts * ts * wz1 * wz2);
-    float n2 = k * ts * wp1 * wp2 * (-4 - 2 * ts * wz1 - ts * wz2 + 3 * ts * ts * wz1 * wz2);
+    float n3 = k * ts * wp1 * wp2 * (4 - 2 * ts * wz1 - 2 * ts * wz2 + ts * ts * wz1 * wz2);
+    float n2 = k * ts * wp1 * wp2 * (-4 - 2 * ts * wz1 - 2 * ts * wz2 + 3 * ts * ts * wz1 * wz2);
     float n1 = k * ts * wp1 * wp2 * (-4 + 2 * ts * wz1 + 2 * ts * wz2 + 3 * ts * ts * wz1 * wz2);
     float n0 = k * ts * wp1 * wp2 * (4 + 2 * ts * wz1 + 2 * ts * wz2 + ts * ts * wz1 * wz2);
 
