@@ -155,6 +155,17 @@
 #endif
 #define M_SQRT1_2 0.70710678118654752440f
 
+
+#ifdef M_SQRT3_2
+#undef M_SQRT3_2
+#endif
+#define M_SQRT3_2 0.8660254037844386f /* sqrt(3) / 2 */
+
+#ifdef M_1_SQRT3
+#undef M_1_SQRT3
+#endif
+#define M_1_SQRT3 0.5773502691896258f /* 1 / sqrt(3) */
+
 #ifdef M_2PI
 #undef M_2PI
 #endif

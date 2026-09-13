@@ -37,7 +37,7 @@ typedef enum
     SVPWM_3LEVEL_OK,               /* Current phase dwell ratios may be consumed. */
     SVPWM_3LEVEL_INVALID_ARGUMENT, /* A required object pointer is NULL. */
     SVPWM_3LEVEL_INVALID_CONFIG,   /* The configured DC-link threshold is not finite or positive. */
-    SVPWM_3LEVEL_INVALID_INPUT,    /* Non-finite input, low half bus or unrepresentable bus ratio. */
+    SVPWM_3LEVEL_INVALID_INPUT,    /* Non-finite voltage input or low half bus. */
     SVPWM_3LEVEL_OUT_OF_RANGE      /* Requested vector cannot be synthesized in the linear region. */
 } SVPWM_3LEVEL_STATUS_E;
 
@@ -56,12 +56,32 @@ typedef struct svpwm_3level_input
     float v_beta;  /* Requested beta-axis voltage in V. */
     float v_dc_p;  /* Positive rail minus DC midpoint voltage in V. */
     float v_dc_n;  /* DC midpoint minus negative rail voltage in V. */
+    float i_a;     /* Phase A fundamental current, A; positive from bridge to AC side. */
+    float i_b;     /* Phase B fundamental current, A; caller rejects switching ripple. */
+    float i_c;     /* Phase C fundamental current, A; coherent with A/B, not raw carrier-edge samples. */
 } svpwm_3level_input_t;
 
 typedef struct svpwm_3level_cfg
 {
     float v_dc_half_min; /* Minimum permitted voltage of EACH half bus in V; finite and > 0. */
+    float midpoint_kp;   /* Balance gain, A/V; 0 disables balance, positive enables it. */
+    bool average_balance; /* Regulate filtered bus difference rather than instantaneous neutral current. */
+    float ts;                 /* Calculation period for averaged balancing, s. */
+    float midpoint_filter_hz; /* Bus difference and current-magnitude filter cutoff, Hz. */
+    float midpoint_ki;        /* Average bus-difference integral gain, A/(V s). */
+    float midpoint_kaw;       /* Offset saturation tracking rate, 1/s. */
+    float midpoint_current_min; /* Minimum current magnitude used to normalize balance authority, A. */
+    float midpoint_slope_floor_ratio; /* Regularization relative to total current magnitude. */
+    float midpoint_offset_max;  /* Maximum correction around the centered common mode, V. */
 } svpwm_3level_cfg_t;
+
+typedef struct svpwm_3level_inter
+{
+    float delta_filtered;   /* Mean positive-minus-negative capacitor voltage, V. */
+    float current_filtered; /* Filtered sum of absolute fundamental phase currents, A. */
+    float balance_integral; /* Averaged balancing PI integral output, A. */
+    float filter_coeff;     /* Exact first-order filter coefficient computed during init. */
+} svpwm_3level_inter_t;
 
 /**
  * Fractions of one COMPLETE PWM period, not gate duties or timer compare values.
@@ -89,12 +109,19 @@ typedef struct svpwm_3level_output
     svpwm_3level_phase_output_t phase_b; /* Phase B dwell ratios for the latest calculation. */
     svpwm_3level_phase_output_t phase_c; /* Phase C dwell ratios for the latest calculation. */
     SVPWM_3LEVEL_STATUS_E status;        /* Dwell ratios are usable only when equal to SVPWM_3LEVEL_OK. */
+    float midpoint_current_ref;         /* Requested current out of the midpoint, A. */
+    float midpoint_current;             /* Predicted mean current out of the midpoint, A. */
+    float common_mode_v;                /* Selected common-mode voltage relative to the raw reference, V. */
+    float midpoint_delta_filtered;      /* Low-pass bus difference used by averaged balancing, V. */
+    float midpoint_correction_v;        /* Applied shift relative to centered common mode, V. */
+    float midpoint_current_magnitude;   /* Filtered sum of absolute fundamental phase currents, A. */
 } svpwm_3level_output_t;
 
 typedef struct svpwm_3level
 {
     svpwm_3level_input_t input;   /* Caller-written coherent snapshot, unchanged during cal(). */
     svpwm_3level_cfg_t cfg;       /* Configuration copied by init(); reinitialize to change it. */
+    svpwm_3level_inter_t inter;   /* Averaged midpoint feedback history; owned by this instance. */
     svpwm_3level_output_t output; /* Library-written result; consume only after cal() completes. */
 } svpwm_3level_t;
 
@@ -117,16 +144,20 @@ bool svpwm_3level_init(svpwm_3level_t *p_svpwm, const svpwm_3level_cfg_t *p_cfg)
  * @return Current calculation status; INVALID_ARGUMENT for a NULL instance.
  *
  * Validate configuration and all inputs; reject non-finite values, either half
- * bus below v_dc_half_min and a half-bus ratio that underflows float. Synthesize
+ * bus below v_dc_half_min. Synthesize
  * the reference inside the attainable hexagon (phase maximum minus minimum <=
  * total bus voltage), without reference clipping or overmodulation. Feasibility
  * allows 8 * FLT_EPSILON of boundary roundoff in max-half-bus units, with final
  * duty clipping only to remove that roundoff. A non-OK result clears all
  * dwell ratios and replaces the previous status, so stale output is not reused.
  *
- * This implementation provides no neutral-point balance regulator, minimum
- * pulse handling or dead-time compensation. Split-bus measurements describe
- * available voltage levels; they do not imply closed-loop midpoint balancing.
+ * With midpoint_kp > 0, choose a feasible common-mode offset and mapping to
+ * track -midpoint_kp * (v_dc_p - v_dc_n) using sum(duty_o * phase_current).
+ * Caller supplies finite phase currents and a finite nonnegative gain. Current
+ * is positive from the bridge to the AC side. Zero gain retains the centered
+ * legacy modulation. No integral state is used; unattainable midpoint current
+ * is limited by modulation feasibility. Zero reference retains OOO.
+ * This implementation provides no minimum pulse handling or dead-time compensation.
  * A single instance is not reentrant. The caller owns PWM timing and must arrange
  * coherent input capture and output transfer across ISR/task boundaries.
  */

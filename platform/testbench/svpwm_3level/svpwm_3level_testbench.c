@@ -33,6 +33,8 @@ typedef enum
     SVPWM_TEST_UNDERVOLTAGE /* Half-bus undervoltage followed by automatic recovery. */
 } SVPWM_TEST_SCENARIO_E;
 
+
+
 static svpwm_3level_t dut;                   /* Production modulation instance, reset per case. */
 static SVPWM_TEST_SCENARIO_E scenario;       /* Scenario selected before DUT initialization. */
 static SVPWM_3LEVEL_STATUS_E actual_status;  /* Status from this period's only DUT call. */
@@ -86,7 +88,7 @@ static void undervoltage_init(void) { case_init(SVPWM_TEST_UNDERVOLTAGE, "build/
 /** @brief Initialize a fresh production instance for every registered case. */
 static void dut_init(void)
 {
-    const svpwm_3level_cfg_t cfg = {20.0f}; /* Each half bus must be at least 20 V. */
+    const svpwm_3level_cfg_t cfg = {.v_dc_half_min = 20.0f}; /* Each half bus must be at least 20 V. */
     expect(svpwm_3level_init(&dut, &cfg) == true);
     expect(dut.output.status == SVPWM_3LEVEL_NOT_READY);
 }
