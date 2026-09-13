@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 #define CHECK(condition) check((condition), #condition, __LINE__) /* Keep checks active at every optimization level. */
 
 static uint32_t check_count = 0u;  /* Number of assertions executed. */
@@ -278,7 +280,7 @@ static void test_sweep(void)
     for (size_t b = 0u; b < (sizeof(buses) / sizeof(buses[0])); ++b) /* Bus case index. */
     {
         svpwm_3level_t instance = {0}; /* Real production instance. */
-        svpwm_3level_cfg_t cfg = {0.5f * fminf(buses[b][0], buses[b][1])}; /* Valid floor for this voltage scale. */
+        svpwm_3level_cfg_t cfg = {.v_dc_half_min = 0.5f * fminf(buses[b][0], buses[b][1])}; /* Valid floor for this voltage scale. */
         CHECK(svpwm_3level_init(&instance, &cfg) == true);
         instance.input.v_dc_p = buses[b][0];
         instance.input.v_dc_n = buses[b][1];
@@ -305,7 +307,7 @@ static void test_sweep(void)
 static void test_lifecycle(void)
 {
     svpwm_3level_t instance = {0};          /* Test instance repeatedly recovered from faults. */
-    svpwm_3level_cfg_t cfg = {10.0f};       /* Each half bus must be at least 10 V. */
+    svpwm_3level_cfg_t cfg = {.v_dc_half_min = 10.0f};       /* Each half bus must be at least 10 V. */
     const float invalid[] = {NAN, INFINITY, -INFINITY}; /* Non-finite controller and measurement values. */
     CHECK(svpwm_3level_init(NULL, &cfg) == false);
     CHECK(svpwm_3level_cal(NULL) == SVPWM_3LEVEL_INVALID_ARGUMENT);
@@ -315,7 +317,7 @@ static void test_lifecycle(void)
     CHECK(instance.output.status == SVPWM_3LEVEL_INVALID_ARGUMENT);
     CHECK(svpwm_3level_init(&instance, &cfg) == true);
     CHECK(instance.output.status == SVPWM_3LEVEL_NOT_READY);
-    instance.input = (svpwm_3level_input_t){300.0f, 100.0f, 350.0f, 350.0f};
+    instance.input = (svpwm_3level_input_t){.v_alpha = 300.0f, .v_beta = 100.0f, .v_dc_p = 350.0f, .v_dc_n = 350.0f};
     verify_sample(&instance);
     /* Sector 1, ordered virtual duties A > B > C: ONN, PNN, PON, POO, then mirror. */
     CHECK(fabs((double)instance.output.phase_a.duty_p - 0.766575057683492) < 2.0e-7);
@@ -336,7 +338,7 @@ static void test_lifecycle(void)
         CHECK(svpwm_3level_init(&instance, &cfg) == true);
         for (uint32_t field = 0u; field < 4u; ++field) /* Input member being faulted. */
         {
-            instance.input = (svpwm_3level_input_t){300.0f, 100.0f, 350.0f, 350.0f};
+            instance.input = (svpwm_3level_input_t){.v_alpha = 300.0f, .v_beta = 100.0f, .v_dc_p = 350.0f, .v_dc_n = 350.0f};
             verify_sample(&instance);
             switch (field)
             {
@@ -360,7 +362,7 @@ static void test_lifecycle(void)
     CHECK(svpwm_3level_init(&instance, &cfg) == false);
     cfg.v_dc_half_min = 10.0f;
     CHECK(svpwm_3level_init(&instance, &cfg) == true);
-    instance.input = (svpwm_3level_input_t){0.0f, 0.0f, 10.0f, 10.0f};
+    instance.input = (svpwm_3level_input_t){.v_alpha = 0.0f, .v_beta = 0.0f, .v_dc_p = 10.0f, .v_dc_n = 10.0f};
     verify_sample(&instance);
     CHECK(instance.output.phase_a.duty_o == 1.0f);
     instance.input.v_dc_p = nextafterf(10.0f, 0.0f);
@@ -368,17 +370,17 @@ static void test_lifecycle(void)
     instance.input.v_dc_p = 10.0f;
     instance.input.v_dc_n = 0.0f;
     CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_INPUT);
-    instance.input = (svpwm_3level_input_t){FLT_MAX, FLT_MAX, 350.0f, 350.0f};
+    instance.input = (svpwm_3level_input_t){.v_alpha = FLT_MAX, .v_beta = FLT_MAX, .v_dc_p = 350.0f, .v_dc_n = 350.0f};
     CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_OUT_OF_RANGE);
-    instance.input = (svpwm_3level_input_t){0.5f * FLT_MAX, 0.0f, FLT_MAX, FLT_MAX};
+    instance.input = (svpwm_3level_input_t){.v_alpha = 0.5f * FLT_MAX, .v_beta = 0.0f, .v_dc_p = FLT_MAX, .v_dc_n = FLT_MAX};
     verify_sample(&instance);
     instance.cfg.v_dc_half_min = nanf("");
     CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_CONFIG);
     CHECK(instance.output.phase_a.duty_p == 0.0f);
     cfg.v_dc_half_min = nextafterf(0.0f, 1.0f);
     CHECK(svpwm_3level_init(&instance, &cfg) == true);
-    instance.input = (svpwm_3level_input_t){0.0f, 0.0f, cfg.v_dc_half_min, FLT_MAX};
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_INPUT);
+    instance.input = (svpwm_3level_input_t){.v_alpha = 0.0f, .v_beta = 0.0f, .v_dc_p = cfg.v_dc_half_min, .v_dc_n = FLT_MAX};
+    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_OK);
 }
 
 /** @return EXIT_SUCCESS when every invariant passes. */
