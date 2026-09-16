@@ -41,5 +41,6 @@ void sim_printf(const char *file, int line, const char *format, ...);
 #define SIM_LOG(...) sim_printf(__FILE__, __LINE__, __VA_ARGS__)
 
 extern uint32_t sim_time_100us;
+void sim_comm_stop(void);
 
 #endif

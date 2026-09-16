@@ -47,6 +47,16 @@
 
 #include "section.h"
 
+/* MATLAB's signal and time ABI requires double precision in this host adapter. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
+
+SECTION_WEAK void sim_comm_stop(void)
+{
+}
+
+static SimStruct *p_owner = NULL; /* Each linked simulation node has one active owner. */
+
 uint32_t sim_time_100us = 0U;
 
 static const double *s_inputs = NULL;
@@ -104,6 +114,7 @@ static void sim_sfunc_bind_io(const double *inputs, double *outputs, double time
 
 static void sim_sfunc_start(void)
 {
+    sim_comm_stop();
     sim_time_100us = 0U;
     s_time_last_s = 0.0;
 
@@ -157,9 +168,8 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetNumModes(S, 0);
     ssSetNumNonsampledZCs(S, 0);
 
-    ssSetOperatingPointCompliance(S, USE_DEFAULT_OPERATING_POINT);
-    ssSetRuntimeThreadSafetyCompliance(S, RUNTIME_THREAD_SAFETY_COMPLIANCE_TRUE);
-    ssSetOptions(S, SS_OPTION_EXCEPTION_FREE_CODE);
+    ssSetOperatingPointCompliance(S, DISALLOW_OPERATING_POINT);
+    ssSetOptions(S, SS_OPTION_CALL_TERMINATE_ON_EXIT);
 }
 
 static void mdlInitializeSampleTimes(SimStruct *S)
@@ -172,7 +182,13 @@ static void mdlInitializeSampleTimes(SimStruct *S)
 #if defined(MDL_START)
 static void mdlStart(SimStruct *S)
 {
-    (void)S;
+    if (p_owner != NULL)
+    {
+        ssSetErrorStatus(S, "Only one active block per node MEX is supported.");
+        return;
+    }
+    p_owner = S;
+    mexLock();
     sim_sfunc_start();
 }
 #endif
@@ -190,8 +206,15 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
 static void mdlTerminate(SimStruct *S)
 {
-    (void)S;
+    if (p_owner == S)
+    {
+        sim_comm_stop();
+        p_owner = NULL;
+        mexUnlock();
+    }
 }
+
+#pragma GCC diagnostic pop
 
 #ifdef MATLAB_MEX_FILE
 #include "simulink.c"
