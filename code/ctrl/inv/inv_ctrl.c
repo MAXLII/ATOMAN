@@ -296,10 +296,10 @@ static void inv_ctrl_reinit_states(void)
     inv_ctrl_reset_loops();
     inv_ctrl_loops_ready = 1U;
     PLECS_LOG("inv_ctrl reinit done: freq=%.3f freq_slew=%.3f rms=%.3f rms_slew=%.3f\n",
-              p_active_setpoint->freq_hz,
-              p_active_setpoint->freq_slew_hzps,
-              p_active_setpoint->rms_ref_v,
-              p_active_setpoint->rms_slew_vps);
+              (double)p_active_setpoint->freq_hz,
+              (double)p_active_setpoint->freq_slew_hzps,
+              (double)p_active_setpoint->rms_ref_v,
+              (double)p_active_setpoint->rms_slew_vps);
 }
 
 static void inv_ctrl_init(void)

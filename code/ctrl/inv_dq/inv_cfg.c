@@ -130,7 +130,7 @@ void inv_cfg_set_freq_hz(float freq_hz)
     if (setpoint_mgr.building.p_data->freq_hz != freq_hz)
     {
         setpoint_mgr.building.p_data->freq_hz = freq_hz;
-        PLECS_LOG("inv_cfg set freq_hz: %.3f\n", freq_hz);
+        PLECS_LOG("inv_cfg set freq_hz: %.3f\n", (double)freq_hz);
     }
 }
 
@@ -144,7 +144,7 @@ void inv_cfg_set_freq_slew_hzps(float freq_slew_hzps)
     if (setpoint_mgr.building.p_data->freq_slew_hzps != freq_slew_hzps)
     {
         setpoint_mgr.building.p_data->freq_slew_hzps = freq_slew_hzps;
-        PLECS_LOG("inv_cfg set freq_slew_hzps: %.3f\n", freq_slew_hzps);
+        PLECS_LOG("inv_cfg set freq_slew_hzps: %.3f\n", (double)freq_slew_hzps);
     }
 }
 
@@ -158,7 +158,7 @@ void inv_cfg_set_rms_ref_v(float rms_ref_v)
     if (setpoint_mgr.building.p_data->rms_ref_v != rms_ref_v)
     {
         setpoint_mgr.building.p_data->rms_ref_v = rms_ref_v;
-        PLECS_LOG("inv_cfg set rms_ref_v: %.3f\n", rms_ref_v);
+        PLECS_LOG("inv_cfg set rms_ref_v: %.3f\n", (double)rms_ref_v);
     }
 }
 
@@ -172,7 +172,7 @@ void inv_cfg_set_rms_slew_vps(float rms_slew_vps)
     if (setpoint_mgr.building.p_data->rms_slew_vps != rms_slew_vps)
     {
         setpoint_mgr.building.p_data->rms_slew_vps = rms_slew_vps;
-        PLECS_LOG("inv_cfg set rms_slew_vps: %.3f\n", rms_slew_vps);
+        PLECS_LOG("inv_cfg set rms_slew_vps: %.3f\n", (double)rms_slew_vps);
     }
 }
 
@@ -190,10 +190,10 @@ void inv_cfg_publish_building(void)
     PLECS_LOG("inv_cfg publish version:%u run:%u freq:%.3f freq_slew:%.3f rms:%.3f rms_slew:%.3f\n",
               setpoint_mgr.active.version,
               setpoint_mgr.active.p_data->run_allowed,
-              setpoint_mgr.active.p_data->freq_hz,
-              setpoint_mgr.active.p_data->freq_slew_hzps,
-              setpoint_mgr.active.p_data->rms_ref_v,
-              setpoint_mgr.active.p_data->rms_slew_vps);
+              (double)setpoint_mgr.active.p_data->freq_hz,
+              (double)setpoint_mgr.active.p_data->freq_slew_hzps,
+              (double)setpoint_mgr.active.p_data->rms_ref_v,
+              (double)setpoint_mgr.active.p_data->rms_slew_vps);
 }
 
 uint8_t inv_cfg_is_ready(void)
