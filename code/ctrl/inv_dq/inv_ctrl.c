@@ -179,10 +179,10 @@ static void inv_ctrl_reinit_states(void)
     memset(volt_buffer, 0, sizeof(volt_buffer));
     memset(curr_buffer, 0, sizeof(curr_buffer));
     PLECS_LOG("inv_ctrl reinit done: freq=%.3f freq_slew=%.3f rms=%.3f rms_slew=%.3f period=%u\n",
-              p_active_setpoint->freq_hz,
-              p_active_setpoint->freq_slew_hzps,
-              p_active_setpoint->rms_ref_v,
-              p_active_setpoint->rms_slew_vps,
+              (double)p_active_setpoint->freq_hz,
+              (double)p_active_setpoint->freq_slew_hzps,
+              (double)p_active_setpoint->rms_ref_v,
+              (double)p_active_setpoint->rms_slew_vps,
               period);
 }
 
