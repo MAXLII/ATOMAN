@@ -163,6 +163,10 @@ extern size_t __stop_section;
 extern uint32_t sim_time_100us;
 #define SECTION_SYS_TICK sim_time_100us
 #define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
+#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address) \
+    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
@@ -589,7 +593,7 @@ extern const uint16_t __section_end;
 #define SECTION_REG_ATTR_PREFIX
 #endif
 
-#if defined(PLATFORM_PLECS) && defined(TOOLCHAIN_GCC)
+#if (defined(PLATFORM_PLECS) || defined(PLATFORM_MATLAB)) && defined(TOOLCHAIN_GCC)
 /* Keep registration records in declaration order within each translation unit.
  * Cross-file order follows linker inputs; runtime priority rules still apply. */
 #define SECTION_REG_ATTR_SUFFIX AUTO_REG_SECTION __attribute__((no_reorder))

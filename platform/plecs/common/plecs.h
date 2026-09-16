@@ -16,10 +16,9 @@ void plecs_printf(const char *file, int line, const char *format, ...);
 
 extern uint32_t plecs_time_100us;
 
+void sim_comm_stop(void);
 void plecs_platform_start(void);
 void plecs_platform_terminate(void);
-void plecs_platform_dispatch_enter(void);
-void plecs_platform_dispatch_exit(void);
 void plecs_perf_counter_refresh(void);
 
 #endif

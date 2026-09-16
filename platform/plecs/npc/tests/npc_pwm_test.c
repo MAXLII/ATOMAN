@@ -26,8 +26,12 @@
 #include "plecs_port.h"
 #include "bsp_pwm.h"
 #include "shell.h"
-#include "frame_tcp_server.h"
 #include "section.h"
+
+/* PLECS exposes double-valued ports and timestamps; retain ABI precision in this host test. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
 
 static uint32_t task_calls; /* Calls to the registered 1 ms scheduler regression task. */
 
@@ -74,7 +78,6 @@ static void shell_set(const char *p_name, double value)
     const int length = snprintf(command, sizeof(command), "%s:%.9f\r\n", p_name, value); /* Decimal-only Shell grammar. */
     CHECK(length > 0);
     CHECK((size_t)length < sizeof(command));
-    frame_tcp_server_dispatch_enter();
     p_item = shell_find(p_name, (uint8_t)strlen(p_name));
     CHECK(p_item != NULL);
     for (int i = 0; i < length; ++i) /* Feed the same bytes accepted by the text Shell service. */
@@ -90,14 +93,12 @@ static void shell_set(const char *p_name, double value)
         CHECK(p_item->type == (uint32_t)SHELL_UINT8);
         CHECK((double)*(uint8_t *)p_item->p_var == value);
     }
-    frame_tcp_server_dispatch_exit();
 }
 
 /** @param p_name Registered monitor name. @param expected Expected sampled value. */
 static void check_monitor(const char *p_name, double expected)
 {
     section_shell_t *p_item; /* Descriptor inspected under the same lock as protocol dispatch. */
-    frame_tcp_server_dispatch_enter();
     p_item = shell_find(p_name, (uint8_t)strlen(p_name));
     CHECK(p_item != NULL);
     CHECK(p_item->type == (uint32_t)SHELL_FP32);
@@ -109,7 +110,6 @@ static void check_monitor(const char *p_name, double expected)
     {
         CHECK(fabs((double)*(float *)p_item->p_var - expected) < 0.0001);
     }
-    frame_tcp_server_dispatch_exit();
 }
 
 /** @param time_s Simulation timestamp. @return true if the DLL reports no simulation error. */
@@ -426,3 +426,5 @@ int main(void)
                  (unsigned long)calls, (unsigned long)checks, max_error);
     return EXIT_SUCCESS;
 }
+
+#pragma GCC diagnostic pop

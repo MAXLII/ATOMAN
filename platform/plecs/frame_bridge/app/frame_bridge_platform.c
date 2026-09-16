@@ -6,14 +6,14 @@
  *          This file is part of the base PLECS FRAME Bridge project.
  *
  *          Module responsibilities:
- *          - Reset FRAME Bridge application state before TCP communication starts
- *          - Bind the shared PLECS TCP server to the DLL lifecycle callbacks
- *          - Serialize simulation callbacks with FRAME protocol dispatch
+ *          - Reset FRAME Bridge application state before scheduled communication runs
+ *          - Let SECTION initialize and poll the shared simulation BSP
+ *          - Keep all application and protocol dispatch on the simulation thread
  *
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - TCP transport implementation remains in platform/plecs/common
+ *          - TCP transport implementation resides in code/sim/comm
  *          - Hardware access is not used by this simulation project
  *
  * @author  Max.Li
@@ -27,30 +27,9 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "frame_bridge_app.h"
-
-#include "frame_tcp_server.h"
 #include "plecs.h"
-#include "plecs_dispatch_lock.h"
 
 void plecs_platform_start(void)
 {
-    plecs_dispatch_lock_start();
     frame_bridge_state_reset();
-    frame_tcp_server_start();
-}
-
-void plecs_platform_terminate(void)
-{
-    frame_tcp_server_stop();
-    plecs_dispatch_lock_stop();
-}
-
-void plecs_platform_dispatch_enter(void)
-{
-    frame_tcp_server_dispatch_enter();
-}
-
-void plecs_platform_dispatch_exit(void)
-{
-    frame_tcp_server_dispatch_exit();
 }

@@ -6,10 +6,10 @@
  *          This file is part of the base PLECS FRAME route-bridge project.
  *
  *          Module responsibilities:
- *          - Initialize the shared dispatch lock before any network worker starts
- *          - Start Frame-facing and peer-facing links required by each node role
- *          - Stop transport workers before destroying shared synchronization state
- *          - Serialize PLECS scheduling with both TCP protocol dispatch paths
+ *          - Reset node application state for each simulation run
+ *          - Let SECTION initialize and poll Frame-facing and peer links
+ *          - Leave transport cleanup to the common host termination callback
+ *          - Keep protocol dispatch in the serialized SECTION task context
  *
  *          Design notes:
  *          - C11 compatible
@@ -28,37 +28,9 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "route_bridge_app.h"
-
-#include "frame_tcp_server.h"
-#include "peer_tcp_link.h"
 #include "plecs.h"
-#include "plecs_dispatch_lock.h"
-
-#ifndef PLECS_NODE_ADDR
-#error "PLECS_NODE_ADDR must be defined by the node DLL target"
-#endif
 
 void plecs_platform_start(void)
 {
-    plecs_dispatch_lock_start();
     route_bridge_state_reset();
-    frame_tcp_server_start();
-    peer_tcp_link_start();
-}
-
-void plecs_platform_terminate(void)
-{
-    peer_tcp_link_stop();
-    frame_tcp_server_stop();
-    plecs_dispatch_lock_stop();
-}
-
-void plecs_platform_dispatch_enter(void)
-{
-    plecs_dispatch_lock_enter();
-}
-
-void plecs_platform_dispatch_exit(void)
-{
-    plecs_dispatch_lock_exit();
 }

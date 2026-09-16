@@ -20,19 +20,23 @@ set(NPC_SOURCES
     ${CODE_DIR}/lib/sogi.c
     ${CODE_DIR}/lib/svpwm_3level.c
     ${CODE_DIR}/section/baremetal/section.c
-    ${COMMON_DIR}/comm/comm.c
-    ${COMMON_DIR}/comm/frame_tcp_server.c
-    ${COMMON_DIR}/comm/plecs_dispatch_lock.c
-    ${COMMON_DIR}/dbg/shell/shell.c
-    ${COMMON_DIR}/dbg/shell/shell_core.c
-    ${COMMON_DIR}/dbg/shell/shell_service.c
+    ${CODE_DIR}/sim/protocol/comm.c
+    ${CODE_DIR}/sim/comm/sim_tcp.c
+    ${CODE_DIR}/sim/protocol/sim_discovery.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/bsp/bsp_tcp.c
+    ${CODE_DIR}/interface/npc/sim/comm_link.c
+    ${CODE_DIR}/sim/debug/shell/shell.c
+    ${CODE_DIR}/sim/debug/shell/shell_core.c
+    ${CODE_DIR}/sim/debug/shell/shell_service.c
 )
 set(NPC_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/bsp
     ${COMMON_DIR}
-    ${COMMON_DIR}/comm
-    ${COMMON_DIR}/dbg/shell
+    ${CODE_DIR}/sim/protocol
+    ${CODE_DIR}/sim/comm
+    ${CMAKE_CURRENT_SOURCE_DIR}/bsp
+    ${CODE_DIR}/sim/debug/shell
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/data_source/comm
     ${CODE_DIR}/dbg

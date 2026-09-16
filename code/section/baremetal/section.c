@@ -367,6 +367,24 @@ static void init_insert(section_item_t *p_item)
     }
 }
 
+section_item_t *section_collect(SECTION_E type)
+{
+    section_item_t *p_first = NULL;
+    section_item_t **p_tail = &p_first;
+    for (const reg_section_t *p_reg = SECTION_REG_FIRST;
+         p_reg < SECTION_REG_LAST; ++p_reg)
+    {
+        if (p_reg->section_type == (uint32_t)type)
+        {
+            section_item_t *p_item = p_reg->p_str;
+            p_item->p_next = NULL;
+            *p_tail = p_item;
+            p_tail = &p_item->p_next;
+        }
+    }
+    return p_first;
+}
+
 void section_init(void)
 {
     task_scheduler_ready = 0u;

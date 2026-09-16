@@ -29,8 +29,7 @@
 #include "npc_protect.h"
 #include "npc_platform.h"
 #include "shell.h"
-#include "frame_tcp_server.h"
-#include "plecs_dispatch_lock.h"
+#include "bsp_tcp.h"
 #include "my_math.h"
 
 #define NPC_MIDPOINT_CAPACITANCE_F (0.06f) /* Each DC-link capacitor in the current NPC model, F. */
@@ -285,13 +284,17 @@ void plecsSetSizes(struct SimulationSizes *p_sizes)
 }
 
 /* PLECS uses double timestamps; initialize the host clock and phase without narrowing. */
+SECTION_WEAK void sim_comm_stop(void)
+{
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 #pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
 void plecsStart(struct SimulationState *p_state)
 {
     npc_ctrl_cfg_t cfg = npc_cfg_default(); /* Platform uses the shared validated candidate parameters. */
-    frame_tcp_server_stop();
+    sim_comm_stop();
     bind_control_hal();
     log_ready = (npc_log_start() == 1) ? 1u : 0u;
     ctrl_status = UINT32_MAX;
@@ -307,7 +310,6 @@ void plecsStart(struct SimulationState *p_state)
     trip_current = NPC_PROTECT_CURRENT_FACTOR * cfg.current_peak;
     v_dc_p = 0.0f;
     v_dc_n = 0.0f;
-    plecs_dispatch_lock_start();
     initialized = false;
     first_update = true;
     disable_control();
@@ -360,7 +362,6 @@ void plecsStart(struct SimulationState *p_state)
     else
     {
         report_status(NPC_APP_OFF, 0u, p_state->time);
-        frame_tcp_server_start();
     }
 }
 
@@ -590,19 +591,16 @@ static void output_locked(struct SimulationState *p_state)
 
 void plecsOutput(struct SimulationState *p_state)
 {
-    frame_tcp_server_dispatch_enter();
     output_locked(p_state);
-    frame_tcp_server_dispatch_exit();
 }
 
 void plecsTerminate(struct SimulationState *p_state)
 {
-    frame_tcp_server_stop();
+    sim_comm_stop();
     report_status(NPC_APP_STOPPED, 0u, last_call_time);
     (void)npc_cfg_set_run_request(0U);
     npc_log_stop();
     log_ready = 0u;
-    plecs_dispatch_lock_stop();
     disable_control();
     initialized = false;
     if (p_state != NULL)
