@@ -19,6 +19,7 @@
 #include <stdatomic.h>
 
 static npc_ctrl_hal_t ctrl_hal = {0}; /* Borrowed source pointers and immediate PWM actions. */
+static npc_hal_sample_t sampled_input = {0}; /* Coherent input values shared by protection and control. */
 static uint8_t binding_locked = 1u; /* Bindings may change only after the FSM unlocks them. */
 static atomic_uint fault_word = ATOMIC_VAR_INIT(0u); /* Atomic phase/code pair; zero means no fault. */
 
@@ -140,7 +141,7 @@ void npc_hal_set_vd_pos_ref_ptr(float *p_value)
     }
 }
 
-void npc_hal_set_pwm_setter(uint32_t (*p_func)(float alpha, float beta, float v_dc_p, float v_dc_n,
+void npc_hal_set_pwm_setter(void (*p_func)(float alpha, float beta, float v_dc_p, float v_dc_n,
                                              const float *p_current))
 {
     if (binding_locked == 0u)
@@ -206,4 +207,21 @@ uint32_t npc_hal_get_fault(void)
 uint32_t npc_hal_get_fault_phase(void)
 {
     return atomic_load(&fault_word) >> 8u;
+}
+
+void FUNC_RAM npc_hal_sample(void)
+{
+    for (uint32_t phase = 0u; phase < 3u; ++phase) /* Capture each phase once. */
+    {
+        sampled_input.v_out[phase] = *ctrl_hal.p_v_out[phase];
+        sampled_input.i_l[phase] = *ctrl_hal.p_i_l[phase];
+    }
+    sampled_input.v_dc_p = *ctrl_hal.p_v_dc_p; /* Positive half bus, V. */
+    sampled_input.v_dc_n = *ctrl_hal.p_v_dc_n; /* Negative half-bus magnitude, V. */
+    sampled_input.theta = *ctrl_hal.p_theta; /* Electrical angle, rad. */
+}
+
+const npc_hal_sample_t *npc_hal_get_sample(void)
+{
+    return &sampled_input;
 }

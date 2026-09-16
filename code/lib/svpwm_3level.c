@@ -8,7 +8,7 @@
  *          Module responsibilities:
  *          - Select adjacent phase levels using the TI SPRABS6 sector mapping
  *          - Solve the common-mode interval using measured split-bus voltages
- *          - Produce bounded phase dwell ratios or invalidate the whole result
+ *          - Limit the requested voltage vector and produce bounded phase dwell ratios
  *
  *          Design notes:
  *          - C11 compatible; no dynamic allocation or hardware access
@@ -40,18 +40,6 @@
 
 /* Set bits select O/P; clear bits select N/O. Bit order is A, B, C. */
 static const uint8_t sector_masks[6] = {1u, 3u, 2u, 6u, 4u, 5u};
-
-/**
- * @param p_svpwm Non-NULL instance whose previous result must be discarded.
- * @param status Reason why the output is not usable.
- * @return The supplied status.
- */
-static inline SVPWM_3LEVEL_STATUS_E invalidate(svpwm_3level_t *p_svpwm, SVPWM_3LEVEL_STATUS_E status)
-{
-    p_svpwm->output = (svpwm_3level_output_t){0};
-    p_svpwm->output.status = status;
-    return status;
-}
 
 /**
  * @param value Fraction already constrained by a feasible common-mode interval.
@@ -155,7 +143,6 @@ static bool FUNC_RAM calculate_sector(const float *p_phase,
     p_output->phase_a = result[0];
     p_output->phase_b = result[1];
     p_output->phase_c = result[2];
-    p_output->status = SVPWM_3LEVEL_OK;
     p_output->midpoint_current_ref = midpoint_ref;
     p_output->midpoint_current = result[0].duty_o * p_current[0] +
                                  result[1].duty_o * p_current[1] +
@@ -170,9 +157,9 @@ static bool FUNC_RAM calculate_sector(const float *p_phase,
  * @param p_phase Normalized inverse-Clarke phase commands.
  * @param p_current Fundamental currents, positive from bridge to AC side.
  * @param scale Voltage normalization base, V.
- * @return Modulation status; an infeasible voltage span clears all output duties.
+ * The reference is already limited to the physical voltage span.
  */
-static SVPWM_3LEVEL_STATUS_E FUNC_RAM calculate_average_balance(
+static void FUNC_RAM calculate_average_balance(
     svpwm_3level_t *p_svpwm, const float *p_phase, const float *p_current, float scale)
 {
     const svpwm_3level_cfg_t *p_cfg = &p_svpwm->cfg;
@@ -194,10 +181,7 @@ static SVPWM_3LEVEL_STATUS_E FUNC_RAM calculate_average_balance(
     float correction = 0.0f;
     float offset = 0.0f;
 
-    if (offset_min > offset_max)
-    {
-        return invalidate(p_svpwm, SVPWM_3LEVEL_OUT_OF_RANGE);
-    }
+    DN_LMT(offset_max, offset_min); /* Collapse boundary roundoff to one feasible offset. */
     p_inter->delta_filtered += p_inter->filter_coeff * (vp - vn - p_inter->delta_filtered);
     p_inter->current_filtered += p_inter->filter_coeff * (current_sum - p_inter->current_filtered);
     for (uint32_t index = 0u; index < 3u; ++index)
@@ -242,57 +226,59 @@ static SVPWM_3LEVEL_STATUS_E FUNC_RAM calculate_average_balance(
         phase_output[index]->duty_o = 1.0f - phase_output[index]->duty_p - phase_output[index]->duty_n;
         p_svpwm->output.midpoint_current += phase_output[index]->duty_o * p_current[index];
     }
-    p_svpwm->output.status = SVPWM_3LEVEL_OK;
-    return SVPWM_3LEVEL_OK;
+    return;
 }
 
-bool svpwm_3level_init(svpwm_3level_t *p_svpwm, const svpwm_3level_cfg_t *p_cfg)
+void svpwm_3level_init(svpwm_3level_t *p_svpwm, const svpwm_3level_cfg_t *p_cfg)
 {
-    if (p_svpwm == NULL)
-    {
-        return false;
-    }
-    if (p_cfg == NULL)
-    {
-        *p_svpwm = (svpwm_3level_t){0};
-        p_svpwm->output.status = SVPWM_3LEVEL_INVALID_ARGUMENT;
-        return false;
-    }
-
-    /* Copy before clearing also permits reinitialization from the instance cfg. */
-    svpwm_3level_cfg_t cfg = *p_cfg; /* Configuration snapshot owned by this call. */
+    svpwm_3level_cfg_t cfg = *p_cfg; /* Copy before clearing, including when p_cfg aliases instance cfg. */
     *p_svpwm = (svpwm_3level_t){0};
-    if ((isfinite(cfg.v_dc_half_min) == 0) || /* Threshold must be a real voltage. */
-        (cfg.v_dc_half_min <= 0.0f))          /* Prevent division by a zero half bus. */
-    {
-        p_svpwm->output.status = SVPWM_3LEVEL_INVALID_CONFIG;
-        return false;
-    }
-
     p_svpwm->cfg = cfg;
     if (cfg.average_balance == true)
     {
-        if ((cfg.ts <= 0.0f) || (cfg.midpoint_filter_hz <= 0.0f) ||
-            (cfg.midpoint_current_min <= 0.0f) || (cfg.midpoint_slope_floor_ratio < 0.0f) ||
-            (cfg.midpoint_offset_max < 0.0f) ||
-            (cfg.midpoint_ki < 0.0f) || (cfg.midpoint_kaw < 0.0f))
-        {
-            p_svpwm->output.status = SVPWM_3LEVEL_INVALID_CONFIG;
-            return false;
-        }
         p_svpwm->inter.filter_coeff = -expm1f(-M_2PI * cfg.midpoint_filter_hz * cfg.ts);
         p_svpwm->inter.current_filtered = cfg.midpoint_current_min;
     }
-    return true;
 }
 
-SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
+/**
+ * @brief Preserve voltage-vector direction while limiting the three-phase span to the available bus.
+ * @param p_input Valid finite reference and strictly positive half buses.
+ * @param scale Maximum half bus, used to normalize the output phases.
+ * @param p_phase Destination for three normalized phase references.
+ */
+static inline void limit_reference(const svpwm_3level_input_t *p_input, float scale, float *p_phase)
+{
+    float magnitude = fmaxf(fabsf(p_input->v_alpha), fabsf(p_input->v_beta)); /* Reference normalization, V. */
+    float span = 0.0f; /* Unit-reference phase span. */
+    float gain = 0.0f; /* Reference amplitude normalized to the maximum half bus. */
+    float gain_limit = 0.0f; /* Maximum feasible normalized amplitude along this direction. */
+
+    if (magnitude == 0.0f) /* Zero vector needs no direction normalization. */
+    {
+        p_phase[0] = 0.0f;
+        p_phase[1] = 0.0f;
+        p_phase[2] = 0.0f;
+        return;
+    }
+    inv_clarke(p_input->v_alpha / magnitude, p_input->v_beta / magnitude,
+               &p_phase[0], &p_phase[1], &p_phase[2]);
+    span = fmaxf(p_phase[0], fmaxf(p_phase[1], p_phase[2])) -
+           fminf(p_phase[0], fminf(p_phase[1], p_phase[2]));
+    gain_limit = (p_input->v_dc_p / scale + p_input->v_dc_n / scale) / span;
+    gain = magnitude / scale;
+    UP_LMT(gain, gain_limit); /* Also bounds a ratio overflow from an extremely large finite reference. */
+    for (uint32_t index = 0u; index < 3u; ++index) /* Apply one shared gain to preserve the vector direction. */
+    {
+        p_phase[index] *= gain;
+    }
+}
+
+void FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
 {
     float scale;                 /* Maximum half bus, used without adding potentially large voltages. */
     float positive_bus;          /* Normalized positive half bus. */
     float negative_bus;          /* Normalized negative half-bus magnitude. */
-    float alpha;                 /* Normalized alpha-axis reference. */
-    float beta;                  /* Normalized beta-axis reference. */
     float phase[3];              /* Inverse Clarke result in A, B, C order. */
     uint8_t preferred_mask = 0u; /* Sign-based mapping from SPRABS6 Table 3. */
     float phase_current[3] = {0}; /* Same-period bridge currents, A. */
@@ -301,25 +287,6 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
     float current_roundoff = 0.0f; /* Tie tolerance retaining the preferred mapping. */
     bool balance_enabled = false; /* Zero gain preserves the legacy modulation. */
     bool found = false;           /* At least one mapping can synthesize the voltage. */
-
-    if (p_svpwm == NULL)
-    {
-        return SVPWM_3LEVEL_INVALID_ARGUMENT;
-    }
-    if ((isfinite(p_svpwm->cfg.v_dc_half_min) == 0) || /* Detect corrupt or uninitialized configuration. */
-        (p_svpwm->cfg.v_dc_half_min <= 0.0f))          /* Require a usable lower bound. */
-    {
-        return invalidate(p_svpwm, SVPWM_3LEVEL_INVALID_CONFIG);
-    }
-    if ((isfinite(p_svpwm->input.v_alpha) == 0) ||              /* Reject non-finite controller output. */
-        (isfinite(p_svpwm->input.v_beta) == 0) ||               /* Both reference axes must be valid. */
-        (isfinite(p_svpwm->input.v_dc_p) == 0) ||               /* Positive rail measurement must be finite. */
-        (isfinite(p_svpwm->input.v_dc_n) == 0) ||               /* Negative rail measurement must be finite. */
-        (p_svpwm->input.v_dc_p < p_svpwm->cfg.v_dc_half_min) || /* Enforce the positive half-bus floor. */
-        (p_svpwm->input.v_dc_n < p_svpwm->cfg.v_dc_half_min))   /* Enforce the negative half-bus floor. */
-    {
-        return invalidate(p_svpwm, SVPWM_3LEVEL_INVALID_INPUT);
-    }
 
     scale = fmaxf(p_svpwm->input.v_dc_p, p_svpwm->input.v_dc_n);
     positive_bus = p_svpwm->input.v_dc_p / scale;
@@ -337,22 +304,11 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
                        (fabsf(phase_current[0]) + fabsf(phase_current[1]) +
                         fabsf(phase_current[2]) + fabsf(midpoint_ref));
 
-    alpha = p_svpwm->input.v_alpha / scale;
-    beta = p_svpwm->input.v_beta / scale;
-    if ((isfinite(alpha) == 0) || /* Division overflow denotes an infeasible reference. */
-        (isfinite(beta) == 0) ||  /* Keep inverse Clarke arithmetic bounded. */
-        (fabsf(alpha) > 2.0f) ||  /* Entire attainable hexagon lies inside this bound. */
-        (fabsf(beta) > 2.0f))     /* Loose precheck avoids overflow, not modulation limiting. */
-    {
-        return invalidate(p_svpwm, SVPWM_3LEVEL_OUT_OF_RANGE);
-    }
-
-    phase[0] = alpha;
-    phase[1] = (-0.5f * alpha) + (M_SQRT3_2 * beta);
-    phase[2] = (-0.5f * alpha) - (M_SQRT3_2 * beta);
+    limit_reference(&p_svpwm->input, scale, phase); /* Saturate before either modulation path. */
     if (p_svpwm->cfg.average_balance == true)
     {
-        return calculate_average_balance(p_svpwm, phase, phase_current, scale);
+        calculate_average_balance(p_svpwm, phase, phase_current, scale);
+        return;
     }
     for (uint32_t index = 0u; index < 3u; ++index) /* Phase index used to encode the preferred mapping. */
     {
@@ -365,13 +321,13 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
     if (preferred_mask == 0u)
     {
         /* Exactly zero reference uses OOO, avoiding unnecessary switching. */
-        (void)invalidate(p_svpwm, SVPWM_3LEVEL_OK);
+        p_svpwm->output = (svpwm_3level_output_t){0};
         p_svpwm->output.phase_a.duty_o = 1.0f;
         p_svpwm->output.phase_b.duty_o = 1.0f;
         p_svpwm->output.phase_c.duty_o = 1.0f;
         p_svpwm->output.midpoint_current_ref = midpoint_ref;
         p_svpwm->output.midpoint_current = phase_current[0] + phase_current[1] + phase_current[2];
-        return SVPWM_3LEVEL_OK;
+        return;
     }
 
     if (calculate_sector(phase, positive_bus, negative_bus, preferred_mask,
@@ -382,7 +338,7 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
         if (balance_enabled == false)
         {
             p_svpwm->output.common_mode_v *= scale;
-            return SVPWM_3LEVEL_OK;
+            return;
         }
     }
 
@@ -411,7 +367,7 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
             if (balance_enabled == false)
             {
                 p_svpwm->output.common_mode_v *= scale;
-                return SVPWM_3LEVEL_OK;
+                return;
             }
         }
     }
@@ -419,19 +375,34 @@ SVPWM_3LEVEL_STATUS_E FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
     if (found == true)
     {
         p_svpwm->output.common_mode_v *= scale;
-        return SVPWM_3LEVEL_OK;
+        return;
     }
 
-    return invalidate(p_svpwm, SVPWM_3LEVEL_OUT_OF_RANGE);
+    /* At a collapsed sector boundary, directly realize the centered limited pole voltages. */
+    {
+        svpwm_3level_phase_output_t *p_output[3] = { /* Phase destinations for the boundary realization. */
+            &p_svpwm->output.phase_a, &p_svpwm->output.phase_b, &p_svpwm->output.phase_c};
+        float minimum = fminf(phase[0], fminf(phase[1], phase[2])); /* Lowest normalized phase. */
+        float maximum = fmaxf(phase[0], fmaxf(phase[1], phase[2])); /* Highest normalized phase. */
+        float offset = 0.5f * (positive_bus - negative_bus - minimum - maximum); /* Centered common mode. */
+        p_svpwm->output = (svpwm_3level_output_t){0};
+        p_svpwm->output.common_mode_v = offset * scale;
+        p_svpwm->output.midpoint_current_ref = midpoint_ref;
+        for (uint32_t index = 0u; index < 3u; ++index) /* Bounded duties retain a realizable output. */
+        {
+            float pole = phase[index] + offset; /* Normalized pole command. */
+            p_output[index]->duty_p = bound_duty(fmaxf(0.0f, pole / positive_bus));
+            p_output[index]->duty_n = bound_duty(fmaxf(0.0f, -pole / negative_bus));
+            p_output[index]->duty_o = 1.0f - p_output[index]->duty_p - p_output[index]->duty_n;
+            p_svpwm->output.midpoint_current += p_output[index]->duty_o * phase_current[index];
+        }
+    }
 }
 
 void svpwm_3level_reset(svpwm_3level_t *p_svpwm)
 {
-    if (p_svpwm != NULL)
-    {
-        p_svpwm->inter.delta_filtered = 0.0f;
-        p_svpwm->inter.current_filtered = p_svpwm->cfg.midpoint_current_min;
-        p_svpwm->inter.balance_integral = 0.0f;
-        (void)invalidate(p_svpwm, SVPWM_3LEVEL_NOT_READY);
-    }
+    p_svpwm->inter.delta_filtered = 0.0f;
+    p_svpwm->inter.current_filtered = p_svpwm->cfg.midpoint_current_min;
+    p_svpwm->inter.balance_integral = 0.0f;
+    p_svpwm->output = (svpwm_3level_output_t){0};
 }

@@ -252,12 +252,7 @@ int main(int argc, char **p_argv)
             mod.input.v_alpha -= (float)(damping * (2.0 * residual[0] - residual[1] - residual[2]) / 3.0);
             mod.input.v_beta -= (float)(damping * (residual[1] - residual[2]) / sqrt(3.0));
         }
-        if (svpwm_3level_cal(&mod)!=SVPWM_3LEVEL_OK)
-        {
-            printf("mode %d stop %.3f delta %.3f\n", mode, t, delta);
-            fclose(p_file);
-            return 2;
-        }
+        svpwm_3level_cal(&mod);
         if (((mode >= 40) && (mode < 50)) || (mode == 51))
         {
             candidate_modulate(&mod);
