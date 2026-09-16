@@ -1,4 +1,5 @@
 # Workspace-local state
+/.agents/
 /.codex-remote-attachments/
 /.metadata/
 /.Xil/
