@@ -32,7 +32,7 @@
 #include "bsp_pwm.h"
 #include "buck_cfg.h"
 #include "buck_hal.h"
-#include "frame_tcp_server.h"
+#include "bsp_tcp.h"
 #include "plecs.h"
 #include "section.h"
 #include "shell.h"
@@ -91,7 +91,7 @@ static float app_ila = 0.0f;
 static float app_ilb = 0.0f;
 
 /* FRAME TCP server port exposed as a read-only Shell parameter. */
-static uint32_t app_frame_tcp_port = FRAME_TCP_SERVER_PORT;
+static uint32_t app_frame_tcp_port = BSP_TCP_FRAME_PORT;
 
 /* App-owned high-voltage feedback mirror supplied by the ADC interface. */
 static int32_t app_adc_hv = 0;

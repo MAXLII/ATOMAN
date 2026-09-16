@@ -11,13 +11,14 @@ set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../code)
 
 set(ROUTE_NODE_COMMON_SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
-    ${PLECS_COMMON_DIR}/comm/comm.c
-    ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
-    ${PLECS_COMMON_DIR}/comm/peer_tcp_link.c
-    ${PLECS_COMMON_DIR}/comm/plecs_dispatch_lock.c
-    ${PLECS_COMMON_DIR}/dbg/shell/shell.c
-    ${PLECS_COMMON_DIR}/dbg/shell/shell_core.c
-    ${PLECS_COMMON_DIR}/dbg/shell/shell_service.c
+    ${CODE_DIR}/sim/protocol/comm.c
+    ${CODE_DIR}/sim/comm/sim_tcp.c
+    ${CODE_DIR}/sim/protocol/sim_discovery.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/bsp/bsp_tcp.c
+    ${CODE_DIR}/interface/frame_route_bridge/sim/comm_link.c
+    ${CODE_DIR}/sim/debug/shell/shell.c
+    ${CODE_DIR}/sim/debug/shell/shell_core.c
+    ${CODE_DIR}/sim/debug/shell/shell_service.c
     ${PLECS_PROJECT_DIR}/app/route_bridge_app.c
     ${PLECS_PROJECT_DIR}/app/route_bridge_platform.c
     ${CODE_DIR}/section/baremetal/section.c
@@ -27,9 +28,11 @@ set(ROUTE_NODE_INCLUDE_DIRS
     ${PLECS_PROJECT_DIR}
     ${PLECS_PROJECT_DIR}/app
     ${PLECS_COMMON_DIR}
-    ${PLECS_COMMON_DIR}/comm
-    ${PLECS_COMMON_DIR}/dbg/perf
-    ${PLECS_COMMON_DIR}/dbg/shell
+    ${CODE_DIR}/sim/protocol
+    ${CODE_DIR}/sim/comm
+    ${CMAKE_CURRENT_SOURCE_DIR}/bsp
+    ${CODE_DIR}/sim/debug/perf
+    ${CODE_DIR}/sim/debug/shell
     ${CODE_DIR}/data_source/comm
     ${CODE_DIR}/lib
     ${CODE_DIR}/section/baremetal
@@ -66,12 +69,12 @@ function(configure_route_node
         TOOLCHAIN_GCC
         __RAM_FUNC=
         HOST_ADDR=${node_addr}
-        PLECS_NODE_ADDR=${node_addr}
-        PLECS_PEER_ROLE=${peer_role}
-        FRAME_TCP_SERVER_PORT=${frame_port}
-        FRAME_TCP_DISCOVERY_ENABLED=${discovery_enabled}
-        FRAME_TCP_DISCOVERY_PEER_ADDR=${discovery_peer_addr}
-        FRAME_TCP_DISCOVERY_PEER_PORT=${discovery_peer_port}
+        BSP_TCP_NODE_ADDR=${node_addr}
+        BSP_TCP_PEER_ROLE=${peer_role}
+        BSP_TCP_FRAME_PORT=${frame_port}
+        BSP_TCP_DISCOVERY_ENABLED=${discovery_enabled}
+        BSP_TCP_DISCOVERY_PEER_ADDR=${discovery_peer_addr}
+        BSP_TCP_DISCOVERY_PEER_PORT=${discovery_peer_port}
     )
     target_compile_options(${target_name} PRIVATE ${ROUTE_NODE_WARNING_FLAGS})
     target_include_directories(${target_name} PRIVATE ${ROUTE_NODE_INCLUDE_DIRS})
@@ -86,10 +89,10 @@ function(configure_route_node
 endfunction()
 
 add_library(plecs_node02 SHARED ${ROUTE_NODE_COMMON_SOURCES})
-configure_route_node(plecs_node02 plecs_node02 0x02 PEER_TCP_ROLE_CLIENT 5000 1 0x03 5002)
+configure_route_node(plecs_node02 plecs_node02 0x02 1 5000 1 0x03 5002)
 
 add_library(plecs_node03 SHARED ${ROUTE_NODE_COMMON_SOURCES})
-configure_route_node(plecs_node03 plecs_node03 0x03 PEER_TCP_ROLE_SERVER 5002 0 0 0)
+configure_route_node(plecs_node03 plecs_node03 0x03 2 5002 0 0 0)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/plecs_node02)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/plecs_node03)

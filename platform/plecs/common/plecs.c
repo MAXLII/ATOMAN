@@ -5,6 +5,12 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+/* The PLECS host ABI and simulation timestamps require double precision. */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunsuffixed-float-constants"
+#endif
+
 #if defined(_WIN32)
 #include "wchar.h"
 #include "windows.h"
@@ -17,7 +23,7 @@
 static FILE *fp_plecs = NULL; /* 当前 PLECS DLL 实例使用的日志文件句柄。 */
 static double interrupt_time_last = 0.0; /* Simulation time of the latest committed control interrupt. */
 static uint8_t interrupt_time_valid = 0u; /* Nonzero after one control interrupt has run in this simulation. */
-static float output_time_last = 0.0f; /* Scheduler time already converted into 100 us ticks. */
+static uint32_t output_tick_last = 0u; /* Scheduler time already converted into 100 us ticks. */
 
 /**
  * @return DLL 目录中的日志文件句柄；路径解析或文件打开失败时返回 NULL。
@@ -76,19 +82,15 @@ static FILE *plecs_log_open(void)
 static struct SimulationState *plecs_astate;
 uint32_t plecs_time_100us = 0;
 
+SECTION_WEAK void sim_comm_stop(void)
+{
+}
+
 __attribute__((weak)) void plecs_platform_start(void)
 {
 }
 
 __attribute__((weak)) void plecs_platform_terminate(void)
-{
-}
-
-__attribute__((weak)) void plecs_platform_dispatch_enter(void)
-{
-}
-
-__attribute__((weak)) void plecs_platform_dispatch_exit(void)
 {
 }
 
@@ -142,9 +144,10 @@ DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 
 DLLEXPORT void plecsStart(struct SimulationState *aState)
 {
+    sim_comm_stop();
     plecs_astate = aState;
     __atomic_store_n(&plecs_time_100us, 0u, __ATOMIC_RELAXED);
-    output_time_last = 0.0f;
+    output_tick_last = 0u;
     interrupt_time_last = 0.0;
     interrupt_time_valid = 0u;
     if (fp_plecs != NULL)
@@ -160,23 +163,17 @@ DLLEXPORT void plecsStart(struct SimulationState *aState)
 DLLEXPORT void plecsOutput(struct SimulationState *aState)
 {
     plecs_astate = aState;
-    const float time = (float)plecs_astate->time;
-    if ((time - output_time_last) > 0.0001f)
+    const uint32_t tick = (uint32_t)(plecs_astate->time * 10000.0 + 1.0e-6);
+    if (tick > output_tick_last)
     {
-        (void)__atomic_fetch_add(&plecs_time_100us,
-                                 (uint32_t)((time - output_time_last) * 10000.0f),
-                                 __ATOMIC_RELAXED);
-        plecs_platform_dispatch_enter();
+        __atomic_store_n(&plecs_time_100us, tick, __ATOMIC_RELAXED);
         run_task();
-        plecs_platform_dispatch_exit();
-        output_time_last += 0.0001f;
+        output_tick_last = tick;
     }
     if ((interrupt_time_valid == 0u) ||             /* Execute the initial sample exactly once. */
         (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
     {
-        plecs_platform_dispatch_enter();
         section_interrupt();
-        plecs_platform_dispatch_exit();
         interrupt_time_last = plecs_astate->time;
         interrupt_time_valid = 1u;
     }
@@ -190,6 +187,7 @@ DLLEXPORT void plecsTerminate(struct SimulationState *aState)
 {
     (void)aState;
 
+    sim_comm_stop();
     plecs_platform_terminate();
 
     if (fp_plecs != NULL)
@@ -199,3 +197,7 @@ DLLEXPORT void plecsTerminate(struct SimulationState *aState)
     }
     plecs_astate = NULL;
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

@@ -14,7 +14,7 @@
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - The shared dispatch lock serializes transport and simulation callbacks
+ *          - SECTION tasks serialize transport, protocol and simulation callbacks
  *          - Hardware access is not used by this simulation project
  *
  * @author  Max.Li
@@ -30,8 +30,8 @@
 #include "route_bridge_app.h"
 
 #include "comm.h"
-#include "frame_tcp_server.h"
-#include "peer_tcp_link.h"
+#include "sim_tcp.h"
+#include "bsp_tcp.h"
 #include "plecs.h"
 #include "section.h"
 #include "shell.h"
@@ -39,12 +39,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef PLECS_NODE_ADDR
-#error "PLECS_NODE_ADDR must be 0x02 or 0x03"
+#ifndef BSP_TCP_NODE_ADDR
+#error "BSP_TCP_NODE_ADDR must be 0x02 or 0x03"
 #endif
 
-#if (PLECS_NODE_ADDR != 0x02) && (PLECS_NODE_ADDR != 0x03)
-#error "PLECS_NODE_ADDR has an unsupported value"
+#if (BSP_TCP_NODE_ADDR != 0x02) && (BSP_TCP_NODE_ADDR != 0x03)
+#error "BSP_TCP_NODE_ADDR has an unsupported value"
 #endif
 
 typedef struct
@@ -57,8 +57,8 @@ typedef struct
 } route_bridge_state_t;
 
 static route_bridge_state_t route_state = {
-    .node_addr = (uint32_t)PLECS_NODE_ADDR,
-    .node_value = (uint32_t)PLECS_NODE_ADDR,
+    .node_addr = (uint32_t)BSP_TCP_NODE_ADDR,
+    .node_value = (uint32_t)BSP_TCP_NODE_ADDR,
     .loopback_count = 0u,
     .peer_connected = 0u,
     .frame_connected = 0u,
@@ -89,13 +89,13 @@ REG_SHELL_VAR(FRAME_CONNECTED,
               NULL,
               SHELL_STA_NULL)
 
-#if (PLECS_NODE_ADDR == 0x02)
+#if (BSP_TCP_NODE_ADDR == 0x02)
 REG_COMM_ROUTE(1, 2, 0x03)
 REG_COMM_ROUTE(2, 1, 0x01)
 #else
 REG_COMM_ROUTE(1, 2, 0x02)
 REG_COMM_ROUTE(2, 1, 0x01)
-#endif /* PLECS_NODE_ADDR */
+#endif /* BSP_TCP_NODE_ADDR */
 
 /**
  * @brief Echo a valid request and identify the addressed node through ACK source fields.
@@ -134,8 +134,8 @@ REG_COMM(0x30, 0x01, loopback_act)
  */
 static void route_bridge_sample(void)
 {
-    route_state.peer_connected = (uint32_t)peer_tcp_link_is_connected();
-    route_state.frame_connected = (uint32_t)frame_tcp_server_is_connected();
+    route_state.peer_connected = sim_tcp_get_status("iso")->connected;
+    route_state.frame_connected = sim_tcp_get_status("dbg")->connected;
 
     plecs_set_output(PLECS_OUTPUT_NODE_VALUE, (float)route_state.node_value);
     plecs_set_output(PLECS_OUTPUT_PEER_CONNECTED, (float)route_state.peer_connected);
@@ -145,8 +145,8 @@ REG_INTERRUPT(0, route_bridge_sample)
 
 void route_bridge_state_reset(void)
 {
-    route_state.node_addr = (uint32_t)PLECS_NODE_ADDR;
-    route_state.node_value = (uint32_t)PLECS_NODE_ADDR;
+    route_state.node_addr = (uint32_t)BSP_TCP_NODE_ADDR;
+    route_state.node_value = (uint32_t)BSP_TCP_NODE_ADDR;
     route_state.loopback_count = 0u;
     route_state.peer_connected = 0u;
     route_state.frame_connected = 0u;

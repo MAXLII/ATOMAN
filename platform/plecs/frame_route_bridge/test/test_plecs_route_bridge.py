@@ -8,6 +8,7 @@ import socket
 import struct
 import sys
 import time
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -102,20 +103,41 @@ class LoadedNode:
             userData=None,
         )
         self.started = False
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._worker = None
+
+    def sample(self) -> None:
+        """The host, rather than the transport, drives SECTION and protocol dispatch."""
+        with self._lock:
+            self.state.time += 0.001
+            self.dll.plecsOutput(ctypes.byref(self.state))
+
+    def _run(self) -> None:
+        while not self._stop.wait(0.001):
+            self.sample()
 
     def start(self) -> None:
         """Start or restart the simulated node."""
 
         if self.started:
             return
+        self.state.time = 0.0
         self.dll.plecsStart(ctypes.byref(self.state))
         self.started = True
+        self._stop.clear()
+        self._worker = threading.Thread(target=self._run, daemon=True)
+        self._worker.start()
 
     def terminate(self) -> None:
         """Stop the simulated node if its lifecycle is active."""
 
         if not self.started:
             return
+        self._stop.set()
+        self._worker.join(timeout=3)
+        if self._worker.is_alive():
+            raise RuntimeError("simulation scheduler failed to stop")
         self.dll.plecsTerminate(ctypes.byref(self.state))
         self.started = False
 
@@ -348,6 +370,28 @@ def run_smoke_test(dll_dir: Path) -> None:
         tcp_socket = connect_frame(NODE02_FRAME_PORT)
         stream = FrameStream(tcp_socket)
 
+        for restart_node in (True, False):
+            partial_frame = encode_frame(NODE02_ADDR, b"must-not-cross-session")
+            tcp_socket.sendall(partial_frame[:11])
+            time.sleep(0.03)  # Let the real parser consume the header before disconnecting.
+            tcp_socket.close()
+            if restart_node:
+                node02.terminate()
+                node02.start()
+            tcp_socket = connect_frame(NODE02_FRAME_PORT)
+            tcp_socket.sendall(partial_frame[11:])
+            tcp_socket.settimeout(0.1)  # Below the parser's 1000 ms timeout.
+            try:
+                unexpected = tcp_socket.recv(512)
+            except socket.timeout:
+                pass
+            else:
+                raise AssertionError(f"partial frame crossed a session boundary: {unexpected!r}")
+            stream = FrameStream(tcp_socket)
+            tcp_socket.sendall(encode_frame(NODE02_ADDR, b"fresh-session"))
+            assert_ack(stream.receive(), NODE02_ADDR, b"fresh-session")
+        print("PASS partial frames discarded across simulation restart and TCP reconnect")
+
         bad_frame = encode_frame(NODE02_ADDR, b"bad-crc", corrupt_crc=True)
         fragmented_frame = encode_frame(NODE02_ADDR, b"direct-fragmented")
         tcp_socket.sendall(bad_frame + fragmented_frame[:4])
@@ -418,8 +462,7 @@ def run_smoke_test(dll_dir: Path) -> None:
                 or write_ack.payload != expected_ack_payload
             ):
                 raise AssertionError(f"invalid NODE_VALUE write ACK from node 0x{target_addr:02x}: {write_ack}")
-            node.state.time += 0.0001
-            node.dll.plecsOutput(ctypes.byref(node.state))
+            node.sample()
             if node.outputs[0] != float(value):
                 raise AssertionError(
                     f"node 0x{target_addr:02x} PLECS output did not follow NODE_VALUE: {node.outputs[0]}"

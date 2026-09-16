@@ -31,7 +31,7 @@
 #include "app.h"
 #include "bsp_adc.h"
 #include "bsp_pwm.h"
-#include "frame_tcp_server.h"
+#include "bsp_tcp.h"
 #include "inv_cfg.h"
 #include "inv_fsm.h"
 #include "inv_hal.h"
@@ -77,7 +77,7 @@ static float app_v_bus = 0.0f;
 /* Inductor-current feedback mirrored from the PLECS model. */
 static float app_i_l = 0.0f;
 /* FRAME TCP server port exposed as a read-only Shell parameter. */
-static uint32_t app_frame_tcp_port = FRAME_TCP_SERVER_PORT;
+static uint32_t app_frame_tcp_port = BSP_TCP_FRAME_PORT;
 
 /**
  * @brief Toggle the desired inverter run state from the Shell RUN command.

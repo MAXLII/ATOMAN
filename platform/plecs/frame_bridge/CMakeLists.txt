@@ -11,28 +11,30 @@ set(CODE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../code)
 
 set(SOURCES
     ${PLECS_COMMON_DIR}/plecs.c
-    ${PLECS_COMMON_DIR}/comm/comm.c
-    ${PLECS_COMMON_DIR}/comm/frame_tcp_server.c
-    ${PLECS_COMMON_DIR}/comm/plecs_dispatch_lock.c
+    ${CODE_DIR}/sim/protocol/comm.c
+    ${CODE_DIR}/sim/comm/sim_tcp.c
+    ${CODE_DIR}/sim/protocol/sim_discovery.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/bsp/bsp_tcp.c
+    ${CODE_DIR}/interface/frame_bridge/sim/comm_link.c
     ${CODE_DIR}/business/demo/demo_shell.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_app.c
     ${PLECS_PROJECT_DIR}/app/frame_bridge_platform.c
-    ${PLECS_COMMON_DIR}/dbg/scope/scope.c
-    ${PLECS_COMMON_DIR}/dbg/scope/scope_core.c
-    ${PLECS_COMMON_DIR}/dbg/scope/scope_service.c
-    ${PLECS_COMMON_DIR}/dbg/section_list/section_list_service.c
-    ${PLECS_COMMON_DIR}/dbg/sfra/sfra.c
-    ${PLECS_COMMON_DIR}/dbg/sfra/sfra_core.c
-    ${PLECS_COMMON_DIR}/dbg/sfra/sfra_service.c
-    ${PLECS_COMMON_DIR}/dbg/perf/perf.c
-    ${PLECS_COMMON_DIR}/dbg/perf/perf_core.c
-    ${PLECS_COMMON_DIR}/dbg/perf/perf_service.c
-    ${PLECS_COMMON_DIR}/dbg/shell/shell.c
-    ${PLECS_COMMON_DIR}/dbg/shell/shell_core.c
-    ${PLECS_COMMON_DIR}/dbg/shell/shell_service.c
-    ${PLECS_COMMON_DIR}/dbg/trace/trace.c
-    ${PLECS_COMMON_DIR}/dbg/trace/trace_core.c
-    ${PLECS_COMMON_DIR}/dbg/trace/trace_service.c
+    ${CODE_DIR}/sim/debug/scope/scope.c
+    ${CODE_DIR}/sim/debug/scope/scope_core.c
+    ${CODE_DIR}/sim/debug/scope/scope_service.c
+    ${CODE_DIR}/sim/debug/section_list/section_list_service.c
+    ${CODE_DIR}/sim/debug/sfra/sfra.c
+    ${CODE_DIR}/sim/debug/sfra/sfra_core.c
+    ${CODE_DIR}/sim/debug/sfra/sfra_service.c
+    ${CODE_DIR}/sim/debug/perf/perf.c
+    ${CODE_DIR}/sim/debug/perf/perf_core.c
+    ${CODE_DIR}/sim/debug/perf/perf_service.c
+    ${CODE_DIR}/sim/debug/shell/shell.c
+    ${CODE_DIR}/sim/debug/shell/shell_core.c
+    ${CODE_DIR}/sim/debug/shell/shell_service.c
+    ${CODE_DIR}/sim/debug/trace/trace.c
+    ${CODE_DIR}/sim/debug/trace/trace_core.c
+    ${CODE_DIR}/sim/debug/trace/trace_service.c
     ${CODE_DIR}/lib/record_dict.c
     ${CODE_DIR}/lib/dft.c
     ${CODE_DIR}/section/baremetal/section.c
@@ -60,13 +62,15 @@ target_include_directories(plecs PRIVATE
     ${PLECS_PROJECT_DIR}
     ${PLECS_PROJECT_DIR}/app
     ${PLECS_COMMON_DIR}
-    ${PLECS_COMMON_DIR}/comm
-    ${PLECS_COMMON_DIR}/dbg/perf
-    ${PLECS_COMMON_DIR}/dbg/scope
-    ${PLECS_COMMON_DIR}/dbg/section_list
-    ${PLECS_COMMON_DIR}/dbg/sfra
-    ${PLECS_COMMON_DIR}/dbg/shell
-    ${PLECS_COMMON_DIR}/dbg/trace
+    ${CODE_DIR}/sim/protocol
+    ${CODE_DIR}/sim/comm
+    ${CMAKE_CURRENT_SOURCE_DIR}/bsp
+    ${CODE_DIR}/sim/debug/perf
+    ${CODE_DIR}/sim/debug/scope
+    ${CODE_DIR}/sim/debug/section_list
+    ${CODE_DIR}/sim/debug/sfra
+    ${CODE_DIR}/sim/debug/shell
+    ${CODE_DIR}/sim/debug/trace
     ${CODE_DIR}/data_source/comm
     ${CODE_DIR}/lib
     ${CODE_DIR}/section/baremetal

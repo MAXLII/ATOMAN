@@ -82,7 +82,14 @@ typedef enum
     SECTION_SCOPE,      /* Scope-instance registration entry. */
     SECTION_SFRA,       /* SFRA-instance registration entry. */
     SECTION_DBG_LIST,   /* Debug-visible list-head registration entry. */
+    SECTION_SIM_TCP,    /* Simulation TCP endpoint registration. */
+    SECTION_SIM_DISCOVERY, /* Simulation discovery advertisement registration. */
 } SECTION_E;
+
+/** Collect one registration type into a static wrapper list during initialization.
+ *  Call once per owner after section_init begins; invalidates that type's old list.
+ */
+section_item_t *section_collect(SECTION_E type);
 
 typedef struct
 {
