@@ -15,11 +15,14 @@ platform/plecs/frame_bridge/
 | `frame_bridge.plecs` | 包含 DLL Block、输入常量和输出显示的 PLECS 模型 |
 | `CMakeLists.txt` | MinGW-w64 DLL 构建配置 |
 | `compile.bat` | Windows 编译入口 |
-| `../common/comm/comm.c`、`../common/comm/comm.h` | PLECS 专用协议解析、Windows section 扫描和 TCP 墙钟超时 |
-| `../common/dbg/` | 按模块组织的 PLECS 调试组件，包含 Scope、SFRA、Perf、Shell、Trace 和 Section 列表服务 |
+| `code/sim/protocol/comm.c`、`code/sim/protocol/comm.h` | 共用仿真协议解析、Windows section 扫描和 TCP 墙钟超时 |
+| `code/sim/debug/` | 按模块组织的共用仿真调试组件，包含 Scope、SFRA、Perf、Shell、Trace 和 Section 列表服务 |
 | `app/` | 仿真输入输出、Scope、SFRA、Trace 和 Perf 计数器接入 |
-| `../common/comm/` | PLECS 工程共用的 FRAME TCP 服务 |
-| `app/frame_bridge_platform.c` | FRAME Bridge 状态复位与共用 TCP 服务的生命周期适配 |
+| `code/sim/comm/` | SECTION 注册的通用 TCP 字节传输组件 |
+| `bsp/bsp_tcp.c` | 项目端口注册和 `bsp_tcp_*` 收发接口 |
+| `app/frame_bridge_platform.c` | FRAME Bridge 状态复位 |
+
+链路注册位于 `code/interface/frame_bridge/sim/comm_link.c`。BSP 静态注册端口，TCP 组件通过 SECTION 初始化和非阻塞任务维护通道；UDP 发现独立位于 `code/sim/protocol/sim_discovery.c`。仿真暂停时通信处理也暂停；结束回调调用 `sim_comm_stop()`。
 
 ## 2. 通信结构
 
@@ -27,10 +30,10 @@ PLECS 加载 `build/bin/libplecs.dll`。DLL 在仿真启动时监听本机 TCP �
 
 TCP 服务绑定 `0.0.0.0:5000`，允许 FRAME 使用 `127.0.0.1` 或运行 PLECS 的计算机局域网 IPv4 地址连接。协议本机地址为 `0x02`，动态地址为 `0x00`。
 
-工程使用 `platform/plecs/common/dbg/` 中的完整调试模块副本，并在该副本中适配 Windows linker section。
+工程使用 `code/sim/debug/` 中的共用仿真调试模块，并在该副本中适配 Windows linker section。
 PLECS 仿真变量通过 `REG_SHELL_VAR` 注册，参数列表、单参数读写和实时波形统一由 Shell 服务处理：
 
-PLECS 构建使用 `platform/plecs/common/comm/comm.c`，MCU 通信实现位于 `code/data_source/comm/comm.c`。
+PLECS 构建使用 `code/sim/protocol/comm.c`，MCU 通信实现位于 `code/data_source/comm/comm.c`。
 PLECS 不引用或编译 `code/dbg/` 中的源文件和头文件，MCU 调试实现保持不变。
 
 | 命令集 | 命令字 | 功能 |
@@ -211,4 +214,4 @@ PLECS DLL 是 64 位进程，协议节点地址字段仍保持现有 32 位格�
 platform/plecs/frame_bridge/build/bin/plecs_log.txt
 ```
 
-日志记录 TCP 监听、客户端连接、断开和 Winsock 错误。端口被占用时，日志包含 `bind port 5000 failed`。
+该文件记录仿真应用日志。通信组件的连接状态和最近的 Winsock 初始化/绑定错误通过 `sim_tcp_get_status("dbg")` 获取，不再由后台线程写入该日志。
