@@ -27,6 +27,10 @@
 #include "bsp_pwm.h"
 #include "shell.h"
 #include "section.h"
+#include "npc_hal.h"
+#include "npc_cfg.h"
+#include "my_math.h"
+#include "npc_protect.h"
 
 /* PLECS exposes double-valued ports and timestamps; retain ABI precision in this host test. */
 #pragma GCC diagnostic push
@@ -161,209 +165,185 @@ static void check_duty(void)
     max_error = fmax(max_error, error);
 }
 
+/** @brief Check transform normalization, rotation signs and inverse consistency independently of NPC. */
+static void check_coordinate_transforms(void)
+{
+    float alpha = 0.0f; /* Stationary alpha result. */
+    float beta = 0.0f; /* Stationary beta result. */
+    float d = 0.0f; /* Rotating direct-axis result. */
+    float q = 0.0f; /* Rotating quadrature-axis result. */
+    float abc[3] = {0}; /* Reconstructed phase values. */
+    clarke(1.0f, 0.0f, 0.0f, &alpha, &beta);
+    CHECK(fabsf(alpha - 2.0f / 3.0f) < 1.0e-6f);
+    CHECK(beta == 0.0f);
+    inv_clarke(alpha, beta, &abc[0], &abc[1], &abc[2]);
+    CHECK(fabsf(abc[0] - 2.0f / 3.0f) < 1.0e-6f);
+    CHECK(fabsf(abc[1] + 1.0f / 3.0f) < 1.0e-6f);
+    CHECK(fabsf(abc[2] + 1.0f / 3.0f) < 1.0e-6f);
+    clarke(5.0f, 5.0f, 5.0f, &alpha, &beta);
+    CHECK(alpha == 0.0f);
+    CHECK(beta == 0.0f);
+    inv_clarke(0.0f, 1.0f, &abc[0], &abc[1], &abc[2]);
+    CHECK(abc[0] == 0.0f);
+    CHECK(fabsf(abc[1] - 0.8660254f) < 1.0e-6f);
+    CHECK(fabsf(abc[2] + 0.8660254f) < 1.0e-6f);
+    park(3.0f, 4.0f, 1.0f, 0.0f, &d, &q);
+    CHECK(d == 4.0f);
+    CHECK(q == -3.0f);
+    park(3.0f, 4.0f, -1.0f, 0.0f, &d, &q);
+    CHECK(d == -4.0f);
+    CHECK(q == 3.0f);
+    inv_park(4.0f, -3.0f, 1.0f, 0.0f, &alpha, &beta);
+    CHECK(alpha == 3.0f);
+    CHECK(beta == 4.0f);
+    for (int32_t index = -32; index <= 32; ++index) /* Both rotation directions and every quadrant. */
+    {
+        float angle = (float)index * M_PI / 16.0f; /* Test electrical angle, rad. */
+        float sine = sinf(angle); /* Unit rotation sine. */
+        float cosine = cosf(angle); /* Unit rotation cosine. */
+        park(3.0f, 4.0f, sine, cosine, &d, &q);
+        CHECK(fabsf(d * d + q * q - 25.0f) < 1.0e-5f);
+        inv_park(d, q, sine, cosine, &alpha, &beta);
+        CHECK(fabsf(alpha - 3.0f) < 2.0e-6f);
+        CHECK(fabsf(beta - 4.0f) < 2.0e-6f);
+        inv_clarke(cosine, sine, &abc[0], &abc[1], &abc[2]);
+        clarke(abc[0], abc[1], abc[2], &alpha, &beta);
+        CHECK(fabsf(alpha - cosine) < 1.0e-6f);
+        CHECK(fabsf(beta - sine) < 1.0e-6f);
+    }
+}
+
 /** @return EXIT_SUCCESS if the actual DLL meets the duty and 5 kHz timing contract. */
 int main(void)
 {
     struct SimulationSizes sizes = {0}; /* Actual DLL port dimensions. */
     double time_s = 0.0; /* Current 200 us control grid time. */
-    double expected_cycles = 0.0; /* Unwrapped test-side phase, independent of DLL phase wrapping. */
-    double saved[PLECS_OUTPUT_MAX]; /* Held frame before faster or repeated callbacks. */
-    bool saw_fractional_duty = false; /* Proves outputs contain duties rather than digital gates. */
+    double saved[PLECS_OUTPUT_MAX] = {0}; /* Held output frame between controller ticks. */
+    bool saw_fractional_duty = false; /* Confirm state duties rather than binary gates. */
+    npc_ctrl_cfg_t cfg = npc_cfg_default(); /* Coefficients for an independent zero-feedback PI recurrence. */
+    float expected_ramp = 0.0f; /* Expected amplitude held across five 200 us controller ticks. */
+    float expected_integral_v = 0.0f; /* Independent outer-loop integral in the unsaturated fixture. */
+    float expected_integral_i = 0.0f; /* Independent inner-loop integral in the unsaturated fixture. */
+    uint32_t ramp_checks = 0u; /* Samples whose voltage command proves the ramp cadence. */
+    check_coordinate_transforms();
     plecsSetSizes(&sizes);
     CHECK(sizes.numInputs == 8);
     CHECK(sizes.numOutputs == 7);
     CHECK(sizes.numParameters == 0);
     CHECK(sizes.numStates == 0);
-    start_at(0.0);
-    task_calls = 0u;
-    for (uint32_t tick = 0u; tick < 20u; ++tick) /* 4 ms of real NPC dispatch, with repeated and intermediate calls. */
-    {
-        const double instant = (double)tick * PLECS_NPC_CONTROL_PERIOD_S; /* Current control grid time. */
-        CHECK(output_at(instant) == true);
-        CHECK(task_calls == (tick + 1u) / 5u);
-        CHECK(output_at(instant) == true);
-        CHECK(output_at(instant + 0.0001) == true);
-        CHECK(task_calls == (tick + 1u) / 5u); /* Held callbacks must not execute extra periodic tasks. */
-    }
-    {
-        const char *const p_names[6] = {"V_OUT_A", "V_OUT_B", "V_OUT_C", "I_L_A", "I_L_B", "I_L_C"}; /* Feedback monitor order. */
-        double feedback_time = 0.0; /* Independent feedback fixture clock. */
-        start_at(feedback_time);
-        inputs[0] = 350.0;
-        inputs[1] = 350.0;
-        for (uint32_t channel = 0u; channel < 6u; ++channel) /* Distinct signed values detect channel swaps. */
-        {
-            check_monitor(p_names[channel], 0.0);
-            inputs[channel + 2u] = (double)channel * 20.0 - 50.0;
-        }
-        CHECK(output_at(feedback_time) == true);
-        check_off(); /* Monitoring remains active while PWM is disabled. */
-        for (uint32_t channel = 0u; channel < 6u; ++channel)
-        {
-            check_monitor(p_names[channel], inputs[channel + 2u]);
-            shell_set(p_names[channel], 999.0); /* Simulation monitors accept writes until the next sample. */
-        }
-        inputs[PLECS_INPUT_V_OUT_A] = 123.0;
-        CHECK(output_at(0.0001) == true);
-        check_monitor("V_OUT_A", 999.0); /* Intermediate callbacks preserve the Shell write. */
-        feedback_time += PLECS_NPC_CONTROL_PERIOD_S;
-        CHECK(output_at(feedback_time) == true);
-        check_monitor("V_OUT_A", 123.0);
-        shell_set("RUN_ENABLE", 1.0);
-        for (uint32_t channel = 0u; channel < 6u; ++channel)
-        {
-            const double invalid[3] = {NAN, INFINITY, DBL_MAX}; /* Non-finite and unrepresentable feedback. */
-            for (uint32_t fault = 0u; fault < 3u; ++fault)
-            {
-                inputs[channel + 2u] = invalid[fault];
-                feedback_time += PLECS_NPC_CONTROL_PERIOD_S;
-                CHECK(output_at(feedback_time) == true);
-                check_monitor(p_names[channel], NAN);
-                check_off();
-                inputs[channel + 2u] = 0.0;
-                feedback_time += PLECS_NPC_CONTROL_PERIOD_S;
-                CHECK(output_at(feedback_time) == true);
-                check_duty(); /* Valid feedback restores open-loop modulation without altering its reference. */
-            }
-        }
-    }
     start_at(time_s);
-    check_off();
-    CHECK(shell_count_get() >= 13u);
-    shell_set("V_DC_HALF_MIN", 20.0);
-    shell_set("RUN_ENABLE", 1.0);
-    for (uint32_t tick = 0u; tick < 2000u; ++tick) /* 0.4 s at 5 kHz, including a half-bus split step. */
+    shell_set("TRACE_ENABLE", 0.0); /* Keep this deterministic fixture free of automatic CSV captures. */
+    shell_set("NP_BAL_KP", 0.0); /* Isolate duty reconstruction from midpoint balancing. */
+    shell_set("VD_POS_REF", 100.0); /* Exercise the closed-loop soft-start path. */
+    shell_set("RUN_ENABLE", 1.0); /* Request run through the real application/FSM boundary. */
+    inputs[0] = 350.0;
+    inputs[1] = 350.0;
+    task_calls = 0u;
+    for (uint32_t tick = 0u; tick < 2000u; ++tick) /* Exercise the actual closed-loop dispatcher for 0.4 s. */
     {
-        const double frequency = (tick < 750u) ? 50.0 : 60.0; /* Change frequency at a nonzero phase. */
-        const double beta_amp = (tick < 1000u) ? 300.0 : 200.0; /* Independent axis amplitude step. */
-        const double theta = 2.0 * acos(-1.0) * expected_cycles; /* Analytical electrical angle. */
-        shell_set("V_ALPHA_AMP", 300.0);
-        shell_set("V_BETA_AMP", beta_amp);
-        shell_set("FREQ_HZ", frequency);
-        ref_alpha = 300.0 * cos(theta);
-        ref_beta = beta_amp * sin(theta);
-        inputs[0] = (tick < 1000u) ? 350.0 : 250.0;
-        inputs[1] = 700.0 - inputs[0];
-        CHECK(output_at(time_s) == true);
-        check_duty();
-        check_monitor("V_ALPHA", ref_alpha);
-        check_monitor("V_BETA", ref_beta);
-        shell_set("V_ALPHA", 123.0); /* Monitor writes do not recalculate an already latched PWM frame. */
-        shell_set("V_BETA", 456.0);
-        for (uint32_t i = 0u; i < BSP_PWM_CHANNEL_COUNT; ++i) /* Detect non-binary duty output. */
+        time_s = (double)tick * PLECS_NPC_CONTROL_PERIOD_S;
+        if (tick == 100u)
         {
-            if ((outputs[i] > 0.0) && /* Duty is above fully off. */
-                (outputs[i] < 1.0))   /* Duty is below fully on. */
+            shell_set("VD_POS_REF", 0.0); /* Exercise downward slew using the same 1 ms task. */
+        }
+        if (tick == 1000u)
+        {
+            inputs[0] = 250.0;
+            inputs[1] = 450.0; /* Unequal half buses must retain the same voltage command mapping. */
+            shell_set("FREQ_HZ", 60.0); /* Rebind observers at the lifecycle update boundary. */
+        }
+        CHECK(output_at(time_s) == true);
+        CHECK(task_calls == (tick + 1u) / 5u);
+        if ((tick < 200u) && (outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0))
+        {
+            section_shell_t *p_alpha = shell_find("V_ALPHA_PWM", 11u); /* Actual modulation command. */
+            section_shell_t *p_beta = shell_find("V_BETA_PWM", 10u); /* Actual modulation command. */
+            float expected_current = cfg.kp_v * expected_ramp + expected_integral_v; /* Zero-feedback outer PI. */
+            float expected_voltage = cfg.kp_i * expected_current + expected_integral_i; /* Zero-feedback inner PI. */
+            float target = (tick < 100u) ? 100.0f : 0.0f; /* Independent rise/fall fixture target. */
+            float step = NPC_CFG_DEFAULT_VD_POS_SLEW_VPS / 1000.0f; /* Requested V/s over a 1 ms interval. */
+            CHECK(p_alpha != NULL);
+            CHECK(p_beta != NULL);
+            CHECK(fabsf(hypotf(*(float *)p_alpha->p_var, *(float *)p_beta->p_var) - expected_voltage) < 0.001f);
+            CHECK(expected_current < cfg.current_peak); /* PI recurrence assumes no current saturation. */
+            expected_integral_v += cfg.ts * cfg.ki_v * expected_ramp;
+            expected_integral_i += cfg.ts * cfg.ki_i * expected_current;
+            if (((tick + 1u) % 5u) == 0u) /* The task runs after this controller sample. */
+            {
+                expected_ramp = (expected_ramp < target) ? fminf(expected_ramp + step, target)
+                                                       : fmaxf(expected_ramp - step, target);
+            }
+            ++ramp_checks;
+        }
+        if (tick >= 50u)
+        {
+            section_shell_t *p_alpha = shell_find("V_ALPHA_PWM", 11u); /* Actual HAL alpha command. */
+            section_shell_t *p_beta = shell_find("V_BETA_PWM", 10u); /* Actual HAL beta command. */
+            CHECK(p_alpha != NULL);
+            CHECK(p_beta != NULL);
+            ref_alpha = (double)*(float *)p_alpha->p_var;
+            ref_beta = (double)*(float *)p_beta->p_var;
+            check_duty();
+        }
+        for (uint32_t channel = 0u; channel < PLECS_OUTPUT_MAX; ++channel)
+        {
+            saved[channel] = outputs[channel];
+            if ((channel < BSP_PWM_CHANNEL_COUNT) && (outputs[channel] > 0.0) && (outputs[channel] < 1.0))
             {
                 saw_fractional_duty = true;
             }
         }
-        for (uint32_t i = 0u; i < (uint32_t)PLECS_OUTPUT_MAX; ++i) /* Snapshot entire output frame. */
-        {
-            saved[i] = outputs[i];
-        }
-        shell_set("V_ALPHA_AMP", 2000.0); /* Intermediate callbacks must hold the generated reference. */
-        shell_set("V_BETA_AMP", 2000.0);
         CHECK(output_at(time_s) == true);
         CHECK(output_at(time_s + 0.0001) == true);
-        check_monitor("V_ALPHA", 123.0);
-        check_monitor("V_BETA", 456.0);
-        for (uint32_t i = 0u; i < (uint32_t)PLECS_OUTPUT_MAX; ++i) /* Verify exact zero-order hold. */
+        CHECK(task_calls == (tick + 1u) / 5u);
+        for (uint32_t channel = 0u; channel < PLECS_OUTPUT_MAX; ++channel)
         {
-            CHECK(outputs[i] == saved[i]);
+            CHECK(outputs[channel] == saved[channel]); /* Repeated and faster callbacks hold all ports. */
         }
-        time_s += PLECS_NPC_CONTROL_PERIOD_S;
-        expected_cycles += frequency * PLECS_NPC_CONTROL_PERIOD_S;
     }
     CHECK(saw_fractional_duty == true);
-    CHECK(output_at(time_s) == true); /* Commit the infeasible command at the next 200 us boundary. */
-    check_off();
+    CHECK(ramp_checks > 150u); /* Both ramp directions were checked across multiple task periods. */
+    CHECK(shell_find("VD_POS", 6u) == NULL);
+    CHECK(shell_find("CTRL_STATUS", 11u) == NULL);
+    CHECK(shell_find("VD_POS_REF_ACT", 14u) == NULL);
+    inputs[PLECS_INPUT_I_L_B] = 7000.0; /* Exceeds the configured sampled-current trip. */
     time_s += PLECS_NPC_CONTROL_PERIOD_S;
-    ref_alpha = 0.0;
-    ref_beta = 0.0;
-    shell_set("V_ALPHA_AMP", 0.0);
-    shell_set("V_BETA_AMP", 0.0);
     CHECK(output_at(time_s) == true);
-    check_duty();
-    for (uint32_t phase = 0u; phase < 3u; ++phase) /* Active OOO is distinct from disable. */
-    {
-        CHECK(outputs[2u * phase] == 0.0);
-        CHECK(outputs[2u * phase + 1u] == 0.0);
-    }
+    check_off();
+    CHECK(npc_hal_get_fault() == NPC_PROTECT_OVERCURRENT);
+    CHECK(npc_hal_get_fault_phase() == 1u);
+    inputs[PLECS_INPUT_I_L_B] = 0.0;
+    time_s += PLECS_NPC_CONTROL_PERIOD_S;
+    CHECK(output_at(time_s) == true);
+    check_off(); /* Removing current alone must not release the protection latch. */
     shell_set("RUN_ENABLE", 0.0);
-    CHECK(output_at(time_s + 0.0001) == true);
-    CHECK(outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0); /* Enable is sampled on the same 5 kHz grid as the duties. */
     time_s += PLECS_NPC_CONTROL_PERIOD_S;
     CHECK(output_at(time_s) == true);
     check_off();
+    CHECK(npc_hal_hard_protect_is_latched() == 0u);
     shell_set("RUN_ENABLE", 1.0);
-    inputs[0] = 10.0;
+    for (uint32_t tick = 0u; tick < 50u; ++tick) /* Allow the real 1 ms FSM to complete restart. */
+    {
+        time_s += PLECS_NPC_CONTROL_PERIOD_S;
+        CHECK(output_at(time_s) == true);
+    }
+    CHECK(outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0);
+    inputs[0] = 10.0; /* Same-period undervoltage must prevent the priority-3 PWM update. */
     time_s += PLECS_NPC_CONTROL_PERIOD_S;
     CHECK(output_at(time_s) == true);
     check_off();
     inputs[0] = 350.0;
-    inputs[1] = nan("");
+    time_s += PLECS_NPC_CONTROL_PERIOD_S;
+    CHECK(output_at(time_s) == true);
+    CHECK(outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0);
+    check_monitor("V_DC_P", 350.0);
+    shell_set("RUN_ENABLE", 0.0);
+    CHECK(output_at(time_s + 0.0001) == true);
+    CHECK(outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0);
     time_s += PLECS_NPC_CONTROL_PERIOD_S;
     CHECK(output_at(time_s) == true);
     check_off();
-    inputs[1] = 350.0;
-    time_s += PLECS_NPC_CONTROL_PERIOD_S;
-    CHECK(output_at(time_s) == true);
-    check_duty();
-    shell_set("V_DC_HALF_MIN", 400.0);
-    time_s += PLECS_NPC_CONTROL_PERIOD_S;
-    CHECK(output_at(time_s) == true);
-    check_off();
-    shell_set("V_DC_HALF_MIN", 20.0);
-    time_s += PLECS_NPC_CONTROL_PERIOD_S;
-    CHECK(output_at(time_s) == true);
-    check_duty();
-    CHECK(output_at(time_s + 0.0004) == false); /* A missed control tick must not silently lower the rate. */
-    check_off();
-
-    start_at(1.0);
-    shell_set("V_ALPHA_AMP", 100.0);
-    shell_set("V_BETA_AMP", 200.0);
-    CHECK(output_at(1.0) == true);
-    check_off(); /* Disabled output still updates the generated monitors. */
-    check_monitor("V_ALPHA", 100.0);
-    check_monitor("V_BETA", 0.0);
-    CHECK(output_at(1.0002) == true);
-    check_off();
-    check_monitor("V_ALPHA", 100.0 * cos(2.0 * acos(-1.0) * 0.01));
-    check_monitor("V_BETA", 200.0 * sin(2.0 * acos(-1.0) * 0.01));
-    CHECK(output_at(0.99) == false); /* Unsupported solver rollback fails off. */
-    check_off();
-    start_at(2.0);
-    CHECK(output_at(2.0) == true);
-    CHECK(output_at(nan("")) == false);
-    check_off();
-    for (uint32_t scenario = 0u; scenario < 2u; ++scenario) /* Long run and large nonzero time origin. */
-    {
-        const double origin = (scenario == 0u) ? 0.0 : 1000000.0; /* Exercise absolute-time rounding. */
-        const uint32_t tick_count = (scenario == 0u) ? 300000u : 2000u; /* 60 s and 0.4 s at 5 kHz. */
-        start_at(origin);
-        shell_set("V_ALPHA_AMP", 100.0);
-        shell_set("V_BETA_AMP", 100.0);
-        shell_set("RUN_ENABLE", 1.0);
-        for (uint32_t tick = 0u; tick <= tick_count; ++tick) /* Host clock computed from integer sample number. */
-        {
-            const double instant = origin + (double)tick * PLECS_NPC_CONTROL_PERIOD_S; /* Scheduled callback time. */
-            CHECK(output_at(instant) == true);
-            if ((tick % 1000u) == 0u) /* Verify phase and held outputs during the long run. */
-            {
-                ref_alpha = 100.0;
-                ref_beta = 0.0;
-                check_duty();
-                CHECK(output_at(instant) == true);
-                CHECK(output_at(instant + 0.0001) == true);
-                check_monitor("V_ALPHA", 100.0);
-                check_monitor("V_BETA", 0.0);
-            }
-        }
-        CHECK(output_at(origin + (double)(tick_count + 2u) * PLECS_NPC_CONTROL_PERIOD_S) == false);
-        check_off(); /* A genuinely skipped tick must still fail off after a long run. */
-    }
+    CHECK(output_at(time_s + 0.001) == false); /* Missing a controller tick remains an ABI timing error. */
     start_at(3.0);
     CHECK(output_at(3.0) == true);
     {

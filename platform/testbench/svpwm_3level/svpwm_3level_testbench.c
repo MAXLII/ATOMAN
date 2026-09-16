@@ -5,7 +5,7 @@
  * @details
  *          This file is part of the base digital power framework project.
  *          - Exercise the real DUT through the common runner at 10 kHz
- *          - Check voltage reconstruction and recovery after rejected inputs
+ *          - Check voltage reconstruction and recovery after limited inputs
  *          - Export per-period CSV records for 4 independent scenarios
  *          C11 compatible; host-only fixture; no MCU or gate-driver simulation.
  * @author  Max.Li
@@ -30,19 +30,17 @@ typedef enum
     SVPWM_TEST_BALANCED = 0, /* Constant 350/350 V split. */
     SVPWM_TEST_UNBALANCED,  /* Split changes from 250/450 V to 450/250 V. */
     SVPWM_TEST_RANGE,       /* Infeasible command followed by automatic recovery. */
-    SVPWM_TEST_UNDERVOLTAGE /* Half-bus undervoltage followed by automatic recovery. */
+    SVPWM_TEST_SMALL_BUS /* Half-bus undervoltage followed by automatic recovery. */
 } SVPWM_TEST_SCENARIO_E;
 
 
 
 static svpwm_3level_t dut;                   /* Production modulation instance, reset per case. */
 static SVPWM_TEST_SCENARIO_E scenario;       /* Scenario selected before DUT initialization. */
-static SVPWM_3LEVEL_STATUS_E actual_status;  /* Status from this period's only DUT call. */
-static SVPWM_3LEVEL_STATUS_E expected_status; /* Test environment's expected result. */
 static FILE *p_csv;                         /* Case-owned recording stream. */
 static bool passed;                         /* Sticky assertion and recording result. */
 static uint32_t step;                       /* Completed input-generation periods. */
-static uint32_t rejected;                   /* Number of correctly rejected periods. */
+static uint32_t limited;                   /* Number of correctly limited periods. */
 static double max_error;                    /* Largest alpha/beta reconstruction error, V. */
 
 /** @param condition Required invariant. */
@@ -64,14 +62,14 @@ static void case_init(SVPWM_TEST_SCENARIO_E selected, const char *p_path)
 {
     scenario = selected;
     step = 0u;
-    rejected = 0u;
+    limited = 0u;
     max_error = 0.0;
     passed = true;
     p_csv = fopen(p_path, "w");
     expect(p_csv != NULL);
     if (p_csv != NULL)
     {
-        expect(fprintf(p_csv, "time_s,alpha_ref_v,beta_ref_v,v_dc_p,v_dc_n,status,"
+        expect(fprintf(p_csv, "time_s,alpha_ref_v,beta_ref_v,v_dc_p,v_dc_n,limit_gain,"
                        "a_p,a_o,a_n,b_p,b_o,b_n,c_p,c_o,c_n,alpha_out_v,beta_out_v,error_v\n") > 0);
     }
 }
@@ -80,17 +78,16 @@ static void case_init(SVPWM_TEST_SCENARIO_E selected, const char *p_path)
 static void balanced_init(void) { case_init(SVPWM_TEST_BALANCED, "build/balanced.csv"); }
 /** @brief Configure a split-bus step scenario. */
 static void unbalanced_init(void) { case_init(SVPWM_TEST_UNBALANCED, "build/unbalanced.csv"); }
-/** @brief Configure command rejection and recovery. */
+/** @brief Configure command limiting and recovery. */
 static void range_init(void) { case_init(SVPWM_TEST_RANGE, "build/range_recovery.csv"); }
-/** @brief Configure undervoltage rejection and recovery. */
-static void undervoltage_init(void) { case_init(SVPWM_TEST_UNDERVOLTAGE, "build/undervoltage_recovery.csv"); }
+/** @brief Configure undervoltage limiting and recovery. */
+static void small_bus_init(void) { case_init(SVPWM_TEST_SMALL_BUS, "build/small_bus_limiting.csv"); }
 
 /** @brief Initialize a fresh production instance for every registered case. */
 static void dut_init(void)
 {
     const svpwm_3level_cfg_t cfg = {.v_dc_half_min = 20.0f}; /* Each half bus must be at least 20 V. */
-    expect(svpwm_3level_init(&dut, &cfg) == true);
-    expect(dut.output.status == SVPWM_3LEVEL_NOT_READY);
+    svpwm_3level_init(&dut, &cfg);
 }
 
 /** @param time_s Simulated time supplied by the common testbench runner. */
@@ -101,7 +98,6 @@ static void before_dut(double time_s)
     ++step;
     dut.input.v_dc_p = 350.0f;
     dut.input.v_dc_n = 350.0f;
-    expected_status = SVPWM_3LEVEL_OK;
     if (scenario == SVPWM_TEST_UNBALANCED)
     {
         dut.input.v_dc_p = (step < 500u) ? 250.0f : 450.0f;
@@ -113,12 +109,10 @@ static void before_dut(double time_s)
         if (scenario == SVPWM_TEST_RANGE)
         {
             amplitude = 600.0;
-            expected_status = SVPWM_3LEVEL_OUT_OF_RANGE;
         }
-        if (scenario == SVPWM_TEST_UNDERVOLTAGE)
+        if (scenario == SVPWM_TEST_SMALL_BUS)
         {
             dut.input.v_dc_p = 10.0f;
-            expected_status = SVPWM_3LEVEL_INVALID_INPUT;
         }
     }
     dut.input.v_alpha = (float)(amplitude * cos(theta));
@@ -128,7 +122,7 @@ static void before_dut(double time_s)
 /** @brief Run the real modulator exactly once for this period. */
 static void dut_run(void)
 {
-    actual_status = svpwm_3level_cal(&dut);
+    svpwm_3level_cal(&dut);
 }
 
 /** @param time_s Current simulated time. @return Case progress or final assertion result. */
@@ -141,55 +135,40 @@ static TESTBENCH_CASE_STATE_E after_dut(double time_s)
     double alpha;          /* Reconstructed alpha voltage, V. */
     double beta;           /* Reconstructed beta voltage, V. */
     double error;          /* Maximum component error, V; NaN for invalid output. */
-    expect(actual_status == expected_status);
-    expect(dut.output.status == actual_status);
-    for (uint32_t i = 0u; i < 3u; ++i) /* Phase index. */
+    const double a = dut.input.v_alpha; /* Exact input for the independent physical-span oracle. */
+    const double b = -0.5 * a + sqrt(3.0) * 0.5 * dut.input.v_beta; /* Oracle phase B. */
+    const double c = -0.5 * a - sqrt(3.0) * 0.5 * dut.input.v_beta; /* Oracle phase C. */
+    const double span = fmax(a, fmax(b, c)) - fmin(a, fmin(b, c)); /* Required voltage span. */
+    const double bus = (double)dut.input.v_dc_p + dut.input.v_dc_n; /* Available voltage span. */
+    const double gain = span > bus ? bus / span : 1.0; /* Expected direction-preserving saturation. */
+    for (uint32_t i = 0u; i < 3u; ++i)
     {
-        if (actual_status == SVPWM_3LEVEL_OK)
-        {
-            expect(isfinite(p_phases[i]->duty_p) != 0);
-            expect(isfinite(p_phases[i]->duty_o) != 0);
-            expect(isfinite(p_phases[i]->duty_n) != 0);
-            expect(p_phases[i]->duty_p >= 0.0f);
-            expect(p_phases[i]->duty_p <= 1.0f);
-            expect(p_phases[i]->duty_o >= 0.0f);
-            expect(p_phases[i]->duty_o <= 1.0f);
-            expect(p_phases[i]->duty_n >= 0.0f);
-            expect(p_phases[i]->duty_n <= 1.0f);
-            expect(fabs((double)p_phases[i]->duty_p + p_phases[i]->duty_o + p_phases[i]->duty_n - 1.0) < 2.0e-7);
-            expect((p_phases[i]->duty_p == 0.0f) || /* N/O pair is permitted. */
-                   (p_phases[i]->duty_n == 0.0f)); /* O/P pair is permitted. */
-        }
-        else
-        {
-            expect(p_phases[i]->duty_p == 0.0f);
-            expect(p_phases[i]->duty_o == 0.0f);
-            expect(p_phases[i]->duty_n == 0.0f);
-        }
+        expect(isfinite(p_phases[i]->duty_p) != 0);
+        expect(isfinite(p_phases[i]->duty_o) != 0);
+        expect(isfinite(p_phases[i]->duty_n) != 0);
+        expect(p_phases[i]->duty_p >= 0.0f && p_phases[i]->duty_p <= 1.0f);
+        expect(p_phases[i]->duty_o >= 0.0f && p_phases[i]->duty_o <= 1.0f);
+        expect(p_phases[i]->duty_n >= 0.0f && p_phases[i]->duty_n <= 1.0f);
+        expect(fabs((double)p_phases[i]->duty_p + p_phases[i]->duty_o + p_phases[i]->duty_n - 1.0) < 2.0e-7);
+        expect((p_phases[i]->duty_p == 0.0f) || (p_phases[i]->duty_n == 0.0f));
         pole[i] = ((double)p_phases[i]->duty_p * dut.input.v_dc_p) -
                   ((double)p_phases[i]->duty_n * dut.input.v_dc_n);
     }
     alpha = (2.0 * pole[0] - pole[1] - pole[2]) / 3.0;
     beta = (pole[1] - pole[2]) / sqrt(3.0);
-    error = fmax(fabs(alpha - dut.input.v_alpha), fabs(beta - dut.input.v_beta));
-    if (actual_status == SVPWM_3LEVEL_OK)
+    error = fmax(fabs(alpha - dut.input.v_alpha * gain), fabs(beta - dut.input.v_beta * gain));
+    expect(error < 0.001);
+    max_error = fmax(max_error, error);
+    if (gain < 1.0)
     {
-        expect(error < 0.001);
-        max_error = fmax(max_error, error);
-    }
-    else
-    {
-        ++rejected;
-        alpha = nan(""); /* Invalid duties do not represent an applied zero-voltage command. */
-        beta = nan("");
-        error = nan("");
+        ++limited;
     }
     if (p_csv != NULL)
     {
-        expect(fprintf(p_csv, "%.7f,%.9g,%.9g,%.9g,%.9g,%d,"
+        expect(fprintf(p_csv, "%.7f,%.9g,%.9g,%.9g,%.9g,%.9g,"
                        "%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,%.9g\n",
                        time_s, (double)dut.input.v_alpha, (double)dut.input.v_beta,
-                       (double)dut.input.v_dc_p, (double)dut.input.v_dc_n, (int)actual_status,
+                       (double)dut.input.v_dc_p, (double)dut.input.v_dc_n, gain,
                        (double)p_phases[0]->duty_p, (double)p_phases[0]->duty_o, (double)p_phases[0]->duty_n,
                        (double)p_phases[1]->duty_p, (double)p_phases[1]->duty_o, (double)p_phases[1]->duty_n,
                        (double)p_phases[2]->duty_p, (double)p_phases[2]->duty_o, (double)p_phases[2]->duty_n,
@@ -199,22 +178,22 @@ static TESTBENCH_CASE_STATE_E after_dut(double time_s)
     {
         return TESTBENCH_CASE_RUNNING;
     }
-    if ((scenario == SVPWM_TEST_RANGE) || /* Command fault must have exactly 200 rejected periods. */
-        (scenario == SVPWM_TEST_UNDERVOLTAGE)) /* Same length for the undervoltage fault. */
+    if ((scenario == SVPWM_TEST_RANGE) || /* Command fault must have exactly 200 limited periods. */
+        (scenario == SVPWM_TEST_SMALL_BUS)) /* Same length for the small-bus interval. */
     {
-        expect(rejected == 200u);
+        expect(limited == 200u);
     }
     else
     {
-        expect(rejected == 0u);
+        expect(limited == 0u);
     }
     if (p_csv != NULL)
     {
         expect(fclose(p_csv) == 0);
         p_csv = NULL;
     }
-    (void)printf("    periods=%lu rejected=%lu max_error_v=%.9g\n",
-                 (unsigned long)step, (unsigned long)rejected, max_error);
+    (void)printf("    periods=%lu limited=%lu max_error_v=%.9g\n",
+                 (unsigned long)step, (unsigned long)limited, max_error);
     return (passed == true) ? TESTBENCH_CASE_PASS : TESTBENCH_CASE_FAIL;
 }
 
@@ -222,4 +201,4 @@ TESTBENCH_REGISTER(svpwm_3level, 0.0001, dut_init, dut_run)
 TESTBENCH_CASE(svpwm_3level, balanced, balanced_init, before_dut, after_dut)
 TESTBENCH_CASE(svpwm_3level, unbalanced_step, unbalanced_init, before_dut, after_dut)
 TESTBENCH_CASE(svpwm_3level, range_recovery, range_init, before_dut, after_dut)
-TESTBENCH_CASE(svpwm_3level, undervoltage_recovery, undervoltage_init, before_dut, after_dut)
+TESTBENCH_CASE(svpwm_3level, small_bus_limiting, small_bus_init, before_dut, after_dut)

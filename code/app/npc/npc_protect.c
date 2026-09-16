@@ -40,7 +40,7 @@ REG_INIT(2, npc_protect_init)
 /** @brief 中断第二层：检查本拍过流和欠压，故障时禁止后续控制及 PWM。 */
 static void FUNC_RAM npc_protect_run(void)
 {
-    const npc_ctrl_sample_t *p_sample = npc_ctrl_get_sample(); /* 采样阶段已形成的本拍快照。 */
+    const npc_hal_sample_t *p_sample = npc_hal_get_sample(); /* 采样阶段已形成的本拍快照。 */
     uint32_t fault = 0u;       /* 本拍首个过流故障码，0 表示无新故障。 */
     uint32_t phase_fault = 0u; /* 首个过流故障的相序号，0=A、1=B、2=C。 */
 
@@ -55,7 +55,7 @@ static void FUNC_RAM npc_protect_run(void)
         if ((fabsf(p_sample->i_l[phase]) > current_trip) && /* 当前相超过应用过流门限。 */
             (fault == 0u))                               /* 仅记录本拍首个过流相。 */
         {
-            fault = NPC_CTRL_OVERCURRENT;
+            fault = NPC_PROTECT_OVERCURRENT;
             phase_fault = phase;
         }
     }
@@ -74,7 +74,7 @@ static void FUNC_RAM npc_protect_run(void)
 
     if (npc_hal_hard_protect_is_latched() == 1u)
     {
-        npc_ctrl_inhibit(npc_hal_get_fault(), npc_hal_get_fault_phase());
+        npc_ctrl_stop();
         return;
     }
 
@@ -87,7 +87,7 @@ static void FUNC_RAM npc_protect_run(void)
     if ((p_sample->v_dc_p < setpoint.v_dc_half_min) || /* 正侧母线低于运行门限。 */
         (p_sample->v_dc_n < setpoint.v_dc_half_min))   /* 负侧母线低于运行门限。 */
     {
-        npc_ctrl_inhibit(NPC_CTRL_BUS, 0u);
+        npc_ctrl_stop();
     }
 }
 REG_INTERRUPT(2, npc_protect_run)

@@ -30,11 +30,11 @@ static inline void map_phase(const svpwm_3level_phase_output_t *p_phase,
                            &p_duty->positive_duty, &p_duty->negative_duty);
 }
 
-bool pwm_init(float v_dc_half_min, float midpoint_kp)
+void pwm_init(float v_dc_half_min, float midpoint_kp)
 {
     const svpwm_3level_cfg_t cfg = pwm_make_modulator_cfg(v_dc_half_min, midpoint_kp);
     bsp_pwm_disable();
-    return svpwm_3level_init(&modulator, &cfg);
+    svpwm_3level_init(&modulator, &cfg);
 }
 
 void pwm_disable(void)
@@ -48,29 +48,13 @@ const svpwm_3level_output_t *pwm_get_output(void)
     return &modulator.output;
 }
 
-SVPWM_3LEVEL_STATUS_E FUNC_RAM pwm_update(const svpwm_3level_input_t *p_input)
+void FUNC_RAM pwm_update(const svpwm_3level_input_t *p_input)
 {
     bsp_pwm_phase_duty_t duty[BSP_PWM_PHASE_COUNT] = {0}; /* Complete A/B/C phase-pair frame. */
-    SVPWM_3LEVEL_STATUS_E status = SVPWM_3LEVEL_OK; /* Result of the actual library calculation. */
-    if (p_input == NULL)
-    {
-        pwm_disable();
-        return SVPWM_3LEVEL_INVALID_ARGUMENT;
-    }
     modulator.input = *p_input;
-    status = svpwm_3level_cal(&modulator);
-    if (status != SVPWM_3LEVEL_OK)
-    {
-        bsp_pwm_disable();
-        return status;
-    }
+    svpwm_3level_cal(&modulator);
     map_phase(&modulator.output.phase_a, p_input->i_a, &duty[0]);
     map_phase(&modulator.output.phase_b, p_input->i_b, &duty[1]);
     map_phase(&modulator.output.phase_c, p_input->i_c, &duty[2]);
-    if (bsp_pwm_set_duty(duty) == false)
-    {
-        pwm_disable();
-        return SVPWM_3LEVEL_INVALID_INPUT;
-    }
-    return SVPWM_3LEVEL_OK;
+    (void)bsp_pwm_set_duty(duty); /* BSP owns gate-output validation and immediate hardware disable. */
 }

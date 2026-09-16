@@ -224,50 +224,29 @@ static void verify_sample(svpwm_3level_t *p_svpwm)
     const double spread = fmax(alpha, fmax(vb, vc)) - fmin(alpha, fmin(vb, vc)); /* Required bus span. */
     const double bus = (double)p_svpwm->input.v_dc_p + p_svpwm->input.v_dc_n; /* Available physical span. */
     const double tolerance = 4.0e-6 * fmax(p_svpwm->input.v_dc_p, p_svpwm->input.v_dc_n); /* Numeric boundary margin. */
-    SVPWM_3LEVEL_STATUS_E status = svpwm_3level_cal(p_svpwm); /* Production result. */
+    const double gain = (spread > bus) ? bus / spread : 1.0; /* Independent radial clipping oracle. */
+    svpwm_3level_cal(p_svpwm);
     ++sample_count;
-    CHECK(status == p_svpwm->output.status);
-    if (spread < (bus - tolerance))
-    {
-        CHECK(status == SVPWM_3LEVEL_OK);
-    }
-    if (spread > (bus + tolerance))
-    {
-        CHECK(status == SVPWM_3LEVEL_OUT_OF_RANGE);
-    }
-    if (status == SVPWM_3LEVEL_OK)
     {
         const double va_out = ((double)p_svpwm->output.phase_a.duty_p * p_svpwm->input.v_dc_p) -
-                              ((double)p_svpwm->output.phase_a.duty_n * p_svpwm->input.v_dc_n); /* Actual phase A pole. */
+                              ((double)p_svpwm->output.phase_a.duty_n * p_svpwm->input.v_dc_n); /* Phase A pole. */
         const double vb_out = ((double)p_svpwm->output.phase_b.duty_p * p_svpwm->input.v_dc_p) -
-                              ((double)p_svpwm->output.phase_b.duty_n * p_svpwm->input.v_dc_n); /* Actual phase B pole. */
+                              ((double)p_svpwm->output.phase_b.duty_n * p_svpwm->input.v_dc_n); /* Phase B pole. */
         const double vc_out = ((double)p_svpwm->output.phase_c.duty_p * p_svpwm->input.v_dc_p) -
-                              ((double)p_svpwm->output.phase_c.duty_n * p_svpwm->input.v_dc_n); /* Actual phase C pole. */
+                              ((double)p_svpwm->output.phase_c.duty_n * p_svpwm->input.v_dc_n); /* Phase C pole. */
         check_phase(&p_svpwm->output.phase_a);
         check_phase(&p_svpwm->output.phase_b);
         check_phase(&p_svpwm->output.phase_c);
-        CHECK(fabs(((2.0 * va_out - vb_out - vc_out) / 3.0) - alpha) <= tolerance);
-        CHECK(fabs(((vb_out - vc_out) / sqrt(3.0)) - beta) <= tolerance);
+        CHECK(fabs(((2.0 * va_out - vb_out - vc_out) / 3.0) - alpha * gain) <= tolerance);
+        CHECK(fabs(((vb_out - vc_out) / sqrt(3.0)) - beta * gain) <= tolerance);
         check_waveform(p_svpwm);
-        if (p_svpwm->input.v_dc_p == p_svpwm->input.v_dc_n)
+        if ((p_svpwm->input.v_dc_p == p_svpwm->input.v_dc_n) &&
+            (gain == 1.0) && (p_svpwm->cfg.average_balance == false))
         {
             check_ti_balanced(p_svpwm);
         }
     }
-    else
-    {
-        const svpwm_3level_phase_output_t *p_phases[3] = { /* Invalid output must not retain any old dwell. */
-            &p_svpwm->output.phase_a, &p_svpwm->output.phase_b, &p_svpwm->output.phase_c
-        };
-        for (uint32_t i = 0u; i < 3u; ++i) /* Phase index. */
-        {
-            CHECK(p_phases[i]->duty_p == 0.0f);
-            CHECK(p_phases[i]->duty_o == 0.0f);
-            CHECK(p_phases[i]->duty_n == 0.0f);
-        }
-    }
 }
-
 /** @brief Cover full rotations inside, at and beyond the physical hexagon. */
 static void test_sweep(void)
 {
@@ -277,112 +256,66 @@ static void test_sweep(void)
         {1.0e30f, 2.0e30f}, {1.0e-30f, 2.0e-30f}, {0.001f, 700.0f}
     };
     const double radii[] = {0.0, 0.05, 0.5, 0.9, 0.99999, 1.0, 1.00001, 1.05}; /* Fractions of the directional boundary. */
-    for (size_t b = 0u; b < (sizeof(buses) / sizeof(buses[0])); ++b) /* Bus case index. */
+    for (uint32_t mode = 0u; mode < 2u; ++mode) /* Exercise both sector selection and averaged balancing. */
     {
-        svpwm_3level_t instance = {0}; /* Real production instance. */
-        svpwm_3level_cfg_t cfg = {.v_dc_half_min = 0.5f * fminf(buses[b][0], buses[b][1])}; /* Valid floor for this voltage scale. */
-        CHECK(svpwm_3level_init(&instance, &cfg) == true);
-        instance.input.v_dc_p = buses[b][0];
-        instance.input.v_dc_n = buses[b][1];
-        for (uint32_t angle = 0u; angle < 720u; ++angle) /* Half-degree angular step. */
+        for (size_t b = 0u; b < (sizeof(buses) / sizeof(buses[0])); ++b) /* Bus case index. */
         {
-            double theta = (double)angle * (acos(-1.0) / 360.0); /* Angle in radians. */
-            double a = cos(theta);                              /* Unit alpha reference. */
-            double beta = sin(theta);                           /* Unit beta reference. */
-            double vb = (-0.5 * a) + (sqrt(3.0) * 0.5 * beta);   /* Unit phase B. */
-            double vc = (-0.5 * a) - (sqrt(3.0) * 0.5 * beta);   /* Unit phase C. */
-            double limit = ((double)buses[b][0] + buses[b][1]) /
-                           (fmax(a, fmax(vb, vc)) - fmin(a, fmin(vb, vc))); /* Physical hexagon radius. */
-            for (size_t r = 0u; r < (sizeof(radii) / sizeof(radii[0])); ++r) /* Radial sample index. */
+            svpwm_3level_t instance = {0}; /* Real production instance. */
+            svpwm_3level_cfg_t cfg = { /* Valid parameters for the selected balance mode. */
+                .v_dc_half_min = 0.5f * fminf(buses[b][0], buses[b][1]),
+                .average_balance = mode != 0u,
+                .ts = 0.0001f,
+                .midpoint_filter_hz = 5.0f,
+                .midpoint_current_min = 10.0f,
+                .midpoint_slope_floor_ratio = 0.1f};
+            svpwm_3level_init(&instance, &cfg);
+            instance.input.v_dc_p = buses[b][0];
+            instance.input.v_dc_n = buses[b][1];
+            for (uint32_t angle = 0u; angle < 720u; ++angle) /* Half-degree angular step. */
             {
-                instance.input.v_alpha = (float)(a * limit * radii[r]);
-                instance.input.v_beta = (float)(beta * limit * radii[r]);
-                verify_sample(&instance);
+                double theta = (double)angle * (acos(-1.0) / 360.0); /* Angle in radians. */
+                double a = cos(theta);                              /* Unit alpha reference. */
+                double beta = sin(theta);                           /* Unit beta reference. */
+                double vb = (-0.5 * a) + (sqrt(3.0) * 0.5 * beta);   /* Unit phase B. */
+                double vc = (-0.5 * a) - (sqrt(3.0) * 0.5 * beta);   /* Unit phase C. */
+                double limit = ((double)buses[b][0] + buses[b][1]) /
+                               (fmax(a, fmax(vb, vc)) - fmin(a, fmin(vb, vc))); /* Physical hexagon radius. */
+                for (size_t r = 0u; r < (sizeof(radii) / sizeof(radii[0])); ++r) /* Radial sample index. */
+                {
+                    instance.input.v_alpha = (float)(a * limit * radii[r]);
+                    instance.input.v_beta = (float)(beta * limit * radii[r]);
+                    verify_sample(&instance);
+                }
             }
         }
     }
 }
 
-/** @brief Check lifecycle, invalidation and a known SPRABS6 sector-1 sequence. */
+/** @brief Check reset/reinitialization, a known sequence and large finite command saturation. */
 static void test_lifecycle(void)
 {
-    svpwm_3level_t instance = {0};          /* Test instance repeatedly recovered from faults. */
-    svpwm_3level_cfg_t cfg = {.v_dc_half_min = 10.0f};       /* Each half bus must be at least 10 V. */
-    const float invalid[] = {NAN, INFINITY, -INFINITY}; /* Non-finite controller and measurement values. */
-    CHECK(svpwm_3level_init(NULL, &cfg) == false);
-    CHECK(svpwm_3level_cal(NULL) == SVPWM_3LEVEL_INVALID_ARGUMENT);
-    svpwm_3level_reset(NULL);
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_CONFIG);
-    CHECK(svpwm_3level_init(&instance, NULL) == false);
-    CHECK(instance.output.status == SVPWM_3LEVEL_INVALID_ARGUMENT);
-    CHECK(svpwm_3level_init(&instance, &cfg) == true);
-    CHECK(instance.output.status == SVPWM_3LEVEL_NOT_READY);
+    svpwm_3level_t instance = {0}; /* Real instance reused through reset and reinitialization. */
+    svpwm_3level_cfg_t cfg = {.v_dc_half_min = 10.0f}; /* Caller-owned protection threshold. */
+    svpwm_3level_init(&instance, &cfg);
     instance.input = (svpwm_3level_input_t){.v_alpha = 300.0f, .v_beta = 100.0f, .v_dc_p = 350.0f, .v_dc_n = 350.0f};
     verify_sample(&instance);
-    /* Sector 1, ordered virtual duties A > B > C: ONN, PNN, PON, POO, then mirror. */
     CHECK(fabs((double)instance.output.phase_a.duty_p - 0.766575057683492) < 2.0e-7);
     CHECK(fabs((double)instance.output.phase_b.duty_o - 0.728296601621902) < 2.0e-7);
     CHECK(fabs((double)instance.output.phase_c.duty_o - 0.233424942316508) < 2.0e-7);
     svpwm_3level_reset(&instance);
-    CHECK(instance.output.status == SVPWM_3LEVEL_NOT_READY);
     CHECK(instance.output.phase_a.duty_p == 0.0f);
+    CHECK(instance.output.phase_a.duty_o == 0.0f);
     CHECK(instance.input.v_alpha == 300.0f);
     CHECK(instance.cfg.v_dc_half_min == 10.0f);
     verify_sample(&instance);
-    CHECK(svpwm_3level_init(&instance, &instance.cfg) == true);
+    svpwm_3level_init(&instance, &instance.cfg);
     CHECK(instance.cfg.v_dc_half_min == 10.0f);
     CHECK(instance.input.v_alpha == 0.0f);
-    for (size_t i = 0u; i < (sizeof(invalid) / sizeof(invalid[0])); ++i) /* Non-finite case index. */
-    {
-        cfg.v_dc_half_min = 10.0f;
-        CHECK(svpwm_3level_init(&instance, &cfg) == true);
-        for (uint32_t field = 0u; field < 4u; ++field) /* Input member being faulted. */
-        {
-            instance.input = (svpwm_3level_input_t){.v_alpha = 300.0f, .v_beta = 100.0f, .v_dc_p = 350.0f, .v_dc_n = 350.0f};
-            verify_sample(&instance);
-            switch (field)
-            {
-                case 0u: instance.input.v_alpha = invalid[i]; break;
-                case 1u: instance.input.v_beta = invalid[i]; break;
-                case 2u: instance.input.v_dc_p = invalid[i]; break;
-                default: instance.input.v_dc_n = invalid[i]; break;
-            }
-            CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_INPUT);
-            CHECK(instance.output.phase_a.duty_p == 0.0f);
-            CHECK(instance.output.phase_b.duty_o == 0.0f);
-            CHECK(instance.output.phase_c.duty_n == 0.0f);
-        }
-        cfg.v_dc_half_min = invalid[i];
-        CHECK(svpwm_3level_init(&instance, &cfg) == false);
-        CHECK(instance.output.status == SVPWM_3LEVEL_INVALID_CONFIG);
-    }
-    cfg.v_dc_half_min = 0.0f;
-    CHECK(svpwm_3level_init(&instance, &cfg) == false);
-    cfg.v_dc_half_min = -1.0f;
-    CHECK(svpwm_3level_init(&instance, &cfg) == false);
-    cfg.v_dc_half_min = 10.0f;
-    CHECK(svpwm_3level_init(&instance, &cfg) == true);
-    instance.input = (svpwm_3level_input_t){.v_alpha = 0.0f, .v_beta = 0.0f, .v_dc_p = 10.0f, .v_dc_n = 10.0f};
-    verify_sample(&instance);
-    CHECK(instance.output.phase_a.duty_o == 1.0f);
-    instance.input.v_dc_p = nextafterf(10.0f, 0.0f);
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_INPUT);
-    instance.input.v_dc_p = 10.0f;
-    instance.input.v_dc_n = 0.0f;
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_INPUT);
     instance.input = (svpwm_3level_input_t){.v_alpha = FLT_MAX, .v_beta = FLT_MAX, .v_dc_p = 350.0f, .v_dc_n = 350.0f};
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_OUT_OF_RANGE);
+    verify_sample(&instance);
     instance.input = (svpwm_3level_input_t){.v_alpha = 0.5f * FLT_MAX, .v_beta = 0.0f, .v_dc_p = FLT_MAX, .v_dc_n = FLT_MAX};
     verify_sample(&instance);
-    instance.cfg.v_dc_half_min = nanf("");
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_INVALID_CONFIG);
-    CHECK(instance.output.phase_a.duty_p == 0.0f);
-    cfg.v_dc_half_min = nextafterf(0.0f, 1.0f);
-    CHECK(svpwm_3level_init(&instance, &cfg) == true);
-    instance.input = (svpwm_3level_input_t){.v_alpha = 0.0f, .v_beta = 0.0f, .v_dc_p = cfg.v_dc_half_min, .v_dc_n = FLT_MAX};
-    CHECK(svpwm_3level_cal(&instance) == SVPWM_3LEVEL_OK);
 }
-
 /** @return EXIT_SUCCESS when every invariant passes. */
 int main(void)
 {

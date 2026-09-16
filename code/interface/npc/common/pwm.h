@@ -83,11 +83,11 @@ static inline void pwm_correct_phase_duty(const svpwm_3level_phase_output_t *p_p
 
 /** @param v_dc_half_min Minimum valid voltage of each half bus in V.
  *  @param midpoint_kp Midpoint balance gain, A/V; 0 disables balancing.
- *  @return true when the modulator is initialized; outputs remain disabled. */
-bool pwm_init(float v_dc_half_min, float midpoint_kp);
+ *  Initializes validated configuration; outputs remain disabled. */
+void pwm_init(float v_dc_half_min, float midpoint_kp);
 /** @param p_input Coherent voltage snapshot captured at the 5 kHz control update.
- *  @return Modulation status; any failure immediately disables all gates. */
-SVPWM_3LEVEL_STATUS_E pwm_update(const svpwm_3level_input_t *p_input);
+ *  Caller validates input; excessive voltage commands are limited by SVPWM. */
+void pwm_update(const svpwm_3level_input_t *p_input);
 /** @brief Disable all gates and invalidate modulation output; update is needed to restart. */
 void pwm_disable(void);
 /** @return Latest modulation result; read serially after pwm_update(). */

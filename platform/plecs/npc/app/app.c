@@ -45,15 +45,11 @@ static uint64_t update_index;                /* Integer index of the next update
 static double last_call_time;                /* Detect unsupported simulation-time rollback. */
 static bool first_update;                    /* First output establishes the control timing origin. */
 static bool initialized;                     /* Initialization succeeded for this simulation. */
-static float v_alpha;                        /* Read-only closed-loop alpha command, V. */
-static float v_beta;                         /* Read-only closed-loop beta command, V. */
 static float v_alpha_pwm;                    /* Alpha command actually passed to PWM this period, V. */
 static float v_beta_pwm;                     /* Beta command actually passed to PWM this period, V. */
 static float vd_pos_ref = 600.0f;            /* Shell positive d-axis phase-voltage peak reference, V. */
 static float vd_pos_slew_vps = NPC_CFG_DEFAULT_VD_POS_SLEW_VPS; /* Shell soft-start slew, V/s. */
-static float vd_pos_ref_act;                 /* Reference actually passed to the controller, V. */
 static float trip_current;                   /* Raw phase-current trip magnitude, A. */
-static npc_ctrl_monitor_t control_monitor = {0}; /* Read-only copy for Shell and CSV. */
 static float theta;                          /* Present-sample external controller angle, rad. */
 static float freq_hz = 50.0f;                /* Shell electrical reference frequency, Hz. */
 static double phase_cycle;                   /* Shared phase in [0,1), advanced only on control updates. */
@@ -109,30 +105,15 @@ REG_SHELL_VAR(V_OUT_C, v_out_c, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_A
 REG_SHELL_VAR(I_L_A, i_l_a, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_AUTO)
 REG_SHELL_VAR(I_L_B, i_l_b, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_AUTO)
 REG_SHELL_VAR(I_L_C, i_l_c, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_AUTO)
-REG_SHELL_VAR(V_ALPHA, v_alpha, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(V_BETA, v_beta, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(V_ALPHA_PWM, v_alpha_pwm, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(V_BETA_PWM, v_beta_pwm, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(VD_POS_REF, vd_pos_ref, SHELL_FP32, 1000000.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(VD_POS_SLEW, vd_pos_slew_vps, SHELL_FP32, 1000000.0f, 0.001f, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(VD_POS_REF_ACT, vd_pos_ref_act, SHELL_FP32, 1000000.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TRIP_CURRENT, trip_current, SHELL_FP32, FLT_MAX, 0.0f, NULL, SHELL_STA_NULL)
 /* Legacy amplitude names now address the same balanced positive-sequence reference. */
 REG_SHELL_VAR(V_ALPHA_AMP, vd_pos_ref, SHELL_FP32, 1000000.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(V_BETA_AMP, vd_pos_ref, SHELL_FP32, 1000000.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(THETA, theta, SHELL_FP32, 6.283186f, 0.0f, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(VD_POS, control_monitor.output.v_dq[0], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(VQ_POS, control_monitor.output.v_dq[1], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(VD_NEG, control_monitor.output.v_dq[2], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(VQ_NEG, control_monitor.output.v_dq[3], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(ID_POS, control_monitor.output.i_dq[0], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(IQ_POS, control_monitor.output.i_dq[1], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(ID_NEG, control_monitor.output.i_dq[2], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(IQ_NEG, control_monitor.output.i_dq[3], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(ID_POS_REF, control_monitor.output.i_ref[0], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(IQ_POS_REF, control_monitor.output.i_ref[1], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(ID_NEG_REF, control_monitor.output.i_ref[2], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(IQ_NEG_REF, control_monitor.output.i_ref[3], SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(FREQ_HZ, freq_hz, SHELL_FP32, 795.0f, 1.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(RUN_ENABLE, run_enable, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(V_DC_HALF_MIN, v_dc_half_min, SHELL_FP32, 1000000.0f, 0.001f, NULL, SHELL_STA_NULL)
@@ -144,8 +125,6 @@ REG_SHELL_VAR(NP_DELTA_AVG, midpoint_delta_filtered, SHELL_FP32, FLT_MAX, -FLT_M
 REG_SHELL_VAR(NP_CORRECTION, midpoint_correction, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(NP_CURRENT_MAG, midpoint_current_magnitude, SHELL_FP32, FLT_MAX, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CTRL_TICKS, ctrl_ticks, SHELL_UINT32, UINT32_MAX, 0u, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(CTRL_STATUS, ctrl_status, SHELL_UINT32, 12u, 0u, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(CTRL_DETAIL, ctrl_detail, SHELL_UINT32, UINT32_MAX, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(LOG_READY, log_ready, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TRACE_ENABLE, trace_enable, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(TRACE_STATE, trace_state, SHELL_UINT8, 4u, 0u, NULL, SHELL_STA_NULL)
@@ -168,7 +147,7 @@ static void report_status(NPC_APP_STATUS_E status, uint32_t detail, double time_
               "vdc_p=%.6g vdc_n=%.6g half_min=%.6g alpha=%.6g beta=%.6g\n",
               time_s, (unsigned long)ctrl_ticks, (unsigned long)ctrl_status, (unsigned long)detail,
               (unsigned int)run_enable, (double)vd_pos_ref, (double)freq_hz,
-              (double)v_dc_p, (double)v_dc_n, (double)v_dc_half_min, (double)v_alpha, (double)v_beta);
+              (double)v_dc_p, (double)v_dc_n, (double)v_dc_half_min, (double)v_alpha_pwm, (double)v_beta_pwm);
 }
 
 /** @param value DLL double input. @return true for finite double values without narrowing. */
@@ -180,8 +159,8 @@ static inline bool finite_value(double value)
 
 /** @param alpha Alpha voltage. @param beta Beta voltage. @param vdc_p Positive half bus.
  * @param vdc_n Negative half bus. @param p_current Same-update A/B/C fundamental currents.
- * @return Detailed PWM status, zero on success. */
-static uint32_t platform_pwm_write(float alpha, float beta, float vdc_p, float vdc_n,
+ * The caller owns input protection; SVPWM limits an excessive voltage command. */
+static void platform_pwm_write(float alpha, float beta, float vdc_p, float vdc_n,
                                    const float *p_current)
 {
     const svpwm_3level_input_t input = { /* Voltage command and ripple-rejected currents from this calculation. */
@@ -193,7 +172,7 @@ static uint32_t platform_pwm_write(float alpha, float beta, float vdc_p, float v
         .i_b = p_current[1],
         .i_c = p_current[2]
     };
-    SVPWM_3LEVEL_STATUS_E status = pwm_update(&input); /* Compute duties and midpoint-current diagnostics. */
+    pwm_update(&input); /* Compute duties and midpoint-current diagnostics. */
     const svpwm_3level_output_t *p_output = pwm_get_output(); /* Completed modulator result. */
 
     midpoint_current_ref = p_output->midpoint_current_ref;
@@ -202,14 +181,8 @@ static uint32_t platform_pwm_write(float alpha, float beta, float vdc_p, float v
     midpoint_delta_filtered = p_output->midpoint_delta_filtered;
     midpoint_correction = p_output->midpoint_correction_v;
     midpoint_current_magnitude = p_output->midpoint_current_magnitude;
-    if (status == SVPWM_3LEVEL_OK)
-    {
-        v_alpha_pwm = alpha;
-        v_beta_pwm = beta;
-        return 0U; /* HAL success is zero; SVPWM success is not zero. */
-    }
-    /* NOT_READY is zero in the library and must never become HAL success. */
-    return (status == SVPWM_3LEVEL_NOT_READY) ? UINT32_MAX : (uint32_t)status;
+    v_alpha_pwm = alpha;
+    v_beta_pwm = beta;
 }
 static void platform_pwm_disable(void)
 {
@@ -245,10 +218,6 @@ static void bind_control_hal(void)
 static void disable_control(void)
 {
     npc_ctrl_stop();
-    control_monitor = *npc_ctrl_get_monitor();
-    v_alpha = 0.0f;
-    v_beta = 0.0f;
-    vd_pos_ref_act = 0.0f;
 }
 
 /** @param p_state Current callback whose output array receives the held frame. */
@@ -324,8 +293,6 @@ void plecsStart(struct SimulationState *p_state)
         p_state->errorMessage = "NPC requires finite start time.";
         return;
     }
-    v_alpha = 0.0f;
-    v_beta = 0.0f;
     v_out_a = 0.0f;
     v_out_b = 0.0f;
     v_out_c = 0.0f;
@@ -343,11 +310,11 @@ void plecsStart(struct SimulationState *p_state)
     midpoint_kp = NPC_MIDPOINT_KP;
     applied_midpoint_kp = midpoint_kp;
     __atomic_store_n(&plecs_time_100us, 0u, __ATOMIC_RELAXED);
-    initialized = pwm_init(applied_half_min, applied_midpoint_kp);
+    pwm_init(applied_half_min, applied_midpoint_kp);
+    initialized = true;
     if (npc_cfg_set_ctrl_ts((float)PLECS_NPC_CONTROL_PERIOD_S) == 0U) initialized = false;
     section_init(); /* Registers lifecycle tasks and the 5 kHz controller callback. */
-    if ((npc_cfg_is_ready() == 0u) ||                         /* Control period and frequency must agree. */
-        (npc_ctrl_get_monitor()->status == NPC_CTRL_CONTROL)) /* Controller initialization must succeed. */
+    if (npc_cfg_is_ready() == 0u) /* Validate the platform configuration before dispatch. */
     {
         initialized = false;
     }
@@ -425,62 +392,34 @@ static void update(const struct SimulationState *p_state)
     if ((v_dc_half_min != applied_half_min) || /* Apply a changed half-bus threshold. */
         (midpoint_kp != applied_midpoint_kp))  /* Apply a changed balance gain without stale configuration. */
     {
-        if ((npc_cfg_set_v_dc_half_min(v_dc_half_min) == 0U) || /* Publish the bus threshold. */
-            (pwm_init(v_dc_half_min, midpoint_kp) == false))  /* Reload modulation parameters. */
+        if (npc_cfg_set_v_dc_half_min(v_dc_half_min) == 0U) /* Application validates the bus threshold. */
         {
             disable_control();
             report_status(NPC_APP_PWM_CONFIG, 0U, p_state->time);
             return;
         }
+        pwm_init(v_dc_half_min, midpoint_kp); /* Reload validated modulation parameters. */
         applied_half_min = v_dc_half_min;
         applied_midpoint_kp = midpoint_kp;
     }
     generate_reference();
     section_interrupt();
-    control_monitor = *npc_ctrl_get_monitor();
-    v_alpha = control_monitor.output.v_alpha;
-    v_beta = control_monitor.output.v_beta;
-    vd_pos_ref_act = control_monitor.vd_pos_ref_act;
-    if ((control_monitor.status == NPC_CTRL_OVERCURRENT) &&
-        (ctrl_status != control_monitor.status))
-    {
-        PLECS_LOG("NPC trip t=%.9f status=%lu phase=%lu i=[%.6g %.6g %.6g] "
-                  "v=[%.6g %.6g %.6g] i_trip=%.6g\n",
-                  p_state->time, (unsigned long)control_monitor.status, (unsigned long)control_monitor.detail,
-                  (double)i_l_a, (double)i_l_b, (double)i_l_c,
-                  (double)v_out_a, (double)v_out_b, (double)v_out_c,
-                  (double)trip_current);
-    }
-    report_status((NPC_APP_STATUS_E)control_monitor.status, control_monitor.detail, p_state->time);
 }
 
 /** @param time_s Timestamp of the coherent post-control snapshot, before Shell task execution. */
 static void trace_sample(double time_s)
 {
     const float values[] = {
-        (float)run_enable, (float)ctrl_status, (float)ctrl_detail, v_dc_p, v_dc_n,
-        v_out_a, v_out_b, v_out_c, i_l_a, i_l_b, i_l_c, theta, vd_pos_ref, vd_pos_ref_act,
-        control_monitor.output.v_dq[0], control_monitor.output.v_dq[1], control_monitor.output.v_dq[2], control_monitor.output.v_dq[3],
-        control_monitor.output.i_dq[0], control_monitor.output.i_dq[1], control_monitor.output.i_dq[2], control_monitor.output.i_dq[3],
-        control_monitor.output.i_ref[0], control_monitor.output.i_ref[1], control_monitor.output.i_ref[2], control_monitor.output.i_ref[3],
-        v_alpha, v_beta, v_alpha_pwm, v_beta_pwm,
-        control_monitor.integral_v[0], control_monitor.integral_v[1], control_monitor.integral_v[2], control_monitor.integral_v[3],
-        control_monitor.integral_i[0], control_monitor.integral_i[1], control_monitor.integral_i[2], control_monitor.integral_i[3],
-        control_monitor.output.current_limited ? 1.0f : 0.0f, control_monitor.output.voltage_limited ? 1.0f : 0.0f,
+        (float)run_enable, v_dc_p, v_dc_n,
+        v_out_a, v_out_b, v_out_c, i_l_a, i_l_b, i_l_c, theta, vd_pos_ref,
+        v_alpha_pwm, v_beta_pwm,
         output_frame[0], output_frame[1], output_frame[2], output_frame[3], output_frame[4], output_frame[5], output_frame[6],
         midpoint_kp, midpoint_current_ref, midpoint_current, midpoint_offset,
-        control_monitor.output.i_fundamental[0], control_monitor.output.i_fundamental[1], control_monitor.output.i_fundamental[2],
-        control_monitor.output.i_bias_ab[0], control_monitor.output.i_bias_ab[1],
-        control_monitor.output.v_damping_ab[0], control_monitor.output.v_damping_ab[1],
         midpoint_delta_filtered, midpoint_correction, midpoint_current_magnitude};
     static const char header[] =
-        "time_s,run,status,detail,vdc_p,vdc_n,va,vb,vc,ia,ib,ic,theta,ref,ref_actual,"
-        "vd_pos,vq_pos,vd_neg,vq_neg,id_pos,iq_pos,id_neg,iq_neg,"
-        "id_pos_ref,iq_pos_ref,id_neg_ref,iq_neg_ref,alpha,beta,alpha_pwm,beta_pwm,"
-        "integral_vdp,integral_vqp,integral_vdn,integral_vqn,integral_idp,integral_iqp,integral_idn,integral_iqn,"
-        "current_limited,voltage_limited,duty_a_pos,duty_a_neg,duty_b_pos,duty_b_neg,duty_c_pos,duty_c_neg,pwm_enable,"
-        "np_kp,np_i_ref,np_i_est,np_offset,ia_fundamental,ib_fundamental,ic_fundamental,i_bias_alpha,i_bias_beta,"
-        "v_damping_alpha,v_damping_beta,np_delta_avg,np_correction,np_current_magnitude";
+        "time_s,run,vdc_p,vdc_n,va,vb,vc,ia,ib,ic,theta,ref,alpha_pwm,beta_pwm,"
+        "duty_a_pos,duty_a_neg,duty_b_pos,duty_b_neg,duty_c_pos,duty_c_neg,pwm_enable,"
+        "np_kp,np_i_ref,np_i_est,np_offset,np_delta_avg,np_correction,np_current_magnitude";
     if (trace_enable != 1u)
     {
         if (trace_state == 2u)

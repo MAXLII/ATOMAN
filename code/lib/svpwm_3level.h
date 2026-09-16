@@ -31,16 +31,6 @@
 
 #include <stdbool.h>
 
-typedef enum
-{
-    SVPWM_3LEVEL_NOT_READY = 0,    /* No usable modulation result, including after reset. */
-    SVPWM_3LEVEL_OK,               /* Current phase dwell ratios may be consumed. */
-    SVPWM_3LEVEL_INVALID_ARGUMENT, /* A required object pointer is NULL. */
-    SVPWM_3LEVEL_INVALID_CONFIG,   /* The configured DC-link threshold is not finite or positive. */
-    SVPWM_3LEVEL_INVALID_INPUT,    /* Non-finite voltage input or low half bus. */
-    SVPWM_3LEVEL_OUT_OF_RANGE      /* Requested vector cannot be synthesized in the linear region. */
-} SVPWM_3LEVEL_STATUS_E;
-
 /**
  * Voltage convention: amplitude-invariant Clarke transform, alpha along phase A,
  * positive beta toward phase B. For a zero-sequence-free reference:
@@ -108,7 +98,6 @@ typedef struct svpwm_3level_output
     svpwm_3level_phase_output_t phase_a; /* Phase A dwell ratios for the latest calculation. */
     svpwm_3level_phase_output_t phase_b; /* Phase B dwell ratios for the latest calculation. */
     svpwm_3level_phase_output_t phase_c; /* Phase C dwell ratios for the latest calculation. */
-    SVPWM_3LEVEL_STATUS_E status;        /* Dwell ratios are usable only when equal to SVPWM_3LEVEL_OK. */
     float midpoint_current_ref;         /* Requested current out of the midpoint, A. */
     float midpoint_current;             /* Predicted mean current out of the midpoint, A. */
     float common_mode_v;                /* Selected common-mode voltage relative to the raw reference, V. */
@@ -126,51 +115,29 @@ typedef struct svpwm_3level
 } svpwm_3level_t;
 
 /**
- * @brief Initialize an instance and copy its configuration.
- * @param p_svpwm Caller-owned instance; p_cfg may point to its cfg member.
- * @param p_cfg Configuration source; copied, not retained.
- * @return true on successful initialization; false on NULL or invalid configuration.
- *
- * Clear input and all dwell ratios; set output.status to NOT_READY on success.
- * On failure with a non-NULL instance,
- * clear the instance and set INVALID_ARGUMENT or INVALID_CONFIG as appropriate.
- * Initialization does not produce a valid PWM command.
+ * @brief Initialize an instance and copy validated configuration without checking it.
+ * @param p_svpwm Valid caller-owned instance; p_cfg may point to its cfg member.
+ * @param p_cfg Valid configuration source; copied, not retained.
+ * Clears input, runtime history and dwell ratios. The caller keeps PWM disabled until cal().
  */
-bool svpwm_3level_init(svpwm_3level_t *p_svpwm, const svpwm_3level_cfg_t *p_cfg);
+void svpwm_3level_init(svpwm_3level_t *p_svpwm, const svpwm_3level_cfg_t *p_cfg);
 
 /**
- * @brief Calculate 1 complete PWM period from the current input snapshot.
- * @param p_svpwm Initialized instance; exclusive access is required for this call.
- * @return Current calculation status; INVALID_ARGUMENT for a NULL instance.
- *
- * Validate configuration and all inputs; reject non-finite values, either half
- * bus below v_dc_half_min. Synthesize
- * the reference inside the attainable hexagon (phase maximum minus minimum <=
- * total bus voltage), without reference clipping or overmodulation. Feasibility
- * allows 8 * FLT_EPSILON of boundary roundoff in max-half-bus units, with final
- * duty clipping only to remove that roundoff. A non-OK result clears all
- * dwell ratios and replaces the previous status, so stale output is not reused.
- *
- * With midpoint_kp > 0, choose a feasible common-mode offset and mapping to
- * track -midpoint_kp * (v_dc_p - v_dc_n) using sum(duty_o * phase_current).
- * Caller supplies finite phase currents and a finite nonnegative gain. Current
- * is positive from the bridge to the AC side. Zero gain retains the centered
- * legacy modulation. No integral state is used; unattainable midpoint current
- * is limited by modulation feasibility. Zero reference retains OOO.
- * This implementation provides no minimum pulse handling or dead-time compensation.
- * A single instance is not reentrant. The caller owns PWM timing and must arrange
- * coherent input capture and output transfer across ISR/task boundaries.
+ * @brief Calculate one complete PWM period, radially limiting commands to the attainable hexagon.
+ * @param p_svpwm Valid initialized instance with exclusive access for this call.
+ * The caller validates configuration, finite voltages/currents and strictly positive half buses.
+ * No pointer, configuration, input-finiteness or undervoltage checks occur here.
+ * A command whose phase maximum minus minimum exceeds the total bus is scaled uniformly;
+ * vector direction is retained and every phase receives bounded P/O/N dwell ratios.
+ * Both instantaneous and averaged midpoint-balance modes use this limited reference.
+ * Zero reference uses OOO in the instantaneous mode. An O state is an active midpoint
+ * connection; hardware shutdown, dead time and input protection remain caller responsibilities.
  */
-SVPWM_3LEVEL_STATUS_E svpwm_3level_cal(svpwm_3level_t *p_svpwm);
+void svpwm_3level_cal(svpwm_3level_t *p_svpwm);
 
 /**
- * @brief Invalidate the output while retaining configuration and input values.
- * @param p_svpwm Instance to reset; NULL is a no-op.
- *
- * Clear all dwell ratios and set
- * NOT_READY. Cleared duties are an invalid sentinel, not a realizable waveform.
- * The caller must inhibit PWM when status is not OK. An O state is an active
- * midpoint connection and must never be treated as a hardware shutdown command.
+ * @brief Clear dwell ratios and balance history while retaining configuration and input.
+ * @param p_svpwm Valid instance; the caller must disable hardware PWM separately.
  */
 void svpwm_3level_reset(svpwm_3level_t *p_svpwm);
 

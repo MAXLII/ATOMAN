@@ -43,7 +43,6 @@ static double verify_output(const svpwm_3level_t *p_mod)
     double poles[3] = {0.0}; /* Mean pole voltages reconstructed from dwell fractions. */
     double neutral = 0.0;    /* Sum of currents during midpoint connection. */
 
-    CHECK(p_mod->output.status == SVPWM_3LEVEL_OK);
     for (uint32_t phase = 0u; phase < 3u; ++phase) /* Independent voltage and charge reconstruction. */
     {
         CHECK((phases[phase].duty_p >= 0.0f) && /* Positive dwell cannot be negative. */
@@ -73,7 +72,7 @@ static void test_offset_authority(void)
     const svpwm_3level_cfg_t cfg = {.v_dc_half_min = 10.0f, .midpoint_kp = 1.8849556f}; /* A/V gain. */
     const double pi = acos(-1.0); /* Host reference constant. */
 
-    CHECK(svpwm_3level_init(&mod, &cfg));
+    svpwm_3level_init(&mod, &cfg);
     for (uint32_t step = 0u; step < 720u; ++step) /* Sweep all voltage angles and both current directions. */
     {
         const double theta = 2.0 * pi * (double)step / 720.0; /* Voltage angle. */
@@ -102,7 +101,7 @@ static void test_offset_authority(void)
         phase_i[0] = mod.input.i_a;
         phase_i[1] = mod.input.i_b;
         phase_i[2] = mod.input.i_c;
-        CHECK(svpwm_3level_cal(&mod) == SVPWM_3LEVEL_OK);
+        svpwm_3level_cal(&mod);
         actual = verify_output(&mod);
         target = -(double)cfg.midpoint_kp * ((double)mod.input.v_dc_p - mod.input.v_dc_n);
         CHECK(fabs(target - mod.output.midpoint_current_ref) < 0.001);
@@ -142,7 +141,7 @@ static void test_capacitor_loop(double initial_delta, double amplitude)
     double lower_charge = capacitance * (1330.0 - initial_delta) / 2.0; /* Lower capacitor positive-plate charge, C. */
     double final_peak = 0.0; /* Maximum imbalance over the final electrical period, V. */
 
-    CHECK(svpwm_3level_init(&mod, &cfg));
+    svpwm_3level_init(&mod, &cfg);
     for (uint32_t tick = 0u; tick < 15000u; ++tick) /* Three seconds of ideal capacitor charge dynamics. */
     {
         const double theta = 2.0 * pi * 50.0 * ts * (double)tick; /* Balanced voltage angle. */
@@ -155,7 +154,7 @@ static void test_capacitor_loop(double initial_delta, double amplitude)
         mod.input.i_a = (float)(amplitude * cos(theta));
         mod.input.i_b = (float)(amplitude * cos(theta - 2.0 * pi / 3.0));
         mod.input.i_c = -mod.input.i_a - mod.input.i_b;
-        CHECK(svpwm_3level_cal(&mod) == SVPWM_3LEVEL_OK);
+        svpwm_3level_cal(&mod);
         midpoint = verify_output(&mod);
         /* Fixed total bus and equal capacitors: Q_lower - Q_upper loses i_mid * Ts. */
         upper_charge += 0.5 * midpoint * ts;
@@ -177,14 +176,14 @@ static void test_no_authority(void)
     svpwm_3level_t mod = {0}; /* Instance with no phase current. */
     const svpwm_3level_cfg_t cfg = {.v_dc_half_min = 20.0f, .midpoint_kp = 2.0f}; /* Nonzero balance demand. */
 
-    CHECK(svpwm_3level_init(&mod, &cfg));
+    svpwm_3level_init(&mod, &cfg);
     mod.input = (svpwm_3level_input_t){.v_alpha = 300.0f, .v_beta = 100.0f, .v_dc_p = 700.0f, .v_dc_n = 630.0f};
-    CHECK(svpwm_3level_cal(&mod) == SVPWM_3LEVEL_OK);
+    svpwm_3level_cal(&mod);
     CHECK(verify_output(&mod) == 0.0);
     CHECK(mod.output.midpoint_current_ref == -140.0f);
     mod.input.v_alpha = 0.0f;
     mod.input.v_beta = 0.0f;
-    CHECK(svpwm_3level_cal(&mod) == SVPWM_3LEVEL_OK);
+    svpwm_3level_cal(&mod);
     CHECK(mod.output.phase_a.duty_o == 1.0f);
     CHECK(mod.output.phase_b.duty_o == 1.0f);
     CHECK(mod.output.phase_c.duty_o == 1.0f);
