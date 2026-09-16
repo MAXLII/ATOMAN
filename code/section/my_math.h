@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file    my_math.h
- * @brief   Control math helper macros.
+ * @brief   Control math helper macros and inline coordinate transforms.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -170,6 +170,65 @@
 #undef M_2PI
 #endif
 #define M_2PI (2.0f * M_PI)
+
+/**
+ * @brief Amplitude-invariant Clarke transform; zero sequence is discarded.
+ * @param a Phase A value.
+ * @param b Phase B value, lagging A by 120 degrees for positive sequence.
+ * @param c Phase C value, leading A by 120 degrees for positive sequence.
+ * @param p_alpha Alpha output; valid and distinct from p_beta.
+ * @param p_beta Beta output; valid and distinct from p_alpha.
+ */
+static inline void clarke(float a, float b, float c, float *p_alpha, float *p_beta)
+{
+    *p_alpha = (2.0f * a - b - c) / 3.0f;
+    *p_beta = (b - c) * M_1_SQRT3;
+}
+
+/**
+ * @brief Inverse amplitude-invariant Clarke transform with zero sequence set to zero.
+ * @param alpha Alpha-axis value.
+ * @param beta Beta-axis value.
+ * @param p_a Phase A output; all output pointers must be valid and distinct.
+ * @param p_b Phase B output.
+ * @param p_c Phase C output.
+ */
+static inline void inv_clarke(float alpha, float beta, float *p_a, float *p_b, float *p_c)
+{
+    *p_a = alpha;
+    *p_b = -0.5f * alpha + M_SQRT3_2 * beta;
+    *p_c = -0.5f * alpha - M_SQRT3_2 * beta;
+}
+
+/**
+ * @brief Park transform; the d axis follows theta and q is positive at theta + pi/2.
+ * @param alpha Alpha-axis value.
+ * @param beta Beta-axis value.
+ * @param sine Sine of theta; negate for a negative-sequence rotating frame.
+ * @param cosine Cosine of theta.
+ * @param p_d Direct-axis output; valid and distinct from p_q.
+ * @param p_q Quadrature-axis output; valid and distinct from p_d.
+ */
+static inline void park(float alpha, float beta, float sine, float cosine, float *p_d, float *p_q)
+{
+    *p_d = cosine * alpha + sine * beta;
+    *p_q = -sine * alpha + cosine * beta;
+}
+
+/**
+ * @brief Inverse Park transform using the same angle convention as park.
+ * @param d Direct-axis value.
+ * @param q Quadrature-axis value.
+ * @param sine Sine of theta; negate for a negative-sequence rotating frame.
+ * @param cosine Cosine of theta.
+ * @param p_alpha Alpha output; valid and distinct from p_beta.
+ * @param p_beta Beta output; valid and distinct from p_alpha.
+ */
+static inline void inv_park(float d, float q, float sine, float cosine, float *p_alpha, float *p_beta)
+{
+    *p_alpha = cosine * d - sine * q;
+    *p_beta = sine * d + cosine * q;
+}
 
 /* Symmetric ramp: move act toward tag with the same step in both directions. */
 #define RAMP(act, tag, step)            \
