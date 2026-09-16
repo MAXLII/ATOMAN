@@ -25,6 +25,7 @@ ATOMAN 是面向数字电源的嵌入式公共工程，本地通常称为 `base`
 | 功率控制 | Buck、Boost、BB、LLC、CLLC、PFC、逆变器和 NPC，包含浮点与整数实现 | [CTRL 组织架构](docs/design/control/ctrl_design.md) |
 | 公共算法 | PI/PR、SOGI/DSOGI、SVPWM、滤波、RMS、查表、检测和时序组件 | [控制算法](docs/application/library/control_blocks_usage.md) · [信号处理](docs/application/library/signal_processing_usage.md) · [检测与时序](docs/application/library/detection_sequence_usage.md) |
 | 通信与数据 | 多链路、多协议分发，FRAME 通信，以及项目数据交换 | [Link / link_process](docs/design/framework/section/link_design.md) · [FRAME](docs/design/communication/frame_design.md) · [数据池与模块边界](docs/engineering_design.md) |
+| 仿真 TCP 通信 | MATLAB / PLECS 仿真模块间的 TCP 通信与路由，以及连接 FRAME 上位机进行参数读写和在线调试 | [TCP 组件与接入](docs/SIM_COMM_USAGE.md) · [MATLAB 双节点 S-Function](docs/MATLAB_FRAME_ROUTE_BRIDGE_USAGE.md) · [PLECS 与 FRAME 联调](docs/application/communication/plecs_frame_bridge.md) |
 | 注册与调度 | 初始化、周期任务、中断、状态机和静态模块注册 | [Section 组织架构](docs/design/framework/section/section_design.md) |
 | 调试与观测 | 参数、波形、频响、性能、运行轨迹和故障现场 | [调试系统](docs/design/debug/debug_system_design.md) |
 | 存储与升级 | Flash 分区与访问、Bootloader、IAP、镜像校验和恢复 | [FAL](docs/design/storage/fal_design.md) · [Bootloader](docs/design/bootloader/bootloader_design.md) |
