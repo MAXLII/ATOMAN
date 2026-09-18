@@ -47,7 +47,7 @@ static bool first_update;                    /* First output establishes the con
 static bool initialized;                     /* Initialization succeeded for this simulation. */
 static float v_alpha_pwm;                    /* Alpha command actually passed to PWM this period, V. */
 static float v_beta_pwm;                     /* Beta command actually passed to PWM this period, V. */
-static float vd_pos_ref = 600.0f;            /* Shell positive d-axis phase-voltage peak reference, V. */
+static float vd_pos_ref = 563.0f;            /* Shell positive d-axis phase-voltage peak reference, V. */
 static float vd_pos_slew_vps = NPC_CFG_DEFAULT_VD_POS_SLEW_VPS; /* Shell soft-start slew, V/s. */
 static float trip_current;                   /* Raw phase-current trip magnitude, A. */
 static float theta;                          /* Present-sample external controller angle, rad. */
@@ -299,7 +299,7 @@ void plecsStart(struct SimulationState *p_state)
     i_l_a = 0.0f;
     i_l_b = 0.0f;
     i_l_c = 0.0f;
-    vd_pos_ref = 0.0f;
+    vd_pos_ref = 563.0f;
     vd_pos_slew_vps = NPC_CFG_DEFAULT_VD_POS_SLEW_VPS;
     theta = 0.0f;
     freq_hz = 50.0f;
