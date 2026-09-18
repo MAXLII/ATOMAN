@@ -71,6 +71,10 @@ PROJECT_SOURCES := \
     ../../code/lib/bch4.c \
     ../../code/lib/flash_integrity.c \
     ../../code/lib/fal/fal_core.c \
+    ../../code/lib/codec_rle.c \
+    ../../code/lib/codec_dict.c \
+    ../../code/lib/codec_lzss.c \
+    ../../code/lib/codec_zero.c \
     ../../code/data_source/demo/demo_storage_record.c \
     ../../code/data_source/demo/demo_storage_service.c \
     ../../code/data_source/demo/demo_storage_section.c \
@@ -116,7 +120,8 @@ PROJECT_SOURCES := \
     ../../code/interface/demo/common/comm_link.c \
     ../../code/interface/demo/common/jitter.c \
     ../../code/section/srtos_m/section.c \
-    ../../code/data_source/comm/comm.c
+    ../../code/data_source/comm/comm.c \
+    ../../code/data_source/comm/comm_v1.c
 
 # Explicit opt-in hardware tests; the default firmware never starts this task.
 ifeq ($(FAL_BOARD_TEST),1)
