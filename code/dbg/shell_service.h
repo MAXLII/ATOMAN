@@ -59,6 +59,9 @@ typedef struct
 {
     uint8_t active;
     DEC_MY_PRINTF;
+    uint8_t sop;
+    uint8_t version;
+    uint8_t seq;
     uint8_t src;
     uint8_t d_src;
     uint8_t dst;

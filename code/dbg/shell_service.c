@@ -227,8 +227,9 @@ DBG_FLOAT_DIAGNOSTIC_END
 /* Context used when a remote peer requests a full shell item enumeration. */
 static shell_report_ctx_t shell_report_ctx = {0};
 
-static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_data_num_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint32_t shell_data_num = shell_count_get();
 
     /* Ignore replies. A fresh host request always restarts the report cursor. */
@@ -237,6 +238,8 @@ static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
     section_packform_t pack_ret = {0};
+    pack_ret.sop = p_pack->sop;
+    pack_ret.version = p_pack->version;
     pack_ret.src = p_pack->dst;
     pack_ret.d_src = p_pack->d_dst;
     pack_ret.dst = p_pack->src;
@@ -244,12 +247,16 @@ static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     pack_ret.cmd_set = CMD_SET_SHELL_DATA_NUM;
     pack_ret.cmd_word = CMD_WORD_SHELL_DATA_NUM;
     pack_ret.is_ack = 1u;
+    pack_ret.seq = p_pack->seq;
     pack_ret.len = sizeof(uint32_t);
     pack_ret.p_data = (uint8_t *)&shell_data_num;
 
     /* Save the routing information so the follow-up report task can stream data. */
     shell_report_ctx.active = 1u;
     shell_report_ctx.my_printf = my_printf;
+    shell_report_ctx.sop = p_pack->sop;
+    shell_report_ctx.version = p_pack->version;
+    shell_report_ctx.seq = p_pack->seq;
     shell_report_ctx.p_item = p_shell_first;
     shell_report_ctx.src = pack_ret.src;
     shell_report_ctx.d_src = pack_ret.d_src;
@@ -285,6 +292,18 @@ static void shell_data_report_act(void)
             memcpy(shell_report_list.name, p_shell->p_name, p_shell->p_name_size);
             shell_report_list.auto_report = (p_shell->status & (1u << 2)) ? 1u : 0u;
 
+            /* 主动上报继承请求的协议：v1 会话用 0xE9 且 SEQ 循环递增，旧会话保持 0xE8。 */
+            if (shell_report_ctx.sop == COMM_V1_SOP)
+            {
+                packform.sop = COMM_V1_SOP;
+                packform.version = COMM_V1_VERSION;
+                shell_report_ctx.seq = (uint8_t)((shell_report_ctx.seq + 1u) & 0x07u);
+                packform.seq = shell_report_ctx.seq;
+            }
+            else
+            {
+                packform.sop = 0xE8u;
+            }
             packform.src = shell_report_ctx.src;
             packform.d_src = shell_report_ctx.d_src;
             packform.dst = shell_report_ctx.dst;
@@ -302,8 +321,9 @@ static void shell_data_report_act(void)
 
 REG_TASK_MS(50, shell_data_report_act)
 
-static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_read_data_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     shell_read_data_t *p_shell_read_data;
 
     if (p_pack == NULL)
@@ -331,6 +351,8 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         memcpy(shell_read_data_ret.name, p->p_name, p->p_name_size);
 
         section_packform_t packform = {0};
+        packform.sop = p_pack->sop;
+        packform.version = p_pack->version;
         packform.src = p_pack->dst;
         packform.d_src = p_pack->d_dst;
         packform.dst = p_pack->src;
@@ -338,6 +360,7 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         packform.cmd_set = CMD_SET_SHELL_READ_DATA;
         packform.cmd_word = CMD_WORD_SHELL_READ_DATA;
         packform.is_ack = 1u;
+        packform.seq = p_pack->seq;
         packform.len = (uint16_t)(sizeof(shell_read_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
         packform.p_data = (uint8_t *)&shell_read_data_ret;
 
@@ -347,8 +370,9 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_READ_DATA, CMD_WORD_SHELL_READ_DATA, shell_read_data_act)
 
-static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_write_data_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     shell_write_data_t *p_shell_write_data;
     section_shell_t *p;
 
@@ -447,6 +471,8 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         shell_write_data_ret.type = (uint8_t)p->type;
 
         section_packform_t packform = {0};
+        packform.sop = p_pack->sop;
+        packform.version = p_pack->version;
         packform.src = p_pack->dst;
         packform.d_src = p_pack->d_dst;
         packform.dst = p_pack->src;
@@ -454,6 +480,7 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         packform.cmd_set = CMD_SET_SHELL_WRITE_DATA;
         packform.cmd_word = CMD_WORD_SHELL_WRITE_DATA;
         packform.is_ack = 1u;
+        packform.seq = p_pack->seq;
         packform.len = (uint16_t)(sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
         packform.p_data = (uint8_t *)&shell_write_data_ret;
 
@@ -467,8 +494,9 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_WRITE_DATA, CMD_WORD_SHELL_WRITE_DATA, shell_write_data_act)
 
-static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_wave_param_enable_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     shell_wave_enable_param_t *p_shell_wave_enable_param;
 
     if (p_pack == NULL)
@@ -501,11 +529,16 @@ static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINT
     }
 
     section_packform_t packform = {0};
+    packform.sop = p_pack->sop;
+    packform.version = p_pack->version;
     packform.cmd_set = CMD_SET_SHELL_WAVE_ENABLE_PARAM;
     packform.cmd_word = CMD_WORD_SHELL_WAVE_ENABLE_PARAM;
     packform.src = p_pack->dst;
+    packform.d_src = p_pack->d_dst;
     packform.dst = p_pack->src;
+    packform.d_dst = p_pack->d_src;
     packform.is_ack = 1u;
+    packform.seq = p_pack->seq;
     packform.len = sizeof(shell_wave_enable_param_ack_t);
     packform.p_data = (uint8_t *)&shell_wave_enable_param_ack;
     comm_send_data(&packform, my_printf);
@@ -525,9 +558,16 @@ static section_link_tx_func_t *p_shell_wave_report_printf;
 static uint8_t shell_wave_src = 0u;
 /* Cached destination address for wave packets. */
 static uint8_t shell_wave_dst = 0u;
+/* Cached wire protocol of the wave session (request protocol). */
+static uint8_t shell_wave_sop = 0xE8u;
+/* Cached wave version for COMM v1 sessions. */
+static uint8_t shell_wave_version = COMM_V1_VERSION;
+/* Wave report sequence counter (0..7) for COMM v1 streams. */
+static uint8_t shell_wave_seq = 0u;
 
-static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_wave_start_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if (p_pack->len != sizeof(shell_wave_start_t))
     {
         return;
@@ -536,23 +576,32 @@ static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     shell_wave_report_flg = p_shell_wave_start->start_report;
 
     section_packform_t packform = {0};
+    packform.sop = p_pack->sop;
+    packform.version = p_pack->version;
     packform.cmd_set = CMD_SET_SHELL_WAVE_START;
     packform.cmd_word = CMD_WORD_SHELL_WAVE_START;
     packform.src = p_pack->dst;
+    packform.d_src = p_pack->d_dst;
     packform.dst = p_pack->src;
+    packform.d_dst = p_pack->d_src;
     packform.is_ack = 1u;
+    packform.seq = p_pack->seq;
     packform.len = 0u;
     packform.p_data = NULL;
     comm_send_data(&packform, my_printf);
-    /* Cache the response route so the periodic task can keep streaming later. */
+    /* Cache the response route and wire protocol so the periodic task can keep streaming later. */
     p_shell_wave_report_printf = my_printf;
     shell_wave_src = packform.src;
     shell_wave_dst = packform.dst;
+    shell_wave_sop = p_pack->sop;
+    shell_wave_version = p_pack->version;
+    shell_wave_seq = p_pack->seq;
 }
 REG_COMM(CMD_SET_SHELL_WAVE_START, CMD_WORD_SHELL_WAVE_START, shell_wave_start_act)
 
-static void shell_wave_period_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_wave_period_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if (p_pack->len != sizeof(shell_wave_period_t))
     {
         return;
@@ -563,11 +612,16 @@ static void shell_wave_period_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     shell_wave_period_ack_t shell_wave_period_ack = {.reprot_period = shell_wave_report_period};
 
     section_packform_t packform = {0};
+    packform.sop = p_pack->sop;
+    packform.version = p_pack->version;
     packform.cmd_set = CMD_SET_SHELL_WAVE_PERIOD;
     packform.cmd_word = CMD_WORD_SHELL_WAVE_PERIOD;
     packform.src = p_pack->dst;
+    packform.d_src = p_pack->d_dst;
     packform.dst = p_pack->src;
+    packform.d_dst = p_pack->d_src;
     packform.is_ack = 1u;
+    packform.seq = p_pack->seq;
     packform.len = sizeof(shell_wave_period_ack_t);
     packform.p_data = (uint8_t *)&shell_wave_period_ack;
     comm_send_data(&packform, my_printf);
@@ -578,7 +632,19 @@ static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
 {
     section_packform_t packform = {0};
 
-    /* Send one wave sample or one frame marker packet. */
+    /* Send one wave sample or one frame marker packet, inheriting the wire
+     * protocol of the session start request. */
+    if (shell_wave_sop == COMM_V1_SOP)
+    {
+        packform.sop = COMM_V1_SOP;
+        packform.version = shell_wave_version;
+        shell_wave_seq = (uint8_t)((shell_wave_seq + 1u) & 0x07u);
+        packform.seq = shell_wave_seq;
+    }
+    else
+    {
+        packform.sop = 0xE8u;
+    }
     packform.cmd_set = CMD_SET_SHELL_WAVE_PARAM;
     packform.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
     packform.src = shell_wave_src;

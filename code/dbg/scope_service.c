@@ -48,6 +48,9 @@ typedef struct
     DEC_MY_PRINTF;
     uint8_t active;
     uint8_t index;
+    uint8_t sop;
+    uint8_t version;
+    uint8_t seq;
     uint8_t src;
     uint8_t d_src;
     uint8_t dst;
@@ -82,6 +85,8 @@ static void scope_service_reply(section_packform_t *p_req_pack,
 {
     section_packform_t packform = {0};
 
+    packform.sop = p_req_pack->sop;
+    packform.version = p_req_pack->version;
     packform.cmd_set = CMD_SET_SCOPE;
     packform.cmd_word = cmd_word;
     packform.dst = p_req_pack->src;
@@ -89,6 +94,7 @@ static void scope_service_reply(section_packform_t *p_req_pack,
     packform.src = p_req_pack->dst;
     packform.d_src = p_req_pack->d_dst;
     packform.is_ack = is_ack;
+    packform.seq = p_req_pack->seq;
     packform.len = len;
     packform.p_data = p_data;
     comm_send_data(&packform, my_printf);
@@ -189,6 +195,9 @@ static void scope_service_capture_route(scope_list_ctx_t *p_ctx, section_packfor
     }
 
     p_ctx->my_printf = my_printf;
+    p_ctx->sop = p_req_pack->sop;
+    p_ctx->version = p_req_pack->version;
+    p_ctx->seq = p_req_pack->seq;
     p_ctx->src = p_req_pack->dst;
     p_ctx->d_src = p_req_pack->d_dst;
     p_ctx->dst = p_req_pack->src;
@@ -204,6 +213,18 @@ static void scope_service_send_active(scope_list_ctx_t *p_ctx, uint8_t cmd_word,
         return;
     }
 
+    /* 主动上报继承请求协议：v1 会话用 0xE9 且 SEQ 循环递增。 */
+    if (p_ctx->sop == COMM_V1_SOP)
+    {
+        packform.sop = COMM_V1_SOP;
+        packform.version = p_ctx->version;
+        p_ctx->seq = (uint8_t)((p_ctx->seq + 1u) & 0x07u);
+        packform.seq = p_ctx->seq;
+    }
+    else
+    {
+        packform.sop = 0xE8u;
+    }
     packform.cmd_set = CMD_SET_SCOPE;
     packform.cmd_word = cmd_word;
     packform.src = p_ctx->src;
@@ -294,8 +315,9 @@ static void scope_service_send_empty_list(section_packform_t *p_pack, DEC_MY_PRI
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_LIST_QUERY, 1u, (uint8_t *)&item, (uint16_t)sizeof(item));
 }
 
-static void scope_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_list_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
@@ -314,8 +336,9 @@ static void scope_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_poll_list();
 }
 
-static void scope_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_info_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
@@ -349,8 +372,9 @@ static void scope_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_INFO_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_var_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = 0xFFu;
     uint8_t var_index = 0xFFu;
 
@@ -403,8 +427,9 @@ static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_VAR_QUERY, 1u, payload, (uint16_t)(sizeof(ack) + name_len));
 }
 
-static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_start_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -450,8 +475,9 @@ static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_START, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_trigger_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -494,8 +520,9 @@ static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_TRIGGER, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_stop_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -528,8 +555,9 @@ static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_STOP, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_reset_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -563,8 +591,9 @@ static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_RESET, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_sample_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = 0xFFu;
     uint8_t read_mode = SCOPE_READ_MODE_NORMAL;
     uint32_t sample_index = 0u;

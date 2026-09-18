@@ -192,6 +192,8 @@ static void section_list_service_reply(section_packform_t *p_request,
 {
     section_packform_t reply = {0};
 
+    reply.sop = p_request->sop;
+    reply.version = p_request->version;
     reply.cmd_set = CMD_SET_SECTION_LIST;
     reply.cmd_word = command_word;
     reply.dst = p_request->src;
@@ -199,13 +201,15 @@ static void section_list_service_reply(section_packform_t *p_request,
     reply.src = p_request->dst;
     reply.d_src = p_request->d_dst;
     reply.is_ack = 1u;
+    reply.seq = p_request->seq;
     reply.len = payload_length;
     reply.p_data = p_payload;
     comm_send_data(&reply, my_printf);
 }
 
-static void section_list_directory_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void section_list_directory_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t payload[SECTION_LIST_DIRECTORY_SUCCESS_FIXED_SIZE + SECTION_LIST_NAME_LEN_MAX] = {0};
     uint16_t requested_index = 0u;
     uint16_t list_count = section_list_service_registration_count();
@@ -259,8 +263,9 @@ static void section_list_directory_act(section_packform_t *p_pack, DEC_MY_PRINTF
                                payload_length);
 }
 
-static void section_list_node_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void section_list_node_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t payload[SECTION_LIST_NODE_SUCCESS_SIZE] = {0};
     uint16_t list_id = 0u;
     uint32_t node_index = 0u;
