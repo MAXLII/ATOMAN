@@ -188,7 +188,7 @@ uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in)
  * =============================================================================
  */
 
-static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(void *p_pack, DEC_MY_PRINTF)
 {
     section_item_t *p_item = p_comm_command_first;
     section_item_t *p_prev = NULL;
@@ -611,17 +611,33 @@ static uint16_t crc16_update_block(uint16_t crc, const uint8_t *p_data, uint32_t
     return crc;
 }
 
-void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
+void comm_send_data(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     comm_tx_buffer_t *tx;
     uint8_t *tx_buffer;
     uint16_t crc;
     uint16_t tx_len;
     uint32_t crc_len;
     uint32_t need;
+    uint8_t sop = 0u;
 
     if (!p_pack)
         return;
+
+    /* 统一发送入口：按输入对象第一个字节 SOP 选择编码方式。 */
+    sop = *(uint8_t *)p_pack;
+    if (sop == COMM_V1_SOP)
+    {
+        /* 0xE9：进入 COMM v1 组包流程。 */
+        comm_v1_send(p_frame, my_printf);
+        return;
+    }
+    if (sop != COMM_SOP_BYTE)
+    {
+        /* 非 0xE8 / 0xE9 的对象拒绝发送。 */
+        return;
+    }
 
     if ((p_pack->len > 0u) && (p_pack->p_data == NULL))
         return;
