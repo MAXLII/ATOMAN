@@ -240,8 +240,9 @@ bootloader_result_t bootloader_protocol_handle(bootloader_protocol_t *p_protocol
 }
 
 #if defined(BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE)
-static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void update_info_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     bootloader_protocol_info_ack_t update_info_ack = {0}; /* Command 0x08 direct ACK payload. */
     uint16_t ack_length = 0u; /* Encoded command 0x08 ACK payload length. */
 
@@ -264,6 +265,8 @@ static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
     section_packform_t packform = {
+        .sop = p_pack->sop,
+        .version = p_pack->version,
         .src = p_pack->dst,
         .d_src = p_pack->d_dst,
         .dst = p_pack->src,
@@ -271,6 +274,7 @@ static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         .cmd_set = BOOTLOADER_PROTOCOL_CMD_SET,
         .cmd_word = BOOTLOADER_PROTOCOL_CMD_INFO,
         .is_ack = 1u,
+        .seq = p_pack->seq,
         .len = ack_length,
         .p_data = (uint8_t *)&update_info_ack,
     }; /* FRAME response routed back to the command 0x08 sender. */
@@ -280,8 +284,9 @@ static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(BOOTLOADER_PROTOCOL_CMD_SET, BOOTLOADER_PROTOCOL_CMD_INFO, update_info_act)
 
-static void update_ready_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void update_ready_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     bootloader_protocol_ready_ack_t update_ready_ack = {0}; /* Command 0x09 direct ACK payload. */
     uint16_t ack_length = 0u; /* Encoded command 0x09 ACK payload length. */
 
@@ -304,6 +309,8 @@ static void update_ready_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
     section_packform_t packform = {
+        .sop = p_pack->sop,
+        .version = p_pack->version,
         .src = p_pack->dst,
         .d_src = p_pack->d_dst,
         .dst = p_pack->src,
@@ -311,6 +318,7 @@ static void update_ready_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         .cmd_set = BOOTLOADER_PROTOCOL_CMD_SET,
         .cmd_word = BOOTLOADER_PROTOCOL_CMD_READY,
         .is_ack = 1u,
+        .seq = p_pack->seq,
         .len = ack_length,
         .p_data = (uint8_t *)&update_ready_ack,
     }; /* FRAME response routed back to the command 0x09 sender. */
@@ -320,8 +328,9 @@ static void update_ready_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(BOOTLOADER_PROTOCOL_CMD_SET, BOOTLOADER_PROTOCOL_CMD_READY, update_ready_act)
 
-static void update_fw_pack_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void update_fw_pack_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     bootloader_protocol_data_ack_payload_t update_fw_ack = {0}; /* Command 0x0A direct ACK payload. */
     uint16_t ack_length = 0u; /* Encoded command 0x0A ACK payload length. */
 
@@ -344,6 +353,8 @@ static void update_fw_pack_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
     section_packform_t packform = {
+        .sop = p_pack->sop,
+        .version = p_pack->version,
         .src = p_pack->dst,
         .d_src = p_pack->d_dst,
         .dst = p_pack->src,
@@ -351,6 +362,7 @@ static void update_fw_pack_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         .cmd_set = BOOTLOADER_PROTOCOL_CMD_SET,
         .cmd_word = BOOTLOADER_PROTOCOL_CMD_DATA,
         .is_ack = 1u,
+        .seq = p_pack->seq,
         .len = ack_length,
         .p_data = (uint8_t *)&update_fw_ack,
     }; /* FRAME response routed back to the command 0x0A sender. */
@@ -360,8 +372,9 @@ static void update_fw_pack_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(BOOTLOADER_PROTOCOL_CMD_SET, BOOTLOADER_PROTOCOL_CMD_DATA, update_fw_pack_act)
 
-static void update_end_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void update_end_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     bootloader_protocol_end_ack_payload_t update_end_ack = {0}; /* Command 0x0B direct ACK payload. */
     uint16_t ack_length = 0u; /* Encoded command 0x0B ACK payload length. */
 
@@ -384,6 +397,8 @@ static void update_end_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
     section_packform_t packform = {
+        .sop = p_pack->sop,
+        .version = p_pack->version,
         .src = p_pack->dst,
         .d_src = p_pack->d_dst,
         .dst = p_pack->src,
@@ -391,6 +406,7 @@ static void update_end_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         .cmd_set = BOOTLOADER_PROTOCOL_CMD_SET,
         .cmd_word = BOOTLOADER_PROTOCOL_CMD_END,
         .is_ack = 1u,
+        .seq = p_pack->seq,
         .len = ack_length,
         .p_data = (uint8_t *)&update_end_ack,
     }; /* FRAME response routed back to the command 0x0B sender. */

@@ -72,8 +72,9 @@ iap_update_prepare(const iap_update_info_t *p_info)
     return IAP_UPDATE_PREPARE_READY_E;
 }
 
-static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void update_info_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     iap_update_info_t update_info = {0}; /* Command 0x08 request retained while preparation runs. */
     bootloader_protocol_info_ack_t update_info_ack = {
         .allow_update = (uint8_t)BOOTLOADER_PROTOCOL_UPDATE_ACK_REJECT_E,
@@ -104,6 +105,8 @@ static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     }
 
     section_packform_t packform = {
+        .sop = p_pack->sop,
+        .version = p_pack->version,
         .src = p_pack->dst,
         .d_src = p_pack->d_dst,
         .dst = p_pack->src,
@@ -111,6 +114,7 @@ static void update_info_act(section_packform_t *p_pack, DEC_MY_PRINTF)
         .cmd_set = BOOTLOADER_PROTOCOL_CMD_SET,
         .cmd_word = BOOTLOADER_PROTOCOL_CMD_INFO,
         .is_ack = 1u,
+        .seq = p_pack->seq,
         .len = (uint16_t)sizeof(update_info_ack),
         .p_data = (uint8_t *)&update_info_ack,
     }; /* FRAME response routed back to the command 0x08 sender. */

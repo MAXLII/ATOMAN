@@ -50,6 +50,9 @@ typedef struct
 {
     DEC_MY_PRINTF;
     uint8_t active;
+    uint8_t sop;
+    uint8_t version;
+    uint8_t seq;
     uint8_t src;
     uint8_t d_src;
     uint8_t dst;
@@ -136,6 +139,8 @@ static SFRA_SERVICE_NOINLINE void sfra_service_reply(section_packform_t *p_req_p
 {
     section_packform_t packform = {0};
 
+    packform.sop = p_req_pack->sop;
+    packform.version = p_req_pack->version;
     packform.cmd_set = CMD_SET_SFRA;
     packform.cmd_word = cmd_word;
     packform.dst = p_req_pack->src;
@@ -143,6 +148,7 @@ static SFRA_SERVICE_NOINLINE void sfra_service_reply(section_packform_t *p_req_p
     packform.src = p_req_pack->dst;
     packform.d_src = p_req_pack->d_dst;
     packform.is_ack = is_ack;
+    packform.seq = p_req_pack->seq;
     packform.len = len;
     packform.p_data = p_data;
     comm_send_data(&packform, my_printf);
@@ -156,6 +162,9 @@ static SFRA_SERVICE_NOINLINE void sfra_service_capture_route(section_packform_t 
     }
 
     s_sfra_report_ctx.my_printf = my_printf;
+    s_sfra_report_ctx.sop = p_req_pack->sop;
+    s_sfra_report_ctx.version = p_req_pack->version;
+    s_sfra_report_ctx.seq = p_req_pack->seq;
     s_sfra_report_ctx.src = p_req_pack->dst;
     s_sfra_report_ctx.d_src = p_req_pack->d_dst;
     s_sfra_report_ctx.dst = p_req_pack->src;
@@ -172,6 +181,18 @@ static void sfra_service_send_report(uint8_t cmd_word, uint8_t *p_data, uint16_t
         return;
     }
 
+    /* 主动上报继承请求协议：v1 会话用 0xE9 且 SEQ 循环递增。 */
+    if (s_sfra_report_ctx.sop == COMM_V1_SOP)
+    {
+        packform.sop = COMM_V1_SOP;
+        packform.version = s_sfra_report_ctx.version;
+        s_sfra_report_ctx.seq = (uint8_t)((s_sfra_report_ctx.seq + 1u) & 0x07u);
+        packform.seq = s_sfra_report_ctx.seq;
+    }
+    else
+    {
+        packform.sop = 0xE8u;
+    }
     packform.cmd_set = CMD_SET_SFRA;
     packform.cmd_word = cmd_word;
     packform.src = s_sfra_report_ctx.src;
@@ -433,8 +454,9 @@ static void sfra_service_poll_task(void)
     }
 }
 
-static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_list_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_item_t *p_item = p_sfra_first;
     uint8_t index = 0u;
 
@@ -479,8 +501,9 @@ static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     }
 }
 
-static void sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_info_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_info_query_t query;
     sfra_info_ack_t ack;
     sfra_registration_t *p_registration;
@@ -506,8 +529,9 @@ static void sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                        (uint16_t)sizeof(ack));
 }
 
-static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_cfg_set_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_cfg_set_t cfg;
     sfra_ctrl_ack_t ack;
     sfra_registration_t *p_registration;
@@ -581,8 +605,9 @@ static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                        (uint16_t)sizeof(ack));
 }
 
-static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_ctrl_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_info_query_t query;
     sfra_ctrl_ack_t ack;
     sfra_registration_t *p_registration;
@@ -660,8 +685,9 @@ static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     sfra_service_reply(p_pack, my_printf, cmd_word, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_point_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_point_query_t query;
     sfra_point_ack_t ack;
     sfra_registration_t *p_registration;

@@ -494,6 +494,8 @@ static void perf_opt_send_response(section_packform_t *p_req,
         return;
     }
 
+    pack.sop = p_req->sop;
+    pack.version = p_req->version;
     pack.src = p_req->dst;
     pack.d_src = p_req->d_dst;
     pack.dst = p_req->src;
@@ -501,6 +503,7 @@ static void perf_opt_send_response(section_packform_t *p_req,
     pack.cmd_set = PERF_OPT_CMD_SET;
     pack.cmd_word = cmd_word;
     pack.is_ack = is_ack;
+    pack.seq = p_req->seq;
     pack.len = len;
     pack.p_data = payload;
 
@@ -511,6 +514,18 @@ static void perf_opt_send_active(perf_opt_service_t *self, uint8_t cmd_word, uin
 {
     section_packform_t pack = {0};
 
+    /* 主动上报继承请求协议：v1 会话用 0xE9 且 SEQ 循环递增。 */
+    if (self->sop == COMM_V1_SOP)
+    {
+        pack.sop = COMM_V1_SOP;
+        pack.version = self->version;
+        self->seq = (uint8_t)((self->seq + 1u) & 0x07u);
+        pack.seq = self->seq;
+    }
+    else
+    {
+        pack.sop = 0xE8u;
+    }
     pack.src = self->src;
     pack.d_src = self->d_src;
     pack.dst = self->dst;
@@ -527,6 +542,9 @@ static void perf_opt_send_active(perf_opt_service_t *self, uint8_t cmd_word, uin
 static void perf_opt_capture_route(perf_opt_service_t *self, section_packform_t *p_pack, DEC_MY_PRINTF)
 {
     self->my_printf = my_printf;
+    self->sop = p_pack->sop;
+    self->version = p_pack->version;
+    self->seq = p_pack->seq;
     self->src = p_pack->dst;
     self->d_src = p_pack->d_dst;
     self->dst = p_pack->src;
@@ -885,8 +903,9 @@ static void perf_opt_poll_task(void)
 
 /* --- binary protocol command handlers ------------------------------------- */
 
-static void perf_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void perf_info_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     perf_info_ack_t ack = {0};
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -903,8 +922,9 @@ static void perf_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_opt_send_response(p_pack, PERF_OPT_CMD_INFO_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);
 }
 
-static void perf_summary_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void perf_summary_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     perf_summary_ack_t ack = {0};
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -919,8 +939,9 @@ static void perf_summary_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_opt_send_response(p_pack, PERF_OPT_CMD_SUMMARY_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);
 }
 
-static void perf_reset_peak_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void perf_reset_peak_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     perf_reset_peak_ack_t ack = {0};
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -933,8 +954,9 @@ static void perf_reset_peak_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_opt_send_response(p_pack, PERF_OPT_CMD_RESET_PEAK, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);
 }
 
-static void perf_dict_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void perf_dict_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     perf_dict_ack_t ack = {0};
     uint8_t reject_reason = PERF_OPT_REJECT_OK;
     uint8_t type_filter = 0xFFu;
@@ -969,8 +991,9 @@ static void perf_dict_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_opt_send_response(p_pack, PERF_OPT_CMD_DICT_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);
 }
 
-static void perf_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void perf_sample_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     perf_sample_ack_t ack = {0};
     uint8_t reject_reason = PERF_OPT_REJECT_OK;
     uint8_t type_filter = 0xFFu;
@@ -1023,8 +1046,9 @@ static void perf_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     perf_opt_send_response(p_pack, PERF_OPT_CMD_SAMPLE_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack), my_printf);
 }
 
-static void perf_report_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void perf_report_control_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     perf_report_control_ack_t ack = {0};
     uint8_t enable = 0u;
 

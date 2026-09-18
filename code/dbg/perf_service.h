@@ -104,6 +104,9 @@ struct perf_opt_service
     section_item_t *p_cur;
     uint8_t pending_end;
     DEC_MY_PRINTF;
+    uint8_t sop;
+    uint8_t version;
+    uint8_t seq;
     uint8_t src;
     uint8_t d_src;
     uint8_t dst;

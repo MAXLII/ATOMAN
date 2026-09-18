@@ -33,8 +33,9 @@
 
 #include <string.h>
 
-static void demo_comm_frame_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void demo_comm_frame_loopback(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_packform_t ack = {0};
 
     if ((p_pack == NULL) ||
@@ -43,6 +44,8 @@ static void demo_comm_frame_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
         return;
     }
 
+    ack.sop = p_pack->sop;
+    ack.version = p_pack->version;
     ack.src = p_pack->dst;
     ack.d_src = p_pack->d_dst;
     ack.dst = p_pack->src;
@@ -50,13 +53,15 @@ static void demo_comm_frame_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
     ack.cmd_set = p_pack->cmd_set;
     ack.cmd_word = p_pack->cmd_word;
     ack.is_ack = 1U;
+    ack.seq = p_pack->seq;
     ack.len = p_pack->len;
     ack.p_data = p_pack->p_data;
     comm_send_data(&ack, my_printf);
 }
 
-static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void demo_comm_loopback(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_packform_t ack = {0};
     demo_comm_frame_t frame = {0};
     demo_data_pool_snapshot_t snapshot = {0};
@@ -75,6 +80,8 @@ static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
     snapshot.temperature_x10 = frame.temperature_x10;
     demo_data_pool_exchange_write(&snapshot);
 
+    ack.sop = p_pack->sop;
+    ack.version = p_pack->version;
     ack.src = p_pack->dst;
     ack.d_src = p_pack->d_dst;
     ack.dst = p_pack->src;
@@ -82,6 +89,7 @@ static void demo_comm_loopback(section_packform_t *p_pack, DEC_MY_PRINTF)
     ack.cmd_set = p_pack->cmd_set;
     ack.cmd_word = p_pack->cmd_word;
     ack.is_ack = 1u;
+    ack.seq = p_pack->seq;
     ack.len = sizeof(frame);
     ack.p_data = (uint8_t *)&frame;
     comm_send_data(&ack, my_printf);

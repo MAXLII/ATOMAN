@@ -62,6 +62,9 @@ typedef struct
 {
     uint8_t running;
     DEC_MY_PRINTF;
+    uint8_t sop;
+    uint8_t version;
+    uint8_t seq;
     uint8_t src;
     uint8_t d_src;
     uint8_t dst;
@@ -139,6 +142,9 @@ static void dbg_trace_binary_capture_route(section_packform_t *p_pack, DEC_MY_PR
     }
 
     g_dbg_trace_binary_ctx.my_printf = my_printf;
+    g_dbg_trace_binary_ctx.sop = p_pack->sop;
+    g_dbg_trace_binary_ctx.version = p_pack->version;
+    g_dbg_trace_binary_ctx.seq = p_pack->seq;
     g_dbg_trace_binary_ctx.src = p_pack->dst;
     g_dbg_trace_binary_ctx.d_src = p_pack->d_dst;
     g_dbg_trace_binary_ctx.dst = p_pack->src;
@@ -149,6 +155,26 @@ static void dbg_trace_binary_send(uint8_t cmd_word, uint8_t is_ack, uint8_t *p_d
 {
     section_packform_t pack = {0};
 
+    if (is_ack != 0u)
+    {
+        /* 直接应答继承请求的协议标识、版本与 SEQ。 */
+        pack.sop = g_dbg_trace_binary_ctx.sop;
+        pack.version = g_dbg_trace_binary_ctx.version;
+        pack.seq = g_dbg_trace_binary_ctx.seq;
+    }
+    else if (g_dbg_trace_binary_ctx.sop == COMM_V1_SOP)
+    {
+        /* v1 主动上报：继承会话协议，SEQ 0~7 循环递增。 */
+        pack.sop = COMM_V1_SOP;
+        pack.version = g_dbg_trace_binary_ctx.version;
+        g_dbg_trace_binary_ctx.seq = (uint8_t)((g_dbg_trace_binary_ctx.seq + 1u) & 0x07u);
+        pack.seq = g_dbg_trace_binary_ctx.seq;
+    }
+    else
+    {
+        /* 旧会话主动上报沿用 0xE8。 */
+        pack.sop = 0xE8u;
+    }
     pack.src = g_dbg_trace_binary_ctx.src;
     pack.d_src = g_dbg_trace_binary_ctx.d_src;
     pack.dst = g_dbg_trace_binary_ctx.dst;
@@ -162,8 +188,9 @@ static void dbg_trace_binary_send(uint8_t cmd_word, uint8_t is_ack, uint8_t *p_d
     comm_send_data(&pack, g_dbg_trace_binary_ctx.my_printf);
 }
 
-static void dbg_trace_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void dbg_trace_control_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     dbg_trace_control_req_t req = {0};
     dbg_trace_control_ack_t ack = {0};
     uint16_t copy_len;
