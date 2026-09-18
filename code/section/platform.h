@@ -143,6 +143,10 @@ extern size_t __stop_section;
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM
+#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address) \
+    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
     do                                        \
     {                                         \
