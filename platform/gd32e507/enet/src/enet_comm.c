@@ -80,6 +80,7 @@ static uint32_t last_link_check_ms = 0u;       /* Millisecond time of the latest
 static uint32_t last_retry_ms = 0u;            /* Millisecond time of the latest initialization attempt. */
 
 DECLARE_COMM_CTX(ethernet_comm_ctx, ENET_COMM_FRAME_PAYLOAD_SIZE, HOST_ADDR, ETHERNET_LINK);
+DECLARE_COMM_V1_CTX(ethernet_comm_v1_ctx, HOST_ADDR, ETHERNET_LINK);
 
 volatile uint32_t g_enet_rx_frame_count = 0u;        /* Ethernet frames accepted by LwIP. */
 volatile uint32_t g_enet_rx_error_count = 0u;        /* Ethernet frames rejected by the adapter or LwIP. */
@@ -158,6 +159,7 @@ static void tcp_rings_reset(void)
     ethernet_comm_ctx.len_flag = 0u;
     ethernet_comm_ctx.eop_flag = 0u;
     ethernet_comm_ctx.is_route = 0u;
+    comm_v1_reset_session(&ethernet_comm_v1_ctx);
     enet_comm_irq_unlock(primask);
 }
 
@@ -208,6 +210,7 @@ static section_link_tx_func_t ethernet_tx_func = {
 
 static const section_link_handler_item_t ethernet_handler_arr[] = {
     {.func = comm_run, .ctx = (void *)&ethernet_comm_ctx},
+    {.func = comm_v1_run, .ctx = (void *)&ethernet_comm_v1_ctx},
 };
 
 REG_LINK(ETHERNET_LINK,
@@ -285,6 +288,10 @@ static err_t tcp_receive_callback(void *p_argument, struct tcp_pcb *p_connection
                         (uint32_t)p_segment->len,
                         &ethernet_tx_func,
                         (void *)&ethernet_comm_ctx);
+        comm_v1_run_buffer(p_bytes,
+                           (uint32_t)p_segment->len,
+                           &ethernet_tx_func,
+                           (void *)&ethernet_comm_v1_ctx);
     }
 
     tcp_recved(p_connection, p_packet->tot_len);
