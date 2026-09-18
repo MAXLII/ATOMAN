@@ -56,7 +56,9 @@ npc_ctrl_cfg_t npc_cfg_default(void)
         .modulation_headroom = 0.95f,
         .current_bias_cutoff_hz = 3.0f,
         .current_bias_resistance = 0.1f,
-        .voltage_damping_gain = 0.15f, /* 配合慢速中点平衡及重载死区补偿，抑制非基波电压残差。 */
+        /* 5 kHz 控制下，容性负载的约 2.3 kHz 模态会被延迟的电压残差正反馈激发。
+         * 默认关闭此补偿；保留基波双环及低频电流偏置反馈，不放宽过流门限。 */
+        .voltage_damping_gain = 0.0f,
         .voltage_damping_cutoff_hz = 100.0f
     };
 }
