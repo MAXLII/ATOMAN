@@ -147,25 +147,31 @@ DECLARE_SHELL_CTX(s_usart_pl_shell_ctx);
 DECLARE_SHELL_CTX(s_usart_iso_shell_ctx);
 #endif
 DECLARE_COMM_CTX(s_usart_dbg_comm_ctx, AC_USART_DBG_COMM_PAYLOAD_SIZE, HOST_ADDR, USART0_LINK);
+DECLARE_COMM_V1_CTX(s_usart_dbg_comm_v1_ctx, HOST_ADDR, USART0_LINK);
 #if (COMM_LINK_ENABLE_PL == 1)
 DECLARE_COMM_CTX(s_usart_pl_comm_ctx, AC_USART_PL_COMM_PAYLOAD_SIZE, HOST_ADDR, USART1_LINK);
+DECLARE_COMM_V1_CTX(s_usart_pl_comm_v1_ctx, HOST_ADDR, USART1_LINK);
 #endif
 #if (COMM_LINK_ENABLE_ISO == 1)
 DECLARE_COMM_CTX(s_usart_iso_comm_ctx, AC_USART_ISO_COMM_PAYLOAD_SIZE, HOST_ADDR, USART2_LINK);
+DECLARE_COMM_V1_CTX(s_usart_iso_comm_v1_ctx, HOST_ADDR, USART2_LINK);
 #endif
 #if (COMM_LINK_ENABLE_CAN == 1)
 DECLARE_COMM_CTX(s_can_dbg_comm_ctx, AC_CAN_DBG_COMM_PAYLOAD_SIZE, HOST_ADDR, CAN_DBG_LINK);
+DECLARE_COMM_V1_CTX(s_can_dbg_comm_v1_ctx, HOST_ADDR, CAN_DBG_LINK);
 #endif
 
 static const section_link_handler_item_t s_usart_dbg_handler_arr[] = {
     {.func = shell_run, .ctx = (void *)&s_usart_dbg_shell_ctx},
     {.func = comm_run, .ctx = (void *)&s_usart_dbg_comm_ctx},
+    {.func = comm_v1_run, .ctx = (void *)&s_usart_dbg_comm_v1_ctx},
 };
 
 #if (COMM_LINK_ENABLE_PL == 1)
 static const section_link_handler_item_t s_usart_pl_handler_arr[] = {
     {.func = shell_run, .ctx = (void *)&s_usart_pl_shell_ctx},
     {.func = comm_run, .ctx = (void *)&s_usart_pl_comm_ctx},
+    {.func = comm_v1_run, .ctx = (void *)&s_usart_pl_comm_v1_ctx},
 };
 #endif
 
@@ -173,12 +179,15 @@ static const section_link_handler_item_t s_usart_pl_handler_arr[] = {
 static const section_link_handler_item_t s_usart_iso_handler_arr[] = {
     {.func = shell_run, .ctx = (void *)&s_usart_iso_shell_ctx},
     {.func = comm_run, .ctx = (void *)&s_usart_iso_comm_ctx},
+    {.func = comm_v1_run, .ctx = (void *)&s_usart_iso_comm_v1_ctx},
 };
 #endif
 
 #if (COMM_LINK_ENABLE_CAN == 1)
 static const section_link_handler_item_t s_can_dbg_handler_arr[] = {
     {.func = comm_run, .ctx = (void *)&s_can_dbg_comm_ctx},
+    {.func = comm_v1_run, .ctx = (void *)&s_can_dbg_comm_v1_ctx},
+};
 };
 #endif
 
