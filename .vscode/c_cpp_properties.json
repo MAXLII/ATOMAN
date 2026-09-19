@@ -490,6 +490,7 @@
                 "${workspaceFolder}/platform/plecs/common/dbg/shell",
                 "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
                 "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/interface/npc/common",
                 "${workspaceFolder}/code/ctrl/npc",
@@ -508,6 +509,7 @@
                     "${workspaceFolder}/code/lib",
                     "${workspaceFolder}/code/section",
                     "${workspaceFolder}/code/data_source/comm",
+                    "${workspaceFolder}/code/data_source/demo",
                     "${workspaceFolder}/code/dbg"
                 ],
                 "limitSymbolsToIncludedHeaders": true
