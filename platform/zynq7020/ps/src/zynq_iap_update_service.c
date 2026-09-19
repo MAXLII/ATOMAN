@@ -92,8 +92,9 @@ static void boot_reason_set(void)
     __asm__ volatile("dmb sy" ::: "memory");
 }
 
-static void info_handle(section_packform_t *p_request, DEC_MY_PRINTF)
+static void info_handle(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     section_packform_t response = {0};
     zynq_iap_update_info_t info = {0};
     uint8_t ack[ZYNQ_IAP_ACK_LENGTH] = {ZYNQ_IAP_ACK_REJECTED, 0u, 0u};

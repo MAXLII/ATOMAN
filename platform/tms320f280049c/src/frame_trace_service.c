@@ -73,8 +73,9 @@ static void frame_trace_send(uint8_t command_word,
     comm_send_data(&report, s_trace_context.p_output);
 }
 
-static void frame_trace_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_trace_control_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_TRACE_CONTROL_ACK_SIZE] = {0}; /* Control acknowledgement. */
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||

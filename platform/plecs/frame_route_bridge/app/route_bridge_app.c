@@ -99,11 +99,12 @@ REG_COMM_ROUTE(2, 1, 0x01)
 
 /**
  * @brief Echo a valid request and identify the addressed node through ACK source fields.
- * @param[in] p_pack Validated request supplied by the FRAME protocol parser.
+ * @param[in] p_frame Validated request supplied by the FRAME protocol parser.
  * @param[in] my_printf Output interface associated with the request's source link.
  */
-static void loopback_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void loopback_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_packform_t ack = {0}; /* Direct response preserving command and payload bytes. */
 
     if ((p_pack == NULL) || /* No validated request is available. */

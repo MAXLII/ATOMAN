@@ -212,7 +212,7 @@ uint16_t section_crc16_with_crc(uint8_t *p_data, uint32_t len, uint16_t crc_in)
  * =============================================================================
  */
 
-static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void (*find_comm_func(uint8_t cmd_set, uint8_t cmd_word))(void *p_pack, DEC_MY_PRINTF)
 {
     section_item_t *p_item = p_comm_command_first;
     section_item_t *p_prev = NULL;
@@ -606,8 +606,9 @@ static uint16_t crc16_update_block(uint16_t crc, const uint8_t *data, uint32_t l
     return crc;
 }
 
-void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF)
+void comm_send_data(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     comm_tx_buffer_t *tx;
     uint8_t *tx_buffer;
     uint16_t crc;

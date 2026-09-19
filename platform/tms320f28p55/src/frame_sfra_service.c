@@ -353,8 +353,9 @@ static void frame_sfra_service_init(void)
 
 REG_INIT(1u, frame_sfra_service_init)
 
-static void frame_sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_sfra_list_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
@@ -478,8 +479,9 @@ static void frame_sfra_poll_task(void)
 
 REG_TASK_MS(1u, frame_sfra_poll_task)
 
-static void frame_sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_sfra_info_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SFRA_INFO_ACK_SIZE] = {0}; /* Serialized SFRA state. */
     sfra_registration_t *p_registration; /* Requested SFRA instance. */
     uint8_t sfra_id = 0xFFu; /* Requested instance id. */
@@ -510,8 +512,9 @@ static void frame_sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_INFO_QUERY, frame_sfra_info_query_act)
 
-static void frame_sfra_config_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_sfra_config_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SFRA_CONTROL_ACK_SIZE] = {0}; /* Serialized config response. */
     sfra_registration_t *p_registration = NULL; /* Requested SFRA instance. */
     sfra_t *p_sfra = NULL; /* Requested SFRA core object. */
@@ -610,8 +613,9 @@ static void frame_sfra_config_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_CFG_SET, frame_sfra_config_act)
 
-static void frame_sfra_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_sfra_control_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SFRA_CONTROL_ACK_SIZE] = {0}; /* Serialized control response. */
     sfra_registration_t *p_registration = NULL; /* Requested SFRA instance. */
     uint8_t sfra_id = 0xFFu; /* Requested instance id. */
@@ -676,8 +680,9 @@ REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_START, frame_sfra_control_act)
 REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_STOP, frame_sfra_control_act)
 REG_COMM(CMD_SET_SFRA, CMD_WORD_SFRA_RESET, frame_sfra_control_act)
 
-static void frame_sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_sfra_point_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SFRA_POINT_ACK_SIZE] = {0}; /* Serialized point response. */
     sfra_registration_t *p_registration = NULL; /* Requested SFRA instance. */
     uint8_t sfra_id = 0xFFu; /* Requested instance id. */

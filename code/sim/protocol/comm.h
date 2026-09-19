@@ -116,7 +116,7 @@ typedef struct
     uint8_t status;          ///< SECTION_PACKFORM_STA_E
     uint16_t crc;            ///< 运行中 CRC
     section_packform_t pack; ///< 当前帧缓存
-    void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
+    void (*func)(void *p_pack, DEC_MY_PRINTF);
 
     uint16_t len;          ///< 剩余 payload 字节数
     const uint8_t src;     ///< 本机地址
@@ -175,7 +175,7 @@ typedef struct section_com_t
 {
     uint8_t cmd_set;
     uint8_t cmd_word;
-    void (*func)(section_packform_t *p_pack, DEC_MY_PRINTF);
+    void (*func)(void *p_pack, DEC_MY_PRINTF);
 } section_com_t;
 
 /**
@@ -234,6 +234,6 @@ void comm_reset_ctx(comm_ctx_t *ctx);
 /** Simulation parser entry; timeout uses host monotonic milliseconds internally. */
 void comm_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
 void comm_run_with_time(uint8_t data, DEC_MY_PRINTF, void *ctx, uint32_t current_time_ms);
-void comm_send_data(section_packform_t *p_pack, DEC_MY_PRINTF);
+void comm_send_data(void *p_pack, DEC_MY_PRINTF);
 
 #endif /* SIM_PROTOCOL_COMM_H */

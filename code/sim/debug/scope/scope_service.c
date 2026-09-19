@@ -292,8 +292,9 @@ static void scope_service_send_empty_list(section_packform_t *p_pack, DEC_MY_PRI
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_LIST_QUERY, 1u, (uint8_t *)&item, (uint16_t)sizeof(item));
 }
 
-static void scope_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_list_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
@@ -312,8 +313,9 @@ static void scope_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_poll_list();
 }
 
-static void scope_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_info_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
     {
         return;
@@ -347,8 +349,9 @@ static void scope_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_INFO_QUERY, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_var_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = 0xFFu;
     uint8_t var_index = 0xFFu;
 
@@ -401,8 +404,9 @@ static void scope_var_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_VAR_QUERY, 1u, payload, (uint16_t)(sizeof(ack) + name_len));
 }
 
-static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_start_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -448,8 +452,9 @@ static void scope_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_START, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_trigger_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -492,8 +497,9 @@ static void scope_trigger_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_TRIGGER, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_stop_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -526,8 +532,9 @@ static void scope_stop_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_STOP, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_reset_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = scope_service_query_scope_id(p_pack);
     scope_registration_t *p_registration = scope_service_find_by_id(scope_id);
     scope_ctrl_ack_t ack;
@@ -561,8 +568,9 @@ static void scope_reset_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     scope_service_reply(p_pack, my_printf, CMD_WORD_SCOPE_RESET, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void scope_sample_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void scope_sample_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint8_t scope_id = 0xFFu;
     uint8_t read_mode = SCOPE_READ_MODE_NORMAL;
     uint32_t sample_index = 0u;

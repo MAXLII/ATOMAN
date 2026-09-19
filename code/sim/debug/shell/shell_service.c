@@ -302,8 +302,9 @@ static void shell_data_report_batches_send(section_packform_t *p_request,
     }
 }
 
-static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_data_num_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     uint32_t shell_data_num = shell_count_get();
 
     if ((p_pack == NULL) ||
@@ -328,8 +329,9 @@ static void shell_data_num_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_DATA_NUM, CMD_WORD_SHELL_DATA_NUM, shell_data_num_act)
 
-static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_read_data_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     shell_read_data_t *p_shell_read_data;
 
     if (p_pack == NULL)
@@ -370,8 +372,9 @@ static void shell_read_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_READ_DATA, CMD_WORD_SHELL_READ_DATA, shell_read_data_act)
 
-static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_write_data_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     shell_write_data_t *p_shell_write_data;
     section_shell_t *p;
 
@@ -542,8 +545,9 @@ static void shell_write_data_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_WRITE_DATA, CMD_WORD_SHELL_WRITE_DATA, shell_write_data_act)
 
-static void shell_wave_param_enable_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_wave_param_enable_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     shell_wave_enable_param_t *p_shell_wave_enable_param;
 
     if (p_pack == NULL)
@@ -603,8 +607,9 @@ static uint8_t shell_wave_src = 0u;
 /* Cached destination address for wave packets. */
 static uint8_t shell_wave_dst = 0u;
 
-static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_wave_start_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if (p_pack->len != sizeof(shell_wave_start_t))
     {
         return;
@@ -629,8 +634,9 @@ static void shell_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 }
 REG_COMM(CMD_SET_SHELL_WAVE_START, CMD_WORD_SHELL_WAVE_START, shell_wave_start_act)
 
-static void shell_wave_period_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void shell_wave_period_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if (p_pack->len != sizeof(shell_wave_period_t))
     {
         return;
