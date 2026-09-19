@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>HC32F334,PLATFORM_HC32F334,TOOLCHAIN_MDK,USE_DDL_DRIVER,FIRMWARE_TYPE_BOOTLOADER,BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE,HC32F334_IAP_BASE=0x00004000UL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\data_source\comm;..\..\..\code\dbg;..\..\..\code\lib\fal;..\..\..\code\app\bootloader\core;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
+              <IncludePath>..\bootloader;..\bsp;..\inc;..\src;..\Firmware\CMSIS\Include;..\Firmware\CMSIS\HDSC\hc32f3xx\Include;..\Firmware\HC32_LL_Driver\inc;..\..\..\code\section\baremetal;..\..\..\code\section;..\..\..\code\data_source\comm;..\..\..\code\data_source\demo;..\..\..\code\dbg;..\..\..\code\lib\fal;..\..\..\code\app\bootloader\core;..\..\..\code\app\bootloader\protocol;..\..\..\code\app\bootloader\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

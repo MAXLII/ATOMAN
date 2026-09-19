@@ -18,6 +18,7 @@ INCLUDES := \
 	--include_path="code/section" \
 	--include_path="code/section/baremetal" \
 	--include_path="code/data_source/comm" \
+	--include_path="code/data_source/demo" \
 	--include_path="code/dbg" \
 	--include_path="code/lib" \
 	--include_path="code/business/demo"

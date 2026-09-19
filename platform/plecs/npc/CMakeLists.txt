@@ -38,7 +38,7 @@ set(NPC_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/bsp
     ${CODE_DIR}/sim/debug/shell
     ${CODE_DIR}/section/baremetal
-    ${CODE_DIR}/data_source/comm
+    ${CODE_DIR}/data_source/comm ${CODE_DIR}/data_source/demo
     ${CODE_DIR}/dbg
     ${CODE_DIR}/interface/npc/common
     ${CODE_DIR}/ctrl/npc

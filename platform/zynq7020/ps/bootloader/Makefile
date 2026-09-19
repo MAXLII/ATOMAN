@@ -40,6 +40,7 @@ C_INCLUDES := \
 -I$(PROJECT_ROOT)/code/section/baremetal \
 -I$(PROJECT_ROOT)/code/section \
 -I$(PROJECT_ROOT)/code/data_source/comm \
+-I$(PROJECT_ROOT)/code/data_source/demo \
 -I$(PROJECT_ROOT)/code/dbg \
 -I$(PROJECT_ROOT)/code/lib/fal \
 -I$(PROJECT_ROOT)/code/app/bootloader/core \

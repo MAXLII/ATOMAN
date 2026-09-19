@@ -71,7 +71,7 @@ target_include_directories(plecs PRIVATE
     ${CODE_DIR}/sim/debug/sfra
     ${CODE_DIR}/sim/debug/shell
     ${CODE_DIR}/sim/debug/trace
-    ${CODE_DIR}/data_source/comm
+    ${CODE_DIR}/data_source/comm ${CODE_DIR}/data_source/demo
     ${CODE_DIR}/lib
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section

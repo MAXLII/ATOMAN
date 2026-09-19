@@ -43,7 +43,7 @@ foreach(node IN ITEMS node02 node03)
         ${BSP_NODE_DIR} ${INTERFACE_NODE_DIR}
         ${CODE_DIR}/sim/comm ${CODE_DIR}/sim/protocol
         ${CODE_DIR}/sim/debug/shell ${CODE_DIR}/sim/debug/perf
-        ${CODE_DIR}/data_source/comm ${CODE_DIR}/lib
+        ${CODE_DIR}/data_source/comm ${CODE_DIR}/data_source/demo ${CODE_DIR}/lib
         ${CODE_DIR}/section/baremetal ${CODE_DIR}/section)
     target_link_libraries(${target} PRIVATE
         "${MATLAB_LIB_DIR}/libmex.lib" "${MATLAB_LIB_DIR}/libmx.lib" ws2_32)
