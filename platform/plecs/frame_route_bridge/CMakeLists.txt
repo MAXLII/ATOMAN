@@ -33,7 +33,7 @@ set(ROUTE_NODE_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/bsp
     ${CODE_DIR}/sim/debug/perf
     ${CODE_DIR}/sim/debug/shell
-    ${CODE_DIR}/data_source/comm
+    ${CODE_DIR}/data_source/comm ${CODE_DIR}/data_source/demo
     ${CODE_DIR}/lib
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section

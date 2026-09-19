@@ -49,7 +49,7 @@ target_include_directories(plecs PRIVATE
     ${CODE_DIR}/sim/comm
     ${CMAKE_CURRENT_SOURCE_DIR}/bsp
     ${CODE_DIR}/sim/debug/shell
-    ${CODE_DIR}/data_source/comm
+    ${CODE_DIR}/data_source/comm ${CODE_DIR}/data_source/demo
     ${CODE_DIR}/section/baremetal
     ${CODE_DIR}/section
     ${CODE_DIR}/dbg
