@@ -13,7 +13,7 @@
  *          Design notes:
  *          - C11 compatible
  *          - No dynamic memory allocation
- *          - USART0 transmit requests are serialized through a software ring buffer
+ *          - USART0 transmit requests are serialized through a software ring buffer drained by DMA0 channel 3
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
  * @author  Max.Li
@@ -46,6 +46,7 @@ int bsp_usart_dbg_tx_dma(const uint8_t *p_data, uint32_t length);
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data);
 void bsp_comm_memory_barrier(void);
 void bsp_usart_dbg_irq_handler(void);
+void bsp_usart_dbg_tx_irq_handler(void);
 
 void bsp_usart_iso_printf(const char *p_format, ...);
 void bsp_usart_iso_tx(char *p_data, int length);

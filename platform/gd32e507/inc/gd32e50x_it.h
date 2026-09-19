@@ -41,5 +41,6 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void TIMER2_IRQHandler(void);
 void USART0_IRQHandler(void);
+void DMA0_Channel3_IRQHandler(void);
 
 #endif /* GD32E50X_IT_H */
