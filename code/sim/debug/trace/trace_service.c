@@ -162,8 +162,9 @@ static void dbg_trace_binary_send(uint8_t cmd_word, uint8_t is_ack, uint8_t *p_d
     comm_send_data(&pack, g_dbg_trace_binary_ctx.my_printf);
 }
 
-static void dbg_trace_control_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void dbg_trace_control_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     dbg_trace_control_req_t req = {0};
     dbg_trace_control_ack_t ack = {0};
     uint16_t copy_len;

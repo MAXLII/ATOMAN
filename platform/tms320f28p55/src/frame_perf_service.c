@@ -734,12 +734,13 @@ static void frame_perf_sample_poll(void)
 
 /**
  * @brief Reply with Perf protocol capabilities and timing conversion data.
- * @param[in] p_request Received binary command.
+ * @param[in] p_frame Received binary command.
  * @param[in] p_output Link callback used for the direct acknowledgement.
  */
-static void frame_perf_info_query_act(section_packform_t *p_request,
+static void frame_perf_info_query_act(void *p_frame,
                                       section_link_tx_func_t *p_output)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PERF_INFO_ACK_SIZE] = {0}; /* Fixed-offset information response. */
 
     if (frame_perf_request_is_command(p_request) == 0u)
@@ -774,12 +775,13 @@ static void frame_perf_info_query_act(section_packform_t *p_request,
 
 /**
  * @brief Reply with current and peak task and interrupt load percentages.
- * @param[in] p_request Received binary command.
+ * @param[in] p_frame Received binary command.
  * @param[in] p_output Link callback used for the direct acknowledgement.
  */
-static void frame_perf_summary_query_act(section_packform_t *p_request,
+static void frame_perf_summary_query_act(void *p_frame,
                                          section_link_tx_func_t *p_output)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PERF_SUMMARY_ACK_SIZE] = {0}; /* Fixed-offset load response. */
 
     if (frame_perf_request_is_command(p_request) == 0u)
@@ -809,12 +811,13 @@ static void frame_perf_summary_query_act(section_packform_t *p_request,
 
 /**
  * @brief Reset all Perf peak metrics and acknowledge the operation.
- * @param[in] p_request Received binary command.
+ * @param[in] p_frame Received binary command.
  * @param[in] p_output Link callback used for the direct acknowledgement.
  */
-static void frame_perf_reset_peak_act(section_packform_t *p_request,
+static void frame_perf_reset_peak_act(void *p_frame,
                                       section_link_tx_func_t *p_output)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PERF_RESET_ACK_SIZE] = {0}; /* Legacy four-octet success response. */
 
     if (frame_perf_request_is_command(p_request) == 0u)
@@ -833,12 +836,13 @@ static void frame_perf_reset_peak_act(section_packform_t *p_request,
 
 /**
  * @brief Accept or reject one asynchronous dictionary transfer request.
- * @param[in] p_request Received binary command.
+ * @param[in] p_frame Received binary command.
  * @param[in] p_output Link callback retained by an accepted transfer.
  */
-static void frame_perf_dict_query_act(section_packform_t *p_request,
+static void frame_perf_dict_query_act(void *p_frame,
                                       section_link_tx_func_t *p_output)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PERF_DICT_ACK_SIZE] = {0}; /* Fixed-offset dictionary acknowledgement. */
     uint32_t known_dict_version = 0u; /* Host cache version, currently advisory. */
     uint32_t current_dict_version = 0u; /* Device dictionary version returned in every response. */
@@ -895,12 +899,13 @@ static void frame_perf_dict_query_act(section_packform_t *p_request,
 
 /**
  * @brief Accept or reject one versioned asynchronous sample transfer request.
- * @param[in] p_request Received binary command.
+ * @param[in] p_frame Received binary command.
  * @param[in] p_output Link callback retained by an accepted transfer.
  */
-static void frame_perf_sample_query_act(section_packform_t *p_request,
+static void frame_perf_sample_query_act(void *p_frame,
                                         section_link_tx_func_t *p_output)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PERF_SAMPLE_ACK_SIZE] = {0}; /* Fixed-offset sample acknowledgement. */
     uint32_t query_dict_version = 0u; /* Dictionary version named by the host request. */
     uint32_t current_dict_version = 0u; /* Device dictionary version returned in every response. */
@@ -971,12 +976,13 @@ static void frame_perf_sample_query_act(section_packform_t *p_request,
 
 /**
  * @brief Cancel an active transfer when report control is disabled.
- * @param[in] p_request Received binary command.
+ * @param[in] p_frame Received binary command.
  * @param[in] p_output Link callback used for a non-broadcast acknowledgement.
  */
-static void frame_perf_report_control_act(section_packform_t *p_request,
+static void frame_perf_report_control_act(void *p_frame,
                                           section_link_tx_func_t *p_output)
 {
+    section_packform_t *p_request = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PERF_CONTROL_ACK_SIZE] = {0}; /* One-octet control acknowledgement. */
     uint8_t enable = 0u; /* Legacy missing-payload behavior treats the request as disable. */
 

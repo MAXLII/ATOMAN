@@ -336,8 +336,9 @@ static void frame_parameter_reply(const section_packform_t *p_request,
     comm_send_data(&reply, my_printf);
 }
 
-static void frame_parameter_count_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_parameter_count_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PARAM_COUNT_PAYLOAD_SIZE] = {0}; /* Parameter-count response. */
 
     if ((p_pack == NULL) || (p_pack->is_ack != 0u))
@@ -411,8 +412,9 @@ static void frame_parameter_list_task(void)
 
 REG_TASK_MS(10, frame_parameter_list_task)
 
-static void frame_parameter_read_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_parameter_read_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_shell_t *p_parameter; /* Parameter matched by the request name. */
     wire_octet_t payload[FRAME_PARAM_READ_ACK_FIXED_SIZE + SHELL_STR_SIZE_MAX] = {0}; /* Read response. */
     uint8_t name_length; /* Validated request-name length. */
@@ -453,8 +455,9 @@ static void frame_parameter_read_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_READ_DATA, CMD_WORD_SHELL_READ_DATA, frame_parameter_read_act)
 
-static void frame_parameter_write_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_parameter_write_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_shell_t *p_parameter; /* Writable parameter matched by the request name. */
     wire_octet_t payload[FRAME_PARAM_WRITE_ACK_FIXED_SIZE + SHELL_STR_SIZE_MAX] = {0}; /* Write response. */
     uint8_t name_length; /* Validated request-name length. */
@@ -513,8 +516,9 @@ static void frame_parameter_write_act(section_packform_t *p_pack, DEC_MY_PRINTF)
 
 REG_COMM(CMD_SET_SHELL_WRITE_DATA, CMD_WORD_SHELL_WRITE_DATA, frame_parameter_write_act)
 
-static void frame_parameter_wave_select_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_parameter_wave_select_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_shell_t *p_parameter; /* Parameter selected for continuous reporting. */
     wire_octet_t payload[FRAME_PARAM_WAVE_SELECT_ACK_SIZE] = {0}; /* Selection result. */
     uint8_t name_length; /* Validated request-name length. */
@@ -560,8 +564,9 @@ REG_COMM(CMD_SET_SHELL_WAVE_ENABLE_PARAM,
          CMD_WORD_SHELL_WAVE_ENABLE_PARAM,
          frame_parameter_wave_select_act)
 
-static void frame_parameter_wave_start_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_parameter_wave_start_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
         (p_pack->p_data == NULL) ||
         (p_pack->len != FRAME_PARAM_WAVE_START_SIZE))
@@ -593,8 +598,9 @@ REG_COMM(CMD_SET_SHELL_WAVE_START,
          CMD_WORD_SHELL_WAVE_START,
          frame_parameter_wave_start_act)
 
-static void frame_parameter_wave_period_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void frame_parameter_wave_period_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PARAM_WAVE_PERIOD_SIZE] = {0}; /* Applied period response. */
     uint32_t requested_period; /* Requested interval between parameter-wave frames. */
 

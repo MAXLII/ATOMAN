@@ -420,12 +420,13 @@ static void frame_scope_service_task(void)
 
 /**
  * @brief Handle command 0x18 and begin an asynchronous Scope list reply.
- * @param[in] p_pack Received list query.
+ * @param[in] p_frame Received list query.
  * @param[in] my_printf Link used for direct and deferred replies.
  */
-static void frame_scope_list_query_act(section_packform_t *p_pack,
+static void frame_scope_list_query_act(void *p_frame,
                                        DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t empty_payload[FRAME_SCOPE_LIST_ACK_FIXED_SIZE] = {0}; /* Empty-list terminator. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_LIST_QUERY_SIZE) == 0u)
@@ -457,12 +458,13 @@ static void frame_scope_list_query_act(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x19 and return one fixed-layout Scope information ACK.
- * @param[in] p_pack Received information query.
+ * @param[in] p_frame Received information query.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_info_query_act(section_packform_t *p_pack,
+static void frame_scope_info_query_act(void *p_frame,
                                        DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SCOPE_INFO_ACK_SIZE] = {0}; /* Serialized information ACK. */
     scope_registration_t *p_registration = NULL;           /* Scope selected by the request. */
     uint8_t scope_id = FRAME_SCOPE_INVALID_ID;              /* Requested protocol identifier. */
@@ -512,12 +514,13 @@ static void frame_scope_info_query_act(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x1A and return one variable-name ACK.
- * @param[in] p_pack Received variable query.
+ * @param[in] p_frame Received variable query.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_variable_query_act(section_packform_t *p_pack,
+static void frame_scope_variable_query_act(void *p_frame,
                                            DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SCOPE_VARIABLE_ACK_FIXED_SIZE +
                          FRAME_SCOPE_NAME_LENGTH_MAX] = {0}; /* Serialized variable ACK. */
     scope_registration_t *p_registration = NULL;             /* Scope selected by the query. */
@@ -612,12 +615,13 @@ static void frame_scope_control_reply(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x1B and start an idle Scope capture.
- * @param[in] p_pack Received start request.
+ * @param[in] p_frame Received start request.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_start_act(section_packform_t *p_pack,
+static void frame_scope_start_act(void *p_frame,
                                   DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
     uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
     scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Start result. */
@@ -656,12 +660,13 @@ static void frame_scope_start_act(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x1C and trigger a running Scope capture.
- * @param[in] p_pack Received trigger request.
+ * @param[in] p_frame Received trigger request.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_trigger_act(section_packform_t *p_pack,
+static void frame_scope_trigger_act(void *p_frame,
                                     DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
     uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
     scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Trigger result. */
@@ -697,12 +702,13 @@ static void frame_scope_trigger_act(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x1D and stop a Scope while retaining its capture data.
- * @param[in] p_pack Received stop request.
+ * @param[in] p_frame Received stop request.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_stop_act(section_packform_t *p_pack,
+static void frame_scope_stop_act(void *p_frame,
                                  DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
     uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
     scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Stop result. */
@@ -732,12 +738,13 @@ static void frame_scope_stop_act(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x1E and reset Scope state and capture readiness.
- * @param[in] p_pack Received reset request.
+ * @param[in] p_frame Received reset request.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_reset_act(section_packform_t *p_pack,
+static void frame_scope_reset_act(void *p_frame,
                                   DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
     uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
     scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Reset result. */
@@ -768,12 +775,13 @@ static void frame_scope_reset_act(section_packform_t *p_pack,
 
 /**
  * @brief Handle command 0x1F and return one logical sample across all Scope variables.
- * @param[in] p_pack Received sample query.
+ * @param[in] p_frame Received sample query.
  * @param[in] my_printf Link used for the ACK.
  */
-static void frame_scope_sample_query_act(section_packform_t *p_pack,
+static void frame_scope_sample_query_act(void *p_frame,
                                          DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_SCOPE_SAMPLE_ACK_MAX_SIZE] = {0}; /* Serialized sample ACK. */
     scope_registration_t *p_registration = NULL;                 /* Scope selected by the request. */
     const scope_t *p_scope = NULL;                                /* Capture data source on a valid id. */

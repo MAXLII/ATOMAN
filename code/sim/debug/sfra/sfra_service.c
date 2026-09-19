@@ -436,8 +436,9 @@ static void sfra_service_poll_task(void)
     }
 }
 
-static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_list_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_item_t *p_item = p_sfra_first;
     uint8_t index = 0u;
 
@@ -482,8 +483,9 @@ static void sfra_list_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     }
 }
 
-static void sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_info_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_info_query_t query;
     sfra_info_ack_t ack;
     sfra_registration_t *p_registration;
@@ -509,8 +511,9 @@ static void sfra_info_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                        (uint16_t)sizeof(ack));
 }
 
-static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_cfg_set_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_cfg_set_t cfg;
     sfra_ctrl_ack_t ack;
     sfra_registration_t *p_registration;
@@ -584,8 +587,9 @@ static void sfra_cfg_set_act(section_packform_t *p_pack, DEC_MY_PRINTF)
                        (uint16_t)sizeof(ack));
 }
 
-static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_ctrl_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_info_query_t query;
     sfra_ctrl_ack_t ack;
     sfra_registration_t *p_registration;
@@ -663,8 +667,9 @@ static void sfra_ctrl_act(section_packform_t *p_pack, DEC_MY_PRINTF)
     sfra_service_reply(p_pack, my_printf, cmd_word, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
 
-static void sfra_point_query_act(section_packform_t *p_pack, DEC_MY_PRINTF)
+static void sfra_point_query_act(void *p_frame, DEC_MY_PRINTF)
 {
+    section_packform_t *p_pack = (section_packform_t *)p_frame;
     sfra_point_query_t query;
     sfra_point_ack_t ack;
     sfra_registration_t *p_registration;
