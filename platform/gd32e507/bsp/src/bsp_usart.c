@@ -8,6 +8,7 @@
  *          Module responsibilities:
  *          - Configure USART0 on PA9 and PA10 at 115200 baud
  *          - Serialize debug messages through a software transmit ring buffer
+ *          - Drain pending transmit bytes with DMA0 channel 3
  *          - Buffer received bytes from the USART0 interrupt
  *          - Adapt formatted output to the Section communication link
  *
@@ -15,7 +16,7 @@
  *          - C11 compatible
  *          - No dynamic memory allocation
  *          - Ring-buffer access is protected by short interrupt-mask regions
- *          - Polling hardware transmit is isolated in one registered task
+ *          - The transmit ring is drained by DMA0 channel 3 and its full-transfer interrupt
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
  * @author  Max.Li
@@ -43,9 +44,14 @@
 #define BSP_USART_TX_RING_SIZE 1024u      /* Serialized pending debug bytes; one slot remains unused. */
 #define BSP_USART_RX_RING_SIZE 256u       /* Interrupt-fed pending receive bytes; one slot remains unused. */
 
+#define BSP_USART_TX_DMA DMA0            /* DMA peripheral draining the debug transmit ring. */
+#define BSP_USART_TX_DMA_CHANNEL DMA_CH3 /* USART0 TX request is fixed to DMA0 channel 3. */
+
 static uint8_t s_bsp_usart_tx_ring[BSP_USART_TX_RING_SIZE]; /* USART0 software transmit queue. */
 static volatile uint16_t s_bsp_usart_tx_head = 0u;          /* Next queue position written by producers. */
-static volatile uint16_t s_bsp_usart_tx_tail = 0u;          /* Next queue position consumed by the task. */
+static volatile uint16_t s_bsp_usart_tx_tail = 0u;          /* Next queue position consumed by the TX DMA. */
+static volatile uint16_t s_bsp_usart_tx_inflight = 0u;      /* Bytes of the DMA transfer currently in flight. */
+static volatile uint8_t s_bsp_usart_tx_busy = 0u;           /* 1 while the TX DMA channel owns a transfer. */
 static uint8_t s_bsp_usart_rx_ring[BSP_USART_RX_RING_SIZE]; /* USART0 interrupt receive queue. */
 static volatile uint16_t s_bsp_usart_rx_head = 0u;          /* Next queue position written by the ISR. */
 static volatile uint16_t s_bsp_usart_rx_tail = 0u;          /* Next queue position consumed by the link task. */
@@ -83,6 +89,54 @@ static uint16_t bsp_usart_tx_ring_free(void)
     return (uint16_t)((uint32_t)tail - (uint32_t)head - 1u);
 }
 
+static uint16_t bsp_usart_tx_ring_used(void)
+{
+    const uint16_t head = s_bsp_usart_tx_head;
+    const uint16_t tail = s_bsp_usart_tx_tail;
+
+    if (head >= tail)
+    {
+        return (uint16_t)(head - tail);
+    }
+
+    return (uint16_t)(BSP_USART_TX_RING_SIZE - (uint32_t)tail + (uint32_t)head);
+}
+
+/**
+ * @brief Start the next contiguous DMA chunk from the transmit ring.
+ * @details The caller must hold the interrupt lock. The channel is idle when
+ *          the previous chunk finished, so one chunk never races the other.
+ *          GD32E50x DMA keeps CHEN set after the counter reaches zero and
+ *          ignores counter writes while the channel is enabled, so the channel
+ *          is explicitly disabled before every re-arm.
+ */
+static void bsp_usart_tx_dma_kick(void)
+{
+    uint16_t count = bsp_usart_tx_ring_used(); /* Pending bytes when the chunk is prepared. */
+    uint16_t part = 0u;                        /* Bytes transferred by the upcoming chunk. */
+
+    if ((s_bsp_usart_tx_busy != 0u) || (count == 0u))
+    {
+        return;
+    }
+
+    /* Split at the ring wrap so one transfer always covers a contiguous region. */
+    part = (uint16_t)(BSP_USART_TX_RING_SIZE - (uint32_t)s_bsp_usart_tx_tail);
+    if (part > count)
+    {
+        part = count;
+    }
+
+    dma_channel_disable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
+    dma_memory_address_config(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL,
+                              (uint32_t)(uintptr_t)&s_bsp_usart_tx_ring[s_bsp_usart_tx_tail]);
+    dma_transfer_number_config(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, part);
+    usart_dma_transmit_config(USART0, USART_TRANSMIT_DMA_ENABLE);
+    s_bsp_usart_tx_inflight = part;
+    s_bsp_usart_tx_busy = 1u;
+    dma_channel_enable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
+}
+
 static int bsp_usart_dbg_enqueue(const uint8_t *p_data, uint16_t length)
 {
     uint32_t primask = 0u; /* Interrupt state saved while the complete message is queued. */
@@ -106,37 +160,32 @@ static int bsp_usart_dbg_enqueue(const uint8_t *p_data, uint16_t length)
         s_bsp_usart_tx_ring[s_bsp_usart_tx_head] = p_data[index];
         s_bsp_usart_tx_head = (uint16_t)(((uint32_t)s_bsp_usart_tx_head + 1u) % BSP_USART_TX_RING_SIZE);
     }
+    bsp_usart_tx_dma_kick();
     bsp_usart_irq_unlock(primask);
 
     return (int)length;
 }
 
-static void bsp_usart_dbg_tx_service_task(void)
+/**
+ * @brief DMA0 channel 3 full-transfer handler: advance the transmit queue and
+ *        start the next chunk when more bytes are pending.
+ * @details Called from DMA0_Channel3_IRQHandler in the platform interrupt module.
+ */
+void bsp_usart_dbg_tx_irq_handler(void)
 {
-    uint8_t data = 0u;   /* Byte removed atomically from the software queue. */
-    uint32_t primask = 0u; /* Interrupt state used while updating the queue tail. */
+    uint32_t primask = bsp_usart_irq_lock(); /* Interrupt state while the queue tail advances. */
 
-    for (;;)
+    if (dma_interrupt_flag_get(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, DMA_INT_FLAG_FTF) != RESET)
     {
-        primask = bsp_usart_irq_lock();
-        if (s_bsp_usart_tx_tail == s_bsp_usart_tx_head)
-        {
-            bsp_usart_irq_unlock(primask);
-            break;
-        }
-
-        data = s_bsp_usart_tx_ring[s_bsp_usart_tx_tail];
-        s_bsp_usart_tx_tail = (uint16_t)(((uint32_t)s_bsp_usart_tx_tail + 1u) % BSP_USART_TX_RING_SIZE);
-        bsp_usart_irq_unlock(primask);
-
-        while (usart_flag_get(USART0, USART_FLAG_TBE) == RESET)
-        {
-        }
-        usart_data_transmit(USART0, (uint16_t)data);
+        dma_interrupt_flag_clear(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, DMA_INT_FLAG_FTF);
+        s_bsp_usart_tx_tail = (uint16_t)(((uint32_t)s_bsp_usart_tx_tail +
+                                          (uint32_t)s_bsp_usart_tx_inflight) % BSP_USART_TX_RING_SIZE);
+        s_bsp_usart_tx_busy = 0u;
+        bsp_usart_tx_dma_kick();
     }
-}
 
-REG_TASK_MS(1, bsp_usart_dbg_tx_service_task)
+    bsp_usart_irq_unlock(primask);
+}
 
 static void bsp_usart_dbg_init(void)
 {
@@ -156,6 +205,27 @@ static void bsp_usart_dbg_init(void)
     usart_enable(USART0);
     usart_interrupt_enable(USART0, USART_INT_RBNE);
     nvic_irq_enable(USART0_IRQn, 2u, 0u);
+
+    /* USART0 TX request is fixed to DMA0 channel 3 (RM0040 request mapping). */
+    rcu_periph_clock_enable(RCU_DMA0);
+    dma_deinit(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
+    {
+        dma_parameter_struct dma_init_struct = {0};
+
+        dma_struct_para_init(&dma_init_struct);
+        dma_init_struct.direction = DMA_MEMORY_TO_PERIPHERAL;
+        dma_init_struct.periph_addr = (uint32_t)(uintptr_t)&USART_DATA(USART0);
+        dma_init_struct.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
+        dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
+        dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
+        dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
+        dma_init_struct.priority = DMA_PRIORITY_ULTRA_HIGH;
+        dma_init_struct.number = 0u;
+        dma_init(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, &dma_init_struct);
+    }
+    dma_circulation_disable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
+    dma_interrupt_enable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, DMA_INT_FTF);
+    nvic_irq_enable(DMA0_Channel3_IRQn, 2u, 0u);
 }
 
 REG_INIT(0, bsp_usart_dbg_init)

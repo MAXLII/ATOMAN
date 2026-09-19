@@ -163,3 +163,8 @@ void USART0_IRQHandler(void)
 {
     bsp_usart_dbg_irq_handler();
 }
+
+void DMA0_Channel3_IRQHandler(void)
+{
+    bsp_usart_dbg_tx_irq_handler();
+}
