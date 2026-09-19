@@ -1,5 +1,5 @@
 Plecs {
-  Name          "npc"
+  Name          "npc-T"
   Version       "5.0"
   CircuitModel  "ContStateSpace"
   StartTime     "0.0"
@@ -73,141 +73,10 @@ Plecs {
   IncompatibleInitialConditionMsg "2"
   Schematic {
     Location      [948, 516; 2239, 1108]
-    ZoomFactor    0.445255
-    SliderPosition [0, 0]
+    ZoomFactor    0.667274
+    SliderPosition [249, 118]
     ShowBrowser   off
     BrowserWidth  100
-    Component {
-      Type          Reference
-      SrcComponent  "Components/Electrical/Nanostep/NPC3"
-      Name          "NPC3"
-      Show          on
-      Position      [1230, 475]
-      Direction     up
-      Flipped       off
-      LabelPosition southSouthwest
-      Frame         [-140, -120; 140, 120]
-      Parameter {
-        Variable      "Configuration"
-        Value         "3"
-        Show          off
-      }
-      Parameter {
-        Variable      "switchModel"
-        Value         "1"
-        Show          off
-      }
-      Parameter {
-        Variable      "semiSymbol"
-        Value         "1"
-        Show          off
-      }
-      Parameter {
-        Variable      "L"
-        Value         "[80e-6 80e-6 80e-6]"
-        Show          off
-      }
-      Parameter {
-        Variable      "R"
-        Value         "[1e-3 1e-3 1e-3]"
-        Show          off
-      }
-      Parameter {
-        Variable      "assert"
-        Value         "2"
-        Show          off
-      }
-      Terminal {
-        Type          Port
-        Position      [-145, -115]
-        Direction     left
-      }
-      Terminal {
-        Type          Port
-        Position      [-145, 115]
-        Direction     left
-      }
-      Terminal {
-        Type          Port
-        Position      [145, -20]
-        Direction     right
-      }
-      Terminal {
-        Type          Input
-        Position      [-120, -90]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [-120, -40]
-        Direction     left
-      }
-      Terminal {
-        Type          Port
-        Position      [145, 0]
-        Direction     right
-      }
-      Terminal {
-        Type          Input
-        Position      [-30, -90]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [-30, -40]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [60, -90]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [60, -40]
-        Direction     left
-      }
-      Terminal {
-        Type          Port
-        Position      [145, 20]
-        Direction     right
-      }
-      Terminal {
-        Type          Input
-        Position      [-120, 40]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [-120, 90]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [-30, 40]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [-30, 90]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [60, 40]
-        Direction     left
-      }
-      Terminal {
-        Type          Input
-        Position      [60, 90]
-        Direction     left
-      }
-      Terminal {
-        Type          Port
-        Position      [-145, 0]
-        Direction     left
-      }
-    }
     Component {
       Type          Capacitor
       Name          "C1"
@@ -2510,7 +2379,7 @@ Plecs {
       Type          From
       Name          "From6"
       Show          off
-      Position      [1080, 385]
+      Position      [1145, 325]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2545,7 +2414,7 @@ Plecs {
       Type          From
       Name          "From7"
       Show          off
-      Position      [1080, 435]
+      Position      [1095, 380]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2580,7 +2449,7 @@ Plecs {
       Type          From
       Name          "From8"
       Show          off
-      Position      [1080, 515]
+      Position      [1115, 370]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2615,7 +2484,7 @@ Plecs {
       Type          From
       Name          "From9"
       Show          off
-      Position      [1080, 565]
+      Position      [1155, 565]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2650,7 +2519,7 @@ Plecs {
       Type          From
       Name          "From10"
       Show          off
-      Position      [1170, 385]
+      Position      [1205, 335]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2685,7 +2554,7 @@ Plecs {
       Type          From
       Name          "From11"
       Show          off
-      Position      [1170, 435]
+      Position      [1080, 440]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2720,7 +2589,7 @@ Plecs {
       Type          From
       Name          "From12"
       Show          off
-      Position      [1170, 515]
+      Position      [1115, 425]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2755,7 +2624,7 @@ Plecs {
       Type          From
       Name          "From13"
       Show          off
-      Position      [1170, 565]
+      Position      [1205, 615]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2790,7 +2659,7 @@ Plecs {
       Type          From
       Name          "From14"
       Show          off
-      Position      [1260, 385]
+      Position      [1265, 335]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2825,7 +2694,7 @@ Plecs {
       Type          From
       Name          "From15"
       Show          off
-      Position      [1260, 435]
+      Position      [1080, 500]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2860,7 +2729,7 @@ Plecs {
       Type          From
       Name          "From16"
       Show          off
-      Position      [1260, 515]
+      Position      [1115, 490]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -2895,7 +2764,7 @@ Plecs {
       Type          From
       Name          "From17"
       Show          off
-      Position      [1260, 565]
+      Position      [1265, 615]
       Direction     right
       Flipped       off
       LabelPosition south
@@ -5938,6 +5807,274 @@ Plecs {
         Show          off
       }
     }
+    Component {
+      Type          Reference
+      SrcComponent  "Components/Electrical/Nanostep/TType3"
+      Name          "TType3"
+      Show          on
+      Position      [1230, 475]
+      Direction     up
+      Flipped       off
+      LabelPosition southSouthwest
+      Frame         [-140, -120; 140, 120]
+      Parameter {
+        Variable      "Configuration"
+        Value         "3"
+        Show          off
+      }
+      Parameter {
+        Variable      "switchModel"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "semiSymbol"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "neutralPoint"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "L"
+        Value         "[80e-6 80e-6 80e-6]"
+        Show          off
+      }
+      Parameter {
+        Variable      "R"
+        Value         "[1e-3 1e-3 1e-3]"
+        Show          off
+      }
+      Parameter {
+        Variable      "assert"
+        Value         "2"
+        Show          off
+      }
+      Terminal {
+        Type          Port
+        Position      [-145, -115]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [-145, 115]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [145, -20]
+        Direction     right
+      }
+      Terminal {
+        Type          Input
+        Position      [-40, -90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-105, -80]
+        Direction     up
+      }
+      Terminal {
+        Type          Port
+        Position      [145, 0]
+        Direction     right
+      }
+      Terminal {
+        Type          Input
+        Position      [20, -90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-105, -20]
+        Direction     up
+      }
+      Terminal {
+        Type          Input
+        Position      [80, -90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-105, 40]
+        Direction     up
+      }
+      Terminal {
+        Type          Port
+        Position      [145, 20]
+        Direction     right
+      }
+      Terminal {
+        Type          Input
+        Position      [-65, -80]
+        Direction     up
+      }
+      Terminal {
+        Type          Input
+        Position      [-40, 90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-65, -20]
+        Direction     up
+      }
+      Terminal {
+        Type          Input
+        Position      [20, 90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-65, 40]
+        Direction     up
+      }
+      Terminal {
+        Type          Input
+        Position      [80, 90]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [-145, 0]
+        Direction     left
+      }
+    }
+    Component {
+      Type          Reference
+      SrcComponent  "Components/Electrical/Nanostep/NPC3"
+      Name          "NPC3"
+      Show          on
+      Position      [2425, 210]
+      Direction     up
+      Flipped       off
+      LabelPosition southSouthwest
+      CommentOut    DisabledOpenCircuit
+      Frame         [-140, -120; 140, 120]
+      Parameter {
+        Variable      "Configuration"
+        Value         "3"
+        Show          off
+      }
+      Parameter {
+        Variable      "switchModel"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "semiSymbol"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "L"
+        Value         "[80e-6 80e-6 80e-6]"
+        Show          off
+      }
+      Parameter {
+        Variable      "R"
+        Value         "[1e-3 1e-3 1e-3]"
+        Show          off
+      }
+      Parameter {
+        Variable      "assert"
+        Value         "2"
+        Show          off
+      }
+      Terminal {
+        Type          Port
+        Position      [-145, -115]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [-145, 115]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [145, -20]
+        Direction     right
+      }
+      Terminal {
+        Type          Input
+        Position      [-120, -90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-120, -40]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [145, 0]
+        Direction     right
+      }
+      Terminal {
+        Type          Input
+        Position      [-30, -90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-30, -40]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [60, -90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [60, -40]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [145, 20]
+        Direction     right
+      }
+      Terminal {
+        Type          Input
+        Position      [-120, 40]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-120, 90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-30, 40]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [-30, 90]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [60, 40]
+        Direction     left
+      }
+      Terminal {
+        Type          Input
+        Position      [60, 90]
+        Direction     left
+      }
+      Terminal {
+        Type          Port
+        Position      [-145, 0]
+        Direction     left
+      }
+    }
     Connection {
       Type          Wire
       SrcComponent  "C2"
@@ -5960,7 +6097,7 @@ Plecs {
       SrcTerminal   1
       Points        [1040, 360]
       Branch {
-        DstComponent  "NPC3"
+        DstComponent  "TType3"
         DstTerminal   1
       }
       Branch {
@@ -5981,7 +6118,7 @@ Plecs {
       SrcTerminal   2
       Points        [1040, 590]
       Branch {
-        DstComponent  "NPC3"
+        DstComponent  "TType3"
         DstTerminal   2
       }
       Branch {
@@ -6175,90 +6312,6 @@ Plecs {
     }
     Connection {
       Type          Signal
-      SrcComponent  "From6"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   4
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From7"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   5
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From8"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   12
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From9"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   13
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From14"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   9
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From15"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   10
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From16"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   16
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From17"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   17
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From10"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   7
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From11"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   8
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From12"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   14
-    }
-    Connection {
-      Type          Signal
-      SrcComponent  "From13"
-      SrcTerminal   1
-      DstComponent  "NPC3"
-      DstTerminal   15
-    }
-    Connection {
-      Type          Signal
       SrcComponent  "DLL"
       SrcTerminal   2
       Points        [1120, 765]
@@ -6319,21 +6372,21 @@ Plecs {
       Type          Wire
       SrcComponent  "R11"
       SrcTerminal   1
-      DstComponent  "NPC3"
+      DstComponent  "TType3"
       DstTerminal   6
     }
     Connection {
       Type          Wire
       SrcComponent  "R9"
       SrcTerminal   1
-      DstComponent  "NPC3"
+      DstComponent  "TType3"
       DstTerminal   3
     }
     Connection {
       Type          Wire
       SrcComponent  "R10"
       SrcTerminal   1
-      DstComponent  "NPC3"
+      DstComponent  "TType3"
       DstTerminal   11
     }
     Connection {
@@ -6345,7 +6398,7 @@ Plecs {
     }
     Connection {
       Type          Wire
-      SrcComponent  "NPC3"
+      SrcComponent  "TType3"
       SrcTerminal   18
       Points        [1040, 475]
       Branch {
@@ -6610,6 +6663,98 @@ Plecs {
       DstComponent  "R17"
       DstTerminal   1
     }
+    Connection {
+      Type          Signal
+      SrcComponent  "From6"
+      SrcTerminal   1
+      Points        [1170, 325; 1170, 385]
+      DstComponent  "TType3"
+      DstTerminal   4
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From7"
+      SrcTerminal   1
+      DstComponent  "TType3"
+      DstTerminal   5
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From8"
+      SrcTerminal   1
+      Points        [1165, 370]
+      DstComponent  "TType3"
+      DstTerminal   12
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From9"
+      SrcTerminal   1
+      DstComponent  "TType3"
+      DstTerminal   13
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From10"
+      SrcTerminal   1
+      Points        [1235, 335]
+      DstComponent  "TType3"
+      DstTerminal   7
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From11"
+      SrcTerminal   1
+      DstComponent  "TType3"
+      DstTerminal   8
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From12"
+      SrcTerminal   1
+      Points        [1165, 425]
+      DstComponent  "TType3"
+      DstTerminal   14
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From13"
+      SrcTerminal   1
+      Points        [1235, 615]
+      DstComponent  "TType3"
+      DstTerminal   15
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From14"
+      SrcTerminal   1
+      Points        [1295, 335]
+      DstComponent  "TType3"
+      DstTerminal   9
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From15"
+      SrcTerminal   1
+      DstComponent  "TType3"
+      DstTerminal   10
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From16"
+      SrcTerminal   1
+      Points        [1165, 490]
+      DstComponent  "TType3"
+      DstTerminal   16
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "From17"
+      SrcTerminal   1
+      Points        [1295, 615]
+      DstComponent  "TType3"
+      DstTerminal   17
+    }
   }
 }
-DemoSignature "eC5Iri9ICBJUSq2h08R6+J9KoWjxNX7YxrQ8rhig4cY="
+DemoSignature "dzAjO/dIHdvslh0JxAUWndUaLk9sgTIshI2osbVkt0s="
