@@ -345,9 +345,9 @@ uint32_t perf_core_count_to_us(uint32_t count)
 
 uint32_t perf_core_count_to_100ns(uint32_t count)
 {
-    const double ticks_100ns = ((double)count * (double)s_perf_cnt_period_s) * 1.0e7; /* Report-unit value. */
+    const double ticks_100ns = ((double)count * (double)s_perf_cnt_period_s) * (double)1.0e7f; /* Report-unit value. */
 
-    if (ticks_100ns <= 0.0)
+    if (ticks_100ns <= (double)0.0f)
     {
         return 0u;
     }
@@ -357,7 +357,7 @@ uint32_t perf_core_count_to_100ns(uint32_t count)
         return UINT32_MAX;
     }
 
-    return (uint32_t)(ticks_100ns + 0.5);
+    return (uint32_t)(ticks_100ns + (double)0.5f);
 }
 
 uint32_t perf_core_task_period_us_get(perf_core_record_t *record)
