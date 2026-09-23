@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    shell_service.h
- * @brief   shell reporting service public interface.
+ * @file shell_service.h
+ * @brief shell reporting service public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,34 +31,34 @@
 
 #include "shell.h"
 
-#define CMD_SET_SHELL_DATA_NUM 0x01
+#define CMD_SET_SHELL_DATA_NUM  0x01
 #define CMD_WORD_SHELL_DATA_NUM 0x01
 
-#define CMD_SET_SHELL_REPORT_LIST 0x01
+#define CMD_SET_SHELL_REPORT_LIST  0x01
 #define CMD_WORD_SHELL_REPORT_LIST 0x04
 
-#define CMD_SET_SHELL_REPORT_LIST_BATCH 0x01
+#define CMD_SET_SHELL_REPORT_LIST_BATCH  0x01
 #define CMD_WORD_SHELL_REPORT_LIST_BATCH 0x3F
 
-#define CMD_SET_SHELL_READ_DATA 0x01
+#define CMD_SET_SHELL_READ_DATA  0x01
 #define CMD_WORD_SHELL_READ_DATA 0x02
 
-#define CMD_SET_SHELL_WRITE_DATA 0x01
+#define CMD_SET_SHELL_WRITE_DATA  0x01
 #define CMD_WORD_SHELL_WRITE_DATA 0x03
 
-#define CMD_SET_SHELL_WAVE_ENABLE_PARAM 0x01
+#define CMD_SET_SHELL_WAVE_ENABLE_PARAM  0x01
 #define CMD_WORD_SHELL_WAVE_ENABLE_PARAM 0x05
 
-#define CMD_SET_SHELL_WAVE_START 0x01
+#define CMD_SET_SHELL_WAVE_START  0x01
 #define CMD_WORD_SHELL_WAVE_START 0x0C
 
-#define CMD_SET_SHELL_WAVE_PERIOD 0x01
+#define CMD_SET_SHELL_WAVE_PERIOD  0x01
 #define CMD_WORD_SHELL_WAVE_PERIOD 0x06
 
-#define CMD_SET_SHELL_WAVE_PARAM 0x01
+#define CMD_SET_SHELL_WAVE_PARAM  0x01
 #define CMD_WORD_SHELL_WAVE_PARAM 0x07
 
-#define CMD_SET_SHELL_WAVE_BATCH 0x01
+#define CMD_SET_SHELL_WAVE_BATCH  0x01
 #define CMD_WORD_SHELL_WAVE_BATCH 0x40
 
 #pragma pack(push, 1)

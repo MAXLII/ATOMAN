@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    scope.h
- * @brief   Scope Section adapter public interface.
+ * @file scope.h
+ * @brief Scope Section adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Capture algorithms are implemented by scope_core.c
  *          - Protocol handling belongs to scope_service.c
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.

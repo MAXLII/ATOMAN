@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.h
- * @brief   PLECS bidirectional CLLC application include point.
+ * @file app.h
+ * @brief PLECS bidirectional CLLC application include point.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - No public application functions are required
  *          - Runtime entry is provided through section registration
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_adc.h
- * @brief   PLECS CLLC ADC adapter public interface.
+ * @file bsp_adc.h
+ * @brief PLECS CLLC ADC adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Values are physical floating-point quantities
  *          - Reads are stateless and suitable for control-interrupt use
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

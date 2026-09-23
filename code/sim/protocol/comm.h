@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    comm.h
- * @brief   Host simulation communication protocol public interface.
+ * @file comm.h
+ * @brief Host simulation communication protocol public interface.
  * @details
  *          This file is part of the base shared simulation library.
  *
@@ -17,8 +17,8 @@
  *          - PLECS TCP parsing can use Windows wall-clock milliseconds
  *          - Protocol frame layout remains compatible with the MCU implementation
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,9 +33,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define COMM_MAX_PAYLOAD_SIZE (10u * 1024u)
+#define COMM_MAX_PAYLOAD_SIZE    (10u * 1024u)
 #define COMM_FRAME_OVERHEAD_SIZE (15u)
-#define COMM_MAX_FRAME_SIZE (COMM_MAX_PAYLOAD_SIZE + COMM_FRAME_OVERHEAD_SIZE)
+#define COMM_MAX_FRAME_SIZE      (COMM_MAX_PAYLOAD_SIZE + COMM_FRAME_OVERHEAD_SIZE)
 
 #include "section.h" // 仅依赖：REG_SECTION_FUNC / SECTION_COMM / SECTION_COMM_ROUTE / DEC_MY_PRINTF
 
@@ -131,8 +131,8 @@ typedef struct
     uint8_t is_route : 1;
 
     const char *p_tcp_name; ///< Registered TCP channel name; NULL for streams without sessions
-    uint32_t session; ///< Connection generation currently owned by this parser
-    uint8_t session_valid; ///< Cleared by protocol initialization on every simulation run
+    uint32_t session;       ///< Connection generation currently owned by this parser
+    uint8_t session_valid;  ///< Cleared by protocol initialization on every simulation run
 
     uint8_t link_id; ///< 所属链路ID
 } comm_ctx_t;
@@ -141,29 +141,29 @@ typedef struct
  * @brief 一句宏声明 payload buffer + comm_ctx_t
  */
 #define DECLARE_COMM_CTX(name, payload_size, _src, _link_id, _tcp_name) \
-    static uint8_t name##_payload_buf[(payload_size)] = {0}; \
-    static comm_ctx_t name = {                               \
-        .p_data_buffer = name##_payload_buf,                 \
-        .buffer_size = (uint16_t)sizeof(name##_payload_buf), \
-        .index = 0,                                          \
-        .status = SECTION_PACKFORM_STA_SOP,                  \
-        .crc = 0,                                            \
-        .pack = {0},                                         \
-        .func = NULL,                                        \
-        .len = 0,                                            \
-        .src = (uint8_t)(_src),                              \
-        .d_src = 0,                                          \
-        .last_rx_tick = 0,                                   \
-        .src_flag = 0,                                       \
-        .dst_flag = 0,                                       \
-        .cmd_flag = 0,                                       \
-        .len_flag = 0,                                       \
-        .eop_flag = 0,                                       \
-        .is_route = 0,                                       \
-        .p_tcp_name = (_tcp_name),                         \
-        .session = 0u,                                      \
-        .session_valid = 0u,                                \
-        .link_id = (uint8_t)(_link_id),                      \
+    static uint8_t name##_payload_buf[(payload_size)] = {0};            \
+    static comm_ctx_t name = {                                          \
+        .p_data_buffer = name##_payload_buf,                            \
+        .buffer_size   = (uint16_t)sizeof(name##_payload_buf),          \
+        .index         = 0,                                             \
+        .status        = SECTION_PACKFORM_STA_SOP,                      \
+        .crc           = 0,                                             \
+        .pack          = {0},                                           \
+        .func          = NULL,                                          \
+        .len           = 0,                                             \
+        .src           = (uint8_t)(_src),                               \
+        .d_src         = 0,                                             \
+        .last_rx_tick  = 0,                                             \
+        .src_flag      = 0,                                             \
+        .dst_flag      = 0,                                             \
+        .cmd_flag      = 0,                                             \
+        .len_flag      = 0,                                             \
+        .eop_flag      = 0,                                             \
+        .is_route      = 0,                                             \
+        .p_tcp_name    = (_tcp_name),                                   \
+        .session       = 0u,                                            \
+        .session_valid = 0u,                                            \
+        .link_id       = (uint8_t)(_link_id),                           \
     }
 
 /* =============================================================================
@@ -188,14 +188,13 @@ typedef struct section_com_t
  */
 #define _REG_COMM(_cmd_set, _cmd_word, _func)              \
     section_com_t section_com_##_cmd_set##_##_cmd_word = { \
-        .cmd_set = (_cmd_set),                             \
+        .cmd_set  = (_cmd_set),                            \
         .cmd_word = (_cmd_word),                           \
-        .func = (_func),                                   \
+        .func     = (_func),                               \
     };                                                     \
     REG_SECTION_FUNC(SECTION_COMM, section_com_##_cmd_set##_##_cmd_word)
 
-#define REG_COMM(_cmd_set, _cmd_word, _func) \
-    _REG_COMM(_cmd_set, _cmd_word, _func)
+#define REG_COMM(_cmd_set, _cmd_word, _func) _REG_COMM(_cmd_set, _cmd_word, _func)
 
 /* =============================================================================
  * COMM 路由表注册
@@ -216,12 +215,11 @@ extern section_item_t *p_comm_route_first;
     comm_route_t comm_route_##_src_link_id##_dst_link_id##_dst_addr = { \
         .src_link_id = (_src_link_id),                                  \
         .dst_link_id = (_dst_link_id),                                  \
-        .dst_addr = (_dst_addr),                                        \
+        .dst_addr    = (_dst_addr),                                     \
     };                                                                  \
     REG_SECTION_FUNC(SECTION_COMM_ROUTE, comm_route_##_src_link_id##_dst_link_id##_dst_addr)
 
-#define REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr) \
-    _REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr)
+#define REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr) _REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr)
 
 /* =============================================================================
  * COMM 对外接口（实现位于 comm.c）
@@ -233,7 +231,10 @@ extern section_item_t *p_comm_route_first;
 void comm_reset_ctx(comm_ctx_t *ctx);
 /** Simulation parser entry; timeout uses host monotonic milliseconds internally. */
 void comm_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
-void comm_run_with_time(uint8_t data, DEC_MY_PRINTF, void *ctx, uint32_t current_time_ms);
+void comm_run_with_time(uint8_t data,
+                        DEC_MY_PRINTF,
+                        void *ctx,
+                        uint32_t current_time_ms);
 void comm_send_data(void *p_pack, DEC_MY_PRINTF);
 
 #endif /* SIM_PROTOCOL_COMM_H */

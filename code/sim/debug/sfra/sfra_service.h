@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sfra_service.h
- * @brief   SFRA service public interface.
+ * @file sfra_service.h
+ * @brief SFRA service public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -15,8 +15,8 @@
  *          - No dynamic memory allocation
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,29 +33,29 @@
 
 #define CMD_SET_SFRA 0x01
 
-#define CMD_WORD_SFRA_LIST_QUERY 0x2F
-#define CMD_WORD_SFRA_INFO_QUERY 0x30
-#define CMD_WORD_SFRA_CFG_SET 0x31
-#define CMD_WORD_SFRA_START 0x32
-#define CMD_WORD_SFRA_STOP 0x33
-#define CMD_WORD_SFRA_RESET 0x34
-#define CMD_WORD_SFRA_POINT_QUERY 0x35
+#define CMD_WORD_SFRA_LIST_QUERY   0x2F
+#define CMD_WORD_SFRA_INFO_QUERY   0x30
+#define CMD_WORD_SFRA_CFG_SET      0x31
+#define CMD_WORD_SFRA_START        0x32
+#define CMD_WORD_SFRA_STOP         0x33
+#define CMD_WORD_SFRA_RESET        0x34
+#define CMD_WORD_SFRA_POINT_QUERY  0x35
 #define CMD_WORD_SFRA_POINT_REPORT 0x36
-#define CMD_WORD_SFRA_DONE_REPORT 0x37
+#define CMD_WORD_SFRA_DONE_REPORT  0x37
 
-#define SFRA_CFG_APPLY_FREQ 0x01u
+#define SFRA_CFG_APPLY_FREQ      0x01u
 #define SFRA_CFG_APPLY_AMPLITUDE 0x02u
 
 typedef enum
 {
-    SFRA_TOOL_STATUS_OK = 0,
-    SFRA_TOOL_STATUS_SFRA_ID_INVALID = 1,
+    SFRA_TOOL_STATUS_OK                  = 0,
+    SFRA_TOOL_STATUS_SFRA_ID_INVALID     = 1,
     SFRA_TOOL_STATUS_POINT_INDEX_INVALID = 2,
-    SFRA_TOOL_STATUS_BUSY = 3,
-    SFRA_TOOL_STATUS_DATA_NOT_READY = 4,
-    SFRA_TOOL_STATUS_SWEEP_CHANGED = 5,
-    SFRA_TOOL_STATUS_INVALID_PARAM = 6,
-    SFRA_TOOL_STATUS_CORE_ERROR = 7,
+    SFRA_TOOL_STATUS_BUSY                = 3,
+    SFRA_TOOL_STATUS_DATA_NOT_READY      = 4,
+    SFRA_TOOL_STATUS_SWEEP_CHANGED       = 5,
+    SFRA_TOOL_STATUS_INVALID_PARAM       = 6,
+    SFRA_TOOL_STATUS_CORE_ERROR          = 7,
 } sfra_tool_status_e;
 
 #pragma pack(push, 1)

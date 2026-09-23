@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sfra.h
- * @brief   SFRA Section adapter public interface.
+ * @file sfra.h
+ * @brief SFRA Section adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Frequency-response algorithms are implemented by sfra_core.c
  *          - Protocol handling belongs to sfra_service.c
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -53,8 +53,7 @@ typedef struct
     uint8_t done_reported;
 } sfra_registration_t;
 
-#define REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, \
-                 prepare_cb, prepare_ctx)                                \
+#define REG_SFRA(name, delay_tick, ts, inject_amp, freq_start, freq_end, prepare_cb, prepare_ctx)                                \
     float name##_inject;                                                 \
     float name##_collect;                                                \
     sfra_t name = {                                                      \

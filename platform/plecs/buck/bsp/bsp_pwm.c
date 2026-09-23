@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_pwm.c
- * @brief   PLECS buck PWM adapter module.
+ * @file bsp_pwm.c
+ * @brief PLECS buck PWM adapter module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-24
+ * @author Max.Li
+ * @date 2026-05-24
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -54,10 +54,10 @@ static void bsp_pwm_set_channel(PLECS_OUTPUT_E duty_ch,
                                 uint8_t dn_en)
 {
     int32_t cmp_limited = 0;
-    float duty = 0.0f;
+    float duty          = 0.0f;
 
     cmp_limited = bsp_pwm_limit_cmp(cmp);
-    duty = (float)cmp_limited / (float)BUCK_CTRL_CMP_MAX;
+    duty        = (float)cmp_limited / (float)BUCK_CTRL_CMP_MAX;
 
     plecs_set_output(duty_ch, duty);
     plecs_set_output(cmp_ch, (float)cmp_limited);

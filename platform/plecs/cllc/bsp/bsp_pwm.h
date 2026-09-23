@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_pwm.h
- * @brief   PLECS CLLC PWM adapter public interface.
+ * @file bsp_pwm.h
+ * @brief PLECS CLLC PWM adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Functions are safe for the simulation control-interrupt path
  *          - Modulation trajectory calculation remains in code/interface/cllc
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

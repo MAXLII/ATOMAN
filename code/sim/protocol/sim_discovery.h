@@ -6,8 +6,8 @@
  * @author Max.Li
  * @date 2026-09-17
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 
 #ifndef SIM_DISCOVERY_H
@@ -21,9 +21,12 @@ typedef struct sim_discovery_reg
     uint16_t udp_port;
 } sim_discovery_reg_t;
 #define REG_SIM_DISCOVERY(_id, _name, _addr, _port, _udp_port) \
-    static sim_discovery_reg_t sim_discovery_##_id = { \
-        .p_name = (_name), .node_addr = (_addr), .tcp_port = (_port), .udp_port = (_udp_port), \
-    }; \
+    static sim_discovery_reg_t sim_discovery_##_id = {         \
+        .p_name    = (_name),                                  \
+        .node_addr = (_addr),                                  \
+        .tcp_port  = (_port),                                  \
+        .udp_port  = (_udp_port),                              \
+    };                                                         \
     REG_SECTION_FUNC(SECTION_SIM_DISCOVERY, sim_discovery_##_id)
 void sim_discovery_stop(void);
 #endif

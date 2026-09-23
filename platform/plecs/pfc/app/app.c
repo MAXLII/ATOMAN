@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.c
- * @brief   PLECS PFC application module.
+ * @file app.c
+ * @brief PLECS PFC application module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-19
+ * @author Max.Li
+ * @date 2026-06-19
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,21 +39,21 @@
 #include "timing.h"
 
 #define APP_VBUS_PRECHARGE_ENTER_V (M_SQRT2 * 200.0f)
-#define APP_VBUS_NOM_ENTER_V (380.0f)
-#define APP_GRID_RMS_MIN_V (180.0f)
-#define APP_GRID_RMS_MAX_V (265.0f)
-#define APP_GRID_RMS_CROSS_THR_V (1.0f)
+#define APP_VBUS_NOM_ENTER_V       (380.0f)
+#define APP_GRID_RMS_MIN_V         (180.0f)
+#define APP_GRID_RMS_MAX_V         (265.0f)
+#define APP_GRID_RMS_CROSS_THR_V   (1.0f)
 
-static uint8_t app_pfc_hal_bound = 0U;
+static uint8_t app_pfc_hal_bound    = 0U;
 static uint8_t app_pfc_timing_bound = 0U;
 
-static float app_v_g = 0.0f;
-static float app_v_cap = 0.0f;
-static float app_v_bus = 0.0f;
-static float app_i_l = 0.0f;
-static float app_v_g_rms = 0.0f;
-static cal_rms_t app_v_g_rms_cal = {0};
-static pfc_vbus_sta_e app_vbus_sta = PFC_VBUS_STA_BELOW_INPUT_PEAK;
+static float app_v_g                  = 0.0f;
+static float app_v_cap                = 0.0f;
+static float app_v_bus                = 0.0f;
+static float app_i_l                  = 0.0f;
+static float app_v_g_rms              = 0.0f;
+static cal_rms_t app_v_g_rms_cal      = {0};
+static pfc_vbus_sta_e app_vbus_sta    = PFC_VBUS_STA_BELOW_INPUT_PEAK;
 static uint8_t app_main_rly_is_closed = 0U;
 
 static void app_main_rly_on(void)
@@ -82,7 +82,8 @@ static float app_calc_duty(float v_pwm, float v_bus, float *p_offset)
 {
     float vbus = v_bus;
 
-    if ((vbus < 1.0e-6f) && (vbus > -1.0e-6f))
+    if (    (vbus < 1.0e-6f)
+         && (vbus > -1.0e-6f))
     {
         vbus = 1.0e-6f;
     }
@@ -100,17 +101,17 @@ static float app_calc_duty(float v_pwm, float v_bus, float *p_offset)
 static void app_pwm_set_bridge(float v_pwm, float v_bus)
 {
     float offset = 0.0f;
-    float duty = app_calc_duty(v_pwm, v_bus, &offset);
+    float duty   = app_calc_duty(v_pwm, v_bus, &offset);
 
     bsp_pwm_set_duty(duty, offset, 1U, 1U, 1U, 1U);
 }
 
 static void app_update_feedback(void)
 {
-    app_v_g = BSP_ADC_V_G;
+    app_v_g   = BSP_ADC_V_G;
     app_v_cap = BSP_ADC_V_CAP;
     app_v_bus = BSP_ADC_V_BUS;
-    app_i_l = BSP_ADC_I_L;
+    app_i_l   = BSP_ADC_I_L;
 
     cal_rms_master_run(&app_v_g_rms_cal);
     app_v_g_rms = app_v_g_rms_cal.output.rms;
@@ -131,8 +132,8 @@ static void app_update_feedback(void)
 
 static uint8_t app_grid_is_ok(void)
 {
-    return (uint8_t)((app_v_g_rms >= APP_GRID_RMS_MIN_V) &&
-                     (app_v_g_rms <= APP_GRID_RMS_MAX_V));
+    return (uint8_t)(    (app_v_g_rms >= APP_GRID_RMS_MIN_V)
+                      && (app_v_g_rms <= APP_GRID_RMS_MAX_V));
 }
 
 static void app_feedback_isr(void)
@@ -144,13 +145,7 @@ REG_INTERRUPT(0, app_feedback_isr)
 
 static void app_rms_init(void)
 {
-    cal_rms_init(&app_v_g_rms_cal,
-                 CAL_RMS_MASTER,
-                 CTRL_TS,
-                 APP_GRID_RMS_CROSS_THR_V,
-                 &app_v_g,
-                 NULL,
-                 NULL);
+    cal_rms_init(&app_v_g_rms_cal, CAL_RMS_MASTER, CTRL_TS, APP_GRID_RMS_CROSS_THR_V, &app_v_g, NULL, NULL);
 }
 
 REG_INIT(0, app_rms_init)
@@ -177,6 +172,7 @@ static void app_bind_pfc_hal(void)
     pfc_hal_set_main_rly_off_func(app_main_rly_off);
 
     app_pfc_hal_bound = pfc_hal_is_ready();
+
     if (app_pfc_hal_bound != 0U)
     {
         pfc_hal_lock_binding();
@@ -206,7 +202,7 @@ static void app_update_setpoint(void)
 
 static void app_task(void)
 {
-    uint8_t run_cmd = 0U;
+    uint8_t run_cmd       = 0U;
     pfc_run_sta_e run_sta = pfc_fsm_get_run_sta();
 
     app_update_feedback();
@@ -216,7 +212,8 @@ static void app_task(void)
     run_cmd = (plecs_get_input(PLECS_INPUT_RUN) > 0.5f) ? 1U : 0U;
     plecs_set_output(PLECS_OUTPUT_RUN_STATE, (float)run_sta);
 
-    if ((run_cmd != 0U) && (app_grid_is_ok() != 0U))
+    if (    (run_cmd != 0U)
+         && (app_grid_is_ok() != 0U))
     {
         if (run_sta == pfc_run_sta_idle)
         {
@@ -227,6 +224,7 @@ static void app_task(void)
     else
     {
         app_pfc_hal_bound = 0U;
+
         if (run_sta != pfc_run_sta_idle)
         {
             pfc_fsm_set_cmd(pfc_fsm_cmd_stop);

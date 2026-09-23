@@ -6,8 +6,8 @@
  * @author Max.Li
  * @date 2026-09-17
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 
 #ifndef SIM_TCP_H
@@ -15,7 +15,11 @@
 #include <stdarg.h>
 #include "section.h"
 
-typedef enum { SIM_TCP_SERVER = 0, SIM_TCP_CLIENT } SIM_TCP_ROLE_E;
+typedef enum
+{
+    SIM_TCP_SERVER = 0,
+    SIM_TCP_CLIENT
+} SIM_TCP_ROLE_E;
 typedef struct sim_tcp_status
 {
     uint32_t connected;
@@ -36,12 +40,15 @@ typedef struct sim_tcp_reg
 } sim_tcp_reg_t;
 
 #define REG_SIM_TCP(_handle, _name, _role, _ip, _port) \
-    static struct sim_tcp *_handle = NULL;           \
-    static sim_tcp_reg_t sim_tcp_reg_##_handle = {    \
-        .p_name = (_name), .role = (_role),           \
-        .p_ip = (_ip), .port = (_port),               \
-        .p_handle = &(_handle), .status = {0},        \
-    };                                               \
+    static struct sim_tcp *_handle = NULL;             \
+    static sim_tcp_reg_t sim_tcp_reg_##_handle = {     \
+        .p_name   = (_name),                           \
+        .role     = (_role),                           \
+        .p_ip     = (_ip),                             \
+        .port     = (_port),                           \
+        .p_handle = &(_handle),                        \
+        .status   = {0},                               \
+    };                                                 \
     REG_SECTION_FUNC(SECTION_SIM_TCP, sim_tcp_reg_##_handle)
 
 /** Whole writes are copied to a bounded ring, or rejected and counted. */

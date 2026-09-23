@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    scope.c
- * @brief   Scope Section adapter implementation.
+ * @file scope.c
+ * @brief Scope Section adapter implementation.
  * @details
  *          This file is part of the base shared simulation library.
  *
@@ -16,8 +16,8 @@
  *          - Windows linker-section access is isolated to this host simulation adapter
  *          - Protocol handling belongs to scope_service.c
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,18 +30,18 @@
 
 #include <stddef.h>
 
-section_item_t *p_scope_first = NULL;
+section_item_t *p_scope_first       = NULL;
 static section_item_t *p_scope_tail = NULL;
 REG_DBG_LIST(scope, p_scope_first)
 
 void scope_init(void)
 {
-    uint8_t id = 0u;
+    uint8_t id                           = 0u;
     const reg_section_t *p_section_first = NULL;
-    const reg_section_t *p_section_last = NULL;
+    const reg_section_t *p_section_last  = NULL;
 
     p_scope_first = NULL;
-    p_scope_tail = NULL;
+    p_scope_tail  = NULL;
 
 #if defined(SECTION_SENTINEL_REG_SECTION)
     extern const reg_section_t section_reg_start;
@@ -50,30 +50,31 @@ void scope_init(void)
     p_section_last = &section_reg_stop;
 #else
     p_section_first = (const reg_section_t *)&SECTION_START;
-    p_section_last = (const reg_section_t *)&SECTION_STOP;
+    p_section_last  = (const reg_section_t *)&SECTION_STOP;
 #endif
 
-    for (const reg_section_t *p_section = p_section_first;
-         p_section < p_section_last;
-         ++p_section)
+    for (const reg_section_t *p_section = p_section_first; p_section < p_section_last; ++p_section)
     {
         if (p_section->section_type == SECTION_SCOPE)
         {
-            section_item_t *p_item = (section_item_t *)p_section->p_str;
+            section_item_t *p_item               = (section_item_t *)p_section->p_str;
             scope_registration_t *p_registration = NULL;
 
-            if ((p_item == NULL) || (p_item->p_obj == NULL))
+            if (    (p_item == NULL)
+                 || (p_item->p_obj == NULL))
             {
                 continue;
             }
 
             p_registration = (scope_registration_t *)p_item->p_obj;
+
             if (p_registration->p_scope == NULL)
             {
                 continue;
             }
             p_registration->scope_id = id++;
-            p_item->p_next = NULL;
+            p_item->p_next           = NULL;
+
             if (p_scope_first == NULL)
             {
                 p_scope_first = p_item;

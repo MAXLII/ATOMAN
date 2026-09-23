@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sfra_core.h
- * @brief   Software frequency response analyzer module.
+ * @file sfra_core.h
+ * @brief Software frequency response analyzer module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented by the caller
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -35,30 +35,30 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SFRA_FREQ_TABLE_SIZE (300U)
-#define SFRA_DEFAULT_SETTLE_CYCLES (2.0f)
+#define SFRA_FREQ_TABLE_SIZE        (300U)
+#define SFRA_DEFAULT_SETTLE_CYCLES  (2.0f)
 #define SFRA_DEFAULT_COLLECT_CYCLES (5.0f)
-#define SFRA_MAX_INJECT_DELAY_TICK (2U)
-#define SFRA_SAMPLE_BUFFER_SIZE (384U)
-#define SFRA_TASK_SAMPLE_BUDGET (128U)
+#define SFRA_MAX_INJECT_DELAY_TICK  (2U)
+#define SFRA_SAMPLE_BUFFER_SIZE     (384U)
+#define SFRA_TASK_SAMPLE_BUDGET     (128U)
 
 typedef enum
 {
-    SFRA_STATUS_OK = 0,
-    SFRA_STATUS_NULL = 1,
+    SFRA_STATUS_OK            = 0,
+    SFRA_STATUS_NULL          = 1,
     SFRA_STATUS_INVALID_PARAM = 2,
-    SFRA_STATUS_BUSY = 3,
-    SFRA_STATUS_DONE = 4
+    SFRA_STATUS_BUSY          = 3,
+    SFRA_STATUS_DONE          = 4
 } sfra_status_t;
 
 typedef enum
 {
-    SFRA_STATE_IDLE = 0,
+    SFRA_STATE_IDLE         = 0,
     SFRA_STATE_PREPARE_FREQ = 1,
-    SFRA_STATE_SETTLE = 2,
-    SFRA_STATE_COLLECT = 3,
-    SFRA_STATE_CALC = 4,
-    SFRA_STATE_DONE = 5
+    SFRA_STATE_SETTLE       = 2,
+    SFRA_STATE_COLLECT      = 3,
+    SFRA_STATE_CALC         = 4,
+    SFRA_STATE_DONE         = 5
 } sfra_state_t;
 
 typedef void (*sfra_freq_prepare_cb_t)(void *p_ctx);
@@ -206,18 +206,18 @@ typedef struct sfra_t
 } sfra_t;
 
 sfra_status_t sfra_core_init(sfra_t *sfra,
-                        float *p_inject,
-                        float *p_collect,
-                        float isr_freq_hz,
-                        float inject_amplitude,
-                        float freq_start_hz,
-                        float freq_step_mul);
+                             float *p_inject,
+                             float *p_collect,
+                             float isr_freq_hz,
+                             float inject_amplitude,
+                             float freq_start_hz,
+                             float freq_step_mul);
 sfra_status_t sfra_core_start(sfra_t *sfra);
 sfra_status_t sfra_core_stop(sfra_t *sfra);
 sfra_status_t sfra_core_reset(sfra_t *sfra);
 sfra_status_t sfra_core_set_sweep_range(sfra_t *sfra,
-                                   float freq_start_hz,
-                                   float freq_end_hz);
+                                        float freq_start_hz,
+                                        float freq_end_hz);
 sfra_status_t sfra_core_set_inject_delay(sfra_t *sfra, uint16_t inject_delay_tick);
 void sfra_core_isr_pre_sample(sfra_t *sfra);
 void sfra_core_isr_post_sample(sfra_t *sfra);

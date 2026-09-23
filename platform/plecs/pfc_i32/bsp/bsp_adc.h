@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_adc.h
- * @brief   PLECS PFC ADC adapter module.
+ * @file bsp_adc.h
+ * @brief PLECS PFC ADC adapter module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-19
+ * @author Max.Li
+ * @date 2026-06-19
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,9 +32,9 @@
 
 #include "plecs.h"
 
-#define BSP_ADC_V_G plecs_get_input(PLECS_INPUT_V_G)
+#define BSP_ADC_V_G   plecs_get_input(PLECS_INPUT_V_G)
 #define BSP_ADC_V_CAP plecs_get_input(PLECS_INPUT_V_CAP)
-#define BSP_ADC_I_L plecs_get_input(PLECS_INPUT_I_L)
+#define BSP_ADC_I_L   plecs_get_input(PLECS_INPUT_I_L)
 #define BSP_ADC_V_BUS plecs_get_input(PLECS_INPUT_V_BUS)
 
 #endif

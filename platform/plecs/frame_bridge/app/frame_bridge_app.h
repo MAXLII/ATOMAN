@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    frame_bridge_app.h
- * @brief   PLECS FRAME bridge simulation-state interface.
+ * @file frame_bridge_app.h
+ * @brief PLECS FRAME bridge simulation-state interface.
  * @details
  *          This file is part of the base project.
  *
@@ -14,8 +14,8 @@
  *          - Shell variables are registered by the matching implementation file
  *          - Hardware access is not used by this simulation project
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

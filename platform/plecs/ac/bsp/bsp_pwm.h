@@ -8,6 +8,11 @@ void bsp_pwm_enable(void);
 
 void bsp_pwm_disable(void);
 
-void bsp_pwm_set_duty(float duty_fast, float duty_slow, uint8_t up_en_fast, uint8_t dn_en_fast, uint8_t up_en_slow, uint8_t dn_en_slow);
+void bsp_pwm_set_duty(float duty_fast,
+                      float duty_slow,
+                      uint8_t up_en_fast,
+                      uint8_t dn_en_fast,
+                      uint8_t up_en_slow,
+                      uint8_t dn_en_slow);
 
 #endif

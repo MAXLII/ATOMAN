@@ -6,8 +6,8 @@
  * @author Max.Li
  * @date 2026-09-17
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 #include "bsp_tcp.h"
 #include "sim_discovery.h"

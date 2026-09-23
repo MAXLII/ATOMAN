@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sim_port.h
- * @brief   MATLAB inverter port definition module.
+ * @file sim_port.h
+ * @brief MATLAB inverter port definition module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-19
+ * @author Max.Li
+ * @date 2026-06-19
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,9 +32,9 @@
 
 #include "my_math.h"
 
-#define SIM_SAMPLE_TIME_S CTRL_TS
-#define SIM_TICK_UNIT_US (100U)
-#define SIM_TICK_STEP_S ((double)SIM_TICK_UNIT_US * 1.0e-6)
+#define SIM_SAMPLE_TIME_S    CTRL_TS
+#define SIM_TICK_UNIT_US     (100U)
+#define SIM_TICK_STEP_S      ((double)SIM_TICK_UNIT_US * 1.0e-6)
 #define SIM_TICKS_PER_SECOND (1000000.0 / (double)SIM_TICK_UNIT_US)
 
 typedef enum
@@ -60,7 +60,7 @@ typedef enum
     SIM_OUTPUT_MAX = 30,
 } SIM_OUTPUT_E;
 
-#define SIM_INPUT_NUM SIM_INPUT_MAX
+#define SIM_INPUT_NUM  SIM_INPUT_MAX
 #define SIM_OUTPUT_NUM SIM_OUTPUT_MAX
 
 #endif

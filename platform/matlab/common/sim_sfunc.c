@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sim_sfunc.c
- * @brief   MATLAB reusable S-Function module.
+ * @file sim_sfunc.c
+ * @brief MATLAB reusable S-Function module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path is simulated by mdlOutputs single-step execution
  *          - Hardware access is abstracted through the project HAL / BSP boundary
  *
- * @author  Max.Li
- * @date    2026-06-25
+ * @author Max.Li
+ * @date 2026-06-25
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -60,9 +60,9 @@ static SimStruct *p_owner = NULL; /* Each linked simulation node has one active 
 uint32_t sim_time_100us = 0U;
 
 static const double *s_inputs = NULL;
-static double *s_outputs = NULL;
-static double s_time_s = 0.0;
-static double s_time_last_s = 0.0;
+static double *s_outputs      = NULL;
+static double s_time_s        = 0.0;
+static double s_time_last_s   = 0.0;
 
 static void sim_sfunc_start(void);
 static void sim_sfunc_bind_io(const double *inputs, double *outputs, double time_s);
@@ -70,7 +70,8 @@ static void sim_sfunc_output_step(void);
 
 float sim_get_input(SIM_INPUT_E num)
 {
-    if ((s_inputs != NULL) && (num < SIM_INPUT_MAX))
+    if (    (s_inputs != NULL)
+         && (num < SIM_INPUT_MAX))
     {
         return (float)s_inputs[num];
     }
@@ -80,13 +81,17 @@ float sim_get_input(SIM_INPUT_E num)
 
 void sim_set_output(SIM_OUTPUT_E num, float val)
 {
-    if ((s_outputs != NULL) && (num < SIM_OUTPUT_MAX))
+    if (    (s_outputs != NULL)
+         && (num < SIM_OUTPUT_MAX))
     {
         s_outputs[num] = (double)val;
     }
 }
 
-void sim_printf(const char *file, int line, const char *format, ...)
+void sim_printf(const char *file,
+                int line,
+                const char *format,
+                ...)
 {
     (void)file;
     (void)line;
@@ -107,16 +112,16 @@ void sim_printf(const char *file, int line, const char *format, ...)
 
 static void sim_sfunc_bind_io(const double *inputs, double *outputs, double time_s)
 {
-    s_inputs = inputs;
+    s_inputs  = inputs;
     s_outputs = outputs;
-    s_time_s = time_s;
+    s_time_s  = time_s;
 }
 
 static void sim_sfunc_start(void)
 {
     sim_comm_stop();
     sim_time_100us = 0U;
-    s_time_last_s = 0.0;
+    s_time_last_s  = 0.0;
 
     section_runtime_reset();
     section_init();
@@ -139,6 +144,7 @@ static void sim_sfunc_output_step(void)
 static void mdlInitializeSizes(SimStruct *S)
 {
     ssSetNumSFcnParams(S, 0);
+
     if (ssGetNumSFcnParams(S) != ssGetSFcnParamsCount(S))
     {
         return;
@@ -196,7 +202,7 @@ static void mdlStart(SimStruct *S)
 static void mdlOutputs(SimStruct *S, int_T tid)
 {
     const real_T *u = (const real_T *)ssGetInputPortSignal(S, 0);
-    real_T *y = (real_T *)ssGetOutputPortSignal(S, 0);
+    real_T *y       = (real_T *)ssGetOutputPortSignal(S, 0);
 
     (void)tid;
 

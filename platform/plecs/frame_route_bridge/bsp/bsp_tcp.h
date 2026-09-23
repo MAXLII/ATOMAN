@@ -6,8 +6,8 @@
  * @author Max.Li
  * @date 2026-09-16
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 #ifndef BSP_TCP_H
 #define BSP_TCP_H

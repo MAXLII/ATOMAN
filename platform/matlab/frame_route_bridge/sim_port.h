@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sim_port.h
- * @brief   SIM FRAME route-bridge signal-port definition.
+ * @file sim_port.h
+ * @brief SIM FRAME route-bridge signal-port definition.
  * @details
  *          This file is part of the base SIM FRAME route-bridge project.
  *
@@ -16,8 +16,8 @@
  *          - Signal values are updated from the SIM simulation callback
  *          - Hardware access is not used by this simulation project
  *
- * @author  Max.Li
- * @date    2026-08-30
+ * @author Max.Li
+ * @date 2026-08-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,9 +42,9 @@ typedef enum
     SIM_OUTPUT_MAX
 } SIM_OUTPUT_E;
 
-#define SIM_INPUT_NUM SIM_INPUT_MAX
-#define SIM_OUTPUT_NUM SIM_OUTPUT_MAX
+#define SIM_INPUT_NUM     SIM_INPUT_MAX
+#define SIM_OUTPUT_NUM    SIM_OUTPUT_MAX
 #define SIM_SAMPLE_TIME_S (1.0e-4)
-#define SIM_TICK_UNIT_US (100U)
-#define SIM_TICK_STEP_S ((double)SIM_TICK_UNIT_US * 1.0e-6)
+#define SIM_TICK_UNIT_US  (100U)
+#define SIM_TICK_STEP_S   ((double)SIM_TICK_UNIT_US * 1.0e-6)
 #endif /* SIM_FRAME_ROUTE_BRIDGE_PORT_H */

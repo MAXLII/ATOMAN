@@ -6,15 +6,15 @@
  * @author Max.Li
  * @date 2026-09-17
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 #ifndef BSP_TCP_H
 #define BSP_TCP_H
-#define BSP_TCP_FRAME_IP "0.0.0.0"
-#define BSP_TCP_FRAME_PORT 5002u
-#define BSP_TCP_PEER_IP "127.0.0.1"
-#define BSP_TCP_PEER_PORT 5001u
+#define BSP_TCP_FRAME_IP       "0.0.0.0"
+#define BSP_TCP_FRAME_PORT     5002u
+#define BSP_TCP_PEER_IP        "127.0.0.1"
+#define BSP_TCP_PEER_PORT      5001u
 #define BSP_TCP_DISCOVERY_NAME "MATLAB-SIM"
 #define BSP_TCP_DISCOVERY_PORT 5000u
 

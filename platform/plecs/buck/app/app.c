@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.c
- * @brief   PLECS buck application module.
+ * @file app.c
+ * @brief PLECS buck application module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -17,8 +17,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-24
+ * @author Max.Li
+ * @date 2026-05-24
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -45,8 +45,7 @@
 #define APP_ADC_VOLT_CODE_MAX ((int32_t)BSP_ADC_VOLT_CODE_MAX)
 
 /* Maximum signed inductor-current feedback code exposed through Shell. */
-#define APP_ADC_IND_CURR_CODE_MAX \
-    ((int32_t)(BSP_ADC_IND_CURR_CODE_MAX - (uint32_t)APP_ADC_IND_CURR_CODE_CENTER))
+#define APP_ADC_IND_CURR_CODE_MAX ((int32_t)(BSP_ADC_IND_CURR_CODE_MAX - (uint32_t)APP_ADC_IND_CURR_CODE_CENTER))
 
 /* Minimum signed inductor-current feedback code exposed through Shell. */
 #define APP_ADC_IND_CURR_CODE_MIN (-APP_ADC_IND_CURR_CODE_CENTER)
@@ -114,123 +113,41 @@ static void app_run_cmd(DEC_MY_PRINTF)
     app_run_request = (app_run_request == 0U) ? 1U : 0U;
     PLECS_LOG("Shell RUN toggled request to %u\n", (unsigned)app_run_request);
 
-    if ((my_printf != NULL) &&
-        (my_printf->my_printf != NULL))
+    if (    (my_printf != NULL)
+         && (my_printf->my_printf != NULL))
     {
         my_printf->my_printf("RUN request=%u\r\n", (unsigned)app_run_request);
     }
 }
 
 REG_SHELL_CMD(RUN, app_run_cmd)
-REG_SHELL_VAR(PWR_LMT,
-              app_pwr_lmt,
-              SHELL_FP32,
-              BUCK_CTRL_IN_PWR_LMT_MAX_W,
-              0.0f,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(IN_CURR_LMT,
-              app_in_curr_lmt,
-              SHELL_FP32,
-              BUCK_CTRL_IN_CURR_LMT_MAX_A,
-              0.0f,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(OUT_CURR_LMT,
-              app_out_curr_lmt,
-              SHELL_FP32,
-              BUCK_CTRL_OUT_CURR_LMT_MAX_A,
-              0.0f,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(OUT_VOLT_REF,
-              app_out_volt_ref,
-              SHELL_FP32,
-              BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V,
-              0.0f,
-              NULL,
-              SHELL_STA_NULL)
+REG_SHELL_VAR(PWR_LMT, app_pwr_lmt, SHELL_FP32, BUCK_CTRL_IN_PWR_LMT_MAX_W, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(IN_CURR_LMT, app_in_curr_lmt, SHELL_FP32, BUCK_CTRL_IN_CURR_LMT_MAX_A, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(OUT_CURR_LMT, app_out_curr_lmt, SHELL_FP32, BUCK_CTRL_OUT_CURR_LMT_MAX_A, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(OUT_VOLT_REF, app_out_volt_ref, SHELL_FP32, BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(RUN_REQUEST, app_run_request, SHELL_UINT8, 1U, 0U, NULL, SHELL_STA_NULL)
-REG_SHELL_VAR(RUN_STATE,
-              app_run_state,
-              SHELL_UINT32,
-              APP_RUN_STATE_MAX,
-              APP_RUN_STATE_MIN,
-              NULL,
+REG_SHELL_VAR(RUN_STATE, app_run_state, SHELL_UINT32, APP_RUN_STATE_MAX, APP_RUN_STATE_MIN, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(HV, app_hv, SHELL_FP32, BSP_ADC_VOLT_MAX_V, BSP_ADC_VOLT_MIN_V, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(LV, app_lv, SHELL_FP32, BSP_ADC_VOLT_MAX_V, BSP_ADC_VOLT_MIN_V, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(ILA, app_ila, SHELL_FP32, BSP_ADC_IND_CURR_MAX_A, BSP_ADC_IND_CURR_MIN_A, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(ILB, app_ilb, SHELL_FP32, BSP_ADC_IND_CURR_MAX_A, BSP_ADC_IND_CURR_MIN_A, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(HV_CODE, app_adc_hv, SHELL_INT32, APP_ADC_VOLT_CODE_MAX, 0, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(LV_CODE, app_adc_lv, SHELL_INT32, APP_ADC_VOLT_CODE_MAX, 0, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(ILA_CODE, app_adc_ila, SHELL_INT32, APP_ADC_IND_CURR_CODE_MAX, APP_ADC_IND_CURR_CODE_MIN, NULL,
               SHELL_STA_NULL)
-REG_SHELL_VAR(HV,
-              app_hv,
-              SHELL_FP32,
-              BSP_ADC_VOLT_MAX_V,
-              BSP_ADC_VOLT_MIN_V,
-              NULL,
+REG_SHELL_VAR(ILB_CODE, app_adc_ilb, SHELL_INT32, APP_ADC_IND_CURR_CODE_MAX, APP_ADC_IND_CURR_CODE_MIN, NULL,
               SHELL_STA_NULL)
-REG_SHELL_VAR(LV,
-              app_lv,
-              SHELL_FP32,
-              BSP_ADC_VOLT_MAX_V,
-              BSP_ADC_VOLT_MIN_V,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(ILA,
-              app_ila,
-              SHELL_FP32,
-              BSP_ADC_IND_CURR_MAX_A,
-              BSP_ADC_IND_CURR_MIN_A,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(ILB,
-              app_ilb,
-              SHELL_FP32,
-              BSP_ADC_IND_CURR_MAX_A,
-              BSP_ADC_IND_CURR_MIN_A,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(HV_CODE,
-              app_adc_hv,
-              SHELL_INT32,
-              APP_ADC_VOLT_CODE_MAX,
-              0,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(LV_CODE,
-              app_adc_lv,
-              SHELL_INT32,
-              APP_ADC_VOLT_CODE_MAX,
-              0,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(ILA_CODE,
-              app_adc_ila,
-              SHELL_INT32,
-              APP_ADC_IND_CURR_CODE_MAX,
-              APP_ADC_IND_CURR_CODE_MIN,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(ILB_CODE,
-              app_adc_ilb,
-              SHELL_INT32,
-              APP_ADC_IND_CURR_CODE_MAX,
-              APP_ADC_IND_CURR_CODE_MIN,
-              NULL,
-              SHELL_STA_NULL)
-REG_SHELL_VAR(FRAME_TCP_PORT,
-              app_frame_tcp_port,
-              SHELL_UINT32,
-              65535u,
-              1u,
-              NULL,
-              SHELL_STA_NULL)
+REG_SHELL_VAR(FRAME_TCP_PORT, app_frame_tcp_port, SHELL_UINT32, 65535u, 1u, NULL, SHELL_STA_NULL)
 
 static inline void app_update_adc_feedback(void)
 {
-    app_hv = plecs_get_input(PLECS_INPUT_HV);
-    app_lv = plecs_get_input(PLECS_INPUT_LV);
+    app_hv  = plecs_get_input(PLECS_INPUT_HV);
+    app_lv  = plecs_get_input(PLECS_INPUT_LV);
     app_ila = plecs_get_input(PLECS_INPUT_ILA);
     app_ilb = plecs_get_input(PLECS_INPUT_ILB);
 
-    app_adc_hv = (int32_t)BSP_ADC_HV;
-    app_adc_lv = (int32_t)BSP_ADC_LV;
+    app_adc_hv  = (int32_t)BSP_ADC_HV;
+    app_adc_lv  = (int32_t)BSP_ADC_LV;
     app_adc_ila = (int32_t)BSP_ADC_ILA - APP_ADC_IND_CURR_CODE_CENTER;
     app_adc_ilb = (int32_t)BSP_ADC_ILB - APP_ADC_IND_CURR_CODE_CENTER;
 
@@ -285,7 +202,7 @@ static void app_task(void)
     app_update_buck_setpoint();
 
     (void)buck_cfg_set_run_request(app_run_request);
-    run_sta = buck_cfg_get_run_state();
+    run_sta       = buck_cfg_get_run_state();
     app_run_state = (uint32_t)run_sta;
     plecs_set_output(PLECS_OUTPUT_RUN_STATE, (float)run_sta);
 }

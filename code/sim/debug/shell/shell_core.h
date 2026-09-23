@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    shell_core.h
- * @brief   Shell core public interface.
+ * @file shell_core.h
+ * @brief Shell core public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -88,8 +88,7 @@ typedef struct
  * @brief Declare a shell ctx in one line inside a business module.
  * @note The ctx is typically bound as the handler_arr / shell_run ctx.
  */
-#define DECLARE_SHELL_CTX(name) \
-    static shell_ctx_t name = {0}
+#define DECLARE_SHELL_CTX(name) static shell_ctx_t name = {0}
 
 typedef enum
 {
@@ -123,31 +122,29 @@ typedef struct shell_core_item
     const char *p_name;
     uint32_t p_name_size;
 
-    void *p_var;                 ///< Variable address (NULL for commands).
-    uint32_t type;               ///< SHELL_TYPE_E.
-    void *p_max;                 ///< Upper-limit pointer (optional).
-    void *p_min;                 ///< Lower-limit pointer (optional).
-    shell_core_func_t func;      ///< Callback (command exec, variable-changed notification, etc.).
+    void *p_var;            ///< Variable address (NULL for commands).
+    uint32_t type;          ///< SHELL_TYPE_E.
+    void *p_max;            ///< Upper-limit pointer (optional).
+    void *p_min;            ///< Lower-limit pointer (optional).
+    shell_core_func_t func; ///< Callback (command exec, variable-changed notification, etc.).
     uint32_t status;
 
     shell_core_io_t *my_printf; ///< Optional: cached / forwarded output interface at runtime.
 } shell_core_item_t;
 
-#define SHELL_CORE_LIMIT_DEFINE(suffix, type)                                      \
-    static inline void shell_core_limit_##suffix(type *p_value,                    \
-                                                   const void *p_upper,              \
-                                                   const void *p_lower)              \
-    {                                                                               \
-        const type upper = *(const type *)p_upper;                                  \
-        const type lower = *(const type *)p_lower;                                  \
-        if (*p_value > upper)                                                       \
-        {                                                                           \
-            *p_value = upper;                                                       \
-        }                                                                           \
-        else if (*p_value < lower)                                                  \
-        {                                                                           \
-            *p_value = lower;                                                       \
-        }                                                                           \
+#define SHELL_CORE_LIMIT_DEFINE(suffix, type)                                                             \
+    static inline void shell_core_limit_##suffix(type *p_value, const void *p_upper, const void *p_lower) \
+    {                                                                                                     \
+        const type upper = *(const type *)p_upper;                                                        \
+        const type lower = *(const type *)p_lower;                                                        \
+        if (*p_value > upper)                                                                             \
+        {                                                                                                 \
+            *p_value = upper;                                                                             \
+        }                                                                                                 \
+        else if (*p_value < lower)                                                                        \
+        {                                                                                                 \
+            *p_value = lower;                                                                             \
+        }                                                                                                 \
     }
 
 SHELL_CORE_LIMIT_DEFINE(i8, int8_t)
@@ -163,21 +160,24 @@ SHELL_CORE_LIMIT_DEFINE(f32, float)
 /**
  * @brief Clamp a supported scalar variable using its typed limit objects.
  */
-#define SHELL_UP_DN_LMT(var, p_up_lmt, p_dn_lmt)                   \
-    _Generic(&(var),                                               \
-        int8_t *: shell_core_limit_i8,                             \
-        uint8_t *: shell_core_limit_u8,                            \
-        int16_t *: shell_core_limit_i16,                           \
-        uint16_t *: shell_core_limit_u16,                          \
-        int32_t *: shell_core_limit_i32,                           \
-        uint32_t *: shell_core_limit_u32,                          \
+#define SHELL_UP_DN_LMT(var, p_up_lmt, p_dn_lmt) \
+    _Generic(&(var),                             \
+        int8_t *: shell_core_limit_i8,           \
+        uint8_t *: shell_core_limit_u8,          \
+        int16_t *: shell_core_limit_i16,         \
+        uint16_t *: shell_core_limit_u16,        \
+        int32_t *: shell_core_limit_i32,         \
+        uint32_t *: shell_core_limit_u32,        \
         float *: shell_core_limit_f32)(&(var), (p_up_lmt), (p_dn_lmt))
 
 /* Shell: handler interface (for LINK dispatch)
  *
  * ctx convention: ctx points to a shell_ctx_t created by DECLARE_SHELL_CTX.
  */
-void shell_core_run(const shell_core_list_t *p_list, uint8_t data, shell_core_io_t *my_printf, void *p_ctx);
+void shell_core_run(const shell_core_list_t *p_list,
+                    uint8_t data,
+                    shell_core_io_t *my_printf,
+                    void *p_ctx);
 void shell_core_item_print(shell_core_item_t *p_item, shell_core_io_t *my_printf);
 uint32_t shell_core_count_get(const shell_core_list_t *p_list);
 shell_core_item_t *shell_core_find(const shell_core_list_t *p_list, const char *p_name, uint8_t len);

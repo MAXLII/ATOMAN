@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_pwm.h
- * @brief   PLECS inverter PWM adapter interface module.
+ * @file bsp_pwm.h
+ * @brief PLECS inverter PWM adapter interface module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-19
+ * @author Max.Li
+ * @date 2026-06-19
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

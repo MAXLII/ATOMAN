@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    trace_service.h
- * @brief   Execution trace service public interface.
+ * @file trace_service.h
+ * @brief Execution trace service public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,8 +31,8 @@
 
 #include "trace.h"
 
-#define TRACE_SERVICE_CMD_SET 0x01
-#define TRACE_SERVICE_CMD_CONTROL 0x2C
+#define TRACE_SERVICE_CMD_SET           0x01
+#define TRACE_SERVICE_CMD_CONTROL       0x2C
 #define TRACE_SERVICE_CMD_RECORD_REPORT 0x2D
 
 #define TRACE_SERVICE_TIME_UNIT_US 100u

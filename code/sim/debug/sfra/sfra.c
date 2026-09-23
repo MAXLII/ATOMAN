@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sfra.c
- * @brief   SFRA Section adapter implementation.
+ * @file sfra.c
+ * @brief SFRA Section adapter implementation.
  * @details
  *          This file is part of the base shared simulation library.
  *
@@ -16,8 +16,8 @@
  *          - Windows linker-section access is isolated to this host simulation adapter
  *          - Protocol handling belongs to sfra_service.c
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,18 +30,18 @@
 
 #include <stddef.h>
 
-section_item_t *p_sfra_first = NULL;
+section_item_t *p_sfra_first       = NULL;
 static section_item_t *p_sfra_tail = NULL;
 REG_DBG_LIST(sfra, p_sfra_first)
 
 void sfra_init_list(void)
 {
-    uint8_t id = 0u;
+    uint8_t id                           = 0u;
     const reg_section_t *p_section_first = NULL;
-    const reg_section_t *p_section_last = NULL;
+    const reg_section_t *p_section_last  = NULL;
 
     p_sfra_first = NULL;
-    p_sfra_tail = NULL;
+    p_sfra_tail  = NULL;
 
 #if defined(SECTION_SENTINEL_REG_SECTION)
     extern const reg_section_t section_reg_start;
@@ -50,30 +50,31 @@ void sfra_init_list(void)
     p_section_last = &section_reg_stop;
 #else
     p_section_first = (const reg_section_t *)&SECTION_START;
-    p_section_last = (const reg_section_t *)&SECTION_STOP;
+    p_section_last  = (const reg_section_t *)&SECTION_STOP;
 #endif
 
-    for (const reg_section_t *p_section = p_section_first;
-         p_section < p_section_last;
-         ++p_section)
+    for (const reg_section_t *p_section = p_section_first; p_section < p_section_last; ++p_section)
     {
         if (p_section->section_type == SECTION_SFRA)
         {
-            section_item_t *p_item = (section_item_t *)p_section->p_str;
+            section_item_t *p_item              = (section_item_t *)p_section->p_str;
             sfra_registration_t *p_registration = NULL;
 
-            if ((p_item == NULL) || (p_item->p_obj == NULL))
+            if (    (p_item == NULL)
+                 || (p_item->p_obj == NULL))
             {
                 continue;
             }
 
             p_registration = (sfra_registration_t *)p_item->p_obj;
+
             if (p_registration->p_sfra == NULL)
             {
                 continue;
             }
             p_registration->sfra_id = id++;
-            p_item->p_next = NULL;
+            p_item->p_next          = NULL;
+
             if (p_sfra_first == NULL)
             {
                 p_sfra_first = p_item;
@@ -95,13 +96,7 @@ sfra_status_t sfra_init(sfra_t *p_sfra,
                         float freq_start_hz,
                         float freq_step_mul)
 {
-    return sfra_core_init(p_sfra,
-                          p_inject,
-                          p_collect,
-                          isr_freq_hz,
-                          inject_amplitude,
-                          freq_start_hz,
-                          freq_step_mul);
+    return sfra_core_init(p_sfra, p_inject, p_collect, isr_freq_hz, inject_amplitude, freq_start_hz, freq_step_mul);
 }
 
 sfra_status_t sfra_start(sfra_t *p_sfra)

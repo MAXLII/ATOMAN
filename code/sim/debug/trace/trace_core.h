@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    trace_core.h
- * @brief   Execution trace public interface.
+ * @file trace_core.h
+ * @brief Execution trace public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.

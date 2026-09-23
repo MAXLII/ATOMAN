@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.c
- * @brief   PLECS boost application module.
+ * @file app.c
+ * @brief PLECS boost application module.
  * @details
  *          This file is part of the BUCK2 project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-24
+ * @author Max.Li
+ * @date 2026-05-24
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -55,8 +55,8 @@ static uint32_t app_adc_ilb = 0;
 
 static inline void app_update_adc_feedback(void)
 {
-    app_adc_hv = BSP_ADC_HV;
-    app_adc_lv = BSP_ADC_LV;
+    app_adc_hv  = BSP_ADC_HV;
+    app_adc_lv  = BSP_ADC_LV;
     app_adc_ila = BSP_ADC_ILA;
     app_adc_ilb = BSP_ADC_ILB;
 
@@ -93,6 +93,7 @@ static void app_bind_boost_hal(void)
     boost_hal_set_pwm_disable(bsp_pwm_disable);
 
     app_boost_hal_bound = boost_hal_is_ready();
+
     if (app_boost_hal_bound != 0U)
     {
         boost_hal_lock_binding();
@@ -102,9 +103,9 @@ static void app_bind_boost_hal(void)
 static void app_bind_boost_timing(void)
 {
     boost_ctrl_timing_t timing = {
-        .ctrl_ts = CTRL_TS,
-        .task_ts = 100.0e-6f,
-        .pwm_ts = PWM_TS,
+        .ctrl_ts     = CTRL_TS,
+        .task_ts     = 100.0e-6f,
+        .pwm_ts      = PWM_TS,
         .pwm_cmp_max = CTRL_PWM_CMP_MAX,
     };
 
@@ -153,6 +154,7 @@ static void app_task(void)
     else
     {
         app_boost_hal_bound = 0U;
+
         if (run_sta != boost_run_sta_idle)
         {
             boost_fsm_set_cmd(boost_fsm_cmd_stop);

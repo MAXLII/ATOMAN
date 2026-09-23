@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_adc.h
- * @brief   PLECS buck ADC adapter public interface.
+ * @file bsp_adc.h
+ * @brief PLECS buck ADC adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-24
+ * @author Max.Li
+ * @date 2026-05-24
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -54,7 +54,10 @@
 #define BSP_ADC_IND_CURR_CODE_MAX (4096UL * 8UL - 1UL)
 
 /* Convert a bounded physical input value into an unsigned ADC raw code. */
-static inline uint32_t bsp_adc_physical_to_code(float val, float min, float max, uint32_t code_max)
+static inline uint32_t bsp_adc_physical_to_code(float val,
+                                                float min,
+                                                float max,
+                                                uint32_t code_max)
 {
     /* Rounded raw ADC code before integer conversion. */
     float code = 0.0f;
@@ -62,7 +65,8 @@ static inline uint32_t bsp_adc_physical_to_code(float val, float min, float max,
     /* Physical span used by the normalization calculation. */
     float span = 0.0f;
 
-    if ((max <= min) || (code_max == 0UL))
+    if (    (max <= min)
+         || (code_max == 0UL))
     {
         return 0U;
     }

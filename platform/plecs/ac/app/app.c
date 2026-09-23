@@ -16,30 +16,30 @@
 
 typedef enum
 {
-    APP_MODE_IDLE = 0,
-    APP_MODE_AC_CHARGE = 1,
+    APP_MODE_IDLE         = 0,
+    APP_MODE_AC_CHARGE    = 1,
     APP_MODE_AC_DISCHARGE = 2,
 } app_mode_e;
 
 #define APP_VBUS_PRECHARGE_ENTER_V (M_SQRT2 * 200.0f)
-#define APP_VBUS_NOM_ENTER_V (380.0f)
-#define APP_GRID_RMS_MIN_V (180.0f)
-#define APP_GRID_RMS_MAX_V (265.0f)
-#define APP_RMS_FILTER_ALPHA (0.001f)
-#define APP_INV_START_VBUS_MIN_V APP_VBUS_NOM_ENTER_V
+#define APP_VBUS_NOM_ENTER_V       (380.0f)
+#define APP_GRID_RMS_MIN_V         (180.0f)
+#define APP_GRID_RMS_MAX_V         (265.0f)
+#define APP_RMS_FILTER_ALPHA       (0.001f)
+#define APP_INV_START_VBUS_MIN_V   APP_VBUS_NOM_ENTER_V
 
-static uint8_t app_pfc_hal_bound = 0U;
-static uint8_t app_inv_hal_bound = 0U;
+static uint8_t app_pfc_hal_bound    = 0U;
+static uint8_t app_inv_hal_bound    = 0U;
 static uint8_t app_pfc_timing_bound = 0U;
 static uint8_t app_inv_timing_bound = 0U;
 
-static float app_v_g = 0.0f;
-static float app_v_cap = 0.0f;
-static float app_v_bus = 0.0f;
-static float app_i_l = 0.0f;
-static float app_v_g_rms = 0.0f;
-static float app_v_g_rms_sq = 0.0f;
-static pfc_vbus_sta_e app_vbus_sta = PFC_VBUS_STA_BELOW_INPUT_PEAK;
+static float app_v_g                  = 0.0f;
+static float app_v_cap                = 0.0f;
+static float app_v_bus                = 0.0f;
+static float app_i_l                  = 0.0f;
+static float app_v_g_rms              = 0.0f;
+static float app_v_g_rms_sq           = 0.0f;
+static pfc_vbus_sta_e app_vbus_sta    = PFC_VBUS_STA_BELOW_INPUT_PEAK;
 static uint8_t app_main_rly_is_closed = 0U;
 
 static void app_inv_rly_on(void)
@@ -78,7 +78,8 @@ static float app_calc_duty(float v_pwm, float v_bus, float *p_offset)
 {
     float vbus = v_bus;
 
-    if ((vbus < 1.0e-6f) && (vbus > -1.0e-6f))
+    if (    (vbus < 1.0e-6f)
+         && (vbus > -1.0e-6f))
     {
         vbus = 1.0e-6f;
     }
@@ -96,19 +97,20 @@ static float app_calc_duty(float v_pwm, float v_bus, float *p_offset)
 static void app_pwm_set_bridge(float v_pwm, float v_bus)
 {
     float offset = 0.0f;
-    float duty = app_calc_duty(v_pwm, v_bus, &offset);
+    float duty   = app_calc_duty(v_pwm, v_bus, &offset);
 
     bsp_pwm_set_duty(duty, offset, 1U, 1U, 1U, 1U);
 }
 
 static void app_update_feedback(void)
 {
-    app_v_g = BSP_ADC_V_G;
+    app_v_g   = BSP_ADC_V_G;
     app_v_cap = BSP_ADC_V_CAP;
     app_v_bus = BSP_ADC_V_BUS;
-    app_i_l = BSP_ADC_I_L;
+    app_i_l   = BSP_ADC_I_L;
 
     app_v_g_rms_sq += ((app_v_g * app_v_g) - app_v_g_rms_sq) * APP_RMS_FILTER_ALPHA;
+
     if (app_v_g_rms_sq < 0.0f)
     {
         app_v_g_rms_sq = 0.0f;
@@ -131,8 +133,8 @@ static void app_update_feedback(void)
 
 static uint8_t app_grid_is_ok(void)
 {
-    return (uint8_t)((app_v_g_rms >= APP_GRID_RMS_MIN_V) &&
-                     (app_v_g_rms <= APP_GRID_RMS_MAX_V));
+    return (uint8_t)(    (app_v_g_rms >= APP_GRID_RMS_MIN_V)
+                      && (app_v_g_rms <= APP_GRID_RMS_MAX_V));
 }
 
 static void app_bind_pfc_timing(void)
@@ -153,7 +155,7 @@ static void app_bind_pfc_timing(void)
 static void app_bind_inv_timing(void)
 {
     inv_ctrl_timing_t timing = {
-        .ctrl_ts = CTRL_TS,
+        .ctrl_ts   = CTRL_TS,
         .ctrl_freq = CTRL_FREQ,
     };
 
@@ -206,6 +208,7 @@ static void app_bind_pfc_hal(void)
     pfc_hal_set_main_rly_off_func(app_main_rly_off);
 
     app_pfc_hal_bound = pfc_hal_is_ready();
+
     if (app_pfc_hal_bound != 0U)
     {
         pfc_hal_lock_binding();
@@ -230,6 +233,7 @@ static void app_bind_inv_hal(void)
     inv_hal_set_inv_rly_off_func(app_inv_rly_off);
 
     app_inv_hal_bound = inv_hal_is_ready();
+
     if (app_inv_hal_bound != 0U)
     {
         inv_hal_lock_binding();
@@ -238,7 +242,7 @@ static void app_bind_inv_hal(void)
 
 static void app_task(void)
 {
-    app_mode_e mode = (app_mode_e)((uint8_t)plecs_get_input(PLECS_INPUT_MODE));
+    app_mode_e mode           = (app_mode_e)((uint8_t)plecs_get_input(PLECS_INPUT_MODE));
     pfc_run_sta_e pfc_run_sta = pfc_fsm_get_run_sta();
     inv_run_sta_e inv_run_sta = inv_fsm_get_run_sta();
 
@@ -251,16 +255,18 @@ static void app_task(void)
     {
     case APP_MODE_AC_CHARGE:
         app_inv_hal_bound = 0U;
-        if ((app_grid_is_ok() != 0U) &&
-            (pfc_run_sta == pfc_run_sta_idle))
+
+        if (    (app_grid_is_ok() != 0U)
+             && (pfc_run_sta == pfc_run_sta_idle))
         {
             app_bind_pfc_hal();
             pfc_fsm_set_cmd(pfc_fsm_cmd_start);
         }
 
         inv_fsm_set_cmd(inv_fsm_cmd_stop);
-        if ((app_grid_is_ok() == 0U) &&
-            (pfc_run_sta != pfc_run_sta_idle))
+
+        if (    (app_grid_is_ok() == 0U)
+             && (pfc_run_sta != pfc_run_sta_idle))
         {
             pfc_fsm_set_cmd(pfc_fsm_cmd_stop);
             app_pfc_hal_bound = 0U;
@@ -270,14 +276,15 @@ static void app_task(void)
     case APP_MODE_AC_DISCHARGE:
         app_pfc_hal_bound = 0U;
         pfc_fsm_set_cmd(pfc_fsm_cmd_stop);
-        if ((app_v_bus >= APP_INV_START_VBUS_MIN_V) &&
-            (inv_run_sta == inv_run_sta_idle))
+
+        if (    (app_v_bus >= APP_INV_START_VBUS_MIN_V)
+             && (inv_run_sta == inv_run_sta_idle))
         {
             app_bind_inv_hal();
             inv_fsm_set_cmd(inv_fsm_cmd_start);
         }
-        else if ((app_v_bus < APP_INV_START_VBUS_MIN_V) &&
-                 (inv_run_sta != inv_run_sta_idle))
+        else if (    (app_v_bus < APP_INV_START_VBUS_MIN_V)
+                  && (inv_run_sta != inv_run_sta_idle))
         {
             inv_fsm_set_cmd(inv_fsm_cmd_stop);
             app_inv_hal_bound = 0U;

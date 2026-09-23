@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.c
- * @brief   PLECS LLC application module.
+ * @file app.c
+ * @brief PLECS LLC application module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -37,11 +37,11 @@
 #include "section.h"
 #include "timing.h"
 
-static uint8_t app_llc_hal_bound = 0U;
+static uint8_t app_llc_hal_bound    = 0U;
 static uint8_t app_llc_timing_bound = 0U;
-static float app_adc_v_out = 0.0f;
-static float app_adc_i_out = 0.0f;
-static float app_adc_v_bus = 0.0f;
+static float app_adc_v_out          = 0.0f;
+static float app_adc_i_out          = 0.0f;
+static float app_adc_v_bus          = 0.0f;
 
 static void app_update_llc_setpoint(void)
 {
@@ -82,6 +82,7 @@ static void app_bind_llc_hal(void)
     llc_hal_set_pwm_disable(bsp_pwm_disable);
 
     app_llc_hal_bound = llc_hal_is_ready();
+
     if (app_llc_hal_bound != 0U)
     {
         llc_hal_lock_binding();
@@ -91,8 +92,8 @@ static void app_bind_llc_hal(void)
 static void app_bind_llc_timing(void)
 {
     llc_ctrl_timing_t timing = {
-        .ctrl_ts = CTRL_TS,
-        .task_ts = 100.0e-6f,
+        .ctrl_ts             = CTRL_TS,
+        .task_ts             = 100.0e-6f,
         .startup_delay_ticks = 1U,
     };
 
@@ -120,7 +121,7 @@ REG_INTERRUPT(8, app_update_llc_debug_output)
 
 static void app_task(void)
 {
-    uint8_t run_cmd = 0U;
+    uint8_t run_cmd       = 0U;
     llc_run_sta_e run_sta = llc_run_sta_init;
 
     app_update_adc_feedback();
@@ -140,6 +141,7 @@ static void app_task(void)
     else
     {
         app_llc_hal_bound = 0U;
+
         if (run_sta != llc_run_sta_idle)
         {
             llc_fsm_set_cmd(llc_fsm_cmd_stop);

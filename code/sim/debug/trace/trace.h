@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    trace.h
- * @brief   Execution trace compatibility adapter.
+ * @file trace.h
+ * @brief Execution trace compatibility adapter.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - The portable implementation is available through trace_core.h
  *          - Protocol handling belongs to trace_service.c
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -41,8 +41,7 @@ const dbg_trace_item_t *dbg_trace_item_get(uint32_t index);
 uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
 
 #if (TRACE_ENABLE == 1u)
-#define DBG_TRACE_BIND_TIME(p_system_time) \
-    dbg_trace_bind_time((volatile uint32_t *)(p_system_time))
+#define DBG_TRACE_BIND_TIME(p_system_time) dbg_trace_bind_time((volatile uint32_t *)(p_system_time))
 
 #define DBG_TRACE_MARK()            \
     do                              \
@@ -51,7 +50,7 @@ uint8_t dbg_trace_read(uint32_t *p_time, uint32_t *p_line);
     } while (0)
 #else
 #define DBG_TRACE_BIND_TIME(p_system_time) ((void)0)
-#define DBG_TRACE_MARK() ((void)0)
+#define DBG_TRACE_MARK()                   ((void)0)
 #endif
 
 #endif /* __TRACE_H__ */

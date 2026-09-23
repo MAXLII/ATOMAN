@@ -6,23 +6,23 @@
  * @author Max.Li
  * @date 2026-09-17
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 #include "bsp_tcp.h"
 #include "sim_discovery.h"
 
 REG_SIM_TCP(p_dbg_tcp, "dbg", SIM_TCP_SERVER, "0.0.0.0", BSP_TCP_FRAME_PORT)
 #if BSP_TCP_PEER_ROLE != 0
-REG_SIM_TCP(p_iso_tcp, "iso",
-            (BSP_TCP_PEER_ROLE == 1) ? SIM_TCP_CLIENT : SIM_TCP_SERVER,
-            "127.0.0.1", BSP_TCP_PEER_PORT)
+REG_SIM_TCP(p_iso_tcp, "iso", (BSP_TCP_PEER_ROLE == 1) ? SIM_TCP_CLIENT : SIM_TCP_SERVER, "127.0.0.1",
+            BSP_TCP_PEER_PORT)
 #endif
 
 #if BSP_TCP_DISCOVERY_ENABLED
 REG_SIM_DISCOVERY(local, BSP_TCP_DISCOVERY_NAME, BSP_TCP_NODE_ADDR, BSP_TCP_FRAME_PORT, BSP_TCP_DISCOVERY_PORT)
 #if BSP_TCP_DISCOVERY_PEER_ADDR != 0
-REG_SIM_DISCOVERY(peer, BSP_TCP_DISCOVERY_NAME, BSP_TCP_DISCOVERY_PEER_ADDR, BSP_TCP_DISCOVERY_PEER_PORT, BSP_TCP_DISCOVERY_PORT)
+REG_SIM_DISCOVERY(peer, BSP_TCP_DISCOVERY_NAME, BSP_TCP_DISCOVERY_PEER_ADDR, BSP_TCP_DISCOVERY_PEER_PORT,
+                  BSP_TCP_DISCOVERY_PORT)
 #endif
 #endif
 

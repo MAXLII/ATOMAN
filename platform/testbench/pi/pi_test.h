@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pi_test.h
- * @brief   PI current-loop testbench fixture definitions.
+ * @file pi_test.h
+ * @brief PI current-loop testbench fixture definitions.
  * @details
  *          This file is part of the base digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Uses the production PI, DFT, and SFRA implementations directly
  *          - Runs only on the host testbench and is never called from an ISR
  *
- * @author  Max.Li
- * @date    2026-08-16
+ * @author Max.Li
+ * @date 2026-08-16
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

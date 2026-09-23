@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    route_bridge_platform.c
- * @brief   PLECS FRAME route-bridge lifecycle adapter.
+ * @file route_bridge_platform.c
+ * @brief PLECS FRAME route-bridge lifecycle adapter.
  * @details
  *          This file is part of the base PLECS FRAME route-bridge project.
  *
@@ -17,8 +17,8 @@
  *          - Each node owns one Frame server while both nodes own one peer link
  *          - Hardware access is not used by this simulation project
  *
- * @author  Max.Li
- * @date    2026-08-30
+ * @author Max.Li
+ * @date 2026-08-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

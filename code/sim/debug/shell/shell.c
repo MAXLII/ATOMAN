@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    shell.c
- * @brief   Shell Section adapter implementation.
+ * @file shell.c
+ * @brief Shell Section adapter implementation.
  * @details
  *          This file is part of the base shared simulation library.
  *
@@ -16,8 +16,8 @@
  *          - Windows linker-section access is isolated to this host simulation adapter
  *          - Protocol handling belongs to shell_service.c
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,7 +30,7 @@
 
 #include <stddef.h>
 
-section_item_t *p_shell_first = NULL;
+section_item_t *p_shell_first       = NULL;
 static section_item_t *p_shell_tail = NULL;
 REG_DBG_LIST(shell, p_shell_first)
 
@@ -54,17 +54,17 @@ static void *shell_list_next(void *p_context, void **pp_cursor)
 
 static const shell_core_list_t shell_list = {
     .p_context = &p_shell_first,
-    .p_first = shell_list_first,
-    .p_next = shell_list_next,
+    .p_first   = shell_list_first,
+    .p_next    = shell_list_next,
 };
 
 void shell_init(void)
 {
     const reg_section_t *p_section_first = NULL;
-    const reg_section_t *p_section_last = NULL;
+    const reg_section_t *p_section_last  = NULL;
 
     p_shell_first = NULL;
-    p_shell_tail = NULL;
+    p_shell_tail  = NULL;
 
 #if defined(SECTION_SENTINEL_REG_SECTION)
     extern const reg_section_t section_reg_start;
@@ -73,23 +73,23 @@ void shell_init(void)
     p_section_last = &section_reg_stop;
 #else
     p_section_first = (const reg_section_t *)&SECTION_START;
-    p_section_last = (const reg_section_t *)&SECTION_STOP;
+    p_section_last  = (const reg_section_t *)&SECTION_STOP;
 #endif
 
-    for (const reg_section_t *p_section = p_section_first;
-         p_section < p_section_last;
-         ++p_section)
+    for (const reg_section_t *p_section = p_section_first; p_section < p_section_last; ++p_section)
     {
         if (p_section->section_type == SECTION_SHELL)
         {
             section_item_t *p_item = (section_item_t *)p_section->p_str;
 
-            if ((p_item == NULL) || (p_item->p_obj == NULL))
+            if (    (p_item == NULL)
+                 || (p_item->p_obj == NULL))
             {
                 continue;
             }
 
             p_item->p_next = NULL;
+
             if (p_shell_first == NULL)
             {
                 p_shell_first = p_item;
@@ -125,7 +125,8 @@ section_shell_t *shell_find(const char *p_name, uint8_t len)
 
 static void shell_time(DEC_MY_PRINTF)
 {
-    if ((my_printf == NULL) || (my_printf->my_printf == NULL))
+    if (    (my_printf == NULL)
+         || (my_printf->my_printf == NULL))
     {
         return;
     }

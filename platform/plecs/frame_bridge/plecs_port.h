@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    plecs_port.h
- * @brief   PLECS FRAME bridge signal-port definition.
+ * @file plecs_port.h
+ * @brief PLECS FRAME bridge signal-port definition.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The signal path runs in the PLECS simulation callback
  *          - Hardware access is not used by this simulation project
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

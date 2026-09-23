@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sim_sfunc.h
- * @brief   MATLAB reusable S-Function interface.
+ * @file sim_sfunc.h
+ * @brief MATLAB reusable S-Function interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path is simulated by mdlOutputs single-step execution
  *          - Hardware access is abstracted through the project HAL / BSP boundary
  *
- * @author  Max.Li
- * @date    2026-06-25
+ * @author Max.Li
+ * @date 2026-06-25
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,7 +36,10 @@
 
 float sim_get_input(SIM_INPUT_E num);
 void sim_set_output(SIM_OUTPUT_E num, float val);
-void sim_printf(const char *file, int line, const char *format, ...);
+void sim_printf(const char *file,
+                int line,
+                const char *format,
+                ...);
 
 #define SIM_LOG(...) sim_printf(__FILE__, __LINE__, __VA_ARGS__)
 
