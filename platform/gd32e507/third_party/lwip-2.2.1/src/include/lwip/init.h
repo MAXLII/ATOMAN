@@ -40,7 +40,8 @@
 #include "lwip/opt.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /**
@@ -56,8 +57,8 @@ extern "C" {
 /** x.x.X: Revision of the stack */
 #define LWIP_VERSION_REVISION   1
 /** For release candidates, this is set to 1..254
-  * For official releases, this is set to 255 (LWIP_RC_RELEASE)
-  * For development versions (Git), this is set to 0 (LWIP_RC_DEVELOPMENT) */
+ * For official releases, this is set to 255 (LWIP_RC_RELEASE)
+ * For development versions (Git), this is set to 0 (LWIP_RC_DEVELOPMENT) */
 #define LWIP_VERSION_RC         LWIP_RC_RELEASE
 
 /** LWIP_VERSION_RC is set to LWIP_RC_RELEASE for official releases */
@@ -86,12 +87,12 @@ extern "C" {
 /** Provides the version of the stack as string */
 #define LWIP_VERSION_STRING     LWIP_VERSTR(LWIP_VERSION_MAJOR) "." LWIP_VERSTR(LWIP_VERSION_MINOR) "." LWIP_VERSTR(LWIP_VERSION_REVISION) LWIP_VERSION_STRING_SUFFIX
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/* Modules initialization */
-void lwip_init(void);
+    /* Modules initialization */
+    void lwip_init(void);
 
 #ifdef __cplusplus
 }

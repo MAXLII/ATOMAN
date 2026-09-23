@@ -1,7 +1,7 @@
 /**
  *
  * @file tftp_client.h
- * TFTP client header
+ *       TFTP client header
  *
  */
 
@@ -37,14 +37,23 @@
 
 #include "lwip/apps/tftp_common.h"
 
-enum tftp_transfer_mode {
-  TFTP_MODE_OCTET,
-  TFTP_MODE_NETASCII,
-  TFTP_MODE_BINARY /* used in old versions only */
+enum tftp_transfer_mode
+{
+    TFTP_MODE_OCTET,
+    TFTP_MODE_NETASCII,
+    TFTP_MODE_BINARY /* used in old versions only */
 };
 
-err_t tftp_init_client(const struct tftp_context* ctx);
-err_t tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, enum tftp_transfer_mode mode);
-err_t tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, enum tftp_transfer_mode mode);
+err_t tftp_init_client(const struct tftp_context *ctx);
+err_t tftp_get(void *handle,
+               const ip_addr_t *addr,
+               u16_t port,
+               const char *fname,
+               enum tftp_transfer_mode mode);
+err_t tftp_put(void *handle,
+               const ip_addr_t *addr,
+               u16_t port,
+               const char *fname,
+               enum tftp_transfer_mode mode);
 
 #endif /* LWIP_HDR_APPS_TFTP_CLIENT_H */

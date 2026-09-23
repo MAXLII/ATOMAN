@@ -41,66 +41,70 @@
 #include "lwip/ip_addr.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-#define LWIPERF_TCP_PORT_DEFAULT  5001
+#define LWIPERF_TCP_PORT_DEFAULT 5001
 
-/** lwIPerf test results */
-enum lwiperf_report_type
-{
-  /** The server side test is done */
-  LWIPERF_TCP_DONE_SERVER,
-  /** The client side test is done */
-  LWIPERF_TCP_DONE_CLIENT,
-  /** Local error lead to test abort */
-  LWIPERF_TCP_ABORTED_LOCAL,
-  /** Data check error lead to test abort */
-  LWIPERF_TCP_ABORTED_LOCAL_DATAERROR,
-  /** Transmit error lead to test abort */
-  LWIPERF_TCP_ABORTED_LOCAL_TXERROR,
-  /** Remote side aborted the test */
-  LWIPERF_TCP_ABORTED_REMOTE
-};
+    /** lwIPerf test results */
+    enum lwiperf_report_type
+    {
+        /** The server side test is done */
+        LWIPERF_TCP_DONE_SERVER,
+        /** The client side test is done */
+        LWIPERF_TCP_DONE_CLIENT,
+        /** Local error lead to test abort */
+        LWIPERF_TCP_ABORTED_LOCAL,
+        /** Data check error lead to test abort */
+        LWIPERF_TCP_ABORTED_LOCAL_DATAERROR,
+        /** Transmit error lead to test abort */
+        LWIPERF_TCP_ABORTED_LOCAL_TXERROR,
+        /** Remote side aborted the test */
+        LWIPERF_TCP_ABORTED_REMOTE
+    };
 
-/** Control */
-enum lwiperf_client_type
-{
-  /** Unidirectional tx only test */
-  LWIPERF_CLIENT,
-  /** Do a bidirectional test simultaneously */
-  LWIPERF_DUAL,
-  /** Do a bidirectional test individually */
-  LWIPERF_TRADEOFF
-};
+    /** Control */
+    enum lwiperf_client_type
+    {
+        /** Unidirectional tx only test */
+        LWIPERF_CLIENT,
+        /** Do a bidirectional test simultaneously */
+        LWIPERF_DUAL,
+        /** Do a bidirectional test individually */
+        LWIPERF_TRADEOFF
+    };
 
-/** Prototype of a report function that is called when a session is finished.
+    /** Prototype of a report function that is called when a session is finished.
     This report function can show the test results.
-    @param arg Report_arg from when the test was started.
-    @param report_type contains the test result
-    @param local_addr The local address from the session
-    @param local_port The local port
-    @param remote_addr The remote address from the session
-    @param remote_port The remote port
-    @param bytes_transferred Total transferred bytes
-    @param ms_duration Total session duration, in milliseconds
-    @param bandwidth_kbitpsec Average bandwidth during the session, in kbps
-*/
-typedef void (*lwiperf_report_fn)(void *arg, enum lwiperf_report_type report_type,
-  const ip_addr_t* local_addr, u16_t local_port, const ip_addr_t* remote_addr, u16_t remote_port,
-  u32_t bytes_transferred, u32_t ms_duration, u32_t bandwidth_kbitpsec);
+      @param arg Report_arg from when the test was started.
+      @param report_type contains the test result
+      @param local_addr The local address from the session
+      @param local_port The local port
+      @param remote_addr The remote address from the session
+      @param remote_port The remote port
+      @param bytes_transferred Total transferred bytes
+      @param ms_duration Total session duration, in milliseconds
+      @param bandwidth_kbitpsec Average bandwidth during the session, in kbps
+     */
+    typedef void (*lwiperf_report_fn)(void *arg, enum lwiperf_report_type report_type, const ip_addr_t *local_addr,
+                                      u16_t local_port, const ip_addr_t *remote_addr, u16_t remote_port,
+                                      u32_t bytes_transferred, u32_t ms_duration, u32_t bandwidth_kbitpsec);
 
-void* lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
-                               lwiperf_report_fn report_fn, void* report_arg);
-void* lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void* report_arg);
-void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
-                               enum lwiperf_client_type type,
-                               lwiperf_report_fn report_fn, void* report_arg);
-void* lwiperf_start_tcp_client_default(const ip_addr_t* remote_addr,
-                               lwiperf_report_fn report_fn, void* report_arg);
+    void *lwiperf_start_tcp_server(const ip_addr_t *local_addr,
+                                   u16_t local_port,
+                                   lwiperf_report_fn report_fn,
+                                   void *report_arg);
+    void *lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void *report_arg);
+    void *lwiperf_start_tcp_client(const ip_addr_t *remote_addr,
+                                   u16_t remote_port,
+                                   enum lwiperf_client_type type,
+                                   lwiperf_report_fn report_fn,
+                                   void *report_arg);
+    void *lwiperf_start_tcp_client_default(const ip_addr_t *remote_addr,
+                                           lwiperf_report_fn report_fn, void *report_arg);
 
-void  lwiperf_abort(void* lwiperf_session);
-
+    void lwiperf_abort(void *lwiperf_session);
 
 #ifdef __cplusplus
 }
