@@ -1,10 +1,10 @@
-//#############################################################################
+// #############################################################################
 //
 // FILE:   device.c
 //
 // TITLE:  Device setup for examples.
 //
-//#############################################################################
+// #############################################################################
 //
 //
 //
@@ -16,17 +16,17 @@
 // modification, are permitted provided that the following conditions
 // are met:
 //
-//   Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
+// Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-//   Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
+// Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the
+// distribution.
 //
-//   Neither the name of Texas Instruments Incorporated nor the names of
-//   its contributors may be used to endorse or promote products derived
-//   from this software without specific prior written permission.
+// Neither the name of Texas Instruments Incorporated nor the names of
+// its contributors may be used to endorse or promote products derived
+// from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -40,7 +40,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // $
-//#############################################################################
+// #############################################################################
 
 //
 // Included Files
@@ -54,7 +54,7 @@ using std::memcpy;
 #include "device_cmd.h"
 #endif
 
-//*****************************************************************************
+// *****************************************************************************
 //
 // Function to initialize the device. Primarily initializes system control to a
 // known state by disabling the watchdog, setting up the SYSCLKOUT frequency,
@@ -64,7 +64,7 @@ using std::memcpy;
 // Note : In case XTAL is used as the PLL source, it is recommended to invoke
 // the Device_verifyXTAL() before configuring PLL
 //
-//*****************************************************************************
+// *****************************************************************************
 void Device_init(void)
 {
     //
@@ -94,7 +94,6 @@ void Device_init(void)
     Flash_initModule(FLASH0CTRL_BASE, FLASH0ECC_BASE, DEVICE_FLASH_WAITSTATES);
 #endif
 
-
     //
     // Set up PLL control and clock dividers
     //
@@ -122,7 +121,7 @@ void Device_init(void)
     // in the Device_init function since during debug time resets, the boot code
     // will not be executed and the gel script will reinitialize all the
     // registers and the calibrated values will be lost.
-	// Sysctl_deviceCal is a wrapper function for Device_Cal
+    // Sysctl_deviceCal is a wrapper function for Device_Cal
     //
     SysCtl_deviceCal();
 #endif
@@ -135,37 +134,42 @@ void Device_init(void)
     //
     // Update the offset trim for PGA2
     //
-    if(HWREG(DEVCFG_BASE + SYSCTL_O_REVID) == 1U)
+
+    if (HWREG(DEVCFG_BASE + SYSCTL_O_REVID) == 1U)
     {
         PGA_setOffsetTrimNMOS(PGA2_BASE);
         PGA_setOffsetTrimPMOS(PGA2_BASE);
 
         //
-        //Set bits in ADCCONFIG2 and make ADC OFFTRIM even for all ADCs
+        // Set bits in ADCCONFIG2 and make ADC OFFTRIM even for all ADCs
         //
         EALLOW;
-        HWREG(ADCA_BASE + 0x66U)|=0x00000C00U;
-        HWREG(ADCB_BASE + 0x66U)|=0x00000C00U;
-        HWREG(ADCC_BASE + 0x66U)|=0x00000C00U;
-        HWREG(ADCD_BASE + 0x66U)|=0x00000C00U;
-        HWREG(ADCE_BASE + 0x66U)|=0x00000C00U;
+        HWREG(ADCA_BASE + 0x66U) |= 0x00000C00U;
+        HWREG(ADCB_BASE + 0x66U) |= 0x00000C00U;
+        HWREG(ADCC_BASE + 0x66U) |= 0x00000C00U;
+        HWREG(ADCD_BASE + 0x66U) |= 0x00000C00U;
+        HWREG(ADCE_BASE + 0x66U) |= 0x00000C00U;
 
-        if(HWREGH(ADCA_BASE + ADC_O_OFFTRIM) % 2U)
+        if (HWREGH(ADCA_BASE + ADC_O_OFFTRIM) % 2U)
         {
             HWREGH(ADCA_BASE + ADC_O_OFFTRIM) += 1U;
         }
+
         if (HWREGH(ADCB_BASE + ADC_O_OFFTRIM) % 2U)
         {
             HWREGH(ADCB_BASE + ADC_O_OFFTRIM) += 1U;
         }
+
         if (HWREGH(ADCC_BASE + ADC_O_OFFTRIM) % 2U)
         {
             HWREGH(ADCC_BASE + ADC_O_OFFTRIM) += 1U;
         }
+
         if (HWREGH(ADCD_BASE + ADC_O_OFFTRIM) % 2U)
         {
             HWREGH(ADCD_BASE + ADC_O_OFFTRIM) += 1U;
         }
+
         if (HWREGH(ADCE_BASE + ADC_O_OFFTRIM) % 2U)
         {
             HWREGH(ADCE_BASE + ADC_O_OFFTRIM) += 1U;
@@ -192,17 +196,16 @@ void Device_init(void)
     GPIO_setAnalogMode(21U, GPIO_ANALOG_DISABLED);
     GPIO_setAnalogMode(24U, GPIO_ANALOG_DISABLED);
     GPIO_setAnalogMode(28U, GPIO_ANALOG_DISABLED);
-
 }
 
-//*****************************************************************************
+// *****************************************************************************
 //
 // Function to turn on all peripherals, enabling reads and writes to the
 // peripherals' registers.
 //
 // Note that to reduce power, unused peripherals should be disabled.
 //
-//*****************************************************************************
+// *****************************************************************************
 void Device_enableAllPeripherals(void)
 {
     SysCtl_enablePeripheral(SYSCTL_PERIPH_CLK_CLA1);
@@ -278,11 +281,11 @@ void Device_enableAllPeripherals(void)
     SysCtl_enablePeripheral(SYSCTL_PERIPH_CLK_EPG1);
 }
 
-//*****************************************************************************
+// *****************************************************************************
 //
 // Function to disable pin locks and enable pullups on GPIOs.
 //
-//*****************************************************************************
+// *****************************************************************************
 void Device_initGPIO(void)
 {
     //
@@ -295,7 +298,7 @@ void Device_initGPIO(void)
     GPIO_unlockPortConfig(GPIO_PORT_H, 0xFFFFFFFF);
 }
 
-//*****************************************************************************
+// *****************************************************************************
 //
 // Function to verify the XTAL frequency
 // freq is the XTAL frequency in MHz
@@ -305,7 +308,7 @@ void Device_initGPIO(void)
 // Note that this function assumes that the PLL is not already configured and
 // hence uses SysClk freq = 10MHz for DCC calculation
 //
-//*****************************************************************************
+// *****************************************************************************
 bool Device_verifyXTAL(float freq)
 {
     //
@@ -317,7 +320,9 @@ bool Device_verifyXTAL(float freq)
     //
     SysCtl_turnOnOsc(SYSCTL_OSCSRC_XTAL);
     SysCtl_clearExternalOscCounterValue();
-    while(SysCtl_getExternalOscCounterValue() != SYSCTL_X1CNT_X1CNT_M);
+
+    while (SysCtl_getExternalOscCounterValue() != SYSCTL_X1CNT_X1CNT_M)
+        ;
 
     //
     // Enable DCC0 clock
@@ -342,17 +347,20 @@ bool Device_verifyXTAL(float freq)
     // Note : Update the tolerance and INTOSC2 frequency variance as necessary.
     //
     return (DCC_verifyClockFrequency(DCC0_BASE,
-                                     DCC_COUNT1SRC_INTOSC2, 10.0F,
-                                     DCC_COUNT0SRC_XTAL, freq,
-                                     1.0F, 10.0F, 10.0F));
-
+                                     DCC_COUNT1SRC_INTOSC2,
+                                     10.0F,
+                                     DCC_COUNT0SRC_XTAL,
+                                     freq,
+                                     1.0F,
+                                     10.0F,
+                                     10.0F));
 }
 
-//*****************************************************************************
+// *****************************************************************************
 //
 // Error handling function to be called when an ASSERT is violated
 //
-//*****************************************************************************
+// *****************************************************************************
 void __error__(const char *filename, uint32_t line)
 {
     //

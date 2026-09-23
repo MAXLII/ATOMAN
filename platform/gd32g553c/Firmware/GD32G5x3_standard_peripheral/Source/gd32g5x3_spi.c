@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_spi.c
-    \brief   SPI driver
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_spi.c
+  \brief SPI driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,33 +30,37 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_spi.h"
 
-#define SPI_ERROR_HANDLE(s)           do{}while(1)
+#define SPI_ERROR_HANDLE(s) \
+    do                      \
+    {                       \
+    } while (1)
 
 /* SPI fifo data size */
-#define SPI_DATASIZE_SUBTRACT_ONE       ((uint8_t)0x01U)
+#define SPI_DATASIZE_SUBTRACT_ONE ((uint8_t)0x01U)
 
 /* SPI parameter initialization mask */
-#define SPI_INIT_MASK                   ((uint32_t)0x00003040U)
-#define SPI_FIFO_INIT_MASK1             ((uint32_t)0x00003840U)  /*!< SPI1 parameter initialization mask1 */
-#define SPI_FIFO_INIT_MASK2             ((uint32_t)0x0000F0FFU)  /*!< SPI1 parameter initialization mask2*/
-#define SPI_FRAMESIZE_MASK              ((uint32_t)0x00000800U)  /*!< SPI0 frame size mask */
-#define SPI_BYTEN_MASK                  ((uint32_t)0x00001000U)  /*!< SPI1 access to FIFO mask */
-#define SPI_TXLVL_EMPTY_MASK            ((uint32_t)0x00001800U)  /*!< SPI1 TXFIFO empty mask */
-#define SPI_RXLVL_EMPTY_MASK            ((uint32_t)0x00000600U)  /*!< SPI1 RXFIFO empty mask */
+#define SPI_INIT_MASK        ((uint32_t)0x00003040U)
+#define SPI_FIFO_INIT_MASK1  ((uint32_t)0x00003840U) /*!< SPI1 parameter initialization mask1 */
+#define SPI_FIFO_INIT_MASK2  ((uint32_t)0x0000F0FFU) /*!< SPI1 parameter initialization mask2 */
+#define SPI_FRAMESIZE_MASK   ((uint32_t)0x00000800U) /*!< SPI0 frame size mask */
+#define SPI_BYTEN_MASK       ((uint32_t)0x00001000U) /*!< SPI1 access to FIFO mask */
+#define SPI_TXLVL_EMPTY_MASK ((uint32_t)0x00001800U) /*!< SPI1 TXFIFO empty mask */
+#define SPI_RXLVL_EMPTY_MASK ((uint32_t)0x00000600U) /*!< SPI1 RXFIFO empty mask */
 
 /*!
-    \brief      reset SPI
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief reset SPI
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_deinit(uint32_t spi_periph)
 {
-    switch(spi_periph) {
+    switch (spi_periph)
+    {
     case SPI0:
         /* reset SPI0 */
         rcu_periph_reset_enable(RCU_SPI0RST);
@@ -71,18 +75,18 @@ void spi_deinit(uint32_t spi_periph)
         /* reset SPI2 */
         rcu_periph_reset_enable(RCU_SPI2RST);
         rcu_periph_reset_disable(RCU_SPI2RST);
-        break;    
-    default :
+        break;
+    default:
         break;
     }
 }
 
 /*!
-    \brief      initialize the parameters of SPI struct with default values
-    \param[in]  none
-    \param[out] spi_parameter_struct: the initialized struct spi_parameter_struct pointer
-    \retval     none
-*/
+  \brief initialize the parameters of SPI struct with default values
+  \param[in]  none
+  \param[out] spi_parameter_struct: the initialized struct spi_parameter_struct pointer
+  \retval none
+ */
 void spi_struct_para_init(spi_parameter_struct *spi_struct)
 {
     /* configure the structure with default value */
@@ -96,9 +100,9 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct)
 }
 
 /*!
-    \brief      initialize SPI parameter
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  spi_struct: SPI parameter initialization stuct members of the structure
+  \brief initialize SPI parameter
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  spi_struct: SPI parameter initialization stuct members of the structure
                             and the member values are shown as below:
                   device_mode: SPI_MASTER, SPI_SLAVE
                   trans_mode: SPI_TRANSMODE_FULLDUPLEX, SPI_TRANSMODE_RECEIVEONLY,
@@ -115,9 +119,9 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct)
                   clock_polarity_phase: SPI_CK_PL_LOW_PH_1EDGE, SPI_CK_PL_HIGH_PH_1EDGE
                                         SPI_CK_PL_LOW_PH_2EDGE, SPI_CK_PL_HIGH_PH_2EDGE
                   prescale: SPI_PSC_n (n=2,4,8,16,32,64,128,256)
-    \param[out] none
-    \retval     ErrStatus: ERROR or SUCCESS
-*/
+  \param[out] none
+  \retval ErrStatus: ERROR or SUCCESS
+ */
 ErrStatus spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
 {
     uint32_t reg2, reg3 = 0U;
@@ -152,119 +156,125 @@ ErrStatus spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
 }
 
 /*!
-    \brief      enable SPI
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_enable(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_SPIEN;
 }
 
 /*!
-    \brief      disable SPI
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_disable(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_SPIEN);
 }
 
 /*!
-    \brief      enable SPI NSS output
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI NSS output
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_output_enable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_NSSDRV;
 }
 
 /*!
-    \brief      disable SPI NSS output
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI NSS output
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_output_disable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_NSSDRV);
 }
 
 /*!
-    \brief      SPI NSS pin high level in software mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI NSS pin high level in software mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_internal_high(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_SWNSS;
 }
 
 /*!
-    \brief      SPI NSS pin low level in software mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI NSS pin low level in software mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_internal_low(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_SWNSS);
 }
 
 /*!
-    \brief      enable SPI DMA send or receive
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  dma: SPI DMA mode
+  \brief enable SPI DMA send or receive
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  dma: SPI DMA mode
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_DMA_TRANSMIT: SPI transmit data use DMA
-      \arg        SPI_DMA_RECEIVE: SPI receive data use DMA
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_DMA_TRANSMIT: SPI transmit data use DMA
+  \arg SPI_DMA_RECEIVE: SPI receive data use DMA
+  \param[out] none
+  \retval none
+ */
 void spi_dma_enable(uint32_t spi_periph, uint8_t spi_dma)
 {
-    if(SPI_DMA_TRANSMIT == spi_dma) {
+    if (SPI_DMA_TRANSMIT == spi_dma)
+    {
         SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_DMATEN;
-    } else {
+    }
+    else
+    {
         SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_DMAREN;
     }
 }
 
 /*!
-    \brief      disable SPI DMA send or receive
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  dma: SPI DMA mode
+  \brief disable SPI DMA send or receive
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  dma: SPI DMA mode
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_DMA_TRANSMIT: SPI transmit data use DMA
-      \arg        SPI_DMA_RECEIVE: SPI receive data use DMA
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_DMA_TRANSMIT: SPI transmit data use DMA
+  \arg SPI_DMA_RECEIVE: SPI receive data use DMA
+  \param[out] none
+  \retval none
+ */
 void spi_dma_disable(uint32_t spi_periph, uint8_t spi_dma)
 {
-    if(SPI_DMA_TRANSMIT == spi_dma) {
+    if (SPI_DMA_TRANSMIT == spi_dma)
+    {
         SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_DMATEN);
-    } else {
+    }
+    else
+    {
         SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_DMAREN);
     }
 }
 
 /*!
-    \brief      configure SPI total number of data to transmit by DMA is odd or not
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  odd: odd bytes in TX DMA channel
+  \brief configure SPI total number of data to transmit by DMA is odd or not
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  odd: odd bytes in TX DMA channel
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_TXDMA_EVEN: number of byte in TX DMA channel is even
-      \arg        SPI_TXDMA_ODD: number of byte in TX DMA channel is odd
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_TXDMA_EVEN: number of byte in TX DMA channel is even
+  \arg SPI_TXDMA_ODD: number of byte in TX DMA channel is odd
+  \param[out] none
+  \retval none
+ */
 void spi_transmit_odd_config(uint32_t spi_periph, uint16_t odd)
 {
     /* clear SPI_CTL1_TXDMA_ODD bit */
@@ -274,15 +284,15 @@ void spi_transmit_odd_config(uint32_t spi_periph, uint16_t odd)
 }
 
 /*!
-    \brief      configure SPI total number of data to receive by DMA is odd or not
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  odd: odd bytes in RX DMA channel
+  \brief configure SPI total number of data to receive by DMA is odd or not
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  odd: odd bytes in RX DMA channel
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_RXDMA_EVEN: number of bytes in RX DMA channel is even
-      \arg        SPI_RXDMA_ODD: number of bytes in RX DMA channel is odd
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_RXDMA_EVEN: number of bytes in RX DMA channel is even
+  \arg SPI_RXDMA_ODD: number of bytes in RX DMA channel is odd
+  \param[out] none
+  \retval none
+ */
 void spi_receive_odd_config(uint32_t spi_periph, uint16_t odd)
 {
     /* clear SPI_CTL1_RXDMA_ODD bit */
@@ -292,14 +302,14 @@ void spi_receive_odd_config(uint32_t spi_periph, uint16_t odd)
 }
 
 /*!
-    \brief      configure SPI data frame format
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  frame_format: SPI frame size
+  \brief configure SPI data frame format
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  frame_format: SPI frame size
                 only one parameter can be selected which is shown as below:
-      \arg         SPI_FRAMESIZE_xBIT(x=4,5..16):SPI frame size is x bits
-    \param[out] none
-    \retval     ErrStatus: ERROR or SUCCESS
-*/
+  \arg SPI_FRAMESIZE_xBIT(x=4,5..16):SPI frame size is x bits
+  \param[out] none
+  \retval ErrStatus: ERROR or SUCCESS
+ */
 ErrStatus spi_data_frame_format_config(uint32_t spi_periph, uint16_t frame_format)
 {
     uint32_t reg;
@@ -315,15 +325,15 @@ ErrStatus spi_data_frame_format_config(uint32_t spi_periph, uint16_t frame_forma
 }
 
 /*!
-    \brief      configure SPI access size to FIFO(8bit or 16bit)
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  fifo_access_size: byte access enable
+  \brief configure SPI access size to FIFO(8bit or 16bit)
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  fifo_access_size: byte access enable
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_HALFWORD_ACCESS: half-word access to FIFO
-      \arg        SPI_BYTE_ACCESS: byte access to FIFO
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_HALFWORD_ACCESS: half-word access to FIFO
+  \arg SPI_BYTE_ACCESS: byte access to FIFO
+  \param[out] none
+  \retval none
+ */
 void spi_fifo_access_size_config(uint32_t spi_periph, uint16_t fifo_access_size)
 {
     /* clear SPI_CTL1_BYTEN bit */
@@ -333,71 +343,82 @@ void spi_fifo_access_size_config(uint32_t spi_periph, uint16_t fifo_access_size)
 }
 
 /*!
-    \brief      configure SPI bidirectional transfer direction
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  transfer_direction: SPI transfer direction
+  \brief configure SPI bidirectional transfer direction
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  transfer_direction: SPI transfer direction
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_BIDIRECTIONAL_TRANSMIT: SPI work in transmit-only mode
-      \arg        SPI_BIDIRECTIONAL_RECEIVE: SPI work in receive-only mode
-    \retval     none
-*/
+  \arg SPI_BIDIRECTIONAL_TRANSMIT: SPI work in transmit-only mode
+  \arg SPI_BIDIRECTIONAL_RECEIVE: SPI work in receive-only mode
+  \retval none
+ */
 void spi_bidirectional_transfer_config(uint32_t spi_periph, uint32_t transfer_direction)
 {
-    if(SPI_BIDIRECTIONAL_TRANSMIT == transfer_direction) {
+    if (SPI_BIDIRECTIONAL_TRANSMIT == transfer_direction)
+    {
         /* set the transmit only mode */
         SPI_CTL0(spi_periph) |= (uint32_t)SPI_BIDIRECTIONAL_TRANSMIT;
-    } else {
+    }
+    else
+    {
         /* set the receive only mode */
         SPI_CTL0(spi_periph) &= SPI_BIDIRECTIONAL_RECEIVE;
     }
 }
 
 /*!
-    \brief      SPI transmit data
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  data: 16-bit data
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI transmit data
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  data: 16-bit data
+  \param[out] none
+  \retval none
+ */
 void spi_data_transmit(uint32_t spi_periph, uint16_t data)
 {
     uint32_t reg, byten;
     /* get the access size to FIFO */
     byten = SPI_CTL1(spi_periph) & SPI_BYTEN_MASK;
-    if(RESET != byten) {
-        reg = spi_periph + 0x0CU;
+
+    if (RESET != byten)
+    {
+        reg               = spi_periph + 0x0CU;
         *(uint8_t *)(reg) = (uint8_t)data;
-    } else {
+    }
+    else
+    {
         SPI_DATA(spi_periph) = (uint16_t)data;
     }
 }
 
 /*!
-    \brief      SPI receive data
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     16-bit data
-*/
+  \brief SPI receive data
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval 16-bit data
+ */
 uint16_t spi_data_receive(uint32_t spi_periph)
 {
     uint32_t reg, byten;
     /* get the access size to FIFO */
     byten = SPI_CTL1(spi_periph) & SPI_BYTEN_MASK;
-    if(RESET != byten) {
+
+    if (RESET != byten)
+    {
         reg = spi_periph + 0x0CU;
         return (uint16_t)(*(uint8_t *)(reg));
-    } else {
+    }
+    else
+    {
         return ((uint16_t)SPI_DATA(spi_periph));
     }
 }
 
 /*!
-    \brief      set SPI CRC polynomial
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  crc_poly: CRC polynomial value
-    \param[out] none
-    \retval     none
-*/
+  \brief set SPI CRC polynomial
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  crc_poly: CRC polynomial value
+  \param[out] none
+  \retval none
+ */
 void spi_crc_polynomial_set(uint32_t spi_periph, uint16_t crc_poly)
 {
     /* set SPI CRC polynomial */
@@ -405,26 +426,26 @@ void spi_crc_polynomial_set(uint32_t spi_periph, uint16_t crc_poly)
 }
 
 /*!
-    \brief      get SPI CRC polynomial
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     16-bit CRC polynomial
-*/
+  \brief get SPI CRC polynomial
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval 16-bit CRC polynomial
+ */
 uint16_t spi_crc_polynomial_get(uint32_t spi_periph)
 {
     return ((uint16_t)SPI_CRCPOLY(spi_periph));
 }
 
 /*!
-    \brief      set CRC length
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  crc_length: CRC length
+  \brief set CRC length
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  crc_length: CRC length
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_CRC_8BIT: CRC length is 8 bits
-      \arg        SPI_CRC_16BIT: CRC length is 16 bits
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_CRC_8BIT: CRC length is 8 bits
+  \arg SPI_CRC_16BIT: CRC length is 16 bits
+  \param[out] none
+  \retval none
+ */
 void spi_crc_length_set(uint32_t spi_periph, uint16_t crc_length)
 {
     /* clear SPI_CTL0_CRCL bit */
@@ -434,234 +455,250 @@ void spi_crc_length_set(uint32_t spi_periph, uint16_t crc_length)
 }
 
 /*!
-    \brief      turn on CRC function
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief turn on CRC function
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_on(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_CRCEN;
 }
 
 /*!
-    \brief      turn off CRC function
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief turn off CRC function
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_off(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_CRCEN);
 }
 
 /*!
-    \brief      SPI next data is CRC value
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI next data is CRC value
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_next(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_CRCNT;
 }
 
 /*!
-    \brief      get SPI CRC send value or receive value
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  crc: SPI crc value
+  \brief get SPI CRC send value or receive value
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  crc: SPI crc value
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_CRC_TX: get transmit crc value
-      \arg        SPI_CRC_RX: get receive crc value
-    \param[out] none
-    \retval     16-bit CRC value
-*/
+  \arg SPI_CRC_TX: get transmit crc value
+  \arg SPI_CRC_RX: get receive crc value
+  \param[out] none
+  \retval 16-bit CRC value
+ */
 uint16_t spi_crc_get(uint32_t spi_periph, uint8_t crc)
 {
-    if(SPI_CRC_TX == crc) {
+    if (SPI_CRC_TX == crc)
+    {
         return ((uint16_t)(SPI_TCRC(spi_periph)));
-    } else {
+    }
+    else
+    {
         return ((uint16_t)(SPI_RCRC(spi_periph)));
     }
 }
 
 /*!
-    \brief      clear SPI CRC error flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief clear SPI CRC error flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_error_clear(uint32_t spi_periph)
 {
     SPI_STAT(spi_periph) &= (uint32_t)(~SPI_FLAG_CRCERR);
 }
 
 /*!
-    \brief      enable SPI TI mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI TI mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_ti_mode_enable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_TMOD;
 }
 
 /*!
-    \brief      disable SPI TI mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI TI mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_ti_mode_disable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_TMOD);
 }
 
 /*!
-    \brief      enable SPI NSS pulse mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI NSS pulse mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nssp_mode_enable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_NSSP;
 }
 
 /*!
-    \brief      disable SPI NSS pulse mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI NSS pulse mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nssp_mode_disable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_NSSP);
 }
 
-
 /*!
-    \brief      enable quad wire SPI
-    \param[in]  spi_periph: SPIx(x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable quad wire SPI
+  \param[in]  spi_periph: SPIx(x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) |= (uint32_t)SPI_QCTL_QMOD;
 }
 
 /*!
-    \brief      disable quad wire SPI
-    \param[in]  spi_periph: SPIx(x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable quad wire SPI
+  \param[in]  spi_periph: SPIx(x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_disable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) &= (uint32_t)(~SPI_QCTL_QMOD);
 }
 
 /*!
-    \brief      enable quad wire SPI write
-    \param[in]  spi_periph: SPIx(x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable quad wire SPI write
+  \param[in]  spi_periph: SPIx(x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_write_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) &= (uint32_t)(~SPI_QCTL_QRD);
 }
 
 /*!
-    \brief      enable quad wire SPI read
-    \param[in]  spi_periph: SPIx(x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable quad wire SPI read
+  \param[in]  spi_periph: SPIx(x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_read_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) |= (uint32_t)SPI_QCTL_QRD;
 }
 
 /*!
-    \brief      enable SPI_IO2 and SPI_IO3 pin output
-    \param[in]  spi_periph: SPIx(x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI_IO2 and SPI_IO3 pin output
+  \param[in]  spi_periph: SPIx(x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_io23_output_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) |= (uint32_t)SPI_QCTL_IO23_DRV;
 }
 
 /*!
-   \brief      disable SPI_IO2 and SPI_IO3 pin output
-   \param[in]  spi_periph: SPIx(x=0)
-   \param[out] none
-   \retval     none
-*/
+  \brief disable SPI_IO2 and SPI_IO3 pin output
+  \param[in]  spi_periph: SPIx(x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_io23_output_disable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) &= (uint32_t)(~SPI_QCTL_IO23_DRV);
 }
 
 /*!
-    \brief      clear SPI format error flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  flag: SPI frame format error flag 
-      \arg        SPI_FLAG_FERR: only for SPI work in TI mode
-    \param[out] none
-    \retval     none
-*/
+  \brief clear SPI format error flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  flag: SPI frame format error flag
+  \arg SPI_FLAG_FERR: only for SPI work in TI mode
+  \param[out] none
+  \retval none
+ */
 void spi_format_error_clear(uint32_t spi_periph, uint32_t flag)
 {
     SPI_STAT(spi_periph) = (uint32_t)(~flag);
 }
 
 /*!
-    \brief      get SPI flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  flag: SPI flag status
+  \brief get SPI flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  flag: SPI flag status
                 only one parameter can be selected which are shown as below:
-      \arg        SPI_FLAG_TBE: transmit buffer empty flag
-      \arg        SPI_FLAG_RBNE: receive buffer not empty flag
-      \arg        SPI_FLAG_TRANS: transmit on-going flag
-      \arg        SPI_FLAG_RXORERR: receive overrun error flag
-      \arg        SPI_FLAG_CONFERR: mode config error flag
-      \arg        SPI_FLAG_CRCERR: CRC error flag
-      \arg        SPI_FLAG_FERR: SPI format error interrupt flag
-      \arg        SPI_FLAG_TXLVL_EMPTY: SPI TXFIFO is empty
-      \arg        SPI_FLAG_TXLVL_QUARTER_FULL: SPI TXFIFO is a quarter of full
-      \arg        SPI_FLAG_TXLVL_HAlF_FULL: SPI TXFIFO is a half of full
-      \arg        SPI_FLAG_TXLVL_FULL: SPI TXFIFO is full
-      \arg        SPI_FLAG_RXLVL_EMPTY: SPI RXFIFO is empty
-      \arg        SPI_FLAG_RXLVL_QUARTER_FULL: SPI RXFIFO is a quarter of full
-      \arg        SPI_FLAG_RXLVL_HAlF_FULL: SPI RXFIFO is a half of full
-      \arg        SPI_FLAG_RXLVL_FULL: SPI RXFIFO is full
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg SPI_FLAG_TBE: transmit buffer empty flag
+  \arg SPI_FLAG_RBNE: receive buffer not empty flag
+  \arg SPI_FLAG_TRANS: transmit on-going flag
+  \arg SPI_FLAG_RXORERR: receive overrun error flag
+  \arg SPI_FLAG_CONFERR: mode config error flag
+  \arg SPI_FLAG_CRCERR: CRC error flag
+  \arg SPI_FLAG_FERR: SPI format error interrupt flag
+  \arg SPI_FLAG_TXLVL_EMPTY: SPI TXFIFO is empty
+  \arg SPI_FLAG_TXLVL_QUARTER_FULL: SPI TXFIFO is a quarter of full
+  \arg SPI_FLAG_TXLVL_HAlF_FULL: SPI TXFIFO is a half of full
+  \arg SPI_FLAG_TXLVL_FULL: SPI TXFIFO is full
+  \arg SPI_FLAG_RXLVL_EMPTY: SPI RXFIFO is empty
+  \arg SPI_FLAG_RXLVL_QUARTER_FULL: SPI RXFIFO is a quarter of full
+  \arg SPI_FLAG_RXLVL_HAlF_FULL: SPI RXFIFO is a half of full
+  \arg SPI_FLAG_RXLVL_FULL: SPI RXFIFO is full
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus spi_flag_get(uint32_t spi_periph, uint32_t flag)
 {
-    if(RESET != (SPI_STAT(spi_periph) & flag)) {
+    if (RESET != (SPI_STAT(spi_periph) & flag))
+    {
         return SET;
-    } else {
-        if(SPI1 == spi_periph) {
+    }
+    else
+    {
+        if (SPI1 == spi_periph)
+        {
             /* check TXFIFO is empty or not */
-            if(SPI_TXLVL_EMPTY == flag) {
-                if(RESET != (SPI_STAT(spi_periph) & SPI_TXLVL_EMPTY_MASK)) {
+
+            if (SPI_TXLVL_EMPTY == flag)
+            {
+                if (RESET != (SPI_STAT(spi_periph) & SPI_TXLVL_EMPTY_MASK))
+                {
                     return RESET;
-                } else {
+                }
+                else
+                {
                     return SET;
                 }
             }
             /* check RXFIFO is empty or not */
-            if(SPI_RXLVL_EMPTY == flag) {
-                if(RESET != (SPI_STAT(spi_periph) & SPI_RXLVL_EMPTY_MASK)) {
+
+            if (SPI_RXLVL_EMPTY == flag)
+            {
+                if (RESET != (SPI_STAT(spi_periph) & SPI_RXLVL_EMPTY_MASK))
+                {
                     return RESET;
-                } else {
+                }
+                else
+                {
                     return SET;
                 }
             }
@@ -671,59 +708,60 @@ FlagStatus spi_flag_get(uint32_t spi_periph, uint32_t flag)
 }
 
 /*!
-    \brief      enable SPI interrupt
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  interrupt: SPI interrupt
+  \brief enable SPI interrupt
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  interrupt: SPI interrupt
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_INT_TBE: transmit buffer empty interrupt
-      \arg        SPI_INT_RBNE: receive buffer not empty interrupt
-      \arg        SPI_INT_ERR: CRC error, configuration error,reception overrun error,
-                                   transmission underrun error and format error interrupt
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_INT_TBE: transmit buffer empty interrupt
+  \arg SPI_INT_RBNE: receive buffer not empty interrupt
+  \arg SPI_INT_ERR: CRC error, configuration error,reception overrun error,
+       transmission underrun error and format error interrupt
+  \param[out] none
+  \retval none
+ */
 void spi_interrupt_enable(uint32_t spi_periph, uint8_t interrupt)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)interrupt;
 }
 
 /*!
-    \brief      disable SPI interrupt
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  interrupt: SPI interrupt
+  \brief disable SPI interrupt
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  interrupt: SPI interrupt
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_INT_TBE: transmit buffer empty interrupt
-      \arg        SPI_INT_RBNE: receive buffer not empty interrupt
-      \arg        SPI_INT_ERR: CRC error,configuration error,reception overrun error,
-                                   transmission underrun error and format error interrupt
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_INT_TBE: transmit buffer empty interrupt
+  \arg SPI_INT_RBNE: receive buffer not empty interrupt
+  \arg SPI_INT_ERR: CRC error,configuration error,reception overrun error,
+       transmission underrun error and format error interrupt
+  \param[out] none
+  \retval none
+ */
 void spi_interrupt_disable(uint32_t spi_periph, uint8_t interrupt)
 {
     SPI_CTL1(spi_periph) &= ~(uint32_t)interrupt;
 }
 
 /*!
-    \brief      get SPI interrupt flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  interrupt: SPI interrupt flag status
+  \brief get SPI interrupt flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  interrupt: SPI interrupt flag status
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_INT_FLAG_TBE: transmit buffer empty interrupt flag
-      \arg        SPI_INT_FLAG_RBNE: receive buffer not empty interrupt flag
-      \arg        SPI_INT_FLAG_RXORERR: overrun interrupt flag
-      \arg        SPI_INT_FLAG_CONFERR: config error interrupt flag
-      \arg        SPI_INT_FLAG_CRCERR: CRC error interrupt flag
-      \arg        SPI_INT_FLAG_FERR: format error interrupt flag
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg SPI_INT_FLAG_TBE: transmit buffer empty interrupt flag
+  \arg SPI_INT_FLAG_RBNE: receive buffer not empty interrupt flag
+  \arg SPI_INT_FLAG_RXORERR: overrun interrupt flag
+  \arg SPI_INT_FLAG_CONFERR: config error interrupt flag
+  \arg SPI_INT_FLAG_CRCERR: CRC error interrupt flag
+  \arg SPI_INT_FLAG_FERR: format error interrupt flag
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus spi_interrupt_flag_get(uint32_t spi_periph, uint8_t interrupt)
 {
     uint32_t reg1 = SPI_STAT(spi_periph);
     uint32_t reg2 = SPI_CTL1(spi_periph);
 
-    switch(interrupt) {
+    switch (interrupt)
+    {
     /* SPI transmit buffer empty interrupt */
     case SPI_INT_FLAG_TBE:
         reg1 = reg1 & SPI_STAT_TBE;
@@ -754,13 +792,18 @@ FlagStatus spi_interrupt_flag_get(uint32_t spi_periph, uint8_t interrupt)
         reg1 = reg1 & SPI_STAT_FERR;
         reg2 = reg2 & SPI_CTL1_ERRIE;
         break;
-    default :
+    default:
         break;
     }
-    /*get SPI interrupt flag status */
-    if(reg1 && reg2) {
+    /* get SPI interrupt flag status */
+
+    if (    reg1
+         && reg2)
+    {
         return SET;
-    } else {
+    }
+    else
+    {
         return RESET;
     }
 }

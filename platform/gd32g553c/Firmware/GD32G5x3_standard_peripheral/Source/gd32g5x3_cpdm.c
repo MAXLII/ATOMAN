@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_cpdm.c
-    \brief   CPDM driver
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_cpdm.c
+  \brief CPDM driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,28 +30,28 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_cpdm.h"
 
-#define CPDM_CPSEL_MASK                        ((uint32_t)0xFFFFFFF0U)  /*!< CPDM output clock phase seclection mask */
-#define CPDM_DLSTCNT_MASK                      ((uint32_t)0xFFFF80FFU)  /*!< CPDM delay step count for a uint delay UINT mask */
-#define CPDM_DLLENF_MASK                       ((uint32_t)0x80000000U)  /*!< CPDM delay line length valid flag mask */
-#define CPDM_DLLEN_MASK                        ((uint32_t)0x0FFF0000U)  /*!< CPDM delay line length mask */
+#define CPDM_CPSEL_MASK   ((uint32_t)0xFFFFFFF0U) /*!< CPDM output clock phase seclection mask */
+#define CPDM_DLSTCNT_MASK ((uint32_t)0xFFFF80FFU) /*!< CPDM delay step count for a uint delay UINT mask */
+#define CPDM_DLLENF_MASK  ((uint32_t)0x80000000U) /*!< CPDM delay line length valid flag mask */
+#define CPDM_DLLEN_MASK   ((uint32_t)0x0FFF0000U) /*!< CPDM delay line length mask */
 
-#define CPDM_DLLEN_OFFSET                      ((uint32_t)16U)          /*!< CPDM delay line length offset */
-#define CPDM_DLSTCNT_OFFSET                    ((uint32_t)8U)           /*!< CPDM delay step count for a uint delay UINT offset */
-#define CPDM_DLLEN_11                          ((uint32_t)0x04000000U)  /*!< CPDM delay line length bit 11 */
-#define CPDM_DLLEN_10                          ((uint32_t)0x08000000U)  /*!< CPDM delay line length bit 10 */
-#define CPDM_DLLEN_10_0_MASK                   ((uint32_t)0x7FFU)       /*!< CPDM delay line length bit 10 to bit 0 mask */
+#define CPDM_DLLEN_OFFSET    ((uint32_t)16U)         /*!< CPDM delay line length offset */
+#define CPDM_DLSTCNT_OFFSET  ((uint32_t)8U)          /*!< CPDM delay step count for a uint delay UINT offset */
+#define CPDM_DLLEN_11        ((uint32_t)0x04000000U) /*!< CPDM delay line length bit 11 */
+#define CPDM_DLLEN_10        ((uint32_t)0x08000000U) /*!< CPDM delay line length bit 10 */
+#define CPDM_DLLEN_10_0_MASK ((uint32_t)0x7FFU)      /*!< CPDM delay line length bit 10 to bit 0 mask */
 
-#define CPDM_MAX_TIMEOUT                       ((uint32_t)0x0000FFFFU)  /*!< count to judge of CPDM timeout */
+#define CPDM_MAX_TIMEOUT ((uint32_t)0x0000FFFFU) /*!< count to judge of CPDM timeout */
 /*!
-    \brief      enable CPDM
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable CPDM
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void cpdm_enable(void)
 {
     /* enable CPDM */
@@ -59,11 +59,11 @@ void cpdm_enable(void)
 }
 
 /*!
-    \brief      disable CPDM
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief disable CPDM
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void cpdm_disable(void)
 {
     /* disable CPDM */
@@ -71,11 +71,11 @@ void cpdm_disable(void)
 }
 
 /*!
-    \brief      enable CPDM delay line sample module
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable CPDM delay line sample module
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void cpdm_delayline_sample_enable(void)
 {
     /* enable CPDM delay line sample module */
@@ -83,11 +83,11 @@ void cpdm_delayline_sample_enable(void)
 }
 
 /*!
-    \brief      disable CPDM delay line sample module
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief disable CPDM delay line sample module
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void cpdm_delayline_sample_disable(void)
 {
     /* disable CPDM delay line sample module */
@@ -95,25 +95,25 @@ void cpdm_delayline_sample_disable(void)
 }
 
 /*!
-    \brief      select CPDM output clock phase
-    \param[in]  output_clock_phase: the output clock phase, refer to cpdm_output_phase_enum
+  \brief select CPDM output clock phase
+  \param[in]  output_clock_phase: the output clock phase, refer to cpdm_output_phase_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_0: output clock phase = input clock
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_1: output clock phase = input clock + 1 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_2: output clock phase = input clock + 2 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_3: output clock phase = input clock + 3 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_4: output clock phase = input clock + 4 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_5: output clock phase = input clock + 5 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_6: output clock phase = input clock + 6 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_7: output clock phase = input clock + 7 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_8: output clock phase = input clock + 8 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_9: output clock phase = input clock + 9 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_10: output clock phase = input clock + 10 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_11: output clock phase = input clock + 11 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_12: output clock phase = input clock + 12 * UNIT delay
-    \param[out] none
-    \retval     none
-*/
+  \arg CPDM_OUTPUT_PHASE_SELECTION_0: output clock phase = input clock
+  \arg CPDM_OUTPUT_PHASE_SELECTION_1: output clock phase = input clock + 1 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_2: output clock phase = input clock + 2 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_3: output clock phase = input clock + 3 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_4: output clock phase = input clock + 4 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_5: output clock phase = input clock + 5 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_6: output clock phase = input clock + 6 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_7: output clock phase = input clock + 7 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_8: output clock phase = input clock + 8 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_9: output clock phase = input clock + 9 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_10: output clock phase = input clock + 10 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_11: output clock phase = input clock + 11 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_12: output clock phase = input clock + 12 * UNIT delay
+  \param[out] none
+  \retval none
+ */
 void cpdm_output_clock_phase_select(cpdm_output_phase_enum output_clock_phase)
 {
     uint32_t reg = 0U;
@@ -126,11 +126,11 @@ void cpdm_output_clock_phase_select(cpdm_output_phase_enum output_clock_phase)
 }
 
 /*!
-    \brief      configure CPDM delay step
-    \param[in]  delay_step: 0 ~ 127
-    \param[out] none
-    \retval     none
-*/
+  \brief configure CPDM delay step
+  \param[in]  delay_step: 0 ~ 127
+  \param[out] none
+  \retval none
+ */
 void cpdm_delay_step_config(uint8_t delay_step)
 {
     uint32_t reg = 0U;
@@ -143,60 +143,64 @@ void cpdm_delay_step_config(uint8_t delay_step)
 }
 
 /*!
-    \brief      get delay line length valid flag
-    \param[in]  none
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \brief get delay line length valid flag
+  \param[in]  none
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus cpdm_delayline_length_valid_flag_get(void)
 {
     uint32_t reg = 0U;
 
     reg = CPDM_CFG;
-    if(reg & CPDM_DLLENF_MASK) {
+
+    if (reg & CPDM_DLLENF_MASK)
+    {
         return SET;
-    } else {
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      get delay line length
-    \param[in]  none
-    \param[out] none
-    \retval     the value of delay line length, 0x00~0xFFF
-*/
+  \brief get delay line length
+  \param[in]  none
+  \param[out] none
+  \retval the value of delay line length, 0x00~0xFFF
+ */
 uint16_t cpdm_delayline_length_get(void)
 {
     return (uint16_t)((CPDM_CFG & CPDM_DLLEN_MASK) >> CPDM_DLLEN_OFFSET);
 }
 
 /*!
-    \brief      configure CPDM clock output
-    \param[in]  output_clock_phase: the output clock phase, refer to cpdm_output_phase_enum
+  \brief configure CPDM clock output
+  \param[in]  output_clock_phase: the output clock phase, refer to cpdm_output_phase_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_0: output clock phase = input clock
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_1: output clock phase = input clock + 1 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_2: output clock phase = input clock + 2 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_3: output clock phase = input clock + 3 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_4: output clock phase = input clock + 4 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_5: output clock phase = input clock + 5 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_6: output clock phase = input clock + 6 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_7: output clock phase = input clock + 7 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_8: output clock phase = input clock + 8 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_9: output clock phase = input clock + 9 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_10: output clock phase = input clock + 10 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_11: output clock phase = input clock + 11 * UNIT delay
-      \arg        CPDM_OUTPUT_PHASE_SELECTION_12: output clock phase = input clock + 12 * UNIT delay
-    \param[out] none
-    \retval     none
-*/
+  \arg CPDM_OUTPUT_PHASE_SELECTION_0: output clock phase = input clock
+  \arg CPDM_OUTPUT_PHASE_SELECTION_1: output clock phase = input clock + 1 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_2: output clock phase = input clock + 2 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_3: output clock phase = input clock + 3 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_4: output clock phase = input clock + 4 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_5: output clock phase = input clock + 5 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_6: output clock phase = input clock + 6 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_7: output clock phase = input clock + 7 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_8: output clock phase = input clock + 8 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_9: output clock phase = input clock + 9 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_10: output clock phase = input clock + 10 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_11: output clock phase = input clock + 11 * UNIT delay
+  \arg CPDM_OUTPUT_PHASE_SELECTION_12: output clock phase = input clock + 12 * UNIT delay
+  \param[out] none
+  \retval none
+ */
 ErrStatus cpdm_clock_output(cpdm_output_phase_enum output_clock_phase)
 {
-    uint32_t reg = 0U;
-    uint32_t reg_cfg = 0U;
+    uint32_t reg         = 0U;
+    uint32_t reg_cfg     = 0U;
     uint32_t delay_count = 0U;
-    uint32_t timeout = 0U;
+    uint32_t timeout     = 0U;
 
     /* enable CPDM and delay line sample module */
     CPDM_CTL = 0U;
@@ -207,25 +211,30 @@ ErrStatus cpdm_clock_output(cpdm_output_phase_enum output_clock_phase)
     reg |= CPDM_MAX_PHASE;
     CPDM_CFG = (uint32_t)reg;
 
-    for(delay_count = 0U; delay_count <= CPDM_MAX_DELAY_STEP_COUNT; delay_count++) {
+    for (delay_count = 0U; delay_count <= CPDM_MAX_DELAY_STEP_COUNT; delay_count++)
+    {
         reg = CPDM_CFG;
         reg &= CPDM_DLSTCNT_MASK;
         /* configure delay line step count */
         reg |= (delay_count << CPDM_DLSTCNT_OFFSET);
         CPDM_CFG = (uint32_t)reg;
 
-        while(RESET == (CPDM_CFG & CPDM_CFG_DLLENF)) {
+        while (RESET == (CPDM_CFG & CPDM_CFG_DLLENF))
+        {
             timeout++;
 
-            if(timeout > CPDM_MAX_TIMEOUT)
+            if (timeout > CPDM_MAX_TIMEOUT)
             {
                 return ERROR;
             }
         }
 
         reg_cfg = CPDM_CFG;
-        if((((reg_cfg >> CPDM_DLLEN_OFFSET) & CPDM_DLLEN_10_0_MASK) > 0U) &&
-                ((RESET == (reg_cfg & CPDM_DLLEN_11)) || (RESET == (reg_cfg & CPDM_DLLEN_10)))) {
+
+        if (    (((reg_cfg >> CPDM_DLLEN_OFFSET) & CPDM_DLLEN_10_0_MASK) > 0U)
+             && (    (RESET == (reg_cfg & CPDM_DLLEN_11))
+                  || (RESET == (reg_cfg & CPDM_DLLEN_10))))
+        {
             break;
         }
     }
@@ -240,6 +249,6 @@ ErrStatus cpdm_clock_output(cpdm_output_phase_enum output_clock_phase)
     CPDM_CFG = (uint32_t)reg;
     /* disable delay line sample module */
     CPDM_CTL = CPDM_CTL_CPDMEN;
-    
+
     return SUCCESS;
 }

@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_can.c
-    \brief   CAN driver
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_can.c
+  \brief CAN driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_can.h"
 
@@ -49,24 +49,29 @@ static void can_data_words_to_little_endian_bytes(uint8_t dest[], const volatile
 static uint32_t can_dlc_value_compute(uint32_t payload_size);
 
 /*!
-    \brief      deinitialize CAN
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief deinitialize CAN
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_deinit(uint32_t can_periph)
 {
-    if(CAN0 == can_periph) {
+    if (CAN0 == can_periph)
+    {
         /* reset CAN0 */
         rcu_periph_reset_enable(RCU_CAN0RST);
         rcu_periph_reset_disable(RCU_CAN0RST);
     }
-    if(CAN1 == can_periph) {
+
+    if (CAN1 == can_periph)
+    {
         /* reset CAN1 */
         rcu_periph_reset_enable(RCU_CAN1RST);
         rcu_periph_reset_disable(RCU_CAN1RST);
     }
-    if(CAN2 == can_periph) {
+
+    if (CAN2 == can_periph)
+    {
         /* reset CAN2 */
         rcu_periph_reset_enable(RCU_CAN2RST);
         rcu_periph_reset_disable(RCU_CAN2RST);
@@ -74,11 +79,11 @@ void can_deinit(uint32_t can_periph)
 }
 
 /*!
-    \brief      reset CAN internal state machines and CAN registers
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \brief reset CAN internal state machines and CAN registers
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_software_reset(uint32_t can_periph)
 {
     uint32_t timeout = CAN_DELAY;
@@ -86,19 +91,24 @@ ErrStatus can_software_reset(uint32_t can_periph)
     /* reset internal state machines and CAN registers */
     CAN_CTL0(can_periph) |= CAN_CTL0_SWRST;
     /* wait reset complete */
-    while((CAN_CTL0(can_periph) & CAN_CTL0_SWRST) && (timeout)) {
+
+    while (    (CAN_CTL0(can_periph) & CAN_CTL0_SWRST)
+            && (timeout))
+    {
         timeout--;
     }
-    if(CAN_CTL0(can_periph) & CAN_CTL0_SWRST) {
+
+    if (CAN_CTL0(can_periph) & CAN_CTL0_SWRST)
+    {
         return ERROR;
     }
     return SUCCESS;
 }
 
 /*!
-    \brief      CAN module initialization
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  can_parameter_init: can parameter struct
+  \brief CAN module initialization
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  can_parameter_init: can parameter struct
                   internal_counter_source: CAN_TIMER_SOURCE_BIT_CLOCK, CAN_TIMER_SOURCE_EXTERNAL_TIME_TICK
                   self_reception: ENABLE, DISABLE
                   mb_tx_order: CAN_TX_HIGH_PRIORITY_MB_FIRST, CAN_TX_LOW_NUM_MB_FIRST
@@ -124,26 +134,32 @@ ErrStatus can_software_reset(uint32_t can_periph)
                   prop_time_segment: 1~64
                   time_segment_1: 1~32
                   time_segment_2: 1~32
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_init(uint32_t can_periph, can_parameter_struct *can_parameter_init)
 {
     uint32_t i;
     uint32_t canram = CAN_RAM(can_periph);
 
     /* clear CAN RAM */
-    for(i = 0U; i < CAN_MAX_RAM_SIZE; i++) {
+
+    for (i = 0U; i < CAN_MAX_RAM_SIZE; i++)
+    {
         *((uint32_t *)canram) = 0U;
-        canram = canram + 4U;
+        canram                = canram + 4U;
     }
     /* reset CAN_RFIFOMPFx */
-    for(i = 0U; i < CAN_MAX_MAILBOX_NUM; i++) {
+
+    for (i = 0U; i < CAN_MAX_MAILBOX_NUM; i++)
+    {
         CAN_RFIFOMPF(can_periph, i) = 0x00000000U;
     }
 
     /* reset internal state machines and CAN registers */
-    if(ERROR == can_software_reset(can_periph)) {
+
+    if (ERROR == can_software_reset(can_periph))
+    {
         return ERROR;
     }
 
@@ -152,38 +168,54 @@ ErrStatus can_init(uint32_t can_periph, can_parameter_struct *can_parameter_init
     /* reset CAN_STAT */
     CAN_STAT(can_periph) = (uint32_t)0xFFFFFFFFU;
     CAN_TIMER(can_periph);
-    while(CAN_STAT(can_periph) & CAN_STAT_MS5_RFNE) {
+
+    while (CAN_STAT(can_periph) & CAN_STAT_MS5_RFNE)
+    {
         CAN_STAT(can_periph) = CAN_STAT_MS5_RFNE;
     }
 
     /* clear register bits */
-    CAN_CTL0(can_periph) &= ~(CAN_CTL0_RFEN | CAN_CTL0_FDEN | CAN_CTL0_SRDIS | CAN_CTL0_LAPRIOEN | CAN_CTL0_MST | CAN_CTL0_RPFQEN | CAN_CTL0_MSZ);
-    CAN_CTL2(can_periph) &= ~(CAN_CTL2_ITSRC | CAN_CTL2_IDERTR_RMF | CAN_CTL2_RRFRMS | CAN_CTL2_RFO | CAN_CTL2_EFDIS | CAN_CTL2_PREEN);
+    CAN_CTL0(can_periph) &= ~(CAN_CTL0_RFEN | CAN_CTL0_FDEN | CAN_CTL0_SRDIS | CAN_CTL0_LAPRIOEN | CAN_CTL0_MST
+                              | CAN_CTL0_RPFQEN | CAN_CTL0_MSZ);
+    CAN_CTL2(can_periph) &=
+        ~(CAN_CTL2_ITSRC | CAN_CTL2_IDERTR_RMF | CAN_CTL2_RRFRMS | CAN_CTL2_RFO | CAN_CTL2_EFDIS | CAN_CTL2_PREEN);
     CAN_CTL1(can_periph) &= ~CAN_CTL1_MTO;
     CAN_BT(can_periph) &= ~(CAN_BT_BAUDPSC | CAN_BT_SJW | CAN_BT_PTS | CAN_BT_PBS1 | CAN_BT_PBS2);
 
     /* set self reception */
-    if((uint8_t)DISABLE == can_parameter_init->self_reception) {
+
+    if ((uint8_t)DISABLE == can_parameter_init->self_reception)
+    {
         CAN_CTL0(can_periph) |= CAN_CTL0_SRDIS;
     }
     /* enable local arbitration priority */
-    if((uint8_t)ENABLE == can_parameter_init->local_priority_enable) {
+
+    if ((uint8_t)ENABLE == can_parameter_init->local_priority_enable)
+    {
         CAN_CTL0(can_periph) |= CAN_CTL0_LAPRIOEN;
     }
     /* set rx private filters and mailbox queue */
-    if((uint8_t)ENABLE == can_parameter_init->rx_private_filter_queue_enable) {
+
+    if ((uint8_t)ENABLE == can_parameter_init->rx_private_filter_queue_enable)
+    {
         CAN_CTL0(can_periph) |= CAN_CTL0_RPFQEN;
     }
     /* configure edge filtering */
-    if((uint32_t)DISABLE == can_parameter_init->edge_filter_enable) {
+
+    if ((uint32_t)DISABLE == can_parameter_init->edge_filter_enable)
+    {
         CAN_CTL2(can_periph) |= CAN_CTL2_EFDIS;
     }
     /* configure protocol exception */
-    if((uint32_t)ENABLE == can_parameter_init->protocol_exception_enable) {
+
+    if ((uint32_t)ENABLE == can_parameter_init->protocol_exception_enable)
+    {
         CAN_CTL2(can_periph) |= CAN_CTL2_PREEN;
     }
     /* set mailbox stop transmission */
-    if((uint8_t)ENABLE == can_parameter_init->mb_tx_abort_enable) {
+
+    if ((uint8_t)ENABLE == can_parameter_init->mb_tx_abort_enable)
+    {
         CAN_CTL0(can_periph) |= CAN_CTL0_MST;
     }
 
@@ -202,146 +234,148 @@ ErrStatus can_init(uint32_t can_periph, can_parameter_struct *can_parameter_init
     /* set memory size */
     CAN_CTL0(can_periph) |= can_parameter_init->memory_size;
     /* set time segment */
-    CAN_BT(can_periph) |= (uint32_t)(BT_BAUDPSC(can_parameter_init->prescaler - 1U) |
-                                     BT_SJW((uint32_t)can_parameter_init->resync_jump_width - 1U) |
-                                     BT_PTS((uint32_t)can_parameter_init->prop_time_segment - 1U) |
-                                     BT_PBS1((uint32_t)can_parameter_init->time_segment_1 - 1U) |
-                                     BT_PBS2((uint32_t)can_parameter_init->time_segment_2 - 1U));
+    CAN_BT(can_periph) |= (uint32_t)(BT_BAUDPSC(can_parameter_init->prescaler - 1U)
+                                     | BT_SJW((uint32_t)can_parameter_init->resync_jump_width - 1U)
+                                     | BT_PTS((uint32_t)can_parameter_init->prop_time_segment - 1U)
+                                     | BT_PBS1((uint32_t)can_parameter_init->time_segment_1 - 1U)
+                                     | BT_PBS2((uint32_t)can_parameter_init->time_segment_2 - 1U));
 
     return SUCCESS;
 }
 
 /*!
-    \brief      initialize CAN parameter structure with a default value
-    \param[in]  type: the type of CAN parameter struct
+  \brief initialize CAN parameter structure with a default value
+  \param[in]  type: the type of CAN parameter struct
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_INIT_STRUCT: the CAN initial struct
-      \arg        CAN_FD_INIT_STRUCT: the CAN FD initial struct
-      \arg        CAN_FIFO_INIT_STRUCT: the CAN FIFO initial struct
-      \arg        CAN_PN_MODE_INIT_STRUCT: the CAN Pretended Networking mode initial struct
-      \arg        CAN_PN_MODE_FILTER_STRUCT: the CAN Pretended Networking mode filter struct
-      \arg        CAN_MDSC_STRUCT: mailbox descriptor strcut
-      \arg        CAN_FDES_STRUCT: Rx fifo descriptor strcut
-      \arg        CAN_FIFO_ID_FILTER_STRUCT: Rx fifo id filter strcut
-      \arg        CAN_CRC_STRUCT: CRC strcut
-      \arg        CAN_ERRCNT_STRUCT: error counter strcut
-    \param[in]  p_struct: the pointer of the specific struct
-    \param[out] none
-    \retval     none
-*/
+  \arg CAN_INIT_STRUCT: the CAN initial struct
+  \arg CAN_FD_INIT_STRUCT: the CAN FD initial struct
+  \arg CAN_FIFO_INIT_STRUCT: the CAN FIFO initial struct
+  \arg CAN_PN_MODE_INIT_STRUCT: the CAN Pretended Networking mode initial struct
+  \arg CAN_PN_MODE_FILTER_STRUCT: the CAN Pretended Networking mode filter struct
+  \arg CAN_MDSC_STRUCT: mailbox descriptor strcut
+  \arg CAN_FDES_STRUCT: Rx fifo descriptor strcut
+  \arg CAN_FIFO_ID_FILTER_STRUCT: Rx fifo id filter strcut
+  \arg CAN_CRC_STRUCT: CRC strcut
+  \arg CAN_ERRCNT_STRUCT: error counter strcut
+  \param[in]  p_struct: the pointer of the specific struct
+  \param[out] none
+  \retval none
+ */
 void can_struct_para_init(can_struct_type_enum type, void *p_struct)
 {
     /* get type of the struct */
-    switch(type) {
+
+    switch (type)
+    {
     /* used for initialize can_parameter_struct */
     case CAN_INIT_STRUCT:
-        ((can_parameter_struct *)p_struct)->self_reception = (uint8_t)DISABLE;
-        ((can_parameter_struct *)p_struct)->internal_counter_source = CAN_TIMER_SOURCE_BIT_CLOCK;
-        ((can_parameter_struct *)p_struct)->mb_tx_order = CAN_TX_HIGH_PRIORITY_MB_FIRST;
-        ((can_parameter_struct *)p_struct)->mb_tx_abort_enable = (uint8_t)ENABLE;
-        ((can_parameter_struct *)p_struct)->local_priority_enable = (uint8_t)DISABLE;
-        ((can_parameter_struct *)p_struct)->mb_rx_ide_rtr_type = CAN_IDE_RTR_COMPARED;
-        ((can_parameter_struct *)p_struct)->mb_remote_frame = CAN_STORE_REMOTE_REQUEST_FRAME;
+        ((can_parameter_struct *)p_struct)->self_reception                 = (uint8_t)DISABLE;
+        ((can_parameter_struct *)p_struct)->internal_counter_source        = CAN_TIMER_SOURCE_BIT_CLOCK;
+        ((can_parameter_struct *)p_struct)->mb_tx_order                    = CAN_TX_HIGH_PRIORITY_MB_FIRST;
+        ((can_parameter_struct *)p_struct)->mb_tx_abort_enable             = (uint8_t)ENABLE;
+        ((can_parameter_struct *)p_struct)->local_priority_enable          = (uint8_t)DISABLE;
+        ((can_parameter_struct *)p_struct)->mb_rx_ide_rtr_type             = CAN_IDE_RTR_COMPARED;
+        ((can_parameter_struct *)p_struct)->mb_remote_frame                = CAN_STORE_REMOTE_REQUEST_FRAME;
         ((can_parameter_struct *)p_struct)->rx_private_filter_queue_enable = (uint8_t)DISABLE;
-        ((can_parameter_struct *)p_struct)->edge_filter_enable = (uint32_t)DISABLE;
-        ((can_parameter_struct *)p_struct)->protocol_exception_enable = (uint32_t)DISABLE;
-        ((can_parameter_struct *)p_struct)->rx_filter_order = CAN_RX_FILTER_ORDER_FIFO_FIRST;
-        ((can_parameter_struct *)p_struct)->memory_size = CAN_MEMSIZE_32_UNIT;
-        ((can_parameter_struct *)p_struct)->mb_public_filter = 0xFFFFFFFFU;
-        ((can_parameter_struct *)p_struct)->prescaler = 0x00000001U;
-        ((can_parameter_struct *)p_struct)->resync_jump_width = 0x01U;
-        ((can_parameter_struct *)p_struct)->prop_time_segment = 0x01U;
-        ((can_parameter_struct *)p_struct)->time_segment_1 = 0x01U;
-        ((can_parameter_struct *)p_struct)->time_segment_2 = 0x01U;
+        ((can_parameter_struct *)p_struct)->edge_filter_enable             = (uint32_t)DISABLE;
+        ((can_parameter_struct *)p_struct)->protocol_exception_enable      = (uint32_t)DISABLE;
+        ((can_parameter_struct *)p_struct)->rx_filter_order                = CAN_RX_FILTER_ORDER_FIFO_FIRST;
+        ((can_parameter_struct *)p_struct)->memory_size                    = CAN_MEMSIZE_32_UNIT;
+        ((can_parameter_struct *)p_struct)->mb_public_filter               = 0xFFFFFFFFU;
+        ((can_parameter_struct *)p_struct)->prescaler                      = 0x00000001U;
+        ((can_parameter_struct *)p_struct)->resync_jump_width              = 0x01U;
+        ((can_parameter_struct *)p_struct)->prop_time_segment              = 0x01U;
+        ((can_parameter_struct *)p_struct)->time_segment_1                 = 0x01U;
+        ((can_parameter_struct *)p_struct)->time_segment_2                 = 0x01U;
         break;
     /* used for initialize can_fd_parameter_struct */
     case CAN_FD_INIT_STRUCT:
-        ((can_fd_parameter_struct *)p_struct)->iso_can_fd_enable = (uint32_t)DISABLE;
+        ((can_fd_parameter_struct *)p_struct)->iso_can_fd_enable     = (uint32_t)DISABLE;
         ((can_fd_parameter_struct *)p_struct)->bitrate_switch_enable = (uint32_t)ENABLE;
-        ((can_fd_parameter_struct *)p_struct)->mailbox_data_size = CAN_MAILBOX_DATA_SIZE_8_BYTES;
-        ((can_fd_parameter_struct *)p_struct)->tdc_enable = (uint32_t)DISABLE;
-        ((can_fd_parameter_struct *)p_struct)->tdc_offset = 0x00U;
-        ((can_fd_parameter_struct *)p_struct)->prescaler = 0x00000001U;
-        ((can_fd_parameter_struct *)p_struct)->resync_jump_width = 0x01U;
-        ((can_fd_parameter_struct *)p_struct)->prop_time_segment = 0x00U;
-        ((can_fd_parameter_struct *)p_struct)->time_segment_1 = 0x01U;
-        ((can_fd_parameter_struct *)p_struct)->time_segment_2 = 0x01U;
+        ((can_fd_parameter_struct *)p_struct)->mailbox_data_size     = CAN_MAILBOX_DATA_SIZE_8_BYTES;
+        ((can_fd_parameter_struct *)p_struct)->tdc_enable            = (uint32_t)DISABLE;
+        ((can_fd_parameter_struct *)p_struct)->tdc_offset            = 0x00U;
+        ((can_fd_parameter_struct *)p_struct)->prescaler             = 0x00000001U;
+        ((can_fd_parameter_struct *)p_struct)->resync_jump_width     = 0x01U;
+        ((can_fd_parameter_struct *)p_struct)->prop_time_segment     = 0x00U;
+        ((can_fd_parameter_struct *)p_struct)->time_segment_1        = 0x01U;
+        ((can_fd_parameter_struct *)p_struct)->time_segment_2        = 0x01U;
         break;
     /* used for initialize can_fifo_parameter_struct */
     case CAN_FIFO_INIT_STRUCT:
-        ((can_fifo_parameter_struct *)p_struct)->dma_enable = (uint8_t)DISABLE;
+        ((can_fifo_parameter_struct *)p_struct)->dma_enable               = (uint8_t)DISABLE;
         ((can_fifo_parameter_struct *)p_struct)->filter_format_and_number = CAN_RXFIFO_FILTER_A_NUM_8;
-        ((can_fifo_parameter_struct *)p_struct)->fifo_public_filter = 0xFFFFFFFFU;
+        ((can_fifo_parameter_struct *)p_struct)->fifo_public_filter       = 0xFFFFFFFFU;
         break;
     /* used for initialize can_pn_mode_config_struct */
     case CAN_PN_MODE_INIT_STRUCT:
-        ((can_pn_mode_config_struct *)p_struct)->timeout_int = (uint32_t)DISABLE;
-        ((can_pn_mode_config_struct *)p_struct)->match_int = (uint32_t)DISABLE;
-        ((can_pn_mode_config_struct *)p_struct)->num_matches = 0x01U;
+        ((can_pn_mode_config_struct *)p_struct)->timeout_int   = (uint32_t)DISABLE;
+        ((can_pn_mode_config_struct *)p_struct)->match_int     = (uint32_t)DISABLE;
+        ((can_pn_mode_config_struct *)p_struct)->num_matches   = 0x01U;
         ((can_pn_mode_config_struct *)p_struct)->match_timeout = 0x0000U;
-        ((can_pn_mode_config_struct *)p_struct)->frame_filter = CAN_PN_FRAME_FILTERING_ID;
-        ((can_pn_mode_config_struct *)p_struct)->id_filter = CAN_PN_ID_FILTERING_EXACT;
-        ((can_pn_mode_config_struct *)p_struct)->data_filter = CAN_PN_DATA_FILTERING_EXACT;
+        ((can_pn_mode_config_struct *)p_struct)->frame_filter  = CAN_PN_FRAME_FILTERING_ID;
+        ((can_pn_mode_config_struct *)p_struct)->id_filter     = CAN_PN_ID_FILTERING_EXACT;
+        ((can_pn_mode_config_struct *)p_struct)->data_filter   = CAN_PN_DATA_FILTERING_EXACT;
         break;
     /* used for initialize can_pn_mode_filter_struct */
     case CAN_PN_MODE_FILTER_STRUCT:
-        ((can_pn_mode_filter_struct *)p_struct)->rtr = (uint32_t)RESET;
-        ((can_pn_mode_filter_struct *)p_struct)->ide = (uint32_t)RESET;
-        ((can_pn_mode_filter_struct *)p_struct)->id = 0x00000000U;
+        ((can_pn_mode_filter_struct *)p_struct)->rtr                = (uint32_t)RESET;
+        ((can_pn_mode_filter_struct *)p_struct)->ide                = (uint32_t)RESET;
+        ((can_pn_mode_filter_struct *)p_struct)->id                 = 0x00000000U;
         ((can_pn_mode_filter_struct *)p_struct)->dlc_high_threshold = 0x00000000U;
-        ((can_pn_mode_filter_struct *)p_struct)->dlc_low_threshold = 0x00000000U;
-        ((can_pn_mode_filter_struct *)p_struct)->payload[0] = 0x00000000U;
-        ((can_pn_mode_filter_struct *)p_struct)->payload[1] = 0x00000000U;
+        ((can_pn_mode_filter_struct *)p_struct)->dlc_low_threshold  = 0x00000000U;
+        ((can_pn_mode_filter_struct *)p_struct)->payload[0]         = 0x00000000U;
+        ((can_pn_mode_filter_struct *)p_struct)->payload[1]         = 0x00000000U;
         break;
     /* used for initialize can_mailbox_descriptor_struct */
     case CAN_MDSC_STRUCT:
-        ((can_mailbox_descriptor_struct *)p_struct)->timestamp = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->dlc = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->rtr = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->ide = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->srr = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->reserve1 = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->code = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->reserve2 = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->esi = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->brs = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->fdf = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->id = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->prio = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->timestamp  = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->dlc        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->rtr        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->ide        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->srr        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->reserve1   = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->code       = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->reserve2   = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->esi        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->brs        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->fdf        = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->id         = 0x00000000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->prio       = 0x00000000U;
         ((can_mailbox_descriptor_struct *)p_struct)->data_bytes = 0x00000000U;
-        ((can_mailbox_descriptor_struct *)p_struct)->padding = 0x0000U;
+        ((can_mailbox_descriptor_struct *)p_struct)->padding    = 0x0000U;
         break;
     /* used for initialize can_rx_fifo_struct */
     case CAN_FDES_STRUCT:
         ((can_rx_fifo_struct *)p_struct)->timestamp = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->dlc = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->rtr = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->ide = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->srr = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->idhit = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->id = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->data[0] = 0x00000000U;
-        ((can_rx_fifo_struct *)p_struct)->data[1] = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->dlc       = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->rtr       = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->ide       = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->srr       = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->idhit     = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->id        = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->data[0]   = 0x00000000U;
+        ((can_rx_fifo_struct *)p_struct)->data[1]   = 0x00000000U;
         break;
     /* used for initialize can_rx_fifo_id_filter_struct */
     case CAN_FIFO_ID_FILTER_STRUCT:
-        ((can_rx_fifo_id_filter_struct *)p_struct)->remote_frame = 0x00000000U;
+        ((can_rx_fifo_id_filter_struct *)p_struct)->remote_frame   = 0x00000000U;
         ((can_rx_fifo_id_filter_struct *)p_struct)->extended_frame = 0x00000000U;
-        ((can_rx_fifo_id_filter_struct *)p_struct)->id = 0x00000000U;
+        ((can_rx_fifo_id_filter_struct *)p_struct)->id             = 0x00000000U;
         break;
     /* used for initialize can_crc_struct */
     case CAN_CRC_STRUCT:
-        ((can_crc_struct *)p_struct)->classical_frm_mb_number = 0x00000000U;
-        ((can_crc_struct *)p_struct)->classical_frm_transmitted_crc = 0x00000000U;
-        ((can_crc_struct *)p_struct)->classical_fd_frm_mb_number = 0x00000000U;
+        ((can_crc_struct *)p_struct)->classical_frm_mb_number          = 0x00000000U;
+        ((can_crc_struct *)p_struct)->classical_frm_transmitted_crc    = 0x00000000U;
+        ((can_crc_struct *)p_struct)->classical_fd_frm_mb_number       = 0x00000000U;
         ((can_crc_struct *)p_struct)->classical_fd_frm_transmitted_crc = 0x00000000U;
         break;
     /* used for initialize can_crc_struct */
     case CAN_ERRCNT_STRUCT:
         ((can_error_counter_struct *)p_struct)->fd_data_phase_rx_errcnt = 0x00U;
         ((can_error_counter_struct *)p_struct)->fd_data_phase_tx_errcnt = 0x00U;
-        ((can_error_counter_struct *)p_struct)->rx_errcnt = 0x00U;
-        ((can_error_counter_struct *)p_struct)->tx_errcnt = 0x00U;
+        ((can_error_counter_struct *)p_struct)->rx_errcnt               = 0x00U;
+        ((can_error_counter_struct *)p_struct)->tx_errcnt               = 0x00U;
         break;
     default:
         break;
@@ -349,32 +383,32 @@ void can_struct_para_init(can_struct_type_enum type, void *p_struct)
 }
 
 /*!
-    \brief      configure receive fifo/mailbox private filter
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index 0~32
-    \param[in]  filter_data: filter data to configure
-    \param[out] none
-    \retval     none
-*/
+  \brief configure receive fifo/mailbox private filter
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index 0~32
+  \param[in]  filter_data: filter data to configure
+  \param[out] none
+  \retval none
+ */
 void can_private_filter_config(uint32_t can_periph, uint32_t index, uint32_t filter_data)
 {
     CAN_RFIFOMPF(can_periph, index) = filter_data;
 }
 
 /*!
-    \brief      enter the corresponding mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  mode: the mode to enter
+  \brief enter the corresponding mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  mode: the mode to enter
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_NORMAL_MODE: normal mode
-      \arg        CAN_MONITOR_MODE: monitor mode
-      \arg        CAN_LOOPBACK_SILENT_MODE: loopback mode
-      \arg        CAN_INACTIVE_MODE: inactive mode
-      \arg        CAN_DISABLE_MODE: disable mode
-      \arg        CAN_PN_MODE: Pretended Networking mode
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \arg CAN_NORMAL_MODE: normal mode
+  \arg CAN_MONITOR_MODE: monitor mode
+  \arg CAN_LOOPBACK_SILENT_MODE: loopback mode
+  \arg CAN_INACTIVE_MODE: inactive mode
+  \arg CAN_DISABLE_MODE: disable mode
+  \arg CAN_PN_MODE: Pretended Networking mode
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_operation_mode_enter(uint32_t can_periph, can_operation_modes_enum mode)
 {
     uint32_t timeout;
@@ -389,15 +423,22 @@ ErrStatus can_operation_mode_enter(uint32_t can_periph, can_operation_modes_enum
     CAN_CTL0(can_periph) &= ~(CAN_CTL0_PNEN | CAN_CTL0_PNMOD);
     timeout = CAN_DELAY;
     /* wait for inactive mode state */
-    while(((CAN_CTL0_NRDY | CAN_CTL0_INAS) != (CAN_CTL0(can_periph) & (CAN_CTL0_NRDY | CAN_CTL0_INAS))) && (timeout)) {
+
+    while (    ((CAN_CTL0_NRDY | CAN_CTL0_INAS) != (CAN_CTL0(can_periph) & (CAN_CTL0_NRDY | CAN_CTL0_INAS)))
+            && (timeout))
+    {
         timeout--;
     }
-    if((CAN_CTL0_NRDY | CAN_CTL0_INAS) != (CAN_CTL0(can_periph) & (CAN_CTL0_NRDY | CAN_CTL0_INAS))) {
+
+    if ((CAN_CTL0_NRDY | CAN_CTL0_INAS) != (CAN_CTL0(can_periph) & (CAN_CTL0_NRDY | CAN_CTL0_INAS)))
+    {
         return ERROR;
     }
 
     /* configure the modes */
-    switch(mode) {
+
+    switch (mode)
+    {
     case CAN_NORMAL_MODE:
         CAN_CTL1(can_periph) &= ~(CAN_CTL1_LSCMOD | CAN_CTL1_MMOD);
         break;
@@ -424,24 +465,37 @@ ErrStatus can_operation_mode_enter(uint32_t can_periph, can_operation_modes_enum
     }
 
     /* exit INACTIVE mode */
-    if(CAN_INACTIVE_MODE != mode) {
+
+    if (CAN_INACTIVE_MODE != mode)
+    {
         /* exit inactive mode */
         CAN_CTL0(can_periph) &= ~(CAN_CTL0_HALT | CAN_CTL0_INAMOD);
         timeout = CAN_DELAY;
-        while((CAN_CTL0(can_periph) & CAN_CTL0_INAS) && (timeout)) {
+
+        while (    (CAN_CTL0(can_periph) & CAN_CTL0_INAS)
+                && (timeout))
+        {
             timeout--;
         }
-        if(CAN_CTL0(can_periph) & CAN_CTL0_INAS) {
+
+        if (CAN_CTL0(can_periph) & CAN_CTL0_INAS)
+        {
             return ERROR;
         }
     }
 
-    if(CAN_PN_MODE == mode) {
+    if (CAN_PN_MODE == mode)
+    {
         timeout = CAN_DELAY;
-        while((0U == (CAN_CTL0(can_periph) & CAN_CTL0_PNS)) && (timeout)) {
+
+        while (    (0U == (CAN_CTL0(can_periph) & CAN_CTL0_PNS))
+                && (timeout))
+        {
             timeout--;
         }
-        if(0U == (CAN_CTL0(can_periph) & CAN_CTL0_PNS)) {
+
+        if (0U == (CAN_CTL0(can_periph) & CAN_CTL0_PNS))
+        {
             return ERROR;
         }
     }
@@ -449,11 +503,11 @@ ErrStatus can_operation_mode_enter(uint32_t can_periph, can_operation_modes_enum
 }
 
 /*!
-    \brief      get operation mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     can_operation_modes_enum
-*/
+  \brief get operation mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval can_operation_modes_enum
+ */
 can_operation_modes_enum can_operation_mode_get(uint32_t can_periph)
 {
     uint32_t reg;
@@ -462,21 +516,35 @@ can_operation_modes_enum can_operation_mode_get(uint32_t can_periph)
     reg = CAN_CTL0(can_periph);
     reg &= (CAN_CTL0_NRDY | CAN_CTL0_INAS | CAN_CTL0_PNS | CAN_CTL0_LPS);
 
-    if((CAN_CTL0_NRDY | CAN_CTL0_LPS) == reg) {
+    if ((CAN_CTL0_NRDY | CAN_CTL0_LPS) == reg)
+    {
         state = CAN_DISABLE_MODE;
-    } else if((CAN_CTL0_NRDY | CAN_CTL0_INAS) == reg) {
+    }
+    else if ((CAN_CTL0_NRDY | CAN_CTL0_INAS) == reg)
+    {
         state = CAN_INACTIVE_MODE;
-    } else if(0U == reg) {
-        if(CAN_CTL1(can_periph)&CAN_CTL1_MMOD) {
+    }
+    else if (0U == reg)
+    {
+        if (CAN_CTL1(can_periph) & CAN_CTL1_MMOD)
+        {
             state = CAN_MONITOR_MODE;
-        } else if(CAN_CTL1(can_periph)&CAN_CTL1_LSCMOD) {
+        }
+        else if (CAN_CTL1(can_periph) & CAN_CTL1_LSCMOD)
+        {
             state = CAN_LOOPBACK_SILENT_MODE;
-        } else {
+        }
+        else
+        {
             state = CAN_NORMAL_MODE;
         }
-    } else if(CAN_CTL0_PNS == reg) {
+    }
+    else if (CAN_CTL0_PNS == reg)
+    {
         state = CAN_PN_MODE;
-    } else {
+    }
+    else
+    {
         /* should not get here */
     }
 
@@ -484,11 +552,11 @@ can_operation_modes_enum can_operation_mode_get(uint32_t can_periph)
 }
 
 /*!
-    \brief      exit inactive mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \brief exit inactive mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_inactive_mode_exit(uint32_t can_periph)
 {
     uint32_t timeout;
@@ -496,43 +564,57 @@ ErrStatus can_inactive_mode_exit(uint32_t can_periph)
     /* exit inactive mode */
     CAN_CTL0(can_periph) &= ~CAN_CTL0_HALT;
     timeout = CAN_DELAY;
-    while((CAN_CTL0(can_periph) & CAN_CTL0_INAS) && (timeout)) {
+
+    while (    (CAN_CTL0(can_periph) & CAN_CTL0_INAS)
+            && (timeout))
+    {
         timeout--;
     }
-    if(CAN_CTL0(can_periph) & CAN_CTL0_INAS) {
+
+    if (CAN_CTL0(can_periph) & CAN_CTL0_INAS)
+    {
         return ERROR;
-    } else {
+    }
+    else
+    {
         return SUCCESS;
     }
 }
 
 /*!
-    \brief      exit Pretended Networking mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  none
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \brief exit Pretended Networking mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  none
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_pn_mode_exit(uint32_t can_periph)
 {
     uint32_t timeout;
 
     CAN_CTL0(can_periph) &= ~(CAN_CTL0_PNEN | CAN_CTL0_PNMOD);
     timeout = CAN_DELAY;
-    while((CAN_CTL0(can_periph) & CAN_CTL0_PNS) && (timeout)) {
+
+    while (    (CAN_CTL0(can_periph) & CAN_CTL0_PNS)
+            && (timeout))
+    {
         timeout--;
     }
-    if(CAN_CTL0(can_periph) & CAN_CTL0_PNS) {
+
+    if (CAN_CTL0(can_periph) & CAN_CTL0_PNS)
+    {
         return ERROR;
-    } else {
+    }
+    else
+    {
         return SUCCESS;
     }
 }
 
 /*!
-    \brief      can FD initialize
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  can_fd_para_init: can fd parameter struct
+  \brief can FD initialize
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  can_fd_para_init: can fd parameter struct
                   iso_can_fd_enable: ENABLE, DISABLE
                   bitrate_switch_enable: ENABLE, DISABLE
                   mailbox_data_size: CAN_MAILBOX_DATA_SIZE_8_BYTES, CAN_MAILBOX_DATA_SIZE_16_BYTES,
@@ -544,9 +626,9 @@ ErrStatus can_pn_mode_exit(uint32_t can_periph)
                   prop_time_segment: 0~31
                   time_segment_1: 1~8
                   time_segment_2: 2~8
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void can_fd_config(uint32_t can_periph, can_fd_parameter_struct *can_fd_para_init)
 {
     /* clear register bits, then enable FD mode */
@@ -558,58 +640,64 @@ void can_fd_config(uint32_t can_periph, can_fd_parameter_struct *can_fd_para_ini
     CAN_CTL0(can_periph) |= CAN_CTL0_FDEN;
 
     /* support ISO or non-ISO mode */
-    if((uint32_t)ENABLE == can_fd_para_init->iso_can_fd_enable) {
+
+    if ((uint32_t)ENABLE == can_fd_para_init->iso_can_fd_enable)
+    {
         CAN_CTL2(can_periph) |= CAN_CTL2_ISO;
     }
     /* set TDC parameter */
-    if((uint32_t)ENABLE == can_fd_para_init->tdc_enable) {
+
+    if ((uint32_t)ENABLE == can_fd_para_init->tdc_enable)
+    {
         CAN_FDCTL(can_periph) |= CAN_FDCTL_TDCEN;
     }
     /* set data bit rate */
-    if((uint32_t)ENABLE == can_fd_para_init->bitrate_switch_enable) {
+
+    if ((uint32_t)ENABLE == can_fd_para_init->bitrate_switch_enable)
+    {
         CAN_FDCTL(can_periph) |= CAN_FDCTL_BRSEN;
     }
 
     /* set mailbox data size */
     CAN_FDCTL(can_periph) |= can_fd_para_init->mailbox_data_size;
     /* configure FD bit timing */
-    CAN_FDBT(can_periph) |= (uint32_t)(FDBT_DBAUDPSC(can_fd_para_init->prescaler - 1U) |
-                                       FDBT_DSJW((uint32_t)can_fd_para_init->resync_jump_width - 1U) |
-                                       FDBT_DPTS(can_fd_para_init->prop_time_segment) |
-                                       FDBT_DPBS1((uint32_t)can_fd_para_init->time_segment_1 - 1U) |
-                                       FDBT_DPBS2((uint32_t)can_fd_para_init->time_segment_2 - 1U));
+    CAN_FDBT(can_periph) |= (uint32_t)(FDBT_DBAUDPSC(can_fd_para_init->prescaler - 1U)
+                                       | FDBT_DSJW((uint32_t)can_fd_para_init->resync_jump_width - 1U)
+                                       | FDBT_DPTS(can_fd_para_init->prop_time_segment)
+                                       | FDBT_DPBS1((uint32_t)can_fd_para_init->time_segment_1 - 1U)
+                                       | FDBT_DPBS2((uint32_t)can_fd_para_init->time_segment_2 - 1U));
     /* configure transmitter delay compensation offset */
     CAN_FDCTL(can_periph) |= FDCTL_TDCO(can_fd_para_init->tdc_offset);
 }
 
 /*!
-    \brief      enable bit rate switching
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable bit rate switching
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_bitrate_switch_enable(uint32_t can_periph)
 {
     CAN_FDCTL(can_periph) |= CAN_FDCTL_BRSEN;
 }
 
 /*!
-    \brief      disable bit rate switching
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable bit rate switching
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_bitrate_switch_disable(uint32_t can_periph)
 {
     CAN_FDCTL(can_periph) &= ~CAN_FDCTL_BRSEN;
 }
 
 /*!
-    \brief      get transmitter delay compensation value
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     0 - 0x3F
-*/
+  \brief get transmitter delay compensation value
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval 0 - 0x3F
+ */
 uint32_t can_tdc_get(uint32_t can_periph)
 {
     uint32_t reg = 0U;
@@ -620,31 +708,31 @@ uint32_t can_tdc_get(uint32_t can_periph)
 }
 
 /*!
-    \brief      enable transmitter delay compensation
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable transmitter delay compensation
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_tdc_enable(uint32_t can_periph)
 {
     CAN_FDCTL(can_periph) |= CAN_FDCTL_TDCEN;
 }
 
 /*!
-    \brief      disable transmitter delay compensation
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable transmitter delay compensation
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_tdc_disable(uint32_t can_periph)
 {
     CAN_FDCTL(can_periph) &= ~CAN_FDCTL_TDCEN;
 }
 
 /*!
-    \brief      configure rx FIFO
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  can_fifo_para_init: fifo parameter struct
+  \brief configure rx FIFO
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  can_fifo_para_init: fifo parameter struct
                   dma_enable: ENABLE, DISABLE
                   filter_format_and_number: CAN_RXFIFO_FILTER_A_NUM_8, CAN_RXFIFO_FILTER_A_NUM_16, CAN_RXFIFO_FILTER_A_NUM_24, CAN_RXFIFO_FILTER_A_NUM_32,
                                             CAN_RXFIFO_FILTER_A_NUM_40, CAN_RXFIFO_FILTER_A_NUM_48, CAN_RXFIFO_FILTER_A_NUM_56, CAN_RXFIFO_FILTER_A_NUM_64,
@@ -657,9 +745,9 @@ void can_tdc_disable(uint32_t can_periph)
                                             CAN_RXFIFO_FILTER_C_NUM_288, CAN_RXFIFO_FILTER_C_NUM_320, CAN_RXFIFO_FILTER_C_NUM_352, CAN_RXFIFO_FILTER_C_NUM_384, CAN_RXFIFO_FILTER_C_NUM_416,
                                             CAN_RXFIFO_FILTER_D
                   fifo_public_filter: 0x00000000 ~ 0xFFFFFFFF
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void can_rx_fifo_config(uint32_t can_periph, can_fifo_parameter_struct *can_fifo_para_init)
 {
     uint32_t num;
@@ -671,12 +759,16 @@ void can_rx_fifo_config(uint32_t can_periph, can_fifo_parameter_struct *can_fifo
 
     /* clear FIFO status */
     CAN_STAT(can_periph) = (uint32_t)0xFFFFFFFFU;
-    while(CAN_STAT(can_periph) & CAN_STAT_MS5_RFNE) {
+
+    while (CAN_STAT(can_periph) & CAN_STAT_MS5_RFNE)
+    {
         CAN_STAT(can_periph) = CAN_STAT_MS5_RFNE;
     }
 
     /* set DMA mode */
-    if((uint8_t)ENABLE == can_fifo_para_init->dma_enable) {
+
+    if ((uint8_t)ENABLE == can_fifo_para_init->dma_enable)
+    {
         CAN_CTL0(can_periph) |= CAN_CTL0_DMAEN;
     }
 
@@ -687,120 +779,161 @@ void can_rx_fifo_config(uint32_t can_periph, can_fifo_parameter_struct *can_fifo
     /* configure fifo public fiter */
     CAN_RFIFOPUBF(can_periph) = can_fifo_para_init->fifo_public_filter;
     /* configure fifo private fiter */
-    if(!(CAN_CTL0(can_periph) & CAN_CTL0_RPFQEN)) {
-        for(num = 0U; num < CAN_MAX_MAILBOX_NUM; num++) {
+
+    if (!(CAN_CTL0(can_periph) & CAN_CTL0_RPFQEN))
+    {
+        for (num = 0U; num < CAN_MAX_MAILBOX_NUM; num++)
+        {
             CAN_RFIFOMPF(can_periph, num) = can_fifo_para_init->fifo_public_filter;
         }
     }
 }
 
 /*!
-    \brief      configure rx FIFO filter table
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  id_filter_table: id filter table struct
+  \brief configure rx FIFO filter table
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  id_filter_table: id filter table struct
                   remote_frame: CAN_DATA_FRAME_ACCEPTED, CAN_REMOTE_FRAME_ACCEPTED
                   extended_frame: CAN_STANDARD_FRAME_ACCEPTED, CAN_EXTENDED_FRAME_ACCEPTED
                   id: 11 bits for standard frame, 29 bits for extended frame
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void can_rx_fifo_filter_table_config(uint32_t can_periph, can_rx_fifo_id_filter_struct id_filter_table[])
 {
     /* set rx FIFO ID filter table elements */
     uint32_t i = 0U, j = 0U, num_of_filters = 0U;
-    uint32_t val = 0U;
-    uint32_t id_format = 0U;
+    uint32_t val          = 0U;
+    uint32_t id_format    = 0U;
     uint32_t filter_table = (uint32_t)(CAN_RAM(can_periph) + 0x00000060U);
 
     num_of_filters = (GET_CTL2_RFFN(CAN_CTL2(can_periph)) + 1U) * 8U;
     id_format = CAN_CTL0(can_periph) & CAN_CTL0_FS;
 
-    switch(id_format) {
-    case(CAN_FIFO_FILTER_FORMAT_A):
+    switch (id_format)
+    {
+    case (CAN_FIFO_FILTER_FORMAT_A):
         /* one full id (standard and extended) per id filter table element */
-        for(i = 0U; i < num_of_filters; i++) {
+
+        for (i = 0U; i < num_of_filters; i++)
+        {
             val = 0U;
 
-            if(CAN_REMOTE_FRAME_ACCEPTED == id_filter_table[i].remote_frame) {
+            if (CAN_REMOTE_FRAME_ACCEPTED == id_filter_table[i].remote_frame)
+            {
                 val |= CAN_FDESX_RTR_A;
             }
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[i].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[i].extended_frame)
+            {
                 val |= CAN_FDESX_IDE_A;
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_A(id_filter_table[i].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_A(id_filter_table[i].id);
             }
             *(uint32_t *)filter_table = val;
-            filter_table = filter_table + 4U;
+            filter_table              = filter_table + 4U;
         }
         break;
-    case(CAN_FIFO_FILTER_FORMAT_B):
+    case (CAN_FIFO_FILTER_FORMAT_B):
         /* two full standard id or two partial 14-bit (standard and extended) id */
         j = 0U;
-        for(i = 0U; i < num_of_filters; i++) {
+
+        for (i = 0U; i < num_of_filters; i++)
+        {
             val = 0U;
 
-            if(CAN_REMOTE_FRAME_ACCEPTED == id_filter_table[j].remote_frame) {
+            if (CAN_REMOTE_FRAME_ACCEPTED == id_filter_table[j].remote_frame)
+            {
                 val |= CAN_FDESX_RTR_B0;
             }
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame)
+            {
                 val |= CAN_FDESX_IDE_B0;
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_B0(id_filter_table[j].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_B0(id_filter_table[j].id);
             }
             j++;
 
-            if(CAN_REMOTE_FRAME_ACCEPTED == id_filter_table[j].remote_frame) {
+            if (CAN_REMOTE_FRAME_ACCEPTED == id_filter_table[j].remote_frame)
+            {
                 val |= CAN_FDESX_RTR_B1;
             }
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame)
+            {
                 val |= CAN_FDESX_IDE_B1;
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_B1(id_filter_table[j].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_B1(id_filter_table[j].id);
             }
             j++;
 
             *(uint32_t *)filter_table = val;
-            filter_table = filter_table + 4U;
+            filter_table              = filter_table + 4U;
         }
         break;
-    case(CAN_FIFO_FILTER_FORMAT_C):
+    case (CAN_FIFO_FILTER_FORMAT_C):
         /* four partial 8-bit standard id per id filter table element */
         j = 0U;
-        for(i = 0U; i < num_of_filters; i++) {
+
+        for (i = 0U; i < num_of_filters; i++)
+        {
             val = 0U;
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame)
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_C0(id_filter_table[j].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_C0(id_filter_table[j].id);
             }
             j++;
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame)
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_C1(id_filter_table[j].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_C1(id_filter_table[j].id);
             }
             j++;
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame)
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_C2(id_filter_table[j].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_C2(id_filter_table[j].id);
             }
             j++;
-            if(CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame) {
+
+            if (CAN_EXTENDED_FRAME_ACCEPTED == id_filter_table[j].extended_frame)
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_EXD_C3(id_filter_table[j].id);
-            } else {
+            }
+            else
+            {
                 val |= (uint32_t)FIFO_FILTER_ID_STD_C3(id_filter_table[j].id);
             }
             j++;
 
             *(uint32_t *)filter_table = val;
-            filter_table = filter_table + 4U;
+            filter_table              = filter_table + 4U;
         }
         break;
-    case(CAN_FIFO_FILTER_FORMAT_D):
+    case (CAN_FIFO_FILTER_FORMAT_D):
         /* all frames rejected */
         break;
     default:
@@ -810,18 +943,18 @@ void can_rx_fifo_filter_table_config(uint32_t can_periph, can_rx_fifo_id_filter_
 }
 
 /*!
-    \brief      read rx FIFO data
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] rx_fifo: rx FIFO struct
-    \retval     none
-*/
+  \brief read rx FIFO data
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] rx_fifo: rx FIFO struct
+  \retval none
+ */
 void can_rx_fifo_read(uint32_t can_periph, can_rx_fifo_struct *rx_fifo)
 {
     uint32_t *rx_fifo_addr = (uint32_t *)rx_fifo;
-    uint32_t can_mb = CAN_RAM(can_periph);
+    uint32_t can_mb        = CAN_RAM(can_periph);
 
     /* read FIFO descriptor 0 */
-    *rx_fifo_addr = *((uint32_t *)can_mb );
+    *rx_fifo_addr = *((uint32_t *)can_mb);
     rx_fifo->id = *((uint32_t *)((uint32_t)(can_mb + 0x04U)));
     rx_fifo->data[0] = *((uint32_t *)((uint32_t)(can_mb + 0x08U)));
     rx_fifo->data[1] = *((uint32_t *)((uint32_t)(can_mb + 0x0CU)));
@@ -830,9 +963,13 @@ void can_rx_fifo_read(uint32_t can_periph, can_rx_fifo_struct *rx_fifo)
     CAN_STAT(can_periph) = CAN_STAT_MS5_RFNE;
 
     /* read FIFO id field */
-    if(rx_fifo->ide) {
+
+    if (rx_fifo->ide)
+    {
         rx_fifo->id = GET_FDES1_ID_EXD(rx_fifo->id);
-    } else {
+    }
+    else
+    {
         rx_fifo->id = GET_FDES1_ID_STD(rx_fifo->id);
     }
 
@@ -841,43 +978,47 @@ void can_rx_fifo_read(uint32_t can_periph, can_rx_fifo_struct *rx_fifo)
 }
 
 /*!
-    \brief      get rx FIFO filter matching number
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     filter number
-*/
+  \brief get rx FIFO filter matching number
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval filter number
+ */
 uint32_t can_rx_fifo_filter_matching_number_get(uint32_t can_periph)
 {
     return GET_RFIFOIFMN_IDFMN(CAN_RFIFOIFMN(can_periph));
 }
 
 /*!
-    \brief      clear rx FIFO
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief clear rx FIFO
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_rx_fifo_clear(uint32_t can_periph)
 {
     CAN_STAT(can_periph) = CAN_STAT_MS0_RFC;
 }
 
 /*!
-    \brief      get mailbox RAM address
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index, 0-31
-    \param[out] none
-    \retval     pointer to the mailbox address
-*/
+  \brief get mailbox RAM address
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index, 0-31
+  \param[out] none
+  \retval pointer to the mailbox address
+ */
 uint32_t can_ram_address_get(uint32_t can_periph, uint32_t index)
 {
     uint32_t payload_size;
     uint32_t address;
 
     /* if CAN FD mode is enabled */
-    if(CAN_CTL0(can_periph) & CAN_CTL0_FDEN) {
+
+    if (CAN_CTL0(can_periph) & CAN_CTL0_FDEN)
+    {
         payload_size = (uint32_t)1U << (GET_FDCTL_MDSZ(CAN_FDCTL(can_periph)) + 3U);
-    } else {
+    }
+    else
+    {
         payload_size = 8U;
     }
     address = (uint32_t)(CAN_RAM(can_periph) + (payload_size + 8U) * index);
@@ -886,12 +1027,12 @@ uint32_t can_ram_address_get(uint32_t can_periph, uint32_t index)
 }
 
 /*!
-    \brief      configure mailbox
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index
+  \brief configure mailbox
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[in]  mdpara: mailbox descriptor struct
+  \arg 0 - 31
+  \param[in]  mdpara: mailbox descriptor struct
                   timestamp: 0 - 0xFFFF
                   dlc: 0 - 0xF
                   rtr: 0, 1
@@ -908,9 +1049,9 @@ uint32_t can_ram_address_get(uint32_t can_periph, uint32_t index)
                   data_bytes: 0 - 64
                   data[64]: data
                   padding: FD mode padding data
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void can_mailbox_config(uint32_t can_periph, uint32_t index, can_mailbox_descriptor_struct *mdpara)
 {
     uint32_t dlc;
@@ -925,53 +1066,72 @@ void can_mailbox_config(uint32_t can_periph, uint32_t index, can_mailbox_descrip
     CAN_STAT(can_periph) = STAT_MS(index);
 
     /* get mailbox base address */
-    mdes = can_ram_address_get(can_periph, index);
-    mdes1 = mdes + 0x04U;
-    mdes2 = mdes + 0x08U;
-    mdes3 = mdes + 0x0CU;
-    *(uint32_t *)mdes = 0U;
+    mdes               = can_ram_address_get(can_periph, index);
+    mdes1              = mdes + 0x04U;
+    mdes2              = mdes + 0x08U;
+    mdes3              = mdes + 0x0CU;
+    *(uint32_t *)mdes  = 0U;
     *(uint32_t *)mdes1 = 0U;
     *(uint32_t *)mdes2 = 0U;
     *(uint32_t *)mdes3 = 0U;
     /* set RTR bit */
-    if(mdpara->rtr) {
+
+    if (mdpara->rtr)
+    {
         mdes0 |= CAN_MDES0_RTR;
     }
 
     /* set IDE bit and ID field */
-    if(mdpara->ide) {
+
+    if (mdpara->ide)
+    {
         mdes0 |= CAN_MDES0_IDE;
         mdes0 |= CAN_MDES0_SRR;
         *(uint32_t *)mdes1 |= MDES1_ID_EXD(mdpara->id);
-    } else {
+    }
+    else
+    {
         *(uint32_t *)mdes1 |= MDES1_ID_STD(mdpara->id);
     }
 
     /* set CODE field */
     mdes0 |= MDES0_CODE(mdpara->code);
 
-    if(mdpara->code != CAN_MB_RX_STATUS_EMPTY) {
+    if (mdpara->code != CAN_MB_RX_STATUS_EMPTY)
+    {
         /* copy user's buffer into the mailbox data area */
-        if(mdpara->data_bytes) {
+
+        if (mdpara->data_bytes)
+        {
             dlc = can_dlc_value_compute(mdpara->data_bytes);
             mdes0 |= MDES0_DLC(dlc);
             length = (uint32_t)1U << (GET_FDCTL_MDSZ(CAN_FDCTL(can_periph)) + 3U);
-            if(mdpara->data_bytes < length) {
+
+            if (mdpara->data_bytes < length)
+            {
                 length = mdpara->data_bytes;
             }
             can_data_bytes_to_big_endian_swap((volatile uint32_t *)mdes2, mdpara->data, length);
         }
 
         /* prepare mailbox for transmission */
-        if(CAN_MB_TX_STATUS_DATA == mdpara->code) {
+
+        if (CAN_MB_TX_STATUS_DATA == mdpara->code)
+        {
             /* set ESI bit */
-            if(mdpara->esi) {
+
+            if (mdpara->esi)
+            {
                 mdes0 |= CAN_MDES0_ESI;
             }
             /* set FDF and BRS bit */
-            if(mdpara->fdf) {
+
+            if (mdpara->fdf)
+            {
                 mdes0 |= CAN_MDES0_FDF;
-                if(mdpara->brs) {
+
+                if (mdpara->brs)
+                {
                     mdes0 |= CAN_MDES0_BRS;
                 }
                 mdes0 &= ~CAN_MDES0_RTR;
@@ -983,25 +1143,25 @@ void can_mailbox_config(uint32_t can_periph, uint32_t index, can_mailbox_descrip
     }
 
     /* set mailbox descriptor 0 */
-   *(uint32_t *)mdes = mdes0;
+    *(uint32_t *)mdes = mdes0;
 }
 
 /*!
-    \brief      abort mailbox transmit
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index
+  \brief abort mailbox transmit
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] none
-    \retval     none
-*/
+  \arg 0 - 31
+  \param[out] none
+  \retval none
+ */
 void can_mailbox_transmit_abort(uint32_t can_periph, uint32_t index)
 {
     uint32_t mdes0;
     uint32_t mdes;
 
     /* abort transmit mailbox */
-    mdes = can_ram_address_get(can_periph, index);
+    mdes  = can_ram_address_get(can_periph, index);
     mdes0 = *(uint32_t *)mdes;
     mdes0 &= ~CAN_MDES0_CODE;
     mdes0 |= MDES0_CODE(CAN_MB_TX_STATUS_ABORT);
@@ -1009,21 +1169,21 @@ void can_mailbox_transmit_abort(uint32_t can_periph, uint32_t index)
 }
 
 /*!
-    \brief      inactive transmit mailbox
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index
+  \brief inactive transmit mailbox
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] none
-    \retval     none
-*/
+  \arg 0 - 31
+  \param[out] none
+  \retval none
+ */
 void can_mailbox_transmit_inactive(uint32_t can_periph, uint32_t index)
 {
     uint32_t mdes0;
     uint32_t mdes;
 
     /* inactive transmit mailbox */
-    mdes = can_ram_address_get(can_periph, index);
+    mdes  = can_ram_address_get(can_periph, index);
     mdes0 = *(uint32_t *)mdes;
     mdes0 &= ~CAN_MDES0_CODE;
     mdes0 |= MDES0_CODE(CAN_MB_TX_STATUS_INACTIVE);
@@ -1031,27 +1191,32 @@ void can_mailbox_transmit_inactive(uint32_t can_periph, uint32_t index)
 }
 
 /*!
-    \brief      read receive mailbox data
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index
+  \brief read receive mailbox data
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] mdpara: mailbox descriptor struct
-    \retval     ERROR or SUCCESS
-*/
+  \arg 0 - 31
+  \param[out] mdpara: mailbox descriptor struct
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can_mailbox_descriptor_struct *mdpara)
 {
     uint32_t timeout;
-    uint32_t mdes = can_ram_address_get(can_periph, index);
+    uint32_t mdes    = can_ram_address_get(can_periph, index);
     uint32_t *mdaddr = (uint32_t *)mdpara;
-    uint32_t mdes1 = 0U;
+    uint32_t mdes1   = 0U;
 
     /* wait mailbox data ready */
     timeout = CAN_DELAY;
-    while(((*(uint32_t *)mdes) & MDES0_CODE(CAN_MB_RX_STATUS_BUSY)) && (timeout)) {
+
+    while (    ((*(uint32_t *)mdes) & MDES0_CODE(CAN_MB_RX_STATUS_BUSY))
+            && (timeout))
+    {
         timeout--;
     }
-    if((*(uint32_t *)mdes) & MDES0_CODE(CAN_MB_RX_STATUS_BUSY)) {
+
+    if ((*(uint32_t *)mdes) & MDES0_CODE(CAN_MB_RX_STATUS_BUSY))
+    {
         return ERROR;
     }
 
@@ -1061,7 +1226,7 @@ ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can
     mdpara->id = (mdes1 & 0x1FFFFFFFU);
     mdpara->prio = (uint8_t)((mdes1 >> 29U) & 0x07U);
     mdpara->data_bytes = can_payload_size_compute(*mdaddr);
-    mdes = mdes + 0x08U;
+    mdes               = mdes + 0x08U;
     can_data_words_to_little_endian_bytes(mdpara->data, (const volatile uint32_t *)mdes, mdpara->data_bytes);
 
     /* clear mailbox status */
@@ -1070,9 +1235,13 @@ ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can
     CAN_TIMER(can_periph);
 
     /* get mailbox ID */
-    if(mdpara->ide) {
+
+    if (mdpara->ide)
+    {
         mdpara->id = GET_MDES1_ID_EXD(mdpara->id);
-    } else {
+    }
+    else
+    {
         mdpara->id = GET_MDES1_ID_STD(mdpara->id);
     }
 
@@ -1081,14 +1250,14 @@ ErrStatus can_mailbox_receive_data_read(uint32_t can_periph, uint32_t index, can
 }
 
 /*!
-    \brief      lock the receive mailbox
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index
+  \brief lock the receive mailbox
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] none
-    \retval     none
-*/
+  \arg 0 - 31
+  \param[out] none
+  \retval none
+ */
 void can_mailbox_receive_lock(uint32_t can_periph, uint32_t index)
 {
     uint32_t mdes;
@@ -1098,32 +1267,32 @@ void can_mailbox_receive_lock(uint32_t can_periph, uint32_t index)
 }
 
 /*!
-    \brief      unlock the receive mailbox
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief unlock the receive mailbox
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_mailbox_receive_unlock(uint32_t can_periph)
 {
     CAN_TIMER(can_periph);
 }
 
 /*!
-    \brief      inactive the receive mailbox
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index
+  \brief inactive the receive mailbox
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] none
-    \retval     none
-*/
+  \arg 0 - 31
+  \param[out] none
+  \retval none
+ */
 void can_mailbox_receive_inactive(uint32_t can_periph, uint32_t index)
 {
     uint32_t mdes0;
     uint32_t mdes;
 
     /* inactive receive mailbox */
-    mdes = can_ram_address_get(can_periph, index);
+    mdes  = can_ram_address_get(can_periph, index);
     mdes0 = *(uint32_t *)mdes;
     mdes0 &= ~CAN_MDES0_CODE;
     mdes0 |= MDES0_CODE(CAN_MB_RX_STATUS_INACTIVE);
@@ -1131,14 +1300,14 @@ void can_mailbox_receive_inactive(uint32_t can_periph, uint32_t index)
 }
 
 /*!
-    \brief      get mailbox code value
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: mailbox index(0~31)
+  \brief get mailbox code value
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: mailbox index(0~31)
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] none
-    \retval     mailbox code
-*/
+  \arg 0 - 31
+  \param[out] none
+  \retval mailbox code
+ */
 uint32_t can_mailbox_code_get(uint32_t can_periph, uint32_t index)
 {
     uint32_t code;
@@ -1151,54 +1320,57 @@ uint32_t can_mailbox_code_get(uint32_t can_periph, uint32_t index)
 }
 
 /*!
-    \brief      configure error counter
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  errcnt_struct
+  \brief configure error counter
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  errcnt_struct
                   fd_data_phase_rx_errcnt: 0-255
                   fd_data_phase_tx_errcnt: 0-255
                   rx_errcnt: 0-255
                   tx_errcnt: 0-255
-    \retval     none
-*/
+  \retval none
+ */
 void can_error_counter_config(uint32_t can_periph, can_error_counter_struct *errcnt_struct)
 {
-    CAN_ERR0(can_periph) = ERR0_REFCNT(errcnt_struct->fd_data_phase_rx_errcnt) | ERR0_TEFCNT(errcnt_struct->fd_data_phase_tx_errcnt) | \
-                           ERR0_RECNT(errcnt_struct->rx_errcnt) | ERR0_TECNT(errcnt_struct->tx_errcnt);
+    CAN_ERR0(can_periph) = ERR0_REFCNT(errcnt_struct->fd_data_phase_rx_errcnt)
+                         | ERR0_TEFCNT(errcnt_struct->fd_data_phase_tx_errcnt) | ERR0_RECNT(errcnt_struct->rx_errcnt)
+                         | ERR0_TECNT(errcnt_struct->tx_errcnt);
 }
 
 /*!
-    \brief      get error counter
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] errcnt_struct
+  \brief get error counter
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] errcnt_struct
                   fd_data_phase_rx_errcnt: 0-255
                   fd_data_phase_tx_errcnt: 0-255
                   rx_errcnt: 0-255
                   tx_errcnt: 0-255
-    \retval     none
-*/
+  \retval none
+ */
 void can_error_counter_get(uint32_t can_periph, can_error_counter_struct *errcnt_struct)
 {
     uint32_t reg = 0U;
 
-    reg = CAN_ERR0(can_periph);
+    reg                                    = CAN_ERR0(can_periph);
     errcnt_struct->fd_data_phase_rx_errcnt = (uint8_t)GET_ERR0_REFCNT(reg);
     errcnt_struct->fd_data_phase_tx_errcnt = (uint8_t)GET_ERR0_TEFCNT(reg);
-    errcnt_struct->rx_errcnt = (uint8_t)GET_ERR0_RECNT(reg);
-    errcnt_struct->tx_errcnt = (uint8_t)GET_ERR0_TECNT(reg);
+    errcnt_struct->rx_errcnt               = (uint8_t)GET_ERR0_RECNT(reg);
+    errcnt_struct->tx_errcnt               = (uint8_t)GET_ERR0_TECNT(reg);
 }
 
 /*!
-    \brief      get error state indicator
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     CAN_ERROR_STATE_ACTIVE, CAN_ERROR_STATE_PASSIVE or CAN_ERROR_STATE_BUS_OFF
-*/
+  \brief get error state indicator
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval CAN_ERROR_STATE_ACTIVE, CAN_ERROR_STATE_PASSIVE or CAN_ERROR_STATE_BUS_OFF
+ */
 can_error_state_enum can_error_state_get(uint32_t can_periph)
 {
     uint32_t reg;
 
     reg = GET_ERR1_ERRSI(CAN_ERR1(can_periph));
-    if(reg >= (uint32_t)CAN_ERROR_STATE_BUS_OFF) {
+
+    if (reg >= (uint32_t)CAN_ERROR_STATE_BUS_OFF)
+    {
         reg = (uint32_t)CAN_ERROR_STATE_BUS_OFF;
     }
 
@@ -1206,31 +1378,31 @@ can_error_state_enum can_error_state_get(uint32_t can_periph)
 }
 
 /*!
-    \brief      get mailbox CRC value
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] crc_struct:
+  \brief get mailbox CRC value
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] crc_struct:
                   classical_frm_mb_number: 0 - 0x1F
                   classical_frm_transmitted_crc: 0 - 0x7FFF
                   classical_fd_frm_mb_number: 0 - 0x1F
                   classical_fd_frm_transmitted_crc: 0 - 0x1FFFFF
-    \retval     none
-*/
+  \retval none
+ */
 void can_crc_get(uint32_t can_periph, can_crc_struct *crc_struct)
 {
     uint32_t reg1 = 0U, reg2 = 0U;
 
-    reg1 = CAN_CRCC(can_periph);
-    reg2 = CAN_CRCCFD(can_periph);
-    crc_struct->classical_frm_mb_number = GET_CRCC_ANTM(reg1);
-    crc_struct->classical_frm_transmitted_crc = GET_CRCC_CRCTC(reg1);
-    crc_struct->classical_fd_frm_mb_number = GET_CRCCFD_ANTM(reg2);
+    reg1                                         = CAN_CRCC(can_periph);
+    reg2                                         = CAN_CRCCFD(can_periph);
+    crc_struct->classical_frm_mb_number          = GET_CRCC_ANTM(reg1);
+    crc_struct->classical_frm_transmitted_crc    = GET_CRCC_CRCTC(reg1);
+    crc_struct->classical_fd_frm_mb_number       = GET_CRCCFD_ANTM(reg2);
     crc_struct->classical_fd_frm_transmitted_crc = GET_CRCCFD_CRCTCI(reg2);
 }
 
 /*!
-    \brief      configure Pretended Networking mode parameter
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  pnmod_config: Pretended Networking mode config struct
+  \brief configure Pretended Networking mode parameter
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  pnmod_config: Pretended Networking mode config struct
                   timeout_int: ENABLE, DISABLE
                   match_int: ENABLE, DISABLE
                   num_matches: 1 ~ 255
@@ -1241,20 +1413,20 @@ void can_crc_get(uint32_t can_periph, can_crc_struct *crc_struct)
                              CAN_PN_ID_FILTERING_SMALLER, CAN_PN_ID_FILTERING_RANGE
                   data_filter: CAN_PN_DATA_FILTERING_EXACT, CAN_PN_DATA_FILTERING_GREATER
                                CAN_PN_DATA_FILTERING_SMALLER, CAN_PN_DATA_FILTERING_RANGE
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void can_pn_mode_config(uint32_t can_periph, can_pn_mode_config_struct *pnmod_config)
 {
     uint32_t tmp;
 
     /* configure specific Pretended Networking mode settings */
     tmp = CAN_PN_CTL0(can_periph);
-    tmp &= ~(CAN_PN_CTL0_FFT | CAN_PN_CTL0_IDFT | CAN_PN_CTL0_DATAFT |
-             CAN_PN_CTL0_NMM | CAN_PN_CTL0_WMIE | CAN_PN_CTL0_WTOIE);
-    tmp |= (uint32_t)PN_CTL0_WTOIE(pnmod_config->timeout_int) | PN_CTL0_WMIE(pnmod_config->match_int) | \
-           PN_CTL0_NMM(pnmod_config->num_matches) | pnmod_config->data_filter | \
-           pnmod_config->id_filter | pnmod_config->frame_filter;
+    tmp &= ~(CAN_PN_CTL0_FFT | CAN_PN_CTL0_IDFT | CAN_PN_CTL0_DATAFT | CAN_PN_CTL0_NMM | CAN_PN_CTL0_WMIE
+             | CAN_PN_CTL0_WTOIE);
+    tmp |= (uint32_t)PN_CTL0_WTOIE(pnmod_config->timeout_int) | PN_CTL0_WMIE(pnmod_config->match_int)
+         | PN_CTL0_NMM(pnmod_config->num_matches) | pnmod_config->data_filter | pnmod_config->id_filter
+         | pnmod_config->frame_filter;
 
     CAN_PN_CTL0(can_periph) = tmp;
 
@@ -1267,9 +1439,9 @@ void can_pn_mode_config(uint32_t can_periph, can_pn_mode_config_struct *pnmod_co
 }
 
 /*!
-    \brief      configure Pretended Networking mode filter
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  expect: Pretended Networking mode struct of expected wakeup frame
+  \brief configure Pretended Networking mode filter
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  expect: Pretended Networking mode struct of expected wakeup frame
                   rtr: SET, RESET
                   ide: SET, RESET
                   id: 0~0x7FF | CAN_STANDARD, or 0~0x1FFFFFFF | CAN_EXTENDED
@@ -1277,114 +1449,139 @@ void can_pn_mode_config(uint32_t can_periph, can_pn_mode_config_struct *pnmod_co
                   dlc_low_threshold: 0~8
                   payload[0]: 0x00000000~0xFFFFFFFF
                   payload[1]: 0x00000000~0xFFFFFFFF
-    \param[in]  filter: Pretended Networking mode struct of filter data
+  \param[in]  filter: Pretended Networking mode struct of filter data
                   remote_frame: SET, RESET
                   extended_frame: SET, RESET
                   id: 0~0x7FF | CAN_STANDARD, or 0~0x1FFFFFFF | CAN_EXTENDED. Used as id filter data, or id expected high threshold.
                   payload[0]: 0x00000000~0xFFFFFFFF. Used as payload filter data, or payload expected high threshold.
                   payload[1]: 0x00000000~0xFFFFFFFF. Used as payload filter data, or payload expected high threshold.
-    \param[out] none
-    \retval     none
-*/
-void can_pn_mode_filter_config(uint32_t can_periph, can_pn_mode_filter_struct *expect, can_pn_mode_filter_struct *filter)
+  \param[out] none
+  \retval none
+ */
+void can_pn_mode_filter_config(uint32_t can_periph, can_pn_mode_filter_struct *expect,
+                               can_pn_mode_filter_struct *filter)
 {
     uint32_t reg, temp;
 
     /* set filter identifier 0 */
     reg = 0U;
-    if((uint32_t)SET == expect->ide) {
+
+    if ((uint32_t)SET == expect->ide)
+    {
         reg |= CAN_PN_EID0_EIDE;
     }
-    if((uint32_t)SET == expect->rtr) {
+
+    if ((uint32_t)SET == expect->rtr)
+    {
         reg |= CAN_PN_EID0_ERTR;
     }
-    if(CAN_STANDARD == (expect->id & BIT(31))){
+
+    if (CAN_STANDARD == (expect->id & BIT(31)))
+    {
         reg |= (uint32_t)PN_EID0_EIDF_ELT_STD(expect->id);
-    }else{
+    }
+    else
+    {
         reg |= (uint32_t)PN_EID0_EIDF_ELT_EXD(expect->id);
     }
 
     CAN_PN_EID0(can_periph) = reg;
 
     temp = CAN_PN_CTL0(can_periph);
-    reg = 0U;
+    reg  = 0U;
     /* ID field 1 is used when ID filtering type is EXACT or RANGE */
-    if(((temp & CAN_PN_CTL0_IDFT) == CAN_PN_ID_FILTERING_EXACT) || ((temp & CAN_PN_CTL0_IDFT) == CAN_PN_ID_FILTERING_RANGE)) {
-        if(CAN_STANDARD == (filter->id & BIT(31))){
+
+    if (    ((temp & CAN_PN_CTL0_IDFT) == CAN_PN_ID_FILTERING_EXACT)
+         || ((temp & CAN_PN_CTL0_IDFT) == CAN_PN_ID_FILTERING_RANGE))
+    {
+        if (CAN_STANDARD == (filter->id & BIT(31)))
+        {
             reg |= (uint32_t)PN_IFEID1_IDEFD_STD(filter->id);
-        }else{
+        }
+        else
+        {
             reg |= (uint32_t)PN_IFEID1_IDEFD_EXD(filter->id);
         }
     }
-    if((uint32_t)SET == filter->ide) {
+
+    if ((uint32_t)SET == filter->ide)
+    {
         reg |= CAN_PN_IFEID1_IDEFD;
     }
-    if((uint32_t)SET == filter->rtr) {
+
+    if ((uint32_t)SET == filter->rtr)
+    {
         reg |= CAN_PN_IFEID1_RTRFD;
     }
     /* set filter identifier 1 */
     CAN_PN_IFEID1(can_periph) = reg;
 
     /* data field is used when frame filtering type is not MATCH or MATCH NMM */
-    if(((temp & CAN_PN_CTL0_FFT) == CAN_PN_FRAME_FILTERING_ID_DATA) ||
-            ((temp & CAN_PN_CTL0_FFT) == CAN_PN_FRAME_FILTERING_ID_DATA_NMM)) {
+
+    if (    ((temp & CAN_PN_CTL0_FFT) == CAN_PN_FRAME_FILTERING_ID_DATA)
+         || ((temp & CAN_PN_CTL0_FFT) == CAN_PN_FRAME_FILTERING_ID_DATA_NMM))
+    {
         /* set filter data payload 0 */
-        CAN_PN_EDLC(can_periph) = PN_EDLC_DLCEHT(expect->dlc_high_threshold) | PN_EDLC_DLCELT(expect->dlc_low_threshold);
-        CAN_PN_EDL0(can_periph) = ((expect->payload[0] << 24U) & CAN_PN_EDL0_DB0ELT) |
-                                  ((expect->payload[0] << 8U) & CAN_PN_EDL0_DB1ELT) |
-                                  ((expect->payload[0] >> 8U) & CAN_PN_EDL0_DB2ELT) |
-                                  ((expect->payload[0] >> 24U) & CAN_PN_EDL0_DB3ELT);
-        CAN_PN_EDL1(can_periph) = ((expect->payload[1] << 24U) & CAN_PN_EDL1_DB4ELT) |
-                                  ((expect->payload[1] << 8U) & CAN_PN_EDL1_DB5ELT) |
-                                  ((expect->payload[1] >> 8U) & CAN_PN_EDL1_DB6ELT) |
-                                  ((expect->payload[1] >> 24U) & CAN_PN_EDL1_DB7ELT);
+        CAN_PN_EDLC(can_periph) =
+            PN_EDLC_DLCEHT(expect->dlc_high_threshold) | PN_EDLC_DLCELT(expect->dlc_low_threshold);
+        CAN_PN_EDL0(can_periph) =
+            ((expect->payload[0] << 24U) & CAN_PN_EDL0_DB0ELT) | ((expect->payload[0] << 8U) & CAN_PN_EDL0_DB1ELT)
+            | ((expect->payload[0] >> 8U) & CAN_PN_EDL0_DB2ELT) | ((expect->payload[0] >> 24U) & CAN_PN_EDL0_DB3ELT);
+        CAN_PN_EDL1(can_periph) =
+            ((expect->payload[1] << 24U) & CAN_PN_EDL1_DB4ELT) | ((expect->payload[1] << 8U) & CAN_PN_EDL1_DB5ELT)
+            | ((expect->payload[1] >> 8U) & CAN_PN_EDL1_DB6ELT) | ((expect->payload[1] >> 24U) & CAN_PN_EDL1_DB7ELT);
 
         /* data field 1 is used when data filtering type is EXACT or RANGE */
-        if(((temp & CAN_PN_CTL0_DATAFT) == CAN_PN_DATA_FILTERING_EXACT)
-                || ((temp & CAN_PN_CTL0_DATAFT) == CAN_PN_DATA_FILTERING_RANGE)) {
+
+        if (    ((temp & CAN_PN_CTL0_DATAFT) == CAN_PN_DATA_FILTERING_EXACT)
+             || ((temp & CAN_PN_CTL0_DATAFT) == CAN_PN_DATA_FILTERING_RANGE))
+        {
             /* set filter data payload 1 */
-            CAN_PN_DF0EDH0(can_periph) = ((filter->payload[0] << 24U) & CAN_PN_DF0EDH0_DB0FD_EHT) |
-                                         ((filter->payload[0] << 8U) & CAN_PN_DF0EDH0_DB1FD_EHT) |
-                                         ((filter->payload[0] >> 8U) & CAN_PN_DF0EDH0_DB2FD_EHT) |
-                                         ((filter->payload[0] >> 24U) & CAN_PN_DF0EDH0_DB3FD_EHT);
-            CAN_PN_DF1EDH1(can_periph) = ((filter->payload[1] << 24U) & CAN_PN_DF1EDH1_DB4FD_EHT) |
-                                         ((filter->payload[1] << 8U) & CAN_PN_DF1EDH1_DB5FD_EHT) |
-                                         ((filter->payload[1] >> 8U) & CAN_PN_DF1EDH1_DB6FD_EHT) |
-                                         ((filter->payload[1] >> 24U) & CAN_PN_DF1EDH1_DB7FD_EHT);
+            CAN_PN_DF0EDH0(can_periph) = ((filter->payload[0] << 24U) & CAN_PN_DF0EDH0_DB0FD_EHT)
+                                       | ((filter->payload[0] << 8U) & CAN_PN_DF0EDH0_DB1FD_EHT)
+                                       | ((filter->payload[0] >> 8U) & CAN_PN_DF0EDH0_DB2FD_EHT)
+                                       | ((filter->payload[0] >> 24U) & CAN_PN_DF0EDH0_DB3FD_EHT);
+            CAN_PN_DF1EDH1(can_periph) = ((filter->payload[1] << 24U) & CAN_PN_DF1EDH1_DB4FD_EHT)
+                                       | ((filter->payload[1] << 8U) & CAN_PN_DF1EDH1_DB5FD_EHT)
+                                       | ((filter->payload[1] >> 8U) & CAN_PN_DF1EDH1_DB6FD_EHT)
+                                       | ((filter->payload[1] >> 24U) & CAN_PN_DF1EDH1_DB7FD_EHT);
         }
     }
 }
 
-
 /*!
-    \brief      get matching message counter of Pretended Networking mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     0~255 or -1
-*/
+  \brief get matching message counter of Pretended Networking mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval 0~255 or -1
+ */
 int32_t can_pn_mode_num_of_match_get(uint32_t can_periph)
 {
-    int32_t ret = 0;
+    int32_t ret  = 0;
     uint32_t reg = 0U;
 
     reg = CAN_PN_STAT(can_periph);
-    if(0U != (reg & CAN_PN_STAT_MMCNTS)) {
+
+    if (0U != (reg & CAN_PN_STAT_MMCNTS))
+    {
         ret = (int32_t)(uint32_t)GET_PN_STAT_MMCNT(reg);
-    } else {
+    }
+    else
+    {
         ret = -1;
     }
     return ret;
 }
 
 /*!
-    \brief      get matching message
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  index: Pretended Networking mailbox index
+  \brief get matching message
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  index: Pretended Networking mailbox index
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] mdpara: wakeup message information
-    \retval     none
-*/
+  \arg 0 - 31
+  \param[out] mdpara: wakeup message information
+  \retval none
+ */
 void can_pn_mode_data_read(uint32_t can_periph, uint32_t index, can_mailbox_descriptor_struct *mdpara)
 {
     uint32_t *mdaddr = (uint32_t *)mdpara;
@@ -1396,169 +1593,185 @@ void can_pn_mode_data_read(uint32_t can_periph, uint32_t index, can_mailbox_desc
     mdpara->id = (pnram1 & 0x1FFFFFFFU);
     mdpara->prio = (uint8_t)((pnram1 >> 29U) & 0x07U);
     /* get mailbox ID */
-    if(0U != mdpara->ide) {
+
+    if (0U != mdpara->ide)
+    {
         mdpara->id = GET_MDES1_ID_EXD(mdpara->id);
-    } else {
+    }
+    else
+    {
         mdpara->id = GET_MDES1_ID_STD(mdpara->id);
     }
     mdpara->data_bytes = mdpara->dlc;
     /* remote frame */
-    if(0U != ((*mdaddr) & CAN_PN_RWMXCS_RRTR)){
+
+    if (0U != ((*mdaddr) & CAN_PN_RWMXCS_RRTR))
+    {
         mdpara->data_bytes = 0U;
-    }else{
+    }
+    else
+    {
         /* classical frame */
-        if(mdpara->dlc <= 8U) {
+
+        if (mdpara->dlc <= 8U)
+        {
             mdpara->data_bytes = mdpara->dlc;
-        }else{
+        }
+        else
+        {
             mdpara->data_bytes = 8U;
         }
     }
-    if(mdpara->data_bytes) {
-        can_data_words_to_little_endian_bytes(mdpara->data, (const volatile uint32_t *)(pnram + 0x08U), mdpara->data_bytes);
+
+    if (mdpara->data_bytes)
+    {
+        can_data_words_to_little_endian_bytes(mdpara->data,
+                                              (const volatile uint32_t *)(pnram + 0x08U),
+                                              mdpara->data_bytes);
     }
 }
 
 /*!
-    \brief      enable self reception
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable self reception
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_self_reception_enable(uint32_t can_periph)
 {
     CAN_CTL0(can_periph) &= ~CAN_CTL0_SRDIS;
 }
 
 /*!
-    \brief      disable self reception
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable self reception
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_self_reception_disable(uint32_t can_periph)
 {
     CAN_CTL0(can_periph) |= CAN_CTL0_SRDIS;
 }
 
 /*!
-    \brief      enable transmit abort
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable transmit abort
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_transmit_abort_enable(uint32_t can_periph)
 {
     CAN_CTL0(can_periph) |= CAN_CTL0_MST;
 }
 
 /*!
-    \brief      disable transmit abort
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable transmit abort
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_transmit_abort_disable(uint32_t can_periph)
 {
     CAN_CTL0(can_periph) &= ~CAN_CTL0_MST;
 }
 
 /*!
-    \brief      enable auto bus off recovery mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable auto bus off recovery mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_auto_busoff_recovery_enable(uint32_t can_periph)
 {
     CAN_CTL1(can_periph) &= ~CAN_CTL1_ABORDIS;
 }
 
 /*!
-    \brief      disable auto bus off recovery mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable auto bus off recovery mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_auto_busoff_recovery_disable(uint32_t can_periph)
 {
     CAN_CTL1(can_periph) |= CAN_CTL1_ABORDIS;
 }
 
 /*!
-    \brief      enable time sync mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable time sync mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_time_sync_enable(uint32_t can_periph)
 {
     CAN_CTL1(can_periph) |= CAN_CTL1_TSYNC;
 }
 
 /*!
-    \brief      disable time sync mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable time sync mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_time_sync_disable(uint32_t can_periph)
 {
     CAN_CTL1(can_periph) &= ~CAN_CTL1_TSYNC;
 }
 
 /*!
-    \brief      enable edge filter mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable edge filter mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_edge_filter_mode_enable(uint32_t can_periph)
 {
     CAN_CTL2(can_periph) &= ~CAN_CTL2_EFDIS;
 }
 
 /*!
-    \brief      disable edge filter mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable edge filter mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_edge_filter_mode_disable(uint32_t can_periph)
 {
     CAN_CTL2(can_periph) |= CAN_CTL2_EFDIS;
 }
 
 /*!
-    \brief      enable protocol exception detection mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable protocol exception detection mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_ped_mode_enable(uint32_t can_periph)
 {
     CAN_CTL2(can_periph) |= CAN_CTL2_PREEN;
 }
 
 /*!
-    \brief      disable protocol exception detection mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable protocol exception detection mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void can_ped_mode_disable(uint32_t can_periph)
 {
     CAN_CTL2(can_periph) &= ~CAN_CTL2_PREEN;
 }
 
 /*!
-    \brief      configure arbitration delay bits
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  delay_bits: delay bits
+  \brief configure arbitration delay bits
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  delay_bits: delay bits
                 only one parameter can be selected which is shown as below:
-      \arg        0 - 31
-    \param[out] none
-    \retval     none
-*/
+  \arg 0 - 31
+  \param[out] none
+  \retval none
+ */
 void can_arbitration_delay_bits_config(uint32_t can_periph, uint32_t delay_bits)
 {
     CAN_CTL2(can_periph) &= ~CAN_CTL2_ASD;
@@ -1566,154 +1779,175 @@ void can_arbitration_delay_bits_config(uint32_t can_periph, uint32_t delay_bits)
 }
 
 /*!
-    \brief      configure bit sampling mode
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  sampling_mode: bit sampling mode
+  \brief configure bit sampling mode
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  sampling_mode: bit sampling mode
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_BSP_MODE_ONE_SAMPLE: one sample for received bit
-      \arg        CAN_BSP_MODE_THREE_SAMPLES: three samples for received bit
-    \param[out] none
-    \retval     none
-*/
+  \arg CAN_BSP_MODE_ONE_SAMPLE: one sample for received bit
+  \arg CAN_BSP_MODE_THREE_SAMPLES: three samples for received bit
+  \param[out] none
+  \retval none
+ */
 void can_bsp_mode_config(uint32_t can_periph, uint32_t sampling_mode)
 {
-    if(CAN_BSP_MODE_ONE_SAMPLE == sampling_mode) {
+    if (CAN_BSP_MODE_ONE_SAMPLE == sampling_mode)
+    {
         CAN_CTL1(can_periph) &= ~CAN_CTL1_BSPMOD;
-    } else {
+    }
+    else
+    {
         CAN_CTL1(can_periph) |= CAN_CTL1_BSPMOD;
     }
 }
 
 /*!
-    \brief      configure bit sampling synchronization
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  sys_mode: bit sampling synchronization mode
+  \brief configure bit sampling synchronization
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  sys_mode: bit sampling synchronization mode
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_BSP_TWO_STAGES_SYN: two satges synchronization for CAN bus sampling
-      \arg        CAN_BSP_ONE_STAGE_SYN: one satge synchronization for CAN bus sampling
-    \param[out] none
-    \retval     none
-*/
+  \arg CAN_BSP_TWO_STAGES_SYN: two satges synchronization for CAN bus sampling
+  \arg CAN_BSP_ONE_STAGE_SYN: one satge synchronization for CAN bus sampling
+  \param[out] none
+  \retval none
+ */
 void can_bsp_syn_config(uint32_t can_periph, uint32_t sys_mode)
 {
-    if(CAN_BSP_TWO_STAGES_SYN == sys_mode) {
+    if (CAN_BSP_TWO_STAGES_SYN == sys_mode)
+    {
         CAN_CTL1(can_periph) &= ~CAN_CTL1_BSSSEL;
-    } else {
+    }
+    else
+    {
         CAN_CTL1(can_periph) |= CAN_CTL1_BSSSEL;
     }
 }
 
 /*!
-    \brief      get CAN flag
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  flag: CAN flags, refer to can_flag_enum
+  \brief get CAN flag
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  flag: CAN flags, refer to can_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_FLAG_CAN_PN: Pretended Networking state flag
-      \arg        CAN_FLAG_SOFT_RST: software reset flag
-      \arg        CAN_FLAG_ERR_SUMMARY: error summary flag
-      \arg        CAN_FLAG_BUSOFF: bus off flag
-      \arg        CAN_FLAG_RECEIVING: receiving state flag
-      \arg        CAN_FLAG_TRANSMITTING: transmitting state flag
-      \arg        CAN_FLAG_IDLE: IDLE state flag
-      \arg        CAN_FLAG_RX_WARNING: receive warning flag
-      \arg        CAN_FLAG_TX_WARNING: transmit warning flag
-      \arg        CAN_FLAG_STUFF_ERR: stuff error flag
-      \arg        CAN_FLAG_FORM_ERR: form error flag
-      \arg        CAN_FLAG_CRC_ERR: CRC error flag
-      \arg        CAN_FLAG_ACK_ERR: ACK error flag
-      \arg        CAN_FLAG_BIT_DOMINANT_ERR: bit dominant error flag
-      \arg        CAN_FLAG_BIT_RECESSIVE_ERR: bit recessive error flag
-      \arg        CAN_FLAG_SYNC_ERR: synchronization flag
-      \arg        CAN_FLAG_BUSOFF_RECOVERY: bus off recovery flag
-      \arg        CAN_FLAG_ERR_SUMMARY_FD: fd error summary flag
-      \arg        CAN_FLAG_ERR_OVERRUN: error overrun flag
-      \arg        CAN_FLAG_STUFF_ERR_FD: stuff error in FD data phase flag
-      \arg        CAN_FLAG_FORM_ERR_FD: form error in FD data phase flag
-      \arg        CAN_FLAG_CRC_ERR_FD: CRC error in FD data phase flag
-      \arg        CAN_FLAG_BIT_DOMINANT_ERR_FD: bit dominant error in FD data phase flag
-      \arg        CAN_FLAG_BIT_RECESSIVE_ERR_FD: bit recessive error in FD data phase flag
-      \arg        CAN_FLAG_MBx(x=0~31): mailbox x flag
-      \arg        CAN_FLAG_FIFO_AVAILABLE: fifo available flag
-      \arg        CAN_FLAG_FIFO_WARNING: fifo warning flag
-      \arg        CAN_FLAG_FIFO_OVERFLOW: fifo overflow flag
-      \arg        CAN_FLAG_WAKEUP_MATCH: Pretended Networking match flag
-      \arg        CAN_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup flag
-      \arg        CAN_FLAG_TDC_OUT_OF_RANGE: transmitter delay is out of compensation range flag
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg CAN_FLAG_CAN_PN: Pretended Networking state flag
+  \arg CAN_FLAG_SOFT_RST: software reset flag
+  \arg CAN_FLAG_ERR_SUMMARY: error summary flag
+  \arg CAN_FLAG_BUSOFF: bus off flag
+  \arg CAN_FLAG_RECEIVING: receiving state flag
+  \arg CAN_FLAG_TRANSMITTING: transmitting state flag
+  \arg CAN_FLAG_IDLE: IDLE state flag
+  \arg CAN_FLAG_RX_WARNING: receive warning flag
+  \arg CAN_FLAG_TX_WARNING: transmit warning flag
+  \arg CAN_FLAG_STUFF_ERR: stuff error flag
+  \arg CAN_FLAG_FORM_ERR: form error flag
+  \arg CAN_FLAG_CRC_ERR: CRC error flag
+  \arg CAN_FLAG_ACK_ERR: ACK error flag
+  \arg CAN_FLAG_BIT_DOMINANT_ERR: bit dominant error flag
+  \arg CAN_FLAG_BIT_RECESSIVE_ERR: bit recessive error flag
+  \arg CAN_FLAG_SYNC_ERR: synchronization flag
+  \arg CAN_FLAG_BUSOFF_RECOVERY: bus off recovery flag
+  \arg CAN_FLAG_ERR_SUMMARY_FD: fd error summary flag
+  \arg CAN_FLAG_ERR_OVERRUN: error overrun flag
+  \arg CAN_FLAG_STUFF_ERR_FD: stuff error in FD data phase flag
+  \arg CAN_FLAG_FORM_ERR_FD: form error in FD data phase flag
+  \arg CAN_FLAG_CRC_ERR_FD: CRC error in FD data phase flag
+  \arg CAN_FLAG_BIT_DOMINANT_ERR_FD: bit dominant error in FD data phase flag
+  \arg CAN_FLAG_BIT_RECESSIVE_ERR_FD: bit recessive error in FD data phase flag
+  \arg CAN_FLAG_MBx(x=0~31): mailbox x flag
+  \arg CAN_FLAG_FIFO_AVAILABLE: fifo available flag
+  \arg CAN_FLAG_FIFO_WARNING: fifo warning flag
+  \arg CAN_FLAG_FIFO_OVERFLOW: fifo overflow flag
+  \arg CAN_FLAG_WAKEUP_MATCH: Pretended Networking match flag
+  \arg CAN_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup flag
+  \arg CAN_FLAG_TDC_OUT_OF_RANGE: transmitter delay is out of compensation range flag
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus can_flag_get(uint32_t can_periph, can_flag_enum flag)
 {
-    if(CAN_REG_VAL(can_periph, flag) & BIT(CAN_BIT_POS(flag))) {
+    if (CAN_REG_VAL(can_periph, flag) & BIT(CAN_BIT_POS(flag)))
+    {
         return SET;
-    } else {
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      clear CAN flag
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  flag: CAN flags, refer to can_flag_enum
+  \brief clear CAN flag
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  flag: CAN flags, refer to can_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_FLAG_ERR_SUMMARY: error summary flag
-      \arg        CAN_FLAG_BUSOFF: bus off flag
-      \arg        CAN_FLAG_BUSOFF_RECOVERY: bus off recovery flag
-      \arg        CAN_FLAG_ERR_SUMMARY_FD: fd error summary flag
-      \arg        CAN_FLAG_ERR_OVERRUN: error overrun flag
-      \arg        CAN_FLAG_MBx(x=0~31): mailbox x flag
-      \arg        CAN_FLAG_FIFO_AVAILABLE: fifo available flag
-      \arg        CAN_FLAG_FIFO_WARNING: fifo warning flag
-      \arg        CAN_FLAG_FIFO_OVERFLOW: fifo overflow flag
-      \arg        CAN_FLAG_WAKEUP_MATCH: Pretended Networking match flag
-      \arg        CAN_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup flag
-      \arg        CAN_FLAG_TDC_OUT_OF_RANGE: transmitter delay is out of compensation range flag
-    \param[out] none
-    \retval     none
-*/
+  \arg CAN_FLAG_ERR_SUMMARY: error summary flag
+  \arg CAN_FLAG_BUSOFF: bus off flag
+  \arg CAN_FLAG_BUSOFF_RECOVERY: bus off recovery flag
+  \arg CAN_FLAG_ERR_SUMMARY_FD: fd error summary flag
+  \arg CAN_FLAG_ERR_OVERRUN: error overrun flag
+  \arg CAN_FLAG_MBx(x=0~31): mailbox x flag
+  \arg CAN_FLAG_FIFO_AVAILABLE: fifo available flag
+  \arg CAN_FLAG_FIFO_WARNING: fifo warning flag
+  \arg CAN_FLAG_FIFO_OVERFLOW: fifo overflow flag
+  \arg CAN_FLAG_WAKEUP_MATCH: Pretended Networking match flag
+  \arg CAN_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup flag
+  \arg CAN_FLAG_TDC_OUT_OF_RANGE: transmitter delay is out of compensation range flag
+  \param[out] none
+  \retval none
+ */
 void can_flag_clear(uint32_t can_periph, can_flag_enum flag)
 {
-    if(CAN_FLAG_TDC_OUT_OF_RANGE == flag) {
+    if (CAN_FLAG_TDC_OUT_OF_RANGE == flag)
+    {
         CAN_FDCTL(can_periph) |= CAN_FDCTL_TDCS;
-    } else {
+    }
+    else
+    {
         CAN_REG_VAL(can_periph, flag) = BIT(CAN_BIT_POS(flag));
     }
 }
 
 /*!
-    \brief      enable CAN interrupt
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  interrupt: CAN interrupt, refer to can_interrupt_enum
+  \brief enable CAN interrupt
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  interrupt: CAN interrupt, refer to can_interrupt_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_INT_RX_WARNING: receive warning interrupt
-      \arg        CAN_INT_TX_WARNING: transmit warning interrupt
-      \arg        CAN_INT_ERR_SUMMARY: error interrupt
-      \arg        CAN_INT_BUSOFF: bus off interrupt
-      \arg        CAN_INT_BUSOFF_RECOVERY: bus off recovery interrupt
-      \arg        CAN_INT_ERR_SUMMARY_FD: fd error interrupt
-      \arg        CAN_INT_MBx(x=0~31): mailbox x interrupt
-      \arg        CAN_INT_FIFO_AVAILABLE: fifo available interrupt
-      \arg        CAN_INT_FIFO_WARNING: fifo warning interrupt
-      \arg        CAN_INT_FIFO_OVERFLOW: fifo overflow interrupt
-      \arg        CAN_INT_WAKEUP_MATCH: Pretended Networking match interrupt
-      \arg        CAN_INT_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \arg CAN_INT_RX_WARNING: receive warning interrupt
+  \arg CAN_INT_TX_WARNING: transmit warning interrupt
+  \arg CAN_INT_ERR_SUMMARY: error interrupt
+  \arg CAN_INT_BUSOFF: bus off interrupt
+  \arg CAN_INT_BUSOFF_RECOVERY: bus off recovery interrupt
+  \arg CAN_INT_ERR_SUMMARY_FD: fd error interrupt
+  \arg CAN_INT_MBx(x=0~31): mailbox x interrupt
+  \arg CAN_INT_FIFO_AVAILABLE: fifo available interrupt
+  \arg CAN_INT_FIFO_WARNING: fifo warning interrupt
+  \arg CAN_INT_FIFO_OVERFLOW: fifo overflow interrupt
+  \arg CAN_INT_WAKEUP_MATCH: Pretended Networking match interrupt
+  \arg CAN_INT_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_interrupt_enable(uint32_t can_periph, can_interrupt_enum interrupt)
 {
     can_operation_modes_enum mode = CAN_NORMAL_MODE;
-    ErrStatus ret = SUCCESS;
+    ErrStatus ret                 = SUCCESS;
 
-    /* enable receive or transmit warning error interrupt should enable error warning in CTL0 register  */
-    if((CAN_INT_RX_WARNING == interrupt) || (CAN_INT_TX_WARNING == interrupt)) {
+    /* enable receive or transmit warning error interrupt should enable error warning in CTL0 register */
+
+    if (    (CAN_INT_RX_WARNING == interrupt)
+         || (CAN_INT_TX_WARNING == interrupt))
+    {
         mode = can_operation_mode_get(can_periph);
         /* in INACTIVE mode */
-        if(CAN_INACTIVE_MODE == mode){
+
+        if (CAN_INACTIVE_MODE == mode)
+        {
             CAN_CTL0(can_periph) |= CAN_CTL0_WERREN;
-        }else{
+        }
+        else
+        {
             ret = can_operation_mode_enter(can_periph, CAN_INACTIVE_MODE);
-            if(SUCCESS == ret){
+
+            if (SUCCESS == ret)
+            {
                 CAN_CTL0(can_periph) |= CAN_CTL0_WERREN;
                 ret = can_operation_mode_enter(can_periph, mode);
             }
@@ -1725,39 +1959,49 @@ ErrStatus can_interrupt_enable(uint32_t can_periph, can_interrupt_enum interrupt
 }
 
 /*!
-    \brief      disable CAN interrupt
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  interrupt: CAN interrupt, refer to can_interrupt_enum
+  \brief disable CAN interrupt
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  interrupt: CAN interrupt, refer to can_interrupt_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_INT_RX_WARNING: receive warning interrupt
-      \arg        CAN_INT_TX_WARNING: transmit warning interrupt
-      \arg        CAN_INT_ERR_SUMMARY: error interrupt
-      \arg        CAN_INT_BUSOFF: bus off interrupt
-      \arg        CAN_INT_BUSOFF_RECOVERY: bus off recovery interrupt
-      \arg        CAN_INT_ERR_SUMMARY_FD: fd error interrupt
-      \arg        CAN_INT_MBx(x=0~31): mailbox x interrupt
-      \arg        CAN_INT_FIFO_AVAILABLE: fifo available interrupt
-      \arg        CAN_INT_FIFO_WARNING: fifo warning interrupt
-      \arg        CAN_INT_FIFO_OVERFLOW: fifo overflow interrupt
-      \arg        CAN_INT_WAKEUP_MATCH: Pretended Networking match interrupt
-      \arg        CAN_INT_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt
-    \param[out] none
-    \retval     ERROR or SUCCESS
-*/
+  \arg CAN_INT_RX_WARNING: receive warning interrupt
+  \arg CAN_INT_TX_WARNING: transmit warning interrupt
+  \arg CAN_INT_ERR_SUMMARY: error interrupt
+  \arg CAN_INT_BUSOFF: bus off interrupt
+  \arg CAN_INT_BUSOFF_RECOVERY: bus off recovery interrupt
+  \arg CAN_INT_ERR_SUMMARY_FD: fd error interrupt
+  \arg CAN_INT_MBx(x=0~31): mailbox x interrupt
+  \arg CAN_INT_FIFO_AVAILABLE: fifo available interrupt
+  \arg CAN_INT_FIFO_WARNING: fifo warning interrupt
+  \arg CAN_INT_FIFO_OVERFLOW: fifo overflow interrupt
+  \arg CAN_INT_WAKEUP_MATCH: Pretended Networking match interrupt
+  \arg CAN_INT_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt
+  \param[out] none
+  \retval ERROR or SUCCESS
+ */
 ErrStatus can_interrupt_disable(uint32_t can_periph, can_interrupt_enum interrupt)
 {
     can_operation_modes_enum mode = CAN_NORMAL_MODE;
-    ErrStatus ret = SUCCESS;
+    ErrStatus ret                 = SUCCESS;
 
-    /* disable receive or transmit warning error interrupt should enable error warning in CTL0 register  */
-    if((0U == (CAN_CTL0(can_periph) & CAN_CTL0_WERREN)) && ((CAN_INT_RX_WARNING == interrupt) || (CAN_INT_TX_WARNING == interrupt))) {
+    /* disable receive or transmit warning error interrupt should enable error warning in CTL0 register */
+
+    if (    (0U == (CAN_CTL0(can_periph) & CAN_CTL0_WERREN))
+         && (    (CAN_INT_RX_WARNING == interrupt)
+              || (CAN_INT_TX_WARNING == interrupt)))
+    {
         mode = can_operation_mode_get(can_periph);
         /* in INACTIVE mode */
-        if(CAN_INACTIVE_MODE == mode){
+
+        if (CAN_INACTIVE_MODE == mode)
+        {
             CAN_CTL0(can_periph) |= CAN_CTL0_WERREN;
-        }else{
+        }
+        else
+        {
             ret = can_operation_mode_enter(can_periph, CAN_INACTIVE_MODE);
-            if(SUCCESS == ret){
+
+            if (SUCCESS == ret)
+            {
                 CAN_CTL0(can_periph) |= CAN_CTL0_WERREN;
                 ret = can_operation_mode_enter(can_periph, mode);
             }
@@ -1769,84 +2013,99 @@ ErrStatus can_interrupt_disable(uint32_t can_periph, can_interrupt_enum interrup
 }
 
 /*!
-    \brief      get CAN interrupt flag
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  int_flag: CAN interrupt flags, refer to can_interrupt_flag_enum
+  \brief get CAN interrupt flag
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  int_flag: CAN interrupt flags, refer to can_interrupt_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_INT_FLAG_ERR_SUMMARY: error summary interrupt flag
-      \arg        CAN_INT_FLAG_BUSOFF: bus off interrupt flag
-      \arg        CAN_INT_FLAG_RX_WARNING: receive warning interrupt flag
-      \arg        CAN_INT_FLAG_TX_WARNING: transmit warning interrupt flag
-      \arg        CAN_INT_FLAG_BUSOFF_RECOVERY: bus off recovery interrupt flag
-      \arg        CAN_INT_FLAG_ERR_SUMMARY_FD: fd error summary interrupt flag
-      \arg        CAN_INT_FLAG_MBx(x=0~31): mailbox x interrupt flag
-      \arg        CAN_INT_FLAG_FIFO_AVAILABLE: fifo available interrupt flag
-      \arg        CAN_INT_FLAG_FIFO_WARNING: fifo warning interrupt flag
-      \arg        CAN_INT_FLAG_FIFO_OVERFLOW: fifo overflow interrupt flag
-      \arg        CAN_INT_FLAG_WAKEUP_MATCH: Pretended Networking match interrupt flag
-      \arg        CAN_INT_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt flag
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg CAN_INT_FLAG_ERR_SUMMARY: error summary interrupt flag
+  \arg CAN_INT_FLAG_BUSOFF: bus off interrupt flag
+  \arg CAN_INT_FLAG_RX_WARNING: receive warning interrupt flag
+  \arg CAN_INT_FLAG_TX_WARNING: transmit warning interrupt flag
+  \arg CAN_INT_FLAG_BUSOFF_RECOVERY: bus off recovery interrupt flag
+  \arg CAN_INT_FLAG_ERR_SUMMARY_FD: fd error summary interrupt flag
+  \arg CAN_INT_FLAG_MBx(x=0~31): mailbox x interrupt flag
+  \arg CAN_INT_FLAG_FIFO_AVAILABLE: fifo available interrupt flag
+  \arg CAN_INT_FLAG_FIFO_WARNING: fifo warning interrupt flag
+  \arg CAN_INT_FLAG_FIFO_OVERFLOW: fifo overflow interrupt flag
+  \arg CAN_INT_FLAG_WAKEUP_MATCH: Pretended Networking match interrupt flag
+  \arg CAN_INT_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt flag
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus can_interrupt_flag_get(uint32_t can_periph, can_interrupt_flag_enum int_flag)
 {
-    if(CAN_REG_VAL(can_periph, int_flag) & BIT(CAN_BIT_POS(int_flag))) {
+    if (CAN_REG_VAL(can_periph, int_flag) & BIT(CAN_BIT_POS(int_flag)))
+    {
         return SET;
-    } else {
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      clear CAN interrupt flag
-    \param[in]  can_periph: CANx(x=0,1,2)
-    \param[in]  int_flag: CAN interrupt flags, refer to can_interrupt_flag_enum
+  \brief clear CAN interrupt flag
+  \param[in]  can_periph: CANx(x=0,1,2)
+  \param[in]  int_flag: CAN interrupt flags, refer to can_interrupt_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CAN_INT_FLAG_ERR_SUMMARY: error summary interrupt flag
-      \arg        CAN_INT_FLAG_BUSOFF: bus off interrupt flag
-      \arg        CAN_INT_FLAG_RX_WARNING: receive warning interrupt flag
-      \arg        CAN_INT_FLAG_TX_WARNING: transmit warning interrupt flag
-      \arg        CAN_INT_FLAG_BUSOFF_RECOVERY: bus off recovery interrupt flag
-      \arg        CAN_INT_FLAG_ERR_SUMMARY_FD: fd error summary interrupt flag
-      \arg        CAN_INT_FLAG_MBx(x=0~31): mailbox x interrupt flag
-      \arg        CAN_INT_FLAG_FIFO_AVAILABLE: fifo available interrupt flag
-      \arg        CAN_INT_FLAG_FIFO_WARNING: fifo warning interrupt flag
-      \arg        CAN_INT_FLAG_FIFO_OVERFLOW: fifo overflow interrupt flag
-      \arg        CAN_INT_FLAG_WAKEUP_MATCH: Pretended Networking match interrupt flag
-      \arg        CAN_INT_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt flag
-    \param[out] none
-    \retval     none
-*/
+  \arg CAN_INT_FLAG_ERR_SUMMARY: error summary interrupt flag
+  \arg CAN_INT_FLAG_BUSOFF: bus off interrupt flag
+  \arg CAN_INT_FLAG_RX_WARNING: receive warning interrupt flag
+  \arg CAN_INT_FLAG_TX_WARNING: transmit warning interrupt flag
+  \arg CAN_INT_FLAG_BUSOFF_RECOVERY: bus off recovery interrupt flag
+  \arg CAN_INT_FLAG_ERR_SUMMARY_FD: fd error summary interrupt flag
+  \arg CAN_INT_FLAG_MBx(x=0~31): mailbox x interrupt flag
+  \arg CAN_INT_FLAG_FIFO_AVAILABLE: fifo available interrupt flag
+  \arg CAN_INT_FLAG_FIFO_WARNING: fifo warning interrupt flag
+  \arg CAN_INT_FLAG_FIFO_OVERFLOW: fifo overflow interrupt flag
+  \arg CAN_INT_FLAG_WAKEUP_MATCH: Pretended Networking match interrupt flag
+  \arg CAN_INT_FLAG_WAKEUP_TIMEOUT: Pretended Networking timeout wakeup interrupt flag
+  \param[out] none
+  \retval none
+ */
 void can_interrupt_flag_clear(uint32_t can_periph, can_interrupt_flag_enum int_flag)
 {
     CAN_REG_VAL(can_periph, int_flag) = BIT(CAN_BIT_POS(int_flag));
 }
 
 /*!
-    \brief      computes the maximum payload size (in bytes), given a dlc
-    \param[in]  mdes0: mailbox descriptor 0 data
-    \param[out] none
-    \retval     payload_size
-*/
+  \brief computes the maximum payload size (in bytes), given a dlc
+  \param[in]  mdes0: mailbox descriptor 0 data
+  \param[out] none
+  \retval payload_size
+ */
 static uint32_t can_payload_size_compute(uint32_t mdes0)
 {
-    uint8_t ret = 0U;
+    uint8_t ret        = 0U;
     uint32_t dlc_value = GET_MDES0_DLC(mdes0);
 
     /* remote frame */
-    if(0U != (mdes0 & CAN_MDES0_RTR)) {
+
+    if (0U != (mdes0 & CAN_MDES0_RTR))
+    {
         ret = 0U;
-    } else {
+    }
+    else
+    {
         /* FD frame */
-        if(0U != (mdes0 & CAN_MDES0_FDF)) {
-            if(dlc_value <= 15U) {
+
+        if (0U != (mdes0 & CAN_MDES0_FDF))
+        {
+            if (dlc_value <= 15U)
+            {
                 ret = dlc_to_databytes[dlc_value];
             }
-        /* classical frame */
-        } else {
-            if(dlc_value <= 8U) {
+            /* classical frame */
+        }
+        else
+        {
+            if (dlc_value <= 8U)
+            {
                 ret = (uint8_t)dlc_value;
-            } else {
+            }
+            else
+            {
                 ret = 8U;
             }
         }
@@ -1856,12 +2115,12 @@ static uint32_t can_payload_size_compute(uint32_t mdes0)
 }
 
 /*!
-    \brief      swap data to little endian
-    \param[in]  src: data source address
-    \param[in]  len: data length be byte
-    \param[out] dest: data destination address
-    \retval     none
-*/
+  \brief swap data to little endian
+  \param[in]  src: data source address
+  \param[in]  len: data length be byte
+  \param[out] dest: data destination address
+  \retval none
+ */
 static void can_data_to_little_endian_swap(uint32_t dest[], uint32_t src[], uint32_t len)
 {
     volatile uint32_t i = 0U;
@@ -1871,27 +2130,29 @@ static void can_data_to_little_endian_swap(uint32_t dest[], uint32_t src[], uint
     /* get the word length of the data */
     cnt = (len + 3U) / 4U;
     /* change each word from big endian to little endian */
-    for(i = 0U; i < cnt; i++) {
+
+    for (i = 0U; i < cnt; i++)
+    {
         temp_src = src[i];
-        dest[i] = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) |
-                  ((uint32_t)(temp_src >> 8U) & 0x0000FF00U) |
-                  ((uint32_t)(temp_src << 8U) & 0x00FF0000U) |
-                  ((uint32_t)(temp_src << 24U) & 0xFF000000U);
+        dest[i] = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) | ((uint32_t)(temp_src >> 8U) & 0x0000FF00U)
+                | ((uint32_t)(temp_src << 8U) & 0x00FF0000U) | ((uint32_t)(temp_src << 24U) & 0xFF000000U);
     }
 
     cnt = len % 4U;
-    if(cnt) {
+
+    if (cnt)
+    {
         dest[i - 1U] &= ((uint32_t)1U << (cnt * 8U)) - 1U;
     }
 }
 
 /*!
-    \brief      swap byte buffer data to big endian words
-    \param[in]  src: byte data source address
-    \param[in]  len: data length be byte
-    \param[out] dest: word data destination address
-    \retval     none
-*/
+  \brief swap byte buffer data to big endian words
+  \param[in]  src: byte data source address
+  \param[in]  len: data length be byte
+  \param[out] dest: word data destination address
+  \retval none
+ */
 static void can_data_bytes_to_big_endian_swap(volatile uint32_t dest[], const uint8_t src[], uint32_t len)
 {
     volatile uint32_t i = 0U;
@@ -1900,31 +2161,31 @@ static void can_data_bytes_to_big_endian_swap(volatile uint32_t dest[], const ui
     uint32_t byte_idx;
 
     cnt = (len + 3U) / 4U;
-    for(i = 0U; i < cnt; i++) {
+
+    for (i = 0U; i < cnt; i++)
+    {
         byte_idx = i * 4U;
-        temp_src = (uint32_t)src[byte_idx] |
-                   ((uint32_t)src[byte_idx + 1U] << 8U) |
-                   ((uint32_t)src[byte_idx + 2U] << 16U) |
-                   ((uint32_t)src[byte_idx + 3U] << 24U);
-        dest[i] = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) |
-                  ((uint32_t)(temp_src >> 8U) & 0x0000FF00U) |
-                  ((uint32_t)(temp_src << 8U) & 0x00FF0000U) |
-                  ((uint32_t)(temp_src << 24U) & 0xFF000000U);
+        temp_src = (uint32_t)src[byte_idx] | ((uint32_t)src[byte_idx + 1U] << 8U)
+                 | ((uint32_t)src[byte_idx + 2U] << 16U) | ((uint32_t)src[byte_idx + 3U] << 24U);
+        dest[i] = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) | ((uint32_t)(temp_src >> 8U) & 0x0000FF00U)
+                | ((uint32_t)(temp_src << 8U) & 0x00FF0000U) | ((uint32_t)(temp_src << 24U) & 0xFF000000U);
     }
 
     cnt = len % 4U;
-    if(cnt) {
+
+    if (cnt)
+    {
         dest[i - 1U] &= ~(((uint32_t)1U << ((4U - cnt) * 8U)) - 1U);
     }
 }
 
 /*!
-    \brief      swap big endian words to byte buffer data
-    \param[in]  src: word data source address
-    \param[in]  len: data length be byte
-    \param[out] dest: byte data destination address
-    \retval     none
-*/
+  \brief swap big endian words to byte buffer data
+  \param[in]  src: word data source address
+  \param[in]  len: data length be byte
+  \param[out] dest: byte data destination address
+  \retval none
+ */
 static void can_data_words_to_little_endian_bytes(uint8_t dest[], const volatile uint32_t src[], uint32_t len)
 {
     uint32_t i;
@@ -1934,50 +2195,67 @@ static void can_data_words_to_little_endian_bytes(uint8_t dest[], const volatile
     uint32_t remain;
 
     cnt = (len + 3U) / 4U;
-    for(i = 0U; i < cnt; i++) {
+
+    for (i = 0U; i < cnt; i++)
+    {
         byte_idx = i * 4U;
         temp_src = src[i];
-        temp_src = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) |
-                   ((uint32_t)(temp_src >> 8U) & 0x0000FF00U) |
-                   ((uint32_t)(temp_src << 8U) & 0x00FF0000U) |
-                   ((uint32_t)(temp_src << 24U) & 0xFF000000U);
+        temp_src = ((uint32_t)(temp_src >> 24U) & 0x000000FFU) | ((uint32_t)(temp_src >> 8U) & 0x0000FF00U)
+                 | ((uint32_t)(temp_src << 8U) & 0x00FF0000U) | ((uint32_t)(temp_src << 24U) & 0xFF000000U);
 
         remain = len - byte_idx;
-        if(remain > 4U) {
+
+        if (remain > 4U)
+        {
             remain = 4U;
         }
-        if(remain > 0U) {
+
+        if (remain > 0U)
+        {
             dest[byte_idx] = (uint8_t)(temp_src & 0xFFU);
         }
-        if(remain > 1U) {
+
+        if (remain > 1U)
+        {
             dest[byte_idx + 1U] = (uint8_t)((temp_src >> 8U) & 0xFFU);
         }
-        if(remain > 2U) {
+
+        if (remain > 2U)
+        {
             dest[byte_idx + 2U] = (uint8_t)((temp_src >> 16U) & 0xFFU);
         }
-        if(remain > 3U) {
+
+        if (remain > 3U)
+        {
             dest[byte_idx + 3U] = (uint8_t)((temp_src >> 24U) & 0xFFU);
         }
     }
 }
 
 /*!
-    \brief      computes the DLC field value, given a payload size (in bytes)
-    \param[in]  payload_size: payload size
-    \param[out] none
-    \retval     DLC value
-*/
+  \brief computes the DLC field value, given a payload size (in bytes)
+  \param[in]  payload_size: payload size
+  \param[out] none
+  \retval DLC value
+ */
 static uint32_t can_dlc_value_compute(uint32_t payload_size)
 {
     uint32_t ret = 8U;
 
-    if(payload_size <= 8U) {
+    if (payload_size <= 8U)
+    {
         ret = payload_size;
-    } else if(payload_size <= 24U) {
+    }
+    else if (payload_size <= 24U)
+    {
         ret = (payload_size - 9U) / 4U + 9U;
-    } else if(payload_size <= 64U) {
+    }
+    else if (payload_size <= 64U)
+    {
         ret = (payload_size - 17U) / 16U + 13U;
-    } else {
+    }
+    else
+    {
         ret = 8U;
     }
 

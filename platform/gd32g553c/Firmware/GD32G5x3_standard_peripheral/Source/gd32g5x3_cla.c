@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_cla.c
-    \brief   CLA driver
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_cla.c
+  \brief CLA driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,16 +30,16 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_cla.h"
 
 /*!
-    \brief      reset CLA
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief reset CLA
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void cla_deinit(void)
 {
     rcu_periph_reset_enable(RCU_CLARST);
@@ -47,103 +47,110 @@ void cla_deinit(void)
 }
 
 /*!
-    \brief      enable CLA
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable CLA
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[out] none
+  \retval none
+ */
 void cla_enable(cla_enum cla_periph)
 {
-    switch(cla_periph){
-        case CLA0:
-             CLA_GCTL |= CLA_GCTL_CLA0EN;
-             break;
-        case CLA1:
-             CLA_GCTL |= CLA_GCTL_CLA1EN;
-             break;
-        case CLA2:
-             CLA_GCTL |= CLA_GCTL_CLA2EN;
-             break;
-        case CLA3:
-             CLA_GCTL |= CLA_GCTL_CLA3EN;
-             break;
-        default: 
-             break;
+    switch (cla_periph)
+    {
+    case CLA0:
+        CLA_GCTL |= CLA_GCTL_CLA0EN;
+        break;
+    case CLA1:
+        CLA_GCTL |= CLA_GCTL_CLA1EN;
+        break;
+    case CLA2:
+        CLA_GCTL |= CLA_GCTL_CLA2EN;
+        break;
+    case CLA3:
+        CLA_GCTL |= CLA_GCTL_CLA3EN;
+        break;
+    default:
+        break;
     }
 }
 
 /*!
-    \brief      disable CLA
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable CLA
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[out] none
+  \retval none
+ */
 void cla_disable(cla_enum cla_periph)
 {
-    switch(cla_periph){
-        case CLA0:
-             CLA_GCTL &= ~CLA_GCTL_CLA0EN;
-             break;
-        case CLA1:
-             CLA_GCTL &= ~CLA_GCTL_CLA1EN;
-             break;
-        case CLA2:
-             CLA_GCTL &= ~CLA_GCTL_CLA2EN;
-             break;
-        case CLA3:
-             CLA_GCTL &= ~CLA_GCTL_CLA3EN;
-             break;
-        default: 
-             break;
+    switch (cla_periph)
+    {
+    case CLA0:
+        CLA_GCTL &= ~CLA_GCTL_CLA0EN;
+        break;
+    case CLA1:
+        CLA_GCTL &= ~CLA_GCTL_CLA1EN;
+        break;
+    case CLA2:
+        CLA_GCTL &= ~CLA_GCTL_CLA2EN;
+        break;
+    case CLA3:
+        CLA_GCTL &= ~CLA_GCTL_CLA3EN;
+        break;
+    default:
+        break;
     }
 }
 
 /*!
-    \brief      get CLA output state
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[out] none
-    \retval     cla_outputstatus_enum: CLA_OUTPUT_HIGH or CLA_OUTPUT_LOW
-*/
+  \brief get CLA output state
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[out] none
+  \retval cla_outputstatus_enum: CLA_OUTPUT_HIGH or CLA_OUTPUT_LOW
+ */
 cla_outputstatus_enum cla_output_state_get(cla_enum cla_periph)
 {
     uint32_t state;
     uint32_t returnval;
-    
+
     /* read cla status register */
     state = CLA_STAT;
-    
-    switch(cla_periph){
-        case CLA0:
-             returnval = (state & CLA_STAT_CLA0OUT);
-             break;
-        case CLA1:
-             returnval = ((state & CLA_STAT_CLA1OUT) >> 1U);
-             break;
-        case CLA2:
-             returnval = ((state & CLA_STAT_CLA2OUT) >> 2U);
-             break;
-        case CLA3:
-             returnval = ((state & CLA_STAT_CLA3OUT) >> 3U);
-             break;
-        default:
-             returnval = 0U;
-             break;
+
+    switch (cla_periph)
+    {
+    case CLA0:
+        returnval = (state & CLA_STAT_CLA0OUT);
+        break;
+    case CLA1:
+        returnval = ((state & CLA_STAT_CLA1OUT) >> 1U);
+        break;
+    case CLA2:
+        returnval = ((state & CLA_STAT_CLA2OUT) >> 2U);
+        break;
+    case CLA3:
+        returnval = ((state & CLA_STAT_CLA3OUT) >> 3U);
+        break;
+    default:
+        returnval = 0U;
+        break;
     }
-    if(0U != returnval){
+
+    if (0U != returnval)
+    {
         return CLA_OUTPUT_HIGH;
-    }else{
+    }
+    else
+    {
         return CLA_OUTPUT_LOW;
     }
 }
 
 /*!
-    \brief      configure signal selector input
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[in]  sigs: signal selector
+  \brief configure signal selector input
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[in]  sigs: signal selector
                 only one parameter can be selected which is shown as below:
-      \arg        SIGS0: signal selector 0
-      \arg        SIGS1: signal selector 1
-    \param[in]  input: input of signal selector
+  \arg SIGS0: signal selector 0
+  \arg SIGS1: signal selector 1
+  \param[in]  input: input of signal selector
 
      SIGS0 input selection:
      only one parameter can be selected which is shown as below:
@@ -219,16 +226,20 @@ cla_outputstatus_enum cla_output_state_get(cla_enum cla_periph)
      --------------------------------------------------------------------------------------------------------------------------------
      |     1111   | CLA0SIGS1_CLAIN15          | CLA1SIGS1_CLAIN19          | CLA2SIGS1_CLAIN19          | CLA3SIGS1_CLAIN17        |
      --------------------------------------------------------------------------------------------------------------------------------
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void cla_sigs_input_config(cla_enum cla_periph, cla_sigs_enum sigs, uint32_t input)
 {
     uint32_t reg;
     reg = CLA_SIGS(cla_periph);
-    if(SIGS0 == sigs) {
+
+    if (SIGS0 == sigs)
+    {
         reg &= ~CLA_SIGS_SIGS0;
-    } else {
+    }
+    else
+    {
         reg &= ~CLA_SIGS_SIGS1;
     }
     reg |= input;
@@ -236,12 +247,12 @@ void cla_sigs_input_config(cla_enum cla_periph, cla_sigs_enum sigs, uint32_t inp
 }
 
 /*!
-    \brief      configure CLA LCU control register value
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[in]  lcuctl_value: the value need to set, 0 - 0xFF
-    \param[out] none
-    \retval     none
-*/
+  \brief configure CLA LCU control register value
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[in]  lcuctl_value: the value need to set, 0 - 0xFF
+  \param[out] none
+  \retval none
+ */
 void cla_lcu_control_config(cla_enum cla_periph, uint8_t lcuctl_value)
 {
     uint32_t reg;
@@ -252,15 +263,15 @@ void cla_lcu_control_config(cla_enum cla_periph, uint8_t lcuctl_value)
 }
 
 /*!
-    \brief      configure CLA output
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[in]  output: output of CLA
+  \brief configure CLA output
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[in]  output: output of CLA
                 only one parameter can be selected which is shown as below:
-      \arg        FLIP_FLOP_OUTPUT: flip-flop output is selected as CLA output
-      \arg        LUT_RESULT: LUT result is selected as CLA output
-    \param[out] none
-    \retval     none
-*/
+  \arg FLIP_FLOP_OUTPUT: flip-flop output is selected as CLA output
+  \arg LUT_RESULT: LUT result is selected as CLA output
+  \param[out] none
+  \retval none
+ */
 void cla_output_config(cla_enum cla_periph, uint32_t output)
 {
     uint32_t reg;
@@ -271,48 +282,48 @@ void cla_output_config(cla_enum cla_periph, uint32_t output)
 }
 
 /*!
-    \brief      enable CLA output
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable CLA output
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[out] none
+  \retval none
+ */
 void cla_output_enable(cla_enum cla_periph)
 {
     CLA_CTL(cla_periph) |= CLA_CTL_OEN;
 }
 
 /*!
-    \brief      disable CLA output
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable CLA output
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[out] none
+  \retval none
+ */
 void cla_output_disable(cla_enum cla_periph)
 {
     CLA_CTL(cla_periph) &= ~CLA_CTL_OEN;
 }
 
 /*!
-    \brief      reset the flip-flop output asynchronously
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[out] none
-    \retval     none
-*/
+  \brief reset the flip-flop output asynchronously
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[out] none
+  \retval none
+ */
 void cla_flip_flop_output_reset(cla_enum cla_periph)
 {
     CLA_CTL(cla_periph) |= CLA_CTL_FFRST;
 }
 
 /*!
-    \brief      configure clock polarity of flip-flop
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[in]  polarity: clock polarity of flip-flop
+  \brief configure clock polarity of flip-flop
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[in]  polarity: clock polarity of flip-flop
                 only one parameter can be selected which is shown as below:
-      \arg        CLA_CLOCKPOLARITY_POSEDGE: clock rising edge is valid
-      \arg        CLA_CLOCKPOLARITY_NEGEDGE: clock falling edge is valid
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA_CLOCKPOLARITY_POSEDGE: clock rising edge is valid
+  \arg CLA_CLOCKPOLARITY_NEGEDGE: clock falling edge is valid
+  \param[out] none
+  \retval none
+ */
 void cla_flip_flop_clockpolarity_config(cla_enum cla_periph, uint32_t polarity)
 {
     uint32_t reg;
@@ -323,17 +334,17 @@ void cla_flip_flop_clockpolarity_config(cla_enum cla_periph, uint32_t polarity)
 }
 
 /*!
-    \brief      configure clock source of flip-flop 
-    \param[in]  cla_periph: CLAx(x=0,1,2,3)
-    \param[in]  clock_source: clock source of flip-flop
+  \brief configure clock source of flip-flop
+  \param[in]  cla_periph: CLAx(x=0,1,2,3)
+  \param[in]  clock_source: clock source of flip-flop
                 only one parameter can be selected which is shown as below:
-      \arg        PRE_CLA_LUT_RESULT: the result of the previous CLA units
-      \arg        SIGS0_OUTPUT: the signal selector output of SIGS0
-      \arg        HCLK: HCLK
-      \arg        TIMER_TRGO: TIMER_TRGO
-    \param[out] none
-    \retval     none
-*/
+  \arg PRE_CLA_LUT_RESULT: the result of the previous CLA units
+  \arg SIGS0_OUTPUT: the signal selector output of SIGS0
+  \arg HCLK: HCLK
+  \arg TIMER_TRGO: TIMER_TRGO
+  \param[out] none
+  \retval none
+ */
 void cla_flip_flop_clocksource_config(cla_enum cla_periph, uint32_t clock_source)
 {
     uint32_t reg;
@@ -344,280 +355,293 @@ void cla_flip_flop_clocksource_config(cla_enum cla_periph, uint32_t clock_source
 }
 
 /*!
-    \brief      check CLA flag is set or not
-    \param[in]  flag: CLA flags,refer to cla_flag_enum
+  \brief check CLA flag is set or not
+  \param[in]  flag: CLA flags,refer to cla_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CLA_FLAG_CLA0NF: CLA0 unit falling edge flag
-      \arg        CLA_FLAG_CLA0PF: CLA0 unit rising edge flag
-      \arg        CLA_FLAG_CLA1NF: CLA1 unit falling edge flag
-      \arg        CLA_FLAG_CLA1PF: CLA1 unit rising edge flag
-      \arg        CLA_FLAG_CLA2NF: CLA2 unit falling edge flag
-      \arg        CLA_FLAG_CLA2PF: CLA2 unit rising edge flag
-      \arg        CLA_FLAG_CLA3NF: CLA3 unit falling edge flag
-      \arg        CLA_FLAG_CLA3PF: CLA3 unit rising edge flag
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg CLA_FLAG_CLA0NF: CLA0 unit falling edge flag
+  \arg CLA_FLAG_CLA0PF: CLA0 unit rising edge flag
+  \arg CLA_FLAG_CLA1NF: CLA1 unit falling edge flag
+  \arg CLA_FLAG_CLA1PF: CLA1 unit rising edge flag
+  \arg CLA_FLAG_CLA2NF: CLA2 unit falling edge flag
+  \arg CLA_FLAG_CLA2PF: CLA2 unit rising edge flag
+  \arg CLA_FLAG_CLA3NF: CLA3 unit falling edge flag
+  \arg CLA_FLAG_CLA3PF: CLA3 unit rising edge flag
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus cla_flag_get(cla_flag_enum flag)
 {
     uint32_t interrupt_flag_register;
     uint32_t returnval;
-    
+
     interrupt_flag_register = CLA_INTF;
-    
-    switch(flag){
-        case CLA_FLAG_CLA0NF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA0NF);
-             break;
-        case CLA_FLAG_CLA0PF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA0PF) >> 1U;
-             break;
-        case CLA_FLAG_CLA1NF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA1NF) >> 2U;
-             break;
-        case CLA_FLAG_CLA1PF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA1PF) >> 3U;
-             break;
-        case CLA_FLAG_CLA2NF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA2NF) >> 4U;
-             break;
-        case CLA_FLAG_CLA2PF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA2PF) >> 5U;
-             break;
-        case CLA_FLAG_CLA3NF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA3NF) >> 6U;
-             break;
-        case CLA_FLAG_CLA3PF:
-             returnval = (interrupt_flag_register & CLA_INTF_CLA3PF) >> 7U;
-             break;
-        default:
-             returnval = 0U;
-             break;
+
+    switch (flag)
+    {
+    case CLA_FLAG_CLA0NF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA0NF);
+        break;
+    case CLA_FLAG_CLA0PF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA0PF) >> 1U;
+        break;
+    case CLA_FLAG_CLA1NF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA1NF) >> 2U;
+        break;
+    case CLA_FLAG_CLA1PF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA1PF) >> 3U;
+        break;
+    case CLA_FLAG_CLA2NF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA2NF) >> 4U;
+        break;
+    case CLA_FLAG_CLA2PF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA2PF) >> 5U;
+        break;
+    case CLA_FLAG_CLA3NF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA3NF) >> 6U;
+        break;
+    case CLA_FLAG_CLA3PF:
+        returnval = (interrupt_flag_register & CLA_INTF_CLA3PF) >> 7U;
+        break;
+    default:
+        returnval = 0U;
+        break;
     }
-    if(SET == returnval){
+
+    if (SET == returnval)
+    {
         return SET;
-    }else{
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      clear CLA flag
-    \param[in]  flag: CLA flags,refer to cla_flag_enum
+  \brief clear CLA flag
+  \param[in]  flag: CLA flags,refer to cla_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CLA_FLAG_CLA0NF: CLA0 unit falling edge flag
-      \arg        CLA_FLAG_CLA0PF: CLA0 unit rising edge flag
-      \arg        CLA_FLAG_CLA1NF: CLA1 unit falling edge flag
-      \arg        CLA_FLAG_CLA1PF: CLA1 unit rising edge flag
-      \arg        CLA_FLAG_CLA2NF: CLA2 unit falling edge flag
-      \arg        CLA_FLAG_CLA2PF: CLA2 unit rising edge flag
-      \arg        CLA_FLAG_CLA3NF: CLA3 unit falling edge flag
-      \arg        CLA_FLAG_CLA3PF: CLA3 unit rising edge flag
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA_FLAG_CLA0NF: CLA0 unit falling edge flag
+  \arg CLA_FLAG_CLA0PF: CLA0 unit rising edge flag
+  \arg CLA_FLAG_CLA1NF: CLA1 unit falling edge flag
+  \arg CLA_FLAG_CLA1PF: CLA1 unit rising edge flag
+  \arg CLA_FLAG_CLA2NF: CLA2 unit falling edge flag
+  \arg CLA_FLAG_CLA2PF: CLA2 unit rising edge flag
+  \arg CLA_FLAG_CLA3NF: CLA3 unit falling edge flag
+  \arg CLA_FLAG_CLA3PF: CLA3 unit rising edge flag
+  \param[out] none
+  \retval none
+ */
 void cla_flag_clear(cla_flag_enum flag)
 {
-    switch(flag){
-        case CLA_FLAG_CLA0NF:
-             CLA_INTF &= ~CLA_INTF_CLA0NF;
-             break;
-        case CLA_FLAG_CLA0PF:
-             CLA_INTF &= ~CLA_INTF_CLA0PF;
-             break;
-        case CLA_FLAG_CLA1NF:
-             CLA_INTF &= ~CLA_INTF_CLA1NF;
-             break;
-        case CLA_FLAG_CLA1PF:
-             CLA_INTF &= ~CLA_INTF_CLA1PF;
-             break;
-        case CLA_FLAG_CLA2NF:
-             CLA_INTF &= ~CLA_INTF_CLA2NF;
-             break;
-        case CLA_FLAG_CLA2PF:
-             CLA_INTF &= ~CLA_INTF_CLA2PF;
-             break;
-        case CLA_FLAG_CLA3NF:
-             CLA_INTF &= ~CLA_INTF_CLA3NF;
-             break;
-        case CLA_FLAG_CLA3PF:
-             CLA_INTF &= ~CLA_INTF_CLA3PF;
-             break;
-        default:
-            break;
+    switch (flag)
+    {
+    case CLA_FLAG_CLA0NF:
+        CLA_INTF &= ~CLA_INTF_CLA0NF;
+        break;
+    case CLA_FLAG_CLA0PF:
+        CLA_INTF &= ~CLA_INTF_CLA0PF;
+        break;
+    case CLA_FLAG_CLA1NF:
+        CLA_INTF &= ~CLA_INTF_CLA1NF;
+        break;
+    case CLA_FLAG_CLA1PF:
+        CLA_INTF &= ~CLA_INTF_CLA1PF;
+        break;
+    case CLA_FLAG_CLA2NF:
+        CLA_INTF &= ~CLA_INTF_CLA2NF;
+        break;
+    case CLA_FLAG_CLA2PF:
+        CLA_INTF &= ~CLA_INTF_CLA2PF;
+        break;
+    case CLA_FLAG_CLA3NF:
+        CLA_INTF &= ~CLA_INTF_CLA3NF;
+        break;
+    case CLA_FLAG_CLA3PF:
+        CLA_INTF &= ~CLA_INTF_CLA3PF;
+        break;
+    default:
+        break;
     }
 }
 
 /*!
-    \brief      enable CLA falling edge interrupt
-    \param[in]  clanie: CLA falling edge interrupt enable
+  \brief enable CLA falling edge interrupt
+  \param[in]  clanie: CLA falling edge interrupt enable
                 only one parameter can be selected which is shown as below:
-      \arg        CLA0NIE: CLA0 falling edge interrupt enable
-      \arg        CLA1NIE: CLA1 falling edge interrupt enable
-      \arg        CLA2NIE: CLA2 falling edge interrupt enable
-      \arg        CLA3NIE: CLA3 falling edge interrupt enable
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA0NIE: CLA0 falling edge interrupt enable
+  \arg CLA1NIE: CLA1 falling edge interrupt enable
+  \arg CLA2NIE: CLA2 falling edge interrupt enable
+  \arg CLA3NIE: CLA3 falling edge interrupt enable
+  \param[out] none
+  \retval none
+ */
 void cla_negedge_interrupt_enable(uint32_t clanie)
 {
     CLA_INTE |= clanie;
 }
 
 /*!
-    \brief      disable CLA falling edge interrupt
-    \param[in]  clanidis: CLA falling edge interrupt disable
+  \brief disable CLA falling edge interrupt
+  \param[in]  clanidis: CLA falling edge interrupt disable
                 only one parameter can be selected which is shown as below:
-      \arg        CLA0NI_DISABLE: CLA0 falling edge interrupt disable
-      \arg        CLA1NI_DISABLE: CLA1 falling edge interrupt disable
-      \arg        CLA2NI_DISABLE: CLA2 falling edge interrupt disable
-      \arg        CLA3NI_DISABLE: CLA3 falling edge interrupt disable
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA0NI_DISABLE: CLA0 falling edge interrupt disable
+  \arg CLA1NI_DISABLE: CLA1 falling edge interrupt disable
+  \arg CLA2NI_DISABLE: CLA2 falling edge interrupt disable
+  \arg CLA3NI_DISABLE: CLA3 falling edge interrupt disable
+  \param[out] none
+  \retval none
+ */
 void cla_negedge_interrupt_disable(uint32_t clanidis)
 {
     CLA_INTE &= ~clanidis;
 }
 
 /*!
-    \brief      enable CLA rising edge interrupt
-    \param[in]  clapie: CLA rising edge interrupt enable
+  \brief enable CLA rising edge interrupt
+  \param[in]  clapie: CLA rising edge interrupt enable
                 only one parameter can be selected which is shown as below:
-      \arg        CLA0PIE: CLA0 rising edge interrupt enable
-      \arg        CLA1PIE: CLA1 rising edge interrupt enable
-      \arg        CLA2PIE: CLA2 rising edge interrupt enable
-      \arg        CLA3PIE: CLA3 rising edge interrupt enable
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA0PIE: CLA0 rising edge interrupt enable
+  \arg CLA1PIE: CLA1 rising edge interrupt enable
+  \arg CLA2PIE: CLA2 rising edge interrupt enable
+  \arg CLA3PIE: CLA3 rising edge interrupt enable
+  \param[out] none
+  \retval none
+ */
 void cla_posedge_interrupt_enable(uint32_t clapie)
 {
     CLA_INTE |= clapie;
 }
 
 /*!
-    \brief      disable CLA rising edge interrupt
-    \param[in]  clapidis: CLA rising edge interrupt disable
+  \brief disable CLA rising edge interrupt
+  \param[in]  clapidis: CLA rising edge interrupt disable
                 only one parameter can be selected which is shown as below:
-      \arg        CLA0PI_DISABLE: CLA0 rising edge interrupt disable
-      \arg        CLA1PI_DISABLE: CLA1 rising edge interrupt disable
-      \arg        CLA2PI_DISABLE: CLA2 rising edge interrupt disable
-      \arg        CLA3PI_DISABLE: CLA3 rising edge interrupt disable
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA0PI_DISABLE: CLA0 rising edge interrupt disable
+  \arg CLA1PI_DISABLE: CLA1 rising edge interrupt disable
+  \arg CLA2PI_DISABLE: CLA2 rising edge interrupt disable
+  \arg CLA3PI_DISABLE: CLA3 rising edge interrupt disable
+  \param[out] none
+  \retval none
+ */
 void cla_posedge_interrupt_disable(uint32_t clapidis)
 {
     CLA_INTE &= ~clapidis;
 }
 
 /*!
-    \brief      check CLA interrupt flag is set or not 
-    \param[in]  int_flag: CLA interrupt flags,refer to cla_interrupt_flag_enum
+  \brief check CLA interrupt flag is set or not
+  \param[in]  int_flag: CLA interrupt flags,refer to cla_interrupt_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CLA_INT_FLAG_CLA0NF: CLA0 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA0PF: CLA0 unit rising edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA1NF: CLA1 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA1PF: CLA1 unit rising edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA2NF: CLA2 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA2PF: CLA2 unit rising edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA3NF: CLA3 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA3PF: CLA3 unit rising edge interrupt flag
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA_INT_FLAG_CLA0NF: CLA0 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA0PF: CLA0 unit rising edge interrupt flag
+  \arg CLA_INT_FLAG_CLA1NF: CLA1 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA1PF: CLA1 unit rising edge interrupt flag
+  \arg CLA_INT_FLAG_CLA2NF: CLA2 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA2PF: CLA2 unit rising edge interrupt flag
+  \arg CLA_INT_FLAG_CLA3NF: CLA3 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA3PF: CLA3 unit rising edge interrupt flag
+  \param[out] none
+  \retval none
+ */
 FlagStatus cla_interrupt_flag_get(cla_interrupt_flag_enum int_flag)
 {
     uint32_t cla_inte = CLA_INTE;
     uint32_t cla_intf = CLA_INTF;
-    
-    switch(int_flag){
-        case CLA_INT_FLAG_CLA0NF:
-             cla_inte = cla_inte & CLA_INTE_CLA0NIE;
-             cla_intf = cla_intf & CLA_INTF_CLA0NF;
-             break;
-        case CLA_INT_FLAG_CLA0PF:
-             cla_inte = cla_inte & CLA_INTE_CLA0PIE;
-             cla_intf = cla_intf & CLA_INTF_CLA0PF;
-             break;
-        case CLA_INT_FLAG_CLA1NF:
-             cla_inte = cla_inte & CLA_INTE_CLA1NIE;
-             cla_intf = cla_intf & CLA_INTF_CLA1NF;
-             break;
-        case CLA_INT_FLAG_CLA1PF:
-             cla_inte = cla_inte & CLA_INTE_CLA1PIE;
-             cla_intf = cla_intf & CLA_INTF_CLA1PF;
-             break;
-        case CLA_INT_FLAG_CLA2NF:
-             cla_inte = cla_inte & CLA_INTE_CLA2NIE;
-             cla_intf = cla_intf & CLA_INTF_CLA2NF;
-             break;
-        case CLA_INT_FLAG_CLA2PF:
-             cla_inte = cla_inte & CLA_INTE_CLA2PIE;
-             cla_intf = cla_intf & CLA_INTF_CLA2PF;
-             break;
-        case CLA_INT_FLAG_CLA3NF:
-             cla_inte = cla_inte & CLA_INTE_CLA3NIE;
-             cla_intf = cla_intf & CLA_INTF_CLA3NF;
-             break;
-        case CLA_INT_FLAG_CLA3PF:
-             cla_inte = cla_inte & CLA_INTE_CLA3PIE;
-             cla_intf = cla_intf & CLA_INTF_CLA3PF;
-             break;
-        default:
-             break;
+
+    switch (int_flag)
+    {
+    case CLA_INT_FLAG_CLA0NF:
+        cla_inte = cla_inte & CLA_INTE_CLA0NIE;
+        cla_intf = cla_intf & CLA_INTF_CLA0NF;
+        break;
+    case CLA_INT_FLAG_CLA0PF:
+        cla_inte = cla_inte & CLA_INTE_CLA0PIE;
+        cla_intf = cla_intf & CLA_INTF_CLA0PF;
+        break;
+    case CLA_INT_FLAG_CLA1NF:
+        cla_inte = cla_inte & CLA_INTE_CLA1NIE;
+        cla_intf = cla_intf & CLA_INTF_CLA1NF;
+        break;
+    case CLA_INT_FLAG_CLA1PF:
+        cla_inte = cla_inte & CLA_INTE_CLA1PIE;
+        cla_intf = cla_intf & CLA_INTF_CLA1PF;
+        break;
+    case CLA_INT_FLAG_CLA2NF:
+        cla_inte = cla_inte & CLA_INTE_CLA2NIE;
+        cla_intf = cla_intf & CLA_INTF_CLA2NF;
+        break;
+    case CLA_INT_FLAG_CLA2PF:
+        cla_inte = cla_inte & CLA_INTE_CLA2PIE;
+        cla_intf = cla_intf & CLA_INTF_CLA2PF;
+        break;
+    case CLA_INT_FLAG_CLA3NF:
+        cla_inte = cla_inte & CLA_INTE_CLA3NIE;
+        cla_intf = cla_intf & CLA_INTF_CLA3NF;
+        break;
+    case CLA_INT_FLAG_CLA3PF:
+        cla_inte = cla_inte & CLA_INTE_CLA3PIE;
+        cla_intf = cla_intf & CLA_INTF_CLA3PF;
+        break;
+    default:
+        break;
     }
-    if((0U != cla_inte) && (0U != cla_intf)){
+
+    if (    (0U != cla_inte)
+         && (0U != cla_intf))
+    {
         return SET;
-    }else{
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      clear CLA interrupt flag
-    \param[in]  int_flag: CLA interrupt flags,refer to cla_interrupt_flag_enum
+  \brief clear CLA interrupt flag
+  \param[in]  int_flag: CLA interrupt flags,refer to cla_interrupt_flag_enum
                 only one parameter can be selected which is shown as below:
-      \arg        CLA_INT_FLAG_CLA0NF: CLA0 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA0PF: CLA0 unit rising edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA1NF: CLA1 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA1PF: CLA1 unit rising edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA2NF: CLA2 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA2PF: CLA2 unit rising edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA3NF: CLA3 unit falling edge interrupt flag
-      \arg        CLA_INT_FLAG_CLA3PF: CLA3 unit rising edge interrupt flag
-    \param[out] none
-    \retval     none
-*/
+  \arg CLA_INT_FLAG_CLA0NF: CLA0 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA0PF: CLA0 unit rising edge interrupt flag
+  \arg CLA_INT_FLAG_CLA1NF: CLA1 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA1PF: CLA1 unit rising edge interrupt flag
+  \arg CLA_INT_FLAG_CLA2NF: CLA2 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA2PF: CLA2 unit rising edge interrupt flag
+  \arg CLA_INT_FLAG_CLA3NF: CLA3 unit falling edge interrupt flag
+  \arg CLA_INT_FLAG_CLA3PF: CLA3 unit rising edge interrupt flag
+  \param[out] none
+  \retval none
+ */
 void cla_interrupt_flag_clear(cla_interrupt_flag_enum int_flag)
 {
-    switch(int_flag){
-        case CLA_INT_FLAG_CLA0NF:
-             CLA_INTF &= ~CLA_INTF_CLA0NF;
-             break;
-        case CLA_INT_FLAG_CLA0PF:
-             CLA_INTF &= ~CLA_INTF_CLA0PF;
-             break;
-        case CLA_INT_FLAG_CLA1NF:
-             CLA_INTF &= ~CLA_INTF_CLA1NF;
-             break;
-        case CLA_INT_FLAG_CLA1PF:
-             CLA_INTF &= ~CLA_INTF_CLA1PF;
-             break;
-        case CLA_INT_FLAG_CLA2NF:
-             CLA_INTF &= ~CLA_INTF_CLA2NF;
-             break;
-        case CLA_INT_FLAG_CLA2PF:
-             CLA_INTF &= ~CLA_INTF_CLA2PF;
-             break;
-        case CLA_INT_FLAG_CLA3NF:
-             CLA_INTF &= ~CLA_INTF_CLA3NF;
-             break;
-        case CLA_INT_FLAG_CLA3PF:
-             CLA_INTF &= ~CLA_INTF_CLA3PF;
-             break;
-        default:
-             break;
+    switch (int_flag)
+    {
+    case CLA_INT_FLAG_CLA0NF:
+        CLA_INTF &= ~CLA_INTF_CLA0NF;
+        break;
+    case CLA_INT_FLAG_CLA0PF:
+        CLA_INTF &= ~CLA_INTF_CLA0PF;
+        break;
+    case CLA_INT_FLAG_CLA1NF:
+        CLA_INTF &= ~CLA_INTF_CLA1NF;
+        break;
+    case CLA_INT_FLAG_CLA1PF:
+        CLA_INTF &= ~CLA_INTF_CLA1PF;
+        break;
+    case CLA_INT_FLAG_CLA2NF:
+        CLA_INTF &= ~CLA_INTF_CLA2NF;
+        break;
+    case CLA_INT_FLAG_CLA2PF:
+        CLA_INTF &= ~CLA_INTF_CLA2PF;
+        break;
+    case CLA_INT_FLAG_CLA3NF:
+        CLA_INTF &= ~CLA_INTF_CLA3NF;
+        break;
+    case CLA_INT_FLAG_CLA3PF:
+        CLA_INTF &= ~CLA_INTF_CLA3PF;
+        break;
+    default:
+        break;
     }
 }

@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_cau_des.c
-    \brief   CAU DES driver
-    
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_cau_des.c
+  \brief CAU DES driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,26 +30,26 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_cau.h"
 
-#define DESBUSY_TIMEOUT    ((uint32_t)0x00010000U)
+#define DESBUSY_TIMEOUT ((uint32_t)0x00010000U)
 
 /* DES calculate process */
 static ErrStatus cau_des_calculate(uint8_t *input, uint32_t in_length, uint8_t *output);
 
 /*!
-    \brief      encrypt and decrypt using DES in ECB mode
-    \param[in]  cau_parameter: pointer to the input structure
+  \brief encrypt and decrypt using DES in ECB mode
+  \param[in]  cau_parameter: pointer to the input structure
                   alg_dir: algorithm dirctory
                     CAU_ENCRYPT, CAU_DECRYPT
                   key: key, 8 bytes
                   input: input data
                   in_length: input data length in bytes, must be a multiple of 8 bytes
-    \param[out] output: pointer to the output buffer
-    \retval     ErrStatus: SUCCESS or ERROR
-*/
+  \param[out] output: pointer to the output buffer
+  \retval ErrStatus: SUCCESS or ERROR
+ */
 ErrStatus cau_des_ecb(cau_parameter_struct *cau_parameter, uint8_t *output)
 {
     ErrStatus ret = ERROR;
@@ -82,17 +82,17 @@ ErrStatus cau_des_ecb(cau_parameter_struct *cau_parameter, uint8_t *output)
 }
 
 /*!
-    \brief      encrypt and decrypt using DES in CBC mode
-    \param[in]  cau_parameter: pointer to the input structure
+  \brief encrypt and decrypt using DES in CBC mode
+  \param[in]  cau_parameter: pointer to the input structure
                   alg_dir: algorithm dirctory
                     CAU_ENCRYPT, CAU_DECRYPT
                   key: key, 8 bytes
                   iv: initialization vector, 8 bytes
                   input: input data
                   in_length: input data length in bytes, must be a multiple of 8 bytes
-    \param[out] output: pointer to the output structure
-    \retval     ErrStatus: SUCCESS or ERROR
-*/
+  \param[out] output: pointer to the output structure
+  \retval ErrStatus: SUCCESS or ERROR
+ */
 ErrStatus cau_des_cbc(cau_parameter_struct *cau_parameter, uint8_t *output)
 {
     ErrStatus ret = ERROR;
@@ -134,27 +134,30 @@ ErrStatus cau_des_cbc(cau_parameter_struct *cau_parameter, uint8_t *output)
 }
 
 /*!
-    \brief      DES calculate process
-    \param[in]  input: pointer to the input buffer
-    \param[in]  in_length: length of the input buffer in bytes, must be a multiple of 8 bytes
-    \param[in]  output: pointer to the returned buffer
-    \param[out] none
-    \retval     ErrStatus: SUCCESS or ERROR
-*/
+  \brief DES calculate process
+  \param[in]  input: pointer to the input buffer
+  \param[in]  in_length: length of the input buffer in bytes, must be a multiple of 8 bytes
+  \param[in]  output: pointer to the returned buffer
+  \param[out] none
+  \retval ErrStatus: SUCCESS or ERROR
+ */
 static ErrStatus cau_des_calculate(uint8_t *input, uint32_t in_length, uint8_t *output)
 {
-    uint32_t inputaddr  = (uint32_t)input;
-    uint32_t outputaddr = (uint32_t)output;
-    uint32_t i = 0U;
+    uint32_t inputaddr    = (uint32_t)input;
+    uint32_t outputaddr   = (uint32_t)output;
+    uint32_t i            = 0U;
     __IO uint32_t counter = 0U;
-    uint32_t busystatus = 0U;
+    uint32_t busystatus   = 0U;
 
     /* the clock is not enabled or there is no embeded CAU peripheral */
-    if(DISABLE == cau_enable_state_get()) {
+
+    if (DISABLE == cau_enable_state_get())
+    {
         return ERROR;
     }
 
-    for(i = 0U; i < in_length; i += 8U) {
+    for (i = 0U; i < in_length; i += 8U)
+    {
         /* write data to the IN FIFO */
         cau_data_write(*(uint32_t *)(inputaddr));
         inputaddr += 4U;
@@ -163,14 +166,19 @@ static ErrStatus cau_des_calculate(uint8_t *input, uint32_t in_length, uint8_t *
 
         /* wait until the complete message has been processed */
         counter = 0U;
-        do {
+        do
+        {
             busystatus = cau_flag_get(CAU_FLAG_BUSY);
             counter++;
-        } while((DESBUSY_TIMEOUT != counter) && (RESET != busystatus));
+        } while (    (DESBUSY_TIMEOUT != counter)
+                  && (RESET != busystatus));
 
-        if(RESET != busystatus) {
+        if (RESET != busystatus)
+        {
             return ERROR;
-        } else {
+        }
+        else
+        {
             /* read the output block from the output FIFO */
             *(uint32_t *)(outputaddr) = cau_data_read();
             outputaddr += 4U;

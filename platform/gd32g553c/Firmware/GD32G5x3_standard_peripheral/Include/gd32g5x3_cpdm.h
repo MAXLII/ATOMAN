@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_cpdm.h
-    \brief   definitions for the CPDM
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_cpdm.h
+  \brief definitions for the CPDM
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef GD32G5X3_CPDM_H
 #define GD32G5X3_CPDM_H
@@ -38,43 +38,44 @@ OF SUCH DAMAGE.
 #include "gd32g5x3.h"
 
 /* CPDM definitions */
-#define CPDM                       CPDM_BASE
+#define CPDM CPDM_BASE
 
 /* registers definitions */
-#define CPDM_CTL                   REG32(CPDM + 0x00000000U)      /*!< CPDM control register */
-#define CPDM_CFG                   REG32(CPDM + 0x00000004U)      /*!< CPDM configuration register */
+#define CPDM_CTL REG32(CPDM + 0x00000000U) /*!< CPDM control register */
+#define CPDM_CFG REG32(CPDM + 0x00000004U) /*!< CPDM configuration register */
 
 /* bits definitions */
 /* CPDM_CTL */
-#define CPDM_CTL_CPDMEN            BIT(0)                         /*!< CPDM enable */
-#define CPDM_CTL_DLSEN             BIT(1)                         /*!< CPDM delay line sample module enable */
+#define CPDM_CTL_CPDMEN BIT(0) /*!< CPDM enable */
+#define CPDM_CTL_DLSEN  BIT(1) /*!< CPDM delay line sample module enable */
 
 /* CPDM_CFG */
-#define CPDM_CFG_CPSEL             BITS(0,3)                      /*!< select the phase of the output clock */
-#define CPDM_CFG_DLSTCNT           BITS(8,14)                     /*!< define a delay step count for a unit delay UNIT */
-#define CPDM_CFG_DLLEN             BITS(16,27)                    /*!< delay line length */
-#define CPDM_CFG_DLLENF            BIT(31)                        /*!< valid mark of delay line length */
+#define CPDM_CFG_CPSEL   BITS(0 , 3)  /*!< select the phase of the output clock */
+#define CPDM_CFG_DLSTCNT BITS(8 , 14) /*!< define a delay step count for a unit delay UNIT */
+#define CPDM_CFG_DLLEN   BITS(16, 27) /*!< delay line length */
+#define CPDM_CFG_DLLENF  BIT(31)      /*!< valid mark of delay line length */
 
 /* constants definitions */
 /* output clock phase selection enum definition */
-typedef enum {
-    CPDM_OUTPUT_PHASE_SELECTION_0 = 0U,                            /*!< output clock phase = input clock */
-    CPDM_OUTPUT_PHASE_SELECTION_1,                                 /*!< output clock phase = input clock + 1 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_2,                                 /*!< output clock phase = input clock + 2 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_3,                                 /*!< output clock phase = input clock + 3 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_4,                                 /*!< output clock phase = input clock + 4 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_5,                                 /*!< output clock phase = input clock + 5 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_6,                                 /*!< output clock phase = input clock + 6 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_7,                                 /*!< output clock phase = input clock + 7 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_8,                                 /*!< output clock phase = input clock + 8 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_9,                                 /*!< output clock phase = input clock + 9 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_10,                                /*!< output clock phase = input clock + 10 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_11,                                /*!< output clock phase = input clock + 11 * UNIT delay */
-    CPDM_OUTPUT_PHASE_SELECTION_12,                                /*!< output clock phase = input clock + 12 * UNIT delay */
+typedef enum
+{
+    CPDM_OUTPUT_PHASE_SELECTION_0 = 0U, /*!< output clock phase = input clock */
+    CPDM_OUTPUT_PHASE_SELECTION_1,      /*!< output clock phase = input clock + 1 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_2,      /*!< output clock phase = input clock + 2 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_3,      /*!< output clock phase = input clock + 3 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_4,      /*!< output clock phase = input clock + 4 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_5,      /*!< output clock phase = input clock + 5 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_6,      /*!< output clock phase = input clock + 6 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_7,      /*!< output clock phase = input clock + 7 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_8,      /*!< output clock phase = input clock + 8 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_9,      /*!< output clock phase = input clock + 9 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_10,     /*!< output clock phase = input clock + 10 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_11,     /*!< output clock phase = input clock + 11 * UNIT delay */
+    CPDM_OUTPUT_PHASE_SELECTION_12,     /*!< output clock phase = input clock + 12 * UNIT delay */
 } cpdm_output_phase_enum;
 
-#define CPDM_MAX_DELAY_STEP_COUNT  ((uint32_t)0x0000007FU)        /*!< max UNIT value  */
-#define CPDM_MAX_PHASE             ((uint32_t)0x0000000CU)        /*!< max select value of the phase */
+#define CPDM_MAX_DELAY_STEP_COUNT ((uint32_t)0x0000007FU) /*!< max UNIT value */
+#define CPDM_MAX_PHASE            ((uint32_t)0x0000000CU) /*!< max select value of the phase */
 
 /* function declarations */
 /* deinitialization and initialization functions */

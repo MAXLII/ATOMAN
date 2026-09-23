@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_misc.c
-    \brief   MISC driver
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_misc.c
+  \brief MISC driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,21 +30,21 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_misc.h"
 
 /*!
-    \brief      set the priority group
-    \param[in]  nvic_prigroup: the NVIC priority group
-      \arg        NVIC_PRIGROUP_PRE0_SUB4:0 bits for pre-emption priority 4 bits for subpriority
-      \arg        NVIC_PRIGROUP_PRE1_SUB3:1 bits for pre-emption priority 3 bits for subpriority
-      \arg        NVIC_PRIGROUP_PRE2_SUB2:2 bits for pre-emption priority 2 bits for subpriority
-      \arg        NVIC_PRIGROUP_PRE3_SUB1:3 bits for pre-emption priority 1 bits for subpriority
-      \arg        NVIC_PRIGROUP_PRE4_SUB0:4 bits for pre-emption priority 0 bits for subpriority
-    \param[out] none
-    \retval     none
-*/
+  \brief set the priority group
+  \param[in]  nvic_prigroup: the NVIC priority group
+  \arg NVIC_PRIGROUP_PRE0_SUB4:0 bits for pre-emption priority 4 bits for subpriority
+  \arg NVIC_PRIGROUP_PRE1_SUB3:1 bits for pre-emption priority 3 bits for subpriority
+  \arg NVIC_PRIGROUP_PRE2_SUB2:2 bits for pre-emption priority 2 bits for subpriority
+  \arg NVIC_PRIGROUP_PRE3_SUB1:3 bits for pre-emption priority 1 bits for subpriority
+  \arg NVIC_PRIGROUP_PRE4_SUB0:4 bits for pre-emption priority 0 bits for subpriority
+  \param[out] none
+  \retval none
+ */
 void nvic_priority_group_set(uint32_t nvic_prigroup)
 {
     /* set the priority group value */
@@ -52,53 +52,65 @@ void nvic_priority_group_set(uint32_t nvic_prigroup)
 }
 
 /*!
-    \brief      enable NVIC request
-    \param[in]  nvic_irq: the NVIC interrupt request, detailed in IRQn_Type
-    \param[in]  nvic_irq_pre_priority: the pre-emption priority needed to set
-    \param[in]  nvic_irq_sub_priority: the subpriority needed to set
-    \param[out] none
-    \retval     none
-*/
-void nvic_irq_enable(IRQn_Type nvic_irq, uint8_t nvic_irq_pre_priority, 
+  \brief enable NVIC request
+  \param[in]  nvic_irq: the NVIC interrupt request, detailed in IRQn_Type
+  \param[in]  nvic_irq_pre_priority: the pre-emption priority needed to set
+  \param[in]  nvic_irq_sub_priority: the subpriority needed to set
+  \param[out] none
+  \retval none
+ */
+void nvic_irq_enable(IRQn_Type nvic_irq, uint8_t nvic_irq_pre_priority,
                      uint8_t nvic_irq_sub_priority)
 {
     uint32_t temp_priority = 0x00U, temp_pre = 0x00U, temp_sub = 0x00U;
     /* use the priority group value to get the temp_pre and the temp_sub */
-    if(((SCB->AIRCR) & (uint32_t)0x700U)==NVIC_PRIGROUP_PRE0_SUB4){
-        temp_pre=0U;
-        temp_sub=0x4U;
-    }else if(((SCB->AIRCR) & (uint32_t)0x700U)==NVIC_PRIGROUP_PRE1_SUB3){
-        temp_pre=1U;
-        temp_sub=0x3U;
-    }else if(((SCB->AIRCR) & (uint32_t)0x700U)==NVIC_PRIGROUP_PRE2_SUB2){
-        temp_pre=2U;
-        temp_sub=0x2U;
-    }else if(((SCB->AIRCR) & (uint32_t)0x700U)==NVIC_PRIGROUP_PRE3_SUB1){
-        temp_pre=3U;
-        temp_sub=0x1U;
-    }else if(((SCB->AIRCR) & (uint32_t)0x700U)==NVIC_PRIGROUP_PRE4_SUB0){
-        temp_pre=4U;
-        temp_sub=0x0U;
-    }else{
+
+    if (((SCB->AIRCR) & (uint32_t)0x700U) == NVIC_PRIGROUP_PRE0_SUB4)
+    {
+        temp_pre = 0U;
+        temp_sub = 0x4U;
+    }
+    else if (((SCB->AIRCR) & (uint32_t)0x700U) == NVIC_PRIGROUP_PRE1_SUB3)
+    {
+        temp_pre = 1U;
+        temp_sub = 0x3U;
+    }
+    else if (((SCB->AIRCR) & (uint32_t)0x700U) == NVIC_PRIGROUP_PRE2_SUB2)
+    {
+        temp_pre = 2U;
+        temp_sub = 0x2U;
+    }
+    else if (((SCB->AIRCR) & (uint32_t)0x700U) == NVIC_PRIGROUP_PRE3_SUB1)
+    {
+        temp_pre = 3U;
+        temp_sub = 0x1U;
+    }
+    else if (((SCB->AIRCR) & (uint32_t)0x700U) == NVIC_PRIGROUP_PRE4_SUB0)
+    {
+        temp_pre = 4U;
+        temp_sub = 0x0U;
+    }
+    else
+    {
         nvic_priority_group_set(NVIC_PRIGROUP_PRE2_SUB2);
-        temp_pre=2U;
-        temp_sub=0x2U;
+        temp_pre = 2U;
+        temp_sub = 0x2U;
     }
     /* get the temp_priority to fill the NVIC->IP register */
     temp_priority = (uint32_t)nvic_irq_pre_priority << (0x4U - temp_pre);
-    temp_priority |= nvic_irq_sub_priority &(0x0FU >> (0x4U - temp_sub));
-    temp_priority = temp_priority << 0x04U;
+    temp_priority |= nvic_irq_sub_priority & (0x0FU >> (0x4U - temp_sub));
+    temp_priority       = temp_priority << 0x04U;
     NVIC->IPR[nvic_irq] = (uint8_t)temp_priority;
     /* enable the selected IRQ */
     NVIC->ISER[(uint8_t)nvic_irq >> 0x05U] = (uint32_t)0x01U << ((uint8_t)nvic_irq & (uint8_t)0x1FU);
 }
 
 /*!
-    \brief      disable NVIC request
-    \param[in]  nvic_irq: the NVIC interrupt request, detailed in IRQn_Type
-    \param[out] none
-    \retval     none
-*/
+  \brief disable NVIC request
+  \param[in]  nvic_irq: the NVIC interrupt request, detailed in IRQn_Type
+  \param[out] none
+  \retval none
+ */
 void nvic_irq_disable(IRQn_Type nvic_irq)
 {
     /* disable the selected IRQ */
@@ -106,25 +118,25 @@ void nvic_irq_disable(IRQn_Type nvic_irq)
 }
 
 /*!
-    \brief      initiates a system reset request to reset the MCU
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief initiates a system reset request to reset the MCU
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void nvic_system_reset(void)
 {
     NVIC_SystemReset();
 }
 
 /*!
-    \brief      set the NVIC vector table base address
-    \param[in]  nvic_vict_tab: the RAM or FLASH base address
-      \arg        NVIC_VECTTAB_RAM: RAM base address
-      \are        NVIC_VECTTAB_FLASH: Flash base address
-    \param[in]  offset: Vector Table offset
-    \param[out] none
-    \retval     none
-*/
+  \brief set the NVIC vector table base address
+  \param[in]  nvic_vict_tab: the RAM or FLASH base address
+  \arg NVIC_VECTTAB_RAM: RAM base address
+  \are NVIC_VECTTAB_FLASH: Flash base address
+  \param[in]  offset: Vector Table offset
+  \param[out] none
+  \retval none
+ */
 void nvic_vector_table_set(uint32_t nvic_vict_tab, uint32_t offset)
 {
     SCB->VTOR = nvic_vict_tab | (offset & NVIC_VECTTAB_OFFSET_MASK);
@@ -132,52 +144,55 @@ void nvic_vector_table_set(uint32_t nvic_vict_tab, uint32_t offset)
 }
 
 /*!
-    \brief      set the state of the low power mode
-    \param[in]  lowpower_mode: the low power mode state
-      \arg        SCB_LPM_SLEEP_EXIT_ISR: if chose this para, the system always enter low power 
-                    mode by exiting from ISR
-      \arg        SCB_LPM_DEEPSLEEP: if chose this para, the system will enter the DEEPSLEEP mode
-      \arg        SCB_LPM_WAKE_BY_ALL_INT: if chose this para, the lowpower mode can be woke up 
-                    by all the enable and disable interrupts
-    \param[out] none
-    \retval     none
-*/
+  \brief set the state of the low power mode
+  \param[in]  lowpower_mode: the low power mode state
+  \arg SCB_LPM_SLEEP_EXIT_ISR: if chose this para, the system always enter low power
+       mode by exiting from ISR
+  \arg SCB_LPM_DEEPSLEEP: if chose this para, the system will enter the DEEPSLEEP mode
+  \arg SCB_LPM_WAKE_BY_ALL_INT: if chose this para, the lowpower mode can be woke up
+       by all the enable and disable interrupts
+  \param[out] none
+  \retval none
+ */
 void system_lowpower_set(uint8_t lowpower_mode)
 {
     SCB->SCR |= (uint32_t)lowpower_mode;
 }
 
 /*!
-    \brief      reset the state of the low power mode
-    \param[in]  lowpower_mode: the low power mode state
-      \arg        SCB_LPM_SLEEP_EXIT_ISR: if chose this para, the system will exit low power 
-                    mode by exiting from ISR
-      \arg        SCB_LPM_DEEPSLEEP: if chose this para, the system will enter the SLEEP mode
-      \arg        SCB_LPM_WAKE_BY_ALL_INT: if chose this para, the lowpower mode only can be 
-                    woke up by the enable interrupts
-    \param[out] none
-    \retval     none
-*/
+  \brief reset the state of the low power mode
+  \param[in]  lowpower_mode: the low power mode state
+  \arg SCB_LPM_SLEEP_EXIT_ISR: if chose this para, the system will exit low power
+       mode by exiting from ISR
+  \arg SCB_LPM_DEEPSLEEP: if chose this para, the system will enter the SLEEP mode
+  \arg SCB_LPM_WAKE_BY_ALL_INT: if chose this para, the lowpower mode only can be
+       woke up by the enable interrupts
+  \param[out] none
+  \retval none
+ */
 void system_lowpower_reset(uint8_t lowpower_mode)
 {
     SCB->SCR &= (~(uint32_t)lowpower_mode);
 }
 
 /*!
-    \brief      set the systick clock source
-    \param[in]  systick_clksource: the systick clock source needed to choose
-      \arg        SYSTICK_CLKSOURCE_HCLK: systick clock source is from HCLK
-      \arg        SYSTICK_CLKSOURCE_HCLK_DIV8: systick clock source is from HCLK/8
-    \param[out] none
-    \retval     none
-*/
+  \brief set the systick clock source
+  \param[in]  systick_clksource: the systick clock source needed to choose
+  \arg SYSTICK_CLKSOURCE_HCLK: systick clock source is from HCLK
+  \arg SYSTICK_CLKSOURCE_HCLK_DIV8: systick clock source is from HCLK/8
+  \param[out] none
+  \retval none
+ */
 
 void systick_clksource_set(uint32_t systick_clksource)
 {
-    if(SYSTICK_CLKSOURCE_HCLK == systick_clksource ){
+    if (SYSTICK_CLKSOURCE_HCLK == systick_clksource)
+    {
         /* set the systick clock source from HCLK */
         SysTick->CTRL |= SYSTICK_CLKSOURCE_HCLK;
-    }else{
+    }
+    else
+    {
         /* set the systick clock source from HCLK/8 */
         SysTick->CTRL &= SYSTICK_CLKSOURCE_HCLK_DIV8;
     }
@@ -186,15 +201,15 @@ void systick_clksource_set(uint32_t systick_clksource)
 #if (__MPU_PRESENT == 1U)
 
 /*!
-    \brief      enable the MPU
-    \param[in]  MPU_Control: select a different MPU mode
-      \arg        MPU_MODE_HFNMI_PRIVDEF_NONE: HFNMIENA and PRIVDEFENA are 0
-      \arg        MPU_MODE_HARDFAULT_NMI: use the MPU for memory accesses by HardFault and NMI handlers only
-      \arg        MPU_MODE_PRIV_DEFAULT: enables the default memory map as a background region for privileged access only
-      \arg        MPU_MODE_HFNMI_PRIVDEF: HFNMIENA and PRIVDEFENA are 1
-    \param[out] none
-    \retval     none
-*/
+  \brief enable the MPU
+  \param[in]  MPU_Control: select a different MPU mode
+  \arg MPU_MODE_HFNMI_PRIVDEF_NONE: HFNMIENA and PRIVDEFENA are 0
+  \arg MPU_MODE_HARDFAULT_NMI: use the MPU for memory accesses by HardFault and NMI handlers only
+  \arg MPU_MODE_PRIV_DEFAULT: enables the default memory map as a background region for privileged access only
+  \arg MPU_MODE_HFNMI_PRIVDEF: HFNMIENA and PRIVDEFENA are 1
+  \param[out] none
+  \retval none
+ */
 void mpu_enable(uint32_t MPU_Control)
 {
     __DMB();
@@ -208,11 +223,11 @@ void mpu_enable(uint32_t MPU_Control)
 }
 
 /*!
-    \brief      disable the MPU
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief disable the MPU
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void mpu_disable(void)
 {
     __DMB();
@@ -220,17 +235,17 @@ void mpu_disable(void)
     SCB->SHCSR &= ~SCB_SHCSR_MEMFAULTENA_Msk;
 #endif
     /* disable the MPU */
-    MPU->CTRL  &= ~MPU_CTRL_ENABLE_Msk;
+    MPU->CTRL &= ~MPU_CTRL_ENABLE_Msk;
     __DSB();
     __ISB();
 }
 
 /*!
-    \brief      initialize mpu_region_init_struct with the default values
-    \param[in]  region_init_struct: pointer to a mpu_region_init_struct structure
-    \param[out] none
-    \retval     none
-*/
+  \brief initialize mpu_region_init_struct with the default values
+  \param[in]  region_init_struct: pointer to a mpu_region_init_struct structure
+  \param[out] none
+  \retval none
+ */
 void mpu_region_struct_para_init(mpu_region_init_struct *region_init_struct)
 {
     region_init_struct->region_number        = MPU_REGION_NUMBER0;
@@ -243,11 +258,11 @@ void mpu_region_struct_para_init(mpu_region_init_struct *region_init_struct)
 }
 
 /*!
-    \brief      initialize mpu_attribute_init_struct with the default values
-    \param[in]  attribute_init_struct: pointer to a mpu_attribute_init_struct structure
-    \param[out] none
-    \retval     none
-*/
+  \brief initialize mpu_attribute_init_struct with the default values
+  \param[in]  attribute_init_struct: pointer to a mpu_attribute_init_struct structure
+  \param[out] none
+  \retval none
+ */
 void mpu_attribute_struct_para_init(mpu_attribute_init_struct *attribute_init_struct)
 {
     attribute_init_struct->attribute_number = MPU_REGION_NUMBER0;
@@ -257,8 +272,8 @@ void mpu_attribute_struct_para_init(mpu_attribute_init_struct *attribute_init_st
 }
 
 /*!
-    \brief      configure the MPU region
-    \param[in]  region_init_struct: MPU initialization structure
+  \brief configure the MPU region
+  \param[in]  region_init_struct: MPU initialization structure
                   region_number: region number
                                  MPU_REGION_NUMBERn (n=0,..,7)
                   region_base_address: region base address
@@ -268,28 +283,28 @@ void mpu_attribute_struct_para_init(mpu_attribute_init_struct *attribute_init_st
                   shareability: MPU_ACCESS_NOT_SHAREABLE, MPU_ACCESS_OUTER_SHAREABLE, MPU_ACCESS_INNER_SHAREABLE
                   attribute_index: attribute index
                                    MPU_ATTRIBUTE_NUMBERn (n=0,..,7)
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void mpu_region_config(mpu_region_init_struct *region_init_struct)
 {
     __DMB();
-    /* select the Region number  */
+    /* select the Region number */
     MPU->RNR = region_init_struct->region_number;
-    /* disable the Region  */
+    /* disable the Region */
     MPU->RLAR &= ~(MPU_RLAR_EN_Msk);
-    MPU->RBAR = (((uint32_t)region_init_struct->region_base_address & 0xFFFFFFE0UL)   | 
-                 ((uint32_t)region_init_struct->shareability << MPU_RBAR_SH_Pos)      |
-                 ((uint32_t)region_init_struct->access_permission << MPU_RBAR_AP_Pos) |
-                 ((uint32_t)region_init_struct->instruction_exec << MPU_RBAR_XN_Pos)) ;
-    
-    MPU->RLAR = (((uint32_t)region_init_struct->region_limit_address & 0xFFFFFFE0UL)      |
-                 ((uint32_t)region_init_struct->attribute_index << MPU_RLAR_AttrIndx_Pos));
+    MPU->RBAR = (((uint32_t)region_init_struct->region_base_address & 0xFFFFFFE0UL)
+                 | ((uint32_t)region_init_struct->shareability << MPU_RBAR_SH_Pos)
+                 | ((uint32_t)region_init_struct->access_permission << MPU_RBAR_AP_Pos)
+                 | ((uint32_t)region_init_struct->instruction_exec << MPU_RBAR_XN_Pos));
+
+    MPU->RLAR = (((uint32_t)region_init_struct->region_limit_address & 0xFFFFFFE0UL)
+                 | ((uint32_t)region_init_struct->attribute_index << MPU_RLAR_AttrIndx_Pos));
 }
 
 /*!
-    \brief      configure the MPU attribute
-    \param[in]  attribute_init_struct: MPU attribute initialization structure
+  \brief configure the MPU attribute
+  \param[in]  attribute_init_struct: MPU attribute initialization structure
                   attribute_number: attribute number
                                  MPU_ATTRIBUTE_NUMBERn (n=0,..,7)
                   memory_type: memory type
@@ -331,46 +346,58 @@ void mpu_region_config(mpu_region_init_struct *region_init_struct)
                                  MPU_DEVICE_nGnRE(for Device)
                                  MPU_DEVICE_nGRE(for Device)
                                  MPU_DEVICE_GRE(for Device)
-    \param[out] none
-    \retval     none
-*/
+  \param[out] none
+  \retval none
+ */
 void mpu_attribute_config(mpu_attribute_init_struct *attribute_init_struct)
 {
     uint32_t attr_values;
-    uint8_t  attr_x_value;
+    uint8_t attr_x_value;
 
     __DMB();
-    if(attribute_init_struct->attribute_number < MPU_ATTRIBUTE_NUMBER4) {
+
+    if (attribute_init_struct->attribute_number < MPU_ATTRIBUTE_NUMBER4)
+    {
         /* configure MPU_MAIR0 */
         attr_values = MPU->MAIR0;
-        attr_values &=  ~(0xFFUL << (attribute_init_struct->attribute_number * 8U));
-        if(MPU_MEMORY_DEVICE == attribute_init_struct->memory_type) {
+        attr_values &= ~(0xFFUL << (attribute_init_struct->attribute_number * 8U));
+
+        if (MPU_MEMORY_DEVICE == attribute_init_struct->memory_type)
+        {
             attr_x_value = (attribute_init_struct->inner_attributes & 0x0CU);
-        }else{
+        }
+        else
+        {
             attr_x_value = attribute_init_struct->inner_attributes | attribute_init_struct->outer_attributes;
         }
-        attr_values |= ((uint32_t)attr_x_value  << (attribute_init_struct->attribute_number * 8U));
+        attr_values |= ((uint32_t)attr_x_value << (attribute_init_struct->attribute_number * 8U));
         MPU->MAIR0 = attr_values;
-    } else {
+    }
+    else
+    {
         /* configure MPU_MAIR0 */
         attr_values = MPU->MAIR1;
-        attr_values &=  ~(0xFFUL << ((attribute_init_struct->attribute_number -4U) * 8U));
-        if(MPU_MEMORY_DEVICE == attribute_init_struct->memory_type) {
+        attr_values &= ~(0xFFUL << ((attribute_init_struct->attribute_number - 4U) * 8U));
+
+        if (MPU_MEMORY_DEVICE == attribute_init_struct->memory_type)
+        {
             attr_x_value = (attribute_init_struct->inner_attributes & 0x0CU);
-        }else{
+        }
+        else
+        {
             attr_x_value = attribute_init_struct->inner_attributes | attribute_init_struct->outer_attributes;
         }
-        attr_values |= ((uint32_t)attr_x_value  << ((attribute_init_struct->attribute_number - 4U) * 8U));
+        attr_values |= ((uint32_t)attr_x_value << ((attribute_init_struct->attribute_number - 4U) * 8U));
         MPU->MAIR1 = attr_values;
     }
 }
 
 /*!
-    \brief      enable the MPU region
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable the MPU region
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void mpu_region_enable(void)
 {
     MPU->RLAR |= MPU_RLAR_EN_Msk;

@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_vref.c
-    \brief   VREF driver
-    
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_vref.c
+  \brief VREF driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,16 +30,16 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_vref.h"
 
 /*!
-    \brief      deinitialize the VREF
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief deinitialize the VREF
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void vref_deinit(void)
 {
     rcu_periph_reset_enable(RCU_VREFRST);
@@ -47,76 +47,79 @@ void vref_deinit(void)
 }
 
 /*!
-    \brief      enable VREF
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable VREF
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void vref_enable(void)
 {
     VREF_CS |= (uint32_t)VREF_CS_VREFEN;
 }
 
 /*!
-    \brief      disable VREF
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief disable VREF
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void vref_disable(void)
 {
     VREF_CS &= ~(uint32_t)VREF_CS_VREFEN;
 }
 
 /*!
-    \brief      enable VREF high impendance mode
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable VREF high impendance mode
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void vref_high_impedance_mode_enable(void)
 {
     VREF_CS |= VREF_HIGH_IMPEDANCE_MODE;
 }
 
 /*!
-    \brief      disable VREF high impendance mode
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief disable VREF high impendance mode
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void vref_high_impedance_mode_disable(void)
 {
     VREF_CS &= ~(uint32_t)VREF_HIGH_IMPEDANCE_MODE;
 }
 
 /*!
-    \brief      get the status of VREF
-    \param[in]  none
-    \param[out] none
-    \retval     the status of VREF output
-      \arg        SET: the VREF output is ready
-      \arg        RESET: the VREF output is not ready
-*/
+  \brief get the status of VREF
+  \param[in]  none
+  \param[out] none
+  \retval the status of VREF output
+  \arg SET: the VREF output is ready
+  \arg RESET: the VREF output is not ready
+ */
 FlagStatus vref_status_get(void)
 {
-    if(RESET != (VREF_CS & VREF_CS_VREFRDY)){
+    if (RESET != (VREF_CS & VREF_CS_VREFRDY))
+    {
         return SET;
-    }else{
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      select the VREF voltage reference 
-    \param[in]  vref_voltage: voltage reference select
+  \brief select the VREF voltage reference
+  \param[in]  vref_voltage: voltage reference select
                 only one parameter can be selected which is shown as below:
-      \arg        VREF_VOLTAGE_SEL_2_048V: VREF voltage reference select 2.048 V
-      \arg        VREF_VOLTAGE_SEL_2_5V: VREF voltage reference select 2.5 V
-      \arg        VREF_VOLTAGE_SEL_2_9V: VREF voltage reference select 2.9 V
-    \param[out] none
-    \retval     none
-*/
+  \arg VREF_VOLTAGE_SEL_2_048V: VREF voltage reference select 2.048 V
+  \arg VREF_VOLTAGE_SEL_2_5V: VREF voltage reference select 2.5 V
+  \arg VREF_VOLTAGE_SEL_2_9V: VREF voltage reference select 2.9 V
+  \param[out] none
+  \retval none
+ */
 void vref_voltage_select(uint32_t vref_voltage)
 {
     /* clear old value */
@@ -125,22 +128,22 @@ void vref_voltage_select(uint32_t vref_voltage)
 }
 
 /*!
-    \brief      set the calibration value of VREF
-    \param[in]  value: calibration value (0x00 - 0x3F)
-    \param[out] none
-    \retval     none
-*/
+  \brief set the calibration value of VREF
+  \param[in]  value: calibration value (0x00 - 0x3F)
+  \param[out] none
+  \retval none
+ */
 void vref_calib_value_set(uint8_t value)
 {
     VREF_CALIB = (uint32_t)(VREF_CALIB_VREFCAL & value);
 }
 
 /*!
-    \brief      get the calibration value of VREF
-    \param[in]  none
-    \param[out] none
-    \retval     calibration value (0x00 - 0x3F)
-*/
+  \brief get the calibration value of VREF
+  \param[in]  none
+  \param[out] none
+  \retval calibration value (0x00 - 0x3F)
+ */
 uint8_t vref_calib_value_get(void)
 {
     uint8_t temp = (uint8_t)VREF_CALIB;

@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_vref.h
-    \brief   definitions for the VREF
-    
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_vref.h
+  \brief definitions for the VREF
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef GD32G5X3_VREF_H
 #define GD32G5X3_VREF_H
@@ -38,33 +38,33 @@ OF SUCH DAMAGE.
 #include "gd32g5x3.h"
 
 /* VREF definitions */
-#define VREF                         VREF_BASE                                  /*!< VREF base address */
+#define VREF VREF_BASE /*!< VREF base address */
 
 /* registers definitions */
-#define VREF_CS                      REG32(VREF + 0x00000000U)                  /*!< VREF Control and status register */
-#define VREF_CALIB                   REG32(VREF + 0x00000004U)                  /*!< VREF Calibration register */
+#define VREF_CS    REG32(VREF + 0x00000000U) /*!< VREF Control and status register */
+#define VREF_CALIB REG32(VREF + 0x00000004U) /*!< VREF Calibration register */
 
 /* bits definitions */
 /* VREF_CS */
-#define VREF_CS_VREFEN               BIT(0)                                     /*!< VREF enable */
-#define VREF_CS_HIPM                 BIT(1)                                     /*!< High impedance mode */
-#define VREF_CS_VREFRDY              BIT(3)                                     /*!< VREF ready */
-#define VREF_CS_VREFS                BITS(4,5)                                  /*!< VREF voltage reference select */
+#define VREF_CS_VREFEN  BIT(0)     /*!< VREF enable */
+#define VREF_CS_HIPM    BIT(1)     /*!< High impedance mode */
+#define VREF_CS_VREFRDY BIT(3)     /*!< VREF ready */
+#define VREF_CS_VREFS   BITS(4, 5) /*!< VREF voltage reference select */
 
 /* VREF_CALIB */
-#define VREF_CALIB_VREFCAL           BITS(0,5)                                  /*!< VREF calibration */
+#define VREF_CALIB_VREFCAL BITS(0, 5) /*!< VREF calibration */
 
 /* constants definitions */
 /* VREF bit devinitions */
-#define VREF_EN                      VREF_CS_VREFEN                             /*!< VREF enable */
-#define VREF_HIGH_IMPEDANCE_MODE     VREF_CS_HIPM                               /*!< High impedance mode */
-#define VREF_RDY                     VREF_CS_VREFRDY                            /*!< VREF ready */
+#define VREF_EN                  VREF_CS_VREFEN  /*!< VREF enable */
+#define VREF_HIGH_IMPEDANCE_MODE VREF_CS_HIPM    /*!< High impedance mode */
+#define VREF_RDY                 VREF_CS_VREFRDY /*!< VREF ready */
 
 /* VREF voltage reference select */
-#define CS_VREFS(regval)             (BITS(4,5) & ((uint32_t)(regval) << 4U))
-#define VREF_VOLTAGE_SEL_2_048V      CS_VREFS(0)                                /*!< VREF voltage reference select 2.048 V */
-#define VREF_VOLTAGE_SEL_2_5V        CS_VREFS(1)                                /*!< VREF voltage reference select 2.5 V */
-#define VREF_VOLTAGE_SEL_2_9V        CS_VREFS(2)                                /*!< VREF voltage reference select 2.9 V */
+#define CS_VREFS(regval)        (BITS(4, 5) & ((uint32_t)(regval) << 4U))
+#define VREF_VOLTAGE_SEL_2_048V CS_VREFS(0) /*!< VREF voltage reference select 2.048 V */
+#define VREF_VOLTAGE_SEL_2_5V   CS_VREFS(1) /*!< VREF voltage reference select 2.5 V */
+#define VREF_VOLTAGE_SEL_2_9V   CS_VREFS(2) /*!< VREF voltage reference select 2.9 V */
 
 /* function declarations */
 /* deinitialize the VREF */

@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_fmc_ramfunc.c
-    \brief   FMC RAMFUNC driver
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_fmc_ramfunc.c
+  \brief FMC RAMFUNC driver
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,20 +30,20 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3_fmc_ramfunc.h"
 
 /*!
-    \brief      flash enter power down mode when MCU run mode
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief flash enter power down mode when MCU run mode
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 __attribute__((section("RAMCODE"))) void fmc_pd_mode_enter(void)
 {
     uint32_t ws;
-    
+
     /* write the FMC RUN_MDSEL unlock key */
     FMC_RUNKEY = RUN_MDSEL_UNLOCK_KEY0;
     FMC_RUNKEY = RUN_MDSEL_UNLOCK_KEY1;
@@ -57,15 +57,15 @@ __attribute__((section("RAMCODE"))) void fmc_pd_mode_enter(void)
 }
 
 /*!
-    \brief      flash exit power down mode when MCU run mode
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief flash exit power down mode when MCU run mode
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 __attribute__((section("RAMCODE"))) void fmc_pd_mode_exit(void)
 {
     uint32_t ws;
-    
+
     /* write the FMC RUN_MDSEL unlock key */
     FMC_RUNKEY = RUN_MDSEL_UNLOCK_KEY0;
     FMC_RUNKEY = RUN_MDSEL_UNLOCK_KEY1;
@@ -73,20 +73,20 @@ __attribute__((section("RAMCODE"))) void fmc_pd_mode_exit(void)
     ws = FMC_WS;
 
     /* clear the RUN_MDSEL bit */
-    ws &= ~FMC_WS_RUN_MDSEL; 
+    ws &= ~FMC_WS_RUN_MDSEL;
 
     FMC_WS = ws;
 }
 
 /*!
-    \brief      configure the option byte bank mode
-    \param[in]  bank_mode: bank mode
+  \brief configure the option byte bank mode
+  \param[in]  bank_mode: bank mode
                 only one parameter can be selected which is shown as below:
-      \arg        OB_SINGLE_BANK_MODE: single-bank mode
-      \arg        OB_DUAL_BANK_MODE: dual-bank mode
-    \param[out] none
-    \retval     none
-*/
+  \arg OB_SINGLE_BANK_MODE: single-bank mode
+  \arg OB_DUAL_BANK_MODE: dual-bank mode
+  \param[out] none
+  \retval none
+ */
 __attribute__((section("RAMCODE"))) ErrStatus ob_bank_mode_config(uint32_t bank_mode)
 {
     uint32_t start_area;
@@ -96,16 +96,20 @@ __attribute__((section("RAMCODE"))) ErrStatus ob_bank_mode_config(uint32_t bank_
     /* DCRP area should be disabled when configure bank mode */
 
     start_area = (FMC_DCRP_SADDR0 & FMC_DCRP_SADDR0_DCRP0_SADDR) >> DCRP_SADDR_DCRP_SADDR_OFFSET;
-    end_area = (FMC_DCRP_EADDR0 & FMC_DCRP_EADDR0_DCRP0_EADDR) >> DCRP_EADDR_DCRP_EADDR_OFFSET;    
+    end_area = (FMC_DCRP_EADDR0 & FMC_DCRP_EADDR0_DCRP0_EADDR) >> DCRP_EADDR_DCRP_EADDR_OFFSET;
     /* DCRP0 area is enabled */
-    if(start_area <= end_area){
+
+    if (start_area <= end_area)
+    {
         return ERROR;
     }
 
     start_area = (FMC_DCRP_SADDR1 & FMC_DCRP_SADDR1_DCRP1_SADDR) >> DCRP_SADDR_DCRP_SADDR_OFFSET;
     end_area = (FMC_DCRP_EADDR1 & FMC_DCRP_EADDR1_DCRP1_EADDR) >> DCRP_EADDR_DCRP_EADDR_OFFSET;
     /* DCRP1 area is enabled */
-    if(start_area <= end_area){
+
+    if (start_area <= end_area)
+    {
         return ERROR;
     }
 
@@ -113,46 +117,58 @@ __attribute__((section("RAMCODE"))) ErrStatus ob_bank_mode_config(uint32_t bank_
     FMC_WS &= ~FMC_WS_PFEN;
 
     /* disable icache */
-    if(FMC_WS & FMC_WS_ICEN){
+
+    if (FMC_WS & FMC_WS_ICEN)
+    {
         FMC_WS &= ~FMC_WS_ICEN;
         FMC_WS |= FMC_WS_ICRST;
     }
 
     /* disable dcache */
-    if(FMC_WS & FMC_WS_DCEN){
+
+    if (FMC_WS & FMC_WS_DCEN)
+    {
         FMC_WS &= ~FMC_WS_DCEN;
         FMC_WS |= FMC_WS_DCRST;
     }
 
     /* disable BK0WP_AREA0 if it is enabled */
     start_area = (FMC_BK0WP0 & FMC_BK0WP0_BK0WP0_SADDR) >> BKWP_BKWP_SADDR_OFFSET;
-    end_area = (FMC_BK0WP0 & FMC_BK0WP0_BK0WP0_EADDR) >> BKWP_BKWP_EADDR_OFFSET; 
-    if(start_area <= end_area){
-        FMC_BK0WP0 &= ~(FMC_BK0WP0_BK0WP0_SADDR|FMC_BK0WP0_BK0WP0_EADDR);
+    end_area = (FMC_BK0WP0 & FMC_BK0WP0_BK0WP0_EADDR) >> BKWP_BKWP_EADDR_OFFSET;
+
+    if (start_area <= end_area)
+    {
+        FMC_BK0WP0 &= ~(FMC_BK0WP0_BK0WP0_SADDR | FMC_BK0WP0_BK0WP0_EADDR);
         FMC_BK0WP0 |= FMC_BK0WP0_BK0WP0_SADDR;
     }
 
     /* disable BK0WP_AREA1 if it is enabled */
     start_area = (FMC_BK0WP1 & FMC_BK0WP1_BK0WP1_SADDR) >> BKWP_BKWP_SADDR_OFFSET;
     end_area = (FMC_BK0WP1 & FMC_BK0WP1_BK0WP1_EADDR) >> BKWP_BKWP_EADDR_OFFSET;
-    if(start_area <= end_area){
-        FMC_BK0WP1 &= ~(FMC_BK0WP1_BK0WP1_SADDR|FMC_BK0WP1_BK0WP1_EADDR);
+
+    if (start_area <= end_area)
+    {
+        FMC_BK0WP1 &= ~(FMC_BK0WP1_BK0WP1_SADDR | FMC_BK0WP1_BK0WP1_EADDR);
         FMC_BK0WP1 |= FMC_BK0WP1_BK0WP1_SADDR;
     }
 
     /* disable BK1WP_AREA0 if it is enabled */
     start_area = (FMC_BK1WP0 & FMC_BK1WP0_BK1WP0_SADDR) >> BKWP_BKWP_SADDR_OFFSET;
-    end_area = (FMC_BK1WP0 & FMC_BK1WP0_BK1WP0_EADDR) >> BKWP_BKWP_EADDR_OFFSET; 
-    if(start_area <= end_area){
-        FMC_BK1WP0 &= ~(FMC_BK1WP0_BK1WP0_SADDR|FMC_BK1WP0_BK1WP0_EADDR);
+    end_area = (FMC_BK1WP0 & FMC_BK1WP0_BK1WP0_EADDR) >> BKWP_BKWP_EADDR_OFFSET;
+
+    if (start_area <= end_area)
+    {
+        FMC_BK1WP0 &= ~(FMC_BK1WP0_BK1WP0_SADDR | FMC_BK1WP0_BK1WP0_EADDR);
         FMC_BK1WP0 |= FMC_BK1WP0_BK1WP0_SADDR;
     }
 
     /* disable BK1WP_AREA1 if it is enabled */
     start_area = (FMC_BK1WP1 & FMC_BK1WP1_BK1WP1_SADDR) >> BKWP_BKWP_SADDR_OFFSET;
-    end_area = (FMC_BK1WP1 & FMC_BK1WP1_BK1WP1_EADDR) >> BKWP_BKWP_EADDR_OFFSET; 
-    if(start_area <= end_area){
-        FMC_BK1WP1 &= ~(FMC_BK1WP1_BK1WP1_SADDR|FMC_BK1WP1_BK1WP1_EADDR);
+    end_area = (FMC_BK1WP1 & FMC_BK1WP1_BK1WP1_EADDR) >> BKWP_BKWP_EADDR_OFFSET;
+
+    if (start_area <= end_area)
+    {
+        FMC_BK1WP1 &= ~(FMC_BK1WP1_BK1WP1_SADDR | FMC_BK1WP1_BK1WP1_EADDR);
         FMC_BK1WP1 |= FMC_BK1WP1_BK1WP1_SADDR;
     }
 
@@ -162,17 +178,20 @@ __attribute__((section("RAMCODE"))) ErrStatus ob_bank_mode_config(uint32_t bank_
 
     FMC_CTL |= FMC_CTL_OBSTART;
 
-    do{
+    do
+    {
         timeout--;
-    }while((RESET != (FMC_STAT & FMC_STAT_BUSY)) && (0x00U != timeout));
+    } while (    (RESET != (FMC_STAT & FMC_STAT_BUSY))
+              && (0x00U != timeout));
 
     /* return the result */
-    if(0x00U != timeout){
+
+    if (0x00U != timeout)
+    {
         return SUCCESS;
     }
-    else {
+    else
+    {
         return ERROR;
     }
-
-
 }
