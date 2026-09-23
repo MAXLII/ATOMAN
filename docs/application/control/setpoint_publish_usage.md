@@ -8,7 +8,7 @@
 2. Buck 通过字段 setter 更新统一配置；其他模块通过各自 setter 修改候选参数。
 3. 通过模块对外提供的启停接口设置运行请求。
 
-除 Buck 外，应用层不得调用 `*_cfg_publish_building()`，也不得直接设置 `run_allowed`；这些接口位于对应模块的 `*_cfg_fsm.h`，仅供同模块 FSM 使用。Buck 的发布函数只存在于 `buck_fsm.c` 内部，cfg仅保存参数与启停请求，应用层和其他模块无法调用发布操作。
+除 Buck 外，应用层不得调用 `*_cfg_publish_building()`，也不得直接设置 `run_allowed`；这些接口统一声明在对应模块的 `*_cfg.h`，并标注仅供同模块 FSM 使用。Buck 的发布函数只存在于 `buck_fsm.c` 内部，cfg仅保存参数与启停请求，应用层和其他模块无法调用发布操作。
 
 ```c
 void app_control_cfg_init(void)
