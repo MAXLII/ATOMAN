@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    plecs_port.h
- * @brief   NPC DLL signal ordering.
+ * @file plecs_port.h
+ * @brief NPC DLL signal ordering.
  * @details
  *          This file is part of the base digital power framework project.
  *          Define bus, output-voltage and inductor-current feedback, 6 duties and bridge enable.
  *          C11 compatible; no dynamic allocation; single simulation instance.
- * @author  Max.Li
- * @date    2026-09-12
+ * @author Max.Li
+ * @date 2026-09-12
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li.
- * All rights reserved.
- * This file is licensed under the MIT License.
- * See the LICENSE file in the project root for full license text.
+ *          Copyright (c) 2026 Max.Li.
+ *          All rights reserved.
+ *          This file is licensed under the MIT License.
+ *          See the LICENSE file in the project root for full license text.
  */
 
 #ifndef PLECS_NPC_PORT_H
@@ -39,7 +39,7 @@ typedef enum
     PLECS_OUTPUT_B_NEGATIVE_DUTY,     /* Phase B N fraction, [0,1]. */
     PLECS_OUTPUT_C_POSITIVE_DUTY,     /* Phase C P fraction, [0,1]. */
     PLECS_OUTPUT_C_NEGATIVE_DUTY,     /* Phase C N fraction, [0,1]. */
-    PLECS_OUTPUT_PWM_ENABLE, /* Global bridge enable: 1 only with a complete valid duty frame. */
-    PLECS_OUTPUT_MAX       /* Number of DLL outputs: 6 duty channels and 1 enable. */
+    PLECS_OUTPUT_PWM_ENABLE,          /* Global bridge enable: 1 only with a complete valid duty frame. */
+    PLECS_OUTPUT_MAX /* Number of DLL outputs: 6 duty channels and 1 enable. */
 } PLECS_OUTPUT_E;
 #endif /* PLECS_NPC_PORT_H */

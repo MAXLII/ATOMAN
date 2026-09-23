@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    ac_loss_det_test.c
- * @brief   Host test cases for the production AC loss detector.
+ * @file ac_loss_det_test.c
+ * @brief Host test cases for the production AC loss detector.
  * @details
  *          This file is part of the base digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Compiles code/lib/ac_loss_det.c directly as the production DUT
  *          - Uses a deterministic 50 Hz-equivalent square wave at the DUT sample rate
  *
- * @author  Max.Li
- * @date    2026-08-16
+ * @author Max.Li
+ * @date 2026-08-16
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,13 +36,13 @@
 #include "testbench.h"
 
 #define AC_LOSS_DET_TEST_HALF_PERIOD_SAMPLES UINT32_C(100)
-#define AC_LOSS_DET_TEST_PERIOD_SAMPLES UINT32_C(200)
-#define AC_LOSS_DET_TEST_PEAK_VOLTAGE_V (325.0f)
-#define AC_LOSS_DET_TEST_RUN_LIMIT_S (500.0 * (double)AC_LOSS_DET_TS)
+#define AC_LOSS_DET_TEST_PERIOD_SAMPLES      UINT32_C(200)
+#define AC_LOSS_DET_TEST_PEAK_VOLTAGE_V      (325.0f)
+#define AC_LOSS_DET_TEST_RUN_LIMIT_S         (500.0 * (double)AC_LOSS_DET_TS)
 
 static ac_loss_det_test_fixture_t fixture; /**< Fixture reset before every registered case. */
-static FILE *p_waveform_file;              /**< CSV waveform file owned by the active test case. */
-static uint8_t waveform_write_ok;          /**< 1 while the active CSV waveform file remains valid. */
+static FILE *p_waveform_file;     /**< CSV waveform file owned by the active test case. */
+static uint8_t waveform_write_ok; /**< 1 while the active CSV waveform file remains valid. */
 
 static void process_record(double time_s);
 
@@ -61,7 +61,8 @@ static void waveform_open(const char *p_path)
     }
 
     waveform_write_ok = 0u;
-    p_waveform_file = fopen(p_path, "w");
+    p_waveform_file   = fopen(p_path, "w");
+
     if (p_waveform_file == NULL)
     {
         (void)printf("    CSV OPEN FAIL | path=%s\n", p_path);
@@ -71,6 +72,7 @@ static void waveform_open(const char *p_path)
     write_result = fprintf(p_waveform_file,
                            "time_s,voltage_v,ac_is_ok,state,buffer_index,"
                            "ovf_diff_count,is_loss,healthy_seen\n");
+
     if (write_result >= 0)
     {
         waveform_write_ok = 1u;
@@ -89,8 +91,9 @@ static uint8_t waveform_close(void)
 
     if (p_waveform_file != NULL)
     {
-        close_result = fclose(p_waveform_file);
+        close_result    = fclose(p_waveform_file);
         p_waveform_file = NULL;
+
         if (close_result != 0)
         {
             waveform_write_ok = 0u;
@@ -113,6 +116,7 @@ static float periodic_voltage_get(uint32_t sample_index)
     uint32_t phase = 0u; /**< Sample position within the periodic waveform. */
 
     phase = sample_index % AC_LOSS_DET_TEST_PERIOD_SAMPLES;
+
     if (phase < AC_LOSS_DET_TEST_HALF_PERIOD_SAMPLES)
     {
         return AC_LOSS_DET_TEST_PEAK_VOLTAGE_V;
@@ -131,11 +135,11 @@ static void fixture_prepare(AC_LOSS_DET_TEST_SCENARIO_E scenario,
                             const char *p_waveform_path)
 {
     (void)memset(&fixture, 0, sizeof(fixture));
-    fixture.scenario = scenario;
-    fixture.ac_is_ok = ac_is_ok;
-    fixture.last_recorded_state = UINT32_MAX;
+    fixture.scenario                     = scenario;
+    fixture.ac_is_ok                     = ac_is_ok;
+    fixture.last_recorded_state          = UINT32_MAX;
     fixture.last_recorded_ovf_diff_count = UINT32_MAX;
-    fixture.last_recorded_loss = UINT8_MAX;
+    fixture.last_recorded_loss           = UINT8_MAX;
     waveform_open(p_waveform_path);
 }
 
@@ -155,12 +159,13 @@ static void dut_init(void)
 static void environment_before_dut(double time_s)
 {
     (void)time_s;
+
     if (fixture.scenario == AC_LOSS_DET_TEST_RESET_E)
     {
-        fixture.dut.inter.sta = AC_LOSS_DET_STA_DET_NEG;
+        fixture.dut.inter.sta          = AC_LOSS_DET_STA_DET_NEG;
         fixture.dut.inter.buffer_index = 42u;
         fixture.dut.inter.ovf_diff_cnt = 12u;
-        fixture.dut.output.is_loss = 0u;
+        fixture.dut.output.is_loss     = 0u;
         return;
     }
 
@@ -168,8 +173,8 @@ static void environment_before_dut(double time_s)
     {
         fixture.voltage_v = AC_LOSS_DET_TEST_PEAK_VOLTAGE_V;
     }
-    else if ((fixture.scenario == AC_LOSS_DET_TEST_FROZEN_WAVE_E) &&
-             (fixture.healthy_seen == 1u))
+    else if (    (fixture.scenario == AC_LOSS_DET_TEST_FROZEN_WAVE_E)
+              && (fixture.healthy_seen == 1u))
     {
         fixture.voltage_v = 0.0f;
     }
@@ -177,7 +182,6 @@ static void environment_before_dut(double time_s)
     {
         fixture.voltage_v = periodic_voltage_get(fixture.sample_index);
     }
-
 }
 
 /**
@@ -202,19 +206,22 @@ static void dut_run(void)
  */
 static void process_record(double time_s)
 {
-    uint32_t state = 0u; /**< Current detector state converted for stable logging. */
+    uint32_t state        = 0u; /**< Current detector state converted for stable logging. */
     uint8_t should_record = 0u; /**< 1 when an observable value changed. */
-    int csv_write_result = 0; /**< Result returned while appending one CSV waveform sample. */
+    int csv_write_result  = 0;  /**< Result returned while appending one CSV waveform sample. */
 
     state = (uint32_t)fixture.dut.inter.sta;
+
     if (state != fixture.last_recorded_state)
     {
         should_record = 1u;
     }
+
     if (fixture.dut.inter.ovf_diff_cnt != fixture.last_recorded_ovf_diff_count)
     {
         should_record = 1u;
     }
+
     if (fixture.dut.output.is_loss != fixture.last_recorded_loss)
     {
         should_record = 1u;
@@ -228,8 +235,7 @@ static void process_record(double time_s)
     if (p_waveform_file != NULL)
     {
         csv_write_result = fprintf(p_waveform_file,
-                                   "%.9f,%.6f,%" PRIu8 ",%" PRIu32
-                                   ",%" PRIu32 ",%" PRIu32 ",%" PRIu8 ",%" PRIu8 "\n",
+                                   "%.9f,%.6f,%" PRIu8 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu8 ",%" PRIu8 "\n",
                                    time_s,
                                    (double)fixture.voltage_v,
                                    fixture.ac_is_ok,
@@ -238,6 +244,7 @@ static void process_record(double time_s)
                                    fixture.dut.inter.ovf_diff_cnt,
                                    fixture.dut.output.is_loss,
                                    fixture.healthy_seen);
+
         if (csv_write_result < 0)
         {
             waveform_write_ok = 0u;
@@ -247,10 +254,7 @@ static void process_record(double time_s)
     if (should_record == 1u)
     {
         (void)printf("    RECORD time_s=%.9f"
-                     " voltage=%.1fV state=%" PRIu32
-                     " index=%" PRIu32
-                     " diff_count=%" PRIu32
-                     " loss=%" PRIu8 "\n",
+                     " voltage=%.1fV state=%" PRIu32 " index=%" PRIu32 " diff_count=%" PRIu32 " loss=%" PRIu8 "\n",
                      time_s,
                      (double)fixture.voltage_v,
                      state,
@@ -259,9 +263,9 @@ static void process_record(double time_s)
                      fixture.dut.output.is_loss);
     }
 
-    fixture.last_recorded_state = state;
+    fixture.last_recorded_state          = state;
     fixture.last_recorded_ovf_diff_count = fixture.dut.inter.ovf_diff_cnt;
-    fixture.last_recorded_loss = fixture.dut.output.is_loss;
+    fixture.last_recorded_loss           = fixture.dut.output.is_loss;
 }
 
 /**
@@ -294,9 +298,7 @@ static uint8_t expect_u32(const char *p_name, uint32_t expected, uint32_t actual
  */
 static void unavailable_init(void)
 {
-    fixture_prepare(AC_LOSS_DET_TEST_AC_UNAVAILABLE_E,
-                    0u,
-                    "build/ac_unavailable_blocks_startup.csv");
+    fixture_prepare(AC_LOSS_DET_TEST_AC_UNAVAILABLE_E, 0u, "build/ac_unavailable_blocks_startup.csv");
 }
 
 /**
@@ -304,9 +306,7 @@ static void unavailable_init(void)
  */
 static void healthy_init(void)
 {
-    fixture_prepare(AC_LOSS_DET_TEST_HEALTHY_WAVE_E,
-                    1u,
-                    "build/periodic_ac_becomes_healthy.csv");
+    fixture_prepare(AC_LOSS_DET_TEST_HEALTHY_WAVE_E, 1u, "build/periodic_ac_becomes_healthy.csv");
 }
 
 /**
@@ -314,9 +314,7 @@ static void healthy_init(void)
  */
 static void frozen_init(void)
 {
-    fixture_prepare(AC_LOSS_DET_TEST_FROZEN_WAVE_E,
-                    1u,
-                    "build/frozen_voltage_triggers_loss.csv");
+    fixture_prepare(AC_LOSS_DET_TEST_FROZEN_WAVE_E, 1u, "build/frozen_voltage_triggers_loss.csv");
 }
 
 /**
@@ -324,9 +322,7 @@ static void frozen_init(void)
  */
 static void reset_init(void)
 {
-    fixture_prepare(AC_LOSS_DET_TEST_RESET_E,
-                    1u,
-                    "build/reset_restores_runtime_state.csv");
+    fixture_prepare(AC_LOSS_DET_TEST_RESET_E, 1u, "build/reset_restores_runtime_state.csv");
 }
 
 /**
@@ -397,14 +393,17 @@ static uint8_t unavailable_assert(void)
     {
         passed = 0u;
     }
+
     if (expect_u32("loss", 1u, fixture.dut.output.is_loss) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("buffer index", 0u, fixture.dut.inter.buffer_index) == 0u)
     {
         passed = 0u;
     }
+
     if (waveform_close() == 0u)
     {
         passed = 0u;
@@ -424,18 +423,22 @@ static uint8_t healthy_assert(void)
     {
         passed = 0u;
     }
+
     if (expect_u32("loss", 0u, fixture.dut.output.is_loss) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("state", (uint32_t)AC_LOSS_DET_STA_DET_POS, (uint32_t)fixture.dut.inter.sta) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("buffer index", 0u, fixture.dut.inter.buffer_index) == 0u)
     {
         passed = 0u;
     }
+
     if (waveform_close() == 0u)
     {
         passed = 0u;
@@ -455,18 +458,22 @@ static uint8_t frozen_assert(void)
     {
         passed = 0u;
     }
+
     if (expect_u32("loss", 1u, fixture.dut.output.is_loss) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("state", (uint32_t)AC_LOSS_DET_STA_IDLE, (uint32_t)fixture.dut.inter.sta) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("difference counter", 0u, fixture.dut.inter.ovf_diff_cnt) == 0u)
     {
         passed = 0u;
     }
+
     if (waveform_close() == 0u)
     {
         passed = 0u;
@@ -486,22 +493,27 @@ static uint8_t reset_assert(void)
     {
         passed = 0u;
     }
+
     if (expect_u32("buffer index", 0u, fixture.dut.inter.buffer_index) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("difference counter", 0u, fixture.dut.inter.ovf_diff_cnt) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("loss", 1u, fixture.dut.output.is_loss) == 0u)
     {
         passed = 0u;
     }
+
     if (expect_u32("buffer size", AC_LOSS_DET_BUFF_SIZE, fixture.dut.inter.buffer_size) == 0u)
     {
         passed = 0u;
     }
+
     if (fixture.dut.input.p_v != &fixture.voltage_v)
     {
         (void)puts("    CHECK voltage binding | FAIL");
@@ -511,6 +523,7 @@ static uint8_t reset_assert(void)
     {
         (void)puts("    CHECK voltage binding | PASS");
     }
+
     if (fixture.dut.input.p_ac_is_ok != &fixture.ac_is_ok)
     {
         (void)puts("    CHECK AC-valid binding | FAIL");
@@ -520,6 +533,7 @@ static uint8_t reset_assert(void)
     {
         (void)puts("    CHECK AC-valid binding | PASS");
     }
+
     if (waveform_close() == 0u)
     {
         passed = 0u;
@@ -539,6 +553,7 @@ static TESTBENCH_CASE_STATE_E assertion_state_get(uint8_t assertion_passed)
 static TESTBENCH_CASE_STATE_E unavailable_after_dut(double time_s)
 {
     process_record(time_s);
+
     if (unavailable_finished(time_s) == 0u)
     {
         return TESTBENCH_CASE_RUNNING;
@@ -549,6 +564,7 @@ static TESTBENCH_CASE_STATE_E unavailable_after_dut(double time_s)
 static TESTBENCH_CASE_STATE_E healthy_after_dut(double time_s)
 {
     process_record(time_s);
+
     if (healthy_finished(time_s) == 0u)
     {
         return TESTBENCH_CASE_RUNNING;
@@ -559,6 +575,7 @@ static TESTBENCH_CASE_STATE_E healthy_after_dut(double time_s)
 static TESTBENCH_CASE_STATE_E frozen_after_dut(double time_s)
 {
     process_record(time_s);
+
     if (frozen_finished(time_s) == 0u)
     {
         return TESTBENCH_CASE_RUNNING;
@@ -569,6 +586,7 @@ static TESTBENCH_CASE_STATE_E frozen_after_dut(double time_s)
 static TESTBENCH_CASE_STATE_E reset_after_dut(double time_s)
 {
     process_record(time_s);
+
     if (reset_finished(time_s) == 0u)
     {
         return TESTBENCH_CASE_RUNNING;
@@ -578,26 +596,11 @@ static TESTBENCH_CASE_STATE_E reset_after_dut(double time_s)
 
 TESTBENCH_REGISTER(ac_loss_det, AC_LOSS_DET_TS, dut_init, dut_run)
 
-TESTBENCH_CASE(ac_loss_det,
-               ac_unavailable_blocks_startup,
-               unavailable_init,
-               environment_before_dut,
+TESTBENCH_CASE(ac_loss_det, ac_unavailable_blocks_startup, unavailable_init, environment_before_dut,
                unavailable_after_dut)
 
-TESTBENCH_CASE(ac_loss_det,
-               periodic_ac_becomes_healthy,
-               healthy_init,
-               environment_before_dut,
-               healthy_after_dut)
+TESTBENCH_CASE(ac_loss_det, periodic_ac_becomes_healthy, healthy_init, environment_before_dut, healthy_after_dut)
 
-TESTBENCH_CASE(ac_loss_det,
-               frozen_voltage_triggers_loss,
-               frozen_init,
-               environment_before_dut,
-               frozen_after_dut)
+TESTBENCH_CASE(ac_loss_det, frozen_voltage_triggers_loss, frozen_init, environment_before_dut, frozen_after_dut)
 
-TESTBENCH_CASE(ac_loss_det,
-               reset_restores_runtime_state,
-               reset_init,
-               environment_before_dut,
-               reset_after_dut)
+TESTBENCH_CASE(ac_loss_det, reset_restores_runtime_state, reset_init, environment_before_dut, reset_after_dut)

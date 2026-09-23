@@ -4,14 +4,14 @@
 #include "hc32_ll.h"
 #include "hc32_ll_adc.h"
 
-#define SAMPLE_TIME 16                      // 采样周期
+#define SAMPLE_TIME  16 // 采样周期
 #define ADC_TRIG_EVT EVT_SRC_HRPWM_3_SCMP_A // ADC触发事件
 
-#define BSP_ADC_BIL (*((&bsp_adc_param[BIL].adc_periph->DR0) + bsp_adc_param[BIL].adc_ch))
-#define BSP_ADC_F3VS (*((&bsp_adc_param[F3VS].adc_periph->DR0) + bsp_adc_param[F3VS].adc_ch))
+#define BSP_ADC_BIL   (*((&bsp_adc_param[BIL].adc_periph->DR0) + bsp_adc_param[BIL].adc_ch))
+#define BSP_ADC_F3VS  (*((&bsp_adc_param[F3VS].adc_periph->DR0) + bsp_adc_param[F3VS].adc_ch))
 #define BSP_ADC_R48VS (*((&bsp_adc_param[R48VS].adc_periph->DR0) + bsp_adc_param[R48VS].adc_ch))
-#define BSP_ADC_VO (*((&bsp_adc_param[VO].adc_periph->DR0) + bsp_adc_param[VO].adc_ch))
-#define BSP_ADC_VAUX (*((&bsp_adc_param[VAUX].adc_periph->DR0) + bsp_adc_param[VAUX].adc_ch))
+#define BSP_ADC_VO    (*((&bsp_adc_param[VO].adc_periph->DR0) + bsp_adc_param[VO].adc_ch))
+#define BSP_ADC_VAUX  (*((&bsp_adc_param[VAUX].adc_periph->DR0) + bsp_adc_param[VAUX].adc_ch))
 #define BSP_ADC_TEMP3 (*((&bsp_adc_param[TEMP3].adc_periph->DR0) + bsp_adc_param[TEMP3].adc_ch))
 #define BSP_ADC_ACCVS (*((&bsp_adc_param[ACCVS].adc_periph->DR0) + bsp_adc_param[ACCVS].adc_ch))
 #define BSP_ADC_RMTVS (*((&bsp_adc_param[RMTVS].adc_periph->DR0) + bsp_adc_param[RMTVS].adc_ch))

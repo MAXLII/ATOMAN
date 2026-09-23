@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_oled.h
- * @brief   Zynq-7020 PL OLED framebuffer DMA interface.
+ * @file bsp_oled.h
+ * @brief Zynq-7020 PL OLED framebuffer DMA interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Normal display updates are polling based
  *          - Only PL OLED error events use the shared GIC
  *
- * @author  Max.Li
- * @date    2026-07-25
+ * @author Max.Li
+ * @date 2026-07-25
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,18 +32,18 @@
 
 #include <stdint.h>
 
-#define BSP_OLED_WIDTH 128U
-#define BSP_OLED_HEIGHT 64U
+#define BSP_OLED_WIDTH       128U
+#define BSP_OLED_HEIGHT      64U
 #define BSP_OLED_FRAME_BYTES 1024U
 
 typedef struct
 {
-    uint32_t version;             /* PL OLED DMA RTL version. */
-    uint32_t status;              /* Current hardware status register. */
-    uint32_t framebuffer_base;    /* Active DDR framebuffer address. */
-    uint32_t frame_count;         /* Successfully transmitted frame count. */
-    uint32_t clear_count;         /* Successfully transmitted clear count. */
-    uint32_t axi_error_count;     /* AXI read error count. */
+    uint32_t version;          /* PL OLED DMA RTL version. */
+    uint32_t status;           /* Current hardware status register. */
+    uint32_t framebuffer_base; /* Active DDR framebuffer address. */
+    uint32_t frame_count;      /* Successfully transmitted frame count. */
+    uint32_t clear_count;      /* Successfully transmitted clear count. */
+    uint32_t axi_error_count;  /* AXI read error count. */
     uint32_t command_error_count; /* Configuration, command, and protocol errors. */
     uint32_t dma_stop_reason;     /* Latched DMA stop reason. */
     uint32_t irq_status;          /* Current hardware IRQ status. */

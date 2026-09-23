@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    frame_parameter_service.c
- * @brief   C28x-safe FRAME parameter protocol service.
+ * @file frame_parameter_service.c
+ * @brief C28x-safe FRAME parameter protocol service.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - All handlers execute in the cooperative SECTION task context
  *          - Native C28x structures are never treated as physical wire layouts
  *
- * @author  Max.Li
- * @date    2026-09-04
+ * @author Max.Li
+ * @date 2026-09-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,30 +33,30 @@
 
 #include <string.h>
 
-#define FRAME_PARAM_COUNT_PAYLOAD_SIZE (4u)
-#define FRAME_PARAM_LIST_FIXED_SIZE (15u)
-#define FRAME_PARAM_READ_REQUEST_FIXED_SIZE (1u)
-#define FRAME_PARAM_READ_ACK_FIXED_SIZE (6u)
+#define FRAME_PARAM_COUNT_PAYLOAD_SIZE       (4u)
+#define FRAME_PARAM_LIST_FIXED_SIZE          (15u)
+#define FRAME_PARAM_READ_REQUEST_FIXED_SIZE  (1u)
+#define FRAME_PARAM_READ_ACK_FIXED_SIZE      (6u)
 #define FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE (13u)
-#define FRAME_PARAM_WRITE_ACK_FIXED_SIZE (14u)
-#define FRAME_PARAM_WAVE_SELECT_FIXED_SIZE (2u)
-#define FRAME_PARAM_WAVE_SELECT_ACK_SIZE (1u)
-#define FRAME_PARAM_WAVE_START_SIZE (1u)
-#define FRAME_PARAM_WAVE_PERIOD_SIZE (4u)
-#define FRAME_PARAM_WAVE_ITEM_FIXED_SIZE (6u)
-#define FRAME_PARAM_WAVE_PERIOD_MIN_MS (200u)
-#define FRAME_PARAM_WAVE_PERIOD_MAX_MS (60000u)
-#define FRAME_PARAM_FP32_EXPONENT_MASK (0x7F800000u)
+#define FRAME_PARAM_WRITE_ACK_FIXED_SIZE     (14u)
+#define FRAME_PARAM_WAVE_SELECT_FIXED_SIZE   (2u)
+#define FRAME_PARAM_WAVE_SELECT_ACK_SIZE     (1u)
+#define FRAME_PARAM_WAVE_START_SIZE          (1u)
+#define FRAME_PARAM_WAVE_PERIOD_SIZE         (4u)
+#define FRAME_PARAM_WAVE_ITEM_FIXED_SIZE     (6u)
+#define FRAME_PARAM_WAVE_PERIOD_MIN_MS       (200u)
+#define FRAME_PARAM_WAVE_PERIOD_MAX_MS       (60000u)
+#define FRAME_PARAM_FP32_EXPONENT_MASK       (0x7F800000u)
 
 typedef struct
 {
-    uint8_t active;                         /* Nonzero while list entries are being reported. */
-    section_link_tx_func_t *p_output;       /* Link that owns the current list request. */
-    section_item_t *p_item;                 /* Next Shell registration to report. */
-    uint8_t source;                         /* Device source address for report frames. */
-    uint8_t dynamic_source;                 /* Device dynamic source address. */
-    uint8_t destination;                    /* FRAME host destination address. */
-    uint8_t dynamic_destination;            /* FRAME host dynamic destination address. */
+    uint8_t active; /* Nonzero while list entries are being reported. */
+    section_link_tx_func_t *p_output; /* Link that owns the current list request. */
+    section_item_t *p_item;           /* Next Shell registration to report. */
+    uint8_t source;         /* Device source address for report frames. */
+    uint8_t dynamic_source; /* Device dynamic source address. */
+    uint8_t destination;    /* FRAME host destination address. */
+    uint8_t dynamic_destination; /* FRAME host dynamic destination address. */
 } frame_parameter_list_context_t;
 
 typedef enum
@@ -68,17 +68,17 @@ typedef enum
     FRAME_PARAM_WAVE_WAIT
 } frame_parameter_wave_state_t;
 
-static frame_parameter_list_context_t s_list_context = {0}; /* Active list-report session. */
-static uint8_t s_wave_enabled = 0u; /* Continuous wave-report enable. */
-static uint32_t s_wave_period_ms = 300u; /* Delay between complete wave frames. */
-static uint32_t s_wave_wait_ms = 0u; /* Remaining delay before the next wave frame. */
-static frame_parameter_wave_state_t s_wave_state = FRAME_PARAM_WAVE_IDLE; /* Wave FSM state. */
-static section_item_t *s_wave_item = NULL; /* Next registered parameter considered for reporting. */
-static section_link_tx_func_t *s_wave_output = NULL; /* Link used by asynchronous wave reports. */
-static uint8_t s_wave_source = 0u; /* Device address used by wave reports. */
-static uint8_t s_wave_dynamic_source = 0u; /* Device dynamic address used by wave reports. */
-static uint8_t s_wave_destination = 0u; /* Host address used by wave reports. */
-static uint8_t s_wave_dynamic_destination = 0u; /* Host dynamic address used by wave reports. */
+static frame_parameter_list_context_t s_list_context = {0};  /* Active list-report session. */
+static uint8_t s_wave_enabled                        = 0u;   /* Continuous wave-report enable. */
+static uint32_t s_wave_period_ms                     = 300u; /* Delay between complete wave frames. */
+static uint32_t s_wave_wait_ms                       = 0u;   /* Remaining delay before the next wave frame. */
+static frame_parameter_wave_state_t s_wave_state     = FRAME_PARAM_WAVE_IDLE; /* Wave FSM state. */
+static section_item_t *s_wave_item                   = NULL; /* Next registered parameter considered for reporting. */
+static section_link_tx_func_t *s_wave_output         = NULL; /* Link used by asynchronous wave reports. */
+static uint8_t s_wave_source                         = 0u;   /* Device address used by wave reports. */
+static uint8_t s_wave_dynamic_source                 = 0u;   /* Device dynamic address used by wave reports. */
+static uint8_t s_wave_destination                    = 0u;   /* Host address used by wave reports. */
+static uint8_t s_wave_dynamic_destination            = 0u;   /* Host dynamic address used by wave reports. */
 
 static uint8_t frame_parameter_name_copy(wire_octet_t *p_destination,
                                          const char *p_name,
@@ -86,8 +86,9 @@ static uint8_t frame_parameter_name_copy(wire_octet_t *p_destination,
 {
     uint16_t index; /* Character copied into the logical wire-octet buffer. */
 
-    if ((p_destination == NULL) || (p_name == NULL) ||
-        (name_length > SHELL_STR_SIZE_MAX))
+    if (    (p_destination == NULL)
+         || (p_name == NULL)
+         || (name_length > SHELL_STR_SIZE_MAX))
     {
         return 0u;
     }
@@ -104,7 +105,8 @@ static uint32_t frame_parameter_scalar_bits_get(const section_shell_t *p_paramet
 {
     uint32_t bits = 0u; /* Canonical 32-bit FRAME scalar representation. */
 
-    if ((p_parameter == NULL) || (p_value == NULL))
+    if (    (p_parameter == NULL)
+         || (p_value == NULL))
     {
         return 0u;
     }
@@ -143,10 +145,12 @@ static void frame_parameter_callback_run(section_shell_t *p_parameter,
 {
     shell_core_io_t shell_io = {0}; /* Callback-local adapter for the Shell output interface. */
 
-    if ((p_parameter == NULL) || (p_parameter->func == NULL))
+    if (    (p_parameter == NULL)
+         || (p_parameter->func == NULL))
     {
         return;
     }
+
     if (p_output == NULL)
     {
         p_parameter->func(NULL);
@@ -174,8 +178,10 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
                                           uint32_t maximum_bits,
                                           uint32_t minimum_bits)
 {
-    if ((p_parameter == NULL) || (p_parameter->p_var == NULL) ||
-        (p_parameter->p_max == NULL) || (p_parameter->p_min == NULL))
+    if (    (p_parameter == NULL)
+         || (p_parameter->p_var == NULL)
+         || (p_parameter->p_max == NULL)
+         || (p_parameter->p_min == NULL))
     {
         return 0u;
     }
@@ -184,7 +190,7 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
     {
     case SHELL_UINT8:
     {
-        uint16_t value = (uint16_t)(value_bits & 0x00FFu); /* Requested unsigned 8-bit value. */
+        uint16_t value   = (uint16_t)(value_bits & 0x00FFu);   /* Requested unsigned 8-bit value. */
         uint16_t maximum = (uint16_t)(maximum_bits & 0x00FFu); /* Requested upper limit. */
         uint16_t minimum = (uint16_t)(minimum_bits & 0x00FFu); /* Requested lower limit. */
 
@@ -201,7 +207,7 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
     }
     case SHELL_INT8:
     {
-        int16_t value = frame_parameter_i8_from_bits(value_bits); /* Requested signed 8-bit value. */
+        int16_t value   = frame_parameter_i8_from_bits(value_bits);   /* Requested signed 8-bit value. */
         int16_t maximum = frame_parameter_i8_from_bits(maximum_bits); /* Requested upper limit. */
         int16_t minimum = frame_parameter_i8_from_bits(minimum_bits); /* Requested lower limit. */
 
@@ -218,7 +224,7 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
     }
     case SHELL_UINT16:
     {
-        uint16_t value = (uint16_t)value_bits; /* Requested unsigned 16-bit value. */
+        uint16_t value   = (uint16_t)value_bits;   /* Requested unsigned 16-bit value. */
         uint16_t maximum = (uint16_t)maximum_bits; /* Requested upper limit. */
         uint16_t minimum = (uint16_t)minimum_bits; /* Requested lower limit. */
 
@@ -235,7 +241,7 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
     }
     case SHELL_INT16:
     {
-        int16_t value = (int16_t)value_bits; /* Requested signed 16-bit value. */
+        int16_t value   = (int16_t)value_bits;   /* Requested signed 16-bit value. */
         int16_t maximum = (int16_t)maximum_bits; /* Requested upper limit. */
         int16_t minimum = (int16_t)minimum_bits; /* Requested lower limit. */
 
@@ -267,7 +273,7 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
     }
     case SHELL_INT32:
     {
-        int32_t value = (int32_t)value_bits; /* Requested signed 32-bit value. */
+        int32_t value   = (int32_t)value_bits;   /* Requested signed 32-bit value. */
         int32_t maximum = (int32_t)maximum_bits; /* Requested upper limit. */
         int32_t minimum = (int32_t)minimum_bits; /* Requested lower limit. */
 
@@ -288,15 +294,16 @@ static uint8_t frame_parameter_scalar_set(section_shell_t *p_parameter,
         float maximum; /* Requested floating-point upper limit. */
         float minimum; /* Requested floating-point lower limit. */
 
-        if ((frame_parameter_fp32_bits_are_finite(value_bits) == 0u) ||
-            (frame_parameter_fp32_bits_are_finite(maximum_bits) == 0u) ||
-            (frame_parameter_fp32_bits_are_finite(minimum_bits) == 0u))
+        if (    (frame_parameter_fp32_bits_are_finite(value_bits) == 0u)
+             || (frame_parameter_fp32_bits_are_finite(maximum_bits) == 0u)
+             || (frame_parameter_fp32_bits_are_finite(minimum_bits) == 0u))
         {
             return 0u;
         }
         (void)memcpy(&value, &value_bits, sizeof(value));
         (void)memcpy(&maximum, &maximum_bits, sizeof(maximum));
         (void)memcpy(&minimum, &minimum_bits, sizeof(minimum));
+
         if (minimum > maximum)
         {
             return 0u;
@@ -324,42 +331,38 @@ static void frame_parameter_reply(const section_packform_t *p_request,
 {
     section_packform_t reply = {0}; /* FRAME response metadata and logical payload. */
 
-    reply.src = p_request->dst;
-    reply.d_src = p_request->d_dst;
-    reply.dst = p_request->src;
-    reply.d_dst = p_request->d_src;
-    reply.cmd_set = CMD_SET_SHELL_DATA_NUM;
+    reply.src      = p_request->dst;
+    reply.d_src    = p_request->d_dst;
+    reply.dst      = p_request->src;
+    reply.d_dst    = p_request->d_src;
+    reply.cmd_set  = CMD_SET_SHELL_DATA_NUM;
     reply.cmd_word = command_word;
-    reply.is_ack = is_ack;
-    reply.len = payload_length;
-    reply.p_data = p_payload;
+    reply.is_ack   = is_ack;
+    reply.len      = payload_length;
+    reply.p_data   = p_payload;
     comm_send_data(&reply, my_printf);
 }
 
 static void frame_parameter_count_act(void *p_frame, DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack                           = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PARAM_COUNT_PAYLOAD_SIZE] = {0}; /* Parameter-count response. */
 
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u))
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u))
     {
         return;
     }
 
     wire_u32_le_write(payload, shell_count_get());
-    s_list_context.active = 1u;
-    s_list_context.p_output = my_printf;
-    s_list_context.p_item = p_shell_first;
-    s_list_context.source = p_pack->dst;
-    s_list_context.dynamic_source = p_pack->d_dst;
-    s_list_context.destination = p_pack->src;
+    s_list_context.active              = 1u;
+    s_list_context.p_output            = my_printf;
+    s_list_context.p_item              = p_shell_first;
+    s_list_context.source              = p_pack->dst;
+    s_list_context.dynamic_source      = p_pack->d_dst;
+    s_list_context.destination         = p_pack->src;
     s_list_context.dynamic_destination = p_pack->d_src;
-    frame_parameter_reply(p_pack,
-                          my_printf,
-                          CMD_WORD_SHELL_DATA_NUM,
-                          1u,
-                          payload,
-                          FRAME_PARAM_COUNT_PAYLOAD_SIZE);
+    frame_parameter_reply(p_pack, my_printf, CMD_WORD_SHELL_DATA_NUM, 1u, payload, FRAME_PARAM_COUNT_PAYLOAD_SIZE);
 }
 
 REG_COMM(CMD_SET_SHELL_DATA_NUM, CMD_WORD_SHELL_DATA_NUM, frame_parameter_count_act)
@@ -375,22 +378,23 @@ static void frame_parameter_list_task(void)
     {
         return;
     }
+
     if (s_list_context.p_item == NULL)
     {
         s_list_context.active = 0u;
         return;
     }
 
-    p_parameter = (section_shell_t *)s_list_context.p_item->p_obj;
+    p_parameter           = (section_shell_t *)s_list_context.p_item->p_obj;
     s_list_context.p_item = s_list_context.p_item->p_next;
+
     if (p_parameter == NULL)
     {
         return;
     }
 
-    name_length = frame_parameter_name_copy(&payload[FRAME_PARAM_LIST_FIXED_SIZE],
-                                            p_parameter->p_name,
-                                            p_parameter->p_name_size);
+    name_length =
+        frame_parameter_name_copy(&payload[FRAME_PARAM_LIST_FIXED_SIZE], p_parameter->p_name, p_parameter->p_name_size);
     payload[0] = name_length;
     payload[1] = wire_octet_get((uint16_t)p_parameter->type);
     wire_u32_le_write(&payload[2], frame_parameter_scalar_bits_get(p_parameter, p_parameter->p_var));
@@ -398,15 +402,15 @@ static void frame_parameter_list_task(void)
     wire_u32_le_write(&payload[10], frame_parameter_scalar_bits_get(p_parameter, p_parameter->p_min));
     payload[14] = ((p_parameter->status & SHELL_STA_AUTO) != 0u) ? 1u : 0u;
 
-    report.src = s_list_context.source;
-    report.d_src = s_list_context.dynamic_source;
-    report.dst = s_list_context.destination;
-    report.d_dst = s_list_context.dynamic_destination;
-    report.cmd_set = CMD_SET_SHELL_REPORT_LIST;
+    report.src      = s_list_context.source;
+    report.d_src    = s_list_context.dynamic_source;
+    report.dst      = s_list_context.destination;
+    report.d_dst    = s_list_context.dynamic_destination;
+    report.cmd_set  = CMD_SET_SHELL_REPORT_LIST;
     report.cmd_word = CMD_WORD_SHELL_REPORT_LIST;
-    report.is_ack = 0u;
-    report.len = (uint16_t)(FRAME_PARAM_LIST_FIXED_SIZE + name_length);
-    report.p_data = payload;
+    report.is_ack   = 0u;
+    report.len      = (uint16_t)(FRAME_PARAM_LIST_FIXED_SIZE + name_length);
+    report.p_data   = payload;
     comm_send_data(&report, s_list_context.p_output);
 }
 
@@ -419,21 +423,25 @@ static void frame_parameter_read_act(void *p_frame, DEC_MY_PRINTF)
     wire_octet_t payload[FRAME_PARAM_READ_ACK_FIXED_SIZE + SHELL_STR_SIZE_MAX] = {0}; /* Read response. */
     uint8_t name_length; /* Validated request-name length. */
 
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
-        (p_pack->p_data == NULL) ||
-        (p_pack->len < FRAME_PARAM_READ_REQUEST_FIXED_SIZE))
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u)
+         || (p_pack->p_data == NULL)
+         || (p_pack->len < FRAME_PARAM_READ_REQUEST_FIXED_SIZE))
     {
         return;
     }
 
     name_length = wire_octet_get(p_pack->p_data[0]);
-    if ((name_length == 0u) || (name_length > SHELL_STR_SIZE_MAX) ||
-        (p_pack->len != (uint16_t)(FRAME_PARAM_READ_REQUEST_FIXED_SIZE + name_length)))
+
+    if (    (name_length == 0u)
+         || (name_length > SHELL_STR_SIZE_MAX)
+         || (p_pack->len != (uint16_t)(FRAME_PARAM_READ_REQUEST_FIXED_SIZE + name_length)))
     {
         return;
     }
 
     p_parameter = shell_find((const char *)&p_pack->p_data[1], name_length);
+
     if (p_parameter == NULL)
     {
         return;
@@ -460,39 +468,41 @@ static void frame_parameter_write_act(void *p_frame, DEC_MY_PRINTF)
     section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_shell_t *p_parameter; /* Writable parameter matched by the request name. */
     wire_octet_t payload[FRAME_PARAM_WRITE_ACK_FIXED_SIZE + SHELL_STR_SIZE_MAX] = {0}; /* Write response. */
-    uint8_t name_length; /* Validated request-name length. */
-    uint32_t value_bits; /* Requested scalar bit pattern. */
+    uint8_t name_length;   /* Validated request-name length. */
+    uint32_t value_bits;   /* Requested scalar bit pattern. */
     uint32_t maximum_bits; /* Requested upper-limit bit pattern. */
     uint32_t minimum_bits; /* Requested lower-limit bit pattern. */
 
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
-        (p_pack->p_data == NULL) ||
-        (p_pack->len < FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE))
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u)
+         || (p_pack->p_data == NULL)
+         || (p_pack->len < FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE))
     {
         return;
     }
 
     name_length = wire_octet_get(p_pack->p_data[0]);
-    if ((name_length == 0u) || (name_length > SHELL_STR_SIZE_MAX) ||
-        (p_pack->len != (uint16_t)(FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE + name_length)))
+
+    if (    (name_length == 0u)
+         || (name_length > SHELL_STR_SIZE_MAX)
+         || (p_pack->len != (uint16_t)(FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE + name_length)))
     {
         return;
     }
 
-    p_parameter = shell_find((const char *)&p_pack->p_data[FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE],
-                             name_length);
-    if ((p_parameter == NULL) || (p_parameter->type == (uint32_t)SHELL_CMD))
+    p_parameter = shell_find((const char *)&p_pack->p_data[FRAME_PARAM_WRITE_REQUEST_FIXED_SIZE], name_length);
+
+    if (    (p_parameter == NULL)
+         || (p_parameter->type == (uint32_t)SHELL_CMD))
     {
         return;
     }
 
-    value_bits = wire_u32_le_read(&p_pack->p_data[1]);
+    value_bits   = wire_u32_le_read(&p_pack->p_data[1]);
     maximum_bits = wire_u32_le_read(&p_pack->p_data[5]);
     minimum_bits = wire_u32_le_read(&p_pack->p_data[9]);
-    if (frame_parameter_scalar_set(p_parameter,
-                                   value_bits,
-                                   maximum_bits,
-                                   minimum_bits) == 0u)
+
+    if (frame_parameter_scalar_set(p_parameter, value_bits, maximum_bits, minimum_bits) == 0u)
     {
         return;
     }
@@ -523,23 +533,27 @@ static void frame_parameter_wave_select_act(void *p_frame, DEC_MY_PRINTF)
     wire_octet_t payload[FRAME_PARAM_WAVE_SELECT_ACK_SIZE] = {0}; /* Selection result. */
     uint8_t name_length; /* Validated request-name length. */
 
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
-        (p_pack->p_data == NULL) ||
-        (p_pack->len < FRAME_PARAM_WAVE_SELECT_FIXED_SIZE))
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u)
+         || (p_pack->p_data == NULL)
+         || (p_pack->len < FRAME_PARAM_WAVE_SELECT_FIXED_SIZE))
     {
         return;
     }
 
     name_length = wire_octet_get(p_pack->p_data[0]);
-    if ((name_length == 0u) || (name_length > SHELL_STR_SIZE_MAX) ||
-        (p_pack->len != (uint16_t)(FRAME_PARAM_WAVE_SELECT_FIXED_SIZE + name_length)))
+
+    if (    (name_length == 0u)
+         || (name_length > SHELL_STR_SIZE_MAX)
+         || (p_pack->len != (uint16_t)(FRAME_PARAM_WAVE_SELECT_FIXED_SIZE + name_length)))
     {
         return;
     }
 
-    p_parameter = shell_find((const char *)&p_pack->p_data[FRAME_PARAM_WAVE_SELECT_FIXED_SIZE],
-                             name_length);
-    if ((p_parameter != NULL) && (p_parameter->type != (uint32_t)SHELL_CMD))
+    p_parameter = shell_find((const char *)&p_pack->p_data[FRAME_PARAM_WAVE_SELECT_FIXED_SIZE], name_length);
+
+    if (    (p_parameter != NULL)
+         && (p_parameter->type != (uint32_t)SHELL_CMD))
     {
         if (wire_octet_get(p_pack->p_data[1]) != 0u)
         {
@@ -560,102 +574,90 @@ static void frame_parameter_wave_select_act(void *p_frame, DEC_MY_PRINTF)
                           FRAME_PARAM_WAVE_SELECT_ACK_SIZE);
 }
 
-REG_COMM(CMD_SET_SHELL_WAVE_ENABLE_PARAM,
-         CMD_WORD_SHELL_WAVE_ENABLE_PARAM,
-         frame_parameter_wave_select_act)
+REG_COMM(CMD_SET_SHELL_WAVE_ENABLE_PARAM, CMD_WORD_SHELL_WAVE_ENABLE_PARAM, frame_parameter_wave_select_act)
 
 static void frame_parameter_wave_start_act(void *p_frame, DEC_MY_PRINTF)
 {
     section_packform_t *p_pack = (section_packform_t *)p_frame;
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
-        (p_pack->p_data == NULL) ||
-        (p_pack->len != FRAME_PARAM_WAVE_START_SIZE))
+
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u)
+         || (p_pack->p_data == NULL)
+         || (p_pack->len != FRAME_PARAM_WAVE_START_SIZE))
     {
         return;
     }
 
     s_wave_enabled = (wire_octet_get(p_pack->p_data[0]) != 0u) ? 1u : 0u;
-    s_wave_output = my_printf;
-    s_wave_source = p_pack->dst;
-    s_wave_dynamic_source = p_pack->d_dst;
-    s_wave_destination = p_pack->src;
+    s_wave_output              = my_printf;
+    s_wave_source              = p_pack->dst;
+    s_wave_dynamic_source      = p_pack->d_dst;
+    s_wave_destination         = p_pack->src;
     s_wave_dynamic_destination = p_pack->d_src;
+
     if (s_wave_enabled == 0u)
     {
         s_wave_state = FRAME_PARAM_WAVE_IDLE;
-        s_wave_item = NULL;
+        s_wave_item  = NULL;
     }
 
-    frame_parameter_reply(p_pack,
-                          my_printf,
-                          CMD_WORD_SHELL_WAVE_START,
-                          1u,
-                          NULL,
-                          0u);
+    frame_parameter_reply(p_pack, my_printf, CMD_WORD_SHELL_WAVE_START, 1u, NULL, 0u);
 }
 
-REG_COMM(CMD_SET_SHELL_WAVE_START,
-         CMD_WORD_SHELL_WAVE_START,
-         frame_parameter_wave_start_act)
+REG_COMM(CMD_SET_SHELL_WAVE_START, CMD_WORD_SHELL_WAVE_START, frame_parameter_wave_start_act)
 
 static void frame_parameter_wave_period_act(void *p_frame, DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack                         = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_PARAM_WAVE_PERIOD_SIZE] = {0}; /* Applied period response. */
     uint32_t requested_period; /* Requested interval between parameter-wave frames. */
 
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
-        (p_pack->p_data == NULL) ||
-        (p_pack->len != FRAME_PARAM_WAVE_PERIOD_SIZE))
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u)
+         || (p_pack->p_data == NULL)
+         || (p_pack->len != FRAME_PARAM_WAVE_PERIOD_SIZE))
     {
         return;
     }
 
     requested_period = wire_u32_le_read(p_pack->p_data);
-    requested_period = (requested_period < FRAME_PARAM_WAVE_PERIOD_MIN_MS) ?
-                           FRAME_PARAM_WAVE_PERIOD_MIN_MS : requested_period;
-    requested_period = (requested_period > FRAME_PARAM_WAVE_PERIOD_MAX_MS) ?
-                           FRAME_PARAM_WAVE_PERIOD_MAX_MS : requested_period;
+    requested_period =
+        (requested_period < FRAME_PARAM_WAVE_PERIOD_MIN_MS) ? FRAME_PARAM_WAVE_PERIOD_MIN_MS : requested_period;
+    requested_period =
+        (requested_period > FRAME_PARAM_WAVE_PERIOD_MAX_MS) ? FRAME_PARAM_WAVE_PERIOD_MAX_MS : requested_period;
     s_wave_period_ms = requested_period;
     wire_u32_le_write(payload, s_wave_period_ms);
-    frame_parameter_reply(p_pack,
-                          my_printf,
-                          CMD_WORD_SHELL_WAVE_PERIOD,
-                          1u,
-                          payload,
-                          FRAME_PARAM_WAVE_PERIOD_SIZE);
+    frame_parameter_reply(p_pack, my_printf, CMD_WORD_SHELL_WAVE_PERIOD, 1u, payload, FRAME_PARAM_WAVE_PERIOD_SIZE);
 }
 
-REG_COMM(CMD_SET_SHELL_WAVE_PERIOD,
-         CMD_WORD_SHELL_WAVE_PERIOD,
-         frame_parameter_wave_period_act)
+REG_COMM(CMD_SET_SHELL_WAVE_PERIOD, CMD_WORD_SHELL_WAVE_PERIOD, frame_parameter_wave_period_act)
 
 static void frame_parameter_wave_send(uint32_t value_bits,
                                       const section_shell_t *p_parameter)
 {
-    section_packform_t report = {0}; /* One asynchronous wave marker or value report. */
+    section_packform_t report                                                   = {0}; /* One asynchronous wave marker or value report. */
     wire_octet_t payload[FRAME_PARAM_WAVE_ITEM_FIXED_SIZE + SHELL_STR_SIZE_MAX] = {0}; /* Serialized report. */
-    uint8_t name_length = 0u; /* Encoded name length, zero for frame markers. */
+    uint8_t name_length                                                         = 0u;  /* Encoded name length, zero for frame markers. */
 
     if (p_parameter != NULL)
     {
         name_length = frame_parameter_name_copy(&payload[FRAME_PARAM_WAVE_ITEM_FIXED_SIZE],
                                                 p_parameter->p_name,
                                                 p_parameter->p_name_size);
-        payload[1] = wire_octet_get((uint16_t)p_parameter->type);
+        payload[1]  = wire_octet_get((uint16_t)p_parameter->type);
     }
     payload[0] = name_length;
     wire_u32_le_write(&payload[2], value_bits);
 
-    report.src = s_wave_source;
-    report.d_src = s_wave_dynamic_source;
-    report.dst = s_wave_destination;
-    report.d_dst = s_wave_dynamic_destination;
-    report.cmd_set = CMD_SET_SHELL_WAVE_PARAM;
+    report.src      = s_wave_source;
+    report.d_src    = s_wave_dynamic_source;
+    report.dst      = s_wave_destination;
+    report.d_dst    = s_wave_dynamic_destination;
+    report.cmd_set  = CMD_SET_SHELL_WAVE_PARAM;
     report.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
-    report.is_ack = 0u;
-    report.len = (uint16_t)(FRAME_PARAM_WAVE_ITEM_FIXED_SIZE + name_length);
-    report.p_data = payload;
+    report.is_ack   = 0u;
+    report.len      = (uint16_t)(FRAME_PARAM_WAVE_ITEM_FIXED_SIZE + name_length);
+    report.p_data   = payload;
     comm_send_data(&report, s_wave_output);
 }
 
@@ -664,6 +666,7 @@ static void frame_parameter_wave_task(void)
     switch (s_wave_state)
     {
     case FRAME_PARAM_WAVE_IDLE:
+
         if (s_wave_enabled != 0u)
         {
             s_wave_state = FRAME_PARAM_WAVE_START;
@@ -672,23 +675,24 @@ static void frame_parameter_wave_task(void)
 
     case FRAME_PARAM_WAVE_START:
         frame_parameter_wave_send(0x55555555u, NULL);
-        s_wave_item = p_shell_first;
+        s_wave_item  = p_shell_first;
         s_wave_state = FRAME_PARAM_WAVE_DATA;
         break;
 
     case FRAME_PARAM_WAVE_DATA:
+
         while (s_wave_item != NULL)
         {
             section_shell_t *p_parameter = (section_shell_t *)s_wave_item->p_obj; /* Candidate wave parameter. */
 
             s_wave_item = s_wave_item->p_next;
-            if ((p_parameter != NULL) &&
-                (p_parameter->type != (uint32_t)SHELL_CMD) &&
-                ((p_parameter->status & SHELL_STA_AUTO) != 0u))
+
+            if (    (p_parameter != NULL)
+                 && (p_parameter->type != (uint32_t)SHELL_CMD)
+                 && ((p_parameter->status & SHELL_STA_AUTO) != 0u))
             {
-                frame_parameter_wave_send(
-                    frame_parameter_scalar_bits_get(p_parameter, p_parameter->p_var),
-                    p_parameter);
+                frame_parameter_wave_send(frame_parameter_scalar_bits_get(p_parameter, p_parameter->p_var),
+                                          p_parameter);
                 return;
             }
         }
@@ -698,10 +702,11 @@ static void frame_parameter_wave_task(void)
     case FRAME_PARAM_WAVE_END:
         frame_parameter_wave_send(0xAAAAAAAAu, NULL);
         s_wave_wait_ms = s_wave_period_ms;
-        s_wave_state = FRAME_PARAM_WAVE_WAIT;
+        s_wave_state   = FRAME_PARAM_WAVE_WAIT;
         break;
 
     case FRAME_PARAM_WAVE_WAIT:
+
         if (s_wave_enabled == 0u)
         {
             s_wave_state = FRAME_PARAM_WAVE_IDLE;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    platform_port.c
- * @brief   TMS320F280049C LaunchPad platform services.
+ * @file platform_port.c
+ * @brief TMS320F280049C LaunchPad platform services.
  * @details
  *          This file is part of the base project.
  *
@@ -22,8 +22,8 @@
  *          - Prior: received octets are untrusted until the FRAME parser validates a complete packet
  *          - Time: the tick is 100 us and every transmit wait has a bounded deadline
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,29 +36,29 @@
 #include "platform.h"
 #include "section.h"
 
-#define TMS320F280049C_SYSCLK_HZ DEVICE_SYSCLK_FREQ /* Official LaunchPad PLL configuration: 100 MHz. */
-#define TMS320F280049C_LSPCLK_HZ DEVICE_LSPCLK_FREQ /* SYSCLK/4; 115200 request yields about 115741 baud. */
-#define TMS320F280049C_TICK_HZ 10000u      /* SECTION scheduler tick frequency. */
-#define TMS320F280049C_UART_BAUD 115200u    /* Requested XDS110 virtual-COM baud rate. */
-#define TMS320F280049C_UART_WIRE_OCTET_MASK 0x00FFu /* Significant bits in one physical SCI character. */
-#define TMS320F280049C_UART_RX_QUEUE_CAPACITY 128u /* Stored logical octets, including one sentinel slot. */
-#define TMS320F280049C_UART_TX_QUEUE_CAPACITY 1024u /* Pending logical octets, including one sentinel slot. */
-#define TMS320F280049C_SCIA_RX_FIFO_CAPACITY 16u  /* Maximum hardware FIFO words drained by one ISR. */
-#define TMS320F280049C_SCIA_TX_FIFO_CAPACITY 16u  /* Maximum hardware FIFO words filled by one ISR. */
-#define TMS320F280049C_UART_TX_WAIT_TICKS 10000u /* Maximum 1 s wait for room for one complete frame. */
+#define TMS320F280049C_SYSCLK_HZ               DEVICE_SYSCLK_FREQ /* Official LaunchPad PLL configuration: 100 MHz. */
+#define TMS320F280049C_LSPCLK_HZ               DEVICE_LSPCLK_FREQ /* SYSCLK/4; 115200 request yields about 115741 baud. */
+#define TMS320F280049C_TICK_HZ                 10000u             /* SECTION scheduler tick frequency. */
+#define TMS320F280049C_UART_BAUD               115200u            /* Requested XDS110 virtual-COM baud rate. */
+#define TMS320F280049C_UART_WIRE_OCTET_MASK    0x00FFu            /* Significant bits in one physical SCI character. */
+#define TMS320F280049C_UART_RX_QUEUE_CAPACITY  128u     /* Stored logical octets, including one sentinel slot. */
+#define TMS320F280049C_UART_TX_QUEUE_CAPACITY  1024u    /* Pending logical octets, including one sentinel slot. */
+#define TMS320F280049C_SCIA_RX_FIFO_CAPACITY   16u      /* Maximum hardware FIFO words drained by one ISR. */
+#define TMS320F280049C_SCIA_TX_FIFO_CAPACITY   16u      /* Maximum hardware FIFO words filled by one ISR. */
+#define TMS320F280049C_UART_TX_WAIT_TICKS      10000u   /* Maximum 1 s wait for room for one complete frame. */
 #define TMS320F280049C_UART_TX_WAIT_ITERATIONS 1000000u /* Fallback bound when the system tick cannot advance. */
 
 static volatile uint32_t g_section_tick_100us = 0u; /* SECTION time base incremented every 100 us. */
 static volatile uint8_t g_uart_rx_queue[TMS320F280049C_UART_RX_QUEUE_CAPACITY]; /* ISR-to-task RX queue. */
 static volatile uint16_t g_uart_rx_write_index = 0u; /* Next queue slot written only by the SCIA ISR. */
-static volatile uint16_t g_uart_rx_read_index = 0u;  /* Next queue slot consumed only by foreground code. */
+static volatile uint16_t g_uart_rx_read_index  = 0u; /* Next queue slot consumed only by foreground code. */
 static volatile uint8_t g_uart_tx_queue[TMS320F280049C_UART_TX_QUEUE_CAPACITY]; /* Task-to-ISR TX queue. */
-static volatile uint16_t g_uart_tx_write_index = 0u; /* Published end of complete frames from foreground. */
-static volatile uint16_t g_uart_tx_read_index = 0u;  /* Next queue slot consumed only by the SCIA ISR. */
-volatile uint32_t g_tms320f280049c_uart_rx_octet_count = 0u; /* Accepted physical RX octets. */
-volatile uint32_t g_tms320f280049c_uart_rx_error_count = 0u; /* Receiver recovery events. */
-volatile uint32_t g_tms320f280049c_uart_rx_drop_count = 0u; /* Logical octets discarded when the queue is full. */
-volatile uint32_t g_tms320f280049c_uart_tx_octet_count = 0u; /* Completed physical TX octets. */
+static volatile uint16_t g_uart_tx_write_index              = 0u; /* Published end of complete frames from foreground. */
+static volatile uint16_t g_uart_tx_read_index               = 0u; /* Next queue slot consumed only by the SCIA ISR. */
+volatile uint32_t g_tms320f280049c_uart_rx_octet_count      = 0u; /* Accepted physical RX octets. */
+volatile uint32_t g_tms320f280049c_uart_rx_error_count      = 0u; /* Receiver recovery events. */
+volatile uint32_t g_tms320f280049c_uart_rx_drop_count       = 0u; /* Logical octets discarded when the queue is full. */
+volatile uint32_t g_tms320f280049c_uart_tx_octet_count      = 0u; /* Completed physical TX octets. */
 volatile uint32_t g_tms320f280049c_uart_tx_drop_frame_count = 0u; /* Complete frames rejected after bounded wait. */
 
 /**
@@ -69,6 +69,7 @@ volatile uint32_t g_tms320f280049c_uart_tx_drop_frame_count = 0u; /* Complete fr
 static uint16_t tms320f280049c_uart_rx_index_next(uint16_t index)
 {
     index++;
+
     if (index >= TMS320F280049C_UART_RX_QUEUE_CAPACITY)
     {
         index = 0u;
@@ -85,6 +86,7 @@ static uint16_t tms320f280049c_uart_rx_index_next(uint16_t index)
 static uint16_t tms320f280049c_uart_tx_index_next(uint16_t index)
 {
     index++;
+
     if (index >= TMS320F280049C_UART_TX_QUEUE_CAPACITY)
     {
         index = 0u;
@@ -99,14 +101,13 @@ static uint16_t tms320f280049c_uart_tx_index_next(uint16_t index)
 #pragma CODE_SECTION(tms320f280049c_uart_tx_free_get, ".TI.ramfunc")
 static uint16_t tms320f280049c_uart_tx_free_get(void)
 {
-    uint16_t read_index = g_uart_tx_read_index;   /* Consumer position sampled from the TX ISR. */
+    uint16_t read_index  = g_uart_tx_read_index;  /* Consumer position sampled from the TX ISR. */
     uint16_t write_index = g_uart_tx_write_index; /* Producer position owned by foreground code. */
-    uint16_t free_count = 0u;                     /* Queue slots available without using the sentinel. */
+    uint16_t free_count  = 0u; /* Queue slots available without using the sentinel. */
 
     if (write_index >= read_index)
     {
-        free_count = (uint16_t)((TMS320F280049C_UART_TX_QUEUE_CAPACITY - 1u) -
-                                (write_index - read_index));
+        free_count = (uint16_t)((TMS320F280049C_UART_TX_QUEUE_CAPACITY - 1u) - (write_index - read_index));
     }
     else
     {
@@ -124,7 +125,7 @@ static uint16_t tms320f280049c_uart_tx_free_get(void)
 static uint8_t tms320f280049c_uart_rx_push(uint8_t data)
 {
     uint16_t write_index = g_uart_rx_write_index; /* Queue position exclusively owned by the ISR producer. */
-    uint16_t next_index = tms320f280049c_uart_rx_index_next(write_index); /* Candidate committed position. */
+    uint16_t next_index  = tms320f280049c_uart_rx_index_next(write_index); /* Candidate committed position. */
 
     if (next_index == g_uart_rx_read_index)
     {
@@ -133,7 +134,7 @@ static uint8_t tms320f280049c_uart_rx_push(uint8_t data)
     }
 
     g_uart_rx_queue[write_index] = (uint8_t)((uint16_t)data & TMS320F280049C_UART_WIRE_OCTET_MASK);
-    g_uart_rx_write_index = next_index;
+    g_uart_rx_write_index        = next_index;
     return 1u;
 }
 
@@ -148,7 +149,7 @@ static __interrupt void tms320f280049c_cpu_timer0_isr(void)
 static __interrupt void tms320f280049c_scia_rx_isr(void)
 {
     uint16_t processed_count = 0u; /* Hardware FIFO entries handled during this bounded ISR invocation. */
-    uint16_t receive_status = SCI_getRxStatus(SCIA_BASE); /* Receiver status captured before FIFO access. */
+    uint16_t receive_status  = SCI_getRxStatus(SCIA_BASE); /* Receiver status captured before FIFO access. */
 
     if ((receive_status & SCI_RXSTATUS_ERROR) != 0u)
     {
@@ -166,11 +167,10 @@ static __interrupt void tms320f280049c_scia_rx_isr(void)
         g_tms320f280049c_uart_rx_error_count++;
     }
 
-    while ((SCI_getRxFIFOStatus(SCIA_BASE) != SCI_FIFO_RX0) &&
-           (processed_count < TMS320F280049C_SCIA_RX_FIFO_CAPACITY))
+    while (    (SCI_getRxFIFOStatus(SCIA_BASE) != SCI_FIFO_RX0)
+            && (processed_count < TMS320F280049C_SCIA_RX_FIFO_CAPACITY))
     {
-        uint8_t data = (uint8_t)(SCI_readCharNonBlocking(SCIA_BASE) &
-                                 TMS320F280049C_UART_WIRE_OCTET_MASK); /* One physical octet. */
+        uint8_t data = (uint8_t)(SCI_readCharNonBlocking(SCIA_BASE) & TMS320F280049C_UART_WIRE_OCTET_MASK); /* One physical octet. */
 
         if (tms320f280049c_uart_rx_push(data) != 0u)
         {
@@ -187,22 +187,22 @@ static __interrupt void tms320f280049c_scia_rx_isr(void)
 #pragma CODE_SECTION(tms320f280049c_scia_tx_isr, ".TI.ramfunc")
 static __interrupt void tms320f280049c_scia_tx_isr(void)
 {
-    uint16_t read_index = g_uart_tx_read_index; /* Queue position exclusively owned by this ISR consumer. */
+    uint16_t read_index      = g_uart_tx_read_index; /* Queue position exclusively owned by this ISR consumer. */
     uint16_t processed_count = 0u; /* Hardware FIFO entries filled during this bounded ISR invocation. */
 
-    while ((SCI_getTxFIFOStatus(SCIA_BASE) != SCI_FIFO_TX16) &&
-           (read_index != g_uart_tx_write_index) &&
-           (processed_count < TMS320F280049C_SCIA_TX_FIFO_CAPACITY))
+    while (    (SCI_getTxFIFOStatus(SCIA_BASE) != SCI_FIFO_TX16)
+            && (read_index != g_uart_tx_write_index)
+            && (processed_count < TMS320F280049C_SCIA_TX_FIFO_CAPACITY))
     {
         SCI_writeCharNonBlocking(SCIA_BASE,
-                                 (uint16_t)g_uart_tx_queue[read_index] &
-                                     TMS320F280049C_UART_WIRE_OCTET_MASK);
+                                 (uint16_t)g_uart_tx_queue[read_index] & TMS320F280049C_UART_WIRE_OCTET_MASK);
         read_index = tms320f280049c_uart_tx_index_next(read_index);
         g_tms320f280049c_uart_tx_octet_count++;
         processed_count++;
     }
 
     g_uart_tx_read_index = read_index;
+
     if (read_index == g_uart_tx_write_index)
     {
         SCI_disableInterrupt(SCIA_BASE, SCI_INT_TXFF);
@@ -262,8 +262,7 @@ static void tms320f280049c_tick_init(void)
     CPUTimer_setPeriod(CPUTIMER0_BASE, timer_period);
     CPUTimer_setPreScaler(CPUTIMER0_BASE, 0u);
     CPUTimer_reloadTimerCounter(CPUTIMER0_BASE);
-    CPUTimer_setEmulationMode(CPUTIMER0_BASE,
-                              CPUTIMER_EMULATIONMODE_STOPAFTERNEXTDECREMENT);
+    CPUTimer_setEmulationMode(CPUTIMER0_BASE, CPUTIMER_EMULATIONMODE_STOPAFTERNEXTDECREMENT);
     CPUTimer_enableInterrupt(CPUTIMER0_BASE);
     Interrupt_enable(INT_TIMER0);
     CPUTimer_startTimer(CPUTIMER0_BASE);
@@ -278,12 +277,12 @@ static void tms320f280049c_tick_init(void)
 static void tms320f280049c_perf_counter_init(void)
 {
     ERAD_Counter_Config counter_config = {
-        .event = ERAD_EVENT_NO_EVENT,
-        .event_mode = ERAD_COUNTER_MODE_ACTIVE,
-        .reference = 0u,
+        .event        = ERAD_EVENT_NO_EVENT,
+        .event_mode   = ERAD_COUNTER_MODE_ACTIVE,
+        .reference    = 0u,
         .rst_on_match = false,
-        .enable_int = false,
-        .enable_stop = false,
+        .enable_int   = false,
+        .enable_stop  = false,
     };
 
     /* ERAD ownership is global; Counter1 is intentionally firmware-owned. */
@@ -334,12 +333,13 @@ uint8_t tms320f280049c_uart_rx_get_byte(uint8_t *p_data)
     }
 
     read_index = g_uart_rx_read_index;
+
     if (read_index == g_uart_rx_write_index)
     {
         return 0u;
     }
 
-    *p_data = (uint8_t)((uint16_t)g_uart_rx_queue[read_index] & TMS320F280049C_UART_WIRE_OCTET_MASK);
+    *p_data              = (uint8_t)((uint16_t)g_uart_rx_queue[read_index] & TMS320F280049C_UART_WIRE_OCTET_MASK);
     g_uart_rx_read_index = tms320f280049c_uart_rx_index_next(read_index);
     return 1u;
 }
@@ -347,12 +347,13 @@ uint8_t tms320f280049c_uart_rx_get_byte(uint8_t *p_data)
 #pragma CODE_SECTION(tms320f280049c_uart_tx_write, ".TI.ramfunc")
 void tms320f280049c_uart_tx_write(const uint8_t *p_data, uint16_t length)
 {
-    uint16_t index = 0u; /* Logical wire-octet index copied into platform-owned storage. */
-    uint16_t write_index = 0u; /* Private producer cursor published only after the complete frame is copied. */
-    uint32_t start_tick = g_section_tick_100us; /* Tick used to bound waiting for queue capacity. */
+    uint16_t index           = 0u; /* Logical wire-octet index copied into platform-owned storage. */
+    uint16_t write_index     = 0u; /* Private producer cursor published only after the complete frame is copied. */
+    uint32_t start_tick      = g_section_tick_100us; /* Tick used to bound waiting for queue capacity. */
     uint32_t wait_iterations = 0u; /* Fallback wait bound for disabled or stalled interrupts. */
 
-    if ((p_data == NULL) || (length == 0u))
+    if (    (p_data == NULL)
+         || (length == 0u))
     {
         return;
     }
@@ -367,8 +368,9 @@ void tms320f280049c_uart_tx_write(const uint8_t *p_data, uint16_t length)
     {
         SCI_enableInterrupt(SCIA_BASE, SCI_INT_TXFF);
         wait_iterations++;
-        if (((uint32_t)(g_section_tick_100us - start_tick) >= TMS320F280049C_UART_TX_WAIT_TICKS) ||
-            (wait_iterations >= TMS320F280049C_UART_TX_WAIT_ITERATIONS))
+
+        if (    ((uint32_t)(g_section_tick_100us - start_tick) >= TMS320F280049C_UART_TX_WAIT_TICKS)
+             || (wait_iterations >= TMS320F280049C_UART_TX_WAIT_ITERATIONS))
         {
             g_tms320f280049c_uart_tx_drop_frame_count++;
             return;
@@ -376,11 +378,11 @@ void tms320f280049c_uart_tx_write(const uint8_t *p_data, uint16_t length)
     }
 
     write_index = g_uart_tx_write_index;
+
     for (index = 0u; index < length; index++)
     {
-        g_uart_tx_queue[write_index] =
-            (uint8_t)((uint16_t)p_data[index] & TMS320F280049C_UART_WIRE_OCTET_MASK);
-        write_index = tms320f280049c_uart_tx_index_next(write_index);
+        g_uart_tx_queue[write_index] = (uint8_t)((uint16_t)p_data[index] & TMS320F280049C_UART_WIRE_OCTET_MASK);
+        write_index                  = tms320f280049c_uart_tx_index_next(write_index);
     }
     g_uart_tx_write_index = write_index;
     SCI_enableInterrupt(SCIA_BASE, SCI_INT_TXFF);

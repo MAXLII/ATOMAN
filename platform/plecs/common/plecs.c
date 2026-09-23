@@ -14,16 +14,16 @@
 #if defined(_WIN32)
 #include "wchar.h"
 #include "windows.h"
-#define PLECS_LOG_FILE_NAME L"plecs_log.txt"
+#define PLECS_LOG_FILE_NAME     L"plecs_log.txt"
 #define PLECS_LOG_PATH_CAPACITY 1024U
 #else
 #define PLECS_LOG_FILE_NAME "plecs_log.txt"
 #endif
 
-static FILE *fp_plecs = NULL; /* 当前 PLECS DLL 实例使用的日志文件句柄。 */
-static double interrupt_time_last = 0.0; /* Simulation time of the latest committed control interrupt. */
-static uint8_t interrupt_time_valid = 0u; /* Nonzero after one control interrupt has run in this simulation. */
-static uint32_t output_tick_last = 0u; /* Scheduler time already converted into 100 us ticks. */
+static FILE *fp_plecs               = NULL; /* 当前 PLECS DLL 实例使用的日志文件句柄。 */
+static double interrupt_time_last   = 0.0;  /* Simulation time of the latest committed control interrupt. */
+static uint8_t interrupt_time_valid = 0u;   /* Nonzero after one control interrupt has run in this simulation. */
+static uint32_t output_tick_last    = 0u;   /* Scheduler time already converted into 100 us ticks. */
 
 /**
  * @return DLL 目录中的日志文件句柄；路径解析或文件打开失败时返回 NULL。
@@ -31,42 +31,44 @@ static uint32_t output_tick_last = 0u; /* Scheduler time already converted into 
 static FILE *plecs_log_open(void)
 {
 #if defined(_WIN32)
-    HMODULE module = NULL;        /* 当前 common/plecs.c 所属的已加载 DLL 模块句柄。 */
-    DWORD path_length = 0U;       /* 不含结尾空字符的 DLL 绝对路径长度。 */
-    wchar_t *separator = NULL;    /* DLL 路径中最后一个目录分隔符的位置。 */
-    size_t directory_length = 0U; /* 包含末尾目录分隔符的 DLL 目录长度。 */
-    const size_t file_name_length = sizeof(PLECS_LOG_FILE_NAME) / sizeof(PLECS_LOG_FILE_NAME[0]);
+    HMODULE module                                   = NULL; /* 当前 common/plecs.c 所属的已加载 DLL 模块句柄。 */
+    DWORD path_length                                = 0U;   /* 不含结尾空字符的 DLL 绝对路径长度。 */
+    wchar_t *separator                               = NULL; /* DLL 路径中最后一个目录分隔符的位置。 */
+    size_t directory_length                          = 0U;   /* 包含末尾目录分隔符的 DLL 目录长度。 */
+    const size_t file_name_length                    = sizeof(PLECS_LOG_FILE_NAME) / sizeof(PLECS_LOG_FILE_NAME[0]);
     static wchar_t log_path[PLECS_LOG_PATH_CAPACITY] = {L'\0'}; /* DLL 同目录日志文件的完整路径。 */
 
-    if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                               GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                           (LPCWSTR)(const void *)&fp_plecs,
-                           &module) == FALSE)
+    if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCWSTR)(const void *)&fp_plecs, &module) == FALSE)
     {
         return NULL;
     }
 
     path_length = GetModuleFileNameW(module, log_path, (DWORD)PLECS_LOG_PATH_CAPACITY);
+
     if (path_length == 0U)
     {
         return NULL;
     }
+
     if (path_length >= (DWORD)PLECS_LOG_PATH_CAPACITY)
     {
         return NULL;
     }
 
     separator = wcsrchr(log_path, L'\\');
+
     if (separator == NULL)
     {
         separator = wcsrchr(log_path, L'/');
     }
+
     if (separator == NULL)
     {
         return NULL;
     }
 
     directory_length = (size_t)(separator - log_path) + 1U;
+
     if ((directory_length + file_name_length) > PLECS_LOG_PATH_CAPACITY)
     {
         return NULL;
@@ -118,10 +120,14 @@ void plecs_set_output(PLECS_OUTPUT_E num, float val)
     }
 }
 
-void plecs_printf(const char *file, int line, const char *format, ...)
+void plecs_printf(const char *file,
+                  int line,
+                  const char *format,
+                  ...)
 {
     (void)file;
     (void)line;
+
     if (fp_plecs != NULL)
     {
         const double time = (double)__atomic_load_n(&plecs_time_100us, __ATOMIC_RELAXED) * 0.0001;
@@ -136,10 +142,10 @@ void plecs_printf(const char *file, int line, const char *format, ...)
 
 DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 {
-    aSizes->numInputs = PLECS_INPUT_NUM;
-    aSizes->numOutputs = PLECS_OUTPUT_NUM;
+    aSizes->numInputs     = PLECS_INPUT_NUM;
+    aSizes->numOutputs    = PLECS_OUTPUT_NUM;
     aSizes->numParameters = 0;
-    aSizes->numStates = 0;
+    aSizes->numStates     = 0;
 }
 
 DLLEXPORT void plecsStart(struct SimulationState *aState)
@@ -147,9 +153,10 @@ DLLEXPORT void plecsStart(struct SimulationState *aState)
     sim_comm_stop();
     plecs_astate = aState;
     __atomic_store_n(&plecs_time_100us, 0u, __ATOMIC_RELAXED);
-    output_tick_last = 0u;
-    interrupt_time_last = 0.0;
+    output_tick_last     = 0u;
+    interrupt_time_last  = 0.0;
     interrupt_time_valid = 0u;
+
     if (fp_plecs != NULL)
     {
         fclose(fp_plecs);
@@ -164,17 +171,20 @@ DLLEXPORT void plecsOutput(struct SimulationState *aState)
 {
     plecs_astate = aState;
     const uint32_t tick = (uint32_t)(plecs_astate->time * 10000.0 + 1.0e-6);
+
     if (tick > output_tick_last)
     {
         __atomic_store_n(&plecs_time_100us, tick, __ATOMIC_RELAXED);
         run_task();
         output_tick_last = tick;
     }
-    if ((interrupt_time_valid == 0u) ||             /* Execute the initial sample exactly once. */
-        (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
+
+    if (    (interrupt_time_valid == 0u)
+         || /* Execute the initial sample exactly once. */
+            (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
     {
         section_interrupt();
-        interrupt_time_last = plecs_astate->time;
+        interrupt_time_last  = plecs_astate->time;
         interrupt_time_valid = 1u;
     }
 }

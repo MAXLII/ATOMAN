@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_icg.h
+ * @file hc32_ll_icg.h
  * @brief This file contains all the Macro Definitions of the ICG driver
  *        library.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -35,15 +35,15 @@ extern "C"
 #include "hc32f5xx.h"
 #include "hc32f5xx_conf.h"
 
-/**
- * @addtogroup LL_Driver
- * @{
- */
+    /**
+     * @addtogroup LL_Driver
+     * @{
+     */
 
-/**
- * @addtogroup LL_ICG
- * @{
- */
+    /**
+     * @addtogroup LL_ICG
+     * @{
+     */
 
 #if (LL_ICG_ENABLE == DDL_ON)
 
@@ -63,8 +63,8 @@ extern "C"
  * @defgroup ICG_SWDT_Reset_State ICG SWDT Reset State
  * @{
  */
-#define ICG_SWDT_RST_START                      (0UL)                   /*!< SWDT auto start after reset */
-#define ICG_SWDT_RST_STOP                       (ICG_ICG0_SWDTAUTS)     /*!< SWDT stop after reset       */
+#define ICG_SWDT_RST_START (0UL) /*!< SWDT auto start after reset */
+#define ICG_SWDT_RST_STOP  (ICG_ICG0_SWDTAUTS) /*!< SWDT stop after reset */
 /**
  * @}
  */
@@ -73,8 +73,8 @@ extern "C"
  * @defgroup ICG_SWDT_Exception_Type ICG SWDT Exception Type
  * @{
  */
-#define ICG_SWDT_EXP_TYPE_INT                   (0UL)               /*!< SWDT trigger interrupt */
-#define ICG_SWDT_EXP_TYPE_RST                   (ICG_ICG0_SWDTITS)  /*!< SWDT trigger reset     */
+#define ICG_SWDT_EXP_TYPE_INT (0UL) /*!< SWDT trigger interrupt */
+#define ICG_SWDT_EXP_TYPE_RST (ICG_ICG0_SWDTITS) /*!< SWDT trigger reset */
 /**
  * @}
  */
@@ -83,10 +83,10 @@ extern "C"
  * @defgroup ICG_SWDT_Count_Period ICG SWDT Count Period
  * @{
  */
-#define ICG_SWDT_CNT_PERIOD256                  (0UL)                   /*!< 256 clock cycle   */
-#define ICG_SWDT_CNT_PERIOD4096                 (ICG_ICG0_SWDTPERI_0)   /*!< 4096 clock cycle  */
-#define ICG_SWDT_CNT_PERIOD16384                (ICG_ICG0_SWDTPERI_1)   /*!< 16384 clock cycle */
-#define ICG_SWDT_CNT_PERIOD65536                (ICG_ICG0_SWDTPERI)     /*!< 65536 clock cycle */
+#define ICG_SWDT_CNT_PERIOD256   (0UL) /*!< 256 clock cycle */
+#define ICG_SWDT_CNT_PERIOD4096  (ICG_ICG0_SWDTPERI_0) /*!< 4096 clock cycle */
+#define ICG_SWDT_CNT_PERIOD16384 (ICG_ICG0_SWDTPERI_1) /*!< 16384 clock cycle */
+#define ICG_SWDT_CNT_PERIOD65536 (ICG_ICG0_SWDTPERI)   /*!< 65536 clock cycle */
 /**
  * @}
  */
@@ -95,13 +95,13 @@ extern "C"
  * @defgroup ICG_SWDT_Clock_Division ICG SWDT Clock Division
  * @{
  */
-#define ICG_SWDT_CLK_DIV1                       (0UL)                               /*!< CLK      */
-#define ICG_SWDT_CLK_DIV16                      (0x04UL << ICG_ICG0_SWDTCKS_POS)    /*!< CLK/16   */
-#define ICG_SWDT_CLK_DIV32                      (0x05UL << ICG_ICG0_SWDTCKS_POS)    /*!< CLK/32   */
-#define ICG_SWDT_CLK_DIV64                      (0x06UL << ICG_ICG0_SWDTCKS_POS)    /*!< CLK/64   */
-#define ICG_SWDT_CLK_DIV128                     (0x07UL << ICG_ICG0_SWDTCKS_POS)    /*!< CLK/128  */
-#define ICG_SWDT_CLK_DIV256                     (0x08UL << ICG_ICG0_SWDTCKS_POS)    /*!< CLK/256  */
-#define ICG_SWDT_CLK_DIV2048                    (0x0BUL << ICG_ICG0_SWDTCKS_POS)    /*!< CLK/2048 */
+#define ICG_SWDT_CLK_DIV1    (0UL) /*!< CLK */
+#define ICG_SWDT_CLK_DIV16   (0x04UL << ICG_ICG0_SWDTCKS_POS) /*!< CLK/16 */
+#define ICG_SWDT_CLK_DIV32   (0x05UL << ICG_ICG0_SWDTCKS_POS) /*!< CLK/32 */
+#define ICG_SWDT_CLK_DIV64   (0x06UL << ICG_ICG0_SWDTCKS_POS) /*!< CLK/64 */
+#define ICG_SWDT_CLK_DIV128  (0x07UL << ICG_ICG0_SWDTCKS_POS) /*!< CLK/128 */
+#define ICG_SWDT_CLK_DIV256  (0x08UL << ICG_ICG0_SWDTCKS_POS) /*!< CLK/256 */
+#define ICG_SWDT_CLK_DIV2048 (0x0BUL << ICG_ICG0_SWDTCKS_POS) /*!< CLK/2048 */
 
 /**
  * @}
@@ -111,32 +111,32 @@ extern "C"
  * @defgroup ICG_SWDT_Refresh_Range ICG SWDT Refresh Range
  * @{
  */
-#define ICG_SWDT_RANGE_0TO25PCT                 (0x01UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~25%             */
-#define ICG_SWDT_RANGE_25TO50PCT                (0x02UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 25%~50%            */
-#define ICG_SWDT_RANGE_0TO50PCT                 (0x03UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~50%             */
-#define ICG_SWDT_RANGE_50TO75PCT                (0x04UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 50%~75%            */
-#define ICG_SWDT_RANGE_0TO25PCT_50TO75PCT       (0x05UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~25% & 50%~75%   */
-#define ICG_SWDT_RANGE_25TO75PCT                (0x06UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 25%~75%            */
-#define ICG_SWDT_RANGE_0TO75PCT                 (0x07UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~75%             */
-#define ICG_SWDT_RANGE_75TO100PCT               (0x08UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 75%~100%           */
-#define ICG_SWDT_RANGE_0TO25PCT_75TO100PCT      (0x09UL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~25% & 75%~100%  */
-#define ICG_SWDT_RANGE_25TO50PCT_75TO100PCT     (0x0AUL << ICG_ICG0_SWDTWDPT_POS)   /*!< 25%~50% & 75%~100% */
-#define ICG_SWDT_RANGE_0TO50PCT_75TO100PCT      (0x0BUL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~50% & 75%~100%  */
-#define ICG_SWDT_RANGE_50TO100PCT               (0x0CUL << ICG_ICG0_SWDTWDPT_POS)   /*!< 50%~100%           */
-#define ICG_SWDT_RANGE_0TO25PCT_50TO100PCT      (0x0DUL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~25% & 50%~100%  */
-#define ICG_SWDT_RANGE_25TO100PCT               (0x0EUL << ICG_ICG0_SWDTWDPT_POS)   /*!< 25%~100%           */
-#define ICG_SWDT_RANGE_0TO100PCT                (0x0FUL << ICG_ICG0_SWDTWDPT_POS)   /*!< 0%~100%            */
+#define ICG_SWDT_RANGE_0TO25PCT             (0x01UL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~25% */
+#define ICG_SWDT_RANGE_25TO50PCT            (0x02UL << ICG_ICG0_SWDTWDPT_POS) /*!< 25%~50% */
+#define ICG_SWDT_RANGE_0TO50PCT             (0x03UL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~50% */
+#define ICG_SWDT_RANGE_50TO75PCT            (0x04UL << ICG_ICG0_SWDTWDPT_POS) /*!< 50%~75% */
+#define ICG_SWDT_RANGE_0TO25PCT_50TO75PCT   (0x05UL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~25% & 50%~75% */
+#define ICG_SWDT_RANGE_25TO75PCT            (0x06UL << ICG_ICG0_SWDTWDPT_POS) /*!< 25%~75% */
+#define ICG_SWDT_RANGE_0TO75PCT             (0x07UL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~75% */
+#define ICG_SWDT_RANGE_75TO100PCT           (0x08UL << ICG_ICG0_SWDTWDPT_POS) /*!< 75%~100% */
+#define ICG_SWDT_RANGE_0TO25PCT_75TO100PCT  (0x09UL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~25% & 75%~100% */
+#define ICG_SWDT_RANGE_25TO50PCT_75TO100PCT (0x0AUL << ICG_ICG0_SWDTWDPT_POS) /*!< 25%~50% & 75%~100% */
+#define ICG_SWDT_RANGE_0TO50PCT_75TO100PCT  (0x0BUL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~50% & 75%~100% */
+#define ICG_SWDT_RANGE_50TO100PCT           (0x0CUL << ICG_ICG0_SWDTWDPT_POS) /*!< 50%~100% */
+#define ICG_SWDT_RANGE_0TO25PCT_50TO100PCT  (0x0DUL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~25% & 50%~100% */
+#define ICG_SWDT_RANGE_25TO100PCT           (0x0EUL << ICG_ICG0_SWDTWDPT_POS) /*!< 25%~100% */
+#define ICG_SWDT_RANGE_0TO100PCT            (0x0FUL << ICG_ICG0_SWDTWDPT_POS) /*!< 0%~100% */
 /**
  * @}
  */
 
 /**
  * @defgroup ICG_SWDT_LPM_Count ICG SWDT Low Power Mode Count
- * @brief    Counting control of SWDT in sleep/stop mode
+ * @brief Counting control of SWDT in sleep/stop mode
  * @{
  */
-#define ICG_SWDT_LPM_CNT_CONT                   (0UL)                   /*!< Continue counting in sleep/stop mode */
-#define ICG_SWDT_LPM_CNT_STOP                   (ICG_ICG0_SWDTSLPOFF)   /*!< Stop counting in sleep/stop mode     */
+#define ICG_SWDT_LPM_CNT_CONT (0UL) /*!< Continue counting in sleep/stop mode */
+#define ICG_SWDT_LPM_CNT_STOP (ICG_ICG0_SWDTSLPOFF) /*!< Stop counting in sleep/stop mode */
 /**
  * @}
  */
@@ -145,8 +145,8 @@ extern "C"
  * @defgroup ICG_WDT_Reset_State ICG WDT Reset State
  * @{
  */
-#define ICG_WDT_RST_START                       (0UL)               /*!< WDT auto start after reset */
-#define ICG_WDT_RST_STOP                        (ICG_ICG0_WDTAUTS)  /*!< WDT stop after reset       */
+#define ICG_WDT_RST_START (0UL) /*!< WDT auto start after reset */
+#define ICG_WDT_RST_STOP  (ICG_ICG0_WDTAUTS) /*!< WDT stop after reset */
 /**
  * @}
  */
@@ -155,8 +155,8 @@ extern "C"
  * @defgroup ICG_WDT_Exception_Type ICG WDT Exception Type
  * @{
  */
-#define ICG_WDT_EXP_TYPE_INT                    (0UL)               /*!< WDT trigger interrupt */
-#define ICG_WDT_EXP_TYPE_RST                    (ICG_ICG0_WDTITS)   /*!< WDT trigger reset     */
+#define ICG_WDT_EXP_TYPE_INT (0UL)             /*!< WDT trigger interrupt */
+#define ICG_WDT_EXP_TYPE_RST (ICG_ICG0_WDTITS) /*!< WDT trigger reset */
 /**
  * @}
  */
@@ -165,12 +165,12 @@ extern "C"
  * @defgroup ICG_WDT_Count_Period ICG WDT Count Period
  * @{
  */
-#define REDEF_ICG_WDTPERI_POS                   ICG_ICG0_WDTPERI_POS
+#define REDEF_ICG_WDTPERI_POS ICG_ICG0_WDTPERI_POS
 
-#define ICG_WDT_CNT_PERIOD256                   (0UL)                               /*!< 256 clock cycle   */
-#define ICG_WDT_CNT_PERIOD4096                  (0x01UL << REDEF_ICG_WDTPERI_POS)   /*!< 4096 clock cycle  */
-#define ICG_WDT_CNT_PERIOD16384                 (0x02UL << REDEF_ICG_WDTPERI_POS)   /*!< 16384 clock cycle */
-#define ICG_WDT_CNT_PERIOD65536                 (0x03UL << REDEF_ICG_WDTPERI_POS)   /*!< 65536 clock cycle */
+#define ICG_WDT_CNT_PERIOD256   (0UL) /*!< 256 clock cycle */
+#define ICG_WDT_CNT_PERIOD4096  (0x01UL << REDEF_ICG_WDTPERI_POS) /*!< 4096 clock cycle */
+#define ICG_WDT_CNT_PERIOD16384 (0x02UL << REDEF_ICG_WDTPERI_POS) /*!< 16384 clock cycle */
+#define ICG_WDT_CNT_PERIOD65536 (0x03UL << REDEF_ICG_WDTPERI_POS) /*!< 65536 clock cycle */
 /**
  * @}
  */
@@ -179,16 +179,16 @@ extern "C"
  * @defgroup ICG_WDT_Clock_Division ICG WDT Clock Division
  * @{
  */
-#define REDEF_ICG_WDTCKS_POS                    ICG_ICG0_WDTCKS_POS
+#define REDEF_ICG_WDTCKS_POS ICG_ICG0_WDTCKS_POS
 
-#define ICG_WDT_CLK_DIV4                        (0x02UL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/4    */
-#define ICG_WDT_CLK_DIV64                       (0x06UL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/64   */
-#define ICG_WDT_CLK_DIV128                      (0x07UL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/128  */
-#define ICG_WDT_CLK_DIV256                      (0x08UL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/256  */
-#define ICG_WDT_CLK_DIV512                      (0x09UL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/512  */
-#define ICG_WDT_CLK_DIV1024                     (0x0AUL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/1024 */
-#define ICG_WDT_CLK_DIV2048                     (0x0BUL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/2048 */
-#define ICG_WDT_CLK_DIV8192                     (0x0DUL << REDEF_ICG_WDTCKS_POS)    /*!< CLK/8192 */
+#define ICG_WDT_CLK_DIV4    (0x02UL << REDEF_ICG_WDTCKS_POS) /*!< CLK/4 */
+#define ICG_WDT_CLK_DIV64   (0x06UL << REDEF_ICG_WDTCKS_POS) /*!< CLK/64 */
+#define ICG_WDT_CLK_DIV128  (0x07UL << REDEF_ICG_WDTCKS_POS) /*!< CLK/128 */
+#define ICG_WDT_CLK_DIV256  (0x08UL << REDEF_ICG_WDTCKS_POS) /*!< CLK/256 */
+#define ICG_WDT_CLK_DIV512  (0x09UL << REDEF_ICG_WDTCKS_POS) /*!< CLK/512 */
+#define ICG_WDT_CLK_DIV1024 (0x0AUL << REDEF_ICG_WDTCKS_POS) /*!< CLK/1024 */
+#define ICG_WDT_CLK_DIV2048 (0x0BUL << REDEF_ICG_WDTCKS_POS) /*!< CLK/2048 */
+#define ICG_WDT_CLK_DIV8192 (0x0DUL << REDEF_ICG_WDTCKS_POS) /*!< CLK/8192 */
 /**
  * @}
  */
@@ -197,34 +197,34 @@ extern "C"
  * @defgroup ICG_WDT_Refresh_Range ICG WDT Refresh Range
  * @{
  */
-#define REDEF_ICG_WDTWDPT_POS                   ICG_ICG0_WDTWDPT_POS
+#define REDEF_ICG_WDTWDPT_POS ICG_ICG0_WDTWDPT_POS
 
-#define ICG_WDT_RANGE_0TO25PCT                  (0x01UL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~25%             */
-#define ICG_WDT_RANGE_25TO50PCT                 (0x02UL << REDEF_ICG_WDTWDPT_POS)   /*!< 25%~50%            */
-#define ICG_WDT_RANGE_0TO50PCT                  (0x03UL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~50%             */
-#define ICG_WDT_RANGE_50TO75PCT                 (0x04UL << REDEF_ICG_WDTWDPT_POS)   /*!< 50%~75%            */
-#define ICG_WDT_RANGE_0TO25PCT_50TO75PCT        (0x05UL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~25% & 50%~75%   */
-#define ICG_WDT_RANGE_25TO75PCT                 (0x06UL << REDEF_ICG_WDTWDPT_POS)   /*!< 25%~75%            */
-#define ICG_WDT_RANGE_0TO75PCT                  (0x07UL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~75%             */
-#define ICG_WDT_RANGE_75TO100PCT                (0x08UL << REDEF_ICG_WDTWDPT_POS)   /*!< 75%~100%           */
-#define ICG_WDT_RANGE_0TO25PCT_75TO100PCT       (0x09UL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~25% & 75%~100%  */
-#define ICG_WDT_RANGE_25TO50PCT_75TO100PCT      (0x0AUL << REDEF_ICG_WDTWDPT_POS)   /*!< 25%~50% & 75%~100% */
-#define ICG_WDT_RANGE_0TO50PCT_75TO100PCT       (0x0BUL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~50% & 75%~100%  */
-#define ICG_WDT_RANGE_50TO100PCT                (0x0CUL << REDEF_ICG_WDTWDPT_POS)   /*!< 50%~100%           */
-#define ICG_WDT_RANGE_0TO25PCT_50TO100PCT       (0x0DUL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~25% & 50%~100%  */
-#define ICG_WDT_RANGE_25TO100PCT                (0x0EUL << REDEF_ICG_WDTWDPT_POS)   /*!< 25%~100%           */
-#define ICG_WDT_RANGE_0TO100PCT                 (0x0FUL << REDEF_ICG_WDTWDPT_POS)   /*!< 0%~100%            */
+#define ICG_WDT_RANGE_0TO25PCT             (0x01UL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~25% */
+#define ICG_WDT_RANGE_25TO50PCT            (0x02UL << REDEF_ICG_WDTWDPT_POS) /*!< 25%~50% */
+#define ICG_WDT_RANGE_0TO50PCT             (0x03UL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~50% */
+#define ICG_WDT_RANGE_50TO75PCT            (0x04UL << REDEF_ICG_WDTWDPT_POS) /*!< 50%~75% */
+#define ICG_WDT_RANGE_0TO25PCT_50TO75PCT   (0x05UL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~25% & 50%~75% */
+#define ICG_WDT_RANGE_25TO75PCT            (0x06UL << REDEF_ICG_WDTWDPT_POS) /*!< 25%~75% */
+#define ICG_WDT_RANGE_0TO75PCT             (0x07UL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~75% */
+#define ICG_WDT_RANGE_75TO100PCT           (0x08UL << REDEF_ICG_WDTWDPT_POS) /*!< 75%~100% */
+#define ICG_WDT_RANGE_0TO25PCT_75TO100PCT  (0x09UL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~25% & 75%~100% */
+#define ICG_WDT_RANGE_25TO50PCT_75TO100PCT (0x0AUL << REDEF_ICG_WDTWDPT_POS) /*!< 25%~50% & 75%~100% */
+#define ICG_WDT_RANGE_0TO50PCT_75TO100PCT  (0x0BUL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~50% & 75%~100% */
+#define ICG_WDT_RANGE_50TO100PCT           (0x0CUL << REDEF_ICG_WDTWDPT_POS) /*!< 50%~100% */
+#define ICG_WDT_RANGE_0TO25PCT_50TO100PCT  (0x0DUL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~25% & 50%~100% */
+#define ICG_WDT_RANGE_25TO100PCT           (0x0EUL << REDEF_ICG_WDTWDPT_POS) /*!< 25%~100% */
+#define ICG_WDT_RANGE_0TO100PCT            (0x0FUL << REDEF_ICG_WDTWDPT_POS) /*!< 0%~100% */
 /**
  * @}
  */
 
 /**
  * @defgroup ICG_WDT_LPM_Count ICG WDT Low Power Mode Count
- * @brief    Counting control of WDT in sleep mode
+ * @brief Counting control of WDT in sleep mode
  * @{
  */
-#define ICG_WDT_LPM_CNT_CONT                    (0UL)                   /*!< Continue counting in sleep mode */
-#define ICG_WDT_LPM_CNT_STOP                    (ICG_ICG0_WDTSLPOFF)    /*!< Stop counting in sleep mode     */
+#define ICG_WDT_LPM_CNT_CONT (0UL) /*!< Continue counting in sleep mode */
+#define ICG_WDT_LPM_CNT_STOP (ICG_ICG0_WDTSLPOFF) /*!< Stop counting in sleep mode */
 /**
  * @}
  */
@@ -233,10 +233,10 @@ extern "C"
  * @defgroup ICG_BOR_Voltage_Threshold ICG BOR Voltage Threshold
  * @{
  */
-#define ICG_BOR_VOL_THRESHOLD_LVL0              (0UL)                   /*!< BOR voltage threshold 1.9V */
-#define ICG_BOR_VOL_THRESHOLD_LVL1              (ICG_ICG1_BOR_LEV_0)    /*!< BOR voltage threshold 2.0V */
-#define ICG_BOR_VOL_THRESHOLD_LVL2              (ICG_ICG1_BOR_LEV_1)    /*!< BOR voltage threshold 2.6V */
-#define ICG_BOR_VOL_THRESHOLD_LVL3              (ICG_ICG1_BOR_LEV)      /*!< BOR voltage threshold 2.8V */
+#define ICG_BOR_VOL_THRESHOLD_LVL0 (0UL) /*!< BOR voltage threshold 1.9V */
+#define ICG_BOR_VOL_THRESHOLD_LVL1 (ICG_ICG1_BOR_LEV_0) /*!< BOR voltage threshold 2.0V */
+#define ICG_BOR_VOL_THRESHOLD_LVL2 (ICG_ICG1_BOR_LEV_1) /*!< BOR voltage threshold 2.6V */
+#define ICG_BOR_VOL_THRESHOLD_LVL3 (ICG_ICG1_BOR_LEV)   /*!< BOR voltage threshold 2.8V */
 /**
  * @}
  */
@@ -245,19 +245,19 @@ extern "C"
  * @defgroup ICG_BOR_Reset_State ICG BOR Reset State
  * @{
  */
-#define ICG_BOR_RST_ENABLE                      (0UL)               /*!< Enable BOR voltage detection after reset  */
-#define ICG_BOR_RST_DISABLE                     (ICG_ICG1_BORDIS)   /*!< Disable BOR voltage detection after reset */
-/**
- * @}
- */
+#define ICG_BOR_RST_ENABLE  (0UL)             /*!< Enable BOR voltage detection after reset */
+#define ICG_BOR_RST_DISABLE (ICG_ICG1_BORDIS) /*!< Disable BOR voltage detection after reset */
+    /**
+     * @}
+     */
 
-/**
- * @defgroup ICG_HRC_Frequency_Select ICG HRC Frequency Select
- * @{
- */
+    /**
+     * @defgroup ICG_HRC_Frequency_Select ICG HRC Frequency Select
+     * @{
+     */
 
-#define ICG_HRC_24M                             (0UL)                   /*!< HRC = 24MHZ */
-#define ICG_HRC_16M                             (ICG_ICG1_HRCFREQSEL)   /*!< HRC = 16MHZ */
+#define ICG_HRC_24M (0UL) /*!< HRC = 24MHZ */
+#define ICG_HRC_16M (ICG_ICG1_HRCFREQSEL) /*!< HRC = 16MHZ */
 /**
  * @}
  */
@@ -266,8 +266,8 @@ extern "C"
  * @defgroup ICG_HRC_Reset_State ICG HRC Reset State
  * @{
  */
-#define ICG_HRC_RST_OSCILLATION                 (0UL)               /*!< HRC Oscillation after reset */
-#define ICG_HRC_RST_STOP                        (ICG_ICG1_HRCSTOP)  /*!< HRC stop after reset        */
+#define ICG_HRC_RST_OSCILLATION (0UL) /*!< HRC Oscillation after reset */
+#define ICG_HRC_RST_STOP        (ICG_ICG1_HRCSTOP) /*!< HRC stop after reset */
 /**
  * @}
  */
@@ -277,8 +277,8 @@ extern "C"
  * @brief Enable or disable D-BUS read protection for addresses 0x00000000 - 0x0001FFFF
  * @{
  */
-#define ICG_FLASH_PROTECT_RST_DISABLE           (0xFFFFFFFFUL)  /*!< Disable D-BUS read protection after reset */
-#define ICG_FLASH_PROTECT_RST_ENABLE            (0xFFFF4450UL)  /*!< Enable D-BUS read protection after reset  */
+#define ICG_FLASH_PROTECT_RST_DISABLE (0xFFFFFFFFUL) /*!< Disable D-BUS read protection after reset */
+#define ICG_FLASH_PROTECT_RST_ENABLE  (0xFFFF4450UL) /*!< Enable D-BUS read protection after reset */
 /**
  * @}
  */
@@ -287,8 +287,8 @@ extern "C"
  * @defgroup ICG_ERMU_Port_Output_State ICG ERMU Port Output State
  * @{
  */
-#define ICG_ERMU_PORT_OUTPUT_DISABLE            (ICG_ICG8_ERMUOUTDIS)   /*!< Disable ERMU port output after reset */
-#define ICG_ERMU_PORT_OUTPUT_ENABLE             (0x0UL)                 /*!< Enable ERMU port output after reset  */
+#define ICG_ERMU_PORT_OUTPUT_DISABLE (ICG_ICG8_ERMUOUTDIS) /*!< Disable ERMU port output after reset */
+#define ICG_ERMU_PORT_OUTPUT_ENABLE  (0x0UL) /*!< Enable ERMU port output after reset */
 /**
  * @}
  */
@@ -297,10 +297,10 @@ extern "C"
  * @defgroup ICG_ERMU_Port_Sel ICG ERMU Output Port Selection
  * @{
  */
-#define ICG_ERMU_PORT_OUTPUT_PA5                (0x0UL)     /*!< ERMU port output by PA5  */
-#define ICG_ERMU_PORT_OUTPUT_PH5                (0x1UL)     /*!< ERMU port output by PH5  */
-#define ICG_ERMU_PORT_OUTPUT_PH13               (0x2UL)     /*!< ERMU port output by PH13 */
-#define ICG_ERMU_PORT_OUTPUT_PC1                (0x3UL)     /*!< ERMU port output by PC1  */
+#define ICG_ERMU_PORT_OUTPUT_PA5  (0x0UL) /*!< ERMU port output by PA5 */
+#define ICG_ERMU_PORT_OUTPUT_PH5  (0x1UL) /*!< ERMU port output by PH5 */
+#define ICG_ERMU_PORT_OUTPUT_PH13 (0x2UL) /*!< ERMU port output by PH13 */
+#define ICG_ERMU_PORT_OUTPUT_PC1  (0x3UL) /*!< ERMU port output by PC1 */
 /**
  * @}
  */
@@ -315,16 +315,16 @@ extern "C"
  * @{
  */
 /* SWDT register bits config */
-#define ICG_RB_SWDT_AUTS                        (ICG_SWDT_RST_STOP)
-#define ICG_RB_SWDT_ITS                         (ICG_SWDT_EXP_TYPE_RST)
-#define ICG_RB_SWDT_PERI                        (ICG_SWDT_CNT_PERIOD65536)
-#define ICG_RB_SWDT_CKS                         (ICG_SWDT_CLK_DIV2048)
-#define ICG_RB_SWDT_WDPT                        (ICG_SWDT_RANGE_0TO100PCT)
-#define ICG_RB_SWDT_SLTPOFF                     (ICG_SWDT_LPM_CNT_STOP)
+#define ICG_RB_SWDT_AUTS    (ICG_SWDT_RST_STOP)
+#define ICG_RB_SWDT_ITS     (ICG_SWDT_EXP_TYPE_RST)
+#define ICG_RB_SWDT_PERI    (ICG_SWDT_CNT_PERIOD65536)
+#define ICG_RB_SWDT_CKS     (ICG_SWDT_CLK_DIV2048)
+#define ICG_RB_SWDT_WDPT    (ICG_SWDT_RANGE_0TO100PCT)
+#define ICG_RB_SWDT_SLTPOFF (ICG_SWDT_LPM_CNT_STOP)
 
 /* SWDT register value */
-#define ICG_REG_SWDT_CONFIG                     (ICG_RB_SWDT_AUTS | ICG_RB_SWDT_ITS  | ICG_RB_SWDT_PERI | \
-                                                 ICG_RB_SWDT_CKS  | ICG_RB_SWDT_WDPT | ICG_RB_SWDT_SLTPOFF)
+#define ICG_REG_SWDT_CONFIG \
+    (ICG_RB_SWDT_AUTS | ICG_RB_SWDT_ITS | ICG_RB_SWDT_PERI | ICG_RB_SWDT_CKS | ICG_RB_SWDT_WDPT | ICG_RB_SWDT_SLTPOFF)
 /**
  * @}
  */
@@ -334,16 +334,16 @@ extern "C"
  * @{
  */
 /* WDT register bits config */
-#define ICG_RB_WDT_AUTS                         (ICG_WDT_RST_STOP)
-#define ICG_RB_WDT_ITS                          (ICG_WDT_EXP_TYPE_RST)
-#define ICG_RB_WDT_PERI                         (ICG_WDT_CNT_PERIOD65536)
-#define ICG_RB_WDT_CKS                          (ICG_WDT_CLK_DIV8192)
-#define ICG_RB_WDT_WDPT                         (ICG_WDT_RANGE_0TO100PCT)
-#define ICG_RB_WDT_SLTPOFF                      (ICG_WDT_LPM_CNT_STOP)
+#define ICG_RB_WDT_AUTS    (ICG_WDT_RST_STOP)
+#define ICG_RB_WDT_ITS     (ICG_WDT_EXP_TYPE_RST)
+#define ICG_RB_WDT_PERI    (ICG_WDT_CNT_PERIOD65536)
+#define ICG_RB_WDT_CKS     (ICG_WDT_CLK_DIV8192)
+#define ICG_RB_WDT_WDPT    (ICG_WDT_RANGE_0TO100PCT)
+#define ICG_RB_WDT_SLTPOFF (ICG_WDT_LPM_CNT_STOP)
 
 /* WDT register value */
-#define ICG_REG_WDT_CONFIG                      (ICG_RB_WDT_AUTS | ICG_RB_WDT_ITS  | ICG_RB_WDT_PERI | \
-                                                 ICG_RB_WDT_CKS  | ICG_RB_WDT_WDPT | ICG_RB_WDT_SLTPOFF)
+#define ICG_REG_WDT_CONFIG \
+    (ICG_RB_WDT_AUTS | ICG_RB_WDT_ITS | ICG_RB_WDT_PERI | ICG_RB_WDT_CKS | ICG_RB_WDT_WDPT | ICG_RB_WDT_SLTPOFF)
 /**
  * @}
  */
@@ -353,11 +353,11 @@ extern "C"
  * @{
  */
 /* BOR register bits config */
-#define ICG_RB_BOR_LEV                          (ICG_BOR_VOL_THRESHOLD_LVL3)
-#define ICG_RB_BOR_DIS                          (ICG_BOR_RST_DISABLE)
+#define ICG_RB_BOR_LEV (ICG_BOR_VOL_THRESHOLD_LVL3)
+#define ICG_RB_BOR_DIS (ICG_BOR_RST_DISABLE)
 
 /* BOR register value */
-#define ICG_REG_BOR_CONFIG                      (ICG_RB_BOR_LEV | ICG_RB_BOR_DIS)
+#define ICG_REG_BOR_CONFIG (ICG_RB_BOR_LEV | ICG_RB_BOR_DIS)
 /**
  * @}
  */
@@ -367,11 +367,11 @@ extern "C"
  * @{
  */
 /* HRC register bits config */
-#define ICG_RB_HRC_FREQSEL                      (ICG_HRC_16M)
-#define ICG_RB_HRC_STOP                         (ICG_HRC_RST_STOP)
+#define ICG_RB_HRC_FREQSEL (ICG_HRC_16M)
+#define ICG_RB_HRC_STOP    (ICG_HRC_RST_STOP)
 
 /* HRC register value */
-#define ICG_REG_HRC_CONFIG                      (ICG_RB_HRC_FREQSEL | ICG_RB_HRC_STOP)
+#define ICG_REG_HRC_CONFIG (ICG_RB_HRC_FREQSEL | ICG_RB_HRC_STOP)
 /**
  * @}
  */
@@ -380,9 +380,9 @@ extern "C"
  * @defgroup ICG_FLASH_Capacity_ Configuration ICG FLASH Capacity Configuration
  * @{
  */
-#define ICG_DUAL_FLASH_OFF                      (0xFFFFFFFFUL)                    /*!< Double Flash Disable */
-#define ICG_DUAL_FLASH_ON                       (0x004B4B4BUL)                    /*!< Double Flash Enable */
-#define ICG_REG_DUAL_FLASH_CONFIG               (ICG_DUAL_FLASH_OFF)
+#define ICG_DUAL_FLASH_OFF        (0xFFFFFFFFUL) /*!< Double Flash Disable */
+#define ICG_DUAL_FLASH_ON         (0x004B4B4BUL) /*!< Double Flash Enable */
+#define ICG_REG_DUAL_FLASH_CONFIG (ICG_DUAL_FLASH_OFF)
 /**
  * @}
  */
@@ -392,17 +392,17 @@ extern "C"
  * @{
  */
 /* FLASH Read Protect register value */
-#define ICG_REG_FLASH_PROTECT_CONFIG            (ICG_FLASH_PROTECT_RST_DISABLE)
-/**
- * @}
- */
+#define ICG_REG_FLASH_PROTECT_CONFIG (ICG_FLASH_PROTECT_RST_DISABLE)
+    /**
+     * @}
+     */
 
-/**
- * @defgroup ICG_ERMU_Port_Output_Configuration ICG ERMU Port Output Configuration
- * @{
- */
+    /**
+     * @defgroup ICG_ERMU_Port_Output_Configuration ICG ERMU Port Output Configuration
+     * @{
+     */
 
-#define ICG_REG_ERMU_PORT_OUTPUT_CONFIG         (ICG_ERMU_PORT_OUTPUT_DISABLE | ICG_ERMU_PORT_OUTPUT_PA5)
+#define ICG_REG_ERMU_PORT_OUTPUT_CONFIG (ICG_ERMU_PORT_OUTPUT_DISABLE | ICG_ERMU_PORT_OUTPUT_PA5)
 /**
  * @}
  */
@@ -411,12 +411,12 @@ extern "C"
  * @defgroup ICG_Data_Protect_State ICG Data Protect State
  * @{
  */
-#define ICG_DATA_PROTECT1_ENABLE                            (0xAF180402UL)
-#define ICG_DATA_PROTECT1_DISABLE                           (0xFFFFFFFFUL)
-#define ICG_DATA_PROTECT2_ENABLE                            (0xA85173AEUL)
-#define ICG_DATA_PROTECT2_DISABLE                           (0xFFFFFFFFUL)
-#define ICG_DATA_PROTECT3_ENABLE                            (0x42545048UL)
-#define ICG_DATA_PROTECT3_DISABLE                           (0xFFFFFFFFUL)
+#define ICG_DATA_PROTECT1_ENABLE  (0xAF180402UL)
+#define ICG_DATA_PROTECT1_DISABLE (0xFFFFFFFFUL)
+#define ICG_DATA_PROTECT2_ENABLE  (0xA85173AEUL)
+#define ICG_DATA_PROTECT2_DISABLE (0xFFFFFFFFUL)
+#define ICG_DATA_PROTECT3_ENABLE  (0x42545048UL)
+#define ICG_DATA_PROTECT3_DISABLE (0xFFFFFFFFUL)
 /**
  * @}
  */
@@ -431,63 +431,63 @@ extern "C"
  */
 /* ICG register value */
 #ifndef ICG_REG_CFG0_CONST
-#define ICG_REG_CFG0_CONST                      (ICG_REG_WDT_CONFIG | ICG_REG_SWDT_CONFIG | 0xE000E000UL)
+#define ICG_REG_CFG0_CONST (ICG_REG_WDT_CONFIG | ICG_REG_SWDT_CONFIG | 0xE000E000UL)
 #endif
 #ifndef ICG_REG_CFG1_CONST
-#define ICG_REG_CFG1_CONST                      (ICG_REG_BOR_CONFIG | ICG_REG_HRC_CONFIG  | 0xFFF8FEFEUL)
+#define ICG_REG_CFG1_CONST (ICG_REG_BOR_CONFIG | ICG_REG_HRC_CONFIG | 0xFFF8FEFEUL)
 #endif
 #ifndef ICG_REG_CFG2_CONST
-#define ICG_REG_CFG2_CONST                      (ICG_REG_DUAL_FLASH_CONFIG | 0xFF000000UL)
+#define ICG_REG_CFG2_CONST (ICG_REG_DUAL_FLASH_CONFIG | 0xFF000000UL)
 #endif
 #ifndef ICG_REG_CFG3_CONST
-#define ICG_REG_CFG3_CONST                      (ICG_REG_FLASH_PROTECT_CONFIG | 0xFFFF0000UL)
+#define ICG_REG_CFG3_CONST (ICG_REG_FLASH_PROTECT_CONFIG | 0xFFFF0000UL)
 #endif
 #ifndef ICG_REG_CFG_DATA_PROTECT1_CONST
-#define ICG_REG_CFG_DATA_PROTECT1_CONST         (ICG_DATA_PROTECT1_DISABLE)
+#define ICG_REG_CFG_DATA_PROTECT1_CONST (ICG_DATA_PROTECT1_DISABLE)
 #endif
 #ifndef ICG_REG_CFG_DATA_PROTECT2_CONST
-#define ICG_REG_CFG_DATA_PROTECT2_CONST         (ICG_DATA_PROTECT2_DISABLE)
+#define ICG_REG_CFG_DATA_PROTECT2_CONST (ICG_DATA_PROTECT2_DISABLE)
 #endif
 #ifndef ICG_REG_CFG_DATA_PROTECT3_CONST
-#define ICG_REG_CFG_DATA_PROTECT3_CONST         (ICG_DATA_PROTECT3_DISABLE)
+#define ICG_REG_CFG_DATA_PROTECT3_CONST (ICG_DATA_PROTECT3_DISABLE)
 #endif
 #ifndef ICG_REG_CFG8A_CONST
-#define ICG_REG_CFG8A_CONST                     (ICG_REG_ERMU_PORT_OUTPUT_CONFIG | 0xFFFFFFECUL)
+#define ICG_REG_CFG8A_CONST (ICG_REG_ERMU_PORT_OUTPUT_CONFIG | 0xFFFFFFECUL)
 #endif
 #ifndef ICG_REG_CFG8B_CONST
-#define ICG_REG_CFG8B_CONST                     (ICG_REG_ERMU_PORT_OUTPUT_CONFIG | 0xFFFFFFECUL)
+#define ICG_REG_CFG8B_CONST (ICG_REG_ERMU_PORT_OUTPUT_CONFIG | 0xFFFFFFECUL)
 #endif
 #ifndef ICG_REG_CFG8C_CONST
-#define ICG_REG_CFG8C_CONST                     (ICG_REG_ERMU_PORT_OUTPUT_CONFIG | 0xFFFFFFECUL)
+#define ICG_REG_CFG8C_CONST (ICG_REG_ERMU_PORT_OUTPUT_CONFIG | 0xFFFFFFECUL)
 #endif
 
 /* ICG reserved value */
-#define ICG_REG_RESV_CONST                      (0xFFFFFFFFUL)
+#define ICG_REG_RESV_CONST (0xFFFFFFFFUL)
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /**
+     * @}
+     */
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
+    /*******************************************************************************
   Global function prototypes (definition in C source)
- ******************************************************************************/
+     ******************************************************************************/
 
 #endif /* LL_ICG_ENABLE */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }

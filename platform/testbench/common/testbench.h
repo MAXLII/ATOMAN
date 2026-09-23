@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    testbench.h
- * @brief   GCC host testbench registration interface.
+ * @file testbench.h
+ * @brief GCC host testbench registration interface.
  * @details
  *          This file is part of the base digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Independent from the base Section framework
  *          - Linker section boundaries are consumed only by the testbench runner
  *
- * @author  Max.Li
- * @date    2026-08-16
+ * @author Max.Li
+ * @date 2026-08-16
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -64,10 +64,10 @@ typedef struct testbench_case
  */
 typedef struct testbench_module
 {
-    const char *p_name;                     /**< Test module name. */
-    double run_period_s;                    /**< Interval between adjacent DUT calls, in seconds. */
-    void (*p_dut_init)(void);               /**< DUT initialization callback. */
-    void (*p_dut_run)(void);                /**< DUT processing callback. */
+    const char *p_name;       /**< Test module name. */
+    double run_period_s;      /**< Interval between adjacent DUT calls, in seconds. */
+    void (*p_dut_init)(void); /**< DUT initialization callback. */
+    void (*p_dut_run)(void);  /**< DUT processing callback. */
     testbench_case_t *p_case_section_begin; /**< First case descriptor in the module section. */
     testbench_case_t *p_case_section_end;   /**< One-past-last descriptor in the module section. */
     testbench_case_t *p_case_head;          /**< Runtime head of the module case list. */

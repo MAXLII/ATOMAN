@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_dac.h
+ * @file hc32_ll_dac.h
  * @brief This file contains all the functions prototypes of the DAC driver
  *        library.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -35,35 +35,36 @@ extern "C"
 #include "hc32f3xx.h"
 #include "hc32f3xx_conf.h"
 
-/**
- * @addtogroup LL_Driver
- * @{
- */
+    /**
+     * @addtogroup LL_Driver
+     * @{
+     */
 
-/**
- * @addtogroup LL_DAC
- * @{
- */
+    /**
+     * @addtogroup LL_DAC
+     * @{
+     */
 
 #if (LL_DAC_ENABLE == DDL_ON)
 
-/*******************************************************************************
- * Global type definitions ('typedef')
- ******************************************************************************/
-/**
- * @defgroup DAC_Global_Types DAC Global Types
- * @{
- */
+    /*******************************************************************************
+     * Global type definitions ('typedef')
+     ******************************************************************************/
+    /**
+     * @defgroup DAC_Global_Types DAC Global Types
+     * @{
+     */
 
-/**
- * @brief Structure definition of DAC initialization.
- */
-typedef struct {
-    uint16_t u16Align;               /*!< Specify the data alignment
+    /**
+     * @brief Structure definition of DAC initialization.
+     */
+    typedef struct
+    {
+        uint16_t u16Align; /*!< Specify the data alignment
                                      This parameter can be a value of @ref DAC_DATAREG_ALIGN_PATTERN */
-    en_functional_state_t enOutput;  /*!< Enable or disable analog output
+        en_functional_state_t enOutput; /*!< Enable or disable analog output
                                      This parameter can be a value of @ref en_functional_state_t */
-} stc_dac_init_t;
+    } stc_dac_init_t;
 
 /**
  * @}
@@ -82,8 +83,8 @@ typedef struct {
  * @defgroup DAC_CH DAC channel
  * @{
  */
-#define DAC_CH1                           (0U)
-#define DAC_CH2                           (1U)
+#define DAC_CH1 (0U)
+#define DAC_CH2 (1U)
 /**
  * @}
  */
@@ -92,8 +93,8 @@ typedef struct {
  * @defgroup DAC_DATAREG_ALIGN_PATTERN DAC data register alignment pattern
  * @{
  */
-#define DAC_DATA_ALIGN_LEFT                (DAC_DACR_DPSEL)
-#define DAC_DATA_ALIGN_RIGHT               (0U)
+#define DAC_DATA_ALIGN_LEFT  (DAC_DACR_DPSEL)
+#define DAC_DATA_ALIGN_RIGHT (0U)
 /**
  * @}
  */
@@ -102,7 +103,7 @@ typedef struct {
  * @defgroup DAC_RESOLUTION DAC resolution
  * @{
  */
-#define DAC_RESOLUTION_12BIT                 (12U)
+#define DAC_RESOLUTION_12BIT (12U)
 /**
  * @}
  */
@@ -111,10 +112,10 @@ typedef struct {
  * @defgroup DAC_ADP_SELECT DAC ADCx priority select
  * @{
  */
-#define DAC_ADP_SEL_ADC1                    (DAC_DAADPCR_ADCSL1)
-#define DAC_ADP_SEL_ADC2                    (DAC_DAADPCR_ADCSL2)
-#define DAC_ADP_SEL_ADC3                    (DAC_DAADPCR_ADCSL3)
-#define DAC_ADP_SEL_ALL                     (DAC_DAADPCR_ADCSL1 | DAC_DAADPCR_ADCSL2 | DAC_DAADPCR_ADCSL3)
+#define DAC_ADP_SEL_ADC1 (DAC_DAADPCR_ADCSL1)
+#define DAC_ADP_SEL_ADC2 (DAC_DAADPCR_ADCSL2)
+#define DAC_ADP_SEL_ADC3 (DAC_DAADPCR_ADCSL3)
+#define DAC_ADP_SEL_ALL  (DAC_DAADPCR_ADCSL1 | DAC_DAADPCR_ADCSL2 | DAC_DAADPCR_ADCSL3)
 /**
  * @}
  */
@@ -123,63 +124,63 @@ typedef struct {
  * @defgroup DAC_CH_DATA_TRANS_MD DAC Channel Data Transfer Mode
  * @{
  */
-#define DAC_CH_DATA_TRANS_NORMAL            (0U)                /* Data transfer immediately */
-#define DAC_CH_DATA_TRANS_HRPWM             (DAC_DACR2_LDMD1)   /* Data transfer trigger by HRPWM event */
-/**
- * @}
- */
+#define DAC_CH_DATA_TRANS_NORMAL (0U) /* Data transfer immediately */
+#define DAC_CH_DATA_TRANS_HRPWM  (DAC_DACR2_LDMD1) /* Data transfer trigger by HRPWM event */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
+    /*******************************************************************************
   Global function prototypes (definition in C source)
- ******************************************************************************/
-/**
- * @addtogroup DAC_Global_Functions
- * @{
- */
+     ******************************************************************************/
+    /**
+     * @addtogroup DAC_Global_Functions
+     * @{
+     */
 
-int32_t DAC_StructInit(stc_dac_init_t *pstcDacInit);
-int32_t DAC_Init(CM_DAC_TypeDef *DACx, uint16_t u16Ch, const stc_dac_init_t *pstcDacInit);
-int32_t DAC_DeInit(CM_DAC_TypeDef *DACx);
+    int32_t DAC_StructInit(stc_dac_init_t *pstcDacInit);
+    int32_t DAC_Init(CM_DAC_TypeDef *DACx, uint16_t u16Ch, const stc_dac_init_t *pstcDacInit);
+    int32_t DAC_DeInit(CM_DAC_TypeDef *DACx);
 
-void DAC_DataRegAlignConfig(CM_DAC_TypeDef *DACx, uint16_t u16Align);
-void DAC_OutputCmd(CM_DAC_TypeDef *DACx, uint16_t u16Ch, en_functional_state_t enNewState);
-void DAC_AMPCmd(CM_DAC_TypeDef *DACx, uint16_t u16Ch, en_functional_state_t enNewState);
-void DAC_ADCPrioCmd(CM_DAC_TypeDef *DACx, en_functional_state_t enNewState);
-void DAC_ADCPrioConfig(CM_DAC_TypeDef *DACx, uint16_t u16ADCxPrio, en_functional_state_t enNewState);
+    void DAC_DataRegAlignConfig(CM_DAC_TypeDef *DACx, uint16_t u16Align);
+    void DAC_OutputCmd(CM_DAC_TypeDef *DACx, uint16_t u16Ch, en_functional_state_t enNewState);
+    void DAC_AMPCmd(CM_DAC_TypeDef *DACx, uint16_t u16Ch, en_functional_state_t enNewState);
+    void DAC_ADCPrioCmd(CM_DAC_TypeDef *DACx, en_functional_state_t enNewState);
+    void DAC_ADCPrioConfig(CM_DAC_TypeDef *DACx, uint16_t u16ADCxPrio, en_functional_state_t enNewState);
 
-int32_t DAC_Start(CM_DAC_TypeDef *DACx, uint16_t u16Ch);
-int32_t DAC_Stop(CM_DAC_TypeDef *DACx, uint16_t u16Ch);
-void DAC_StartDualCh(CM_DAC_TypeDef *DACx);
-void DAC_StopDualCh(CM_DAC_TypeDef *DACx);
+    int32_t DAC_Start(CM_DAC_TypeDef *DACx, uint16_t u16Ch);
+    int32_t DAC_Stop(CM_DAC_TypeDef *DACx, uint16_t u16Ch);
+    void DAC_StartDualCh(CM_DAC_TypeDef *DACx);
+    void DAC_StopDualCh(CM_DAC_TypeDef *DACx);
 
-void DAC_SetChData(CM_DAC_TypeDef *DACx, uint16_t u16Ch, uint16_t u16Data);
-void DAC_SetDualChData(CM_DAC_TypeDef *DACx, uint16_t u16Data1, uint16_t u16Data2);
-int32_t DAC_GetChConvertState(const CM_DAC_TypeDef *DACx, uint16_t u16Ch);
+    void DAC_SetChData(CM_DAC_TypeDef *DACx, uint16_t u16Ch, uint16_t u16Data);
+    void DAC_SetDualChData(CM_DAC_TypeDef *DACx, uint16_t u16Data1, uint16_t u16Data2);
+    int32_t DAC_GetChConvertState(const CM_DAC_TypeDef *DACx, uint16_t u16Ch);
 
-void DAC_SetChDataTransMode(CM_DAC_TypeDef *DACx, uint16_t u16Ch, uint16_t u16Mode);
-uint16_t DAC_GetActiveData(CM_DAC_TypeDef *DACx, uint16_t u16Ch);
+    void DAC_SetChDataTransMode(CM_DAC_TypeDef *DACx, uint16_t u16Ch, uint16_t u16Mode);
+    uint16_t DAC_GetActiveData(CM_DAC_TypeDef *DACx, uint16_t u16Ch);
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #endif /* LL_DAC_ENABLE */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }

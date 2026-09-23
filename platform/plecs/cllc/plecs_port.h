@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    plecs_port.h
- * @brief   PLECS bidirectional CLLC port definition.
+ * @file plecs_port.h
+ * @brief PLECS bidirectional CLLC port definition.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Input and output order is part of the PLECS model integration contract
  *          - Append new ports at the tail to preserve existing signal indexes
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -66,7 +66,7 @@ typedef enum
     PLECS_OUTPUT_CURRENT_LIMIT_ACTIVE, /* Dll:16 1 when the forward current loop wins. */
     PLECS_OUTPUT_DIRECTION_MISMATCH,   /* Dll:17 Direction-buffer lock bypass diagnostic. */
     PLECS_OUTPUT_FAULT_LATCH,          /* Dll:18 Current hard-protection latch state. */
-    PLECS_OUTPUT_DBG,                  /* Dll:19 Forward 100 Hz PR correction in the -0.5...0.5 range. */
+    PLECS_OUTPUT_DBG, /* Dll:19 Forward 100 Hz PR correction in the -0.5...0.5 range. */
     PLECS_OUTPUT_MAX = 40,
 } PLECS_OUTPUT_E;
 

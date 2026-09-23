@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    f28p55_wire.h
- * @brief   F28P55 logical wire-octet codec.
+ * @file f28p55_wire.h
+ * @brief F28P55 logical wire-octet codec.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The C28x addressable word is 16 bits; only the low 8 bits are wire data
  *          - Native structures are never used as physical protocol layouts
  *
- * @author  Max.Li
- * @date    2026-09-04
+ * @author Max.Li
+ * @date 2026-09-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -37,8 +37,8 @@
 typedef uint8_t wire_octet_t;
 
 #define WIRE_OCTET_MASK (0x00FFu)
-#define WIRE_U16_SIZE (2u)
-#define WIRE_U32_SIZE (4u)
+#define WIRE_U16_SIZE   (2u)
+#define WIRE_U32_SIZE   (4u)
 
 static inline wire_octet_t wire_octet_get(uint16_t value)
 {
@@ -47,16 +47,13 @@ static inline wire_octet_t wire_octet_get(uint16_t value)
 
 static inline uint16_t wire_u16_le_read(const wire_octet_t *p_source)
 {
-    return (uint16_t)((uint16_t)wire_octet_get(p_source[0]) |
-                      ((uint16_t)wire_octet_get(p_source[1]) << 8u));
+    return (uint16_t)((uint16_t)wire_octet_get(p_source[0]) | ((uint16_t)wire_octet_get(p_source[1]) << 8u));
 }
 
 static inline uint32_t wire_u32_le_read(const wire_octet_t *p_source)
 {
-    return (uint32_t)wire_octet_get(p_source[0]) |
-           ((uint32_t)wire_octet_get(p_source[1]) << 8u) |
-           ((uint32_t)wire_octet_get(p_source[2]) << 16u) |
-           ((uint32_t)wire_octet_get(p_source[3]) << 24u);
+    return (uint32_t)wire_octet_get(p_source[0]) | ((uint32_t)wire_octet_get(p_source[1]) << 8u)
+         | ((uint32_t)wire_octet_get(p_source[2]) << 16u) | ((uint32_t)wire_octet_get(p_source[3]) << 24u);
 }
 
 static inline void wire_u16_le_write(wire_octet_t *p_destination, uint16_t value)
@@ -76,7 +73,7 @@ static inline void wire_u32_le_write(wire_octet_t *p_destination, uint32_t value
 static inline float wire_f32_le_read(const wire_octet_t *p_source)
 {
     uint32_t bits = wire_u32_le_read(p_source); /* IEEE-754 bit pattern from four wire octets. */
-    float value = 0.0f; /* Decoded floating-point value. */
+    float value   = 0.0f; /* Decoded floating-point value. */
 
     (void)memcpy(&value, &bits, sizeof(value));
     return value;

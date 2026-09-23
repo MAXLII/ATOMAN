@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_timer.c
- * @brief   GD32E507 demo timer BSP implementation.
+ * @file bsp_timer.c
+ * @brief GD32E507 demo timer BSP implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - TIMER2_IRQHandler clears the update flag before dispatch
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,16 +36,16 @@
 #include <stdint.h>
 
 #define BSP_TIMER_PERF_FREQ_HZ 2000000u /* TIMER1 Perf counter frequency. */
-#define BSP_TIMER_ISR_FREQ_HZ 10000u    /* TIMER2 interrupt-dispatch frequency. */
+#define BSP_TIMER_ISR_FREQ_HZ  10000u   /* TIMER2 interrupt-dispatch frequency. */
 #define BSP_TIMER_CNT_PERIOD_S 0.5e-6f  /* TIMER1 counter period in seconds. */
 
 REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x24u), BSP_TIMER_CNT_PERIOD_S)
 
 void bsp_timer_init(void)
 {
-    timer_parameter_struct timer_config = {0}; /* Shared base-timer configuration. */
-    uint32_t timer_clock_hz = SystemCoreClock; /* TIMER1/TIMER2 clock after APB multiplier. */
-    uint32_t perf_divider = 1u;                /* Divider used to produce the 2 MHz counter. */
+    timer_parameter_struct timer_config = {0};             /* Shared base-timer configuration. */
+    uint32_t timer_clock_hz             = SystemCoreClock; /* TIMER1/TIMER2 clock after APB multiplier. */
+    uint32_t perf_divider               = 1u; /* Divider used to produce the 2 MHz counter. */
 
     if (timer_clock_hz >= BSP_TIMER_PERF_FREQ_HZ)
     {
@@ -57,11 +57,11 @@ void bsp_timer_init(void)
 
     timer_deinit(TIMER1);
     timer_struct_para_init(&timer_config);
-    timer_config.prescaler = (uint16_t)(perf_divider - 1u);
-    timer_config.alignedmode = TIMER_COUNTER_EDGE;
-    timer_config.counterdirection = TIMER_COUNTER_UP;
-    timer_config.period = 0xFFFFFFFFu;
-    timer_config.clockdivision = TIMER_CKDIV_DIV1;
+    timer_config.prescaler         = (uint16_t)(perf_divider - 1u);
+    timer_config.alignedmode       = TIMER_COUNTER_EDGE;
+    timer_config.counterdirection  = TIMER_COUNTER_UP;
+    timer_config.period            = 0xFFFFFFFFu;
+    timer_config.clockdivision     = TIMER_CKDIV_DIV1;
     timer_config.repetitioncounter = 0u;
     timer_init(TIMER1, &timer_config);
     timer_counter_value_config(TIMER1, 0u);
@@ -69,11 +69,11 @@ void bsp_timer_init(void)
 
     timer_deinit(TIMER2);
     timer_struct_para_init(&timer_config);
-    timer_config.prescaler = 0u;
-    timer_config.alignedmode = TIMER_COUNTER_EDGE;
+    timer_config.prescaler        = 0u;
+    timer_config.alignedmode      = TIMER_COUNTER_EDGE;
     timer_config.counterdirection = TIMER_COUNTER_UP;
     timer_config.period = (timer_clock_hz / BSP_TIMER_ISR_FREQ_HZ) - 1u;
-    timer_config.clockdivision = TIMER_CKDIV_DIV1;
+    timer_config.clockdivision     = TIMER_CKDIV_DIV1;
     timer_config.repetitioncounter = 0u;
     timer_init(TIMER2, &timer_config);
     timer_interrupt_flag_clear(TIMER2, TIMER_INT_FLAG_UP);

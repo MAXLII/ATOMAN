@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    frame_trace_service.c
- * @brief   C28x-safe FRAME execution-trace protocol service.
+ * @file frame_trace_service.c
+ * @brief C28x-safe FRAME execution-trace protocol service.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Trace records are emitted outside interrupt context
  *          - Native C28x structures are never used as physical wire layouts
  *
- * @author  Max.Li
- * @date    2026-09-04
+ * @author Max.Li
+ * @date 2026-09-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,18 +33,18 @@
 #include "trace_service.h"
 
 #define FRAME_TRACE_CONTROL_REQUEST_SIZE (1u)
-#define FRAME_TRACE_CONTROL_ACK_SIZE (4u)
-#define FRAME_TRACE_RECORD_SIZE (6u)
-#define FRAME_TRACE_REPORTS_PER_TASK (1u)
+#define FRAME_TRACE_CONTROL_ACK_SIZE     (4u)
+#define FRAME_TRACE_RECORD_SIZE          (6u)
+#define FRAME_TRACE_REPORTS_PER_TASK     (1u)
 
 typedef struct
 {
-    uint8_t running;                   /* Nonzero while binary reports are enabled. */
-    section_link_tx_func_t *p_output;  /* Link selected by the latest control request. */
-    uint8_t source;                    /* Device source address. */
-    uint8_t dynamic_source;            /* Device dynamic source address. */
-    uint8_t destination;               /* FRAME host destination address. */
-    uint8_t dynamic_destination;       /* FRAME host dynamic destination address. */
+    uint8_t running; /* Nonzero while binary reports are enabled. */
+    section_link_tx_func_t *p_output; /* Link selected by the latest control request. */
+    uint8_t source;         /* Device source address. */
+    uint8_t dynamic_source; /* Device dynamic source address. */
+    uint8_t destination;    /* FRAME host destination address. */
+    uint8_t dynamic_destination; /* FRAME host dynamic destination address. */
 } frame_trace_context_t;
 
 static frame_trace_context_t s_trace_context = {0}; /* Active binary-report route. */
@@ -61,44 +61,42 @@ static void frame_trace_send(uint8_t command_word,
         return;
     }
 
-    report.src = s_trace_context.source;
-    report.d_src = s_trace_context.dynamic_source;
-    report.dst = s_trace_context.destination;
-    report.d_dst = s_trace_context.dynamic_destination;
-    report.cmd_set = TRACE_SERVICE_CMD_SET;
+    report.src      = s_trace_context.source;
+    report.d_src    = s_trace_context.dynamic_source;
+    report.dst      = s_trace_context.destination;
+    report.d_dst    = s_trace_context.dynamic_destination;
+    report.cmd_set  = TRACE_SERVICE_CMD_SET;
     report.cmd_word = command_word;
-    report.is_ack = is_ack;
-    report.len = payload_length;
-    report.p_data = p_payload;
+    report.is_ack   = is_ack;
+    report.len      = payload_length;
+    report.p_data   = p_payload;
     comm_send_data(&report, s_trace_context.p_output);
 }
 
 static void frame_trace_control_act(void *p_frame, DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack                         = (section_packform_t *)p_frame;
     wire_octet_t payload[FRAME_TRACE_CONTROL_ACK_SIZE] = {0}; /* Control acknowledgement. */
 
-    if ((p_pack == NULL) || (p_pack->is_ack != 0u) ||
-        (p_pack->p_data == NULL) ||
-        (p_pack->len < FRAME_TRACE_CONTROL_REQUEST_SIZE))
+    if (    (p_pack == NULL)
+         || (p_pack->is_ack != 0u)
+         || (p_pack->p_data == NULL)
+         || (p_pack->len < FRAME_TRACE_CONTROL_REQUEST_SIZE))
     {
         return;
     }
 
-    s_trace_context.p_output = my_printf;
-    s_trace_context.source = p_pack->dst;
-    s_trace_context.dynamic_source = p_pack->d_dst;
-    s_trace_context.destination = p_pack->src;
+    s_trace_context.p_output            = my_printf;
+    s_trace_context.source              = p_pack->dst;
+    s_trace_context.dynamic_source      = p_pack->d_dst;
+    s_trace_context.destination         = p_pack->src;
     s_trace_context.dynamic_destination = p_pack->d_src;
     s_trace_context.running = (wire_octet_get(p_pack->p_data[0]) != 0u) ? 1u : 0u;
 
     payload[0] = 1u;
     payload[1] = s_trace_context.running;
     wire_u16_le_write(&payload[2], TRACE_SERVICE_TIME_UNIT_US);
-    frame_trace_send(TRACE_SERVICE_CMD_CONTROL,
-                     1u,
-                     payload,
-                     FRAME_TRACE_CONTROL_ACK_SIZE);
+    frame_trace_send(TRACE_SERVICE_CMD_CONTROL, 1u, payload, FRAME_TRACE_CONTROL_ACK_SIZE);
 }
 
 REG_COMM(TRACE_SERVICE_CMD_SET, TRACE_SERVICE_CMD_CONTROL, frame_trace_control_act)
@@ -106,24 +104,22 @@ REG_COMM(TRACE_SERVICE_CMD_SET, TRACE_SERVICE_CMD_CONTROL, frame_trace_control_a
 static void frame_trace_report_task(void)
 {
     wire_octet_t payload[FRAME_TRACE_RECORD_SIZE] = {0}; /* One serialized trace record. */
-    uint32_t time_value = 0u; /* Captured Trace timestamp. */
-    uint32_t line_value = 0u; /* Captured source line number. */
-    uint16_t report_count = 0u; /* Reports emitted during this task activation. */
+    uint32_t time_value                           = 0u;  /* Captured Trace timestamp. */
+    uint32_t line_value                           = 0u;  /* Captured source line number. */
+    uint16_t report_count                         = 0u;  /* Reports emitted during this task activation. */
 
-    if ((s_trace_context.running == 0u) || (s_trace_context.p_output == NULL))
+    if (    (s_trace_context.running == 0u)
+         || (s_trace_context.p_output == NULL))
     {
         return;
     }
 
-    while ((report_count < FRAME_TRACE_REPORTS_PER_TASK) &&
-           (dbg_trace_read(&time_value, &line_value) != 0u))
+    while (    (report_count < FRAME_TRACE_REPORTS_PER_TASK)
+            && (dbg_trace_read(&time_value, &line_value) != 0u))
     {
         wire_u32_le_write(payload, time_value);
         wire_u16_le_write(&payload[4], (uint16_t)line_value);
-        frame_trace_send(TRACE_SERVICE_CMD_RECORD_REPORT,
-                         0u,
-                         payload,
-                         FRAME_TRACE_RECORD_SIZE);
+        frame_trace_send(TRACE_SERVICE_CMD_RECORD_REPORT, 0u, payload, FRAME_TRACE_RECORD_SIZE);
         report_count++;
     }
 }

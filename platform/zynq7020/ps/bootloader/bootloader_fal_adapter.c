@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bootloader_fal_adapter.c
- * @brief   Zynq-7020 FAL-to-Bootloader Flash adapter implementation.
+ * @file bootloader_fal_adapter.c
+ * @brief Zynq-7020 FAL-to-Bootloader Flash adapter implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Bootloader Core receives only bootloader_flash_ops_t
  *          - FAL initialization remains owned by the platform FAL service
  *
- * @author  Max.Li
- * @date    2026-07-29
+ * @author Max.Li
+ * @date 2026-07-29
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,10 +38,10 @@
 
 #include <stddef.h>
 
-static bootloader_t bootloader = {0}; /* Platform Bootloader Core instance. */
-static bootloader_protocol_t protocol = {0}; /* FRAME upgrade protocol instance. */
+static bootloader_t bootloader                            = {0}; /* Platform Bootloader Core instance. */
+static bootloader_protocol_t protocol                     = {0}; /* FRAME upgrade protocol instance. */
 static uint8_t packet_buffer[BOOTLOADER_PACKET_DATA_SIZE] = {0}; /* Upgrade packet workspace. */
-static uint8_t copy_buffer[BSP_QSPI_FLASH_ERASE_SIZE] = {0}; /* Staging-copy block workspace. */
+static uint8_t copy_buffer[BSP_QSPI_FLASH_ERASE_SIZE]     = {0}; /* Staging-copy block workspace. */
 
 static uint16_t firmware_crc_init(void)
 {
@@ -65,15 +65,15 @@ static uint16_t packet_crc(const uint8_t *p_data, uint32_t length)
 }
 
 static const bootloader_config_t config = {
-    .expected_module_id = HOST_ADDR,
-    .default_mode = BOOTLOADER_UPGRADE_MODE_STAGED_E,
+    .expected_module_id  = HOST_ADDR,
+    .default_mode        = BOOTLOADER_UPGRADE_MODE_STAGED_E,
     .image_header_length = 8u,
-    .p_packet_buffer = packet_buffer,
-    .packet_buffer_size = (uint32_t)sizeof(packet_buffer),
-    .p_copy_buffer = copy_buffer,
-    .copy_buffer_size = (uint32_t)sizeof(copy_buffer),
-    .p_crc16_init = firmware_crc_init,
-    .p_crc16_update = firmware_crc_update,
+    .p_packet_buffer     = packet_buffer,
+    .packet_buffer_size  = (uint32_t)sizeof(packet_buffer),
+    .p_copy_buffer       = copy_buffer,
+    .copy_buffer_size    = (uint32_t)sizeof(copy_buffer),
+    .p_crc16_init        = firmware_crc_init,
+    .p_crc16_update      = firmware_crc_update,
 }; /* Platform-independent Bootloader Core configuration. */
 
 static bootloader_result_t result_convert(fal_result_t result)
@@ -138,27 +138,29 @@ static bootloader_result_t zone_info_get(bootloader_flash_zone_t zone,
                                          bootloader_flash_zone_info_t *p_info)
 {
     fal_zone_info_t fal_info = {0}; /* Geometry and permissions reported by FAL. */
-    fal_zone_id_t fal_zone = 0u; /* Platform FAL zone selected for the logical zone. */
-    fal_result_t result = FAL_RESULT_INVALID_ARGUMENT; /* FAL request result. */
+    fal_zone_id_t fal_zone   = 0u;  /* Platform FAL zone selected for the logical zone. */
+    fal_result_t result      = FAL_RESULT_INVALID_ARGUMENT; /* FAL request result. */
 
     if (p_info == NULL)
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
+
     if (fal_zone_get(zone, &fal_zone) != BOOTLOADER_RESULT_SUCCESS_E)
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
 
     result = fal_zone_info_get(&g_zynq7020_fal, fal_zone, &fal_info);
+
     if (result != FAL_RESULT_SUCCESS)
     {
         return result_convert(result);
     }
 
-    p_info->size = fal_info.size;
+    p_info->size              = fal_info.size;
     p_info->program_page_size = fal_info.program_page_size;
-    p_info->erase_block_size = fal_info.erase_block_size;
+    p_info->erase_block_size  = fal_info.erase_block_size;
     p_info->readable = ((fal_info.permissions & FAL_ZONE_PERMISSION_READ) != 0u) ? 1u : 0u;
     p_info->writable = ((fal_info.permissions & FAL_ZONE_PERMISSION_WRITE) != 0u) ? 1u : 0u;
     p_info->erasable = ((fal_info.permissions & FAL_ZONE_PERMISSION_ERASE) != 0u) ? 1u : 0u;
@@ -218,11 +220,11 @@ static bootloader_result_t result_get(void)
 
 static const bootloader_flash_ops_t flash_ops = {
     .p_zone_info_get = zone_info_get,
-    .p_read = read,
-    .p_write = write,
-    .p_erase = erase,
-    .p_is_busy = is_busy,
-    .p_result_get = result_get,
+    .p_read          = read,
+    .p_write         = write,
+    .p_erase         = erase,
+    .p_is_busy       = is_busy,
+    .p_result_get    = result_get,
 }; /* FAL callbacks mounted into Bootloader Core. */
 
 static void halt(void)
@@ -235,22 +237,22 @@ static void halt(void)
 static void bootloader_fal_adapter_init(void)
 {
     bootloader_platform_ops_t platform_ops = {0}; /* Zynq boot-reason and IAP handoff callbacks. */
-    fal_state_t fal_state = fal_state_get(&g_zynq7020_fal); /* FAL state established by priority 0 init. */
-    if ((fal_state == FAL_STATE_UNINITIALIZED) ||
-        (fal_state == FAL_STATE_ERROR) ||
-        (fal_state == FAL_STATE_STOPPED))
+    fal_state_t fal_state                  = fal_state_get(&g_zynq7020_fal); /* FAL state established by priority 0 init. */
+
+    if (    (fal_state == FAL_STATE_UNINITIALIZED)
+         || (fal_state == FAL_STATE_ERROR)
+         || (fal_state == FAL_STATE_STOPPED))
     {
         halt();
     }
 
     platform_ops = zynq_boot_platform_ops_make(&bootloader);
-    if ((bootloader_flash_ops_init(&bootloader, &flash_ops) != BOOTLOADER_RESULT_SUCCESS_E) ||
-        (bootloader_init(&bootloader, &config, &platform_ops) != BOOTLOADER_RESULT_SUCCESS_E) ||
-        (bootloader_protocol_init(&protocol,
-                                  &bootloader,
-                                  packet_crc,
-                                  config.default_mode) != BOOTLOADER_RESULT_SUCCESS_E) ||
-        (bootloader_protocol_mount(&protocol) != BOOTLOADER_RESULT_SUCCESS_E))
+
+    if (
+        (bootloader_flash_ops_init(&bootloader, &flash_ops) != BOOTLOADER_RESULT_SUCCESS_E)
+     || (bootloader_init(&bootloader, &config, &platform_ops) != BOOTLOADER_RESULT_SUCCESS_E)
+     || (bootloader_protocol_init(&protocol, &bootloader, packet_crc, config.default_mode) != BOOTLOADER_RESULT_SUCCESS_E)
+     || (bootloader_protocol_mount(&protocol) != BOOTLOADER_RESULT_SUCCESS_E))
     {
         halt();
     }

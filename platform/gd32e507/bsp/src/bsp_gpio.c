@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_gpio.c
- * @brief   GD32E507Z-EVAL GPIO BSP implementation.
+ * @file bsp_gpio.c
+ * @brief GD32E507Z-EVAL GPIO BSP implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - LED writes use atomic GPIO set/reset operations
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,7 +32,8 @@
 #include "gd32e50x.h"
 #include "section.h"
 
-static const uint32_t led_pins[GPIO_TABLE_MAX] = { /* Board LED pin map indexed by bsp_gpio_table_e. */
+static const uint32_t led_pins[GPIO_TABLE_MAX] = {
+    /* Board LED pin map indexed by bsp_gpio_table_e. */
     GPIO_PIN_10,
     GPIO_PIN_11,
     GPIO_PIN_12,
@@ -44,10 +45,7 @@ static uint8_t heartbeat_state = 0u; /* Current LED1 heartbeat output state. */
 void bsp_gpio_init(void)
 {
     rcu_periph_clock_enable(RCU_GPIOG);
-    gpio_init(GPIOG,
-              GPIO_MODE_OUT_PP,
-              GPIO_OSPEED_50MHZ,
-              GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13);
+    gpio_init(GPIOG, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13);
     gpio_bit_reset(GPIOG, GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13);
 }
 
@@ -72,8 +70,9 @@ void bsp_gpio_set_bit(bsp_gpio_table_e number, uint8_t value)
 
 void bsp_gpio_get_bit(bsp_gpio_table_e number, uint8_t *p_value)
 {
-    if (((uint32_t)number >= (uint32_t)GPIO_TABLE_MAX) || /* Logical GPIO number is outside the board map. */
-        (p_value == NULL))                               /* The caller did not provide output storage. */
+    if (    ((uint32_t)number >= (uint32_t)GPIO_TABLE_MAX)
+         || /* Logical GPIO number is outside the board map. */
+            (p_value == NULL)) /* The caller did not provide output storage. */
     {
         return;
     }

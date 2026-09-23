@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    frame_scope_service.c
- * @brief   C28x-safe FRAME Scope protocol service.
+ * @file frame_scope_service.c
+ * @brief C28x-safe FRAME Scope protocol service.
  * @details
  *          This file is part of the base project.
  *
@@ -21,8 +21,8 @@
  *          - Native C28x structures are never used as physical wire layouts
  *          - Scope capture state remains owned by scope.c and scope_core.c
  *
- * @author  Max.Li
- * @date    2026-09-04
+ * @author Max.Li
+ * @date 2026-09-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -40,68 +40,68 @@
 
 #if (SCOPE_ENABLE == 1u)
 
-#define FRAME_SCOPE_NAME_LENGTH_MAX (64u)
+#define FRAME_SCOPE_NAME_LENGTH_MAX    (64u)
 #define FRAME_SCOPE_VARIABLE_COUNT_MAX (10u)
-#define FRAME_SCOPE_INVALID_ID (0xFFu)
+#define FRAME_SCOPE_INVALID_ID         (0xFFu)
 
-#define FRAME_SCOPE_LIST_QUERY_SIZE (1u)
-#define FRAME_SCOPE_LIST_ACK_FIXED_SIZE (4u)
-#define FRAME_SCOPE_LIST_ACK_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_LIST_ACK_IS_LAST_OFFSET (1u)
+#define FRAME_SCOPE_LIST_QUERY_SIZE             (1u)
+#define FRAME_SCOPE_LIST_ACK_FIXED_SIZE         (4u)
+#define FRAME_SCOPE_LIST_ACK_SCOPE_ID_OFFSET    (0u)
+#define FRAME_SCOPE_LIST_ACK_IS_LAST_OFFSET     (1u)
 #define FRAME_SCOPE_LIST_ACK_NAME_LENGTH_OFFSET (2u)
-#define FRAME_SCOPE_LIST_ACK_NAME_OFFSET (4u)
+#define FRAME_SCOPE_LIST_ACK_NAME_OFFSET        (4u)
 
-#define FRAME_SCOPE_INFO_QUERY_SIZE (4u)
-#define FRAME_SCOPE_INFO_QUERY_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_INFO_ACK_SIZE (36u)
-#define FRAME_SCOPE_INFO_ACK_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_INFO_ACK_STATUS_OFFSET (1u)
-#define FRAME_SCOPE_INFO_ACK_STATE_OFFSET (2u)
-#define FRAME_SCOPE_INFO_ACK_DATA_READY_OFFSET (3u)
-#define FRAME_SCOPE_INFO_ACK_VARIABLE_COUNT_OFFSET (4u)
-#define FRAME_SCOPE_INFO_ACK_SAMPLE_COUNT_OFFSET (8u)
-#define FRAME_SCOPE_INFO_ACK_WRITE_INDEX_OFFSET (12u)
-#define FRAME_SCOPE_INFO_ACK_TRIGGER_INDEX_OFFSET (16u)
-#define FRAME_SCOPE_INFO_ACK_TRIGGER_POST_COUNT_OFFSET (20u)
+#define FRAME_SCOPE_INFO_QUERY_SIZE                       (4u)
+#define FRAME_SCOPE_INFO_QUERY_SCOPE_ID_OFFSET            (0u)
+#define FRAME_SCOPE_INFO_ACK_SIZE                         (36u)
+#define FRAME_SCOPE_INFO_ACK_SCOPE_ID_OFFSET              (0u)
+#define FRAME_SCOPE_INFO_ACK_STATUS_OFFSET                (1u)
+#define FRAME_SCOPE_INFO_ACK_STATE_OFFSET                 (2u)
+#define FRAME_SCOPE_INFO_ACK_DATA_READY_OFFSET            (3u)
+#define FRAME_SCOPE_INFO_ACK_VARIABLE_COUNT_OFFSET        (4u)
+#define FRAME_SCOPE_INFO_ACK_SAMPLE_COUNT_OFFSET          (8u)
+#define FRAME_SCOPE_INFO_ACK_WRITE_INDEX_OFFSET           (12u)
+#define FRAME_SCOPE_INFO_ACK_TRIGGER_INDEX_OFFSET         (16u)
+#define FRAME_SCOPE_INFO_ACK_TRIGGER_POST_COUNT_OFFSET    (20u)
 #define FRAME_SCOPE_INFO_ACK_TRIGGER_DISPLAY_INDEX_OFFSET (24u)
-#define FRAME_SCOPE_INFO_ACK_SAMPLE_PERIOD_US_OFFSET (28u)
-#define FRAME_SCOPE_INFO_ACK_CAPTURE_TAG_OFFSET (32u)
+#define FRAME_SCOPE_INFO_ACK_SAMPLE_PERIOD_US_OFFSET      (28u)
+#define FRAME_SCOPE_INFO_ACK_CAPTURE_TAG_OFFSET           (32u)
 
-#define FRAME_SCOPE_VARIABLE_QUERY_SIZE (4u)
-#define FRAME_SCOPE_VARIABLE_QUERY_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_VARIABLE_QUERY_INDEX_OFFSET (1u)
-#define FRAME_SCOPE_VARIABLE_ACK_FIXED_SIZE (8u)
-#define FRAME_SCOPE_VARIABLE_ACK_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET (1u)
-#define FRAME_SCOPE_VARIABLE_ACK_INDEX_OFFSET (2u)
-#define FRAME_SCOPE_VARIABLE_ACK_IS_LAST_OFFSET (3u)
+#define FRAME_SCOPE_VARIABLE_QUERY_SIZE             (4u)
+#define FRAME_SCOPE_VARIABLE_QUERY_SCOPE_ID_OFFSET  (0u)
+#define FRAME_SCOPE_VARIABLE_QUERY_INDEX_OFFSET     (1u)
+#define FRAME_SCOPE_VARIABLE_ACK_FIXED_SIZE         (8u)
+#define FRAME_SCOPE_VARIABLE_ACK_SCOPE_ID_OFFSET    (0u)
+#define FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET      (1u)
+#define FRAME_SCOPE_VARIABLE_ACK_INDEX_OFFSET       (2u)
+#define FRAME_SCOPE_VARIABLE_ACK_IS_LAST_OFFSET     (3u)
 #define FRAME_SCOPE_VARIABLE_ACK_NAME_LENGTH_OFFSET (4u)
-#define FRAME_SCOPE_VARIABLE_ACK_NAME_OFFSET (8u)
+#define FRAME_SCOPE_VARIABLE_ACK_NAME_OFFSET        (8u)
 
-#define FRAME_SCOPE_CONTROL_QUERY_SIZE (4u)
-#define FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_CONTROL_ACK_SIZE (8u)
-#define FRAME_SCOPE_CONTROL_ACK_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_CONTROL_ACK_STATUS_OFFSET (1u)
-#define FRAME_SCOPE_CONTROL_ACK_STATE_OFFSET (2u)
-#define FRAME_SCOPE_CONTROL_ACK_DATA_READY_OFFSET (3u)
+#define FRAME_SCOPE_CONTROL_QUERY_SIZE             (4u)
+#define FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET  (0u)
+#define FRAME_SCOPE_CONTROL_ACK_SIZE               (8u)
+#define FRAME_SCOPE_CONTROL_ACK_SCOPE_ID_OFFSET    (0u)
+#define FRAME_SCOPE_CONTROL_ACK_STATUS_OFFSET      (1u)
+#define FRAME_SCOPE_CONTROL_ACK_STATE_OFFSET       (2u)
+#define FRAME_SCOPE_CONTROL_ACK_DATA_READY_OFFSET  (3u)
 #define FRAME_SCOPE_CONTROL_ACK_CAPTURE_TAG_OFFSET (4u)
 
-#define FRAME_SCOPE_SAMPLE_QUERY_SIZE (12u)
-#define FRAME_SCOPE_SAMPLE_QUERY_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_SAMPLE_QUERY_READ_MODE_OFFSET (1u)
-#define FRAME_SCOPE_SAMPLE_QUERY_INDEX_OFFSET (4u)
-#define FRAME_SCOPE_SAMPLE_QUERY_CAPTURE_TAG_OFFSET (8u)
-#define FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE (16u)
-#define FRAME_SCOPE_SAMPLE_ACK_SCOPE_ID_OFFSET (0u)
-#define FRAME_SCOPE_SAMPLE_ACK_STATUS_OFFSET (1u)
-#define FRAME_SCOPE_SAMPLE_ACK_READ_MODE_OFFSET (2u)
+#define FRAME_SCOPE_SAMPLE_QUERY_SIZE                (12u)
+#define FRAME_SCOPE_SAMPLE_QUERY_SCOPE_ID_OFFSET     (0u)
+#define FRAME_SCOPE_SAMPLE_QUERY_READ_MODE_OFFSET    (1u)
+#define FRAME_SCOPE_SAMPLE_QUERY_INDEX_OFFSET        (4u)
+#define FRAME_SCOPE_SAMPLE_QUERY_CAPTURE_TAG_OFFSET  (8u)
+#define FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE            (16u)
+#define FRAME_SCOPE_SAMPLE_ACK_SCOPE_ID_OFFSET       (0u)
+#define FRAME_SCOPE_SAMPLE_ACK_STATUS_OFFSET         (1u)
+#define FRAME_SCOPE_SAMPLE_ACK_READ_MODE_OFFSET      (2u)
 #define FRAME_SCOPE_SAMPLE_ACK_VARIABLE_COUNT_OFFSET (3u)
-#define FRAME_SCOPE_SAMPLE_ACK_INDEX_OFFSET (4u)
-#define FRAME_SCOPE_SAMPLE_ACK_CAPTURE_TAG_OFFSET (8u)
-#define FRAME_SCOPE_SAMPLE_ACK_IS_LAST_OFFSET (12u)
-#define FRAME_SCOPE_SAMPLE_ACK_VALUES_OFFSET (16u)
-#define FRAME_SCOPE_FP32_WIRE_SIZE (4u)
+#define FRAME_SCOPE_SAMPLE_ACK_INDEX_OFFSET          (4u)
+#define FRAME_SCOPE_SAMPLE_ACK_CAPTURE_TAG_OFFSET    (8u)
+#define FRAME_SCOPE_SAMPLE_ACK_IS_LAST_OFFSET        (12u)
+#define FRAME_SCOPE_SAMPLE_ACK_VALUES_OFFSET         (16u)
+#define FRAME_SCOPE_FP32_WIRE_SIZE                   (4u)
 #define FRAME_SCOPE_SAMPLE_ACK_MAX_SIZE \
     (FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE + (FRAME_SCOPE_VARIABLE_COUNT_MAX * FRAME_SCOPE_FP32_WIRE_SIZE))
 
@@ -109,11 +109,11 @@ typedef struct
 {
     section_item_t *p_item;           /* Next registered Scope reported to the requester. */
     section_link_tx_func_t *p_output; /* Link retained for deferred list replies. */
-    uint8_t active;                   /* One while a list response is in progress. */
-    uint8_t source;                   /* Device source address for list replies. */
-    uint8_t dynamic_source;           /* Device dynamic source address for list replies. */
-    uint8_t destination;              /* FRAME host destination address for list replies. */
-    uint8_t dynamic_destination;      /* FRAME host dynamic destination for list replies. */
+    uint8_t active;         /* One while a list response is in progress. */
+    uint8_t source;         /* Device source address for list replies. */
+    uint8_t dynamic_source; /* Device dynamic source address for list replies. */
+    uint8_t destination;    /* FRAME host destination address for list replies. */
+    uint8_t dynamic_destination; /* FRAME host dynamic destination for list replies. */
 } frame_scope_list_context_t;
 
 static frame_scope_list_context_t frame_scope_list_context = {0}; /* Deferred Scope-list session. */
@@ -127,10 +127,13 @@ static frame_scope_list_context_t frame_scope_list_context = {0}; /* Deferred Sc
 static uint8_t frame_scope_request_is_valid(const section_packform_t *p_request,
                                             uint16_t expected_length)
 {
-    if ((p_request == NULL) ||       /* A request object is required. */
-        (p_request->is_ack != 0u) || /* ACK frames must not recursively trigger handlers. */
-        (p_request->p_data == NULL) || /* Every current Scope request has a payload. */
-        (p_request->len < expected_length)) /* Ignore compatible fields appended by newer hosts. */
+    if (    (p_request == NULL)
+         || /* A request object is required. */
+            (p_request->is_ack != 0u)
+         || /* ACK frames must not recursively trigger handlers. */
+            (p_request->p_data == NULL)
+         || /* Every current Scope request has a payload. */
+            (p_request->len < expected_length)) /* Ignore compatible fields appended by newer hosts. */
     {
         return 0u;
     }
@@ -148,14 +151,16 @@ static uint8_t frame_scope_name_copy(wire_octet_t *p_destination,
 {
     uint16_t index = 0u; /* Current character converted to one logical wire octet. */
 
-    if ((p_destination == NULL) || /* The caller must provide bounded payload storage. */
-        (p_name == NULL))          /* A missing name is encoded as an empty string. */
+    if (    (p_destination == NULL)
+         || /* The caller must provide bounded payload storage. */
+            (p_name == NULL)) /* A missing name is encoded as an empty string. */
     {
         return 0u;
     }
 
-    while ((index < FRAME_SCOPE_NAME_LENGTH_MAX) && /* Bound the response payload. */
-           (p_name[index] != '\0'))                 /* Stop at the native string terminator. */
+    while (    (index < FRAME_SCOPE_NAME_LENGTH_MAX)
+            && /* Bound the response payload. */
+               (p_name[index] != '\0')) /* Stop at the native string terminator. */
     {
         p_destination[index] = wire_octet_get((uint16_t)p_name[index]);
         index++;
@@ -174,12 +179,13 @@ static scope_registration_t *frame_scope_find_by_id(uint8_t scope_id)
 
     while (p_item != NULL)
     {
-        scope_registration_t *p_registration =
-            (scope_registration_t *)p_item->p_obj; /* Scope metadata owned by scope.c. */
+        scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj; /* Scope metadata owned by scope.c. */
 
-        if ((p_registration != NULL) &&        /* Ignore an invalid Section object. */
-            (p_registration->p_scope != NULL) && /* Only initialized Scope objects can serve data. */
-            (p_registration->scope_id == scope_id)) /* Match the stable protocol identifier. */
+        if (    (p_registration != NULL)
+             && /* Ignore an invalid Section object. */
+                (p_registration->p_scope != NULL)
+             && /* Only initialized Scope objects can serve data. */
+                (p_registration->scope_id == scope_id)) /* Match the stable protocol identifier. */
         {
             return p_registration;
         }
@@ -200,6 +206,7 @@ static void frame_scope_capture_tag_increment(scope_registration_t *p_registrati
     }
 
     p_registration->capture_tag++;
+
     if (p_registration->capture_tag == 0u)
     {
         p_registration->capture_tag++;
@@ -213,9 +220,11 @@ static void frame_scope_capture_tag_increment(scope_registration_t *p_registrati
  */
 static uint32_t frame_scope_trigger_display_index_get(const scope_t *p_scope)
 {
-    if ((p_scope == NULL) ||                          /* Scope metadata is required. */
-        (p_scope->buffer_size == 0u) ||               /* Modulo operations need a nonzero size. */
-        (p_scope->trigger_post_cnt >= p_scope->buffer_size)) /* Post samples must fit the capture. */
+    if (    (p_scope == NULL)
+         || /* Scope metadata is required. */
+            (p_scope->buffer_size == 0u)
+         || /* Modulo operations need a nonzero size. */
+            (p_scope->trigger_post_cnt >= p_scope->buffer_size)) /* Post samples must fit the capture. */
     {
         return 0u;
     }
@@ -231,21 +240,23 @@ static uint32_t frame_scope_trigger_display_index_get(const scope_t *p_scope)
 static uint32_t frame_scope_logical_start_index_get(const scope_t *p_scope,
                                                     uint8_t read_mode)
 {
-    if ((p_scope == NULL) ||            /* Scope metadata is required. */
-        (p_scope->buffer_size == 0u))    /* Modulo operations need a nonzero size. */
+    if (    (p_scope == NULL)
+         || /* Scope metadata is required. */
+            (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
     {
         return 0u;
     }
 
-    if ((read_mode == (uint8_t)SCOPE_READ_MODE_FORCE) && /* Force mode may inspect a live ring. */
-        (p_scope->state == SCOPE_STATE_RUNNING) &&       /* The ring is currently advancing. */
-        (p_scope->in_trigger == 0u))                     /* Trigger ordering has not been fixed yet. */
+    if (    (read_mode == (uint8_t)SCOPE_READ_MODE_FORCE)
+         && /* Force mode may inspect a live ring. */
+            (p_scope->state == SCOPE_STATE_RUNNING)
+         && /* The ring is currently advancing. */
+            (p_scope->in_trigger == 0u)) /* Trigger ordering has not been fixed yet. */
     {
         return p_scope->write_index % p_scope->buffer_size;
     }
 
-    return (p_scope->trigger_index + p_scope->trigger_post_cnt + 1u) %
-           p_scope->buffer_size;
+    return (p_scope->trigger_index + p_scope->trigger_post_cnt + 1u) % p_scope->buffer_size;
 }
 
 /**
@@ -261,8 +272,9 @@ static uint32_t frame_scope_physical_index_get(const scope_t *p_scope,
 {
     uint32_t start_index = 0u; /* Physical index represented by logical sample 0. */
 
-    if ((p_scope == NULL) ||         /* Scope metadata is required. */
-        (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
+    if (    (p_scope == NULL)
+         || /* Scope metadata is required. */
+            (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
     {
         return 0u;
     }
@@ -287,21 +299,22 @@ static void frame_scope_reply(const section_packform_t *p_request,
 {
     section_packform_t reply = {0}; /* FRAME response metadata and logical payload. */
 
-    if ((p_request == NULL) || /* A route cannot be derived without request metadata. */
-        (p_output == NULL))    /* No transport is available for the response. */
+    if (    (p_request == NULL)
+         || /* A route cannot be derived without request metadata. */
+            (p_output == NULL)) /* No transport is available for the response. */
     {
         return;
     }
 
-    reply.src = p_request->dst;
-    reply.d_src = p_request->d_dst;
-    reply.dst = p_request->src;
-    reply.d_dst = p_request->d_src;
-    reply.cmd_set = CMD_SET_SCOPE;
+    reply.src      = p_request->dst;
+    reply.d_src    = p_request->d_dst;
+    reply.dst      = p_request->src;
+    reply.d_dst    = p_request->d_src;
+    reply.cmd_set  = CMD_SET_SCOPE;
     reply.cmd_word = command_word;
-    reply.is_ack = 1u;
-    reply.len = payload_length;
-    reply.p_data = p_payload;
+    reply.is_ack   = 1u;
+    reply.len      = payload_length;
+    reply.p_data   = p_payload;
     comm_send_data(&reply, p_output);
 }
 
@@ -320,15 +333,15 @@ static void frame_scope_list_reply(wire_octet_t *p_payload,
         return;
     }
 
-    reply.src = frame_scope_list_context.source;
-    reply.d_src = frame_scope_list_context.dynamic_source;
-    reply.dst = frame_scope_list_context.destination;
-    reply.d_dst = frame_scope_list_context.dynamic_destination;
-    reply.cmd_set = CMD_SET_SCOPE;
+    reply.src      = frame_scope_list_context.source;
+    reply.d_src    = frame_scope_list_context.dynamic_source;
+    reply.dst      = frame_scope_list_context.destination;
+    reply.d_dst    = frame_scope_list_context.dynamic_destination;
+    reply.cmd_set  = CMD_SET_SCOPE;
     reply.cmd_word = CMD_WORD_SCOPE_LIST_QUERY;
-    reply.is_ack = 1u;
-    reply.len = payload_length;
-    reply.p_data = p_payload;
+    reply.is_ack   = 1u;
+    reply.len      = payload_length;
+    reply.p_data   = p_payload;
     comm_send_data(&reply, frame_scope_list_context.p_output);
 }
 
@@ -341,16 +354,17 @@ static void frame_scope_state_poll(void)
 
     while (p_item != NULL)
     {
-        scope_registration_t *p_registration =
-            (scope_registration_t *)p_item->p_obj; /* Current Scope service metadata. */
+        scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj; /* Current Scope service metadata. */
 
-        if ((p_registration != NULL) &&      /* Ignore an invalid Section object. */
-            (p_registration->p_scope != NULL)) /* Only initialized Scope objects have state. */
+        if (    (p_registration != NULL)
+             && /* Ignore an invalid Section object. */
+                (p_registration->p_scope != NULL)) /* Only initialized Scope objects have state. */
         {
             scope_t *p_scope = p_registration->p_scope; /* Capture state observed this tick. */
 
-            if ((p_registration->last_state == SCOPE_STATE_TRIGGERED) && /* Capture was finishing. */
-                (p_scope->state == SCOPE_STATE_IDLE)) /* Core completed the post-trigger samples. */
+            if (    (p_registration->last_state == SCOPE_STATE_TRIGGERED)
+                 && /* Capture was finishing. */
+                    (p_scope->state == SCOPE_STATE_IDLE)) /* Core completed the post-trigger samples. */
             {
                 p_registration->data_ready = 1u;
                 frame_scope_capture_tag_increment(p_registration);
@@ -366,12 +380,11 @@ static void frame_scope_state_poll(void)
  */
 static void frame_scope_list_poll(void)
 {
-    section_item_t *p_item = NULL;                  /* Scope wrapper emitted this tick. */
-    scope_registration_t *p_registration = NULL;   /* Metadata represented by the list item. */
-    wire_octet_t payload[FRAME_SCOPE_LIST_ACK_FIXED_SIZE +
-                         FRAME_SCOPE_NAME_LENGTH_MAX] = {0}; /* Serialized list ACK. */
-    uint8_t name_length = 0u;                       /* Encoded name length in logical octets. */
-    uint8_t is_last = 0u;                           /* One when this item closes the list. */
+    section_item_t *p_item                                                              = NULL; /* Scope wrapper emitted this tick. */
+    scope_registration_t *p_registration                                                = NULL; /* Metadata represented by the list item. */
+    wire_octet_t payload[FRAME_SCOPE_LIST_ACK_FIXED_SIZE + FRAME_SCOPE_NAME_LENGTH_MAX] = {0};  /* Serialized list ACK. */
+    uint8_t name_length                                                                 = 0u;   /* Encoded name length in logical octets. */
+    uint8_t is_last                                                                     = 0u;   /* One when this item closes the list. */
 
     if (frame_scope_list_context.active == 0u)
     {
@@ -379,29 +392,30 @@ static void frame_scope_list_poll(void)
     }
 
     p_item = frame_scope_list_context.p_item;
+
     if (p_item == NULL)
     {
         frame_scope_list_context.active = 0u;
         return;
     }
 
-    p_registration = (scope_registration_t *)p_item->p_obj;
+    p_registration                  = (scope_registration_t *)p_item->p_obj;
     frame_scope_list_context.p_item = p_item->p_next;
-    if ((p_registration == NULL) ||       /* A corrupt registration cannot be described. */
-        (p_registration->p_scope == NULL)) /* Scope state must remain owned by a valid object. */
+
+    if (    (p_registration == NULL)
+         || /* A corrupt registration cannot be described. */
+            (p_registration->p_scope == NULL)) /* Scope state must remain owned by a valid object. */
     {
         frame_scope_list_context.active = 0u;
         return;
     }
 
     is_last = (frame_scope_list_context.p_item == NULL) ? 1u : 0u;
-    name_length = frame_scope_name_copy(&payload[FRAME_SCOPE_LIST_ACK_NAME_OFFSET],
-                                        p_registration->p_name);
-    payload[FRAME_SCOPE_LIST_ACK_SCOPE_ID_OFFSET] = wire_octet_get(p_registration->scope_id);
-    payload[FRAME_SCOPE_LIST_ACK_IS_LAST_OFFSET] = is_last;
+    name_length = frame_scope_name_copy(&payload[FRAME_SCOPE_LIST_ACK_NAME_OFFSET], p_registration->p_name);
+    payload[FRAME_SCOPE_LIST_ACK_SCOPE_ID_OFFSET]    = wire_octet_get(p_registration->scope_id);
+    payload[FRAME_SCOPE_LIST_ACK_IS_LAST_OFFSET]     = is_last;
     payload[FRAME_SCOPE_LIST_ACK_NAME_LENGTH_OFFSET] = name_length;
-    frame_scope_list_reply(payload,
-                           (uint16_t)(FRAME_SCOPE_LIST_ACK_FIXED_SIZE + name_length));
+    frame_scope_list_reply(payload, (uint16_t)(FRAME_SCOPE_LIST_ACK_FIXED_SIZE + name_length));
 
     if (is_last == 1u)
     {
@@ -426,7 +440,7 @@ static void frame_scope_service_task(void)
 static void frame_scope_list_query_act(void *p_frame,
                                        DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack                                  = (section_packform_t *)p_frame;
     wire_octet_t empty_payload[FRAME_SCOPE_LIST_ACK_FIXED_SIZE] = {0}; /* Empty-list terminator. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_LIST_QUERY_SIZE) == 0u)
@@ -437,22 +451,18 @@ static void frame_scope_list_query_act(void *p_frame,
     if (p_scope_first == NULL)
     {
         empty_payload[FRAME_SCOPE_LIST_ACK_SCOPE_ID_OFFSET] = FRAME_SCOPE_INVALID_ID;
-        empty_payload[FRAME_SCOPE_LIST_ACK_IS_LAST_OFFSET] = 1u;
-        frame_scope_reply(p_pack,
-                          my_printf,
-                          CMD_WORD_SCOPE_LIST_QUERY,
-                          empty_payload,
-                          FRAME_SCOPE_LIST_ACK_FIXED_SIZE);
+        empty_payload[FRAME_SCOPE_LIST_ACK_IS_LAST_OFFSET]  = 1u;
+        frame_scope_reply(p_pack, my_printf, CMD_WORD_SCOPE_LIST_QUERY, empty_payload, FRAME_SCOPE_LIST_ACK_FIXED_SIZE);
         return;
     }
 
-    frame_scope_list_context.p_item = p_scope_first;
-    frame_scope_list_context.p_output = my_printf;
-    frame_scope_list_context.source = p_pack->dst;
-    frame_scope_list_context.dynamic_source = p_pack->d_dst;
-    frame_scope_list_context.destination = p_pack->src;
+    frame_scope_list_context.p_item              = p_scope_first;
+    frame_scope_list_context.p_output            = my_printf;
+    frame_scope_list_context.source              = p_pack->dst;
+    frame_scope_list_context.dynamic_source      = p_pack->d_dst;
+    frame_scope_list_context.destination         = p_pack->src;
     frame_scope_list_context.dynamic_destination = p_pack->d_src;
-    frame_scope_list_context.active = 1u;
+    frame_scope_list_context.active              = 1u;
     frame_scope_list_poll();
 }
 
@@ -464,52 +474,43 @@ static void frame_scope_list_query_act(void *p_frame,
 static void frame_scope_info_query_act(void *p_frame,
                                        DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
-    wire_octet_t payload[FRAME_SCOPE_INFO_ACK_SIZE] = {0}; /* Serialized information ACK. */
-    scope_registration_t *p_registration = NULL;           /* Scope selected by the request. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;              /* Requested protocol identifier. */
+    section_packform_t *p_pack                      = (section_packform_t *)p_frame;
+    wire_octet_t payload[FRAME_SCOPE_INFO_ACK_SIZE] = {0};  /* Serialized information ACK. */
+    scope_registration_t *p_registration            = NULL; /* Scope selected by the request. */
+    uint8_t scope_id                                = FRAME_SCOPE_INVALID_ID; /* Requested protocol identifier. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_INFO_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_INFO_QUERY_SCOPE_ID_OFFSET]);
+    scope_id       = wire_octet_get(p_pack->p_data[FRAME_SCOPE_INFO_QUERY_SCOPE_ID_OFFSET]);
     p_registration = frame_scope_find_by_id(scope_id);
     payload[FRAME_SCOPE_INFO_ACK_SCOPE_ID_OFFSET] = scope_id;
+
     if (p_registration == NULL)
     {
-        payload[FRAME_SCOPE_INFO_ACK_STATUS_OFFSET] =
-            wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID);
+        payload[FRAME_SCOPE_INFO_ACK_STATUS_OFFSET] = wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID);
     }
     else
     {
         const scope_t *p_scope = p_registration->p_scope; /* Snapshot source for this ACK. */
 
-        payload[FRAME_SCOPE_INFO_ACK_STATUS_OFFSET] =
-            wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_OK);
-        payload[FRAME_SCOPE_INFO_ACK_STATE_OFFSET] = wire_octet_get((uint16_t)p_scope->state);
-        payload[FRAME_SCOPE_INFO_ACK_DATA_READY_OFFSET] =
-            (p_registration->data_ready != 0u) ? 1u : 0u;
+        payload[FRAME_SCOPE_INFO_ACK_STATUS_OFFSET] = wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_OK);
+        payload[FRAME_SCOPE_INFO_ACK_STATE_OFFSET]  = wire_octet_get((uint16_t)p_scope->state);
+        payload[FRAME_SCOPE_INFO_ACK_DATA_READY_OFFSET] = (p_registration->data_ready != 0u) ? 1u : 0u;
         payload[FRAME_SCOPE_INFO_ACK_VARIABLE_COUNT_OFFSET] = wire_octet_get(p_scope->var_count);
         wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_SAMPLE_COUNT_OFFSET], p_scope->buffer_size);
         wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_WRITE_INDEX_OFFSET], p_scope->write_index);
         wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_TRIGGER_INDEX_OFFSET], p_scope->trigger_index);
-        wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_TRIGGER_POST_COUNT_OFFSET],
-                          p_scope->trigger_post_cnt);
+        wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_TRIGGER_POST_COUNT_OFFSET], p_scope->trigger_post_cnt);
         wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_TRIGGER_DISPLAY_INDEX_OFFSET],
                           frame_scope_trigger_display_index_get(p_scope));
-        wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_SAMPLE_PERIOD_US_OFFSET],
-                          p_registration->sample_period_us);
-        wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_CAPTURE_TAG_OFFSET],
-                          p_registration->capture_tag);
+        wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_SAMPLE_PERIOD_US_OFFSET], p_registration->sample_period_us);
+        wire_u32_le_write(&payload[FRAME_SCOPE_INFO_ACK_CAPTURE_TAG_OFFSET], p_registration->capture_tag);
     }
 
-    frame_scope_reply(p_pack,
-                      my_printf,
-                      CMD_WORD_SCOPE_INFO_QUERY,
-                      payload,
-                      FRAME_SCOPE_INFO_ACK_SIZE);
+    frame_scope_reply(p_pack, my_printf, CMD_WORD_SCOPE_INFO_QUERY, payload, FRAME_SCOPE_INFO_ACK_SIZE);
 }
 
 /**
@@ -521,34 +522,32 @@ static void frame_scope_variable_query_act(void *p_frame,
                                            DEC_MY_PRINTF)
 {
     section_packform_t *p_pack = (section_packform_t *)p_frame;
-    wire_octet_t payload[FRAME_SCOPE_VARIABLE_ACK_FIXED_SIZE +
-                         FRAME_SCOPE_NAME_LENGTH_MAX] = {0}; /* Serialized variable ACK. */
-    scope_registration_t *p_registration = NULL;             /* Scope selected by the query. */
-    const char *p_name = NULL;                                /* Variable name encoded on success. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;                /* Requested Scope identifier. */
-    uint8_t variable_index = FRAME_SCOPE_INVALID_ID;          /* Requested variable index. */
-    uint8_t name_length = 0u;                                 /* Encoded variable-name length. */
+    wire_octet_t payload[FRAME_SCOPE_VARIABLE_ACK_FIXED_SIZE + FRAME_SCOPE_NAME_LENGTH_MAX] = {0};  /* Serialized variable ACK. */
+    scope_registration_t *p_registration                                                    = NULL; /* Scope selected by the query. */
+    const char *p_name                                                                      = NULL; /* Variable name encoded on success. */
+    uint8_t scope_id                                                                        = FRAME_SCOPE_INVALID_ID; /* Requested Scope identifier. */
+    uint8_t variable_index                                                                  = FRAME_SCOPE_INVALID_ID; /* Requested variable index. */
+    uint8_t name_length                                                                     = 0u; /* Encoded variable-name length. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_VARIABLE_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_VARIABLE_QUERY_SCOPE_ID_OFFSET]);
+    scope_id       = wire_octet_get(p_pack->p_data[FRAME_SCOPE_VARIABLE_QUERY_SCOPE_ID_OFFSET]);
     variable_index = wire_octet_get(p_pack->p_data[FRAME_SCOPE_VARIABLE_QUERY_INDEX_OFFSET]);
     p_registration = frame_scope_find_by_id(scope_id);
     payload[FRAME_SCOPE_VARIABLE_ACK_SCOPE_ID_OFFSET] = scope_id;
-    payload[FRAME_SCOPE_VARIABLE_ACK_INDEX_OFFSET] = variable_index;
+    payload[FRAME_SCOPE_VARIABLE_ACK_INDEX_OFFSET]    = variable_index;
+
     if (p_registration == NULL)
     {
-        payload[FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET] =
-            wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID);
+        payload[FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET]  = wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_SCOPE_ID_INVALID);
         payload[FRAME_SCOPE_VARIABLE_ACK_IS_LAST_OFFSET] = 1u;
     }
     else if (variable_index >= p_registration->p_scope->var_count)
     {
-        payload[FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET] =
-            wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_VAR_INDEX_INVALID);
+        payload[FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET] = wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_VAR_INDEX_INVALID);
         payload[FRAME_SCOPE_VARIABLE_ACK_IS_LAST_OFFSET] = 1u;
     }
     else
@@ -559,10 +558,8 @@ static void frame_scope_variable_query_act(void *p_frame,
         {
             p_name = p_scope->var_names[variable_index];
         }
-        name_length = frame_scope_name_copy(&payload[FRAME_SCOPE_VARIABLE_ACK_NAME_OFFSET],
-                                            p_name);
-        payload[FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET] =
-            wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_OK);
+        name_length = frame_scope_name_copy(&payload[FRAME_SCOPE_VARIABLE_ACK_NAME_OFFSET], p_name);
+        payload[FRAME_SCOPE_VARIABLE_ACK_STATUS_OFFSET] = wire_octet_get((uint16_t)SCOPE_TOOL_STATUS_OK);
         payload[FRAME_SCOPE_VARIABLE_ACK_IS_LAST_OFFSET] =
             (((uint16_t)variable_index + 1u) >= (uint16_t)p_scope->var_count) ? 1u : 0u;
         payload[FRAME_SCOPE_VARIABLE_ACK_NAME_LENGTH_OFFSET] = name_length;
@@ -594,23 +591,18 @@ static void frame_scope_control_reply(section_packform_t *p_pack,
     wire_octet_t payload[FRAME_SCOPE_CONTROL_ACK_SIZE] = {0}; /* Serialized control ACK. */
 
     payload[FRAME_SCOPE_CONTROL_ACK_SCOPE_ID_OFFSET] = scope_id;
-    payload[FRAME_SCOPE_CONTROL_ACK_STATUS_OFFSET] = wire_octet_get((uint16_t)status);
-    if ((p_registration != NULL) &&       /* Invalid ids retain zero state fields. */
-        (p_registration->p_scope != NULL)) /* Valid metadata must own a Scope object. */
+    payload[FRAME_SCOPE_CONTROL_ACK_STATUS_OFFSET]   = wire_octet_get((uint16_t)status);
+
+    if (    (p_registration != NULL)
+         && /* Invalid ids retain zero state fields. */
+            (p_registration->p_scope != NULL)) /* Valid metadata must own a Scope object. */
     {
-        payload[FRAME_SCOPE_CONTROL_ACK_STATE_OFFSET] =
-            wire_octet_get((uint16_t)p_registration->p_scope->state);
-        payload[FRAME_SCOPE_CONTROL_ACK_DATA_READY_OFFSET] =
-            (p_registration->data_ready != 0u) ? 1u : 0u;
-        wire_u32_le_write(&payload[FRAME_SCOPE_CONTROL_ACK_CAPTURE_TAG_OFFSET],
-                          p_registration->capture_tag);
+        payload[FRAME_SCOPE_CONTROL_ACK_STATE_OFFSET] = wire_octet_get((uint16_t)p_registration->p_scope->state);
+        payload[FRAME_SCOPE_CONTROL_ACK_DATA_READY_OFFSET] = (p_registration->data_ready != 0u) ? 1u : 0u;
+        wire_u32_le_write(&payload[FRAME_SCOPE_CONTROL_ACK_CAPTURE_TAG_OFFSET], p_registration->capture_tag);
     }
 
-    frame_scope_reply(p_pack,
-                      my_printf,
-                      command_word,
-                      payload,
-                      FRAME_SCOPE_CONTROL_ACK_SIZE);
+    frame_scope_reply(p_pack, my_printf, command_word, payload, FRAME_SCOPE_CONTROL_ACK_SIZE);
 }
 
 /**
@@ -621,18 +613,19 @@ static void frame_scope_control_reply(section_packform_t *p_pack,
 static void frame_scope_start_act(void *p_frame,
                                   DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack           = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
-    scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Start result. */
+    uint8_t scope_id                     = FRAME_SCOPE_INVALID_ID;             /* Requested Scope identifier. */
+    scope_tool_status_e status           = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Start result. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_CONTROL_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
+    scope_id       = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
     p_registration = frame_scope_find_by_id(scope_id);
+
     if (p_registration == NULL)
     {
         status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -647,15 +640,10 @@ static void frame_scope_start_act(void *p_frame,
         frame_scope_capture_tag_increment(p_registration);
         scope_start(p_registration->p_scope);
         p_registration->last_state = p_registration->p_scope->state;
-        status = SCOPE_TOOL_STATUS_OK;
+        status                     = SCOPE_TOOL_STATUS_OK;
     }
 
-    frame_scope_control_reply(p_pack,
-                              my_printf,
-                              CMD_WORD_SCOPE_START,
-                              scope_id,
-                              status,
-                              p_registration);
+    frame_scope_control_reply(p_pack, my_printf, CMD_WORD_SCOPE_START, scope_id, status, p_registration);
 }
 
 /**
@@ -666,18 +654,19 @@ static void frame_scope_start_act(void *p_frame,
 static void frame_scope_trigger_act(void *p_frame,
                                     DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack           = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
-    scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Trigger result. */
+    uint8_t scope_id                     = FRAME_SCOPE_INVALID_ID;             /* Requested Scope identifier. */
+    scope_tool_status_e status           = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Trigger result. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_CONTROL_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
+    scope_id       = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
     p_registration = frame_scope_find_by_id(scope_id);
+
     if (p_registration == NULL)
     {
         status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -692,12 +681,7 @@ static void frame_scope_trigger_act(void *p_frame,
         status = SCOPE_TOOL_STATUS_OK;
     }
 
-    frame_scope_control_reply(p_pack,
-                              my_printf,
-                              CMD_WORD_SCOPE_TRIGGER,
-                              scope_id,
-                              status,
-                              p_registration);
+    frame_scope_control_reply(p_pack, my_printf, CMD_WORD_SCOPE_TRIGGER, scope_id, status, p_registration);
 }
 
 /**
@@ -708,32 +692,28 @@ static void frame_scope_trigger_act(void *p_frame,
 static void frame_scope_stop_act(void *p_frame,
                                  DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack           = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
-    scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Stop result. */
+    uint8_t scope_id                     = FRAME_SCOPE_INVALID_ID;             /* Requested Scope identifier. */
+    scope_tool_status_e status           = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Stop result. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_CONTROL_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
+    scope_id       = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
     p_registration = frame_scope_find_by_id(scope_id);
+
     if (p_registration != NULL)
     {
         scope_stop(p_registration->p_scope);
         p_registration->data_ready = 1u;
         p_registration->last_state = p_registration->p_scope->state;
-        status = SCOPE_TOOL_STATUS_OK;
+        status                     = SCOPE_TOOL_STATUS_OK;
     }
 
-    frame_scope_control_reply(p_pack,
-                              my_printf,
-                              CMD_WORD_SCOPE_STOP,
-                              scope_id,
-                              status,
-                              p_registration);
+    frame_scope_control_reply(p_pack, my_printf, CMD_WORD_SCOPE_STOP, scope_id, status, p_registration);
 }
 
 /**
@@ -744,33 +724,29 @@ static void frame_scope_stop_act(void *p_frame,
 static void frame_scope_reset_act(void *p_frame,
                                   DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack           = (section_packform_t *)p_frame;
     scope_registration_t *p_registration = NULL; /* Scope selected by the request. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;    /* Requested Scope identifier. */
-    scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Reset result. */
+    uint8_t scope_id                     = FRAME_SCOPE_INVALID_ID;             /* Requested Scope identifier. */
+    scope_tool_status_e status           = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Reset result. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_CONTROL_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
+    scope_id       = wire_octet_get(p_pack->p_data[FRAME_SCOPE_CONTROL_QUERY_SCOPE_ID_OFFSET]);
     p_registration = frame_scope_find_by_id(scope_id);
+
     if (p_registration != NULL)
     {
         scope_reset(p_registration->p_scope);
         p_registration->data_ready = 0u;
         frame_scope_capture_tag_increment(p_registration);
         p_registration->last_state = p_registration->p_scope->state;
-        status = SCOPE_TOOL_STATUS_OK;
+        status                     = SCOPE_TOOL_STATUS_OK;
     }
 
-    frame_scope_control_reply(p_pack,
-                              my_printf,
-                              CMD_WORD_SCOPE_RESET,
-                              scope_id,
-                              status,
-                              p_registration);
+    frame_scope_control_reply(p_pack, my_printf, CMD_WORD_SCOPE_RESET, scope_id, status, p_registration);
 }
 
 /**
@@ -781,35 +757,35 @@ static void frame_scope_reset_act(void *p_frame,
 static void frame_scope_sample_query_act(void *p_frame,
                                          DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
-    wire_octet_t payload[FRAME_SCOPE_SAMPLE_ACK_MAX_SIZE] = {0}; /* Serialized sample ACK. */
-    scope_registration_t *p_registration = NULL;                 /* Scope selected by the request. */
-    const scope_t *p_scope = NULL;                                /* Capture data source on a valid id. */
-    uint32_t sample_index = 0u;                                   /* Requested logical sample index. */
-    uint32_t expected_capture_tag = 0u;                            /* Optional generation guard. */
-    uint32_t physical_index = 0u;                                 /* Resolved ring-buffer index. */
-    uint16_t payload_length = FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE;  /* ACK length in logical octets. */
-    uint8_t scope_id = FRAME_SCOPE_INVALID_ID;                    /* Requested Scope identifier. */
-    uint8_t read_mode = (uint8_t)SCOPE_READ_MODE_NORMAL;          /* Requested read consistency mode. */
-    uint8_t variable_count = 0u;                                  /* Values appended on success. */
-    uint8_t variable_index = 0u;                                  /* Current captured variable. */
-    scope_tool_status_e status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Sample read result. */
+    section_packform_t *p_pack                            = (section_packform_t *)p_frame;
+    wire_octet_t payload[FRAME_SCOPE_SAMPLE_ACK_MAX_SIZE] = {0};  /* Serialized sample ACK. */
+    scope_registration_t *p_registration                  = NULL; /* Scope selected by the request. */
+    const scope_t *p_scope                                = NULL; /* Capture data source on a valid id. */
+    uint32_t sample_index                                 = 0u;   /* Requested logical sample index. */
+    uint32_t expected_capture_tag                         = 0u;   /* Optional generation guard. */
+    uint32_t physical_index                               = 0u;   /* Resolved ring-buffer index. */
+    uint16_t payload_length                               = FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE; /* ACK length in logical octets. */
+    uint8_t scope_id                                      = FRAME_SCOPE_INVALID_ID;            /* Requested Scope identifier. */
+    uint8_t read_mode                                     = (uint8_t)SCOPE_READ_MODE_NORMAL;   /* Requested read consistency mode. */
+    uint8_t variable_count                                = 0u; /* Values appended on success. */
+    uint8_t variable_index                                = 0u; /* Current captured variable. */
+    scope_tool_status_e status                            = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID; /* Sample read result. */
 
     if (frame_scope_request_is_valid(p_pack, FRAME_SCOPE_SAMPLE_QUERY_SIZE) == 0u)
     {
         return;
     }
 
-    scope_id = wire_octet_get(p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_SCOPE_ID_OFFSET]);
-    read_mode = wire_octet_get(p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_READ_MODE_OFFSET]);
-    sample_index = wire_u32_le_read(&p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_INDEX_OFFSET]);
-    expected_capture_tag =
-        wire_u32_le_read(&p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_CAPTURE_TAG_OFFSET]);
-    p_registration = frame_scope_find_by_id(scope_id);
+    scope_id             = wire_octet_get(p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_SCOPE_ID_OFFSET]);
+    read_mode            = wire_octet_get(p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_READ_MODE_OFFSET]);
+    sample_index         = wire_u32_le_read(&p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_INDEX_OFFSET]);
+    expected_capture_tag = wire_u32_le_read(&p_pack->p_data[FRAME_SCOPE_SAMPLE_QUERY_CAPTURE_TAG_OFFSET]);
+    p_registration       = frame_scope_find_by_id(scope_id);
 
-    payload[FRAME_SCOPE_SAMPLE_ACK_SCOPE_ID_OFFSET] = scope_id;
+    payload[FRAME_SCOPE_SAMPLE_ACK_SCOPE_ID_OFFSET]  = scope_id;
     payload[FRAME_SCOPE_SAMPLE_ACK_READ_MODE_OFFSET] = read_mode;
     wire_u32_le_write(&payload[FRAME_SCOPE_SAMPLE_ACK_INDEX_OFFSET], sample_index);
+
     if (p_registration == NULL)
     {
         status = SCOPE_TOOL_STATUS_SCOPE_ID_INVALID;
@@ -817,75 +793,70 @@ static void frame_scope_sample_query_act(void *p_frame,
     else
     {
         p_scope = p_registration->p_scope;
-        wire_u32_le_write(&payload[FRAME_SCOPE_SAMPLE_ACK_CAPTURE_TAG_OFFSET],
-                          p_registration->capture_tag);
-        if ((read_mode != (uint8_t)SCOPE_READ_MODE_NORMAL) && /* Only two parser modes are defined. */
-            (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE))   /* Unknown modes cannot define ordering. */
+        wire_u32_le_write(&payload[FRAME_SCOPE_SAMPLE_ACK_CAPTURE_TAG_OFFSET], p_registration->capture_tag);
+
+        if (    (read_mode != (uint8_t)SCOPE_READ_MODE_NORMAL)
+             && /* Only two parser modes are defined. */
+                (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Unknown modes cannot define ordering. */
         {
             status = SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID;
         }
-        else if ((read_mode == (uint8_t)SCOPE_READ_MODE_NORMAL) && /* Normal reads require a frozen capture. */
-                 (p_scope->state != SCOPE_STATE_IDLE))             /* A running ring is not stable. */
+        else if (    (read_mode == (uint8_t)SCOPE_READ_MODE_NORMAL)
+                  && /* Normal reads require a frozen capture. */
+                     (p_scope->state != SCOPE_STATE_IDLE)) /* A running ring is not stable. */
         {
             status = SCOPE_TOOL_STATUS_RUNNING_DENIED;
         }
-        else if ((expected_capture_tag != 0u) && /* Zero explicitly disables generation matching. */
-                 (expected_capture_tag != p_registration->capture_tag)) /* The capture changed since discovery. */
+        else if (    (expected_capture_tag != 0u)
+                  && /* Zero explicitly disables generation matching. */
+                     (expected_capture_tag != p_registration->capture_tag)) /* The capture changed since discovery. */
         {
             status = SCOPE_TOOL_STATUS_CAPTURE_CHANGED;
         }
-        else if ((p_registration->data_ready == 0u) && /* No completed capture has been published. */
-                 (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Force mode intentionally bypasses readiness. */
+        else if (    (p_registration->data_ready == 0u)
+                  && /* No completed capture has been published. */
+                     (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Force mode intentionally bypasses readiness. */
         {
             status = SCOPE_TOOL_STATUS_DATA_NOT_READY;
         }
-        else if ((p_scope->buffer == NULL) ||       /* No sample storage is available. */
-                 (p_scope->buffer_size == 0u) ||    /* A zero-length ring cannot be indexed. */
-                 (sample_index >= p_scope->buffer_size)) /* Requested sample lies outside the capture. */
+        else if (    (p_scope->buffer == NULL)
+                  || /* No sample storage is available. */
+                     (p_scope->buffer_size == 0u)
+                  || /* A zero-length ring cannot be indexed. */
+                     (sample_index >= p_scope->buffer_size)) /* Requested sample lies outside the capture. */
         {
             status = SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID;
         }
         else
         {
             variable_count = p_scope->var_count;
+
             if (variable_count > FRAME_SCOPE_VARIABLE_COUNT_MAX)
             {
                 variable_count = FRAME_SCOPE_VARIABLE_COUNT_MAX;
             }
 
-            physical_index = frame_scope_physical_index_get(p_scope,
-                                                            read_mode,
-                                                            sample_index);
-            for (variable_index = 0u;
-                 variable_index < variable_count;
-                 variable_index++)
+            physical_index = frame_scope_physical_index_get(p_scope, read_mode, sample_index);
+
+            for (variable_index = 0u; variable_index < variable_count; variable_index++)
             {
-                uint16_t value_offset =
-                    (uint16_t)(FRAME_SCOPE_SAMPLE_ACK_VALUES_OFFSET +
-                               ((uint16_t)variable_index * FRAME_SCOPE_FP32_WIRE_SIZE));
-                float value =
-                    p_scope->buffer[physical_index +
-                                    ((uint32_t)variable_index * p_scope->buffer_size)];
+                uint16_t value_offset = (uint16_t)(FRAME_SCOPE_SAMPLE_ACK_VALUES_OFFSET
+                                                   + ((uint16_t)variable_index * FRAME_SCOPE_FP32_WIRE_SIZE));
+                float value = p_scope->buffer[physical_index + ((uint32_t)variable_index * p_scope->buffer_size)];
 
                 wire_f32_le_write(&payload[value_offset], value);
             }
 
             payload[FRAME_SCOPE_SAMPLE_ACK_VARIABLE_COUNT_OFFSET] = variable_count;
-            payload[FRAME_SCOPE_SAMPLE_ACK_IS_LAST_OFFSET] =
-                ((sample_index + 1u) >= p_scope->buffer_size) ? 1u : 0u;
+            payload[FRAME_SCOPE_SAMPLE_ACK_IS_LAST_OFFSET] = ((sample_index + 1u) >= p_scope->buffer_size) ? 1u : 0u;
             payload_length =
-                (uint16_t)(FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE +
-                           ((uint16_t)variable_count * FRAME_SCOPE_FP32_WIRE_SIZE));
+                (uint16_t)(FRAME_SCOPE_SAMPLE_ACK_FIXED_SIZE + ((uint16_t)variable_count * FRAME_SCOPE_FP32_WIRE_SIZE));
             status = SCOPE_TOOL_STATUS_OK;
         }
     }
 
     payload[FRAME_SCOPE_SAMPLE_ACK_STATUS_OFFSET] = wire_octet_get((uint16_t)status);
-    frame_scope_reply(p_pack,
-                      my_printf,
-                      CMD_WORD_SCOPE_SAMPLE_QUERY,
-                      payload,
-                      payload_length);
+    frame_scope_reply(p_pack, my_printf, CMD_WORD_SCOPE_SAMPLE_QUERY, payload, payload_length);
 }
 
 REG_TASK_MS(1, frame_scope_service_task)

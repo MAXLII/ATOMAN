@@ -1,9 +1,9 @@
 /*!
-    \file    gd32g5x3_trng.h
-    \brief   definitions for the TRNG
-
-    \version 2025-04-11, V1.2.0, firmware for GD32G5x3
-*/
+  \file gd32g5x3_trng.h
+  \brief definitions for the TRNG
+ 
+  \version 2025-04-11, V1.2.0, firmware for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef GD32G5X3_TRNG_H
 #define GD32G5X3_TRNG_H
@@ -38,125 +38,124 @@ OF SUCH DAMAGE.
 #include "gd32g5x3.h"
 
 /* TRNG definitions */
-#define TRNG                        TRNG_BASE
+#define TRNG TRNG_BASE
 
 /* registers definitions */
-#define TRNG_CTL                    REG32(TRNG + 0x00000000U)  /*!< control register */
-#define TRNG_STAT                   REG32(TRNG + 0x00000004U)  /*!< status register */
-#define TRNG_DATA                   REG32(TRNG + 0x00000008U)  /*!< data register */
-#define TRNG_HTCFG                  REG32(TRNG + 0x00000010U)  /*!< health tests configure register */
+#define TRNG_CTL   REG32(TRNG + 0x00000000U) /*!< control register */
+#define TRNG_STAT  REG32(TRNG + 0x00000004U) /*!< status register */
+#define TRNG_DATA  REG32(TRNG + 0x00000008U) /*!< data register */
+#define TRNG_HTCFG REG32(TRNG + 0x00000010U) /*!< health tests configure register */
 
 /* bits definitions */
 /* TRNG_CTL */
-#define TRNG_CTL_TRNGEN             BIT(2)                     /*!< TRNG enable bit */
-#define TRNG_CTL_IE                 BIT(3)                     /*!< interrupt enable bit */
-#define TRNG_CTL_MODSEL             BIT(4)                     /*!< TRNG working mode config bit */
-#define TRNG_CTL_CED                BIT(5)                     /*!< clock error detect enable bit */
-#define TRNG_CTL_NISTSEL            BIT(6)                     /*!< NIST seed mode selection */
-#define TRNG_CTL_RTEN               BIT(7)                     /*!< replace test enable */
-#define TRNG_CTL_INIT               BIT(8)                     /*!< HASH algorithm init */
-#define TRNG_CTL_PPEN               BIT(9)                     /*!< TRNG post-porcessing module enable */
-#define TRNG_CTL_CONDEN             BIT(10)                    /*!< TRNG conditioning module enable */
-#define TRNG_CTL_ALGO               BITS(12,13)                /*!< TRNG conditioning module hash algo select */
-#define TRNG_CTL_OUTMOD             BIT(14)                    /*!< TRNG conditioning output width config bit */
-#define TRNG_CTL_INMOD              BIT(15)                    /*!< TRNG conditioning input width config bit */
-#define TRNG_CTL_CLKDIV             BITS(16,19)                /*!< TRNG clock divider */
-#define TRNG_CTL_NR                 BITS(24,25)                /*!< TRNG analog power mode bits */
-#define TRNG_CTL_CONDRST            BIT(30)                    /*!< reset TRNG conditioning logic */
-#define TRNG_CTL_LK                 BIT(31)                    /*!< TRNG_CTL register lock bit */
+#define TRNG_CTL_TRNGEN  BIT(2)       /*!< TRNG enable bit */
+#define TRNG_CTL_IE      BIT(3)       /*!< interrupt enable bit */
+#define TRNG_CTL_MODSEL  BIT(4)       /*!< TRNG working mode config bit */
+#define TRNG_CTL_CED     BIT(5)       /*!< clock error detect enable bit */
+#define TRNG_CTL_NISTSEL BIT(6)       /*!< NIST seed mode selection */
+#define TRNG_CTL_RTEN    BIT(7)       /*!< replace test enable */
+#define TRNG_CTL_INIT    BIT(8)       /*!< HASH algorithm init */
+#define TRNG_CTL_PPEN    BIT(9)       /*!< TRNG post-porcessing module enable */
+#define TRNG_CTL_CONDEN  BIT(10)      /*!< TRNG conditioning module enable */
+#define TRNG_CTL_ALGO    BITS(12, 13) /*!< TRNG conditioning module hash algo select */
+#define TRNG_CTL_OUTMOD  BIT(14)      /*!< TRNG conditioning output width config bit */
+#define TRNG_CTL_INMOD   BIT(15)      /*!< TRNG conditioning input width config bit */
+#define TRNG_CTL_CLKDIV  BITS(16, 19) /*!< TRNG clock divider */
+#define TRNG_CTL_NR      BITS(24, 25) /*!< TRNG analog power mode bits */
+#define TRNG_CTL_CONDRST BIT(30)      /*!< reset TRNG conditioning logic */
+#define TRNG_CTL_LK      BIT(31)      /*!< TRNG_CTL register lock bit */
 
 /* TRNG_STAT */
-#define TRNG_STAT_DRDY              BIT(0)                     /*!< random data ready status bit */
-#define TRNG_STAT_CECS              BIT(1)                     /*!< clock error current status */
-#define TRNG_STAT_SECS              BIT(2)                     /*!< seed error current status */
-#define TRNG_STAT_ERRSTA            BIT(3)                     /*!< NIST mode error status */
-#define TRNG_STAT_CEIF              BIT(5)                     /*!< clock error interrupt flag */
-#define TRNG_STAT_SEIF              BIT(6)                     /*!< seed error interrupt flag */
+#define TRNG_STAT_DRDY   BIT(0) /*!< random data ready status bit */
+#define TRNG_STAT_CECS   BIT(1) /*!< clock error current status */
+#define TRNG_STAT_SECS   BIT(2) /*!< seed error current status */
+#define TRNG_STAT_ERRSTA BIT(3) /*!< NIST mode error status */
+#define TRNG_STAT_CEIF   BIT(5) /*!< clock error interrupt flag */
+#define TRNG_STAT_SEIF   BIT(6) /*!< seed error interrupt flag */
 
 /* TRNG_DATA */
-#define TRNG_DATA_TRNDATA           BITS(0,31)                 /*!< 32-Bit Random data */
+#define TRNG_DATA_TRNDATA BITS(0, 31) /*!< 32-Bit Random data */
 
 /* TRNG_HTCFG */
-#define TRNG_HTCFG_RCTTH            BITS(0,6)                  /*!< repetition (00/11) count test threshold */
-#define TRNG_HTCFG_APTTH            BITS(16,25)                /*!< adaptive proportion test threshold */
+#define TRNG_HTCFG_RCTTH BITS(0 , 6)  /*!< repetition (00/11) count test threshold */
+#define TRNG_HTCFG_APTTH BITS(16, 25) /*!< adaptive proportion test threshold */
 
 /* TRNG clock division */
-#define CTL_ALGO(regval)            (BITS(12,13) & ((uint32_t)(regval) << 12U))
-#define TRNG_ALGO_SHA1              CTL_ALGO(0)                /*!< TRNG conditioning module hash SHA1 */
-#define TRNG_ALGO_MD5               CTL_ALGO(1)                /*!< TRNG conditioning module hash MD5 */
-#define TRNG_ALGO_SHA224            CTL_ALGO(2)                /*!< TRNG conditioning module hash SHA224 */
-#define TRNG_ALGO_SHA256            CTL_ALGO(3)                /*!< TRNG conditioning module hash SHA256 */
+#define CTL_ALGO(regval) (BITS(12, 13) & ((uint32_t)(regval) << 12U))
+#define TRNG_ALGO_SHA1   CTL_ALGO(0) /*!< TRNG conditioning module hash SHA1 */
+#define TRNG_ALGO_MD5    CTL_ALGO(1) /*!< TRNG conditioning module hash MD5 */
+#define TRNG_ALGO_SHA224 CTL_ALGO(2) /*!< TRNG conditioning module hash SHA224 */
+#define TRNG_ALGO_SHA256 CTL_ALGO(3) /*!< TRNG conditioning module hash SHA256 */
 
 /* TRNG clock division */
-#define CTL_CLKDIV(regval)          (BITS(16,19) & ((uint32_t)(regval) << 16U))
-#define TRNG_CLK_DIV1               CTL_CLKDIV(0)              /*!< TRNG clock TRNG_CLK divider 1 */
-#define TRNG_CLK_DIV2               CTL_CLKDIV(1)              /*!< TRNG clock TRNG_CLK divider 2 */
-#define TRNG_CLK_DIV4               CTL_CLKDIV(2)              /*!< TRNG clock TRNG_CLK divider 4 */
-#define TRNG_CLK_DIV8               CTL_CLKDIV(3)              /*!< TRNG clock TRNG_CLK divider 8 */
-#define TRNG_CLK_DIV16              CTL_CLKDIV(4)              /*!< TRNG clock TRNG_CLK divider 16 */
-#define TRNG_CLK_DIV32              CTL_CLKDIV(5)              /*!< TRNG clock TRNG_CLK divider 32 */
-#define TRNG_CLK_DIV64              CTL_CLKDIV(6)              /*!< TRNG clock TRNG_CLK divider 64 */
-#define TRNG_CLK_DIV128             CTL_CLKDIV(7)              /*!< TRNG clock TRNG_CLK divider 128 */
-#define TRNG_CLK_DIV256             CTL_CLKDIV(8)              /*!< TRNG clock TRNG_CLK divider 256 */
-#define TRNG_CLK_DIV512             CTL_CLKDIV(9)              /*!< TRNG clock TRNG_CLK divider 512 */
-#define TRNG_CLK_DIV1024            CTL_CLKDIV(10)             /*!< TRNG clock TRNG_CLK divider 1024 */
-#define TRNG_CLK_DIV2048            CTL_CLKDIV(11)             /*!< TRNG clock TRNG_CLK divider 2048 */
-#define TRNG_CLK_DIV4096            CTL_CLKDIV(12)             /*!< TRNG clock TRNG_CLK divider 4096 */
-#define TRNG_CLK_DIV8192            CTL_CLKDIV(13)             /*!< TRNG clock TRNG_CLK divider 8192 */
-#define TRNG_CLK_DIV16384           CTL_CLKDIV(14)             /*!< TRNG clock TRNG_CLK divider 16384 */
-#define TRNG_CLK_DIV32768           CTL_CLKDIV(15)             /*!< TRNG clock TRNG_CLK divider 32768 */
+#define CTL_CLKDIV(regval) (BITS(16, 19) & ((uint32_t)(regval) << 16U))
+#define TRNG_CLK_DIV1      CTL_CLKDIV(0)  /*!< TRNG clock TRNG_CLK divider 1 */
+#define TRNG_CLK_DIV2      CTL_CLKDIV(1)  /*!< TRNG clock TRNG_CLK divider 2 */
+#define TRNG_CLK_DIV4      CTL_CLKDIV(2)  /*!< TRNG clock TRNG_CLK divider 4 */
+#define TRNG_CLK_DIV8      CTL_CLKDIV(3)  /*!< TRNG clock TRNG_CLK divider 8 */
+#define TRNG_CLK_DIV16     CTL_CLKDIV(4)  /*!< TRNG clock TRNG_CLK divider 16 */
+#define TRNG_CLK_DIV32     CTL_CLKDIV(5)  /*!< TRNG clock TRNG_CLK divider 32 */
+#define TRNG_CLK_DIV64     CTL_CLKDIV(6)  /*!< TRNG clock TRNG_CLK divider 64 */
+#define TRNG_CLK_DIV128    CTL_CLKDIV(7)  /*!< TRNG clock TRNG_CLK divider 128 */
+#define TRNG_CLK_DIV256    CTL_CLKDIV(8)  /*!< TRNG clock TRNG_CLK divider 256 */
+#define TRNG_CLK_DIV512    CTL_CLKDIV(9)  /*!< TRNG clock TRNG_CLK divider 512 */
+#define TRNG_CLK_DIV1024   CTL_CLKDIV(10) /*!< TRNG clock TRNG_CLK divider 1024 */
+#define TRNG_CLK_DIV2048   CTL_CLKDIV(11) /*!< TRNG clock TRNG_CLK divider 2048 */
+#define TRNG_CLK_DIV4096   CTL_CLKDIV(12) /*!< TRNG clock TRNG_CLK divider 4096 */
+#define TRNG_CLK_DIV8192   CTL_CLKDIV(13) /*!< TRNG clock TRNG_CLK divider 8192 */
+#define TRNG_CLK_DIV16384  CTL_CLKDIV(14) /*!< TRNG clock TRNG_CLK divider 16384 */
+#define TRNG_CLK_DIV32768  CTL_CLKDIV(15) /*!< TRNG clock TRNG_CLK divider 32768 */
 
 /* TRNG power mode */
-#define CTL_NR(regval)              (BITS(24,25) & ((uint32_t)(regval) << 24U))
-#define TRNG_NR_ULTRALOW            CTL_NR(0)                  /*!< TRNG analog power mode ultralow  */
-#define TRNG_NR_LOW                 CTL_NR(1)                  /*!< TRNG analog power mode low  */
-#define TRNG_NR_MEDIUM              CTL_NR(2)                  /*!< TRNG analog power mode medium  */
-#define TRNG_NR_HIGH                CTL_NR(3)                  /*!< TRNG analog power mode high  */
+#define CTL_NR(regval)   (BITS(24, 25) & ((uint32_t)(regval) << 24U))
+#define TRNG_NR_ULTRALOW CTL_NR(0) /*!< TRNG analog power mode ultralow */
+#define TRNG_NR_LOW      CTL_NR(1) /*!< TRNG analog power mode low */
+#define TRNG_NR_MEDIUM   CTL_NR(2) /*!< TRNG analog power mode medium */
+#define TRNG_NR_HIGH     CTL_NR(3) /*!< TRNG analog power mode high */
 
 /* constants definitions */
 /* trng input mode */
 typedef enum
 {
-    TRNG_INMOD_256BIT = 0,                                     /*!< conditioning module input bitwidth 256bits */
-    TRNG_INMOD_440BIT = TRNG_CTL_INMOD                         /*!< conditioning module input bitwidth 440bits */
-}trng_inmod_enum;
+    TRNG_INMOD_256BIT = 0,             /*!< conditioning module input bitwidth 256bits */
+    TRNG_INMOD_440BIT = TRNG_CTL_INMOD /*!< conditioning module input bitwidth 440bits */
+} trng_inmod_enum;
 
 /* trng output mode */
 typedef enum
 {
-    TRNG_OUTMOD_128BIT = 0,                                    /*!< conditioning module output bitwidth 128bits */
-    TRNG_OUTMOD_256BIT = TRNG_CTL_OUTMOD                       /*!< conditioning module output bitwidth 256bits */
-}trng_outmod_enum;
+    TRNG_OUTMOD_128BIT = 0, /*!< conditioning module output bitwidth 128bits */
+    TRNG_OUTMOD_256BIT = TRNG_CTL_OUTMOD /*!< conditioning module output bitwidth 256bits */
+} trng_outmod_enum;
 
 /* trng working mode */
 typedef enum
 {
-    TRNG_MODSEL_LFSR = 0,                                      /*!< TRNG working in LFSR mode */
-    TRNG_MODSEL_NIST = TRNG_CTL_MODSEL                         /*!< TRNG working in NIST mode */
-}trng_modsel_enum;
+    TRNG_MODSEL_LFSR = 0, /*!< TRNG working in LFSR mode */
+    TRNG_MODSEL_NIST = TRNG_CTL_MODSEL /*!< TRNG working in NIST mode */
+} trng_modsel_enum;
 
 /* NIST seed mode */
 typedef enum
 {
-    TRNG_NIST_SEED_ANALOG = 0,                                 /*!< select annlog as seed in NIST mode */
-    TRNG_NIST_SEED_LFSR = TRNG_CTL_NISTSEL                     /*!< select LFSR as seed in NIST mode */
-}trng_nist_seed_enum;
+    TRNG_NIST_SEED_ANALOG = 0, /*!< select annlog as seed in NIST mode */
+    TRNG_NIST_SEED_LFSR   = TRNG_CTL_NISTSEL /*!< select LFSR as seed in NIST mode */
+} trng_nist_seed_enum;
 
 /* trng status flag */
 typedef enum
-{ 
-    TRNG_FLAG_DRDY = TRNG_STAT_DRDY,                           /*!< random Data ready status */
-    TRNG_FLAG_CECS = TRNG_STAT_CECS,                           /*!< clock error current status */
-    TRNG_FLAG_SECS = TRNG_STAT_SECS                            /*!< seed error current status */
-}trng_flag_enum;
+{
+    TRNG_FLAG_DRDY = TRNG_STAT_DRDY, /*!< random Data ready status */
+    TRNG_FLAG_CECS = TRNG_STAT_CECS, /*!< clock error current status */
+    TRNG_FLAG_SECS = TRNG_STAT_SECS  /*!< seed error current status */
+} trng_flag_enum;
 
 /* trng interrupt flag */
 typedef enum
 {
-    TRNG_INT_FLAG_CEIF = TRNG_STAT_CEIF,                       /*!< clock error interrupt flag */
-    TRNG_INT_FLAG_SEIF = TRNG_STAT_SEIF                        /*!< seed error interrupt flag */
-}trng_int_flag_enum;
-
+    TRNG_INT_FLAG_CEIF = TRNG_STAT_CEIF, /*!< clock error interrupt flag */
+    TRNG_INT_FLAG_SEIF = TRNG_STAT_SEIF  /*!< seed error interrupt flag */
+} trng_int_flag_enum;
 
 /* function declarations */
 /* initialization functions */

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_timer.c
- * @brief   Zynq-7020 section time-base implementation.
+ * @file bsp_timer.c
+ * @brief Zynq-7020 section time-base implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -17,8 +17,8 @@
  *          - The read path is safe in task and IRQ context
  *          - Hardware access is isolated in the Zynq BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -47,16 +47,15 @@ volatile uint32_t sys_tick_100us = 0U; /* Trace 与调试模块共享的 100 us 
 static XTime s_start_count = 0ULL;          /* 平台启动时的全局计时器基准计数。 */
 static XScuTimer s_section_interrupt_timer; /* 驱动 section_interrupt 的私有定时器实例。 */
 
-REG_PERF_BASE_CNT((uintptr_t)(GLOBAL_TMR_BASEADDR + GTIMER_COUNTER_LOWER_OFFSET),
-                  (1.0f / (float)COUNTS_PER_SECOND))
+REG_PERF_BASE_CNT((uintptr_t)(GLOBAL_TMR_BASEADDR + GTIMER_COUNTER_LOWER_OFFSET), (1.0f / (float)COUNTS_PER_SECOND))
 
 static void section_timer_interrupt_handler(void *callback_ref)
 {
     XScuTimer *timer = (XScuTimer *)callback_ref; /* 触发本次 IRQ 的私有定时器实例。 */
 
     XScuTimer_ClearInterruptStatus(timer); /* 先清除私有定时器中断状态，允许下一周期触发。 */
-    section_interrupt();                   /* 调度全部 SECTION_INTERRUPT 注册回调。 */
-    section_task_irq_exit_request();       /* 由选中的 section 实现决定是否请求任务切换。 */
+    section_interrupt();             /* 调度全部 SECTION_INTERRUPT 注册回调。 */
+    section_task_irq_exit_request(); /* 由选中的 section 实现决定是否请求任务切换。 */
 }
 
 void bsp_timer_init(void)
@@ -68,7 +67,7 @@ uint32_t bsp_timer_gettime_100us(void)
 {
     XTime current_count = 0ULL; /* 当前 Cortex-A9 全局计时器计数。 */
     XTime elapsed_count = 0ULL; /* 自平台启动以来累计的计时器计数。 */
-    XTime ticks_100us = 0ULL;   /* 换算后的 100 us 系统 tick。 */
+    XTime ticks_100us   = 0ULL; /* 换算后的 100 us 系统 tick。 */
 
     XTime_GetTime(&current_count); /* 原子读取 64 位全局计时器。 */
     elapsed_count = current_count - s_start_count;
@@ -80,10 +79,10 @@ uint32_t bsp_timer_gettime_100us(void)
 
 int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
 {
-    XScuTimer_Config *timer_config = NULL; /* Cortex-A9 私有定时器配置描述符。 */
-    uint64_t timer_clock_hz = 0ULL;        /* 私有定时器输入时钟频率，单位 Hz。 */
-    uint64_t timer_load = 0ULL;            /* 目标中断频率对应的重装计数。 */
-    int32_t status = XST_FAILURE;          /* Xilinx 驱动初始化或连接结果。 */
+    XScuTimer_Config *timer_config = NULL;        /* Cortex-A9 私有定时器配置描述符。 */
+    uint64_t timer_clock_hz        = 0ULL;        /* 私有定时器输入时钟频率，单位 Hz。 */
+    uint64_t timer_load            = 0ULL;        /* 目标中断频率对应的重装计数。 */
+    int32_t status                 = XST_FAILURE; /* Xilinx 驱动初始化或连接结果。 */
 
     if (frequency_hz == 0U)
     {
@@ -91,14 +90,14 @@ int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
     }
 
     timer_config = XScuTimer_LookupConfig(XPAR_XSCUTIMER_0_DEVICE_ID);
+
     if (timer_config == NULL)
     {
         return XST_FAILURE;
     }
 
-    status = XScuTimer_CfgInitialize(&s_section_interrupt_timer,
-                                     timer_config,
-                                     timer_config->BaseAddr);
+    status = XScuTimer_CfgInitialize(&s_section_interrupt_timer, timer_config, timer_config->BaseAddr);
+
     if (status != XST_SUCCESS)
     {
         return status;
@@ -107,25 +106,28 @@ int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
     status = bsp_interrupt_connect(XPAR_SCUTIMER_INTR,
                                    (Xil_ExceptionHandler)section_timer_interrupt_handler,
                                    &s_section_interrupt_timer);
+
     if (status != XST_SUCCESS)
     {
         return status;
     }
 
     timer_clock_hz = (uint64_t)XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ / 2ULL;
-    timer_load = timer_clock_hz / (uint64_t)frequency_hz;
-    if ((timer_load == 0ULL) || /* 目标频率高于私有定时器输入时钟。 */
-        (timer_load > (uint64_t)UINT32_MAX)) /* 目标周期超出 32 位重装寄存器范围。 */
+    timer_load     = timer_clock_hz / (uint64_t)frequency_hz;
+
+    if (    (timer_load == 0ULL)
+         || /* 目标频率高于私有定时器输入时钟。 */
+            (timer_load > (uint64_t)UINT32_MAX)) /* 目标周期超出 32 位重装寄存器范围。 */
     {
         return XST_INVALID_PARAM;
     }
 
     XScuTimer_LoadTimer(&s_section_interrupt_timer, (uint32_t)(timer_load - 1ULL)); /* 配置目标 IRQ 周期。 */
-    XScuTimer_EnableAutoReload(&s_section_interrupt_timer);                         /* 每次到期后自动重新装载。 */
-    bsp_interrupt_enable(XPAR_SCUTIMER_INTR);                                       /* 在共享 GIC 中开放私有定时器 IRQ。 */
-    XScuTimer_EnableInterrupt(&s_section_interrupt_timer);                          /* 开放私有定时器本地中断。 */
-    bsp_interrupt_global_enable();                                                  /* 开放 Cortex-A9 IRQ 异常。 */
-    XScuTimer_Start(&s_section_interrupt_timer);                                    /* 启动 10 kHz section 中断源。 */
+    XScuTimer_EnableAutoReload(&s_section_interrupt_timer); /* 每次到期后自动重新装载。 */
+    bsp_interrupt_enable(XPAR_SCUTIMER_INTR); /* 在共享 GIC 中开放私有定时器 IRQ。 */
+    XScuTimer_EnableInterrupt(&s_section_interrupt_timer); /* 开放私有定时器本地中断。 */
+    bsp_interrupt_global_enable(); /* 开放 Cortex-A9 IRQ 异常。 */
+    XScuTimer_Start(&s_section_interrupt_timer); /* 启动 10 kHz section 中断源。 */
 
     return XST_SUCCESS;
 }

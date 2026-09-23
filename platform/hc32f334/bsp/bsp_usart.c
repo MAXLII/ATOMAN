@@ -4,65 +4,65 @@
 #include <stdio.h>
 
 #define BSP_USART1_UNIT (CM_USART1)
-#define BSP_USART1_FCG (FCG3_PERIPH_USART1)
+#define BSP_USART1_FCG  (FCG3_PERIPH_USART1)
 
 #define BSP_USART1_TX_PORT (GPIO_PORT_A)
-#define BSP_USART1_TX_PIN (GPIO_PIN_06)
+#define BSP_USART1_TX_PIN  (GPIO_PIN_06)
 #define BSP_USART1_RX_PORT (GPIO_PORT_A)
-#define BSP_USART1_RX_PIN (GPIO_PIN_07)
+#define BSP_USART1_RX_PIN  (GPIO_PIN_07)
 
 #define BSP_USART1_BAUDRATE (115200UL)
-#define BSP_USART1_CLK_DIV (USART_CLK_DIV4)
+#define BSP_USART1_CLK_DIV  (USART_CLK_DIV4)
 
-#define BSP_USART1_RX_DMA_UNIT (CM_DMA)
-#define BSP_USART1_RX_DMA_CH (DMA_CH2)
-#define BSP_USART1_RX_DMA_MX_CH (DMA_MX_CH2)
+#define BSP_USART1_RX_DMA_UNIT     (CM_DMA)
+#define BSP_USART1_RX_DMA_CH       (DMA_CH2)
+#define BSP_USART1_RX_DMA_MX_CH    (DMA_MX_CH2)
 #define BSP_USART1_RX_DMA_TRIG_SEL (AOS_DMA_2)
 #define BSP_USART1_RX_DMA_TRIG_SRC (EVT_SRC_USART1_RI)
 #define BSP_USART1_RX_DMA_BUF_SIZE (512U)
 
-#define BSP_USART1_TX_DMA_UNIT (CM_DMA)
-#define BSP_USART1_TX_DMA_CH (DMA_CH3)
-#define BSP_USART1_TX_DMA_MX_CH (DMA_MX_CH3)
-#define BSP_USART1_TX_DMA_TC_FLAG (DMA_FLAG_TC_CH3)
+#define BSP_USART1_TX_DMA_UNIT             (CM_DMA)
+#define BSP_USART1_TX_DMA_CH               (DMA_CH3)
+#define BSP_USART1_TX_DMA_MX_CH            (DMA_MX_CH3)
+#define BSP_USART1_TX_DMA_TC_FLAG          (DMA_FLAG_TC_CH3)
 #define BSP_USART1_TX_DMA_CHSTAT_BUSY_MASK (DMA_CHSTAT_CHACT_3)
-#define BSP_USART1_TX_DMA_TRIG_SEL (AOS_DMA_3)
-#define BSP_USART1_TX_DMA_TRIG_SRC (EVT_SRC_USART1_TI)
-#define BSP_USART1_TX_RING_BUF_SIZE (512U)
-#define BSP_USART1_TX_DMA_BUF_SIZE (128U)
-#define BSP_USART1_TX_DMA_TIMEOUT (0x00FFFFFFUL)
+#define BSP_USART1_TX_DMA_TRIG_SEL         (AOS_DMA_3)
+#define BSP_USART1_TX_DMA_TRIG_SRC         (EVT_SRC_USART1_TI)
+#define BSP_USART1_TX_RING_BUF_SIZE        (512U)
+#define BSP_USART1_TX_DMA_BUF_SIZE         (128U)
+#define BSP_USART1_TX_DMA_TIMEOUT          (0x00FFFFFFUL)
 
 #define BSP_USART2_UNIT (CM_USART2)
-#define BSP_USART2_FCG (FCG3_PERIPH_USART2)
+#define BSP_USART2_FCG  (FCG3_PERIPH_USART2)
 
-#define BSP_USART2_TX_PORT (GPIO_PORT_C)
-#define BSP_USART2_TX_PIN (GPIO_PIN_10)
-#define BSP_USART2_RX_PORT (GPIO_PORT_C)
-#define BSP_USART2_RX_PIN (GPIO_PIN_04)
+#define BSP_USART2_TX_PORT   (GPIO_PORT_C)
+#define BSP_USART2_TX_PIN    (GPIO_PIN_10)
+#define BSP_USART2_RX_PORT   (GPIO_PORT_C)
+#define BSP_USART2_RX_PIN    (GPIO_PIN_04)
 #define BSP_USART2_PORT_FUNC (GPIO_FUNC_36)
 
 #define BSP_USART2_BAUDRATE (921600UL)
-#define BSP_USART2_CLK_DIV (USART_CLK_DIV4)
+#define BSP_USART2_CLK_DIV  (USART_CLK_DIV4)
 
-#define BSP_USART2_RX_DMA_UNIT (CM_DMA)
-#define BSP_USART2_RX_DMA_CH (DMA_CH0)
-#define BSP_USART2_RX_DMA_MX_CH (DMA_MX_CH0)
+#define BSP_USART2_RX_DMA_UNIT     (CM_DMA)
+#define BSP_USART2_RX_DMA_CH       (DMA_CH0)
+#define BSP_USART2_RX_DMA_MX_CH    (DMA_MX_CH0)
 #define BSP_USART2_RX_DMA_TRIG_SRC (EVT_SRC_USART2_RI)
 #define BSP_USART2_RX_DMA_BUF_SIZE (512U)
 
-#define BSP_USART2_TX_DMA_UNIT (CM_DMA)
-#define BSP_USART2_TX_DMA_CH (DMA_CH1)
-#define BSP_USART2_TX_DMA_MX_CH (DMA_MX_CH1)
-#define BSP_USART2_TX_DMA_TC_FLAG (DMA_FLAG_TC_CH1)
+#define BSP_USART2_TX_DMA_UNIT             (CM_DMA)
+#define BSP_USART2_TX_DMA_CH               (DMA_CH1)
+#define BSP_USART2_TX_DMA_MX_CH            (DMA_MX_CH1)
+#define BSP_USART2_TX_DMA_TC_FLAG          (DMA_FLAG_TC_CH1)
 #define BSP_USART2_TX_DMA_CHSTAT_BUSY_MASK (DMA_CHSTAT_CHACT_1)
-#define BSP_USART2_TX_DMA_TRIG_SRC (EVT_SRC_USART2_TI)
-#define BSP_USART2_TX_RING_BUF_SIZE (512U)
-#define BSP_USART2_TX_DMA_BUF_SIZE (128U)
-#define BSP_USART2_TX_DMA_TIMEOUT (0x00FFFFFFUL)
-#define BSP_USART2_TX_STRESS_PKT_SIZE (48U)
-#define BSP_USART_DBG_PRINTF_BUF_SIZE (256U)
-#define BSP_USART_ISO_PRINTF_BUF_SIZE (256U)
-#define BSP_USART2_DMA_TEST_ENABLE (0U)
+#define BSP_USART2_TX_DMA_TRIG_SRC         (EVT_SRC_USART2_TI)
+#define BSP_USART2_TX_RING_BUF_SIZE        (512U)
+#define BSP_USART2_TX_DMA_BUF_SIZE         (128U)
+#define BSP_USART2_TX_DMA_TIMEOUT          (0x00FFFFFFUL)
+#define BSP_USART2_TX_STRESS_PKT_SIZE      (48U)
+#define BSP_USART_DBG_PRINTF_BUF_SIZE      (256U)
+#define BSP_USART_ISO_PRINTF_BUF_SIZE      (256U)
+#define BSP_USART2_DMA_TEST_ENABLE         (0U)
 #if (BSP_USART2_DMA_TEST_ENABLE == 1U)
 #define BSP_USART_TEST_LONG_PRINTF_PERIOD (31UL)
 #endif
@@ -75,14 +75,14 @@ void bsp_comm_memory_barrier(void)
 /* USART RX/TX use DMA plus polling service tasks; no USART/DMA NVIC interrupt is enabled here. */
 typedef struct
 {
-    uint8_t rx_dma_buf[BSP_USART1_RX_DMA_BUF_SIZE];   /* RX circular DMA buffer. */
-    uint16_t rx_read_idx;                             /* Next byte index consumed by software. */
+    uint8_t rx_dma_buf[BSP_USART1_RX_DMA_BUF_SIZE]; /* RX circular DMA buffer. */
+    uint16_t rx_read_idx; /* Next byte index consumed by software. */
     uint8_t tx_ring_buf[BSP_USART1_TX_RING_BUF_SIZE]; /* TX software ring buffer. */
     uint8_t tx_dma_buf[BSP_USART1_TX_DMA_BUF_SIZE];   /* Linear staging buffer for one TX DMA burst. */
-    volatile uint16_t tx_ring_head;                   /* Next TX ring write index. */
-    volatile uint16_t tx_ring_tail;                   /* Next TX ring read index. */
-    volatile uint16_t tx_dma_len;                     /* Current TX DMA transfer length. */
-    volatile uint8_t tx_dma_busy;                     /* TX DMA ownership flag set while a burst is active. */
+    volatile uint16_t tx_ring_head; /* Next TX ring write index. */
+    volatile uint16_t tx_ring_tail; /* Next TX ring read index. */
+    volatile uint16_t tx_dma_len;   /* Current TX DMA transfer length. */
+    volatile uint8_t tx_dma_busy;   /* TX DMA ownership flag set while a burst is active. */
 } bsp_usart_port_ctx_t;
 
 static bsp_usart_port_ctx_t s_bsp_usart1_ctx = {0};
@@ -102,26 +102,26 @@ static uint8_t bsp_usart_tx_dma_chstat_is_idle(CM_DMA_TypeDef *dma, uint32_t chs
  * table plus bsp_usart_port_ctx_t so USART1 and USART2 keep the same logic. */
 typedef struct
 {
-    CM_USART_TypeDef *unit;           /* USART peripheral instance. */
-    uint32_t fcg;                     /* Peripheral clock gate mask. */
-    uint8_t tx_port;                  /* TX GPIO port. */
-    uint32_t tx_pin;                  /* TX GPIO pin. */
-    uint8_t rx_port;                  /* RX GPIO port. */
-    uint32_t rx_pin;                  /* RX GPIO pin. */
-    uint16_t tx_func;                 /* TX pin alternate function. */
-    uint16_t rx_func;                 /* RX pin alternate function. */
-    uint32_t baudrate;                /* USART baud rate. */
-    uint32_t clk_div;                 /* USART clock divider. */
-    CM_DMA_TypeDef *rx_dma_unit;      /* RX DMA controller instance. */
-    uint8_t rx_dma_ch;                /* RX DMA channel. */
-    uint8_t rx_dma_mx_ch;             /* RX DMA mux channel. */
-    uint32_t rx_dma_trig_sel;         /* RX DMA trigger select register value. */
-    en_event_src_t rx_dma_trig_src;   /* RX DMA trigger event source. */
-    uint16_t rx_dma_buf_size;         /* RX DMA circular buffer size. */
-    CM_DMA_TypeDef *tx_dma_unit;      /* TX DMA controller instance. */
-    uint8_t tx_dma_ch;                /* TX DMA channel. */
-    uint8_t tx_dma_mx_ch;             /* TX DMA mux channel. */
-    uint32_t tx_dma_tc_flag;          /* TX DMA transfer-complete flag. */
+    CM_USART_TypeDef *unit; /* USART peripheral instance. */
+    uint32_t fcg;           /* Peripheral clock gate mask. */
+    uint8_t tx_port;        /* TX GPIO port. */
+    uint32_t tx_pin;        /* TX GPIO pin. */
+    uint8_t rx_port;        /* RX GPIO port. */
+    uint32_t rx_pin;        /* RX GPIO pin. */
+    uint16_t tx_func;       /* TX pin alternate function. */
+    uint16_t rx_func;       /* RX pin alternate function. */
+    uint32_t baudrate;      /* USART baud rate. */
+    uint32_t clk_div;       /* USART clock divider. */
+    CM_DMA_TypeDef *rx_dma_unit; /* RX DMA controller instance. */
+    uint8_t rx_dma_ch;           /* RX DMA channel. */
+    uint8_t rx_dma_mx_ch;        /* RX DMA mux channel. */
+    uint32_t rx_dma_trig_sel;    /* RX DMA trigger select register value. */
+    en_event_src_t rx_dma_trig_src; /* RX DMA trigger event source. */
+    uint16_t rx_dma_buf_size;       /* RX DMA circular buffer size. */
+    CM_DMA_TypeDef *tx_dma_unit;    /* TX DMA controller instance. */
+    uint8_t tx_dma_ch;       /* TX DMA channel. */
+    uint8_t tx_dma_mx_ch;    /* TX DMA mux channel. */
+    uint32_t tx_dma_tc_flag; /* TX DMA transfer-complete flag. */
     uint32_t tx_dma_chstat_busy_mask; /* TX DMA channel busy status mask. */
     uint32_t tx_dma_trig_sel;         /* TX DMA trigger select register value. */
     en_event_src_t tx_dma_trig_src;   /* TX DMA trigger event source. */
@@ -131,61 +131,61 @@ typedef struct
 } bsp_usart_port_cfg_t;
 
 static const bsp_usart_port_cfg_t s_bsp_usart1_cfg = {
-    .unit = BSP_USART1_UNIT,
-    .fcg = BSP_USART1_FCG,
-    .tx_port = BSP_USART1_TX_PORT,
-    .tx_pin = BSP_USART1_TX_PIN,
-    .rx_port = BSP_USART1_RX_PORT,
-    .rx_pin = BSP_USART1_RX_PIN,
-    .tx_func = GPIO_FUNC_36,
-    .rx_func = GPIO_FUNC_37,
-    .baudrate = BSP_USART1_BAUDRATE,
-    .clk_div = BSP_USART1_CLK_DIV,
-    .rx_dma_unit = BSP_USART1_RX_DMA_UNIT,
-    .rx_dma_ch = BSP_USART1_RX_DMA_CH,
-    .rx_dma_mx_ch = BSP_USART1_RX_DMA_MX_CH,
-    .rx_dma_trig_sel = BSP_USART1_RX_DMA_TRIG_SEL,
-    .rx_dma_trig_src = BSP_USART1_RX_DMA_TRIG_SRC,
-    .rx_dma_buf_size = BSP_USART1_RX_DMA_BUF_SIZE,
-    .tx_dma_unit = BSP_USART1_TX_DMA_UNIT,
-    .tx_dma_ch = BSP_USART1_TX_DMA_CH,
-    .tx_dma_mx_ch = BSP_USART1_TX_DMA_MX_CH,
-    .tx_dma_tc_flag = BSP_USART1_TX_DMA_TC_FLAG,
+    .unit                    = BSP_USART1_UNIT,
+    .fcg                     = BSP_USART1_FCG,
+    .tx_port                 = BSP_USART1_TX_PORT,
+    .tx_pin                  = BSP_USART1_TX_PIN,
+    .rx_port                 = BSP_USART1_RX_PORT,
+    .rx_pin                  = BSP_USART1_RX_PIN,
+    .tx_func                 = GPIO_FUNC_36,
+    .rx_func                 = GPIO_FUNC_37,
+    .baudrate                = BSP_USART1_BAUDRATE,
+    .clk_div                 = BSP_USART1_CLK_DIV,
+    .rx_dma_unit             = BSP_USART1_RX_DMA_UNIT,
+    .rx_dma_ch               = BSP_USART1_RX_DMA_CH,
+    .rx_dma_mx_ch            = BSP_USART1_RX_DMA_MX_CH,
+    .rx_dma_trig_sel         = BSP_USART1_RX_DMA_TRIG_SEL,
+    .rx_dma_trig_src         = BSP_USART1_RX_DMA_TRIG_SRC,
+    .rx_dma_buf_size         = BSP_USART1_RX_DMA_BUF_SIZE,
+    .tx_dma_unit             = BSP_USART1_TX_DMA_UNIT,
+    .tx_dma_ch               = BSP_USART1_TX_DMA_CH,
+    .tx_dma_mx_ch            = BSP_USART1_TX_DMA_MX_CH,
+    .tx_dma_tc_flag          = BSP_USART1_TX_DMA_TC_FLAG,
     .tx_dma_chstat_busy_mask = BSP_USART1_TX_DMA_CHSTAT_BUSY_MASK,
-    .tx_dma_trig_sel = BSP_USART1_TX_DMA_TRIG_SEL,
-    .tx_dma_trig_src = BSP_USART1_TX_DMA_TRIG_SRC,
-    .tx_ring_buf_size = BSP_USART1_TX_RING_BUF_SIZE,
-    .tx_dma_buf_size = BSP_USART1_TX_DMA_BUF_SIZE,
-    .tx_dma_timeout = BSP_USART1_TX_DMA_TIMEOUT,
+    .tx_dma_trig_sel         = BSP_USART1_TX_DMA_TRIG_SEL,
+    .tx_dma_trig_src         = BSP_USART1_TX_DMA_TRIG_SRC,
+    .tx_ring_buf_size        = BSP_USART1_TX_RING_BUF_SIZE,
+    .tx_dma_buf_size         = BSP_USART1_TX_DMA_BUF_SIZE,
+    .tx_dma_timeout          = BSP_USART1_TX_DMA_TIMEOUT,
 };
 
 static const bsp_usart_port_cfg_t s_bsp_usart2_cfg = {
-    .unit = BSP_USART2_UNIT,
-    .fcg = BSP_USART2_FCG,
-    .tx_port = BSP_USART2_TX_PORT,
-    .tx_pin = BSP_USART2_TX_PIN,
-    .rx_port = BSP_USART2_RX_PORT,
-    .rx_pin = BSP_USART2_RX_PIN,
-    .tx_func = GPIO_FUNC_36,
-    .rx_func = GPIO_FUNC_37,
-    .baudrate = BSP_USART2_BAUDRATE,
-    .clk_div = BSP_USART2_CLK_DIV,
-    .rx_dma_unit = BSP_USART2_RX_DMA_UNIT,
-    .rx_dma_ch = BSP_USART2_RX_DMA_CH,
-    .rx_dma_mx_ch = BSP_USART2_RX_DMA_MX_CH,
-    .rx_dma_trig_sel = AOS_DMA_0,
-    .rx_dma_trig_src = BSP_USART2_RX_DMA_TRIG_SRC,
-    .rx_dma_buf_size = BSP_USART2_RX_DMA_BUF_SIZE,
-    .tx_dma_unit = BSP_USART2_TX_DMA_UNIT,
-    .tx_dma_ch = BSP_USART2_TX_DMA_CH,
-    .tx_dma_mx_ch = BSP_USART2_TX_DMA_MX_CH,
-    .tx_dma_tc_flag = BSP_USART2_TX_DMA_TC_FLAG,
+    .unit                    = BSP_USART2_UNIT,
+    .fcg                     = BSP_USART2_FCG,
+    .tx_port                 = BSP_USART2_TX_PORT,
+    .tx_pin                  = BSP_USART2_TX_PIN,
+    .rx_port                 = BSP_USART2_RX_PORT,
+    .rx_pin                  = BSP_USART2_RX_PIN,
+    .tx_func                 = GPIO_FUNC_36,
+    .rx_func                 = GPIO_FUNC_37,
+    .baudrate                = BSP_USART2_BAUDRATE,
+    .clk_div                 = BSP_USART2_CLK_DIV,
+    .rx_dma_unit             = BSP_USART2_RX_DMA_UNIT,
+    .rx_dma_ch               = BSP_USART2_RX_DMA_CH,
+    .rx_dma_mx_ch            = BSP_USART2_RX_DMA_MX_CH,
+    .rx_dma_trig_sel         = AOS_DMA_0,
+    .rx_dma_trig_src         = BSP_USART2_RX_DMA_TRIG_SRC,
+    .rx_dma_buf_size         = BSP_USART2_RX_DMA_BUF_SIZE,
+    .tx_dma_unit             = BSP_USART2_TX_DMA_UNIT,
+    .tx_dma_ch               = BSP_USART2_TX_DMA_CH,
+    .tx_dma_mx_ch            = BSP_USART2_TX_DMA_MX_CH,
+    .tx_dma_tc_flag          = BSP_USART2_TX_DMA_TC_FLAG,
     .tx_dma_chstat_busy_mask = BSP_USART2_TX_DMA_CHSTAT_BUSY_MASK,
-    .tx_dma_trig_sel = AOS_DMA_1,
-    .tx_dma_trig_src = BSP_USART2_TX_DMA_TRIG_SRC,
-    .tx_ring_buf_size = BSP_USART2_TX_RING_BUF_SIZE,
-    .tx_dma_buf_size = BSP_USART2_TX_DMA_BUF_SIZE,
-    .tx_dma_timeout = BSP_USART2_TX_DMA_TIMEOUT,
+    .tx_dma_trig_sel         = AOS_DMA_1,
+    .tx_dma_trig_src         = BSP_USART2_TX_DMA_TRIG_SRC,
+    .tx_ring_buf_size        = BSP_USART2_TX_RING_BUF_SIZE,
+    .tx_dma_buf_size         = BSP_USART2_TX_DMA_BUF_SIZE,
+    .tx_dma_timeout          = BSP_USART2_TX_DMA_TIMEOUT,
 };
 
 #if (BSP_USART2_DMA_TEST_ENABLE == 1U)
@@ -233,6 +233,7 @@ static void bsp_usart_test_record_tx(bsp_usart_test_port_stats_t *stats, uint16_
 
     stats->req_bytes += req_len;
     stats->sent_bytes += sent_len;
+
     if (sent_len < req_len)
     {
         stats->drop_bytes += (uint32_t)(req_len - sent_len);
@@ -255,6 +256,7 @@ static uint16_t bsp_usart_tx_ring_used(const bsp_usart_port_ctx_t *ctx, const bs
 
     u16Head = ctx->tx_ring_head;
     u16Tail = ctx->tx_ring_tail;
+
     if (u16Head >= u16Tail)
     {
         return (uint16_t)(u16Head - u16Tail);
@@ -279,20 +281,20 @@ static void bsp_usart_rx_dma_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_por
      * the DMA destination address is used as the producer write index. */
     DMA_Cmd(cfg->rx_dma_unit, ENABLE);
     (void)DMA_StructInit(&stcDmaInit);
-    stcDmaInit.u32IntEn = DMA_INT_DISABLE;
-    stcDmaInit.u32SrcAddr = (uint32_t)(&cfg->unit->RDR);
-    stcDmaInit.u32DestAddr = (uint32_t)(&ctx->rx_dma_buf[0]);
-    stcDmaInit.u32DataWidth = DMA_DATAWIDTH_8BIT;
-    stcDmaInit.u32BlockSize = 1U;
-    stcDmaInit.u32TransCount = 0xFFFFU;
-    stcDmaInit.u32SrcAddrInc = DMA_SRC_ADDR_FIX;
+    stcDmaInit.u32IntEn       = DMA_INT_DISABLE;
+    stcDmaInit.u32SrcAddr     = (uint32_t)(&cfg->unit->RDR);
+    stcDmaInit.u32DestAddr    = (uint32_t)(&ctx->rx_dma_buf[0]);
+    stcDmaInit.u32DataWidth   = DMA_DATAWIDTH_8BIT;
+    stcDmaInit.u32BlockSize   = 1U;
+    stcDmaInit.u32TransCount  = 0xFFFFU;
+    stcDmaInit.u32SrcAddrInc  = DMA_SRC_ADDR_FIX;
     stcDmaInit.u32DestAddrInc = DMA_DEST_ADDR_INC;
     (void)DMA_Init(cfg->rx_dma_unit, cfg->rx_dma_ch, &stcDmaInit);
 
     (void)DMA_RepeatStructInit(&stcDmaRepeatInit);
-    stcDmaRepeatInit.u32Mode = DMA_RPT_DEST;
+    stcDmaRepeatInit.u32Mode      = DMA_RPT_DEST;
     stcDmaRepeatInit.u32DestCount = cfg->rx_dma_buf_size;
-    stcDmaRepeatInit.u32SrcCount = 0U;
+    stcDmaRepeatInit.u32SrcCount  = 0U;
     (void)DMA_RepeatInit(cfg->rx_dma_unit, cfg->rx_dma_ch, &stcDmaRepeatInit);
 
     AOS_SetTriggerEventSrc(cfg->rx_dma_trig_sel, cfg->rx_dma_trig_src);
@@ -307,8 +309,9 @@ static uint16_t bsp_usart_rx_dma_get_write_idx(bsp_usart_port_ctx_t *ctx, const 
     u32Addr = DMA_GetDestAddr(cfg->rx_dma_unit, cfg->rx_dma_ch);
     /* Guard against an invalid DMA pointer while the channel is being reset or
      * if hardware reports an address outside the configured circular buffer. */
-    if ((u32Addr < (uint32_t)(&ctx->rx_dma_buf[0])) ||
-        (u32Addr > (uint32_t)(&ctx->rx_dma_buf[cfg->rx_dma_buf_size - 1U]) + 1UL))
+
+    if (    (u32Addr < (uint32_t)(&ctx->rx_dma_buf[0]))
+         || (u32Addr > (uint32_t)(&ctx->rx_dma_buf[cfg->rx_dma_buf_size - 1U]) + 1UL))
     {
         return 0U;
     }
@@ -318,10 +321,10 @@ static uint16_t bsp_usart_rx_dma_get_write_idx(bsp_usart_port_ctx_t *ctx, const 
 
 static uint8_t bsp_usart_rx_has_error(const bsp_usart_port_cfg_t *cfg)
 {
-    return (uint8_t)((SET == USART_GetStatus(cfg->unit, USART_FLAG_OVERRUN)) ||
-                     (SET == USART_GetStatus(cfg->unit, USART_FLAG_FRAME_ERR)) ||
-                     (SET == USART_GetStatus(cfg->unit, USART_FLAG_PARITY_ERR)) ||
-                     (SET == USART_GetStatus(cfg->unit, USART_FLAG_RX_TIMEOUT)));
+    return (uint8_t)(    (SET == USART_GetStatus(cfg->unit, USART_FLAG_OVERRUN))
+                      || (SET == USART_GetStatus(cfg->unit, USART_FLAG_FRAME_ERR))
+                      || (SET == USART_GetStatus(cfg->unit, USART_FLAG_PARITY_ERR))
+                      || (SET == USART_GetStatus(cfg->unit, USART_FLAG_RX_TIMEOUT)));
 }
 
 static void bsp_usart_rx_recover_if_error(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg)
@@ -344,12 +347,10 @@ static void bsp_usart_rx_recover_if_error(bsp_usart_port_ctx_t *ctx, const bsp_u
     }
 
     USART_ClearStatus(cfg->unit,
-                      USART_FLAG_OVERRUN |
-                          USART_FLAG_FRAME_ERR |
-                          USART_FLAG_PARITY_ERR |
-                          USART_FLAG_RX_TIMEOUT);
+                      USART_FLAG_OVERRUN | USART_FLAG_FRAME_ERR | USART_FLAG_PARITY_ERR | USART_FLAG_RX_TIMEOUT);
 
     ctx->rx_read_idx = 0U;
+
     for (i = 0U; i < cfg->rx_dma_buf_size; i++)
     {
         ctx->rx_dma_buf[i] = 0U;
@@ -365,13 +366,13 @@ static void bsp_usart_tx_dma_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_por
      * is a placeholder until bytes are copied from the software ring. */
     DMA_Cmd(cfg->tx_dma_unit, ENABLE);
     (void)DMA_StructInit(&stcDmaInit);
-    stcDmaInit.u32IntEn = DMA_INT_DISABLE;
-    stcDmaInit.u32SrcAddr = (uint32_t)(&ctx->tx_dma_buf[0]);
-    stcDmaInit.u32DestAddr = (uint32_t)(&cfg->unit->TDR);
-    stcDmaInit.u32DataWidth = DMA_DATAWIDTH_8BIT;
-    stcDmaInit.u32BlockSize = 1U;
-    stcDmaInit.u32TransCount = 1U;
-    stcDmaInit.u32SrcAddrInc = DMA_SRC_ADDR_INC;
+    stcDmaInit.u32IntEn       = DMA_INT_DISABLE;
+    stcDmaInit.u32SrcAddr     = (uint32_t)(&ctx->tx_dma_buf[0]);
+    stcDmaInit.u32DestAddr    = (uint32_t)(&cfg->unit->TDR);
+    stcDmaInit.u32DataWidth   = DMA_DATAWIDTH_8BIT;
+    stcDmaInit.u32BlockSize   = 1U;
+    stcDmaInit.u32TransCount  = 1U;
+    stcDmaInit.u32SrcAddrInc  = DMA_SRC_ADDR_INC;
     stcDmaInit.u32DestAddrInc = DMA_DEST_ADDR_FIX;
     (void)DMA_Init(cfg->tx_dma_unit, cfg->tx_dma_ch, &stcDmaInit);
 
@@ -379,30 +380,37 @@ static void bsp_usart_tx_dma_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_por
     DMA_MxChCmd(cfg->tx_dma_unit, cfg->tx_dma_mx_ch, ENABLE);
 }
 
-static uint16_t bsp_usart_tx_ring_read(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg, uint8_t *data, uint16_t len)
+static uint16_t bsp_usart_tx_ring_read(bsp_usart_port_ctx_t *ctx,
+                                       const bsp_usart_port_cfg_t *cfg,
+                                       uint8_t *data,
+                                       uint16_t len)
 {
     uint16_t u16Offset;
     uint16_t u16Read;
     uint16_t u16ToEnd;
     uint16_t i;
 
-    if ((NULL == data) || (0U == len))
+    if (    (NULL == data)
+         || (0U == len))
     {
         return 0U;
     }
 
     u16Read = bsp_usart_tx_ring_used(ctx, cfg);
+
     if (u16Read > len)
     {
         u16Read = len;
     }
 
     u16Offset = 0U;
+
     while (u16Offset < u16Read)
     {
         /* Split copies at the physical end of the ring buffer. */
         u16ToEnd = (uint16_t)(cfg->tx_ring_buf_size - ctx->tx_ring_tail);
-        len = (uint16_t)(u16Read - u16Offset);
+        len      = (uint16_t)(u16Read - u16Offset);
+
         if (len > u16ToEnd)
         {
             len = u16ToEnd;
@@ -427,6 +435,7 @@ static int32_t bsp_usart_tx_dma_start(bsp_usart_port_ctx_t *ctx, const bsp_usart
     /* Move one contiguous chunk out of the ring so DMA never has to handle
      * wrap-around in the software buffer. */
     u16Len = bsp_usart_tx_ring_read(ctx, cfg, ctx->tx_dma_buf, cfg->tx_dma_buf_size);
+
     if (0U == u16Len)
     {
         return LL_ERR_BUF_EMPTY;
@@ -440,7 +449,7 @@ static int32_t bsp_usart_tx_dma_start(bsp_usart_port_ctx_t *ctx, const bsp_usart
     (void)DMA_ChCmd(cfg->tx_dma_unit, cfg->tx_dma_ch, ENABLE);
     DMA_MxChSWTrigger(cfg->tx_dma_unit, cfg->tx_dma_mx_ch);
 
-    ctx->tx_dma_len = u16Len;
+    ctx->tx_dma_len  = u16Len;
     ctx->tx_dma_busy = 1U;
     return LL_OK;
 }
@@ -451,26 +460,30 @@ static void bsp_usart_tx_dma_service(bsp_usart_port_ctx_t *ctx, const bsp_usart_
     {
         /* A DMA TC flag alone is not enough here: the USART shift register must
          * also be empty before the staging buffer can be reused safely. */
-        if ((0U == bsp_usart_tx_dma_chstat_is_idle(cfg->tx_dma_unit, cfg->tx_dma_chstat_busy_mask)) ||
-            (RESET == USART_GetStatus(cfg->unit, USART_FLAG_TX_CPLT)))
+
+        if (    (0U == bsp_usart_tx_dma_chstat_is_idle(cfg->tx_dma_unit, cfg->tx_dma_chstat_busy_mask))
+             || (RESET == USART_GetStatus(cfg->unit, USART_FLAG_TX_CPLT)))
         {
             return;
         }
 
         DMA_ClearTransCompleteStatus(cfg->tx_dma_unit, cfg->tx_dma_tc_flag);
         USART_ClearStatus(cfg->unit, USART_FLAG_TX_END);
-        ctx->tx_dma_len = 0U;
+        ctx->tx_dma_len  = 0U;
         ctx->tx_dma_busy = 0U;
     }
 
-    if ((0U != bsp_usart_tx_dma_chstat_is_idle(cfg->tx_dma_unit, cfg->tx_dma_chstat_busy_mask)) &&
-        (SET == USART_GetStatus(cfg->unit, USART_FLAG_TX_CPLT)))
+    if (    (0U != bsp_usart_tx_dma_chstat_is_idle(cfg->tx_dma_unit, cfg->tx_dma_chstat_busy_mask))
+         && (SET == USART_GetStatus(cfg->unit, USART_FLAG_TX_CPLT)))
     {
         (void)bsp_usart_tx_dma_start(ctx, cfg);
     }
 }
 
-static uint16_t bsp_usart_tx_ring_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg, const uint8_t *data, uint16_t len)
+static uint16_t bsp_usart_tx_ring_write(bsp_usart_port_ctx_t *ctx,
+                                        const bsp_usart_port_cfg_t *cfg,
+                                        const uint8_t *data,
+                                        uint16_t len)
 {
     uint16_t u16Offset;
     uint16_t u16Free;
@@ -478,16 +491,19 @@ static uint16_t bsp_usart_tx_ring_write(bsp_usart_port_ctx_t *ctx, const bsp_usa
     uint16_t u16Write;
     uint16_t i;
 
-    if ((NULL == data) || (0U == len))
+    if (    (NULL == data)
+         || (0U == len))
     {
         return 0U;
     }
 
     u16Offset = 0U;
+
     while (u16Offset < len)
     {
         /* Keep one slot empty so head == tail always means "empty". */
         u16Free = bsp_usart_tx_ring_free(ctx, cfg);
+
         if (0U == u16Free)
         {
             break;
@@ -495,10 +511,12 @@ static uint16_t bsp_usart_tx_ring_write(bsp_usart_port_ctx_t *ctx, const bsp_usa
 
         u16ToEnd = (uint16_t)(cfg->tx_ring_buf_size - ctx->tx_ring_head);
         u16Write = (uint16_t)(len - u16Offset);
+
         if (u16Write > u16Free)
         {
             u16Write = u16Free;
         }
+
         if (u16Write > u16ToEnd)
         {
             u16Write = u16ToEnd;
@@ -525,17 +543,17 @@ static void bsp_usart_port_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
     GPIO_REG_Unlock();
 
     (void)GPIO_StructInit(&stcGpioInit);
-    stcGpioInit.u16PinDir = PIN_DIR_OUT;
-    stcGpioInit.u16PinDrv = PIN_HIGH_DRV;
+    stcGpioInit.u16PinDir        = PIN_DIR_OUT;
+    stcGpioInit.u16PinDrv        = PIN_HIGH_DRV;
     stcGpioInit.u16PinOutputType = PIN_OUT_TYPE_CMOS;
-    stcGpioInit.u16PullUp = PIN_PU_OFF;
-    stcGpioInit.u16PullDown = PIN_PD_OFF;
-    stcGpioInit.u16PinState = PIN_STAT_SET;
+    stcGpioInit.u16PullUp        = PIN_PU_OFF;
+    stcGpioInit.u16PullDown      = PIN_PD_OFF;
+    stcGpioInit.u16PinState      = PIN_STAT_SET;
     (void)GPIO_Init(cfg->tx_port, cfg->tx_pin, &stcGpioInit);
 
     (void)GPIO_StructInit(&stcGpioInit);
-    stcGpioInit.u16PinDir = PIN_DIR_IN;
-    stcGpioInit.u16PullUp = PIN_PU_ON;
+    stcGpioInit.u16PinDir   = PIN_DIR_IN;
+    stcGpioInit.u16PullUp   = PIN_PU_ON;
     stcGpioInit.u16PullDown = PIN_PD_OFF;
     (void)GPIO_Init(cfg->rx_port, cfg->rx_pin, &stcGpioInit);
 
@@ -549,8 +567,8 @@ static void bsp_usart_port_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
     FCG_Fcg3PeriphClockCmd(cfg->fcg, ENABLE);
 
     (void)USART_UART_StructInit(&stcUartInit);
-    stcUartInit.u32ClockDiv = cfg->clk_div;
-    stcUartInit.u32Baudrate = cfg->baudrate;
+    stcUartInit.u32ClockDiv      = cfg->clk_div;
+    stcUartInit.u32Baudrate      = cfg->baudrate;
     stcUartInit.u32OverSampleBit = USART_OVER_SAMPLE_8BIT;
     stcUartInit.u32HWFlowControl = USART_HW_FLOWCTRL_NONE;
 
@@ -559,15 +577,18 @@ static void bsp_usart_port_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
     USART_ClearStatus(cfg->unit, USART_FLAG_TX_END);
     ctx->tx_ring_head = 0U;
     ctx->tx_ring_tail = 0U;
-    ctx->tx_dma_len = 0U;
-    ctx->tx_dma_busy = 0U;
-    ctx->rx_read_idx = 0U;
+    ctx->tx_dma_len   = 0U;
+    ctx->tx_dma_busy  = 0U;
+    ctx->rx_read_idx  = 0U;
     bsp_usart_rx_dma_init(ctx, cfg);
     bsp_usart_tx_dma_init(ctx, cfg);
     DMA_ClearTransCompleteStatus(cfg->tx_dma_unit, cfg->tx_dma_tc_flag);
 }
 
-static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg, const uint8_t *data, uint16_t len)
+static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx,
+                                const bsp_usart_port_cfg_t *cfg,
+                                const uint8_t *data,
+                                uint16_t len)
 {
     uint16_t u16Offset;
     uint16_t u16Write;
@@ -578,11 +599,13 @@ static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
         return 0U;
     }
 
-    u16Offset = 0U;
+    u16Offset  = 0U;
     u32Timeout = cfg->tx_dma_timeout;
+
     while (u16Offset < len)
     {
         u16Write = bsp_usart_tx_ring_write(ctx, cfg, &data[u16Offset], (uint16_t)(len - u16Offset));
+
         if (0U != u16Write)
         {
             u16Offset = (uint16_t)(u16Offset + u16Write);
@@ -592,6 +615,7 @@ static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
             /* Backpressure is intentional: drain TX DMA while waiting for ring
              * space. A drop is recorded only if this wait exceeds the timeout. */
             bsp_usart_tx_dma_service(ctx, cfg);
+
             if (0U == u32Timeout)
             {
                 break;
@@ -617,6 +641,7 @@ static int32_t bsp_usart_read_byte(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
     bsp_usart_rx_recover_if_error(ctx, cfg);
 
     u16WriteIdx = bsp_usart_rx_dma_get_write_idx(ctx, cfg);
+
     if (u16WriteIdx >= cfg->rx_dma_buf_size)
     {
         u16WriteIdx = 0U;
@@ -626,6 +651,7 @@ static int32_t bsp_usart_read_byte(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
     {
         *data = ctx->rx_dma_buf[ctx->rx_read_idx];
         ctx->rx_read_idx++;
+
         if (ctx->rx_read_idx >= cfg->rx_dma_buf_size)
         {
             ctx->rx_read_idx = 0U;
@@ -679,7 +705,8 @@ void bsp_usart_dbg_tx(char *ptr, int len)
     uint16_t u16ReqLen;
     uint16_t u16SentLen;
 
-    if ((NULL == ptr) || (len <= 0))
+    if (    (NULL == ptr)
+         || (len <= 0))
     {
         return;
     }
@@ -732,7 +759,8 @@ void bsp_usart_iso_tx(char *ptr, int len)
     uint16_t u16ReqLen;
     uint16_t u16SentLen;
 
-    if ((NULL == ptr) || (len <= 0))
+    if (    (NULL == ptr)
+         || (len <= 0))
     {
         return;
     }
@@ -783,11 +811,11 @@ uint8_t bsp_usart_iso_rx_get_byte(uint8_t *p_data)
 uint8_t bsp_usart_iso_tx_is_idle(void)
 {
     bsp_usart_tx_dma_service(&s_bsp_usart2_ctx, &s_bsp_usart2_cfg);
-    return (uint8_t)((s_bsp_usart2_ctx.tx_ring_head == s_bsp_usart2_ctx.tx_ring_tail) &&
-                     (0U == s_bsp_usart2_ctx.tx_dma_busy) &&
-                     (0U != bsp_usart_tx_dma_chstat_is_idle(s_bsp_usart2_cfg.tx_dma_unit,
-                                                            s_bsp_usart2_cfg.tx_dma_chstat_busy_mask)) &&
-                     (SET == USART_GetStatus(s_bsp_usart2_cfg.unit, USART_FLAG_TX_CPLT)));
+    return (
+        uint8_t)(    (s_bsp_usart2_ctx.tx_ring_head == s_bsp_usart2_ctx.tx_ring_tail)
+                  && (0U == s_bsp_usart2_ctx.tx_dma_busy)
+                  && (0U != bsp_usart_tx_dma_chstat_is_idle(s_bsp_usart2_cfg.tx_dma_unit, s_bsp_usart2_cfg.tx_dma_chstat_busy_mask))
+                  && (SET == USART_GetStatus(s_bsp_usart2_cfg.unit, USART_FLAG_TX_CPLT)));
 }
 
 static int32_t bsp_usart1_read_byte(uint8_t *data)
@@ -801,7 +829,10 @@ static int32_t bsp_usart2_read_byte(uint8_t *data)
 }
 
 #if (BSP_USART2_DMA_TEST_ENABLE == 1U)
-static uint16_t bsp_usart_test_append_msg(uint8_t *buf, uint16_t idx, const char *tag, uint32_t seq)
+static uint16_t bsp_usart_test_append_msg(uint8_t *buf,
+                                          uint16_t idx,
+                                          const char *tag,
+                                          uint32_t seq)
 {
     while ('\0' != *tag)
     {
@@ -809,7 +840,7 @@ static uint16_t bsp_usart_test_append_msg(uint8_t *buf, uint16_t idx, const char
     }
 
     buf[idx++] = ' ';
-    idx = bsp_usart_append_hex32(buf, idx, seq);
+    idx        = bsp_usart_append_hex32(buf, idx, seq);
     buf[idx++] = '\r';
     buf[idx++] = '\n';
 
@@ -845,10 +876,12 @@ static void bsp_usart_printf_test_task(void)
      * buffer pressure and exercise truncation accounting. */
     u32Seq = u32PrintfSeq++;
     s_bsp_usart_dbg_test_stats.printf_frames++;
+
     if ((u32Seq % BSP_USART_TEST_LONG_PRINTF_PERIOD) == 0UL)
     {
-        bsp_usart_dbg_printf("DBG PRINTF LONG %08lX 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF\r\n",
-                             (unsigned long)u32Seq);
+        bsp_usart_dbg_printf(
+            "DBG PRINTF LONG %08lX 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF\r\n",
+            (unsigned long)u32Seq);
     }
     else
     {
@@ -856,10 +889,12 @@ static void bsp_usart_printf_test_task(void)
     }
 
     s_bsp_usart_iso_test_stats.printf_frames++;
+
     if ((u32Seq % BSP_USART_TEST_LONG_PRINTF_PERIOD) == 0UL)
     {
-        bsp_usart_iso_printf("ISO PRINTF LONG %08lX 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF\r\n",
-                             (unsigned long)u32Seq);
+        bsp_usart_iso_printf(
+            "ISO PRINTF LONG %08lX 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF 0123456789ABCDEF\r\n",
+            (unsigned long)u32Seq);
     }
     else
     {
@@ -886,10 +921,12 @@ static uint16_t bsp_usart_test_format_result(char *buf,
                    (unsigned long)stats->tx_frames,
                    (unsigned long)stats->printf_frames,
                    (unsigned long)stats->printf_trunc);
+
     if (len <= 0)
     {
         return 0U;
     }
+
     if (len >= (int)buf_size)
     {
         return (uint16_t)(buf_size - 1U);
@@ -905,16 +942,10 @@ static void bsp_usart_test_result_task(void)
 
     /* Publish cumulative counters once per second without using printf wrappers,
      * so the result line itself does not skew printf statistics. */
-    u16Len = bsp_usart_test_format_result(acBuf,
-                                          (uint16_t)sizeof(acBuf),
-                                          "DBG",
-                                          &s_bsp_usart_dbg_test_stats);
+    u16Len = bsp_usart_test_format_result(acBuf, (uint16_t)sizeof(acBuf), "DBG", &s_bsp_usart_dbg_test_stats);
     (void)bsp_usart1_write((const uint8_t *)acBuf, u16Len);
 
-    u16Len = bsp_usart_test_format_result(acBuf,
-                                          (uint16_t)sizeof(acBuf),
-                                          "ISO",
-                                          &s_bsp_usart_iso_test_stats);
+    u16Len = bsp_usart_test_format_result(acBuf, (uint16_t)sizeof(acBuf), "ISO", &s_bsp_usart_iso_test_stats);
     (void)bsp_usart2_write((const uint8_t *)acBuf, u16Len);
 }
 

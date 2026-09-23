@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_pwm.c
- * @brief   PLECS CLLC PWM adapter implementation.
+ * @file bsp_pwm.c
+ * @brief PLECS CLLC PWM adapter implementation.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Final clamps protect the model from invalid interface callers
  *          - No MCU timer or register access is present
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,6 +38,7 @@ static float clamp_float(float value, float lower, float upper)
     {
         return upper;
     }
+
     if (value < lower)
     {
         return lower;
@@ -100,8 +101,8 @@ void bsp_pwm_enable(CLLC_DIRECTION_E direction)
 {
     float initial_frequency_hz = 0.0f; /* Zero-power PSM frequency. */
 
-    if ((direction < CLLC_DIRECTION_FORWARD) ||
-        (direction >= CLLC_DIRECTION_MAX)) /* Never publish an undefined bridge direction. */
+    if (    (direction < CLLC_DIRECTION_FORWARD)
+         || (direction >= CLLC_DIRECTION_MAX)) /* Never publish an undefined bridge direction. */
     {
         bsp_pwm_disable();
         return;
@@ -114,19 +115,16 @@ void bsp_pwm_set_modulation(CLLC_DIRECTION_E direction,
                             float duty,
                             float frequency_hz)
 {
-    float bounded_duty = clamp_float(duty, 0.0f, CLLC_HW_MAX_PHASE_SHIFT_DUTY); /* Safe duty command. */
+    float bounded_duty         = clamp_float(duty, 0.0f, CLLC_HW_MAX_PHASE_SHIFT_DUTY); /* Safe duty command. */
     float bounded_frequency_hz = 0.0f; /* Direction-specific safe switching frequency. */
 
-    if ((direction < CLLC_DIRECTION_FORWARD) ||
-        (direction >= CLLC_DIRECTION_MAX)) /* Reject calls that bypass interface validation. */
+    if (    (direction < CLLC_DIRECTION_FORWARD)
+         || (direction >= CLLC_DIRECTION_MAX)) /* Reject calls that bypass interface validation. */
     {
         bsp_pwm_disable();
         return;
     }
-    bounded_frequency_hz = clamp_float(
-        frequency_hz,
-        minimum_frequency(direction),
-        maximum_frequency(direction));
+    bounded_frequency_hz = clamp_float(frequency_hz, minimum_frequency(direction), maximum_frequency(direction));
     set_active_bridge(direction, bounded_duty, bounded_frequency_hz);
 }
 

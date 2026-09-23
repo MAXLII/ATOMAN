@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    fake_flash.c
- * @brief   Host fake flash driver implementation.
+ * @file fake_flash.c
+ * @brief Host fake flash driver implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Test-only, single-threaded implementation
  *          - Hardware access is replaced by an in-memory model
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -45,16 +45,16 @@ static fal_result_t call_record(fake_flash_t *p_flash,
                                 uint32_t address,
                                 uint32_t length)
 {
-    if ((address > FAKE_FLASH_CAPACITY) ||
-        (length > (FAKE_FLASH_CAPACITY - address)) ||
-        (p_flash->call_count >= FAKE_FLASH_MAX_CALLS))
+    if (    (address > FAKE_FLASH_CAPACITY)
+         || (length > (FAKE_FLASH_CAPACITY - address))
+         || (p_flash->call_count >= FAKE_FLASH_MAX_CALLS))
     {
         return FAL_RESULT_DRIVER_ERROR;
     }
 
-    p_flash->calls[p_flash->call_count].type = type;
+    p_flash->calls[p_flash->call_count].type    = type;
     p_flash->calls[p_flash->call_count].address = address;
-    p_flash->calls[p_flash->call_count].length = length;
+    p_flash->calls[p_flash->call_count].length  = length;
     p_flash->call_count++;
     p_flash->busy_polls_remaining = p_flash->busy_polls_per_operation;
     return next_result_take(p_flash);
@@ -76,10 +76,12 @@ static fal_device_state_t fake_state_get(void *p_context)
 {
     fake_flash_t *p_flash = (fake_flash_t *)p_context; /* Fake device queried by FAL. */
 
-    if ((p_flash == NULL) || (p_flash->initialized == 0u))
+    if (    (p_flash == NULL)
+         || (p_flash->initialized == 0u))
     {
         return FAL_DEVICE_STATE_ERROR;
     }
+
     if (p_flash->busy_polls_remaining != 0u)
     {
         p_flash->busy_polls_remaining--;
@@ -94,13 +96,15 @@ static fal_result_t fake_read(void *p_context,
                               uint8_t *p_data)
 {
     fake_flash_t *p_flash = (fake_flash_t *)p_context; /* Fake device supplying read data. */
-    fal_result_t result = FAL_RESULT_SUCCESS;          /* Read call acceptance result. */
+    fal_result_t result   = FAL_RESULT_SUCCESS;        /* Read call acceptance result. */
 
-    if ((p_flash == NULL) || (p_data == NULL))
+    if (    (p_flash == NULL)
+         || (p_data == NULL))
     {
         return FAL_RESULT_INVALID_ARGUMENT;
     }
     result = call_record(p_flash, FAKE_FLASH_CALL_READ, address, length);
+
     if (result == FAL_RESULT_SUCCESS)
     {
         (void)memcpy(p_data, &p_flash->data[address], length);
@@ -114,14 +118,16 @@ static fal_result_t fake_program(void *p_context,
                                  const uint8_t *p_data)
 {
     fake_flash_t *p_flash = (fake_flash_t *)p_context; /* Fake device accepting program data. */
-    fal_result_t result = FAL_RESULT_SUCCESS;          /* Program call acceptance result. */
-    uint32_t index = 0u;                               /* Program byte index. */
+    fal_result_t result   = FAL_RESULT_SUCCESS;        /* Program call acceptance result. */
+    uint32_t index        = 0u; /* Program byte index. */
 
-    if ((p_flash == NULL) || (p_data == NULL))
+    if (    (p_flash == NULL)
+         || (p_data == NULL))
     {
         return FAL_RESULT_INVALID_ARGUMENT;
     }
     result = call_record(p_flash, FAKE_FLASH_CALL_PROGRAM, address, length);
+
     if (result == FAL_RESULT_SUCCESS)
     {
         for (index = 0u; index < length; index++)
@@ -135,13 +141,14 @@ static fal_result_t fake_program(void *p_context,
 static fal_result_t fake_erase(void *p_context, uint32_t address, uint32_t length)
 {
     fake_flash_t *p_flash = (fake_flash_t *)p_context; /* Fake device accepting an erase. */
-    fal_result_t result = FAL_RESULT_SUCCESS;          /* Erase call acceptance result. */
+    fal_result_t result   = FAL_RESULT_SUCCESS;        /* Erase call acceptance result. */
 
     if (p_flash == NULL)
     {
         return FAL_RESULT_INVALID_ARGUMENT;
     }
     result = call_record(p_flash, FAKE_FLASH_CALL_ERASE, address, length);
+
     if (result == FAL_RESULT_SUCCESS)
     {
         (void)memset(&p_flash->data[address], 0xFF, length);
@@ -174,13 +181,13 @@ void fake_flash_reset(fake_flash_t *p_flash)
 fal_flash_ops_t fake_flash_ops_make(fake_flash_t *p_flash)
 {
     fal_flash_ops_t ops = {
-        .p_context = p_flash,
-        .p_init = fake_init,
+        .p_context   = p_flash,
+        .p_init      = fake_init,
         .p_get_state = fake_state_get,
-        .p_read = fake_read,
-        .p_program = fake_program,
-        .p_erase = fake_erase,
-        .p_sync = fake_sync,
+        .p_read      = fake_read,
+        .p_program   = fake_program,
+        .p_erase     = fake_erase,
+        .p_sync      = fake_sync,
     }; /* Operation table mounted by the real FAL core. */
 
     return ops;

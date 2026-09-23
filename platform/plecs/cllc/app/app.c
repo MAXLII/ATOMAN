@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    app.c
- * @brief   PLECS bidirectional CLLC application module.
+ * @file app.c
+ * @brief PLECS bidirectional CLLC application module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ADC sampling precedes the control ISR through interrupt priority 0
  *          - Debug export follows the control ISR through interrupt priority 8
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,22 +38,20 @@
 #include "section.h"
 #include "timing.h"
 
-static uint8_t hal_bound = 0u;         /* Nonzero after all required CLLC HAL bindings validate. */
-static uint8_t timing_bound = 0u;      /* Nonzero after valid control/FSM timing is installed. */
-static uint8_t hard_fault_last = 0u;   /* Previous hard-fault command for rising-edge detection. */
-static uint8_t fault_reset_last = 0u;  /* Previous reset command for rising-edge detection. */
-static uint8_t fault_latched = 0u;     /* PLECS-visible hard-protection latch bound to the CLLC HAL. */
-static uint8_t trace_header_written = 0u; /* Nonzero after the current run writes its CSV trace header. */
-static float battery_voltage_v = 0.0f; /* Latest battery-voltage feedback. */
-static float battery_current_a = 0.0f; /* Latest battery/load-current feedback. */
-static float bus_voltage_v = 0.0f;     /* Latest high-voltage-bus feedback. */
+static uint8_t hal_bound            = 0u;   /* Nonzero after all required CLLC HAL bindings validate. */
+static uint8_t timing_bound         = 0u;   /* Nonzero after valid control/FSM timing is installed. */
+static uint8_t hard_fault_last      = 0u;   /* Previous hard-fault command for rising-edge detection. */
+static uint8_t fault_reset_last     = 0u;   /* Previous reset command for rising-edge detection. */
+static uint8_t fault_latched        = 0u;   /* PLECS-visible hard-protection latch bound to the CLLC HAL. */
+static uint8_t trace_header_written = 0u;   /* Nonzero after the current run writes its CSV trace header. */
+static float battery_voltage_v      = 0.0f; /* Latest battery-voltage feedback. */
+static float battery_current_a      = 0.0f; /* Latest battery/load-current feedback. */
+static float bus_voltage_v          = 0.0f; /* Latest high-voltage-bus feedback. */
 
 /** Decode the external direction command into the public CLLC enum. */
 static CLLC_DIRECTION_E read_direction(void)
 {
-    return (plecs_get_input(PLECS_INPUT_DIRECTION) > 0.5f)
-               ? CLLC_DIRECTION_REVERSE
-               : CLLC_DIRECTION_FORWARD;
+    return (plecs_get_input(PLECS_INPUT_DIRECTION) > 0.5f) ? CLLC_DIRECTION_REVERSE : CLLC_DIRECTION_FORWARD;
 }
 
 /** Sample all physical feedback before the registered CLLC control interrupt. */
@@ -61,7 +59,7 @@ static void sample_feedback(void)
 {
     battery_voltage_v = cllc_adc_get_battery_voltage();
     battery_current_a = cllc_adc_get_battery_current();
-    bus_voltage_v = cllc_adc_get_bus_voltage();
+    bus_voltage_v     = cllc_adc_get_bus_voltage();
 }
 
 /** Registered priority-0 analog sampling entry. */
@@ -77,8 +75,8 @@ static void bind_timing(void)
 {
     cllc_ctrl_timing_t timing = {
         /* Timing shared by controller and FSM. */
-        .ctrl_ts = CTRL_TS,
-        .task_ts = 1.0e-3f,
+        .ctrl_ts             = CTRL_TS,
+        .task_ts             = 1.0e-3f,
         .startup_delay_ticks = 1u,
     };
 
@@ -107,6 +105,7 @@ static void bind_hal(void)
     cllc_hal_set_pwm_disable(cllc_pwm_disable);
     cllc_hal_set_latched_ptr(&fault_latched);
     hal_bound = cllc_hal_is_ready();
+
     if (hal_bound == 1u)
     {
         cllc_hal_lock_binding();
@@ -128,18 +127,22 @@ static void process_fault_commands(void)
     uint8_t hard_fault = (plecs_get_input(PLECS_INPUT_HARD_FAULT) > 0.5f) ? (uint8_t)1u : (uint8_t)0u;
     uint8_t fault_reset = (plecs_get_input(PLECS_INPUT_FAULT_RESET) > 0.5f) ? (uint8_t)1u : (uint8_t)0u;
 
-    if ((hard_fault == 1u) &&    /* The external fault input is active. */
-        (hard_fault_last == 0u)) /* Only its rising edge issues a new trip. */
+    if (    (hard_fault == 1u)
+         && /* The external fault input is active. */
+            (hard_fault_last == 0u)) /* Only its rising edge issues a new trip. */
     {
         cllc_hal_hard_protect_trip();
     }
-    if ((fault_reset == 1u) &&      /* The external reset input has a rising edge. */
-        (fault_reset_last == 0u) && /* Avoid reposting reset every task tick. */
-        (hard_fault == 0u))         /* Never clear a fault while its source remains active. */
+
+    if (    (fault_reset == 1u)
+         && /* The external reset input has a rising edge. */
+            (fault_reset_last == 0u)
+         && /* Avoid reposting reset every task tick. */
+            (hard_fault == 0u)) /* Never clear a fault while its source remains active. */
     {
         cllc_fsm_set_cmd(CLLC_FSM_CMD_RESET);
     }
-    hard_fault_last = hard_fault;
+    hard_fault_last  = hard_fault;
     fault_reset_last = fault_reset;
 }
 
@@ -154,6 +157,7 @@ static void process_run_command(void)
         if (run_state == CLLC_RUN_STATE_IDLE)
         {
             bind_hal();
+
             if (hal_bound == 1u)
             {
                 cllc_fsm_set_cmd(CLLC_FSM_CMD_START);
@@ -162,11 +166,13 @@ static void process_run_command(void)
         return;
     }
 
-    if ((run_state == CLLC_RUN_STATE_STARTUP) || /* Cancel an in-progress bridge startup. */
-        (run_state == CLLC_RUN_STATE_RUN))       /* Stop either active power-flow direction. */
+    if (    (run_state == CLLC_RUN_STATE_STARTUP)
+         || /* Cancel an in-progress bridge startup. */
+            (run_state == CLLC_RUN_STATE_RUN)) /* Stop either active power-flow direction. */
     {
         cllc_fsm_set_cmd(CLLC_FSM_CMD_STOP);
     }
+
     if (run_state == CLLC_RUN_STATE_IDLE)
     {
         hal_bound = 0u;
@@ -211,14 +217,16 @@ static void log_forward_control_trace(void)
 {
     cllc_ctrl_debug_t debug = {0}; /* Coherent controller values sampled by the 1 ms application task. */
 
-    if ((cllc_fsm_get_run_state() != CLLC_RUN_STATE_RUN) || /* Log only settled control operation. */
-        (cllc_ctrl_get_direction() != CLLC_DIRECTION_FORWARD)) /* Exclude the reverse control law. */
+    if (    (cllc_fsm_get_run_state() != CLLC_RUN_STATE_RUN)
+         || /* Log only settled control operation. */
+            (cllc_ctrl_get_direction() != CLLC_DIRECTION_FORWARD)) /* Exclude the reverse control law. */
     {
         trace_header_written = 0u;
         return;
     }
 
     cllc_ctrl_get_debug(&debug);
+
     if (trace_header_written == 0u)
     {
         PLECS_LOG("CLLC_TRACE_HEADER,v_bus_v,v_out_v,v_ref_v,i_out_a,i_ref_a,"

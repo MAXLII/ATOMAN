@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_usart.c
- * @brief   GD32E507Z-EVAL USART BSP implementation.
+ * @file bsp_usart.c
+ * @brief GD32E507Z-EVAL USART BSP implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -19,8 +19,8 @@
  *          - The transmit ring is drained by DMA0 channel 3 and its full-transfer interrupt
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -40,24 +40,24 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define BSP_USART_PRINT_BUFFER_SIZE 256u /* Maximum formatted debug message including terminator. */
-#define BSP_USART_TX_RING_SIZE 1024u      /* Serialized pending debug bytes; one slot remains unused. */
-#define BSP_USART_RX_RING_SIZE 256u       /* Interrupt-fed pending receive bytes; one slot remains unused. */
+#define BSP_USART_PRINT_BUFFER_SIZE 256u  /* Maximum formatted debug message including terminator. */
+#define BSP_USART_TX_RING_SIZE      1024u /* Serialized pending debug bytes; one slot remains unused. */
+#define BSP_USART_RX_RING_SIZE      256u  /* Interrupt-fed pending receive bytes; one slot remains unused. */
 
-#define BSP_USART_TX_DMA DMA0            /* DMA peripheral draining the debug transmit ring. */
+#define BSP_USART_TX_DMA         DMA0    /* DMA peripheral draining the debug transmit ring. */
 #define BSP_USART_TX_DMA_CHANNEL DMA_CH3 /* USART0 TX request is fixed to DMA0 channel 3. */
 
 static uint8_t s_bsp_usart_tx_ring[BSP_USART_TX_RING_SIZE]; /* USART0 software transmit queue. */
-static volatile uint16_t s_bsp_usart_tx_head = 0u;          /* Next queue position written by producers. */
-static volatile uint16_t s_bsp_usart_tx_tail = 0u;          /* Next queue position consumed by the TX DMA. */
+static volatile uint16_t s_bsp_usart_tx_head     = 0u;      /* Next queue position written by producers. */
+static volatile uint16_t s_bsp_usart_tx_tail     = 0u;      /* Next queue position consumed by the TX DMA. */
 static volatile uint16_t s_bsp_usart_tx_inflight = 0u;      /* Bytes of the DMA transfer currently in flight. */
-static volatile uint8_t s_bsp_usart_tx_busy = 0u;           /* 1 while the TX DMA channel owns a transfer. */
+static volatile uint8_t s_bsp_usart_tx_busy      = 0u;      /* 1 while the TX DMA channel owns a transfer. */
 static uint8_t s_bsp_usart_rx_ring[BSP_USART_RX_RING_SIZE]; /* USART0 interrupt receive queue. */
 static volatile uint16_t s_bsp_usart_rx_head = 0u;          /* Next queue position written by the ISR. */
 static volatile uint16_t s_bsp_usart_rx_tail = 0u;          /* Next queue position consumed by the link task. */
 
-volatile uint32_t g_bsp_usart_dbg_tx_drop_count = 0u;
-volatile uint32_t g_bsp_usart_dbg_rx_drop_count = 0u;
+volatile uint32_t g_bsp_usart_dbg_tx_drop_count  = 0u;
+volatile uint32_t g_bsp_usart_dbg_rx_drop_count  = 0u;
 volatile uint32_t g_bsp_usart_dbg_rx_error_count = 0u;
 
 static uint32_t bsp_usart_irq_lock(void)
@@ -113,41 +113,46 @@ static uint16_t bsp_usart_tx_ring_used(void)
 static void bsp_usart_tx_dma_kick(void)
 {
     uint16_t count = bsp_usart_tx_ring_used(); /* Pending bytes when the chunk is prepared. */
-    uint16_t part = 0u;                        /* Bytes transferred by the upcoming chunk. */
+    uint16_t part  = 0u; /* Bytes transferred by the upcoming chunk. */
 
-    if ((s_bsp_usart_tx_busy != 0u) || (count == 0u))
+    if (    (s_bsp_usart_tx_busy != 0u)
+         || (count == 0u))
     {
         return;
     }
 
     /* Split at the ring wrap so one transfer always covers a contiguous region. */
     part = (uint16_t)(BSP_USART_TX_RING_SIZE - (uint32_t)s_bsp_usart_tx_tail);
+
     if (part > count)
     {
         part = count;
     }
 
     dma_channel_disable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
-    dma_memory_address_config(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL,
+    dma_memory_address_config(BSP_USART_TX_DMA,
+                              BSP_USART_TX_DMA_CHANNEL,
                               (uint32_t)(uintptr_t)&s_bsp_usart_tx_ring[s_bsp_usart_tx_tail]);
     dma_transfer_number_config(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, part);
     usart_dma_transmit_config(USART0, USART_TRANSMIT_DMA_ENABLE);
     s_bsp_usart_tx_inflight = part;
-    s_bsp_usart_tx_busy = 1u;
+    s_bsp_usart_tx_busy     = 1u;
     dma_channel_enable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
 }
 
 static int bsp_usart_dbg_enqueue(const uint8_t *p_data, uint16_t length)
 {
     uint32_t primask = 0u; /* Interrupt state saved while the complete message is queued. */
-    uint16_t index = 0u;   /* Current byte in the caller-owned message. */
+    uint16_t index   = 0u; /* Current byte in the caller-owned message. */
 
-    if ((p_data == NULL) || (length == 0u))
+    if (    (p_data == NULL)
+         || (length == 0u))
     {
         return 0;
     }
 
     primask = bsp_usart_irq_lock();
+
     if (bsp_usart_tx_ring_free() < length)
     {
         g_bsp_usart_dbg_tx_drop_count++;
@@ -178,8 +183,8 @@ void bsp_usart_dbg_tx_irq_handler(void)
     if (dma_interrupt_flag_get(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, DMA_INT_FLAG_FTF) != RESET)
     {
         dma_interrupt_flag_clear(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, DMA_INT_FLAG_FTF);
-        s_bsp_usart_tx_tail = (uint16_t)(((uint32_t)s_bsp_usart_tx_tail +
-                                          (uint32_t)s_bsp_usart_tx_inflight) % BSP_USART_TX_RING_SIZE);
+        s_bsp_usart_tx_tail =
+            (uint16_t)(((uint32_t)s_bsp_usart_tx_tail + (uint32_t)s_bsp_usart_tx_inflight) % BSP_USART_TX_RING_SIZE);
         s_bsp_usart_tx_busy = 0u;
         bsp_usart_tx_dma_kick();
     }
@@ -213,14 +218,14 @@ static void bsp_usart_dbg_init(void)
         dma_parameter_struct dma_init_struct = {0};
 
         dma_struct_para_init(&dma_init_struct);
-        dma_init_struct.direction = DMA_MEMORY_TO_PERIPHERAL;
-        dma_init_struct.periph_addr = (uint32_t)(uintptr_t)&USART_DATA(USART0);
+        dma_init_struct.direction    = DMA_MEMORY_TO_PERIPHERAL;
+        dma_init_struct.periph_addr  = (uint32_t)(uintptr_t)&USART_DATA(USART0);
         dma_init_struct.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
-        dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
+        dma_init_struct.periph_inc   = DMA_PERIPH_INCREASE_DISABLE;
         dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
-        dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
-        dma_init_struct.priority = DMA_PRIORITY_ULTRA_HIGH;
-        dma_init_struct.number = 0u;
+        dma_init_struct.memory_inc   = DMA_MEMORY_INCREASE_ENABLE;
+        dma_init_struct.priority     = DMA_PRIORITY_ULTRA_HIGH;
+        dma_init_struct.number       = 0u;
         dma_init(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL, &dma_init_struct);
     }
     dma_circulation_disable(BSP_USART_TX_DMA, BSP_USART_TX_DMA_CHANNEL);
@@ -234,13 +239,15 @@ void bsp_usart_dbg_tx(char *p_data, int length)
 {
     uint32_t transfer_length = 0u; /* Length constrained to the software queue API. */
 
-    if ((p_data == NULL) || /* No transmit buffer was provided. */
-        (length <= 0))      /* There are no bytes to transmit. */
+    if (    (p_data == NULL)
+         || /* No transmit buffer was provided. */
+            (length <= 0)) /* There are no bytes to transmit. */
     {
         return;
     }
 
     transfer_length = (uint32_t)length;
+
     if (transfer_length > UINT16_MAX)
     {
         transfer_length = UINT16_MAX;
@@ -252,8 +259,8 @@ void bsp_usart_dbg_tx(char *p_data, int length)
 void bsp_usart_dbg_printf(const char *p_format, ...)
 {
     char buffer[BSP_USART_PRINT_BUFFER_SIZE] = {0}; /* Stack-owned formatted output buffer. */
-    va_list arguments;                              /* Variable arguments associated with p_format. */
-    int length = 0;                                 /* Number of formatted characters to transmit. */
+    va_list arguments; /* Variable arguments associated with p_format. */
+    int length = 0;    /* Number of formatted characters to transmit. */
 
     if (p_format == NULL)
     {
@@ -268,6 +275,7 @@ void bsp_usart_dbg_printf(const char *p_format, ...)
     {
         return;
     }
+
     if ((size_t)length >= sizeof(buffer))
     {
         length = (int)(sizeof(buffer) - 1u);
@@ -284,6 +292,7 @@ int bsp_usart_dbg_tx_dma(const uint8_t *p_data, uint32_t length)
     {
         return 0;
     }
+
     if (transfer_length > UINT16_MAX)
     {
         transfer_length = UINT16_MAX;
@@ -302,6 +311,7 @@ uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data)
     }
 
     primask = bsp_usart_irq_lock();
+
     if (s_bsp_usart_rx_tail == s_bsp_usart_rx_head)
     {
         bsp_usart_irq_unlock(primask);
@@ -317,10 +327,10 @@ uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data)
 void bsp_usart_dbg_irq_handler(void)
 {
     uint16_t next_head = 0u; /* Queue position following the byte being received. */
-    uint8_t data = 0u;       /* Byte read once to clear the hardware receive condition. */
+    uint8_t data       = 0u; /* Byte read once to clear the hardware receive condition. */
 
-    if ((usart_flag_get(USART0, USART_FLAG_RBNE) == RESET) &&
-        (usart_flag_get(USART0, USART_FLAG_ORERR) == RESET))
+    if (    (usart_flag_get(USART0, USART_FLAG_RBNE) == RESET)
+         && (usart_flag_get(USART0, USART_FLAG_ORERR) == RESET))
     {
         return;
     }
@@ -332,6 +342,7 @@ void bsp_usart_dbg_irq_handler(void)
 
     data = (uint8_t)usart_data_receive(USART0);
     next_head = (uint16_t)(((uint32_t)s_bsp_usart_rx_head + 1u) % BSP_USART_RX_RING_SIZE);
+
     if (next_head == s_bsp_usart_rx_tail)
     {
         g_bsp_usart_dbg_rx_drop_count++;
@@ -339,7 +350,7 @@ void bsp_usart_dbg_irq_handler(void)
     }
 
     s_bsp_usart_rx_ring[s_bsp_usart_rx_head] = data;
-    s_bsp_usart_rx_head = next_head;
+    s_bsp_usart_rx_head                      = next_head;
 }
 
 void bsp_usart_iso_printf(const char *p_format, ...)
