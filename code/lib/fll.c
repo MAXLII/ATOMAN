@@ -1,7 +1,7 @@
 ﻿// SPDX-License-Identifier: MIT
 /**
- * @file    fll.c
- * @brief   fll library module.
+ * @file fll.c
+ * @brief fll library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -44,8 +44,8 @@ void fll_init(fll_state_t *fll,
               float *p_qv,
               float *p_epsilon)
 {
-    fll->p_v = p_v;
-    fll->p_qv = p_qv;
+    fll->p_v       = p_v;
+    fll->p_qv      = p_qv;
     fll->p_epsilon = p_epsilon;
     // 使用默认参数或用户自定义参数
     fll->params = (params != NULL) ? *params : default_params;
@@ -57,23 +57,17 @@ void fll_init(fll_state_t *fll,
 // 更新FLL频率估计
 void fll_cal(fll_state_t *fll)
 {
-    if ((fll->p_v == NULL) ||
-        (fll->p_qv == NULL) ||
-        (fll->p_epsilon == NULL))
+    if (    (fll->p_v == NULL)
+         || (fll->p_qv == NULL)
+         || (fll->p_epsilon == NULL))
     {
         return;
     }
 
     float qvv = *fll->p_v * *fll->p_v + *fll->p_qv * *fll->p_qv;
     DN_LMT(qvv, 0.001f);
-    fll->i_err = fll->i_err -
-                 fll->params.gamma *
-                     1.414f *
-                     fll->params.ts *
-                     fll->omega *
-                     *fll->p_epsilon *
-                     *fll->p_qv *
-                     (1.0f / qvv);
+    fll->i_err = fll->i_err
+               - fll->params.gamma * 1.414f * fll->params.ts * fll->omega * *fll->p_epsilon * *fll->p_qv * (1.0f / qvv);
     UP_DN_LMT(fll->i_err, 2 * M_PI * 30, -2 * M_PI * 30);
     fll->omega = fll->i_err + fll->params.omega_init;
 }

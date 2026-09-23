@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    shell_service.c
- * @brief   shell reporting service module.
+ * @file shell_service.c
+ * @brief shell reporting service module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,15 +42,18 @@ void shell_status_run(void)
     const section_item_t *p_list = p_shell_first;
 
     /* Periodically service status-triggered shell items. */
+
     for (const section_item_t *p_item = p_list; p_item != NULL; p_item = p_item->p_next)
     {
         section_shell_t *p = (section_shell_t *)p_item->p_obj;
+
         if (p->status == 0u)
         {
             continue;
         }
 
-        if ((p->my_printf == NULL) || (p->my_printf->my_printf == NULL))
+        if (    (p->my_printf == NULL)
+             || (p->my_printf->my_printf == NULL))
         {
             continue;
         }
@@ -58,6 +61,7 @@ void shell_status_run(void)
         if (p->status & (1u << 0))
         {
             /* Bit0 means "print me periodically" for variable-style entries. */
+
             if (p->type != SHELL_CMD)
             {
                 shell_item_print(p, (section_link_tx_func_t *)p->my_printf);
@@ -67,6 +71,7 @@ void shell_status_run(void)
         if (p->status & (1u << 1))
         {
             /* Bit1 means "run callback periodically". */
+
             if (p->func)
                 p->func(p->my_printf);
         }
@@ -88,20 +93,23 @@ static list_print_ctx_t g_list_print_ctx = {0};
 
 void list_print_start(DEC_MY_PRINTF)
 {
-    if ((my_printf == NULL) || (g_list_print_ctx.active != 0u))
+    if (    (my_printf == NULL)
+         || (g_list_print_ctx.active != 0u))
     {
         return;
     }
     const section_item_t *p_list = p_shell_first;
 
-    g_list_print_ctx.p_item = (section_item_t *)p_list;
+    g_list_print_ctx.p_item    = (section_item_t *)p_list;
     g_list_print_ctx.my_printf = my_printf;
-    g_list_print_ctx.active = 1u;
-    size_t max_len = 0u;
+    g_list_print_ctx.active    = 1u;
+    size_t max_len             = 0u;
+
     for (const section_item_t *p_item = p_list; p_item != NULL; p_item = p_item->p_next)
     {
         section_shell_t *s = (section_shell_t *)p_item->p_obj;
-        size_t len = strlen(s->p_name);
+        size_t len         = strlen(s->p_name);
+
         if (len > max_len)
         {
             max_len = len;
@@ -117,9 +125,9 @@ int list_print_step(void)
 {
     static uint8_t print_flag = 0u;
 
-    if ((g_list_print_ctx.active == 0u) ||
-        (g_list_print_ctx.my_printf == NULL) ||
-        (g_list_print_ctx.my_printf->my_printf == NULL))
+    if (    (g_list_print_ctx.active == 0u)
+         || (g_list_print_ctx.my_printf == NULL)
+         || (g_list_print_ctx.my_printf->my_printf == NULL))
     {
         return 0;
     }
@@ -128,10 +136,11 @@ int list_print_step(void)
     {
         section_item_t *p_item = g_list_print_ctx.p_item;
         section_shell_t *s = (p_item == NULL) ? NULL : (section_shell_t *)p_item->p_obj;
+
         if (s == NULL)
         {
             g_list_print_ctx.active = 0u;
-            print_flag = 0u;
+            print_flag              = 0u;
             return 0;
         }
 
@@ -201,7 +210,7 @@ int list_print_step(void)
         }
 
         g_list_print_ctx.p_item = p_item->p_next;
-        print_flag = 1u;
+        print_flag              = 1u;
         return 1;
     }
 
@@ -230,38 +239,39 @@ static shell_report_ctx_t shell_report_ctx = {0};
 static void shell_data_num_act(void *p_frame, DEC_MY_PRINTF)
 {
     section_packform_t *p_pack = (section_packform_t *)p_frame;
-    uint32_t shell_data_num = shell_count_get();
+    uint32_t shell_data_num    = shell_count_get();
 
     /* Ignore replies. A fresh host request always restarts the report cursor. */
+
     if (p_pack->is_ack != 0u)
     {
         return;
     }
     section_packform_t pack_ret = {0};
-    pack_ret.sop = p_pack->sop;
-    pack_ret.version = p_pack->version;
-    pack_ret.src = p_pack->dst;
-    pack_ret.d_src = p_pack->d_dst;
-    pack_ret.dst = p_pack->src;
-    pack_ret.d_dst = p_pack->d_src;
-    pack_ret.cmd_set = CMD_SET_SHELL_DATA_NUM;
-    pack_ret.cmd_word = CMD_WORD_SHELL_DATA_NUM;
-    pack_ret.is_ack = 1u;
-    pack_ret.seq = p_pack->seq;
-    pack_ret.len = sizeof(uint32_t);
-    pack_ret.p_data = (uint8_t *)&shell_data_num;
+    pack_ret.sop                = p_pack->sop;
+    pack_ret.version            = p_pack->version;
+    pack_ret.src                = p_pack->dst;
+    pack_ret.d_src              = p_pack->d_dst;
+    pack_ret.dst                = p_pack->src;
+    pack_ret.d_dst              = p_pack->d_src;
+    pack_ret.cmd_set            = CMD_SET_SHELL_DATA_NUM;
+    pack_ret.cmd_word           = CMD_WORD_SHELL_DATA_NUM;
+    pack_ret.is_ack             = 1u;
+    pack_ret.seq                = p_pack->seq;
+    pack_ret.len                = sizeof(uint32_t);
+    pack_ret.p_data             = (uint8_t *)&shell_data_num;
 
     /* Save the routing information so the follow-up report task can stream data. */
-    shell_report_ctx.active = 1u;
+    shell_report_ctx.active    = 1u;
     shell_report_ctx.my_printf = my_printf;
-    shell_report_ctx.sop = p_pack->sop;
-    shell_report_ctx.version = p_pack->version;
-    shell_report_ctx.seq = p_pack->seq;
-    shell_report_ctx.p_item = p_shell_first;
-    shell_report_ctx.src = pack_ret.src;
-    shell_report_ctx.d_src = pack_ret.d_src;
-    shell_report_ctx.dst = pack_ret.dst;
-    shell_report_ctx.d_dst = pack_ret.d_dst;
+    shell_report_ctx.sop       = p_pack->sop;
+    shell_report_ctx.version   = p_pack->version;
+    shell_report_ctx.seq       = p_pack->seq;
+    shell_report_ctx.p_item    = p_shell_first;
+    shell_report_ctx.src       = pack_ret.src;
+    shell_report_ctx.d_src     = pack_ret.d_src;
+    shell_report_ctx.dst       = pack_ret.dst;
+    shell_report_ctx.d_dst     = pack_ret.d_dst;
 
     comm_send_data(&pack_ret, my_printf);
 }
@@ -280,22 +290,23 @@ static void shell_data_report_act(void)
         else
         {
             section_packform_t packform = {0};
-            section_shell_t *p_shell = (section_shell_t *)shell_report_ctx.p_item->p_obj;
+            section_shell_t *p_shell    = (section_shell_t *)shell_report_ctx.p_item->p_obj;
 
             /* Convert the current shell entry into one compact report frame. */
             shell_report_list_t shell_report_list;
             shell_report_list.name_len = (uint8_t)p_shell->p_name_size;
-            shell_report_list.type = (uint8_t)p_shell->type;
-            shell_report_list.data = *(uint32_t *)p_shell->p_var;
+            shell_report_list.type     = (uint8_t)p_shell->type;
+            shell_report_list.data     = *(uint32_t *)p_shell->p_var;
             shell_report_list.data_max = *(uint32_t *)p_shell->p_max;
             shell_report_list.data_min = *(uint32_t *)p_shell->p_min;
             memcpy(shell_report_list.name, p_shell->p_name, p_shell->p_name_size);
             shell_report_list.auto_report = (p_shell->status & (1u << 2)) ? 1u : 0u;
 
             /* 主动上报继承请求的协议：v1 会话用 0xE9 且 SEQ 循环递增，旧会话保持 0xE8。 */
+
             if (shell_report_ctx.sop == COMM_V1_SOP)
             {
-                packform.sop = COMM_V1_SOP;
+                packform.sop     = COMM_V1_SOP;
                 packform.version = COMM_V1_VERSION;
                 shell_report_ctx.seq = (uint8_t)((shell_report_ctx.seq + 1u) & 0x07u);
                 packform.seq = shell_report_ctx.seq;
@@ -304,13 +315,13 @@ static void shell_data_report_act(void)
             {
                 packform.sop = 0xE8u;
             }
-            packform.src = shell_report_ctx.src;
-            packform.d_src = shell_report_ctx.d_src;
-            packform.dst = shell_report_ctx.dst;
-            packform.d_dst = shell_report_ctx.d_dst;
-            packform.cmd_set = CMD_SET_SHELL_REPORT_LIST;
+            packform.src      = shell_report_ctx.src;
+            packform.d_src    = shell_report_ctx.d_src;
+            packform.dst      = shell_report_ctx.dst;
+            packform.d_dst    = shell_report_ctx.d_dst;
+            packform.cmd_set  = CMD_SET_SHELL_REPORT_LIST;
             packform.cmd_word = CMD_WORD_SHELL_REPORT_LIST;
-            packform.is_ack = 0u;
+            packform.is_ack   = 0u;
             packform.len = (uint16_t)(sizeof(shell_report_list_t) - SHELL_STR_SIZE_MAX + p_shell->p_name_size);
             packform.p_data = (uint8_t *)&shell_report_list;
             comm_send_data(&packform, shell_report_ctx.my_printf);
@@ -332,11 +343,13 @@ static void shell_read_data_act(void *p_frame, DEC_MY_PRINTF)
     }
     p_shell_read_data = (shell_read_data_t *)p_pack->p_data;
     /* Validate the variable-length payload before dereferencing its name field. */
+
     if (p_pack->len != sizeof(shell_read_data_t) - SHELL_STR_SIZE_MAX + p_shell_read_data->name_len)
     {
         return;
     }
     section_shell_t *p = shell_find(p_shell_read_data->name, p_shell_read_data->name_len);
+
     if (p != NULL)
     {
         if (p->func != NULL)
@@ -345,22 +358,22 @@ static void shell_read_data_act(void *p_frame, DEC_MY_PRINTF)
             p->func((shell_core_io_t *)my_printf);
         }
         shell_read_data_ret_t shell_read_data_ret = {0};
-        shell_read_data_ret.name_len = (uint8_t)p->p_name_size;
-        shell_read_data_ret.type = (uint8_t)p->type;
-        shell_read_data_ret.data = *(uint32_t *)p->p_var;
+        shell_read_data_ret.name_len              = (uint8_t)p->p_name_size;
+        shell_read_data_ret.type                  = (uint8_t)p->type;
+        shell_read_data_ret.data                  = *(uint32_t *)p->p_var;
         memcpy(shell_read_data_ret.name, p->p_name, p->p_name_size);
 
         section_packform_t packform = {0};
-        packform.sop = p_pack->sop;
-        packform.version = p_pack->version;
-        packform.src = p_pack->dst;
-        packform.d_src = p_pack->d_dst;
-        packform.dst = p_pack->src;
-        packform.d_dst = p_pack->d_src;
-        packform.cmd_set = CMD_SET_SHELL_READ_DATA;
-        packform.cmd_word = CMD_WORD_SHELL_READ_DATA;
-        packform.is_ack = 1u;
-        packform.seq = p_pack->seq;
+        packform.sop                = p_pack->sop;
+        packform.version            = p_pack->version;
+        packform.src                = p_pack->dst;
+        packform.d_src              = p_pack->d_dst;
+        packform.dst                = p_pack->src;
+        packform.d_dst              = p_pack->d_src;
+        packform.cmd_set            = CMD_SET_SHELL_READ_DATA;
+        packform.cmd_word           = CMD_WORD_SHELL_READ_DATA;
+        packform.is_ack             = 1u;
+        packform.seq                = p_pack->seq;
         packform.len = (uint16_t)(sizeof(shell_read_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
         packform.p_data = (uint8_t *)&shell_read_data_ret;
 
@@ -381,10 +394,12 @@ static void shell_write_data_act(void *p_frame, DEC_MY_PRINTF)
         return;
     }
     p_shell_write_data = (shell_write_data_t *)p_pack->p_data;
-    p = shell_find(p_shell_write_data->name, p_shell_write_data->name_len);
+    p                  = shell_find(p_shell_write_data->name, p_shell_write_data->name_len);
+
     if (p != NULL)
     {
         /* Remote write shares the same data model as the local shell entry. */
+
         switch (p->type)
         {
         case SHELL_CMD:
@@ -463,24 +478,24 @@ static void shell_write_data_act(void *p_frame, DEC_MY_PRINTF)
         }
         }
         shell_write_data_ret_t shell_write_data_ret = {0};
-        shell_write_data_ret.data = *(uint32_t *)p->p_var;
-        shell_write_data_ret.data_max = *(uint32_t *)p->p_max;
-        shell_write_data_ret.data_min = *(uint32_t *)p->p_min;
+        shell_write_data_ret.data                   = *(uint32_t *)p->p_var;
+        shell_write_data_ret.data_max               = *(uint32_t *)p->p_max;
+        shell_write_data_ret.data_min               = *(uint32_t *)p->p_min;
         memcpy(shell_write_data_ret.name, p->p_name, p->p_name_size);
         shell_write_data_ret.name_len = (uint8_t)p->p_name_size;
-        shell_write_data_ret.type = (uint8_t)p->type;
+        shell_write_data_ret.type     = (uint8_t)p->type;
 
         section_packform_t packform = {0};
-        packform.sop = p_pack->sop;
-        packform.version = p_pack->version;
-        packform.src = p_pack->dst;
-        packform.d_src = p_pack->d_dst;
-        packform.dst = p_pack->src;
-        packform.d_dst = p_pack->d_src;
-        packform.cmd_set = CMD_SET_SHELL_WRITE_DATA;
-        packform.cmd_word = CMD_WORD_SHELL_WRITE_DATA;
-        packform.is_ack = 1u;
-        packform.seq = p_pack->seq;
+        packform.sop                = p_pack->sop;
+        packform.version            = p_pack->version;
+        packform.src                = p_pack->dst;
+        packform.d_src              = p_pack->d_dst;
+        packform.dst                = p_pack->src;
+        packform.d_dst              = p_pack->d_src;
+        packform.cmd_set            = CMD_SET_SHELL_WRITE_DATA;
+        packform.cmd_word           = CMD_WORD_SHELL_WRITE_DATA;
+        packform.is_ack             = 1u;
+        packform.seq                = p_pack->seq;
         packform.len = (uint16_t)(sizeof(shell_write_data_ret_t) - SHELL_STR_SIZE_MAX + p->p_name_size);
         packform.p_data = (uint8_t *)&shell_write_data_ret;
 
@@ -505,12 +520,12 @@ static void shell_wave_param_enable_act(void *p_frame, DEC_MY_PRINTF)
     }
     p_shell_wave_enable_param = (shell_wave_enable_param_t *)p_pack->p_data;
     /* Validate variable-length payload before touching the embedded name field. */
+
     if (p_pack->len != sizeof(shell_wave_enable_param_t) - SHELL_STR_SIZE_MAX + p_shell_wave_enable_param->name_len)
     {
         return;
     }
-    section_shell_t *p = shell_find(p_shell_wave_enable_param->name,
-                                    p_shell_wave_enable_param->name_len);
+    section_shell_t *p = shell_find(p_shell_wave_enable_param->name, p_shell_wave_enable_param->name_len);
 
     shell_wave_enable_param_ack_t shell_wave_enable_param_ack;
 
@@ -518,6 +533,7 @@ static void shell_wave_param_enable_act(void *p_frame, DEC_MY_PRINTF)
     {
         shell_wave_enable_param_ack.ok = 1u;
         /* Bit2 is reserved for wave auto-report selection. */
+
         if (p_shell_wave_enable_param->auto_report != 0u)
         {
             p->status |= 1u << 2;
@@ -529,18 +545,18 @@ static void shell_wave_param_enable_act(void *p_frame, DEC_MY_PRINTF)
     }
 
     section_packform_t packform = {0};
-    packform.sop = p_pack->sop;
-    packform.version = p_pack->version;
-    packform.cmd_set = CMD_SET_SHELL_WAVE_ENABLE_PARAM;
-    packform.cmd_word = CMD_WORD_SHELL_WAVE_ENABLE_PARAM;
-    packform.src = p_pack->dst;
-    packform.d_src = p_pack->d_dst;
-    packform.dst = p_pack->src;
-    packform.d_dst = p_pack->d_src;
-    packform.is_ack = 1u;
-    packform.seq = p_pack->seq;
-    packform.len = sizeof(shell_wave_enable_param_ack_t);
-    packform.p_data = (uint8_t *)&shell_wave_enable_param_ack;
+    packform.sop                = p_pack->sop;
+    packform.version            = p_pack->version;
+    packform.cmd_set            = CMD_SET_SHELL_WAVE_ENABLE_PARAM;
+    packform.cmd_word           = CMD_WORD_SHELL_WAVE_ENABLE_PARAM;
+    packform.src                = p_pack->dst;
+    packform.d_src              = p_pack->d_dst;
+    packform.dst                = p_pack->src;
+    packform.d_dst              = p_pack->d_src;
+    packform.is_ack             = 1u;
+    packform.seq                = p_pack->seq;
+    packform.len                = sizeof(shell_wave_enable_param_ack_t);
+    packform.p_data             = (uint8_t *)&shell_wave_enable_param_ack;
     comm_send_data(&packform, my_printf);
 }
 
@@ -568,62 +584,64 @@ static uint8_t shell_wave_seq = 0u;
 static void shell_wave_start_act(void *p_frame, DEC_MY_PRINTF)
 {
     section_packform_t *p_pack = (section_packform_t *)p_frame;
+
     if (p_pack->len != sizeof(shell_wave_start_t))
     {
         return;
     }
     shell_wave_start_t *p_shell_wave_start = (shell_wave_start_t *)p_pack->p_data;
-    shell_wave_report_flg = p_shell_wave_start->start_report;
+    shell_wave_report_flg                  = p_shell_wave_start->start_report;
 
     section_packform_t packform = {0};
-    packform.sop = p_pack->sop;
-    packform.version = p_pack->version;
-    packform.cmd_set = CMD_SET_SHELL_WAVE_START;
-    packform.cmd_word = CMD_WORD_SHELL_WAVE_START;
-    packform.src = p_pack->dst;
-    packform.d_src = p_pack->d_dst;
-    packform.dst = p_pack->src;
-    packform.d_dst = p_pack->d_src;
-    packform.is_ack = 1u;
-    packform.seq = p_pack->seq;
-    packform.len = 0u;
-    packform.p_data = NULL;
+    packform.sop                = p_pack->sop;
+    packform.version            = p_pack->version;
+    packform.cmd_set            = CMD_SET_SHELL_WAVE_START;
+    packform.cmd_word           = CMD_WORD_SHELL_WAVE_START;
+    packform.src                = p_pack->dst;
+    packform.d_src              = p_pack->d_dst;
+    packform.dst                = p_pack->src;
+    packform.d_dst              = p_pack->d_src;
+    packform.is_ack             = 1u;
+    packform.seq                = p_pack->seq;
+    packform.len                = 0u;
+    packform.p_data             = NULL;
     comm_send_data(&packform, my_printf);
     /* Cache the response route and wire protocol so the periodic task can keep streaming later. */
     p_shell_wave_report_printf = my_printf;
-    shell_wave_src = packform.src;
-    shell_wave_dst = packform.dst;
-    shell_wave_sop = p_pack->sop;
-    shell_wave_version = p_pack->version;
-    shell_wave_seq = p_pack->seq;
+    shell_wave_src             = packform.src;
+    shell_wave_dst             = packform.dst;
+    shell_wave_sop             = p_pack->sop;
+    shell_wave_version         = p_pack->version;
+    shell_wave_seq             = p_pack->seq;
 }
 REG_COMM(CMD_SET_SHELL_WAVE_START, CMD_WORD_SHELL_WAVE_START, shell_wave_start_act)
 
 static void shell_wave_period_act(void *p_frame, DEC_MY_PRINTF)
 {
     section_packform_t *p_pack = (section_packform_t *)p_frame;
+
     if (p_pack->len != sizeof(shell_wave_period_t))
     {
         return;
     }
     shell_wave_period_t *p_shell_wave_period = (shell_wave_period_t *)p_pack->p_data;
-    shell_wave_report_period = p_shell_wave_period->reprot_period;
+    shell_wave_report_period                 = p_shell_wave_period->reprot_period;
 
     shell_wave_period_ack_t shell_wave_period_ack = {.reprot_period = shell_wave_report_period};
 
     section_packform_t packform = {0};
-    packform.sop = p_pack->sop;
-    packform.version = p_pack->version;
-    packform.cmd_set = CMD_SET_SHELL_WAVE_PERIOD;
-    packform.cmd_word = CMD_WORD_SHELL_WAVE_PERIOD;
-    packform.src = p_pack->dst;
-    packform.d_src = p_pack->d_dst;
-    packform.dst = p_pack->src;
-    packform.d_dst = p_pack->d_src;
-    packform.is_ack = 1u;
-    packform.seq = p_pack->seq;
-    packform.len = sizeof(shell_wave_period_ack_t);
-    packform.p_data = (uint8_t *)&shell_wave_period_ack;
+    packform.sop                = p_pack->sop;
+    packform.version            = p_pack->version;
+    packform.cmd_set            = CMD_SET_SHELL_WAVE_PERIOD;
+    packform.cmd_word           = CMD_WORD_SHELL_WAVE_PERIOD;
+    packform.src                = p_pack->dst;
+    packform.d_src              = p_pack->d_dst;
+    packform.dst                = p_pack->src;
+    packform.d_dst              = p_pack->d_src;
+    packform.is_ack             = 1u;
+    packform.seq                = p_pack->seq;
+    packform.len                = sizeof(shell_wave_period_ack_t);
+    packform.p_data             = (uint8_t *)&shell_wave_period_ack;
     comm_send_data(&packform, my_printf);
 }
 REG_COMM(CMD_SET_SHELL_WAVE_PERIOD, CMD_WORD_SHELL_WAVE_PERIOD, shell_wave_period_act)
@@ -634,9 +652,10 @@ static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
 
     /* Send one wave sample or one frame marker packet, inheriting the wire
      * protocol of the session start request. */
+
     if (shell_wave_sop == COMM_V1_SOP)
     {
-        packform.sop = COMM_V1_SOP;
+        packform.sop     = COMM_V1_SOP;
         packform.version = shell_wave_version;
         shell_wave_seq = (uint8_t)((shell_wave_seq + 1u) & 0x07u);
         packform.seq = shell_wave_seq;
@@ -645,10 +664,10 @@ static void shell_wave_param_act(shell_wave_param_t *p, DEC_MY_PRINTF)
     {
         packform.sop = 0xE8u;
     }
-    packform.cmd_set = CMD_SET_SHELL_WAVE_PARAM;
+    packform.cmd_set  = CMD_SET_SHELL_WAVE_PARAM;
     packform.cmd_word = CMD_WORD_SHELL_WAVE_PARAM;
-    packform.src = shell_wave_src;
-    packform.dst = shell_wave_dst;
+    packform.src      = shell_wave_src;
+    packform.dst      = shell_wave_dst;
     packform.len = (uint16_t)(sizeof(shell_wave_param_t) - SHELL_STR_SIZE_MAX + p->name_len);
     packform.p_data = (uint8_t *)p;
 
@@ -675,13 +694,15 @@ static SHELL_WAVE_FSM_E shell_wave_fsm = 0;
 static void shell_wave_report_task(void)
 {
     /* delay_cnt throttles packet rate inside the DATA state. */
-    static uint8_t delay_cnt = 0u;
+    static uint8_t delay_cnt            = 0u;
     shell_wave_param_t shell_wave_param = {0};
     /* Cursor used to resume variable scanning across task ticks. */
     static section_item_t *p_item = NULL;
+
     switch (shell_wave_fsm)
     {
     case SHELL_WAVE_FSM_IDLE:
+
         if (shell_wave_report_flg != 0u)
         {
             shell_wave_fsm = SHELL_WAVE_FSM_START;
@@ -691,11 +712,12 @@ static void shell_wave_report_task(void)
         /* 0x55555555 marks the beginning of one streamed frame. */
         shell_wave_param.data = 0x55555555;
         shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
-        p_item = p_shell_first;
+        p_item         = p_shell_first;
         shell_wave_fsm = SHELL_WAVE_FSM_DATA;
-        delay_cnt = 10u;
+        delay_cnt      = 10u;
         break;
     case SHELL_WAVE_FSM_DATA:
+
         if (delay_cnt != 0u)
         {
             delay_cnt--;
@@ -705,15 +727,17 @@ static void shell_wave_report_task(void)
         {
             delay_cnt = 10u;
         }
+
         while (p_item != NULL)
         {
             section_shell_t *p = (section_shell_t *)p_item->p_obj;
+
             if (p->status & (1u << 2))
             {
                 /* Bit2-selected shell variables are streamed one by one. */
-                shell_wave_param.data = (uint32_t)*(uint32_t *)p->p_var;
+                shell_wave_param.data     = (uint32_t)*(uint32_t *)p->p_var;
                 shell_wave_param.name_len = (uint8_t)p->p_name_size;
-                shell_wave_param.type = (uint8_t)p->type;
+                shell_wave_param.type     = (uint8_t)p->type;
                 memcpy((uint8_t *)shell_wave_param.name, (uint8_t *)p->p_name, shell_wave_param.name_len);
                 p_item = p_item->p_next;
                 shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
@@ -721,6 +745,7 @@ static void shell_wave_report_task(void)
             }
             p_item = p_item->p_next;
         }
+
         if (p_item == NULL)
         {
             shell_wave_fsm = SHELL_WAVE_FSM_END;
@@ -730,15 +755,17 @@ static void shell_wave_report_task(void)
         /* 0xAAAAAAAA marks the end of one streamed frame. */
         shell_wave_param.data = 0xAAAAAAAA;
         shell_wave_param_act(&shell_wave_param, p_shell_wave_report_printf);
-        shell_wave_fsm = SHELL_WAVE_FSM_WAIT;
+        shell_wave_fsm           = SHELL_WAVE_FSM_WAIT;
         shell_wave_report_dn_cnt = shell_wave_report_period;
         break;
     case SHELL_WAVE_FSM_WAIT:
         DN_CNT(shell_wave_report_dn_cnt);
+
         if (shell_wave_report_dn_cnt == 0u)
         {
             shell_wave_fsm = SHELL_WAVE_FSM_START;
         }
+
         if (shell_wave_report_flg == 0u)
         {
             shell_wave_fsm = SHELL_WAVE_FSM_IDLE;

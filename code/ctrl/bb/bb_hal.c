@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_hal.c
- * @brief   bb_hal control module.
+ * @file bb_hal.c
+ * @brief bb_hal control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -61,14 +61,13 @@ static void bb_hal_exit_run(void)
     {
         bb_ctrl_hal.p_pwm_disable();
     }
-
 }
 
 static bb_fsm_hal_t bb_fsm_hal = {
     /* bb_fsm_hal: FSM callbacks for run enter/exit */
     .p_enter_run_func = bb_hal_enter_run,
-    .p_exit_run_func = bb_hal_exit_run,
-    .p_latched = &hard_protect_latched,
+    .p_exit_run_func  = bb_hal_exit_run,
+    .p_latched        = &hard_protect_latched,
 };
 
 bb_ctrl_hal_t *bb_hal_get_ctrl(void)
@@ -103,8 +102,8 @@ void bb_hal_hard_protect_clear(void)
 
 uint8_t bb_hal_is_ready(void)
 {
-    return (uint8_t)((STRUCT_ALL_PTR_VALID(bb_ctrl_hal) != 0) &&
-                     (STRUCT_ALL_PTR_VALID(bb_fsm_hal) != 0));
+    return (uint8_t)(    (STRUCT_ALL_PTR_VALID(bb_ctrl_hal) != 0)
+                      && (STRUCT_ALL_PTR_VALID(bb_fsm_hal) != 0));
 }
 
 void bb_hal_lock_binding(void)

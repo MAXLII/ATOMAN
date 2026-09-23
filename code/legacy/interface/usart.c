@@ -14,7 +14,8 @@
 
 static void usart_dbg_tx_by_dma_cb(char *ptr, int len)
 {
-    if ((ptr == NULL) || (len <= 0))
+    if (    (ptr == NULL)
+         || (len <= 0))
     {
         return;
     }
@@ -46,10 +47,7 @@ static const section_link_handler_item_t s_usart_dbg_handler_arr[] = {
     {.func = comm_run, .ctx = (void *)&s_usart_dbg_comm_ctx},
 };
 
-REG_LINK(USART0_LINK,
-         s_usart_dbg_tx_func,
-         bsp_usart_dbg_rx_get_byte,
-         s_usart_dbg_handler_arr,
+REG_LINK(USART0_LINK, s_usart_dbg_tx_func, bsp_usart_dbg_rx_get_byte, s_usart_dbg_handler_arr,
          sizeof(s_usart_dbg_handler_arr) / sizeof(s_usart_dbg_handler_arr[0]));
 
 REG_LINK(USART1_LINK, s_usart_null_tx_func, usart_empty_rx_get_byte, NULL, 0u);

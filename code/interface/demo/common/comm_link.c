@@ -9,7 +9,7 @@
 
 #define COMM_LINK_ENABLE_ISO BSP_COMM_LINK_ENABLE_ISO
 #define COMM_LINK_ENABLE_CAN BSP_COMM_LINK_ENABLE_CAN
-#define COMM_LINK_ENABLE_PL BSP_COMM_LINK_ENABLE_PL
+#define COMM_LINK_ENABLE_PL  BSP_COMM_LINK_ENABLE_PL
 
 #if (COMM_LINK_ENABLE_CAN == 1)
 #include "bsp_can.h"
@@ -41,7 +41,8 @@ void comm_link_usart1_suspend(uint8_t suspended)
 
 static void usart_dbg_tx_by_dma_cb(char *ptr, int len)
 {
-    if ((ptr == NULL) || (len <= 0))
+    if (    (ptr == NULL)
+         || (len <= 0))
     {
         return;
     }
@@ -52,7 +53,9 @@ static void usart_dbg_tx_by_dma_cb(char *ptr, int len)
 static void usart_iso_tx_by_dma_cb(char *ptr, int len)
 {
 #if (COMM_LINK_ENABLE_ISO == 1)
-    if ((ptr == NULL) || (len <= 0))
+
+    if (    (ptr == NULL)
+         || (len <= 0))
     {
         return;
     }
@@ -67,9 +70,9 @@ static void usart_iso_tx_by_dma_cb(char *ptr, int len)
 #if (COMM_LINK_ENABLE_PL == 1)
 static void usart_pl_tx_by_dma_cb(char *ptr, int len)
 {
-    if ((ptr == NULL) ||
-        (len <= 0) ||
-        (usart1_suspended == 1U))
+    if (    (ptr == NULL)
+         || (len <= 0)
+         || (usart1_suspended == 1U))
     {
         return;
     }
@@ -91,7 +94,8 @@ static uint8_t usart_pl_rx_get_byte_cb(uint8_t *p_data)
 #if (COMM_LINK_ENABLE_CAN == 1)
 static void can_dbg_tx_by_dma_cb(char *ptr, int len)
 {
-    if ((ptr == NULL) || (len <= 0))
+    if (    (ptr == NULL)
+         || (len <= 0))
     {
         return;
     }
@@ -188,40 +192,29 @@ static const section_link_handler_item_t s_can_dbg_handler_arr[] = {
     {.func = comm_run, .ctx = (void *)&s_can_dbg_comm_ctx},
     {.func = comm_v1_run, .ctx = (void *)&s_can_dbg_comm_v1_ctx},
 };
-};
+}
+;
 #endif
 
-REG_LINK(USART0_LINK,
-         s_usart_dbg_tx_func,
-         bsp_usart_dbg_rx_get_byte,
-         s_usart_dbg_handler_arr,
+REG_LINK(USART0_LINK, s_usart_dbg_tx_func, bsp_usart_dbg_rx_get_byte, s_usart_dbg_handler_arr,
          sizeof(s_usart_dbg_handler_arr) / sizeof(s_usart_dbg_handler_arr[0]))
 
 #if (COMM_LINK_ENABLE_ISO == 1)
-REG_LINK(USART2_LINK,
-         s_usart_iso_tx_func,
-         bsp_usart_iso_rx_get_byte,
-         s_usart_iso_handler_arr,
+REG_LINK(USART2_LINK, s_usart_iso_tx_func, bsp_usart_iso_rx_get_byte, s_usart_iso_handler_arr,
          sizeof(s_usart_iso_handler_arr) / sizeof(s_usart_iso_handler_arr[0]))
 #else
 REG_LINK(USART2_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
 #endif
 
 #if (COMM_LINK_ENABLE_CAN == 1)
-REG_LINK(CAN_DBG_LINK,
-         s_can_dbg_tx_func,
-         bsp_can_dbg_rx_get_byte,
-         s_can_dbg_handler_arr,
+REG_LINK(CAN_DBG_LINK, s_can_dbg_tx_func, bsp_can_dbg_rx_get_byte, s_can_dbg_handler_arr,
          sizeof(s_can_dbg_handler_arr) / sizeof(s_can_dbg_handler_arr[0]))
 #else
 REG_LINK(CAN_DBG_LINK, s_usart_null_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)
 #endif
 
 #if (COMM_LINK_ENABLE_PL == 1)
-REG_LINK(USART1_LINK,
-         s_usart_pl_tx_func,
-         usart_pl_rx_get_byte_cb,
-         s_usart_pl_handler_arr,
+REG_LINK(USART1_LINK, s_usart_pl_tx_func, usart_pl_rx_get_byte_cb, s_usart_pl_handler_arr,
          sizeof(s_usart_pl_handler_arr) / sizeof(s_usart_pl_handler_arr[0]))
 #else
 REG_LINK(USART1_LINK, s_usart_dbg_tx_func, comm_link_empty_rx_get_byte, NULL, 0u)

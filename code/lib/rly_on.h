@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    rly_on.h
- * @brief   rly_on library public interface.
+ * @file rly_on.h
+ * @brief rly_on library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -84,7 +84,15 @@ typedef struct
     rly_on_output_t output;
 } rly_on_t;
 
-void rly_on_init(rly_on_t *p_str, uint8_t *p_rly_on_trig, uint8_t *p_rly_off_trig, uint8_t *p_is_equal, float *p_freq, float ctrl_freq, float rly_on_time_def, void (*rly_on)(void), void (*rly_off)(void));
+void rly_on_init(rly_on_t *p_str,
+                 uint8_t *p_rly_on_trig,
+                 uint8_t *p_rly_off_trig,
+                 uint8_t *p_is_equal,
+                 float *p_freq,
+                 float ctrl_freq,
+                 float rly_on_time_def,
+                 void (*rly_on)(void),
+                 void (*rly_off)(void));
 
 void rly_on_func(rly_on_t *p_str);
 

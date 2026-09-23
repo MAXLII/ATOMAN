@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    npc_hal.h
- * @brief   Analog and PWM bindings, lifecycle hooks and immediate protection inhibition.
+ * @file npc_hal.h
+ * @brief Analog and PWM bindings, lifecycle hooks and immediate protection inhibition.
  * @details Base digital power framework. C11, static storage, no allocation.
  *          Bindings change only while stopped. PLECS serializes the dispatcher;
  *          ISR setpoints use the FSM publication snapshot.
- * @author  Max.Li
- * @date    2026-09-13
+ * @author Max.Li
+ * @date 2026-09-13
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License. See LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License. See LICENSE in the project root.
  */
 #ifndef NPC_HAL_H
 #define NPC_HAL_H
@@ -19,11 +19,11 @@
 /** 采样阶段写入、应用保护与控制共用的本拍快照。 */
 typedef struct npc_hal_sample
 {
-    float v_out[3];   /* 输出相电压 A/B/C，V。 */
-    float i_l[3];     /* 电感电流 A/B/C，A，桥臂流向输出为正。 */
-    float v_dc_p;     /* 正侧母线电压，V。 */
-    float v_dc_n;     /* 负侧母线电压幅值，V。 */
-    float theta;      /* 本拍外部电角度，rad。 */
+    float v_out[3]; /* 输出相电压 A/B/C，V。 */
+    float i_l[3];   /* 电感电流 A/B/C，A，桥臂流向输出为正。 */
+    float v_dc_p;   /* 正侧母线电压，V。 */
+    float v_dc_n;   /* 负侧母线电压幅值，V。 */
+    float theta;    /* 本拍外部电角度，rad。 */
 } npc_hal_sample_t;
 
 /** @brief Capture bound inputs once after FSM INIT; dispatch serially before protection and control. */
@@ -48,10 +48,9 @@ typedef struct npc_ctrl_hal
      * @param v_dc_p Positive half-bus voltage, V.
      * @param v_dc_n Negative half-bus magnitude, V.
      * @param p_current Same-update A/B/C fundamental currents for midpoint balancing, A.
-     * The callback consumes all three values synchronously; it must not retain this pointer.
+     *        The callback consumes all three values synchronously; it must not retain this pointer.
      */
-    void (*p_set_pwm_func)(float alpha, float beta, float v_dc_p, float v_dc_n,
-                             const float *p_current);
+    void (*p_set_pwm_func)(float alpha, float beta, float v_dc_p, float v_dc_n, const float *p_current);
     void (*p_pwm_disable)(void); /* Disable all phases immediately. */
 } npc_ctrl_hal_t;
 
@@ -123,7 +122,7 @@ void npc_hal_set_vd_pos_ref_ptr(float *p_value);
  * @param p_func Callback with the same units and input contract as p_set_pwm_func; NULL disconnects it.
  */
 void npc_hal_set_pwm_setter(void (*p_func)(float alpha, float beta, float v_dc_p, float v_dc_n,
-                                             const float *p_current));
+                                           const float *p_current));
 
 /**
  * @brief Bind immediate PWM shutdown while unlocked.

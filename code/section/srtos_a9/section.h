@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    section.h
- * @brief   Cortex-A9 section SRTOS public interface.
+ * @file section.h
+ * @brief Cortex-A9 section SRTOS public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -17,8 +17,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -48,7 +48,7 @@
 
 typedef struct section_item
 {
-    void *p_obj;                 /* Business object owned by the registration module. */
+    void *p_obj; /* Business object owned by the registration module. */
     struct section_item *p_next; /* Next wrapper in one runtime registration list. */
 } section_item_t;
 
@@ -168,20 +168,20 @@ extern volatile section_fault_debug_t g_section_fault_debug;
 
 typedef struct
 {
-    uint32_t task_switch_count;                 /* Number of completed task selections. */
-    uint32_t ready_task_pick_count;             /* Number of newly released tasks selected for execution. */
-    uint32_t unfinished_task_pick_count;        /* Number of suspended or step-continuation tasks selected. */
-    uint32_t context_save_count;                /* Number of shared runtime-stack snapshots created. */
-    uint32_t context_restore_count;             /* Number of suspended snapshots restored. */
-    uint32_t context_alloc_count;               /* Number of successful context-pool allocations. */
-    uint32_t context_release_count;             /* Number of successful FIFO context-pool releases. */
-    uint32_t context_pool_wrap_count;           /* Number of context-pool tail wraps. */
-    uint32_t context_pool_high_water_words;     /* Maximum context-pool occupancy, including wrap gaps. */
-    uint32_t runtime_stack_min_free_words;      /* Minimum observed free shared-stack words. */
-    uint32_t runtime_stack_peak_used_words;     /* Maximum observed shared-stack context size. */
-    uint32_t runtime_stack_peak_task_name;      /* Task-name address associated with the deepest context. */
-    uint32_t idle_wait_count;                   /* Number of waits entered while no task was runnable. */
-    uint32_t invariant_fail_count;              /* Number of internal scheduler invariant violations. */
+    uint32_t task_switch_count;             /* Number of completed task selections. */
+    uint32_t ready_task_pick_count;         /* Number of newly released tasks selected for execution. */
+    uint32_t unfinished_task_pick_count;    /* Number of suspended or step-continuation tasks selected. */
+    uint32_t context_save_count;            /* Number of shared runtime-stack snapshots created. */
+    uint32_t context_restore_count;         /* Number of suspended snapshots restored. */
+    uint32_t context_alloc_count;           /* Number of successful context-pool allocations. */
+    uint32_t context_release_count;         /* Number of successful FIFO context-pool releases. */
+    uint32_t context_pool_wrap_count;       /* Number of context-pool tail wraps. */
+    uint32_t context_pool_high_water_words; /* Maximum context-pool occupancy, including wrap gaps. */
+    uint32_t runtime_stack_min_free_words;  /* Minimum observed free shared-stack words. */
+    uint32_t runtime_stack_peak_used_words; /* Maximum observed shared-stack context size. */
+    uint32_t runtime_stack_peak_task_name;  /* Task-name address associated with the deepest context. */
+    uint32_t idle_wait_count;      /* Number of waits entered while no task was runnable. */
+    uint32_t invariant_fail_count; /* Number of internal scheduler invariant violations. */
 } section_scheduler_debug_t;
 
 extern volatile section_scheduler_debug_t g_section_scheduler_debug;
@@ -318,7 +318,7 @@ void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t
 
 typedef enum
 {
-    SECTION_TASK_DONE = 0,
+    SECTION_TASK_DONE    = 0,
     SECTION_TASK_RUNNING = 1,
 } section_task_status_t;
 

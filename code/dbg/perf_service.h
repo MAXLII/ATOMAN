@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    perf_service.h
- * @brief   Perf communication service public interface.
+ * @file perf_service.h
+ * @brief Perf communication service public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-04-30
+ * @author Max.Li
+ * @date 2026-04-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -43,36 +43,36 @@
 #define PERF_COUNT_UNIT_US 0.5f
 #endif
 
-#define PERF_OPT_CMD_SET 0x01
-#define PERF_OPT_CMD_INFO_QUERY 0x20
-#define PERF_OPT_CMD_SUMMARY_QUERY 0x21
-#define PERF_OPT_CMD_RESET_PEAK 0x25
-#define PERF_OPT_CMD_DICT_QUERY 0x26
-#define PERF_OPT_CMD_DICT_ITEM_REPORT 0x27
-#define PERF_OPT_CMD_DICT_END 0x28
-#define PERF_OPT_CMD_SAMPLE_QUERY 0x29
+#define PERF_OPT_CMD_SET                 0x01
+#define PERF_OPT_CMD_INFO_QUERY          0x20
+#define PERF_OPT_CMD_SUMMARY_QUERY       0x21
+#define PERF_OPT_CMD_RESET_PEAK          0x25
+#define PERF_OPT_CMD_DICT_QUERY          0x26
+#define PERF_OPT_CMD_DICT_ITEM_REPORT    0x27
+#define PERF_OPT_CMD_DICT_END            0x28
+#define PERF_OPT_CMD_SAMPLE_QUERY        0x29
 #define PERF_OPT_CMD_SAMPLE_BATCH_REPORT 0x2A
-#define PERF_OPT_CMD_SAMPLE_END 0x2B
-#define PERF_OPT_CMD_REPORT_CONTROL 0x2E
+#define PERF_OPT_CMD_SAMPLE_END          0x2B
+#define PERF_OPT_CMD_REPORT_CONTROL      0x2E
 
-#define PERF_OPT_TYPE_ALL 0u
-#define PERF_OPT_TYPE_TASK 1u
+#define PERF_OPT_TYPE_ALL       0u
+#define PERF_OPT_TYPE_TASK      1u
 #define PERF_OPT_TYPE_INTERRUPT 2u
-#define PERF_OPT_TYPE_CODE 3u
+#define PERF_OPT_TYPE_CODE      3u
 
-#define PERF_OPT_REJECT_OK 0u
-#define PERF_OPT_REJECT_BUSY 1u
+#define PERF_OPT_REJECT_OK             0u
+#define PERF_OPT_REJECT_BUSY           1u
 #define PERF_OPT_REJECT_INVALID_FILTER 2u
-#define PERF_OPT_REJECT_NO_BUFFER 3u
-#define PERF_OPT_REJECT_UNSUPPORTED 4u
-#define PERF_OPT_REJECT_DICT_MISMATCH 5u
+#define PERF_OPT_REJECT_NO_BUFFER      3u
+#define PERF_OPT_REJECT_UNSUPPORTED    4u
+#define PERF_OPT_REJECT_DICT_MISMATCH  5u
 
-#define PERF_OPT_END_OK 0u
-#define PERF_OPT_END_CANCELLED 1u
-#define PERF_OPT_END_OVERFLOW 2u
+#define PERF_OPT_END_OK             0u
+#define PERF_OPT_END_CANCELLED      1u
+#define PERF_OPT_END_OVERFLOW       2u
 #define PERF_OPT_END_INTERNAL_ERROR 3u
 
-#define PERF_OPT_MAX_PAYLOAD_SIZE 160u
+#define PERF_OPT_MAX_PAYLOAD_SIZE          160u
 #define PERF_OPT_MAX_SAMPLE_ITEMS_PER_POLL 1u
 
 typedef enum
@@ -84,11 +84,8 @@ typedef enum
 
 typedef struct perf_opt_service perf_opt_service_t;
 
-typedef uint8_t (*perf_opt_start_f)(perf_opt_service_t *self,
-                                    section_packform_t *p_pack,
-                                    uint8_t type_filter,
-                                    DEC_MY_PRINTF,
-                                    uint8_t *reject_reason);
+typedef uint8_t (*perf_opt_start_f)(perf_opt_service_t *self, section_packform_t *p_pack, uint8_t type_filter,
+                                    DEC_MY_PRINTF, uint8_t *reject_reason);
 typedef void (*perf_opt_poll_f)(perf_opt_service_t *self);
 
 struct perf_opt_service

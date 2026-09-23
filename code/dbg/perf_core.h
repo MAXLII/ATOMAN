@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    perf_core.h
- * @brief   Perf backend public interface.
+ * @file perf_core.h
+ * @brief Perf backend public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,9 +31,9 @@
 
 #include <stdint.h>
 
-#define PERF_TASK_ENABLE 1u
+#define PERF_TASK_ENABLE      1u
 #define PERF_INTERRUPT_ENABLE 1u
-#define PERF_CODE_ENABLE 1u
+#define PERF_CODE_ENABLE      1u
 
 #if ((PERF_TASK_ENABLE != 0u) && (PERF_TASK_ENABLE != 1u))
 #error "PERF_TASK_ENABLE must be 0 or 1."
@@ -47,9 +47,7 @@
 #error "PERF_CODE_ENABLE must be 0 or 1."
 #endif
 
-#define PERF_ENABLE ((PERF_TASK_ENABLE == 1u) || \
-                     (PERF_INTERRUPT_ENABLE == 1u) || \
-                     (PERF_CODE_ENABLE == 1u))
+#define PERF_ENABLE ((PERF_TASK_ENABLE == 1u) || (PERF_INTERRUPT_ENABLE == 1u) || (PERF_CODE_ENABLE == 1u))
 
 typedef struct perf_core_record perf_core_record_t;
 

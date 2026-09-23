@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pi_tustin.h
- * @brief   pi_tustin library public interface.
+ * @file pi_tustin.h
+ * @brief pi_tustin library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -72,7 +72,10 @@ bool pi_tustin_init(pi_tustin_t *p_str,
 
 bool pi_tustin_cal(pi_tustin_t *p_str);
 
-bool pi_tustin_update(pi_tustin_t *p_str, float kp, float ki, float ts);
+bool pi_tustin_update(pi_tustin_t *p_str,
+                      float kp,
+                      float ki,
+                      float ts);
 
 static inline void pi_tustin_update_b0(pi_tustin_t *p_str, float b0)
 {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    inv_hal.c
- * @brief   inv_hal control module.
+ * @file inv_hal.c
+ * @brief inv_hal control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -40,9 +40,9 @@ static uint8_t inv_hal_binding_locked = 1U;
 static inv_ctrl_hal_t inv_ctrl_hal = {0};
 
 static inv_fsm_hal_t inv_fsm_hal = {
-    .p_enter_run_func = inv_hal_enter_run,
-    .p_exit_run_func = inv_hal_exit_run,
-    .p_inv_rly_on_func = inv_hal_rly_on,
+    .p_enter_run_func   = inv_hal_enter_run,
+    .p_exit_run_func    = inv_hal_exit_run,
+    .p_inv_rly_on_func  = inv_hal_rly_on,
     .p_inv_rly_off_func = inv_hal_rly_off,
 };
 
@@ -50,6 +50,7 @@ static void inv_hal_enter_run(void)
 {
     PLECS_LOG("inv_hal enter run\n");
     inv_ctrl_prepare_run();
+
     if (inv_ctrl_hal.p_pwm_enable != NULL)
     {
         inv_ctrl_hal.p_pwm_enable();
@@ -59,6 +60,7 @@ static void inv_hal_enter_run(void)
 static void inv_hal_exit_run(void)
 {
     PLECS_LOG("inv_hal exit run\n");
+
     if (inv_ctrl_hal.p_pwm_disable != NULL)
     {
         inv_ctrl_hal.p_pwm_disable();
@@ -87,7 +89,6 @@ inv_fsm_hal_t *inv_hal_get_fsm(void)
 
 void inv_hal_hard_protect_trip(void)
 {
-
     if (inv_ctrl_hal.p_pwm_disable != NULL)
     {
         inv_ctrl_hal.p_pwm_disable();
@@ -98,8 +99,8 @@ void inv_hal_hard_protect_trip(void)
 
 uint8_t inv_hal_is_ready(void)
 {
-    return (uint8_t)((STRUCT_ALL_PTR_VALID(inv_ctrl_hal) != 0) &&
-                     (STRUCT_ALL_PTR_VALID(inv_fsm_hal) != 0));
+    return (uint8_t)(    (STRUCT_ALL_PTR_VALID(inv_ctrl_hal) != 0)
+                      && (STRUCT_ALL_PTR_VALID(inv_fsm_hal) != 0));
 }
 
 void inv_hal_lock_binding(void)

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_fsm.h
- * @brief   pfc_fsm control public interface.
+ * @file pfc_fsm.h
+ * @brief pfc_fsm control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -46,7 +46,7 @@ typedef enum
 
 typedef enum
 {
-    pfc_fsm_ev_null = 0,
+    pfc_fsm_ev_null    = 0,
     pfc_fsm_ev_to_idle = 1,
     pfc_fsm_ev_to_soft_start,
     pfc_fsm_ev_to_main_rly,

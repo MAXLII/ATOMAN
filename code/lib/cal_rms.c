@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    cal_rms.c
- * @brief   cal_rms library module.
+ * @file cal_rms.c
+ * @brief cal_rms library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,14 +34,14 @@
 void reset_calculation(cal_rms_t *str)
 {
     str->inter.square_sum = 0.0f;
-    str->inter.cnt = 0;
+    str->inter.cnt        = 0;
 }
 
 // 设置错误状态
 static void set_error_state(cal_rms_t *str)
 {
-    str->output.freq = 0.0f;
-    str->output.rms = 0.0f;
+    str->output.freq   = 0.0f;
+    str->output.rms    = 0.0f;
     str->output.is_cal = 0;
     str->output.is_run = 0;
     reset_calculation(str);
@@ -58,7 +58,7 @@ static void perform_rms_calculation(cal_rms_t *str)
     }
 
     str->output.freq = 1.0f / (str->cfg.ts * str->inter.cnt);
-    str->output.rms = sqrtf(str->inter.square_sum / str->inter.cnt);
+    str->output.rms    = sqrtf(str->inter.square_sum / str->inter.cnt);
     str->output.is_cal = 1;
     reset_calculation(str);
 }
@@ -104,12 +104,12 @@ void cal_rms_init(cal_rms_t *str,
                   uint8_t *p_is_run)
 {
     memset(str, 0, sizeof(cal_rms_t));
-    str->input.p_val = p_val;
+    str->input.p_val    = p_val;
     str->input.p_is_cal = p_is_cal;
     str->input.p_is_run = p_is_run;
-    str->cfg.role = role;
-    str->cfg.ts = ts;
-    str->cfg.cross_thr = cross_thr;
+    str->cfg.role       = role;
+    str->cfg.ts         = ts;
+    str->cfg.cross_thr  = cross_thr;
     str->cfg.cnt_max = (int)(1.0f / (CAL_RMS_FREQ_MIN * ts));
 }
 
@@ -126,10 +126,11 @@ void cal_rms_master_run(cal_rms_t *str)
     {
     case CAL_RMS_STA_IDLE:
         str->output.is_run = 0;
+
         if (*str->input.p_val > str->cfg.cross_thr)
         {
             reset_calculation(str);
-            str->inter.sta = CAL_RMS_STA_IS_POS;
+            str->inter.sta     = CAL_RMS_STA_IS_POS;
             str->output.is_run = 1;
         }
         break;
@@ -154,9 +155,9 @@ void cal_rms_master_run(cal_rms_t *str)
 
 void cal_rms_slave_run(cal_rms_t *str)
 {
-    if ((str->cfg.role != CAL_RMS_SLAVE) ||
-        (str->input.p_is_cal == NULL) ||
-        (str->input.p_is_run == NULL))
+    if (    (str->cfg.role != CAL_RMS_SLAVE)
+         || (str->input.p_is_cal == NULL)
+         || (str->input.p_is_run == NULL))
     {
         return;
     }
@@ -165,10 +166,11 @@ void cal_rms_slave_run(cal_rms_t *str)
     {
     case CAL_RMS_STA_IDLE:
         str->output.is_run = 0;
+
         if (*str->input.p_is_run)
         {
             str->output.is_run = 1;
-            str->inter.sta = CAL_RMS_STA_CAL;
+            str->inter.sta     = CAL_RMS_STA_CAL;
         }
         break;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    dft.h
- * @brief   Single-bin DFT module.
+ * @file dft.h
+ * @brief Single-bin DFT module.
  * @details
  *          This file is part of the fft project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented by the caller
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-12
+ * @author Max.Li
+ * @date 2026-05-12
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

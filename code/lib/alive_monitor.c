@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    alive_monitor.c
- * @brief   Activity timeout monitor implementation.
+ * @file alive_monitor.c
+ * @brief Activity timeout monitor implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - A zero reload interval always represents an expired monitor
  *          - No hardware or framework dependencies
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,7 +38,7 @@ void alive_monitor_init(alive_monitor_t *p_monitor, uint32_t reload_ticks)
         return;
     }
 
-    p_monitor->reload_ticks = reload_ticks;
+    p_monitor->reload_ticks    = reload_ticks;
     p_monitor->remaining_ticks = 0u;
 }
 

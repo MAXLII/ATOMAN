@@ -1,6 +1,6 @@
 /*
- * @file    pi_dual_compete.h
- * @brief   双通道 PI 竞争模块头文件.
+ * @file pi_dual_compete.h
+ * @brief 双通道 PI 竞争模块头文件.
  * @details
  *          This file is part of the PFC project.
  *
@@ -8,8 +8,8 @@
  *          - 定义双通道 PI 竞争模式和数据结构
  *          - 声明初始化、更新、计算、重置接口
  *
- * @author  Max.Li
- * @date    2026-05-20
+ * @author Max.Li
+ * @date 2026-05-20
  * @version 1.0.0
  */
 

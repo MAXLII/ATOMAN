@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pwm.c
- * @brief   Bidirectional CLLC normalized-modulation implementation.
+ * @file pwm.c
+ * @brief Bidirectional CLLC normalized-modulation implementation.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Controller output is clamped before modulation calculation
  *          - Direction validation prevents an undefined bridge selection
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,6 +38,7 @@ static float clamp_normalized(float value)
     {
         return 1.0f;
     }
+
     if (value < 0.0f)
     {
         return 0.0f;
@@ -59,8 +60,8 @@ static void calculate_forward(float command, float *p_duty, float *p_frequency_h
     {
         float ratio = (command - transition) / (1.0f - transition); /* PFM progression to resonance. */
 
-        *p_frequency_hz = CLLC_HW_FORWARD_MAX_FREQ_HZ -
-                          ((CLLC_HW_FORWARD_MAX_FREQ_HZ - CLLC_HW_PRIMARY_RESONANT_FREQ_HZ) * ratio);
+        *p_frequency_hz =
+            CLLC_HW_FORWARD_MAX_FREQ_HZ - ((CLLC_HW_FORWARD_MAX_FREQ_HZ - CLLC_HW_PRIMARY_RESONANT_FREQ_HZ) * ratio);
         *p_duty = CLLC_HW_MAX_PHASE_SHIFT_DUTY;
     }
 }
@@ -79,16 +80,16 @@ static void calculate_reverse(float command, float *p_duty, float *p_frequency_h
     {
         float ratio = (command - transition) / (1.0f - transition); /* PFM progression below resonance. */
 
-        *p_frequency_hz = CLLC_HW_PRIMARY_RESONANT_FREQ_HZ -
-                          ((CLLC_HW_PRIMARY_RESONANT_FREQ_HZ - CLLC_HW_REVERSE_MIN_FREQ_HZ) * ratio);
+        *p_frequency_hz = CLLC_HW_PRIMARY_RESONANT_FREQ_HZ
+                        - ((CLLC_HW_PRIMARY_RESONANT_FREQ_HZ - CLLC_HW_REVERSE_MIN_FREQ_HZ) * ratio);
         *p_duty = CLLC_HW_MAX_PHASE_SHIFT_DUTY;
     }
 }
 
 void cllc_pwm_enable_direction(CLLC_DIRECTION_E direction)
 {
-    if ((direction < CLLC_DIRECTION_FORWARD) ||
-        (direction >= CLLC_DIRECTION_MAX)) /* Undefined direction must never select a bridge set. */
+    if (    (direction < CLLC_DIRECTION_FORWARD)
+         || (direction >= CLLC_DIRECTION_MAX)) /* Undefined direction must never select a bridge set. */
     {
         bsp_pwm_disable();
         return;
@@ -98,9 +99,9 @@ void cllc_pwm_enable_direction(CLLC_DIRECTION_E direction)
 
 void cllc_pwm_set_normalized(CLLC_DIRECTION_E direction, float normalized_command)
 {
-    float command = clamp_normalized(normalized_command); /* Safe normalized command. */
-    float duty = 0.0f;                                   /* Equivalent phase-shift duty, 0...0.5. */
-    float frequency_hz = 0.0f;                           /* Direction-specific switching frequency. */
+    float command      = clamp_normalized(normalized_command); /* Safe normalized command. */
+    float duty         = 0.0f; /* Equivalent phase-shift duty, 0...0.5. */
+    float frequency_hz = 0.0f; /* Direction-specific switching frequency. */
 
     if (direction == CLLC_DIRECTION_FORWARD)
     {

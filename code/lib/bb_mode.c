@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_mode.c
- * @brief   bb_mode library module.
+ * @file bb_mode.c
+ * @brief bb_mode library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -72,41 +72,39 @@ void bb_mode_init(bb_mode_t *p_mode,
         return;
     }
 
-    p_mode->input.p_v_l = p_v_l;
-    p_mode->input.p_v_in = p_v_in;
-    p_mode->input.p_v_out = p_v_out;
-    p_mode->inter.mode = mode;
-    p_mode->output.buck_duty = 0.0f;
-    p_mode->output.boost_duty = 0.0f;
+    p_mode->input.p_v_l         = p_v_l;
+    p_mode->input.p_v_in        = p_v_in;
+    p_mode->input.p_v_out       = p_v_out;
+    p_mode->inter.mode          = mode;
+    p_mode->output.buck_duty    = 0.0f;
+    p_mode->output.boost_duty   = 0.0f;
     p_mode->output.is_half_freq = 0U;
 }
 
 void bb_mode_func(bb_mode_t *p_mode)
 {
-    if ((p_mode == NULL) ||
-        (p_mode->input.p_v_l == NULL) ||
-        (p_mode->input.p_v_in == NULL) ||
-        (p_mode->input.p_v_out == NULL))
+    if (    (p_mode == NULL)
+         || (p_mode->input.p_v_l == NULL)
+         || (p_mode->input.p_v_in == NULL)
+         || (p_mode->input.p_v_out == NULL))
     {
         return;
     }
 
-    const float v_l = *p_mode->input.p_v_l;
-    const float v_in = bb_mode_lmt_min(*p_mode->input.p_v_in, 0.001f);
+    const float v_l   = *p_mode->input.p_v_l;
+    const float v_in  = bb_mode_lmt_min(*p_mode->input.p_v_in, 0.001f);
     const float v_out = bb_mode_lmt_min(*p_mode->input.p_v_out, 0.001f);
 
     switch (p_mode->inter.mode)
     {
     case BB_MODE_BUCK:
         p_mode->output.buck_duty = bb_mode_calc_buck_duty(v_l, v_in, v_out);
+
         if (p_mode->output.buck_duty > BB_MODE_SSW_TO_BB_MODE_THR)
         {
             p_mode->output.boost_duty = BB_MODE_DUTY_MAX;
-            p_mode->output.buck_duty = bb_mode_calc_buck_duty_with_boost(v_l,
-                                                                         v_in,
-                                                                         v_out,
-                                                                         p_mode->output.boost_duty);
-            p_mode->inter.mode = BB_MODE_BUCK_BOOST;
+            p_mode->output.buck_duty  = bb_mode_calc_buck_duty_with_boost(v_l, v_in, v_out, p_mode->output.boost_duty);
+            p_mode->inter.mode        = BB_MODE_BUCK_BOOST;
         }
         else
         {
@@ -116,14 +114,12 @@ void bb_mode_func(bb_mode_t *p_mode)
 
     case BB_MODE_BOOST:
         p_mode->output.boost_duty = bb_mode_calc_boost_duty(v_l, v_in, v_out);
+
         if (p_mode->output.boost_duty > BB_MODE_SSW_TO_BB_MODE_THR)
         {
-            p_mode->output.buck_duty = BB_MODE_DUTY_MAX;
-            p_mode->output.boost_duty = bb_mode_calc_boost_duty_with_buck(v_l,
-                                                                          v_in,
-                                                                          v_out,
-                                                                          p_mode->output.buck_duty);
-            p_mode->inter.mode = BB_MODE_BUCK_BOOST;
+            p_mode->output.buck_duty  = BB_MODE_DUTY_MAX;
+            p_mode->output.boost_duty = bb_mode_calc_boost_duty_with_buck(v_l, v_in, v_out, p_mode->output.buck_duty);
+            p_mode->inter.mode        = BB_MODE_BUCK_BOOST;
         }
         else
         {
@@ -133,60 +129,49 @@ void bb_mode_func(bb_mode_t *p_mode)
 
     case BB_MODE_BUCK_BOOST:
         p_mode->output.buck_duty = bb_mode_calc_buck_duty(v_l, v_in, v_out);
+
         if (p_mode->output.buck_duty > BB_MODE_DUTY_MAX)
         {
-            p_mode->output.buck_duty = BB_MODE_DUTY_MAX;
-            p_mode->output.boost_duty = bb_mode_calc_boost_duty_with_buck(v_l,
-                                                                          v_in,
-                                                                          v_out,
-                                                                          p_mode->output.buck_duty);
+            p_mode->output.buck_duty  = BB_MODE_DUTY_MAX;
+            p_mode->output.boost_duty = bb_mode_calc_boost_duty_with_buck(v_l, v_in, v_out, p_mode->output.buck_duty);
+
             if ((p_mode->output.boost_duty + p_mode->output.buck_duty) > BB_MODE_DUTY_SUM)
             {
                 p_mode->output.buck_duty = BB_MODE_DUTY_SUM - p_mode->output.boost_duty;
-                p_mode->output.boost_duty = bb_mode_calc_boost_duty_with_buck(v_l,
-                                                                              v_in,
-                                                                              v_out,
-                                                                              p_mode->output.buck_duty);
+                p_mode->output.boost_duty =
+                    bb_mode_calc_boost_duty_with_buck(v_l, v_in, v_out, p_mode->output.buck_duty);
             }
 
             if (p_mode->output.boost_duty < BB_MODE_BB_MODE_TO_SSW_THR)
             {
-                p_mode->inter.mode = BB_MODE_BOOST;
-                p_mode->output.buck_duty = 1.0f;
+                p_mode->inter.mode        = BB_MODE_BOOST;
+                p_mode->output.buck_duty  = 1.0f;
                 p_mode->output.boost_duty = bb_mode_calc_boost_duty(v_l, v_in, v_out);
             }
         }
         else
         {
             p_mode->output.boost_duty = BB_MODE_BUCK_BOOST_FIXED_BOOST_DUTY;
-            p_mode->output.buck_duty = bb_mode_calc_buck_duty_with_boost(v_l,
-                                                                         v_in,
-                                                                         v_out,
-                                                                         p_mode->output.boost_duty);
+            p_mode->output.buck_duty  = bb_mode_calc_buck_duty_with_boost(v_l, v_in, v_out, p_mode->output.boost_duty);
+
             if ((p_mode->output.boost_duty + p_mode->output.buck_duty) > BB_MODE_DUTY_SUM)
             {
                 p_mode->output.boost_duty = BB_MODE_DUTY_SUM - p_mode->output.buck_duty;
-                p_mode->output.buck_duty = bb_mode_calc_buck_duty_with_boost(v_l,
-                                                                             v_in,
-                                                                             v_out,
-                                                                             p_mode->output.boost_duty);
+                p_mode->output.buck_duty =
+                    bb_mode_calc_buck_duty_with_boost(v_l, v_in, v_out, p_mode->output.boost_duty);
             }
 
             if (p_mode->output.buck_duty < BB_MODE_BB_MODE_TO_SSW_THR)
             {
-                p_mode->inter.mode = BB_MODE_BUCK;
+                p_mode->inter.mode        = BB_MODE_BUCK;
                 p_mode->output.boost_duty = 1.0f;
-                p_mode->output.buck_duty = bb_mode_calc_buck_duty(v_l, v_in, v_out);
+                p_mode->output.buck_duty  = bb_mode_calc_buck_duty(v_l, v_in, v_out);
             }
         }
         break;
 
     default:
-        bb_mode_init(p_mode,
-                     p_mode->input.p_v_l,
-                     p_mode->input.p_v_in,
-                     p_mode->input.p_v_out,
-                     BB_MODE_BUCK);
+        bb_mode_init(p_mode, p_mode->input.p_v_l, p_mode->input.p_v_in, p_mode->input.p_v_out, BB_MODE_BUCK);
         break;
     }
 

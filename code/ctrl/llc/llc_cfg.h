@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    llc_cfg.h
- * @brief   LLC control configuration public interface.
+ * @file llc_cfg.h
+ * @brief LLC control configuration public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -41,21 +41,18 @@ typedef struct
 } llc_ctrl_timing_t;
 
 #define LLC_CTRL_VOLT_LOOP_FREQ_CUT_HZ (500.0f)
-#define LLC_CTRL_VOLT_LOOP_W_CUT (M_2PI * LLC_CTRL_VOLT_LOOP_FREQ_CUT_HZ)
-#define LLC_CTRL_VOLT_LOOP_PM (60.0f / 180.0f * M_PI)
-#define LLC_CTRL_VOLT_LOOP_KP 0.005f
-#define LLC_CTRL_VOLT_LOOP_KI   \
-    (LLC_CTRL_VOLT_LOOP_KP *    \
-     LLC_CTRL_VOLT_LOOP_W_CUT / \
-     tanf(LLC_CTRL_VOLT_LOOP_PM))
+#define LLC_CTRL_VOLT_LOOP_W_CUT       (M_2PI * LLC_CTRL_VOLT_LOOP_FREQ_CUT_HZ)
+#define LLC_CTRL_VOLT_LOOP_PM          (60.0f / 180.0f * M_PI)
+#define LLC_CTRL_VOLT_LOOP_KP          0.005f
+#define LLC_CTRL_VOLT_LOOP_KI          (LLC_CTRL_VOLT_LOOP_KP * LLC_CTRL_VOLT_LOOP_W_CUT / tanf(LLC_CTRL_VOLT_LOOP_PM))
 
-#define LLC_CTRL_OUTPUT_UP_LMT (1.0f)
-#define LLC_CTRL_OUTPUT_DN_LMT (0.0f)
-#define LLC_CTRL_VOUT_REF_DEFAULT_V (3.6f)
-#define LLC_CTRL_VOUT_LPF_CUTOFF_HZ (50.0f)
-#define LLC_CTRL_VBUS_NOTCH_CENTER_HZ (100.0f)
+#define LLC_CTRL_OUTPUT_UP_LMT           (1.0f)
+#define LLC_CTRL_OUTPUT_DN_LMT           (0.0f)
+#define LLC_CTRL_VOUT_REF_DEFAULT_V      (3.6f)
+#define LLC_CTRL_VOUT_LPF_CUTOFF_HZ      (50.0f)
+#define LLC_CTRL_VBUS_NOTCH_CENTER_HZ    (100.0f)
 #define LLC_CTRL_VBUS_NOTCH_BANDWIDTH_HZ (50.0f)
-#define LLC_CTRL_OUT_FF_NORM_BASE (800.0f)
+#define LLC_CTRL_OUT_FF_NORM_BASE        (800.0f)
 
 typedef struct
 {
@@ -91,8 +88,8 @@ const llc_ctrl_setpoint_mgr_t *llc_cfg_get_mgr(void);
 
 static inline void llc_cfg_sync_building_to_active(void)
 {
-    if ((llc_cfg_setpoint_mgr.building.p_data == NULL) ||
-        (llc_cfg_setpoint_mgr.active.p_data == NULL))
+    if (    (llc_cfg_setpoint_mgr.building.p_data == NULL)
+         || (llc_cfg_setpoint_mgr.active.p_data == NULL))
     {
         return;
     }

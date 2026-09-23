@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    hys_cmp.c
- * @brief   hys_cmp library module.
+ * @file hys_cmp.c
+ * @brief hys_cmp library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -54,18 +54,20 @@ void hys_cmp_init(hys_cmp_t *p_str,
                   float thr_hys,
                   uint32_t time,
                   uint32_t time_hys,
-                  uint8_t (*p_cmp_func)(float val, float thr),
-                  uint8_t (*p_cmp_hys_func)(float val, float thr))
+                  uint8_t (*p_cmp_func)(float val,
+                                        float thr),
+                  uint8_t (*p_cmp_hys_func)(float val,
+                                            float thr))
 {
-    p_str->input.p_val = p_val;
-    p_str->inter.cfg.thr = thr;
-    p_str->inter.cfg.thr_hys = thr_hys;
-    p_str->inter.cfg.time = time;
-    p_str->inter.cfg.time_hys = time_hys;
-    p_str->inter.cfg.p_cmp_func = p_cmp_func;
+    p_str->input.p_val              = p_val;
+    p_str->inter.cfg.thr            = thr;
+    p_str->inter.cfg.thr_hys        = thr_hys;
+    p_str->inter.cfg.time           = time;
+    p_str->inter.cfg.time_hys       = time_hys;
+    p_str->inter.cfg.p_cmp_func     = p_cmp_func;
     p_str->inter.cfg.p_cmp_hys_func = p_cmp_hys_func;
-    p_str->inter.cnt = 0;
-    p_str->output.is_asserted = 0;
+    p_str->inter.cnt                = 0;
+    p_str->output.is_asserted       = 0;
 }
 
 /**
@@ -98,36 +100,39 @@ void hys_cmp_init(hys_cmp_t *p_str,
 void hys_cmp_func(hys_cmp_t *p_str)
 {
     /* Defensive programming: validate pointers */
-    if ((p_str == NULL) ||
-        (p_str->input.p_val == NULL))
+
+    if (    (p_str == NULL)
+         || (p_str->input.p_val == NULL))
     {
         return;
     }
 
     hys_cmp_cfg_t *cfg = &p_str->inter.cfg;
-    float val = *(p_str->input.p_val);
+    float val          = *(p_str->input.p_val);
 
     uint8_t *state = &p_str->output.is_asserted;
-    uint32_t *cnt = &p_str->inter.cnt;
+    uint32_t *cnt  = &p_str->inter.cnt;
 
     /* =====================================================
        ASSERT PHASE
        Condition: state == 0
        Goal: detect entry condition
        ===================================================== */
+
     if (*state == 0U)
     {
-        if ((cfg->p_cmp_func != NULL) &&
-            cfg->p_cmp_func(val, cfg->thr))
+        if (    (cfg->p_cmp_func != NULL)
+             && cfg->p_cmp_func(val, cfg->thr))
         {
             /* Condition satisfied → increment counter */
             (*cnt)++;
 
             /* Time qualification satisfied */
+
             if (*cnt > cfg->time)
             {
                 *state = 1U; /* Assert comparator */
-                *cnt = 0U;   /* Reset counter */
+                *cnt   = 0U; /* Reset counter */
             }
         }
         else
@@ -144,8 +149,8 @@ void hys_cmp_func(hys_cmp_t *p_str)
        ===================================================== */
     else
     {
-        if ((cfg->p_cmp_hys_func != NULL) &&
-            cfg->p_cmp_hys_func(val, cfg->thr_hys))
+        if (    (cfg->p_cmp_hys_func != NULL)
+             && cfg->p_cmp_hys_func(val, cfg->thr_hys))
         {
             /* Release condition satisfied */
             (*cnt)++;
@@ -153,7 +158,7 @@ void hys_cmp_func(hys_cmp_t *p_str)
             if (*cnt > cfg->time_hys)
             {
                 *state = 0U; /* Deassert comparator */
-                *cnt = 0U;
+                *cnt   = 0U;
             }
         }
         else

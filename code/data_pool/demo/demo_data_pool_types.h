@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_data_pool_types.h
- * @brief   Demo data-pool value types.
+ * @file demo_data_pool_types.h
+ * @brief Demo data-pool value types.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Values are copied as complete task-context snapshots
  *          - This header has no Platform or framework dependency
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

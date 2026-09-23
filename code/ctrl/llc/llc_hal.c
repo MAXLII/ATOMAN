@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    llc_hal.c
- * @brief   LLC HAL binding module.
+ * @file llc_hal.c
+ * @brief LLC HAL binding module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,13 +34,13 @@
 static void llc_hal_enter_run(void);
 static void llc_hal_exit_run(void);
 
-static uint8_t hard_protect_latched = 0U;
+static uint8_t hard_protect_latched   = 0U;
 static uint8_t llc_hal_binding_locked = 1U;
-static llc_ctrl_hal_t llc_ctrl_hal = {0};
+static llc_ctrl_hal_t llc_ctrl_hal    = {0};
 static llc_fsm_hal_t llc_fsm_hal = {
     .p_enter_run_func = llc_hal_enter_run,
-    .p_exit_run_func = llc_hal_exit_run,
-    .p_latched = &hard_protect_latched,
+    .p_exit_run_func  = llc_hal_exit_run,
+    .p_latched        = &hard_protect_latched,
 };
 
 static void llc_hal_enter_run(void)
@@ -51,7 +51,6 @@ static void llc_hal_enter_run(void)
     {
         llc_ctrl_hal.p_pwm_enable();
     }
-
 }
 
 static void llc_hal_exit_run(void)
@@ -71,14 +70,14 @@ llc_fsm_hal_t *llc_hal_get_fsm(void)
 
 uint8_t llc_hal_is_ready(void)
 {
-    return (uint8_t)((llc_ctrl_hal.p_v_out != NULL) &&
-                     (llc_ctrl_hal.p_i_out != NULL) &&
-                     (llc_ctrl_hal.p_v_bus != NULL) &&
-                     (llc_ctrl_hal.p_set_pwm_func != NULL) &&
-                     (llc_ctrl_hal.p_pwm_disable != NULL) &&
-                     (llc_fsm_hal.p_enter_run_func != NULL) &&
-                     (llc_fsm_hal.p_exit_run_func != NULL) &&
-                     (llc_fsm_hal.p_latched != NULL));
+    return (uint8_t)(    (llc_ctrl_hal.p_v_out != NULL)
+                      && (llc_ctrl_hal.p_i_out != NULL)
+                      && (llc_ctrl_hal.p_v_bus != NULL)
+                      && (llc_ctrl_hal.p_set_pwm_func != NULL)
+                      && (llc_ctrl_hal.p_pwm_disable != NULL)
+                      && (llc_fsm_hal.p_enter_run_func != NULL)
+                      && (llc_fsm_hal.p_exit_run_func != NULL)
+                      && (llc_fsm_hal.p_latched != NULL));
 }
 
 void llc_hal_lock_binding(void)

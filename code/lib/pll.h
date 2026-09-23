@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pll.h
- * @brief   pll library public interface.
+ * @file pll.h
+ * @brief pll library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe when caller owns the instance
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-07-01
+ * @author Max.Li
+ * @date 2026-07-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -96,7 +96,10 @@ void pll_reset(pll_t *p_pll, float theta_init);
 
 bool pll_update_pi(pll_t *p_pll, float pi_kp, float pi_ki);
 
-bool pll_update_tuning(pll_t *p_pll, float vm, float zeta, float omega_n);
+bool pll_update_tuning(pll_t *p_pll,
+                       float vm,
+                       float zeta,
+                       float omega_n);
 
 bool pll_cal(pll_t *p_pll);
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    cllc_hal.h
- * @brief   Bidirectional CLLC HAL binding public interface.
+ * @file cllc_hal.h
+ * @brief Bidirectional CLLC HAL binding public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Bindings are changed only while the FSM is idle
  *          - Fast shutdown remains available from protection context
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,20 +42,20 @@ typedef void (*cllc_pwm_enable_t)(CLLC_DIRECTION_E direction);
 /** Fast-loop measurement and actuator bindings. */
 typedef struct
 {
-    float *p_v_battery;                         /* Low-voltage battery-port sample in volts. */
-    float *p_i_battery;                         /* Battery/load current magnitude in amperes. */
-    float *p_v_bus;                             /* High-voltage bus sample in volts. */
-    cllc_modulation_setter_t p_set_modulation;  /* Normalized hybrid-modulation update hook. */
-    cllc_pwm_enable_t p_pwm_enable;             /* Direction-aware bridge startup hook. */
-    void (*p_pwm_disable)(void);                /* Immediate all-bridge shutdown hook. */
+    float *p_v_battery; /* Low-voltage battery-port sample in volts. */
+    float *p_i_battery; /* Battery/load current magnitude in amperes. */
+    float *p_v_bus;     /* High-voltage bus sample in volts. */
+    cllc_modulation_setter_t p_set_modulation; /* Normalized hybrid-modulation update hook. */
+    cllc_pwm_enable_t p_pwm_enable;            /* Direction-aware bridge startup hook. */
+    void (*p_pwm_disable)(void); /* Immediate all-bridge shutdown hook. */
 } cllc_ctrl_hal_t;
 
 /** FSM callbacks and shared protection latch. */
 typedef struct
 {
     void (*p_enter_run)(CLLC_DIRECTION_E direction); /* Prepare and enable the selected direction. */
-    void (*p_exit_run)(void);                         /* Disable power transfer before the FSM commits stop. */
-    uint8_t *p_latched;                               /* Nonzero blocks start and requests fault state. */
+    void (*p_exit_run)(void); /* Disable power transfer before the FSM commits stop. */
+    uint8_t *p_latched;       /* Nonzero blocks start and requests fault state. */
 } cllc_fsm_hal_t;
 
 /** @brief Get fast-loop HAL bindings. @return Mutable internal HAL object. */

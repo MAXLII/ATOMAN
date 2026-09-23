@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    adc.h
- * @brief   CLLC analog-feedback interface.
+ * @file adc.h
+ * @brief CLLC analog-feedback interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Read functions are safe for control-interrupt use after BSP setup
  *          - Platform-specific acquisition remains in bsp_adc
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

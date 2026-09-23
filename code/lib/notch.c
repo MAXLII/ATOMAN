@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    notch.c
- * @brief   notch library module.
+ * @file notch.c
+ * @brief notch library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -57,9 +57,9 @@ void notch_init(notch_t *p_str,
                 float *p_val)
 {
     p_str->input.p_val = p_val;
-    p_str->cfg.ts = ts;
-    p_str->cfg.w0 = w0;
-    p_str->cfg.wb = wb;
+    p_str->cfg.ts      = ts;
+    p_str->cfg.w0      = w0;
+    p_str->cfg.wb      = wb;
 
     notch_update_coeff(p_str);
     p_str->inter.x[0] = 0.0f;
@@ -84,11 +84,9 @@ void notch_cal(notch_t *p_str)
     }
     p_str->inter.x[0] = *p_str->input.p_val;
 
-    p_str->inter.y[0] = p_str->inter.c0 * p_str->inter.x[0] +
-                        p_str->inter.c1 * p_str->inter.x[1] +
-                        p_str->inter.c2 * p_str->inter.x[2] -
-                        p_str->inter.d1 * p_str->inter.y[1] -
-                        p_str->inter.d2 * p_str->inter.y[2];
+    p_str->inter.y[0] = p_str->inter.c0 * p_str->inter.x[0] + p_str->inter.c1 * p_str->inter.x[1]
+                      + p_str->inter.c2 * p_str->inter.x[2] - p_str->inter.d1 * p_str->inter.y[1]
+                      - p_str->inter.d2 * p_str->inter.y[2];
 
     p_str->inter.y[2] = p_str->inter.y[1];
     p_str->inter.y[1] = p_str->inter.y[0];

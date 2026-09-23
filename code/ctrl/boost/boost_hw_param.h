@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    boost_hw_param.h
- * @brief   BOOST hardware parameter definitions.
+ * @file boost_hw_param.h
+ * @brief BOOST hardware parameter definitions.
  * @details
  *          This file is part of the BOOST2 project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-24
+ * @author Max.Li
+ * @date 2026-05-24
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -29,12 +29,12 @@
 #ifndef __BOOST_HW_PARAM_H
 #define __BOOST_HW_PARAM_H
 
-#define BOOST_HW_IN_CAP_PER (330.0e-6f)
-#define BOOST_HW_IN_CAP_PCS (4U)
+#define BOOST_HW_IN_CAP_PER   (330.0e-6f)
+#define BOOST_HW_IN_CAP_PCS   (4U)
 #define BOOST_HW_IN_CAP_TOTAL (BOOST_HW_IN_CAP_PER * (float)BOOST_HW_IN_CAP_PCS)
 
-#define BOOST_HW_OUT_CAP_PER (1000.0e-6f)
-#define BOOST_HW_OUT_CAP_PCS (4U)
+#define BOOST_HW_OUT_CAP_PER   (1000.0e-6f)
+#define BOOST_HW_OUT_CAP_PCS   (4U)
 #define BOOST_HW_OUT_CAP_TOTAL (BOOST_HW_OUT_CAP_PER * (float)BOOST_HW_OUT_CAP_PCS)
 
 #define BOOST_HW_IND (1.5e-6f)

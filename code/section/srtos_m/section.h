@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    section.h
- * @brief   Cortex-M section SRTOS public interface.
+ * @file section.h
+ * @brief Cortex-M section SRTOS public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -17,8 +17,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -48,7 +48,7 @@
 
 typedef struct section_item
 {
-    void *p_obj;                 /* Business object owned by the registration module. */
+    void *p_obj; /* Business object owned by the registration module. */
     struct section_item *p_next; /* Next wrapper in one runtime registration list. */
 } section_item_t;
 
@@ -299,7 +299,7 @@ void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t
 
 typedef enum
 {
-    SECTION_TASK_DONE = 0,
+    SECTION_TASK_DONE    = 0,
     SECTION_TASK_RUNNING = 1,
 } section_task_status_t;
 

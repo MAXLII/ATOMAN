@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    resonant_i32.c
- * @brief   Integer ideal resonant controller module.
+ * @file resonant_i32.c
+ * @brief Integer ideal resonant controller module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Runtime path uses no division
  *          - No hardware access
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,6 +39,7 @@ static int32_t float_to_i32(float value)
     {
         return INT32_MAX;
     }
+
     if (value <= (float)INT32_MIN)
     {
         return INT32_MIN;
@@ -52,6 +53,7 @@ static int32_t sat_i64_to_i32(int64_t value)
     {
         return INT32_MAX;
     }
+
     if (value < (int64_t)INT32_MIN)
     {
         return INT32_MIN;
@@ -67,19 +69,19 @@ bool resonant_i32_design_coeff(resonant_i32_coeff_t *p_coeff,
                                float output_code_per_unit,
                                float input_code_per_unit)
 {
-    float omega_n = 0.0f;     /**< Resonant angular frequency. */
+    float omega_n     = 0.0f; /**< Resonant angular frequency. */
     float denominator = 0.0f; /**< Bilinear-transform denominator. */
     float domain_gain = 0.0f; /**< Input-code to output-code conversion gain. */
-    float b0 = 0.0f;          /**< Designed input coefficient. */
-    float a1 = 0.0f;          /**< Designed first feedback coefficient. */
+    float b0          = 0.0f; /**< Designed input coefficient. */
+    float a1          = 0.0f; /**< Designed first feedback coefficient. */
 
-    if ((p_coeff == NULL) ||
-        (gain < 0.0f) ||
-        (order == 0U) ||
-        (omega_radps <= 0.0f) ||
-        (ts <= 0.0f) ||
-        (output_code_per_unit <= 0.0f) ||
-        (input_code_per_unit <= 0.0f))
+    if (    (p_coeff == NULL)
+         || (gain < 0.0f)
+         || (order == 0U)
+         || (omega_radps <= 0.0f)
+         || (ts <= 0.0f)
+         || (output_code_per_unit <= 0.0f)
+         || (input_code_per_unit <= 0.0f))
     {
         return false;
     }
@@ -99,8 +101,8 @@ bool resonant_i32_design_coeff(resonant_i32_coeff_t *p_coeff,
 
 bool resonant_i32_init(resonant_i32_t *p_resonant, const resonant_i32_coeff_t *p_coeff)
 {
-    if ((p_resonant == NULL) ||
-        (p_coeff == NULL))
+    if (    (p_resonant == NULL)
+         || (p_coeff == NULL))
     {
         return false;
     }
@@ -111,8 +113,8 @@ bool resonant_i32_init(resonant_i32_t *p_resonant, const resonant_i32_coeff_t *p
 
 bool resonant_i32_set_coeff(resonant_i32_t *p_resonant, const resonant_i32_coeff_t *p_coeff)
 {
-    if ((p_resonant == NULL) ||
-        (p_coeff == NULL))
+    if (    (p_resonant == NULL)
+         || (p_coeff == NULL))
     {
         return false;
     }
@@ -126,36 +128,34 @@ void resonant_i32_reset(resonant_i32_t *p_resonant)
     {
         return;
     }
-    p_resonant->x1 = 0;
-    p_resonant->x2 = 0;
-    p_resonant->y1 = 0;
-    p_resonant->y2 = 0;
+    p_resonant->x1           = 0;
+    p_resonant->x2           = 0;
+    p_resonant->y1           = 0;
+    p_resonant->y2           = 0;
     p_resonant->residual_q29 = 0;
 }
 
 int32_t resonant_i32_cal(resonant_i32_t *p_resonant, int32_t input)
 {
     int64_t accumulator = 0; /**< Q29 multiply-accumulate result. */
-    int64_t scaled = 0;      /**< Output-domain value before saturation. */
-    int32_t output = 0;      /**< Current output in the configured code domain. */
+    int64_t scaled      = 0; /**< Output-domain value before saturation. */
+    int32_t output      = 0; /**< Current output in the configured code domain. */
 
     if (p_resonant == NULL)
     {
         return 0;
     }
 
-    accumulator = ((int64_t)p_resonant->coeff.b0 * (int64_t)input) +
-                  ((int64_t)p_resonant->coeff.b2 * (int64_t)p_resonant->x2) -
-                  ((int64_t)p_resonant->coeff.a1 * (int64_t)p_resonant->y1) -
-                  ((int64_t)p_resonant->coeff.a2 * (int64_t)p_resonant->y2) +
-                  p_resonant->residual_q29;
+    accumulator = ((int64_t)p_resonant->coeff.b0 * (int64_t)input)
+                + ((int64_t)p_resonant->coeff.b2 * (int64_t)p_resonant->x2)
+                - ((int64_t)p_resonant->coeff.a1 * (int64_t)p_resonant->y1)
+                - ((int64_t)p_resonant->coeff.a2 * (int64_t)p_resonant->y2) + p_resonant->residual_q29;
     scaled = accumulator >> RESONANT_I32_COEFF_Q_SHIFT;
     output = sat_i64_to_i32(scaled);
+
     if (scaled == (int64_t)output)
     {
-        p_resonant->residual_q29 = accumulator -
-                                   ((int64_t)output *
-                                    (int64_t)(1UL << RESONANT_I32_COEFF_Q_SHIFT));
+        p_resonant->residual_q29 = accumulator - ((int64_t)output * (int64_t)(1UL << RESONANT_I32_COEFF_Q_SHIFT));
     }
     else
     {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    notch_i32.c
- * @brief   Integer notch filter module.
+ * @file notch_i32.c
+ * @brief Integer notch filter module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe when caller owns the instance and input pointer
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-27
+ * @author Max.Li
+ * @date 2026-06-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -86,18 +86,18 @@ bool notch_i32_update(notch_i32_t *p_notch,
                       uint8_t coeff_q_shift)
 {
     float coeff_q = 0.0f;
-    float n0 = 0.0f;
-    float n1 = 0.0f;
-    float n2 = 0.0f;
-    float d0 = 0.0f;
-    float d1 = 0.0f;
-    float d2 = 0.0f;
+    float n0      = 0.0f;
+    float n1      = 0.0f;
+    float n2      = 0.0f;
+    float d0      = 0.0f;
+    float d1      = 0.0f;
+    float d2      = 0.0f;
 
-    if ((p_notch == NULL) ||
-        (w0 <= 0.0f) ||
-        (wb <= 0.0f) ||
-        (ts <= 0.0f) ||
-        (coeff_q_shift >= 30U))
+    if (    (p_notch == NULL)
+         || (w0 <= 0.0f)
+         || (wb <= 0.0f)
+         || (ts <= 0.0f)
+         || (coeff_q_shift >= 30U))
     {
         return false;
     }
@@ -128,8 +128,8 @@ bool notch_i32_init(notch_i32_t *p_notch,
                     uint8_t coeff_q_shift,
                     int32_t *p_input)
 {
-    if ((p_notch == NULL) ||
-        (p_input == NULL))
+    if (    (p_notch == NULL)
+         || (p_input == NULL))
     {
         return false;
     }
@@ -144,8 +144,8 @@ bool notch_i32_cal(notch_i32_t *p_notch)
 {
     int64_t y = 0;
 
-    if ((p_notch == NULL) ||
-        (p_notch->input.p_input == NULL))
+    if (    (p_notch == NULL)
+         || (p_notch->input.p_input == NULL))
     {
         return false;
     }
@@ -157,11 +157,11 @@ bool notch_i32_cal(notch_i32_t *p_notch)
     p_notch->inter.y[2] = p_notch->inter.y[1];
     p_notch->inter.y[1] = p_notch->inter.y[0];
 
-    y = ((int64_t)p_notch->inter.b[0] * (int64_t)p_notch->inter.x[0]) +
-        ((int64_t)p_notch->inter.b[1] * (int64_t)p_notch->inter.x[1]) +
-        ((int64_t)p_notch->inter.b[2] * (int64_t)p_notch->inter.x[2]) -
-        ((int64_t)p_notch->inter.a[0] * (int64_t)p_notch->inter.y[1]) -
-        ((int64_t)p_notch->inter.a[1] * (int64_t)p_notch->inter.y[2]);
+    y = ((int64_t)p_notch->inter.b[0] * (int64_t)p_notch->inter.x[0])
+      + ((int64_t)p_notch->inter.b[1] * (int64_t)p_notch->inter.x[1])
+      + ((int64_t)p_notch->inter.b[2] * (int64_t)p_notch->inter.x[2])
+      - ((int64_t)p_notch->inter.a[0] * (int64_t)p_notch->inter.y[1])
+      - ((int64_t)p_notch->inter.a[1] * (int64_t)p_notch->inter.y[2]);
     y >>= p_notch->inter.coeff_q_shift;
 
     p_notch->inter.y[0] = notch_i32_sat_i64_to_i32(y);

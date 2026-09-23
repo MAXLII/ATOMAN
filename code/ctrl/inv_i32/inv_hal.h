@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    inv_hal.h
- * @brief   Inverter int32 HAL public interface.
+ * @file inv_hal.h
+ * @brief Inverter int32 HAL public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Bindings must be complete before ISR execution
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

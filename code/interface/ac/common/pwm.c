@@ -2,23 +2,26 @@
 
 static uint8_t pwm_step = 0;
 static float v_pwm_last = 0.0f;
-static float v_pwm_tag = 0.0f;
-static float v_pwm_act = 0.0f;
-static uint8_t v_pwm_i = 0;
+static float v_pwm_tag  = 0.0f;
+static float v_pwm_act  = 0.0f;
+static uint8_t v_pwm_i  = 0;
 
 void pwm_enable(void)
 {
-    pwm_step = 0;
+    pwm_step   = 0;
     v_pwm_last = 0.0f;
-    v_pwm_tag = 0.0f;
-    v_pwm_act = 0.0f;
-    v_pwm_i = 0U;
+    v_pwm_tag  = 0.0f;
+    v_pwm_act  = 0.0f;
+    v_pwm_i    = 0U;
 }
 
 static inline float pfc_calc_duty(float v_pwm, float v_bus, float *p_offset)
 {
     /* 保护：防止除0；你也可以改成直接关PWM并返回 */
-    const float vbus = (v_bus > 1e-6f || v_bus < -1e-6f) ? v_bus : 1e-6f;
+    const float vbus = (    v_bus > 1e-6f
+                         || v_bus < -1e-6f)
+                         ? v_bus
+                         : 1e-6f;
 
     if (v_pwm > 0.0f)
     {
@@ -81,6 +84,7 @@ void pwm_set_pfc(float v_pwm, float v_bus)
         break;
 
     case 1:
+
         if (pfc_is_zero_cross(v_pwm, v_pwm_last))
         {
             pwm_step = 2;
@@ -88,7 +92,7 @@ void pwm_set_pfc(float v_pwm, float v_bus)
 
             v_pwm_tag = v_pwm;
             v_pwm_act = 0.0f;
-            v_pwm_i = 0; /* 建议：显式复位计数器，避免继承旧值 */
+            v_pwm_i   = 0; /* 建议：显式复位计数器，避免继承旧值 */
         }
         else
         {
@@ -97,6 +101,7 @@ void pwm_set_pfc(float v_pwm, float v_bus)
         break;
 
     case 2:
+
         if (v_pwm_i < 5)
         {
             v_pwm_i++;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    dft.c
- * @brief   Single-bin DFT module.
+ * @file dft.c
+ * @brief Single-bin DFT module.
  * @details
  *          This file is part of the fft project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented by the caller
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-12
+ * @author Max.Li
+ * @date 2026-05-12
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -35,8 +35,7 @@
 
 static uint32_t dft_calc_required_sample_size(const dft_t *dft)
 {
-    const float sample_count =
-        dft->cfg.valid_cycle_count / (dft->cfg.target_freq_hz * dft->cfg.sample_period_s);
+    const float sample_count = dft->cfg.valid_cycle_count / (dft->cfg.target_freq_hz * dft->cfg.sample_period_s);
 
     if (sample_count < 1.0f)
     {
@@ -49,19 +48,21 @@ static uint32_t dft_calc_required_sample_size(const dft_t *dft)
 static dft_status_t dft_validate(const dft_t *dft)
 {
     /* The module stores caller-owned pointers, so every calculation rechecks them. */
+
     if (dft == 0)
     {
         return DFT_STATUS_NULL;
     }
 
-    if ((dft->input.sample == 0) || (dft->input.start == 0))
+    if (    (dft->input.sample == 0)
+         || (dft->input.start == 0))
     {
         return DFT_STATUS_NULL;
     }
 
-    if ((dft->cfg.sample_period_s <= 0.0f) ||
-        (dft->cfg.target_freq_hz <= 0.0f) ||
-        (dft->cfg.valid_cycle_count <= 0.0f))
+    if (    (dft->cfg.sample_period_s <= 0.0f)
+         || (dft->cfg.target_freq_hz <= 0.0f)
+         || (dft->cfg.valid_cycle_count <= 0.0f))
     {
         return DFT_STATUS_INVALID_PARAM;
     }
@@ -82,21 +83,23 @@ dft_status_t dft_init(dft_t *dft,
         return DFT_STATUS_NULL;
     }
 
-    dft->input.sample = sample;
-    dft->input.start = start;
-    dft->cfg.target_freq_hz = target_freq_hz;
-    dft->cfg.sample_period_s = sample_period_s;
+    dft->input.sample          = sample;
+    dft->input.start           = start;
+    dft->cfg.target_freq_hz    = target_freq_hz;
+    dft->cfg.sample_period_s   = sample_period_s;
     dft->cfg.valid_cycle_count = DFT_DEFAULT_VALID_CYCLES;
 
     /* Reset clears stale results before the new configuration is validated. */
     status = dft_reset(dft);
+
     if (status != DFT_STATUS_OK)
     {
         return status;
     }
 
-    status = dft_validate(dft);
+    status             = dft_validate(dft);
     dft->output.status = status;
+
     if (status != DFT_STATUS_OK)
     {
         /* Invalid bindings are recorded in output.status for the caller to inspect. */
@@ -116,21 +119,21 @@ dft_status_t dft_reset(dft_t *dft)
         return DFT_STATUS_NULL;
     }
 
-    dft->inter.phase_step_rad = 0.0f;
-    dft->inter.phase_step_cos = 1.0f;
-    dft->inter.phase_step_sin = 0.0f;
-    dft->inter.phase_rad = 0.0f;
-    dft->inter.phase_cos = 1.0f;
-    dft->inter.phase_sin = 0.0f;
-    dft->inter.real_sum = 0.0f;
-    dft->inter.imag_sum = 0.0f;
+    dft->inter.phase_step_rad       = 0.0f;
+    dft->inter.phase_step_cos       = 1.0f;
+    dft->inter.phase_step_sin       = 0.0f;
+    dft->inter.phase_rad            = 0.0f;
+    dft->inter.phase_cos            = 1.0f;
+    dft->inter.phase_sin            = 0.0f;
+    dft->inter.real_sum             = 0.0f;
+    dft->inter.imag_sum             = 0.0f;
     dft->inter.required_sample_size = 0U;
-    dft->inter.sample_count = 0U;
-    dft->inter.running = 0U;
-    dft->output.real = 0.0f;
-    dft->output.imag = 0.0f;
-    dft->output.valid = 0U;
-    dft->output.status = DFT_STATUS_OK;
+    dft->inter.sample_count         = 0U;
+    dft->inter.running              = 0U;
+    dft->output.real                = 0.0f;
+    dft->output.imag                = 0.0f;
+    dft->output.valid               = 0U;
+    dft->output.status              = DFT_STATUS_OK;
 
     return DFT_STATUS_OK;
 }
@@ -140,10 +143,12 @@ dft_status_t dft_cal(dft_t *dft)
     dft_status_t status;
 
     status = dft_validate(dft);
+
     if (dft != 0)
     {
         dft->output.status = status;
     }
+
     if (status != DFT_STATUS_OK)
     {
         return status;
@@ -151,15 +156,15 @@ dft_status_t dft_cal(dft_t *dft)
 
     if (*(dft->input.start) == 0U)
     {
-        dft->inter.phase_rad = 0.0f;
-        dft->inter.phase_cos = 1.0f;
-        dft->inter.phase_sin = 0.0f;
-        dft->inter.real_sum = 0.0f;
-        dft->inter.imag_sum = 0.0f;
+        dft->inter.phase_rad    = 0.0f;
+        dft->inter.phase_cos    = 1.0f;
+        dft->inter.phase_sin    = 0.0f;
+        dft->inter.real_sum     = 0.0f;
+        dft->inter.imag_sum     = 0.0f;
         dft->inter.sample_count = 0U;
-        dft->inter.running = 0U;
-        dft->output.valid = 0U;
-        dft->output.status = DFT_STATUS_OK;
+        dft->inter.running      = 0U;
+        dft->output.valid       = 0U;
+        dft->output.status      = DFT_STATUS_OK;
         return DFT_STATUS_OK;
     }
 
@@ -171,18 +176,17 @@ dft_status_t dft_cal(dft_t *dft)
 
     if (dft->inter.running == 0U)
     {
-        dft->inter.phase_step_rad =
-            DFT_TWO_PI * dft->cfg.target_freq_hz * dft->cfg.sample_period_s;
-        dft->inter.phase_step_cos = cosf(dft->inter.phase_step_rad);
-        dft->inter.phase_step_sin = sinf(dft->inter.phase_step_rad);
+        dft->inter.phase_step_rad = DFT_TWO_PI * dft->cfg.target_freq_hz * dft->cfg.sample_period_s;
+        dft->inter.phase_step_cos       = cosf(dft->inter.phase_step_rad);
+        dft->inter.phase_step_sin       = sinf(dft->inter.phase_step_rad);
         dft->inter.required_sample_size = dft_calc_required_sample_size(dft);
-        dft->inter.phase_rad = 0.0f;
-        dft->inter.phase_cos = 1.0f;
-        dft->inter.phase_sin = 0.0f;
-        dft->inter.real_sum = 0.0f;
-        dft->inter.imag_sum = 0.0f;
-        dft->inter.sample_count = 0U;
-        dft->inter.running = 1U;
+        dft->inter.phase_rad            = 0.0f;
+        dft->inter.phase_cos            = 1.0f;
+        dft->inter.phase_sin            = 0.0f;
+        dft->inter.real_sum             = 0.0f;
+        dft->inter.imag_sum             = 0.0f;
+        dft->inter.sample_count         = 0U;
+        dft->inter.running              = 1U;
     }
 
     /* X(f) = sum x[n] * exp(-j * 2*pi*f*n*Ts), one sample per call. */
@@ -193,12 +197,8 @@ dft_status_t dft_cal(dft_t *dft)
         const float phase_cos = dft->inter.phase_cos;
         const float phase_sin = dft->inter.phase_sin;
 
-        dft->inter.phase_cos =
-            (phase_cos * dft->inter.phase_step_cos) -
-            (phase_sin * dft->inter.phase_step_sin);
-        dft->inter.phase_sin =
-            (phase_sin * dft->inter.phase_step_cos) +
-            (phase_cos * dft->inter.phase_step_sin);
+        dft->inter.phase_cos = (phase_cos * dft->inter.phase_step_cos) - (phase_sin * dft->inter.phase_step_sin);
+        dft->inter.phase_sin = (phase_sin * dft->inter.phase_step_cos) + (phase_cos * dft->inter.phase_step_sin);
     }
     dft->inter.sample_count++;
 
@@ -206,9 +206,9 @@ dft_status_t dft_cal(dft_t *dft)
     {
         const float gain = 2.0f / (float)dft->inter.sample_count;
 
-        dft->output.real = dft->inter.real_sum * gain;
-        dft->output.imag = dft->inter.imag_sum * gain;
-        dft->output.valid = 1U;
+        dft->output.real   = dft->inter.real_sum * gain;
+        dft->output.imag   = dft->inter.imag_sum * gain;
+        dft->output.valid  = 1U;
         dft->inter.running = 0U;
     }
 

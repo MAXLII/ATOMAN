@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_ol.c
- * @brief   bb_ol library module.
+ * @file bb_ol.c
+ * @brief bb_ol library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -46,6 +46,7 @@ static inline float bb_ol_limit_duty(float duty)
     {
         return 0.0f;
     }
+
     if (duty > 1.0f)
     {
         return 1.0f;
@@ -53,14 +54,22 @@ static inline float bb_ol_limit_duty(float duty)
     return duty;
 }
 
-static float bb_ol_calc_boost_dcm_duty(float i_ref, float t_s, float v_in, float v_out, float l)
+static float bb_ol_calc_boost_dcm_duty(float i_ref,
+                                       float t_s,
+                                       float v_in,
+                                       float v_out,
+                                       float l)
 {
     float factor = (2.0f * i_ref * t_s * l * (v_out - v_in)) / (v_in * v_out);
     float result = bb_ol_safe_sqrt(factor);
     return bb_ol_limit_duty(bb_ol_safe_div(result, t_s));
 }
 
-static float bb_ol_calc_buck_dcm_duty(float i_ref, float t_s, float v_in, float v_out, float l)
+static float bb_ol_calc_buck_dcm_duty(float i_ref,
+                                      float t_s,
+                                      float v_in,
+                                      float v_out,
+                                      float l)
 {
     float denominator = (v_in * (v_in - v_out)) / l;
     float factor = (2.0f * i_ref * t_s * v_out) / denominator;
@@ -88,7 +97,12 @@ static float bb_ol_calc_buck_boost_dcm_ton(float d,
     return bb_ol_safe_div(numerator, denominator);
 }
 
-static float bb_ol_check_buck_duty(float w, float t, float l, float v_in, float v_out, float i_ref)
+static float bb_ol_check_buck_duty(float w,
+                                   float t,
+                                   float l,
+                                   float v_in,
+                                   float v_out,
+                                   float i_ref)
 {
     float numerator = 2.0f * l * i_ref * v_out;
     float denominator = t * ((w + v_in) * (w + v_in) + (w - v_in) * v_out);
@@ -103,18 +117,18 @@ static void bb_ol_calc_buck_boost_dcm_duty(float v_in,
                                            float *p_buck_duty,
                                            float *p_boost_duty)
 {
-    float w = 0.0f;
+    float w   = 0.0f;
     float ton = 0.0f;
 
-    if ((p_buck_duty == NULL) ||
-        (p_boost_duty == NULL))
+    if (    (p_buck_duty == NULL)
+         || (p_boost_duty == NULL))
     {
         return;
     }
 
     if (i_ref < 0.0f)
     {
-        *p_buck_duty = 0.0f;
+        *p_buck_duty  = 0.0f;
         *p_boost_duty = 0.0f;
         return;
     }
@@ -124,6 +138,7 @@ static void bb_ol_calc_buck_boost_dcm_duty(float v_in,
     if (w > 0.0f)
     {
         *p_buck_duty = bb_ol_check_buck_duty(w, t, l, v_in, v_out, i_ref);
+
         if (*p_buck_duty > BB_OL_FIX_DUTY)
         {
             *p_buck_duty = BB_OL_FIX_DUTY;
@@ -134,7 +149,7 @@ static void bb_ol_calc_buck_boost_dcm_duty(float v_in,
         *p_buck_duty = BB_OL_FIX_DUTY;
     }
 
-    ton = bb_ol_calc_buck_boost_dcm_ton(*p_buck_duty, t, w, v_in, v_out, l, i_ref);
+    ton           = bb_ol_calc_buck_boost_dcm_ton(*p_buck_duty, t, w, v_in, v_out, l, i_ref);
     *p_boost_duty = bb_ol_limit_duty(bb_ol_safe_div(ton, t));
 }
 
@@ -151,59 +166,59 @@ void bb_ol_init(bb_ol_t *p_ol,
         return;
     }
 
-    p_ol->input.p_mode = p_mode;
-    p_ol->input.p_i_ref = p_i_ref;
+    p_ol->input.p_mode   = p_mode;
+    p_ol->input.p_i_ref  = p_i_ref;
     p_ol->input.p_pwm_ts = p_pwm_ts;
-    p_ol->input.p_v_in = p_v_in;
-    p_ol->input.p_v_out = p_v_out;
-    p_ol->input.p_l = p_l;
+    p_ol->input.p_v_in   = p_v_in;
+    p_ol->input.p_v_out  = p_v_out;
+    p_ol->input.p_l      = p_l;
 
-    p_ol->output.buck_duty = 0.0f;
-    p_ol->output.buck_up_en = 0U;
-    p_ol->output.buck_dn_en = 0U;
-    p_ol->output.boost_duty = 0.0f;
+    p_ol->output.buck_duty   = 0.0f;
+    p_ol->output.buck_up_en  = 0U;
+    p_ol->output.buck_dn_en  = 0U;
+    p_ol->output.boost_duty  = 0.0f;
     p_ol->output.boost_up_en = 0U;
     p_ol->output.boost_dn_en = 0U;
 }
 
 void bb_ol_func(bb_ol_t *p_ol)
 {
-    if ((p_ol == NULL) ||
-        (p_ol->input.p_mode == NULL) ||
-        (p_ol->input.p_i_ref == NULL) ||
-        (p_ol->input.p_pwm_ts == NULL) ||
-        (p_ol->input.p_v_in == NULL) ||
-        (p_ol->input.p_v_out == NULL) ||
-        (p_ol->input.p_l == NULL))
+    if (    (p_ol == NULL)
+         || (p_ol->input.p_mode == NULL)
+         || (p_ol->input.p_i_ref == NULL)
+         || (p_ol->input.p_pwm_ts == NULL)
+         || (p_ol->input.p_v_in == NULL)
+         || (p_ol->input.p_v_out == NULL)
+         || (p_ol->input.p_l == NULL))
     {
         return;
     }
 
     const bb_ol_mode_e mode = *p_ol->input.p_mode;
-    float i_ref = *p_ol->input.p_i_ref;
-    const float pwm_ts = *p_ol->input.p_pwm_ts;
-    const float v_in = *p_ol->input.p_v_in;
-    const float v_out = *p_ol->input.p_v_out;
-    const float l = *p_ol->input.p_l;
+    float i_ref             = *p_ol->input.p_i_ref;
+    const float pwm_ts      = *p_ol->input.p_pwm_ts;
+    const float v_in        = *p_ol->input.p_v_in;
+    const float v_out       = *p_ol->input.p_v_out;
+    const float l           = *p_ol->input.p_l;
 
     switch (mode)
     {
     case BB_OL_MODE_BOOST:
         DN_LMT(i_ref, 0.0f);
-        p_ol->output.buck_duty = 1.0f;
-        p_ol->output.boost_duty = 1.0f - bb_ol_calc_boost_dcm_duty(i_ref, pwm_ts, v_in, v_out, l);
-        p_ol->output.buck_dn_en = 1U;
-        p_ol->output.buck_up_en = 1U;
+        p_ol->output.buck_duty   = 1.0f;
+        p_ol->output.boost_duty  = 1.0f - bb_ol_calc_boost_dcm_duty(i_ref, pwm_ts, v_in, v_out, l);
+        p_ol->output.buck_dn_en  = 1U;
+        p_ol->output.buck_up_en  = 1U;
         p_ol->output.boost_dn_en = 1U;
         p_ol->output.boost_up_en = 0U;
         break;
 
     case BB_OL_MODE_BUCK:
         DN_LMT(i_ref, 0.0f);
-        p_ol->output.buck_duty = bb_ol_calc_buck_dcm_duty(i_ref, pwm_ts, v_in, v_out, l);
-        p_ol->output.boost_duty = 1.0f;
-        p_ol->output.buck_dn_en = 0U;
-        p_ol->output.buck_up_en = 1U;
+        p_ol->output.buck_duty   = bb_ol_calc_buck_dcm_duty(i_ref, pwm_ts, v_in, v_out, l);
+        p_ol->output.boost_duty  = 1.0f;
+        p_ol->output.buck_dn_en  = 0U;
+        p_ol->output.buck_up_en  = 1U;
         p_ol->output.boost_dn_en = 1U;
         p_ol->output.boost_up_en = 1U;
         break;
@@ -216,23 +231,23 @@ void bb_ol_func(bb_ol_t *p_ol)
                                        l,
                                        &p_ol->output.buck_duty,
                                        &p_ol->output.boost_duty);
-        p_ol->output.boost_duty = 1.0f - p_ol->output.boost_duty;
-        p_ol->output.buck_dn_en = 0U;
-        p_ol->output.buck_up_en = 1U;
+        p_ol->output.boost_duty  = 1.0f - p_ol->output.boost_duty;
+        p_ol->output.buck_dn_en  = 0U;
+        p_ol->output.buck_up_en  = 1U;
         p_ol->output.boost_dn_en = 1U;
         p_ol->output.boost_up_en = 0U;
         break;
 
     default:
-        p_ol->output.buck_duty = 0.0f;
-        p_ol->output.buck_up_en = 0U;
-        p_ol->output.buck_dn_en = 0U;
-        p_ol->output.boost_duty = 0.0f;
+        p_ol->output.buck_duty   = 0.0f;
+        p_ol->output.buck_up_en  = 0U;
+        p_ol->output.buck_dn_en  = 0U;
+        p_ol->output.boost_duty  = 0.0f;
         p_ol->output.boost_up_en = 0U;
         p_ol->output.boost_dn_en = 0U;
         break;
     }
 
-    p_ol->output.buck_duty = bb_ol_limit_duty(p_ol->output.buck_duty);
+    p_ol->output.buck_duty  = bb_ol_limit_duty(p_ol->output.buck_duty);
     p_ol->output.boost_duty = bb_ol_limit_duty(p_ol->output.boost_duty);
 }

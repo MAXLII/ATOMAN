@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_data_pool_business.h
- * @brief   Demo data-pool business interface.
+ * @file demo_data_pool_business.h
+ * @brief Demo data-pool business interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Reads publish only a stable task-context snapshot
  *          - The data pool does not access Platform resources
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

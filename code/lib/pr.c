@@ -1,7 +1,7 @@
 ﻿// SPDX-License-Identifier: MIT
 /**
- * @file    pr.c
- * @brief   pr library module.
+ * @file pr.c
+ * @brief pr library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -69,9 +69,9 @@ bool pr_init(pr_t *p_str,
              float *p_ref,
              float *p_act)
 {
-    if ((p_str == NULL) ||
-        (p_ref == NULL) ||
-        (p_act == NULL))
+    if (    (p_str == NULL)
+         || (p_ref == NULL)
+         || (p_act == NULL))
     {
         return false;
     }
@@ -79,16 +79,16 @@ bool pr_init(pr_t *p_str,
     p_str->input.p_ref = p_ref;
     p_str->input.p_act = p_act;
 
-    p_str->inter.kp = kp;
-    p_str->inter.kr = kr;
-    p_str->inter.w0 = w0;
-    p_str->inter.wc = wc;
-    p_str->inter.ts = ts;
-    p_str->inter.a1 = 0.0f;
-    p_str->inter.a2 = 0.0f;
-    p_str->inter.b0 = 0.0f;
-    p_str->inter.b1 = 0.0f;
-    p_str->inter.b2 = 0.0f;
+    p_str->inter.kp     = kp;
+    p_str->inter.kr     = kr;
+    p_str->inter.w0     = w0;
+    p_str->inter.wc     = wc;
+    p_str->inter.ts     = ts;
+    p_str->inter.a1     = 0.0f;
+    p_str->inter.a2     = 0.0f;
+    p_str->inter.b0     = 0.0f;
+    p_str->inter.b1     = 0.0f;
+    p_str->inter.b2     = 0.0f;
     p_str->inter.up_lmt = up_lmt;
     p_str->inter.dn_lmt = dn_lmt;
 
@@ -98,9 +98,9 @@ bool pr_init(pr_t *p_str,
 
 bool pr_cal(pr_t *p_str)
 {
-    if ((p_str == NULL) ||
-        (p_str->input.p_ref == NULL) ||
-        (p_str->input.p_act == NULL))
+    if (    (p_str == NULL)
+         || (p_str->input.p_ref == NULL)
+         || (p_str->input.p_act == NULL))
     {
         return false;
     }
@@ -110,14 +110,11 @@ bool pr_cal(pr_t *p_str)
     float e2 = p_str->inter.e[1];
     float u1 = p_str->inter.u[0];
     float u2 = p_str->inter.u[1];
-    float u_raw = p_str->inter.b0 * e0 +
-                  p_str->inter.b1 * e1 +
-                  p_str->inter.b2 * e2 -
-                  p_str->inter.a1 * u1 -
-                  p_str->inter.a2 * u2;
-    float u_sat = u_raw;
+    float u_raw = p_str->inter.b0 * e0 + p_str->inter.b1 * e1 + p_str->inter.b2 * e2 - p_str->inter.a1 * u1
+                - p_str->inter.a2 * u2;
+    float u_sat       = u_raw;
     bool is_saturated = false;
-    bool hold_state = false;
+    bool hold_state   = false;
 
     UP_DN_LMT(u_sat, p_str->inter.up_lmt, p_str->inter.dn_lmt);
     is_saturated = (u_sat != u_raw);
@@ -127,10 +124,13 @@ bool pr_cal(pr_t *p_str)
      * by the current error direction. This keeps the PR state from winding up
      * during hard startup/limit conditions while still allowing recovery.
      */
+
     if (is_saturated)
     {
-        if (((u_raw > p_str->inter.up_lmt) && (e0 > 0.0f)) ||
-            ((u_raw < p_str->inter.dn_lmt) && (e0 < 0.0f)))
+        if (    (    (u_raw > p_str->inter.up_lmt)
+                  && (e0 > 0.0f))
+             || (    (u_raw < p_str->inter.dn_lmt)
+                  && (e0 < 0.0f)))
         {
             hold_state = true;
         }
@@ -147,9 +147,9 @@ bool pr_cal(pr_t *p_str)
         p_str->inter.u[0] = u_sat;
     }
 
-    p_str->output.raw = u_raw;
-    p_str->output.sat = u_sat;
-    p_str->output.val = u_sat;
+    p_str->output.raw          = u_raw;
+    p_str->output.sat          = u_sat;
+    p_str->output.val          = u_sat;
     p_str->output.is_saturated = is_saturated;
 
     return true;
@@ -157,12 +157,12 @@ bool pr_cal(pr_t *p_str)
 
 bool pr_update_freq(pr_t *p_str, float omega)
 {
-    if ((p_str == NULL) ||
-        (p_str->inter.kp < 0.0f) ||
-        (p_str->inter.kr < 0.0f) ||
-        (p_str->inter.wc <= 0.0f) ||
-        (p_str->inter.ts <= 0.0f) ||
-        (omega <= 0.0f))
+    if (    (p_str == NULL)
+         || (p_str->inter.kp < 0.0f)
+         || (p_str->inter.kr < 0.0f)
+         || (p_str->inter.wc <= 0.0f)
+         || (p_str->inter.ts <= 0.0f)
+         || (omega <= 0.0f))
     {
         return false;
     }
@@ -205,14 +205,14 @@ void pr_reset(pr_t *p_str)
         return;
     }
 
-    p_str->inter.e[0] = 0.0f;
-    p_str->inter.e[1] = 0.0f;
-    p_str->inter.e[2] = 0.0f;
-    p_str->inter.u[0] = 0.0f;
-    p_str->inter.u[1] = 0.0f;
-    p_str->inter.u[2] = 0.0f;
-    p_str->output.raw = 0.0f;
-    p_str->output.sat = 0.0f;
-    p_str->output.val = 0.0f;
+    p_str->inter.e[0]          = 0.0f;
+    p_str->inter.e[1]          = 0.0f;
+    p_str->inter.e[2]          = 0.0f;
+    p_str->inter.u[0]          = 0.0f;
+    p_str->inter.u[1]          = 0.0f;
+    p_str->inter.u[2]          = 0.0f;
+    p_str->output.raw          = 0.0f;
+    p_str->output.sat          = 0.0f;
+    p_str->output.val          = 0.0f;
     p_str->output.is_saturated = false;
 }

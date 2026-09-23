@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_cfg.c
- * @brief   bb_cfg control module.
+ * @file bb_cfg.c
+ * @brief bb_cfg control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -29,25 +29,28 @@
 #include "bb_cfg.h"
 #include <stddef.h>
 
-static bb_ctrl_setpoint_t setpoint_active = {0};   /* setpoint_active: snapshot consumed by control logic */
+static bb_ctrl_setpoint_t setpoint_active   = {0}; /* setpoint_active: snapshot consumed by control logic */
 static bb_ctrl_setpoint_t setpoint_building = {0}; /* setpoint_building: scratch image updated by upper layers */
 
 static bb_ctrl_setpoint_mgr_t setpoint_mgr = {
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0U,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0U,
-    },
+    .active =
+        {
+            .p_data  = &setpoint_active,
+            .version = 0U,
+        },
+    .building =
+        {
+            .p_data  = &setpoint_building,
+            .version = 0U,
+        },
 };
 
 static bb_ctrl_timing_t ctrl_timing = {0};
 
 static uint8_t bb_cfg_timing_is_valid(const bb_ctrl_timing_t *p_timing)
 {
-    return (p_timing != NULL) && (p_timing->ctrl_ts > 0.0f);
+    return (p_timing != NULL)
+        && (p_timing->ctrl_ts > 0.0f);
 }
 
 void bb_cfg_set_timing(const bb_ctrl_timing_t *p_timing)
@@ -201,8 +204,8 @@ void bb_cfg_set_out_curr_lmt(float out_curr_lmt)
  */
 void bb_cfg_publish_building(void)
 {
-    if ((setpoint_mgr.building.p_data == NULL) ||
-        (setpoint_mgr.active.p_data == NULL))
+    if (    (setpoint_mgr.building.p_data == NULL)
+         || (setpoint_mgr.active.p_data == NULL))
     {
         return;
     }
@@ -219,9 +222,9 @@ void bb_cfg_publish_building(void)
  */
 uint8_t bb_cfg_is_ready(void)
 {
-    return (setpoint_mgr.active.p_data != NULL) &&
-           (setpoint_mgr.building.p_data != NULL) &&
-           (bb_cfg_timing_is_valid(&ctrl_timing) != 0U);
+    return (setpoint_mgr.active.p_data != NULL)
+        && (setpoint_mgr.building.p_data != NULL)
+        && (bb_cfg_timing_is_valid(&ctrl_timing) != 0U);
 }
 
 /**
@@ -231,8 +234,8 @@ uint8_t bb_cfg_is_ready(void)
  */
 void bb_cfg_sync_building_to_active(void)
 {
-    if ((setpoint_mgr.building.p_data == NULL) ||
-        (setpoint_mgr.active.p_data == NULL))
+    if (    (setpoint_mgr.building.p_data == NULL)
+         || (setpoint_mgr.active.p_data == NULL))
     {
         return;
     }

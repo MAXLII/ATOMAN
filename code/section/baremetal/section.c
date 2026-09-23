@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    section.c
- * @brief   Bare-metal section runtime module.
+ * @file section.c
+ * @brief Bare-metal section runtime module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,12 +32,12 @@
 #include <stddef.h>
 #include <string.h>
 
-section_item_t *p_task_first = NULL;
+section_item_t *p_task_first       = NULL;
 static section_item_t *p_task_tail = NULL;
-section_item_t *p_interrupt_first = NULL;
-section_item_t *p_link_first = NULL;
+section_item_t *p_interrupt_first  = NULL;
+section_item_t *p_link_first       = NULL;
 static section_item_t *p_link_tail = NULL;
-section_item_t *p_init_first = NULL;
+section_item_t *p_init_first       = NULL;
 
 REG_DBG_LIST(init, p_init_first)
 REG_DBG_LIST(task, p_task_first)
@@ -50,11 +50,11 @@ volatile section_critical_race_debug_t g_section_critical_race_debug;
 #if (PERF_ENABLE)
 #define SECTION_TASK_PERF_LOCALS()     \
     section_perf_record_t *rec = NULL; \
-    uint32_t perf_start = 0u
+    uint32_t perf_start        = 0u
 #define SECTION_TASK_PERF_BEGIN(task)              \
     do                                             \
     {                                              \
-        rec = (task)->p_perf_record;               \
+        rec        = (task)->p_perf_record;        \
         perf_start = section_perf_task_begin(rec); \
     } while (0)
 #define SECTION_TASK_PERF_END()                 \
@@ -62,20 +62,19 @@ volatile section_critical_race_debug_t g_section_critical_race_debug;
     {                                           \
         section_perf_task_end(rec, perf_start); \
     } while (0)
-#define SECTION_TASK_PERF_PERIOD_SET(task)                                         \
-    do                                                                             \
-    {                                                                              \
-        section_perf_task_period_set((task)->p_perf_record,                        \
-                                     (task)->t_period * SECTION_SYS_TICK_UNIT_US); \
+#define SECTION_TASK_PERF_PERIOD_SET(task)                                                                \
+    do                                                                                                    \
+    {                                                                                                     \
+        section_perf_task_period_set((task)->p_perf_record, (task)->t_period * SECTION_SYS_TICK_UNIT_US); \
     } while (0)
 #if (PERF_INTERRUPT_ENABLE == 1u)
-#define SECTION_INTERRUPT_PERF_RUN(item)                         \
-    do                                                           \
-    {                                                            \
-        section_perf_record_t *rec = (item)->p_perf_record;      \
-        uint32_t perf_start = section_perf_interrupt_begin(rec); \
-        (item)->p_func();                                        \
-        section_perf_interrupt_end(rec, perf_start);             \
+#define SECTION_INTERRUPT_PERF_RUN(item)                                \
+    do                                                                  \
+    {                                                                   \
+        section_perf_record_t *rec = (item)->p_perf_record;             \
+        uint32_t perf_start        = section_perf_interrupt_begin(rec); \
+        (item)->p_func();                                               \
+        section_perf_interrupt_end(rec, perf_start);                    \
     } while (0)
 #else
 #define SECTION_INTERRUPT_PERF_RUN(item) \
@@ -177,12 +176,12 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
 
 #if defined(SECTION_SENTINEL_REG_SECTION)
 SECTION_REG_START_ATTR_PREFIX const reg_section_t section_reg_start = {0u, NULL};
-SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop = {0u, NULL};
+SECTION_REG_STOP_ATTR_PREFIX const reg_section_t section_reg_stop   = {0u, NULL};
 #define SECTION_REG_FIRST ((const reg_section_t *)(&section_reg_start + 1))
-#define SECTION_REG_LAST ((const reg_section_t *)&section_reg_stop)
+#define SECTION_REG_LAST  ((const reg_section_t *)&section_reg_stop)
 #else
 #define SECTION_REG_FIRST ((const reg_section_t *)&SECTION_START)
-#define SECTION_REG_LAST ((const reg_section_t *)&SECTION_STOP)
+#define SECTION_REG_LAST  ((const reg_section_t *)&SECTION_STOP)
 #endif
 
 #if (PERF_ENABLE)
@@ -258,14 +257,15 @@ static void task_insert(section_item_t *p_item)
 {
     reg_task_t *p_task = NULL;
 
-    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    if (    (p_item == NULL)
+         || (p_item->p_obj == NULL))
     {
         return;
     }
 
-    p_task = (reg_task_t *)p_item->p_obj;
+    p_task            = (reg_task_t *)p_item->p_obj;
     p_task->time_last = SECTION_SYS_TICK;
-    p_task->is_ready = 0u;
+    p_task->is_ready  = 0u;
     do
     {
         section_perf_task_period_set((p_task)->p_perf_record, (p_task)->t_period * 100u);
@@ -275,39 +275,41 @@ static void task_insert(section_item_t *p_item)
     if (p_task_first == NULL)
     {
         p_task_first = p_item;
-        p_task_tail = p_item;
+        p_task_tail  = p_item;
     }
     else
     {
         p_task_tail->p_next = p_item;
-        p_task_tail = p_item;
+        p_task_tail         = p_item;
     }
 }
 
 static void interrupt_insert(section_item_t *p_item)
 {
     reg_interrupt_t *p_interrupt = NULL;
-    section_item_t *p_prev = NULL;
+    section_item_t *p_prev       = NULL;
 
-    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    if (    (p_item == NULL)
+         || (p_item->p_obj == NULL))
     {
         return;
     }
 
     p_interrupt = (reg_interrupt_t *)p_item->p_obj;
 
-    if ((p_interrupt_first == NULL) ||
-        (p_interrupt->priority < ((reg_interrupt_t *)p_interrupt_first->p_obj)->priority))
+    if (    (p_interrupt_first == NULL)
+         || (p_interrupt->priority < ((reg_interrupt_t *)p_interrupt_first->p_obj)->priority))
     {
-        p_item->p_next = p_interrupt_first;
+        p_item->p_next    = p_interrupt_first;
         p_interrupt_first = p_item;
     }
     else
     {
         p_prev = p_interrupt_first;
         /* Preserve registration order among callbacks with equal priority. */
-        while ((p_prev->p_next != NULL) &&
-               (((reg_interrupt_t *)p_prev->p_next->p_obj)->priority <= p_interrupt->priority))
+
+        while (    (p_prev->p_next != NULL)
+                && (((reg_interrupt_t *)p_prev->p_next->p_obj)->priority <= p_interrupt->priority))
         {
             p_prev = p_prev->p_next;
         }
@@ -318,47 +320,51 @@ static void interrupt_insert(section_item_t *p_item)
 
 static void link_insert(section_item_t *p_item)
 {
-    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    if (    (p_item == NULL)
+         || (p_item->p_obj == NULL))
     {
         return;
     }
 
     p_item->p_next = NULL;
+
     if (p_link_first == NULL)
     {
         p_link_first = p_item;
-        p_link_tail = p_item;
+        p_link_tail  = p_item;
     }
     else
     {
         p_link_tail->p_next = p_item;
-        p_link_tail = p_item;
+        p_link_tail         = p_item;
     }
 }
 
 static void init_insert(section_item_t *p_item)
 {
-    reg_init_t *p_init = NULL;
+    reg_init_t *p_init     = NULL;
     section_item_t *p_prev = NULL;
 
-    if ((p_item == NULL) || (p_item->p_obj == NULL))
+    if (    (p_item == NULL)
+         || (p_item->p_obj == NULL))
     {
         return;
     }
 
     p_init = (reg_init_t *)p_item->p_obj;
 
-    if ((p_init_first == NULL) ||
-        (p_init->priority < ((reg_init_t *)p_init_first->p_obj)->priority))
+    if (    (p_init_first == NULL)
+         || (p_init->priority < ((reg_init_t *)p_init_first->p_obj)->priority))
     {
         p_item->p_next = p_init_first;
-        p_init_first = p_item;
+        p_init_first   = p_item;
     }
     else
     {
         p_prev = p_init_first;
-        while ((p_prev->p_next != NULL) &&
-               (((reg_init_t *)p_prev->p_next->p_obj)->priority <= p_init->priority))
+
+        while (    (p_prev->p_next != NULL)
+                && (((reg_init_t *)p_prev->p_next->p_obj)->priority <= p_init->priority))
         {
             p_prev = p_prev->p_next;
         }
@@ -371,15 +377,15 @@ section_item_t *section_collect(SECTION_E type)
 {
     section_item_t *p_first = NULL;
     section_item_t **p_tail = &p_first;
-    for (const reg_section_t *p_reg = SECTION_REG_FIRST;
-         p_reg < SECTION_REG_LAST; ++p_reg)
+
+    for (const reg_section_t *p_reg = SECTION_REG_FIRST; p_reg < SECTION_REG_LAST; ++p_reg)
     {
         if (p_reg->section_type == (uint32_t)type)
         {
             section_item_t *p_item = p_reg->p_str;
-            p_item->p_next = NULL;
-            *p_tail = p_item;
-            p_tail = &p_item->p_next;
+            p_item->p_next         = NULL;
+            *p_tail                = p_item;
+            p_tail                 = &p_item->p_next;
         }
     }
     return p_first;
@@ -388,16 +394,14 @@ section_item_t *section_collect(SECTION_E type)
 void section_init(void)
 {
     task_scheduler_ready = 0u;
-    p_init_first = NULL;
-    p_task_first = NULL;
-    p_task_tail = NULL;
-    p_interrupt_first = NULL;
-    p_link_first = NULL;
-    p_link_tail = NULL;
+    p_init_first         = NULL;
+    p_task_first         = NULL;
+    p_task_tail          = NULL;
+    p_interrupt_first    = NULL;
+    p_link_first         = NULL;
+    p_link_tail          = NULL;
 
-    for (const reg_section_t *p = SECTION_REG_FIRST;
-         p < SECTION_REG_LAST;
-         ++p)
+    for (const reg_section_t *p = SECTION_REG_FIRST; p < SECTION_REG_LAST; ++p)
     {
         switch (p->section_type)
         {
@@ -421,6 +425,7 @@ void section_init(void)
     for (section_item_t *p_item = p_init_first; p_item != NULL; p_item = p_item->p_next)
     {
         reg_init_t *p_init = (reg_init_t *)p_item->p_obj;
+
         if (p_init->p_func != NULL)
         {
             p_init->p_func();
@@ -435,12 +440,12 @@ void section_runtime_reset(void)
     task_scheduler_ready = 0u;
     (void)memset((void *)&g_section_critical_race_debug, 0, sizeof(g_section_critical_race_debug));
     p_task_first = NULL;
-    p_task_tail = NULL;
+    p_task_tail  = NULL;
     (void)memset((void *)&g_section_fault_debug, 0, sizeof(g_section_fault_debug));
     p_interrupt_first = NULL;
-    p_link_first = NULL;
-    p_link_tail = NULL;
-    p_init_first = NULL;
+    p_link_first      = NULL;
+    p_link_tail       = NULL;
+    p_init_first      = NULL;
 }
 
 static void task_schedule_next(reg_task_t *task, uint32_t elapsed)
@@ -455,12 +460,15 @@ static void task_activate_if_due(reg_task_t *task, uint32_t now)
     uint32_t elapsed = 0u;
     uint32_t primask = 0u;
 
-    if ((task == NULL) || (task->p_func == NULL) || (task->t_period == 0u))
+    if (    (task == NULL)
+         || (task->p_func == NULL)
+         || (task->t_period == 0u))
     {
         return;
     }
 
     elapsed = (uint32_t)(now - task->time_last);
+
     if (elapsed < task->t_period)
     {
         return;
@@ -469,7 +477,9 @@ static void task_activate_if_due(reg_task_t *task, uint32_t now)
     primask = section_critical_enter();
 
     elapsed = (uint32_t)(now - task->time_last);
-    if ((elapsed >= task->t_period) && (task->is_ready == 0u))
+
+    if (    (elapsed >= task->t_period)
+         && (task->is_ready == 0u))
     {
         task_schedule_next(task, elapsed);
         task->is_ready = 1u;
@@ -496,12 +506,13 @@ void section_task_tick(void)
 static uint8_t task_claim(reg_task_t *p_task)
 {
     uint32_t primask = section_critical_enter();
-    uint8_t claimed = 0u;
+    uint8_t claimed  = 0u;
 
-    if ((p_task != NULL) && (p_task->is_ready != 0u))
+    if (    (p_task != NULL)
+         && (p_task->is_ready != 0u))
     {
         p_task->is_ready = 0u;
-        claimed = 1u;
+        claimed          = 1u;
     }
 
     section_critical_exit(primask);
@@ -533,6 +544,7 @@ void FUNC_RAM section_interrupt(void)
     for (section_item_t *p_item = p_interrupt_first; p_item != NULL; p_item = p_item->p_next)
     {
         reg_interrupt_t *p = (reg_interrupt_t *)p_item->p_obj;
+
         if (p->p_func == NULL)
         {
             continue;
@@ -544,13 +556,15 @@ void FUNC_RAM section_interrupt(void)
 
 static void link_process(section_link_t *p_link)
 {
-    uint8_t data = 0u;                  /* Byte dispatched during the current Link round. */
+    uint8_t data                  = 0u; /* Byte dispatched during the current Link round. */
     uint32_t processed_byte_count = 0u; /* Bytes consumed from this Link during the current round. */
-    uint32_t handler_index = 0u;        /* Handler receiving the current byte. */
+    uint32_t handler_index        = 0u; /* Handler receiving the current byte. */
 
-    if ((p_link == NULL) ||                     /* No Link descriptor is available. */
-        (p_link->rx_get_byte == NULL) ||        /* The Link cannot provide received bytes. */
-        (p_link->handler_arr == NULL))          /* The Link has no byte consumers. */
+    if (    (p_link == NULL)
+         || /* No Link descriptor is available. */
+            (p_link->rx_get_byte == NULL)
+         || /* The Link cannot provide received bytes. */
+            (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
     {
         return;
     }
@@ -564,8 +578,8 @@ static void link_process(section_link_t *p_link)
 
         for (handler_index = 0u; handler_index < p_link->handler_num; ++handler_index)
         {
-            const section_link_handler_item_t *p_handler =
-                &p_link->handler_arr[handler_index]; /* Handler bound to the current Link. */
+            const section_link_handler_item_t *p_handler = &p_link->handler_arr[handler_index]; /* Handler bound to the current Link. */
+
             if (p_handler->func != NULL)
             {
                 p_handler->func(data, p_link->my_printf, p_handler->ctx);
@@ -587,7 +601,9 @@ REG_TASK(10, section_link_task)
 
 void section_fsm_func(reg_fsm_t *fsm)
 {
-    if ((fsm == NULL) || (fsm->p_fsm_func_table == NULL) || (fsm->p_fsm_ev == NULL))
+    if (    (fsm == NULL)
+         || (fsm->p_fsm_func_table == NULL)
+         || (fsm->p_fsm_ev == NULL))
     {
         return;
     }
@@ -595,12 +611,14 @@ void section_fsm_func(reg_fsm_t *fsm)
     for (uint32_t i = 0; i < fsm->fsm_table_size; ++i)
     {
         reg_fsm_func_t *entry = &fsm->p_fsm_func_table[i];
+
         if (fsm->fsm_sta == entry->fsm_sta)
         {
             if (fsm->fsm_sta_is_change != 0u)
             {
                 fsm->fsm_sta_is_change = 0;
                 PLECS_LOG("%s\n", entry->p_name);
+
                 if (entry->func_in != NULL)
                 {
                     entry->func_in();
@@ -621,14 +639,16 @@ void section_fsm_func(reg_fsm_t *fsm)
                     next = entry->func_chk(*fsm->p_fsm_ev);
                 }
 
-                if ((next != 0u) && (next != entry->fsm_sta))
+                if (    (next != 0u)
+                     && (next != entry->fsm_sta))
                 {
                     PLECS_LOG("%s-chk_ev:%lu\n", entry->p_name, (unsigned long)*fsm->p_fsm_ev);
+
                     if (entry->func_out != NULL)
                     {
                         entry->func_out();
                     }
-                    fsm->fsm_sta = next;
+                    fsm->fsm_sta           = next;
                     fsm->fsm_sta_is_change = 1u;
                 }
                 *fsm->p_fsm_ev = 0u;

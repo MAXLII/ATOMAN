@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    llc_ctrl.c
- * @brief   LLC control module.
+ * @file llc_ctrl.c
+ * @brief LLC control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,29 +36,29 @@
 
 #define p_hal (p_ctrl_hal)
 
-static pi_tustin_t volt_loop = {0};
-static notch_t v_bus_notch_filter = {0};
-static llc_ctrl_hal_t *p_ctrl_hal = NULL;
-static llc_ctrl_setpoint_t safe_setpoint = {0};
+static pi_tustin_t volt_loop                       = {0};
+static notch_t v_bus_notch_filter                  = {0};
+static llc_ctrl_hal_t *p_ctrl_hal                  = NULL;
+static llc_ctrl_setpoint_t safe_setpoint           = {0};
 static llc_ctrl_setpoint_t *p_ctrl_active_setpoint = &safe_setpoint;
-static float v_out_ref = 0.0f;
-static float i_out_act = 0.0f;
-static float v_bus_act = 0.0f;
-static float v_bus_notch_comp = 0.0f;
-static float v_out_flt = 0.0f;
-static float v_out_last = 0.0f;
-static uint8_t run_active = 0U;
+static float v_out_ref                             = 0.0f;
+static float i_out_act                             = 0.0f;
+static float v_bus_act                             = 0.0f;
+static float v_bus_notch_comp                      = 0.0f;
+static float v_out_flt                             = 0.0f;
+static float v_out_last                            = 0.0f;
+static uint8_t run_active                          = 0U;
 
 static uint8_t llc_ctrl_ready(void)
 {
-    return (uint8_t)((p_hal != NULL) &&
-                     (llc_cfg_is_ready() != 0U) &&
-                     (p_ctrl_active_setpoint != NULL) &&
-                     (p_hal->p_v_out != NULL) &&
-                     (p_hal->p_i_out != NULL) &&
-                     (p_hal->p_v_bus != NULL) &&
-                     (p_hal->p_set_pwm_func != NULL) &&
-                     (p_hal->p_pwm_disable != NULL));
+    return (uint8_t)(    (p_hal != NULL)
+                      && (llc_cfg_is_ready() != 0U)
+                      && (p_ctrl_active_setpoint != NULL)
+                      && (p_hal->p_v_out != NULL)
+                      && (p_hal->p_i_out != NULL)
+                      && (p_hal->p_v_bus != NULL)
+                      && (p_hal->p_set_pwm_func != NULL)
+                      && (p_hal->p_pwm_disable != NULL));
 }
 
 static inline void llc_ctrl_sample_analog(void)
@@ -73,20 +73,15 @@ static inline void llc_ctrl_sample_analog(void)
     v_bus_act = *p_hal->p_v_bus;
 
     notch_cal(&v_bus_notch_filter);
-    v_bus_notch_comp = (v_bus_notch_filter.output.val - v_bus_act) /
-                       LLC_CTRL_OUT_FF_NORM_BASE;
+    v_bus_notch_comp = (v_bus_notch_filter.output.val - v_bus_act) / LLC_CTRL_OUT_FF_NORM_BASE;
 
     v_out_raw = *p_hal->p_v_out;
-    LPF(v_out_raw,
-        v_out_last,
-        v_out_flt,
-        llc_cfg_get_ctrl_ts(),
-        M_2PI * LLC_CTRL_VOUT_LPF_CUTOFF_HZ);
+    LPF(v_out_raw, v_out_last, v_out_flt, llc_cfg_get_ctrl_ts(), M_2PI * LLC_CTRL_VOUT_LPF_CUTOFF_HZ);
 }
 
 static void llc_ctrl_reinit_states(void)
 {
-    float ctrl_ts = 0.0f;
+    float ctrl_ts                          = 0.0f;
     llc_ctrl_setpoint_t *p_active_setpoint = NULL;
 
     p_ctrl_hal = llc_hal_get_ctrl();
@@ -100,13 +95,13 @@ static void llc_ctrl_reinit_states(void)
         return;
     }
 
-    ctrl_ts = llc_cfg_get_ctrl_ts();
-    i_out_act = *p_hal->p_i_out;
-    v_bus_act = *p_hal->p_v_bus;
+    ctrl_ts          = llc_cfg_get_ctrl_ts();
+    i_out_act        = *p_hal->p_i_out;
+    v_bus_act        = *p_hal->p_v_bus;
     v_bus_notch_comp = 0.0f;
-    v_out_flt = *p_hal->p_v_out;
-    v_out_last = v_out_flt;
-    v_out_ref = v_out_flt;
+    v_out_flt        = *p_hal->p_v_out;
+    v_out_last       = v_out_flt;
+    v_out_ref        = v_out_flt;
 
     notch_init(&v_bus_notch_filter,
                M_2PI * LLC_CTRL_VBUS_NOTCH_CENTER_HZ,
@@ -136,8 +131,8 @@ static void llc_ctrl_force_safe_output(void)
     run_active = 0U;
     pi_tustin_reset(&volt_loop);
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_pwm_disable != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_pwm_disable != NULL))
     {
         p_hal->p_pwm_disable();
     }
@@ -246,8 +241,8 @@ void llc_ctrl_get_pi_debug(llc_ctrl_pi_debug_t *p_debug)
         return;
     }
 
-    p_debug->ref = v_out_ref;
-    p_debug->fbk = v_out_flt;
-    p_debug->out = volt_loop.output.val;
+    p_debug->ref         = v_out_ref;
+    p_debug->fbk         = v_out_flt;
+    p_debug->out         = volt_loop.output.val;
     p_debug->out_ff_norm = v_bus_notch_comp;
 }

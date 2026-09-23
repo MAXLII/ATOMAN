@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_protocol.h
- * @brief   Demo FRAME protocol contract.
+ * @file demo_protocol.h
+ * @brief Demo FRAME protocol contract.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - New wire fields are appended at the structure tail
  *          - Receivers bound copies by the received payload length
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,11 +39,11 @@ typedef struct
     int16_t temperature_x10;
 } demo_comm_frame_t;
 
-#define DEMO_CMD_SET_LOOPBACK 0x30u
-#define DEMO_CMD_WORD_LOOPBACK 0x01u
-#define DEMO_CMD_SET_FRAME_LOOPBACK 0x01u
+#define DEMO_CMD_SET_LOOPBACK        0x30u
+#define DEMO_CMD_WORD_LOOPBACK       0x01u
+#define DEMO_CMD_SET_FRAME_LOOPBACK  0x01u
 #define DEMO_CMD_WORD_FRAME_LOOPBACK 0x17u
-#define DEMO_CMD_SET_CONTROL 0x30u
-#define DEMO_CMD_WORD_CONTROL 0x02u
+#define DEMO_CMD_SET_CONTROL         0x30u
+#define DEMO_CMD_WORD_CONTROL        0x02u
 
 #endif /* DEMO_PROTOCOL_H */

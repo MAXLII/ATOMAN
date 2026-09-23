@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_jitter.c
- * @brief   SRTOS interrupt jitter test module.
+ * @file demo_jitter.c
+ * @brief SRTOS interrupt jitter test module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR path stores fixed-size RAM records and updates simple counters
  *          - TIMER2 counter value is recorded at ISR entry on GD32G553
  *
- * @author  Max.Li
- * @date    2026-06-30
+ * @author Max.Li
+ * @date 2026-06-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -69,7 +69,7 @@ static void demo_jitter_work_medium(uint32_t seed)
 static void demo_jitter_work_long(uint32_t ticks, uint32_t seed)
 {
     const uint32_t start_tick = SECTION_SYS_TICK;
-    uint32_t acc = seed ^ 0xA5A5A5A5u;
+    uint32_t acc              = seed ^ 0xA5A5A5A5u;
 
     while ((uint32_t)(SECTION_SYS_TICK - start_tick) < ticks)
     {
@@ -107,6 +107,7 @@ static void demo_jitter_task_run(uint32_t id, uint32_t mode)
         demo_jitter_work_long(15u + (id % 7u), id + count);
         break;
     default:
+
         if ((count % 5u) == 0u)
         {
             demo_jitter_work_long(20u + (id % 11u), id + count);
@@ -119,11 +120,11 @@ static void demo_jitter_task_run(uint32_t id, uint32_t mode)
     }
 }
 
-#define DEMO_JITTER_TASK_DEFINE(id, period, mode)        \
-    static void demo_jitter_task_##id(void)              \
-    {                                                    \
-        demo_jitter_task_run((uint32_t)(id), (mode));    \
-    }                                                    \
+#define DEMO_JITTER_TASK_DEFINE(id, period, mode)     \
+    static void demo_jitter_task_##id(void)           \
+    {                                                 \
+        demo_jitter_task_run((uint32_t)(id), (mode)); \
+    }                                                 \
     REG_TASK((period), demo_jitter_task_##id)
 
 #define DEMO_JITTER_TASK_DEFINE4(id0, p0, id1, p1, id2, p2, id3, p3) \
@@ -198,23 +199,25 @@ void demo_jitter_timer2_isr_entry(void)
 {
 #if (DEMO_JITTER_CAPTURE_ENABLE == 1u)
     const uint32_t entry_count = demo_jitter_timer_count_get();
-    const uint32_t index = g_demo_jitter_debug.write_index % DEMO_JITTER_SAMPLE_COUNT;
+    const uint32_t index       = g_demo_jitter_debug.write_index % DEMO_JITTER_SAMPLE_COUNT;
 
     g_demo_jitter_timer2_count[index] = entry_count;
     g_demo_jitter_debug.write_index++;
-    g_demo_jitter_debug.sample_count = DEMO_JITTER_SAMPLE_COUNT;
-    g_demo_jitter_debug.timer2_counter_hz = demo_jitter_timer_clock_hz_get();
-    g_demo_jitter_debug.timer2_hz = DEMO_JITTER_TIMER2_HZ;
+    g_demo_jitter_debug.sample_count        = DEMO_JITTER_SAMPLE_COUNT;
+    g_demo_jitter_debug.timer2_counter_hz   = demo_jitter_timer_clock_hz_get();
+    g_demo_jitter_debug.timer2_hz           = DEMO_JITTER_TIMER2_HZ;
     g_demo_jitter_debug.timer2_period_ticks = demo_jitter_timer_period_ticks_get();
-    g_demo_jitter_debug.last_entry_count = entry_count;
+    g_demo_jitter_debug.last_entry_count    = entry_count;
 
-    if ((g_demo_jitter_debug.min_entry_count == 0u) || (entry_count < g_demo_jitter_debug.min_entry_count))
+    if (    (g_demo_jitter_debug.min_entry_count == 0u)
+         || (entry_count < g_demo_jitter_debug.min_entry_count))
     {
         g_demo_jitter_debug.min_entry_count = entry_count;
     }
+
     if (entry_count > g_demo_jitter_debug.max_entry_count)
     {
-        g_demo_jitter_debug.max_entry_count = entry_count;
+        g_demo_jitter_debug.max_entry_count     = entry_count;
         g_demo_jitter_debug.max_entry_timestamp = g_demo_jitter_debug.write_index;
     }
 

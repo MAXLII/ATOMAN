@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_ctrl.c
- * @brief   PFC int32 controller module.
+ * @file pfc_ctrl.c
+ * @brief PFC int32 controller module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-27
+ * @author Max.Li
+ * @date 2026-06-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,32 +38,32 @@
 
 #define p_hal (p_ctrl_hal)
 
-static pi_tustin_t vbus_volt_loop = {0};
+static pi_tustin_t vbus_volt_loop    = {0};
 static pi_tustin_i32_t ind_curr_loop = {0};
 
-static pfc_ctrl_hal_t *p_ctrl_hal = NULL;
-static pfc_ctrl_setpoint_t pfc_ctrl_safe_setpoint = {0};
+static pfc_ctrl_hal_t *p_ctrl_hal                  = NULL;
+static pfc_ctrl_setpoint_t pfc_ctrl_safe_setpoint  = {0};
 static pfc_ctrl_setpoint_t *p_ctrl_active_setpoint = &pfc_ctrl_safe_setpoint;
-static sogi_i32_t grid_sogi = {0};
-static fll_i32_t grid_fll = {0};
-static int32_t grid_sogi_input = 0;
-static int32_t grid_fll_input_u = 0;
-static int32_t grid_fll_input_qu = 0;
-static int32_t grid_fll_input_err = 0;
-static int32_t grid_omega_last_mradps = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
-static volatile uint32_t grid_sogi_snapshot_seq = 0U;
-static volatile int32_t grid_sogi_snapshot_u = 0;
-static volatile int32_t grid_sogi_snapshot_qu = 0;
-static volatile int32_t grid_sogi_snapshot_err = 0;
-static volatile int32_t grid_omega_pending_mradps = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
-static int32_t vbus_loop_i_amp = 0;
-static float vbus_ref_ramped = 0.0f;
-static float vbus_feedback = 0.0f;
-static int8_t grid_zero_last_sign = 0;
-static int32_t ind_curr_ref = 0;
-static int32_t ind_curr_loop_out = 0;
-static int32_t pfc_pwm_cmd = 0;
-static uint8_t pfc_ctrl_run_active = 0U;
+static sogi_i32_t grid_sogi                        = {0};
+static fll_i32_t grid_fll                          = {0};
+static int32_t grid_sogi_input                     = 0;
+static int32_t grid_fll_input_u                    = 0;
+static int32_t grid_fll_input_qu                   = 0;
+static int32_t grid_fll_input_err                  = 0;
+static int32_t grid_omega_last_mradps              = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
+static volatile uint32_t grid_sogi_snapshot_seq    = 0U;
+static volatile int32_t grid_sogi_snapshot_u       = 0;
+static volatile int32_t grid_sogi_snapshot_qu      = 0;
+static volatile int32_t grid_sogi_snapshot_err     = 0;
+static volatile int32_t grid_omega_pending_mradps  = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
+static int32_t vbus_loop_i_amp                     = 0;
+static float vbus_ref_ramped                       = 0.0f;
+static float vbus_feedback                         = 0.0f;
+static int8_t grid_zero_last_sign                  = 0;
+static int32_t ind_curr_ref                        = 0;
+static int32_t ind_curr_loop_out                   = 0;
+static int32_t pfc_pwm_cmd                         = 0;
+static uint8_t pfc_ctrl_run_active                 = 0U;
 
 static inline int32_t pfc_ctrl_limit_i32(int32_t val, int32_t up_lmt, int32_t dn_lmt)
 {
@@ -115,6 +115,7 @@ static inline void pfc_ctrl_ramp_float(float *p_val, float target, float step)
     if (val < target)
     {
         val += step;
+
         if (val > target)
         {
             val = target;
@@ -123,6 +124,7 @@ static inline void pfc_ctrl_ramp_float(float *p_val, float target, float step)
     else if (val > target)
     {
         val -= step;
+
         if (val < target)
         {
             val = target;
@@ -146,7 +148,7 @@ static inline float pfc_ctrl_calc_vbus_slew_step(const pfc_ctrl_setpoint_t *p_se
 
 static inline uint8_t pfc_ctrl_grid_zero_cross_update(int32_t v_g)
 {
-    int8_t sign = 0;
+    int8_t sign      = 0;
     uint8_t is_cross = 0U;
 
     if (v_g > 0)
@@ -162,8 +164,8 @@ static inline uint8_t pfc_ctrl_grid_zero_cross_update(int32_t v_g)
         return 0U;
     }
 
-    if ((grid_zero_last_sign != 0) &&
-        (sign != grid_zero_last_sign))
+    if (    (grid_zero_last_sign != 0)
+         && (sign != grid_zero_last_sign))
     {
         is_cross = 1U;
     }
@@ -182,9 +184,7 @@ static inline int32_t pfc_ctrl_calc_ind_curr_ref(int32_t i_amp, int32_t v_g, int
         return 0;
     }
 
-    numerator = (int64_t)i_amp *
-                (int64_t)v_g *
-                (int64_t)PFC_CTRL_GRID_RMS_NOMINAL_CODE;
+    numerator = (int64_t)i_amp * (int64_t)v_g * (int64_t)PFC_CTRL_GRID_RMS_NOMINAL_CODE;
 
     return pfc_ctrl_sat_i64_to_i32(numerator / ((int64_t)v_rms * (int64_t)v_rms));
 }
@@ -198,8 +198,7 @@ static inline int32_t pfc_ctrl_calc_pwm_cmd(int32_t v_cap, int32_t v_l_cmd)
      * this node is kept in AC-voltage-code * PWM-reload domain. The app layer
      * divides by the bus-voltage feedback and converts the result to duty.
      */
-    numerator = ((int64_t)v_cap * (int64_t)PFC_CTRL_PWM_CMP_MAX) -
-                (int64_t)v_l_cmd;
+    numerator = ((int64_t)v_cap * (int64_t)PFC_CTRL_PWM_CMP_MAX) - (int64_t)v_l_cmd;
 
     return pfc_ctrl_sat_i64_to_i32(numerator);
 }
@@ -207,8 +206,8 @@ static inline int32_t pfc_ctrl_calc_pwm_cmd(int32_t v_cap, int32_t v_l_cmd)
 static inline void pfc_ctrl_publish_sogi_snapshot(void)
 {
     grid_sogi_snapshot_seq++;
-    grid_sogi_snapshot_u = grid_sogi.output.u;
-    grid_sogi_snapshot_qu = grid_sogi.output.qu;
+    grid_sogi_snapshot_u   = grid_sogi.output.u;
+    grid_sogi_snapshot_qu  = grid_sogi.output.qu;
     grid_sogi_snapshot_err = grid_sogi.output.err;
     grid_sogi_snapshot_seq++;
 }
@@ -216,16 +215,17 @@ static inline void pfc_ctrl_publish_sogi_snapshot(void)
 static inline uint8_t pfc_ctrl_read_sogi_snapshot(void)
 {
     uint32_t seq_before = 0U;
-    uint32_t seq_after = 0U;
+    uint32_t seq_after  = 0U;
 
     do
     {
-        seq_before = grid_sogi_snapshot_seq;
-        grid_fll_input_u = grid_sogi_snapshot_u;
-        grid_fll_input_qu = grid_sogi_snapshot_qu;
+        seq_before         = grid_sogi_snapshot_seq;
+        grid_fll_input_u   = grid_sogi_snapshot_u;
+        grid_fll_input_qu  = grid_sogi_snapshot_qu;
         grid_fll_input_err = grid_sogi_snapshot_err;
-        seq_after = grid_sogi_snapshot_seq;
-    } while ((seq_before != seq_after) || ((seq_after & 1U) != 0U));
+        seq_after          = grid_sogi_snapshot_seq;
+    } while (    (seq_before != seq_after)
+              || ((seq_after & 1U) != 0U));
 
     return (uint8_t)(seq_after != 0U);
 }
@@ -270,7 +270,7 @@ static void pfc_ctrl_init_observer(void)
                        &grid_fll_input_u,
                        &grid_fll_input_qu,
                        &grid_fll_input_err);
-    grid_omega_last_mradps = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
+    grid_omega_last_mradps    = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
     grid_omega_pending_mradps = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
 }
 
@@ -284,16 +284,16 @@ static inline void pfc_ctrl_reset_loops(void)
     grid_omega_pending_mradps = PFC_CTRL_GRID_OMEGA_INIT_MRADPS;
     pfc_ctrl_publish_sogi_snapshot();
     grid_zero_last_sign = 0;
-    vbus_loop_i_amp = 0;
-    ind_curr_ref = 0;
-    ind_curr_loop_out = 0;
-    pfc_pwm_cmd = 0;
+    vbus_loop_i_amp     = 0;
+    ind_curr_ref        = 0;
+    ind_curr_loop_out   = 0;
+    pfc_pwm_cmd         = 0;
 }
 
 static inline void pfc_ctrl_force_safe_output(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_pwm_disable != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_pwm_disable != NULL))
     {
         p_hal->p_pwm_disable();
     }
@@ -308,20 +308,20 @@ static void pfc_ctrl_reinit_states(void)
 
     p_ctrl_hal = pfc_hal_get_ctrl();
     pfc_cfg_sync_building_to_active();
-    p_active_setpoint = pfc_cfg_get_p_active();
+    p_active_setpoint   = pfc_cfg_get_p_active();
     pfc_ctrl_run_active = 0U;
 
-    if ((p_hal == NULL) ||
-        (pfc_cfg_is_ready() == 0U) ||
-        (pfc_hal_is_ready() == 0U) ||
-        (p_active_setpoint == NULL))
+    if (    (p_hal == NULL)
+         || (pfc_cfg_is_ready() == 0U)
+         || (pfc_hal_is_ready() == 0U)
+         || (p_active_setpoint == NULL))
     {
         return;
     }
 
     p_ctrl_active_setpoint = p_active_setpoint;
-    vbus_feedback = (float)*p_hal->p_v_bus;
-    vbus_ref_ramped = vbus_feedback;
+    vbus_feedback          = (float)*p_hal->p_v_bus;
+    vbus_ref_ramped        = vbus_feedback;
 
     (void)pi_tustin_init(&vbus_volt_loop,
                          PFC_CTRL_VOLT_LOOP_KP,
@@ -354,17 +354,17 @@ REG_INIT(0, pfc_ctrl_init)
 
 static void FUNC_RAM pfc_ctrl_isr(void)
 {
-    pfc_ctrl_hal_t *p_hal_isr = p_hal;
+    pfc_ctrl_hal_t *p_hal_isr       = p_hal;
     pfc_ctrl_setpoint_t *p_setpoint = p_ctrl_active_setpoint;
 
-    if ((p_hal_isr == NULL) ||
-        (p_setpoint == NULL))
+    if (    (p_hal_isr == NULL)
+         || (p_setpoint == NULL))
     {
         return;
     }
 
-    if ((p_setpoint->run_allowed == 0U) ||
-        (*p_hal_isr->p_main_rly_is_closed == 0U))
+    if (    (p_setpoint->run_allowed == 0U)
+         || (*p_hal_isr->p_main_rly_is_closed == 0U))
     {
         if (pfc_ctrl_run_active != 0U)
         {
@@ -388,17 +388,12 @@ static void FUNC_RAM pfc_ctrl_isr(void)
         vbus_loop_i_amp = pfc_ctrl_run_vbus_loop(p_hal_isr, p_setpoint);
     }
 
-    ind_curr_ref = pfc_ctrl_calc_ind_curr_ref(vbus_loop_i_amp,
-                                              grid_sogi.output.u,
-                                              *p_hal_isr->p_v_rms);
-    ind_curr_ref = pfc_ctrl_limit_i32(ind_curr_ref,
-                                      PFC_CTRL_IND_CURR_CODE_MAX,
-                                      PFC_CTRL_IND_CURR_CODE_MIN);
+    ind_curr_ref = pfc_ctrl_calc_ind_curr_ref(vbus_loop_i_amp, grid_sogi.output.u, *p_hal_isr->p_v_rms);
+    ind_curr_ref = pfc_ctrl_limit_i32(ind_curr_ref, PFC_CTRL_IND_CURR_CODE_MAX, PFC_CTRL_IND_CURR_CODE_MIN);
 
     pi_tustin_i32_cal_a1_neg1_inline(&ind_curr_loop);
     ind_curr_loop_out = ind_curr_loop.output.val;
-    pfc_pwm_cmd = pfc_ctrl_calc_pwm_cmd(*p_hal_isr->p_v_cap,
-                                        ind_curr_loop_out);
+    pfc_pwm_cmd       = pfc_ctrl_calc_pwm_cmd(*p_hal_isr->p_v_cap, ind_curr_loop_out);
 
     p_hal_isr->p_set_pwm_func(pfc_pwm_cmd, *p_hal_isr->p_v_bus);
 }
@@ -409,11 +404,10 @@ static inline int32_t pfc_ctrl_run_vbus_loop(pfc_ctrl_hal_t *p_hal_task,
                                              pfc_ctrl_setpoint_t *p_setpoint)
 {
     vbus_feedback = (float)*p_hal_task->p_v_bus;
-    pfc_ctrl_ramp_float(&vbus_ref_ramped,
-                        (float)p_setpoint->vbus_ref,
-                        pfc_ctrl_calc_vbus_slew_step(p_setpoint));
+    pfc_ctrl_ramp_float(&vbus_ref_ramped, (float)p_setpoint->vbus_ref, pfc_ctrl_calc_vbus_slew_step(p_setpoint));
 
     (void)pi_tustin_cal(&vbus_volt_loop);
+
     if (vbus_volt_loop.output.val < 0.0f)
     {
         pi_tustin_reset(&vbus_volt_loop);
@@ -426,7 +420,7 @@ static inline int32_t pfc_ctrl_run_vbus_loop(pfc_ctrl_hal_t *p_hal_task,
 static void pfc_ctrl_task(void)
 {
     int32_t grid_omega_now_mradps = 0;
-    int32_t omega_delta_mradps = 0;
+    int32_t omega_delta_mradps    = 0;
 
     if (pfc_ctrl_read_sogi_snapshot() == 0U)
     {
@@ -435,7 +429,7 @@ static void pfc_ctrl_task(void)
 
     (void)fll_i32_cal(&grid_fll);
     grid_omega_now_mradps = grid_fll.output.omega_mradps;
-    omega_delta_mradps = grid_omega_now_mradps - grid_omega_pending_mradps;
+    omega_delta_mradps    = grid_omega_now_mradps - grid_omega_pending_mradps;
 
     if (omega_delta_mradps < 0)
     {

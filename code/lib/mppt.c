@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    mppt.c
- * @brief   mppt library module.
+ * @file mppt.c
+ * @brief mppt library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,10 +38,10 @@
  *****************************************************************************/
 void MpptProcess(mppt_cfg_para_t *self)
 {
-    if ((self->setMpptRef == NULL) ||
-        (self->getMpptRef == NULL) ||
-        (self->getMpptVoltFdk == NULL) ||
-        (self->getMpptPwrFdk == NULL))
+    if (    (self->setMpptRef == NULL)
+         || (self->getMpptRef == NULL)
+         || (self->getMpptVoltFdk == NULL)
+         || (self->getMpptPwrFdk == NULL))
         return;
     float currStepDeltaVolt;
     float currStepVolt;
@@ -49,24 +49,30 @@ void MpptProcess(mppt_cfg_para_t *self)
     float deltaPwrStep1;
     float deltaPwrStep2;
     float curVoltFdb;
-    if (self->mpptEnableFlg == 0 || self->mpptPauseFlg == 0)
+
+    if (    self->mpptEnableFlg == 0
+         || self->mpptPauseFlg == 0)
     {
         return;
     }
+
     if (++(self->mpptTimeCnt) < self->mpptTimeThres)
     { // mpptTimeThres * 任务时间，进入一次MPPT
         return;
     }
     self->mpptTimeCnt = 0;
-    curVoltFdb = self->getMpptVoltFdk();
+    curVoltFdb        = self->getMpptVoltFdk();
+
     switch (self->mpptSubStep)
     {
     case MPPT_DISTURB:
         currStepVolt = self->getMpptRef();
         /* 电压跟踪不上对应的参考和反馈差值阈值，需要考虑采样误差，各项目自定，默认值可为2.0f */
+
         if (fabsf(curVoltFdb - currStepVolt) > self->mpptLoseCtrVoltThres)
         {
             /* 电压不受控超过一定时间给定当前电压作为参考 */
+
             if ((self->mpptLoseCtrTimeCnt)++ > self->mpptLoseCtrTimeThres)
             {
                 self->setMpptRef(curVoltFdb - self->fastStepDeltaVolt);
@@ -79,8 +85,8 @@ void MpptProcess(mppt_cfg_para_t *self)
         {
             self->mpptLoseCtrTimeCnt = 0;
         }
-        self->pwrStep1 = self->getMpptPwrFdk();
-        curStepDir = self->mpptDir;
+        self->pwrStep1    = self->getMpptPwrFdk();
+        curStepDir        = self->mpptDir;
         currStepDeltaVolt = curStepDir * self->stepDeltaVolt;
         currStepVolt += currStepDeltaVolt;
         self->setMpptRef(currStepVolt);
@@ -88,9 +94,9 @@ void MpptProcess(mppt_cfg_para_t *self)
         break;
 
     case MPPT_REV_DISTURB:
-        self->pwrStep2 = self->getMpptPwrFdk();
-        curStepDir = -self->mpptDir;
-        currStepVolt = self->getMpptRef();
+        self->pwrStep2    = self->getMpptPwrFdk();
+        curStepDir        = -self->mpptDir;
+        currStepVolt      = self->getMpptRef();
         currStepDeltaVolt = curStepDir * self->stepDeltaVolt;
         currStepVolt += currStepDeltaVolt;
         self->setMpptRef(currStepVolt);
@@ -98,15 +104,17 @@ void MpptProcess(mppt_cfg_para_t *self)
         break;
     case MPPT_DIR_DECIDE:
         self->pwrStep3 = self->getMpptPwrFdk();
-        deltaPwrStep1 = self->pwrStep2 - self->pwrStep1;
-        deltaPwrStep2 = self->pwrStep3 - self->pwrStep2;
+        deltaPwrStep1  = self->pwrStep2 - self->pwrStep1;
+        deltaPwrStep2  = self->pwrStep3 - self->pwrStep2;
+
         if (deltaPwrStep1 > deltaPwrStep2)
         { // 初始扰动方向正确，往初始方向扰动回去
-            curStepDir = self->mpptDir;
-            currStepVolt = self->getMpptRef();
+            curStepDir        = self->mpptDir;
+            currStepVolt      = self->getMpptRef();
             currStepDeltaVolt = curStepDir * self->stepDeltaVolt;
             currStepVolt += currStepDeltaVolt;
             self->setMpptRef(currStepVolt);
+
             if ((deltaPwrStep1 - deltaPwrStep2) < self->slowStepVoltThr)
             {
                 self->stepDeltaVolt = self->slowStepDeltaVolt;
@@ -122,7 +130,7 @@ void MpptProcess(mppt_cfg_para_t *self)
         }
         else
         { // 初始扰动方向错误，则调换方向
-            self->mpptDir = -self->mpptDir;
+            self->mpptDir       = -self->mpptDir;
             self->stepDeltaVolt = self->slowStepDeltaVolt;
         }
         self->mpptSubStep = MPPT_DISTURB;
@@ -142,10 +150,10 @@ void MpptProcess(mppt_cfg_para_t *self)
  *****************************************************************************/
 void MpptEnable(mppt_cfg_para_t *self)
 {
-    self->mpptDir = MPPT_DIR_DECREASE;
+    self->mpptDir       = MPPT_DIR_DECREASE;
     self->mpptEnableFlg = 1;
-    self->mpptPauseFlg = 1;
-    self->mpptSubStep = MPPT_DISTURB;
+    self->mpptPauseFlg  = 1;
+    self->mpptSubStep   = MPPT_DISTURB;
     /* 刚开机时从0.8Voc追踪 */
     self->setMpptRef(self->mpptStartVolt);
 }
@@ -159,18 +167,18 @@ void MpptEnable(mppt_cfg_para_t *self)
  *****************************************************************************/
 void MpptDisable(mppt_cfg_para_t *self)
 {
-    self->mpptStartVolt = 0.0f;
-    self->voltRef = 0.0f;
-    self->pwrStep1 = 0.0f;
-    self->pwrStep2 = 0.0f;
-    self->pwrStep3 = 0.0f;
-    self->mpptVoc = 0.0f;
-    self->mpptVoltUplimit = 0.0f;
-    self->mpptVoltDnlimit = 0.0f;
-    self->mpptEnableFlg = 0;
-    self->mpptPauseFlg = 0;
+    self->mpptStartVolt      = 0.0f;
+    self->voltRef            = 0.0f;
+    self->pwrStep1           = 0.0f;
+    self->pwrStep2           = 0.0f;
+    self->pwrStep3           = 0.0f;
+    self->mpptVoc            = 0.0f;
+    self->mpptVoltUplimit    = 0.0f;
+    self->mpptVoltDnlimit    = 0.0f;
+    self->mpptEnableFlg      = 0;
+    self->mpptPauseFlg       = 0;
     self->mpptLoseCtrTimeCnt = 0;
-    self->mpptTimeCnt = 0;
+    self->mpptTimeCnt        = 0;
 }
 
 /*****************************************************************************
@@ -195,7 +203,7 @@ void MpptPause(mppt_cfg_para_t *self)
 void MpptResume(mppt_cfg_para_t *self)
 {
     self->mpptPauseFlg = 1;
-    self->mpptSubStep = MPPT_DISTURB;
+    self->mpptSubStep  = MPPT_DISTURB;
 }
 
 /*****************************************************************************

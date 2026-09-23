@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    status_bitmap.h
- * @brief   Active and historical status bitmap public interface.
+ * @file status_bitmap.h
+ * @brief Active and historical status bitmap public interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Supports from 0 to 32 configured status bits
  *          - No hardware, protocol, or framework dependencies
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

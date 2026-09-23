@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    status_bitmap.c
- * @brief   Active and historical status bitmap implementation.
+ * @file status_bitmap.c
+ * @brief Active and historical status bitmap implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Invalid objects and indexes leave state unchanged
  *          - No hardware, protocol, or framework dependencies
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,6 +42,7 @@ static uint8_t status_bitmap_index_is_valid(const status_bitmap_t *p_bitmap, uin
     {
         return 0u;
     }
+
     if (bit_index >= STATUS_BITMAP_CAPACITY_BITS)
     {
         return 0u;
@@ -62,7 +63,7 @@ void status_bitmap_init(status_bitmap_t *p_bitmap, uint8_t bit_count)
         return;
     }
 
-    p_bitmap->active = 0u;
+    p_bitmap->active  = 0u;
     p_bitmap->history = 0u;
     p_bitmap->bit_count = (bit_count <= STATUS_BITMAP_CAPACITY_BITS) ? bit_count : 0u;
 }

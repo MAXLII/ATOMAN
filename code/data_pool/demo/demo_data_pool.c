@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_data_pool.c
- * @brief   Demo data-pool storage implementation.
+ * @file demo_data_pool.c
+ * @brief Demo data-pool storage implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -17,8 +17,8 @@
  *          - Readers keep their previous snapshot while a write is in progress
  *          - Static initialization establishes the initial zero snapshot
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -51,8 +51,8 @@ void demo_data_pool_exchange_write(const demo_data_pool_snapshot_t *p_snapshot)
     }
 
     s_demo_data_pool.sequence++;
-    s_demo_data_pool.counter = p_snapshot->counter;
-    s_demo_data_pool.led_mask = p_snapshot->led_mask;
+    s_demo_data_pool.counter         = p_snapshot->counter;
+    s_demo_data_pool.led_mask        = p_snapshot->led_mask;
     s_demo_data_pool.temperature_x10 = p_snapshot->temperature_x10;
     s_demo_data_pool.sequence++;
 }
@@ -69,15 +69,16 @@ void demo_data_pool_business_read(demo_data_pool_snapshot_t *p_snapshot)
     }
 
     sequence_begin = s_demo_data_pool.sequence;
+
     if ((sequence_begin & 1u) != 0u)
     {
         return;
     }
 
-    snapshot.counter = s_demo_data_pool.counter;
-    snapshot.led_mask = s_demo_data_pool.led_mask;
+    snapshot.counter         = s_demo_data_pool.counter;
+    snapshot.led_mask        = s_demo_data_pool.led_mask;
     snapshot.temperature_x10 = s_demo_data_pool.temperature_x10;
-    sequence_end = s_demo_data_pool.sequence;
+    sequence_end             = s_demo_data_pool.sequence;
 
     if (sequence_begin == sequence_end)
     {

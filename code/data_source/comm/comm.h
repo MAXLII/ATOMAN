@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    comm.h
- * @brief   comm communication public interface.
+ * @file comm.h
+ * @brief comm communication public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -132,27 +132,27 @@ typedef struct
 /**
  * @brief 一句宏声明 payload buffer + comm_ctx_t
  */
-#define DECLARE_COMM_CTX(name, payload_size, _src, _link_id) \
-    static uint8_t name##_payload_buf[(payload_size)] = {0}; \
-    static comm_ctx_t name = {                               \
-        .p_data_buffer = name##_payload_buf,                 \
-        .buffer_size = (uint16_t)sizeof(name##_payload_buf), \
-        .index = 0,                                          \
-        .status = SECTION_PACKFORM_STA_SOP,                  \
-        .crc = 0,                                            \
-        .pack = {0},                                         \
-        .func = NULL,                                        \
-        .len = 0,                                            \
-        .src = (uint8_t)(_src),                              \
-        .d_src = 0,                                          \
-        .last_rx_tick = 0,                                   \
-        .src_flag = 0,                                       \
-        .dst_flag = 0,                                       \
-        .cmd_flag = 0,                                       \
-        .len_flag = 0,                                       \
-        .eop_flag = 0,                                       \
-        .is_route = 0,                                       \
-        .link_id = (uint8_t)(_link_id),                      \
+#define DECLARE_COMM_CTX(name, payload_size, _src, _link_id)   \
+    static uint8_t name##_payload_buf[(payload_size)] = {0};   \
+    static comm_ctx_t name = {                                 \
+        .p_data_buffer = name##_payload_buf,                   \
+        .buffer_size   = (uint16_t)sizeof(name##_payload_buf), \
+        .index         = 0,                                    \
+        .status        = SECTION_PACKFORM_STA_SOP,             \
+        .crc           = 0,                                    \
+        .pack          = {0},                                  \
+        .func          = NULL,                                 \
+        .len           = 0,                                    \
+        .src           = (uint8_t)(_src),                      \
+        .d_src         = 0,                                    \
+        .last_rx_tick  = 0,                                    \
+        .src_flag      = 0,                                    \
+        .dst_flag      = 0,                                    \
+        .cmd_flag      = 0,                                    \
+        .len_flag      = 0,                                    \
+        .eop_flag      = 0,                                    \
+        .is_route      = 0,                                    \
+        .link_id       = (uint8_t)(_link_id),                  \
     }
 
 /* =============================================================================
@@ -177,14 +177,13 @@ typedef struct section_com_t
  */
 #define _REG_COMM(_cmd_set, _cmd_word, _func)              \
     section_com_t section_com_##_cmd_set##_##_cmd_word = { \
-        .cmd_set = (_cmd_set),                             \
+        .cmd_set  = (_cmd_set),                            \
         .cmd_word = (_cmd_word),                           \
-        .func = (_func),                                   \
+        .func     = (_func),                               \
     };                                                     \
     REG_SECTION_FUNC(SECTION_COMM, section_com_##_cmd_set##_##_cmd_word)
 
-#define REG_COMM(_cmd_set, _cmd_word, _func) \
-    _REG_COMM(_cmd_set, _cmd_word, _func)
+#define REG_COMM(_cmd_set, _cmd_word, _func) _REG_COMM(_cmd_set, _cmd_word, _func)
 
 /* =============================================================================
  * COMM 路由表注册
@@ -205,12 +204,11 @@ extern section_item_t *p_comm_route_first;
     comm_route_t comm_route_##_src_link_id##_dst_link_id##_dst_addr = { \
         .src_link_id = (_src_link_id),                                  \
         .dst_link_id = (_dst_link_id),                                  \
-        .dst_addr = (_dst_addr),                                        \
+        .dst_addr    = (_dst_addr),                                     \
     };                                                                  \
     REG_SECTION_FUNC(SECTION_COMM_ROUTE, comm_route_##_src_link_id##_dst_link_id##_dst_addr)
 
-#define REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr) \
-    _REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr)
+#define REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr) _REG_COMM_ROUTE(_src_link_id, _dst_link_id, _dst_addr)
 
 /* =============================================================================
  * COMM 对外接口（实现位于 comm.c）
@@ -228,7 +226,10 @@ void comm_run(uint8_t data, DEC_MY_PRINTF, void *ctx);
  * @param[in] my_printf Output interface associated with the source link.
  * @param[in,out] p_context Parser context created by DECLARE_COMM_CTX.
  */
-void comm_run_buffer(const uint8_t *p_data, uint32_t length, DEC_MY_PRINTF, void *p_context);
+void comm_run_buffer(const uint8_t *p_data,
+                     uint32_t length,
+                     DEC_MY_PRINTF,
+                     void *p_context);
 void comm_send_data(void *p_pack, DEC_MY_PRINTF);
 
 /* =============================================================================
@@ -241,26 +242,26 @@ void comm_send_data(void *p_pack, DEC_MY_PRINTF);
  * - DATA 长度为 1~256 B，线上 LEN 用 0x00 表示 256 B
  */
 
-#define COMM_V1_SOP 0xE9u       ///< v1 帧起始字节
-#define COMM_V1_VERSION 0x01u   ///< v1 本地协议标识，不占线上字节
-#define COMM_V1_MAX_DATA 256u   ///< 数据帧 DATA 最大长度
-#define COMM_V1_PURE_CMD_LEN 6u ///< 纯命令帧固定长度（SOP + MSG + SUM）
-#define COMM_V1_FRAME_MAX 263u  ///< 最大 v1 数据帧长度（7 + 256）
-#define COMM_V1_SEQ_MASK 0x07u  ///< MSG SEQ 字段掩码
-#define COMM_V1_ADDR_MAX 0x0Fu  ///< 静态地址最大有效值
-#define COMM_V1_DADDR_MAX 0x07u ///< 动态地址最大有效值
-#define COMM_V1_CMD_SET_MAX 0x0Fu  ///< 命令集最大有效值
+#define COMM_V1_SOP          0xE9u ///< v1 帧起始字节
+#define COMM_V1_VERSION      0x01u ///< v1 本地协议标识，不占线上字节
+#define COMM_V1_MAX_DATA     256u  ///< 数据帧 DATA 最大长度
+#define COMM_V1_PURE_CMD_LEN 6u    ///< 纯命令帧固定长度（SOP + MSG + SUM）
+#define COMM_V1_FRAME_MAX    263u  ///< 最大 v1 数据帧长度（7 + 256）
+#define COMM_V1_SEQ_MASK     0x07u ///< MSG SEQ 字段掩码
+#define COMM_V1_ADDR_MAX     0x0Fu ///< 静态地址最大有效值
+#define COMM_V1_DADDR_MAX    0x07u ///< 动态地址最大有效值
+#define COMM_V1_CMD_SET_MAX  0x0Fu ///< 命令集最大有效值
 #define COMM_V1_CMD_WORD_MAX 0x3Fu ///< 命令字最大有效值
 
 /* CODEC 取值（MSG bit29:27） */
-#define COMM_V1_CODEC_RAW 0u  ///< DATA 为原始字节流
+#define COMM_V1_CODEC_RAW  0u ///< DATA 为原始字节流
 #define COMM_V1_CODEC_DICT 1u ///< 静态字典压缩
-#define COMM_V1_CODEC_RLE 2u  ///< PackBits / 重复字节压缩
+#define COMM_V1_CODEC_RLE  2u ///< PackBits / 重复字节压缩
 #define COMM_V1_CODEC_LZSS 3u ///< 块内 LZSS-256 压缩
 #define COMM_V1_CODEC_ZERO 4u ///< 数零法 nibble 变长编码（小值密集数据）
 
 /* 码本协商命令：CMD_SET=0、CMD_WORD=0 保留为 CODEC_SELECT */
-#define COMM_V1_CODEC_SELECT_SET 0x0u
+#define COMM_V1_CODEC_SELECT_SET  0x0u
 #define COMM_V1_CODEC_SELECT_WORD 0x00u
 /* CODEC_SELECT 响应 result 值 */
 #define COMM_V1_CODEC_SELECT_OK 0u
@@ -340,52 +341,52 @@ typedef struct
     uint8_t is_route;  ///< 此帧是否为路由转发帧
     uint8_t is_local;  ///< 此帧是否投递给本机
 
-    section_packform_t pack;                                  ///< 当前帧解码缓存
-    void (*func)(void *p_pack, DEC_MY_PRINTF);                ///< 命中的命令回调
+    section_packform_t pack; ///< 当前帧解码缓存
+    void (*func)(void *p_pack, DEC_MY_PRINTF); ///< 命中的命令回调
 
     uint8_t last_seq;       ///< 上一有效包的 SEQ
     uint8_t last_seq_valid; ///< 上一有效包标志，0 表示无历史
     uint32_t last_rx_tick;  ///< 最后一个接收字节的 tick，用于半帧超时
 
-    const uint8_t src;  ///< 本机静态地址
-    uint8_t d_src;      ///< 本机动态地址
-    uint8_t link_id;    ///< 所属链路 ID
+    const uint8_t src; ///< 本机静态地址
+    uint8_t d_src;     ///< 本机动态地址
+    uint8_t link_id;   ///< 所属链路 ID
 } comm_v1_ctx_t;
 
 /**
  * @brief 一句宏声明 v1 DATA / 候选 / 线上 / 发送缓冲区 + comm_v1_ctx_t
  */
-#define DECLARE_COMM_V1_CTX(name, _src, _link_id)              \
-    static uint8_t name##_data_buf[COMM_V1_MAX_DATA] = {0};    \
-    static uint8_t name##_candidate_buf[COMM_V1_MAX_DATA] = {0}; \
-    static uint8_t name##_wire_buf[COMM_V1_FRAME_MAX] = {0};   \
-    static uint8_t name##_tx_buf[COMM_V1_FRAME_MAX] = {0};     \
-    static comm_v1_ctx_t name = {                              \
-        .p_data_buffer = name##_data_buf,                      \
-        .buffer_size = (uint16_t)sizeof(name##_data_buf),      \
-        .p_candidate_buffer = name##_candidate_buf,            \
-        .candidate_size = (uint16_t)sizeof(name##_candidate_buf), \
-        .p_wire_buffer = name##_wire_buf,                      \
-        .wire_size = (uint16_t)sizeof(name##_wire_buf),        \
-        .p_tx_buffer = name##_tx_buf,                          \
-        .tx_size = (uint16_t)sizeof(name##_tx_buf),            \
-        .status = COMM_V1_STA_IDLE,                            \
-        .index = 0,                                            \
-        .len = 0,                                              \
-        .sum = 0,                                              \
-        .msg = 0,                                              \
-        .msg_cnt = 0,                                          \
-        .wire_len = 0,                                         \
-        .is_route = 0,                                         \
-        .is_local = 0,                                         \
-        .pack = {0},                                           \
-        .func = NULL,                                          \
-        .last_seq = 0,                                         \
-        .last_seq_valid = 0,                                   \
-        .last_rx_tick = 0,                                     \
-        .src = (uint8_t)(_src),                                \
-        .d_src = 0,                                            \
-        .link_id = (uint8_t)(_link_id),                        \
+#define DECLARE_COMM_V1_CTX(name, _src, _link_id)                     \
+    static uint8_t name##_data_buf[COMM_V1_MAX_DATA]      = {0};      \
+    static uint8_t name##_candidate_buf[COMM_V1_MAX_DATA] = {0};      \
+    static uint8_t name##_wire_buf[COMM_V1_FRAME_MAX]     = {0};      \
+    static uint8_t name##_tx_buf[COMM_V1_FRAME_MAX]       = {0};      \
+    static comm_v1_ctx_t name = {                                     \
+        .p_data_buffer      = name##_data_buf,                        \
+        .buffer_size        = (uint16_t)sizeof(name##_data_buf),      \
+        .p_candidate_buffer = name##_candidate_buf,                   \
+        .candidate_size     = (uint16_t)sizeof(name##_candidate_buf), \
+        .p_wire_buffer      = name##_wire_buf,                        \
+        .wire_size          = (uint16_t)sizeof(name##_wire_buf),      \
+        .p_tx_buffer        = name##_tx_buf,                          \
+        .tx_size            = (uint16_t)sizeof(name##_tx_buf),        \
+        .status             = COMM_V1_STA_IDLE,                       \
+        .index              = 0,                                      \
+        .len                = 0,                                      \
+        .sum                = 0,                                      \
+        .msg                = 0,                                      \
+        .msg_cnt            = 0,                                      \
+        .wire_len           = 0,                                      \
+        .is_route           = 0,                                      \
+        .is_local           = 0,                                      \
+        .pack               = {0},                                    \
+        .func               = NULL,                                   \
+        .last_seq           = 0,                                      \
+        .last_seq_valid     = 0,                                      \
+        .last_rx_tick       = 0,                                      \
+        .src                = (uint8_t)(_src),                        \
+        .d_src              = 0,                                      \
+        .link_id            = (uint8_t)(_link_id),                    \
     }
 
 /**
@@ -421,7 +422,10 @@ void comm_v1_reset_session(comm_v1_ctx_t *p_ctx);
  * @param[in] my_printf Output interface associated with the source link.
  * @param[in,out] p_context Parser context created by DECLARE_COMM_V1_CTX.
  */
-void comm_v1_run_buffer(const uint8_t *p_data, uint32_t length, DEC_MY_PRINTF, void *p_context);
+void comm_v1_run_buffer(const uint8_t *p_data,
+                        uint32_t length,
+                        DEC_MY_PRINTF,
+                        void *p_context);
 
 /**
  * @brief COMM v1 发送组包入口，由 comm_send_data 在 SOP=0xE9 时调用。

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    inv_cfg.h
- * @brief   inv_cfg control public interface.
+ * @file inv_cfg.h
+ * @brief inv_cfg control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,11 +31,11 @@
 
 #include <stdint.h>
 
-#define INV_CFG_DEFAULT_RUN_ALLOWED (0U)
-#define INV_CFG_DEFAULT_FREQ_HZ (50.0f)
+#define INV_CFG_DEFAULT_RUN_ALLOWED    (0U)
+#define INV_CFG_DEFAULT_FREQ_HZ        (50.0f)
 #define INV_CFG_DEFAULT_FREQ_SLEW_HZPS (10.0f)
-#define INV_CFG_DEFAULT_RMS_REF_V (230.0f)
-#define INV_CFG_DEFAULT_RMS_SLEW_VPS (212.0f)
+#define INV_CFG_DEFAULT_RMS_REF_V      (230.0f)
+#define INV_CFG_DEFAULT_RMS_SLEW_VPS   (212.0f)
 
 typedef struct
 {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    boost_cfg.c
- * @brief   boost_cfg control module.
+ * @file boost_cfg.c
+ * @brief boost_cfg control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,43 +31,45 @@
 
 static boost_ctrl_setpoint_t setpoint_active = {0};
 static boost_ctrl_setpoint_t setpoint_building = {
-    .run_allowed = 0U,
+    .run_allowed  = 0U,
     .out_volt_ref = BOOST_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(BOOST_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V),
-    .in_volt_lmt = BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V),
-    .pwr_lmt = BOOST_CTRL_IN_PWR_LMT_TO_CODE(BOOST_CTRL_IN_PWR_LMT_DEFAULT_W),
-    .in_curr_lmt = BOOST_CTRL_IN_CURR_LMT_TO_CODE(BOOST_CTRL_IN_CURR_LMT_DEFAULT_A),
+    .in_volt_lmt  = BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V),
+    .pwr_lmt      = BOOST_CTRL_IN_PWR_LMT_TO_CODE(BOOST_CTRL_IN_PWR_LMT_DEFAULT_W),
+    .in_curr_lmt  = BOOST_CTRL_IN_CURR_LMT_TO_CODE(BOOST_CTRL_IN_CURR_LMT_DEFAULT_A),
     .out_curr_lmt = BOOST_CTRL_OUT_CURR_LMT_TO_CODE(BOOST_CTRL_OUT_CURR_LMT_DEFAULT_A),
 };
 
 static boost_ctrl_timing_t ctrl_timing = {0};
 
 boost_ctrl_setpoint_mgr_t boost_cfg_setpoint_mgr = {
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0U,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0U,
-    },
+    .active =
+        {
+            .p_data  = &setpoint_active,
+            .version = 0U,
+        },
+    .building =
+        {
+            .p_data  = &setpoint_building,
+            .version = 0U,
+        },
 };
 
 static uint8_t timing_is_valid(const boost_ctrl_timing_t *p_timing)
 {
-    return (p_timing != NULL) &&
-           (p_timing->ctrl_ts > 0.0f) &&
-           (p_timing->task_ts > 0.0f) &&
-           (p_timing->pwm_ts > 0.0f) &&
-           (p_timing->pwm_cmp_max > 0);
+    return (p_timing != NULL)
+        && (p_timing->ctrl_ts > 0.0f)
+        && (p_timing->task_ts > 0.0f)
+        && (p_timing->pwm_ts > 0.0f)
+        && (p_timing->pwm_cmp_max > 0);
 }
 
 void boost_cfg_set_timing(const boost_ctrl_timing_t *p_timing)
 {
     if (timing_is_valid(p_timing) == 0U)
     {
-        ctrl_timing.ctrl_ts = 0.0f;
-        ctrl_timing.task_ts = 0.0f;
-        ctrl_timing.pwm_ts = 0.0f;
+        ctrl_timing.ctrl_ts     = 0.0f;
+        ctrl_timing.task_ts     = 0.0f;
+        ctrl_timing.pwm_ts      = 0.0f;
         ctrl_timing.pwm_cmp_max = 0;
         return;
     }
@@ -104,7 +106,9 @@ static int32_t float_to_code(float val, float val_max, int32_t code_max)
 {
     float code = 0.0f;
 
-    if ((val <= 0.0f) || (val_max <= 0.0f) || (code_max <= 0))
+    if (    (val <= 0.0f)
+         || (val_max <= 0.0f)
+         || (code_max <= 0))
     {
         return 0;
     }
@@ -124,7 +128,8 @@ static int32_t float_to_bipolar_code(float val, float val_abs_max, int32_t code_
     /* Signed code value before integer conversion. */
     float code = 0.0f;
 
-    if ((val_abs_max <= 0.0f) || (code_abs_max <= 0))
+    if (    (val_abs_max <= 0.0f)
+         || (code_abs_max <= 0))
     {
         return 0;
     }
@@ -191,9 +196,7 @@ void boost_cfg_set_out_volt_ref(float out_volt_ref)
     }
 
     boost_cfg_setpoint_mgr.building.p_data->out_volt_ref =
-        float_to_code(out_volt_ref,
-                      BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V,
-                      BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
+        float_to_code(out_volt_ref, BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V, BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
 }
 
 void boost_cfg_set_in_volt_lmt(float in_volt_lmt)
@@ -204,9 +207,7 @@ void boost_cfg_set_in_volt_lmt(float in_volt_lmt)
     }
 
     boost_cfg_setpoint_mgr.building.p_data->in_volt_lmt =
-        float_to_code(in_volt_lmt,
-                      BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V,
-                      BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX);
+        float_to_code(in_volt_lmt, BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V, BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX);
 }
 
 void boost_cfg_set_in_curr_lmt(float in_curr_lmt)
@@ -217,9 +218,7 @@ void boost_cfg_set_in_curr_lmt(float in_curr_lmt)
     }
 
     boost_cfg_setpoint_mgr.building.p_data->in_curr_lmt =
-        float_to_bipolar_code(in_curr_lmt,
-                              BOOST_CTRL_IN_CURR_LMT_MAX_A,
-                              BOOST_CTRL_IN_CURR_LMT_CODE_MAX);
+        float_to_bipolar_code(in_curr_lmt, BOOST_CTRL_IN_CURR_LMT_MAX_A, BOOST_CTRL_IN_CURR_LMT_CODE_MAX);
 }
 
 void boost_cfg_set_out_curr_lmt(float out_curr_lmt)
@@ -230,15 +229,13 @@ void boost_cfg_set_out_curr_lmt(float out_curr_lmt)
     }
 
     boost_cfg_setpoint_mgr.building.p_data->out_curr_lmt =
-        float_to_bipolar_code(out_curr_lmt,
-                              BOOST_CTRL_OUT_CURR_LMT_MAX_A,
-                              BOOST_CTRL_OUT_CURR_LMT_CODE_MAX);
+        float_to_bipolar_code(out_curr_lmt, BOOST_CTRL_OUT_CURR_LMT_MAX_A, BOOST_CTRL_OUT_CURR_LMT_CODE_MAX);
 }
 
 void boost_cfg_publish_building(void)
 {
-    if ((boost_cfg_setpoint_mgr.building.p_data == NULL) ||
-        (boost_cfg_setpoint_mgr.active.p_data == NULL))
+    if (    (boost_cfg_setpoint_mgr.building.p_data == NULL)
+         || (boost_cfg_setpoint_mgr.active.p_data == NULL))
     {
         return;
     }
@@ -248,9 +245,9 @@ void boost_cfg_publish_building(void)
 
 uint8_t boost_cfg_is_ready(void)
 {
-    return (boost_cfg_setpoint_mgr.active.p_data != NULL) &&
-           (boost_cfg_setpoint_mgr.building.p_data != NULL) &&
-           (timing_is_valid(&ctrl_timing) != 0U);
+    return (boost_cfg_setpoint_mgr.active.p_data != NULL)
+        && (boost_cfg_setpoint_mgr.building.p_data != NULL)
+        && (timing_is_valid(&ctrl_timing) != 0U);
 }
 
 const boost_ctrl_setpoint_mgr_t *boost_cfg_get_mgr(void)

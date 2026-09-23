@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    volt_mt.h
- * @brief   volt_mt library public interface.
+ * @file volt_mt.h
+ * @brief volt_mt library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,10 +34,10 @@
 // 电压监测状态枚举
 typedef enum
 {
-    ST_INVALID = 0,  // 电压无效
-    ST_VALID = 1,    // 电压有效
+    ST_INVALID  = 0, // 电压无效
+    ST_VALID    = 1, // 电压有效
     ST_ENTERING = 2, // 正在进入有效范围
-    ST_EXITING = 3   // 正在退出有效范围
+    ST_EXITING  = 3  // 正在退出有效范围
 } volt_st_t;
 
 // 配置参数结构体

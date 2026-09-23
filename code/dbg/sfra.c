@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    sfra.c
- * @brief   SFRA Section adapter implementation.
+ * @file sfra.c
+ * @brief SFRA Section adapter implementation.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Linker-section access is isolated to this file
  *          - Protocol handling belongs to sfra_service.c
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,7 +30,7 @@
 
 #include <stddef.h>
 
-section_item_t *p_sfra_first = NULL;
+section_item_t *p_sfra_first       = NULL;
 static section_item_t *p_sfra_tail = NULL;
 REG_DBG_LIST(sfra, p_sfra_first)
 
@@ -39,29 +39,31 @@ void sfra_init_list(void)
     uint8_t id = 0u;
 
     p_sfra_first = NULL;
-    p_sfra_tail = NULL;
+    p_sfra_tail  = NULL;
 
-    for (reg_section_t *p_section = (reg_section_t *)&SECTION_START;
-         p_section < (reg_section_t *)&SECTION_STOP;
+    for (reg_section_t *p_section = (reg_section_t *)&SECTION_START; p_section < (reg_section_t *)&SECTION_STOP;
          ++p_section)
     {
         if (p_section->section_type == SECTION_SFRA)
         {
-            section_item_t *p_item = (section_item_t *)p_section->p_str;
+            section_item_t *p_item              = (section_item_t *)p_section->p_str;
             sfra_registration_t *p_registration = NULL;
 
-            if ((p_item == NULL) || (p_item->p_obj == NULL))
+            if (    (p_item == NULL)
+                 || (p_item->p_obj == NULL))
             {
                 continue;
             }
 
             p_registration = (sfra_registration_t *)p_item->p_obj;
+
             if (p_registration->p_sfra == NULL)
             {
                 continue;
             }
             p_registration->sfra_id = id++;
-            p_item->p_next = NULL;
+            p_item->p_next          = NULL;
+
             if (p_sfra_first == NULL)
             {
                 p_sfra_first = p_item;
@@ -83,13 +85,7 @@ sfra_status_t sfra_init(sfra_t *p_sfra,
                         float freq_start_hz,
                         float freq_step_mul)
 {
-    return sfra_core_init(p_sfra,
-                          p_inject,
-                          p_collect,
-                          isr_freq_hz,
-                          inject_amplitude,
-                          freq_start_hz,
-                          freq_step_mul);
+    return sfra_core_init(p_sfra, p_inject, p_collect, isr_freq_hz, inject_amplitude, freq_start_hz, freq_step_mul);
 }
 
 sfra_status_t sfra_start(sfra_t *p_sfra)

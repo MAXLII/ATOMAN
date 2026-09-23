@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bootloader_protocol.h
- * @brief   FRAME firmware-upgrade protocol service.
+ * @file bootloader_protocol.h
+ * @brief FRAME firmware-upgrade protocol service.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Not ISR-safe; communication callbacks and bootloader processing are serialized
  *          - FRAME service registration is selected by the build target
  *
- * @author  Max.Li
- * @date    2026-07-28
+ * @author Max.Li
+ * @date 2026-07-28
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

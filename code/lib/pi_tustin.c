@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pi_tustin.c
- * @brief   pi_tustin library module.
+ * @file pi_tustin.c
+ * @brief pi_tustin library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,18 +39,18 @@ bool pi_tustin_init(pi_tustin_t *p_str,
                     float *p_ref,
                     float *p_act)
 {
-    if ((p_ref == NULL) ||
-        (p_act == NULL) ||
-        (p_str == NULL))
+    if (    (p_ref == NULL)
+         || (p_act == NULL)
+         || (p_str == NULL))
     {
         return false;
     }
     p_str->input.p_ref = p_ref;
     p_str->input.p_act = p_act;
 
-    p_str->inter.a1 = 0.0f;
-    p_str->inter.b0 = 0.0f;
-    p_str->inter.b1 = 0.0f;
+    p_str->inter.a1     = 0.0f;
+    p_str->inter.b0     = 0.0f;
+    p_str->inter.b1     = 0.0f;
     p_str->inter.b1_inv = 0.0f;
 
     p_str->inter.up_lmt = up_lmt;
@@ -71,9 +71,9 @@ bool pi_tustin_init(pi_tustin_t *p_str,
 
 bool pi_tustin_cal(pi_tustin_t *p_str)
 {
-    if ((p_str == NULL) ||
-        (p_str->input.p_ref == NULL) ||
-        (p_str->input.p_act == NULL))
+    if (    (p_str == NULL)
+         || (p_str->input.p_ref == NULL)
+         || (p_str->input.p_act == NULL))
     {
         return false;
     }
@@ -81,25 +81,22 @@ bool pi_tustin_cal(pi_tustin_t *p_str)
     p_str->inter.e[0] = *p_str->input.p_ref - *p_str->input.p_act;
     p_str->inter.u[1] = p_str->inter.u[0];
 
-    p_str->inter.u[0] = p_str->inter.b0 * p_str->inter.e[0] +
-                        p_str->inter.b1 * p_str->inter.e[1] -
-                        p_str->inter.a1 * p_str->inter.u[1];
+    p_str->inter.u[0] =
+        p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.b1 * p_str->inter.e[1] - p_str->inter.a1 * p_str->inter.u[1];
 
     if (p_str->inter.u[0] > p_str->inter.up_lmt)
     {
         p_str->inter.u[0] = p_str->inter.up_lmt;
-        p_str->inter.e[1] = (p_str->inter.u[0] -
-                             p_str->inter.b0 * p_str->inter.e[0] +
-                             p_str->inter.a1 * p_str->inter.u[1]) *
-                            p_str->inter.b1_inv;
+        p_str->inter.e[1] =
+            (p_str->inter.u[0] - p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.a1 * p_str->inter.u[1])
+            * p_str->inter.b1_inv;
     }
     else if (p_str->inter.u[0] < p_str->inter.dn_lmt)
     {
         p_str->inter.u[0] = p_str->inter.dn_lmt;
-        p_str->inter.e[1] = (p_str->inter.u[0] -
-                             p_str->inter.b0 * p_str->inter.e[0] +
-                             p_str->inter.a1 * p_str->inter.u[1]) *
-                            p_str->inter.b1_inv;
+        p_str->inter.e[1] =
+            (p_str->inter.u[0] - p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.a1 * p_str->inter.u[1])
+            * p_str->inter.b1_inv;
     }
     else
     {
@@ -115,9 +112,9 @@ bool pi_tustin_update(pi_tustin_t *p_str,
                       float ki,
                       float ts)
 {
-    if ((kp <= 0.0f) ||
-        (ki < 0.0f) ||
-        (ts <= 0.0f))
+    if (    (kp <= 0.0f)
+         || (ki < 0.0f)
+         || (ts <= 0.0f))
     {
         return false;
     }
@@ -134,9 +131,9 @@ bool pi_tustin_update(pi_tustin_t *p_str,
 
     float b1 = n1 / d0;
 
-    p_str->inter.a1 = d1 / d0;
-    p_str->inter.b0 = n0 / d0;
-    p_str->inter.b1 = b1;
+    p_str->inter.a1     = d1 / d0;
+    p_str->inter.b0     = n0 / d0;
+    p_str->inter.b1     = b1;
     p_str->inter.b1_inv = 1.0f / b1;
 
     return true;

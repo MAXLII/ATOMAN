@@ -1,6 +1,6 @@
 /*
- * @file    pi_dual_compete.c
- * @brief   双通道 PI 竞争模块.
+ * @file pi_dual_compete.c
+ * @brief 双通道 PI 竞争模块.
  * @details
  *          This file is part of the PFC project.
  *
@@ -8,8 +8,8 @@
  *          - 两路 PI 控制器竞争输出，取较大/较小值作为实际输出
  *          - 共享同一个积分项，减少积分冲突和震荡
  *
- * @author  Max.Li
- * @date    2026-05-20
+ * @author Max.Li
+ * @date 2026-05-20
  * @version 1.0.0
  */
 
@@ -45,12 +45,12 @@ bool pi_dual_compete_init(pi_dual_compete_t *p_str,
                           float *p_ref_b,
                           float *p_act_b)
 {
-    if ((p_str == NULL) ||
-        (p_ref_a == NULL) ||
-        (p_act_a == NULL) ||
-        (p_ref_b == NULL) ||
-        (p_act_b == NULL) ||
-        (up_lmt < dn_lmt))
+    if (    (p_str == NULL)
+         || (p_ref_a == NULL)
+         || (p_act_a == NULL)
+         || (p_ref_b == NULL)
+         || (p_act_b == NULL)
+         || (up_lmt < dn_lmt))
     {
         return false;
     }
@@ -62,7 +62,7 @@ bool pi_dual_compete_init(pi_dual_compete_t *p_str,
 
     p_str->cfg.up_lmt = up_lmt;
     p_str->cfg.dn_lmt = dn_lmt;
-    p_str->cfg.mode = mode;
+    p_str->cfg.mode   = mode;
 
     if (!pi_dual_compete_update_a(p_str, kp_a, ki_a))
     {
@@ -83,9 +83,9 @@ bool pi_dual_compete_update_a(pi_dual_compete_t *p_str,
                               float kp,
                               float ki)
 {
-    if ((p_str == NULL) ||
-        (kp < 0.0f) ||
-        (ki < 0.0f))
+    if (    (p_str == NULL)
+         || (kp < 0.0f)
+         || (ki < 0.0f))
     {
         return false;
     }
@@ -100,9 +100,9 @@ bool pi_dual_compete_update_b(pi_dual_compete_t *p_str,
                               float kp,
                               float ki)
 {
-    if ((p_str == NULL) ||
-        (kp < 0.0f) ||
-        (ki < 0.0f))
+    if (    (p_str == NULL)
+         || (kp < 0.0f)
+         || (ki < 0.0f))
     {
         return false;
     }
@@ -127,11 +127,11 @@ bool pi_dual_compete_set_mode(pi_dual_compete_t *p_str,
 
 bool pi_dual_compete_cal(pi_dual_compete_t *p_str)
 {
-    if ((p_str == NULL) ||
-        (p_str->input.p_ref_a == NULL) ||
-        (p_str->input.p_act_a == NULL) ||
-        (p_str->input.p_ref_b == NULL) ||
-        (p_str->input.p_act_b == NULL))
+    if (    (p_str == NULL)
+         || (p_str->input.p_ref_a == NULL)
+         || (p_str->input.p_act_a == NULL)
+         || (p_str->input.p_ref_b == NULL)
+         || (p_str->input.p_act_b == NULL))
     {
         return false;
     }
@@ -159,38 +159,38 @@ bool pi_dual_compete_cal(pi_dual_compete_t *p_str)
     {
         if (out_a <= out_b)
         {
-            active_ch = PI_DUAL_CH_A;
+            active_ch  = PI_DUAL_CH_A;
             active_err = err_a;
-            active_ki = p_str->cfg.loop_a.ki;
-            active_p = p_a;
-            output = out_a;
+            active_ki  = p_str->cfg.loop_a.ki;
+            active_p   = p_a;
+            output     = out_a;
         }
         else
         {
-            active_ch = PI_DUAL_CH_B;
+            active_ch  = PI_DUAL_CH_B;
             active_err = err_b;
-            active_ki = p_str->cfg.loop_b.ki;
-            active_p = p_b;
-            output = out_b;
+            active_ki  = p_str->cfg.loop_b.ki;
+            active_p   = p_b;
+            output     = out_b;
         }
     }
     else
     {
         if (out_a >= out_b)
         {
-            active_ch = PI_DUAL_CH_A;
+            active_ch  = PI_DUAL_CH_A;
             active_err = err_a;
-            active_ki = p_str->cfg.loop_a.ki;
-            active_p = p_a;
-            output = out_a;
+            active_ki  = p_str->cfg.loop_a.ki;
+            active_p   = p_a;
+            output     = out_a;
         }
         else
         {
-            active_ch = PI_DUAL_CH_B;
+            active_ch  = PI_DUAL_CH_B;
             active_err = err_b;
-            active_ki = p_str->cfg.loop_b.ki;
-            active_p = p_b;
-            output = out_b;
+            active_ki  = p_str->cfg.loop_b.ki;
+            active_p   = p_b;
+            output     = out_b;
         }
     }
 
@@ -201,21 +201,22 @@ bool pi_dual_compete_cal(pi_dual_compete_t *p_str)
     output = active_p + p_str->inter.i_share;
 
     /* 7. Saturation + anti-windup */
+
     if (output > p_str->cfg.up_lmt)
     {
-        output = p_str->cfg.up_lmt;
+        output               = p_str->cfg.up_lmt;
         p_str->inter.i_share = p_str->cfg.up_lmt - active_p;
     }
     else if (output < p_str->cfg.dn_lmt)
     {
-        output = p_str->cfg.dn_lmt;
+        output               = p_str->cfg.dn_lmt;
         p_str->inter.i_share = p_str->cfg.dn_lmt - active_p;
     }
 
     /* 8. Clamp shared integrator */
     {
-        const float i_max = p_str->cfg.up_lmt - active_p;
-        const float i_min = p_str->cfg.dn_lmt - active_p;
+        const float i_max    = p_str->cfg.up_lmt - active_p;
+        const float i_min    = p_str->cfg.dn_lmt - active_p;
         p_str->inter.i_share = pi_dual_compete_clamp(p_str->inter.i_share, i_min, i_max);
     }
 
@@ -234,7 +235,7 @@ bool pi_dual_compete_cal(pi_dual_compete_t *p_str)
     p_str->inter.out_b_raw = out_b;
     p_str->inter.active_ch = active_ch;
 
-    p_str->output.val = output;
+    p_str->output.val   = output;
     p_str->output.val_a = out_a;
     p_str->output.val_b = out_b;
 
@@ -260,7 +261,7 @@ void pi_dual_compete_reset(pi_dual_compete_t *p_str)
     p_str->inter.out_b_raw = 0.0f;
     p_str->inter.active_ch = PI_DUAL_CH_A;
 
-    p_str->output.val = 0.0f;
+    p_str->output.val   = 0.0f;
     p_str->output.val_a = 0.0f;
     p_str->output.val_b = 0.0f;
 }

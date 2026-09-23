@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    zero_player.h
- * @brief   Zero-player cellular automaton interface.
+ * @file zero_player.h
+ * @brief Zero-player cellular automaton interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Grid consumers read the data without taking ownership
  *          - Hardware access remains outside the application module
  *
- * @author  Max.Li
- * @date    2026-07-25
+ * @author Max.Li
+ * @date 2026-07-25
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -37,7 +37,7 @@
 
 typedef struct
 {
-    uint32_t rows; /* Number of valid grid rows. */
+    uint32_t rows;    /* Number of valid grid rows. */
     uint32_t columns; /* Number of valid cells in each row. */
     const int (*p_cells)[COLS]; /* Read-only cells addressed as p_cells[row][column]. */
 } zero_player_grid_t;

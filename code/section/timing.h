@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    timing.h
- * @brief   Control and PWM timing configuration.
+ * @file timing.h
+ * @brief Control and PWM timing configuration.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path provides compile-time constants only
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-01
+ * @author Max.Li
+ * @date 2026-06-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

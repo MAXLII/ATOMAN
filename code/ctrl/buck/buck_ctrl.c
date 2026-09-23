@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    buck_ctrl.c
- * @brief   buck_ctrl control module.
+ * @file buck_ctrl.c
+ * @brief buck_ctrl control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,8 +34,8 @@
 
 #define p_hal (buck_hal_get_ctrl())
 
-static pi_tustin_i32_t out_volt_loop = {0};
-static pi_tustin_i32_t in_volt_lmt_loop = {0};
+static pi_tustin_i32_t out_volt_loop                            = {0};
+static pi_tustin_i32_t in_volt_lmt_loop                         = {0};
 static pi_tustin_i32_t ind_curr_loop[BUCK_CTRL_IND_CURR_CH_NUM] = {0};
 
 typedef struct
@@ -49,35 +49,35 @@ typedef struct
 } buck_ctrl_isr_param_t;
 
 static buck_ctrl_setpoint_t buck_ctrl_active_setpoint = {
-    .run_allowed = 0U,
+    .run_allowed  = 0U,
     .out_volt_ref = BUCK_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(BUCK_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V),
-    .in_volt_lmt = BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V),
-    .pwr_lmt = BUCK_CTRL_IN_PWR_LMT_TO_CODE(BUCK_CTRL_IN_PWR_LMT_DEFAULT_W),
-    .in_curr_lmt = BUCK_CTRL_IN_CURR_LMT_TO_CODE(BUCK_CTRL_IN_CURR_LMT_DEFAULT_A),
+    .in_volt_lmt  = BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V),
+    .pwr_lmt      = BUCK_CTRL_IN_PWR_LMT_TO_CODE(BUCK_CTRL_IN_PWR_LMT_DEFAULT_W),
+    .in_curr_lmt  = BUCK_CTRL_IN_CURR_LMT_TO_CODE(BUCK_CTRL_IN_CURR_LMT_DEFAULT_A),
     .out_curr_lmt = BUCK_CTRL_OUT_CURR_LMT_TO_CODE(BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A),
 };
 static volatile buck_ctrl_isr_param_t buck_ctrl_isr_param = {
     .i_l_lmt = 0,
-    .up_en = 1U,
-    .dn_en = 1U,
+    .up_en   = 1U,
+    .dn_en   = 1U,
 };
 static volatile buck_ctrl_isr_param_t buck_ctrl_isr_param_pending[2] = {
     {
         .i_l_lmt = 0,
-        .up_en = 1U,
-        .dn_en = 1U,
+        .up_en   = 1U,
+        .dn_en   = 1U,
     },
     {
         .i_l_lmt = 0,
-        .up_en = 1U,
-        .dn_en = 1U,
+        .up_en   = 1U,
+        .dn_en   = 1U,
     },
 };
-static volatile uint8_t buck_ctrl_isr_param_pending_idx = 0U;
+static volatile uint8_t buck_ctrl_isr_param_pending_idx  = 0U;
 static volatile uint32_t buck_ctrl_isr_param_publish_seq = 0U;
-static uint32_t buck_ctrl_isr_param_applied_seq = 0U;
-static int32_t ind_curr_ref = 0;
-static uint8_t buck_ctrl_run_active = 0U;
+static uint32_t buck_ctrl_isr_param_applied_seq          = 0U;
+static int32_t ind_curr_ref                              = 0;
+static uint8_t buck_ctrl_run_active                      = 0U;
 
 #if (BUCK_CTRL_IND_CURR_CH_NUM == 2U)
 /* Shift used to convert the K2-domain total current command into a per-channel current code. */
@@ -88,11 +88,11 @@ static inline void buck_ctrl_isr_param_request_update(buck_ctrl_isr_param_t para
 {
     uint8_t pending_idx = 0U;
 
-    pending_idx = (uint8_t)(buck_ctrl_isr_param_pending_idx ^ 1U);
+    pending_idx                                      = (uint8_t)(buck_ctrl_isr_param_pending_idx ^ 1U);
     buck_ctrl_isr_param_pending[pending_idx].i_l_lmt = param.i_l_lmt;
-    buck_ctrl_isr_param_pending[pending_idx].up_en = param.up_en;
-    buck_ctrl_isr_param_pending[pending_idx].dn_en = param.dn_en;
-    buck_ctrl_isr_param_pending_idx = pending_idx;
+    buck_ctrl_isr_param_pending[pending_idx].up_en   = param.up_en;
+    buck_ctrl_isr_param_pending[pending_idx].dn_en   = param.dn_en;
+    buck_ctrl_isr_param_pending_idx                  = pending_idx;
     buck_ctrl_isr_param_publish_seq++;
 }
 
@@ -126,10 +126,9 @@ static inline int32_t buck_ctrl_calc_cmp(int32_t v_l_cmd, int32_t v_in, int32_t 
         return BUCK_CTRL_CMP_MIN;
     }
 
-    numerator_i64 = (int64_t)v_l_cmd +
-                    ((int64_t)v_out * (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_V_OUT_FF_K);
+    numerator_i64 = (int64_t)v_l_cmd + ((int64_t)v_out * (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_V_OUT_FF_K);
     numerator = pi_tustin_i32_sat_i64_to_i32(numerator_i64);
-    cmp = numerator / v_in;
+    cmp       = numerator / v_in;
 
     return buck_ctrl_limit_cmp(cmp);
 }
@@ -167,7 +166,7 @@ static inline int32_t buck_ctrl_div_pos_i32(int32_t numerator, int32_t denominat
 static inline int32_t buck_ctrl_div_by_cmp_i32(int32_t numerator, int32_t cmp)
 {
     /* Scaled numerator saturated before division so the runtime divider stays 32-bit. */
-    int64_t scaled = 0;
+    int64_t scaled     = 0;
     int32_t scaled_i32 = 0;
 
     if (cmp <= 0)
@@ -175,7 +174,7 @@ static inline int32_t buck_ctrl_div_by_cmp_i32(int32_t numerator, int32_t cmp)
         return numerator;
     }
 
-    scaled = (int64_t)numerator * (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_V_OUT_FF_K;
+    scaled     = (int64_t)numerator * (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_V_OUT_FF_K;
     scaled_i32 = pi_tustin_i32_sat_i64_to_i32(scaled);
 
     return scaled_i32 / cmp;
@@ -198,7 +197,7 @@ static void buck_ctrl_reinit_states(void)
     (void)buck_fsm_read_published(&buck_ctrl_active_setpoint);
 
     buck_ctrl_run_active = 0U;
-    ind_curr_ref = 0;
+    ind_curr_ref         = 0;
 
     (void)pi_tustin_i32_init(&out_volt_loop,
                              BUCK_CTRL_OUT_VOLT_LOOP_KP,
@@ -241,16 +240,16 @@ REG_INIT(0, buck_ctrl_init)
 static void FUNC_RAM buck_ctrl_isr(void)
 {
     buck_ctrl_isr_param_t isr_param = {0};
-    uint8_t pending_idx = 0U;
-    uint32_t publish_seq = 0U;
-    int32_t v_in = 0;
-    int32_t v_out = 0;
-    int32_t cmp = 0;
-    int32_t cmp_calc = 0;
-    int32_t cmp_numerator = 0;
+    uint8_t pending_idx             = 0U;
+    uint32_t publish_seq            = 0U;
+    int32_t v_in                    = 0;
+    int32_t v_out                   = 0;
+    int32_t cmp                     = 0;
+    int32_t cmp_calc                = 0;
+    int32_t cmp_numerator           = 0;
     /* Voltage-loop total current reference before channel split. */
     int32_t i_l_ref_total = 0;
-    int32_t v_out_ff = 0;
+    int32_t v_out_ff      = 0;
 
     (void)buck_fsm_read_published(&buck_ctrl_active_setpoint);
 
@@ -266,12 +265,13 @@ static void FUNC_RAM buck_ctrl_isr(void)
 
     /* Commit the task-built ISR parameter snapshot at the PWM update point. */
     publish_seq = buck_ctrl_isr_param_publish_seq;
+
     if (buck_ctrl_isr_param_applied_seq != publish_seq)
     {
-        pending_idx = buck_ctrl_isr_param_pending_idx;
-        buck_ctrl_isr_param.i_l_lmt = buck_ctrl_isr_param_pending[pending_idx].i_l_lmt;
-        buck_ctrl_isr_param.up_en = buck_ctrl_isr_param_pending[pending_idx].up_en;
-        buck_ctrl_isr_param.dn_en = buck_ctrl_isr_param_pending[pending_idx].dn_en;
+        pending_idx                     = buck_ctrl_isr_param_pending_idx;
+        buck_ctrl_isr_param.i_l_lmt     = buck_ctrl_isr_param_pending[pending_idx].i_l_lmt;
+        buck_ctrl_isr_param.up_en       = buck_ctrl_isr_param_pending[pending_idx].up_en;
+        buck_ctrl_isr_param.dn_en       = buck_ctrl_isr_param_pending[pending_idx].dn_en;
         buck_ctrl_isr_param_applied_seq = publish_seq;
     }
 
@@ -288,10 +288,10 @@ static void FUNC_RAM buck_ctrl_isr(void)
     buck_ctrl_run_active = 1U;
 
     isr_param.i_l_lmt = buck_ctrl_isr_param.i_l_lmt;
-    isr_param.up_en = buck_ctrl_isr_param.up_en;
-    isr_param.dn_en = buck_ctrl_isr_param.dn_en;
+    isr_param.up_en   = buck_ctrl_isr_param.up_en;
+    isr_param.dn_en   = buck_ctrl_isr_param.dn_en;
 
-    v_in = *p_hal->p_v_in;
+    v_in  = *p_hal->p_v_in;
     v_out = *p_hal->p_v_out;
 
     /* Voltage loop now runs at the PWM interrupt rate and publishes the current-loop reference directly. */
@@ -306,6 +306,7 @@ static void FUNC_RAM buck_ctrl_isr(void)
     }
 
 #if defined(BUCK_CTRL_IND_CURR_REF_SHIFT)
+
     if (i_l_ref_total <= 0)
     {
         ind_curr_ref = 0;
@@ -321,10 +322,11 @@ static void FUNC_RAM buck_ctrl_isr(void)
         /* Saturated denominator used by the 32-bit divider. */
         int32_t denominator_i32 = 0;
 
-        denominator = (int64_t)BUCK_CTRL_IND_CURR_LOOP_FB_K * (int64_t)BUCK_CTRL_IND_CURR_CH_NUM;
+        denominator     = (int64_t)BUCK_CTRL_IND_CURR_LOOP_FB_K * (int64_t)BUCK_CTRL_IND_CURR_CH_NUM;
         denominator_i32 = pi_tustin_i32_sat_i64_to_i32(denominator);
-        if ((i_l_ref_total <= 0) ||
-            (denominator_i32 <= 0))
+
+        if (    (i_l_ref_total <= 0)
+             || (denominator_i32 <= 0))
         {
             ind_curr_ref = 0;
         }
@@ -351,14 +353,13 @@ static void FUNC_RAM buck_ctrl_isr(void)
         return;
     }
 
-    v_out_ff = pi_tustin_i32_sat_i64_to_i32((int64_t)v_out *
-                                            (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_V_OUT_FF_K);
+    v_out_ff = pi_tustin_i32_sat_i64_to_i32((int64_t)v_out * (int64_t)BUCK_CTRL_OUT_VOLT_LOOP_V_OUT_FF_K);
 
 #if (BUCK_CTRL_IND_CURR_CH_NUM == 2U)
     pi_tustin_i32_cal_a1_neg1_inline(&ind_curr_loop[0]);
-    cmp_numerator = pi_tustin_i32_sat_i64_to_i32((int64_t)ind_curr_loop[0].output.val +
-                                                 (int64_t)v_out_ff);
-    cmp_calc = cmp_numerator / v_in;
+    cmp_numerator = pi_tustin_i32_sat_i64_to_i32((int64_t)ind_curr_loop[0].output.val + (int64_t)v_out_ff);
+    cmp_calc      = cmp_numerator / v_in;
+
     if (cmp_calc > BUCK_CTRL_CMP_MAX)
     {
         cmp = BUCK_CTRL_CMP_MAX;
@@ -374,9 +375,9 @@ static void FUNC_RAM buck_ctrl_isr(void)
     p_hal->p_set_pwm_func[0](cmp, isr_param.up_en, isr_param.dn_en);
 
     pi_tustin_i32_cal_a1_neg1_inline(&ind_curr_loop[1]);
-    cmp_numerator = pi_tustin_i32_sat_i64_to_i32((int64_t)ind_curr_loop[1].output.val +
-                                                 (int64_t)v_out_ff);
-    cmp_calc = cmp_numerator / v_in;
+    cmp_numerator = pi_tustin_i32_sat_i64_to_i32((int64_t)ind_curr_loop[1].output.val + (int64_t)v_out_ff);
+    cmp_calc      = cmp_numerator / v_in;
+
     if (cmp_calc > BUCK_CTRL_CMP_MAX)
     {
         cmp = BUCK_CTRL_CMP_MAX;
@@ -392,12 +393,13 @@ static void FUNC_RAM buck_ctrl_isr(void)
     p_hal->p_set_pwm_func[1](cmp, isr_param.up_en, isr_param.dn_en);
 #else
     uint32_t ch = 0U;
+
     for (ch = 0U; ch < BUCK_CTRL_IND_CURR_CH_NUM; ch++)
     {
         pi_tustin_i32_cal_a1_neg1_inline(&ind_curr_loop[ch]);
-        cmp_numerator = pi_tustin_i32_sat_i64_to_i32((int64_t)ind_curr_loop[ch].output.val +
-                                                     (int64_t)v_out_ff);
-        cmp_calc = cmp_numerator / v_in;
+        cmp_numerator = pi_tustin_i32_sat_i64_to_i32((int64_t)ind_curr_loop[ch].output.val + (int64_t)v_out_ff);
+        cmp_calc      = cmp_numerator / v_in;
+
         if (cmp_calc > BUCK_CTRL_CMP_MAX)
         {
             cmp = BUCK_CTRL_CMP_MAX;
@@ -419,17 +421,17 @@ REG_INTERRUPT(3, buck_ctrl_isr)
 
 static void buck_ctrl_task(void)
 {
-    buck_ctrl_isr_param_t param = {0};
+    buck_ctrl_isr_param_t param        = {0};
     buck_ctrl_setpoint_t task_setpoint = {0};
-    int32_t v_in = 0;
-    int32_t v_out = 0;
-    int32_t cmp = 0;
-    int32_t pwr_i_in_lmt = 0;
-    int32_t in_curr_i_in_lmt = 0;
-    int32_t in_curr_i_l_lmt = 0;
-    int32_t out_curr_i_l_lmt = 0;
-    int32_t in_volt_i_l_lmt = 0;
-    int32_t i_l_lmt = 0;
+    int32_t v_in                       = 0;
+    int32_t v_out                      = 0;
+    int32_t cmp                        = 0;
+    int32_t pwr_i_in_lmt               = 0;
+    int32_t in_curr_i_in_lmt           = 0;
+    int32_t in_curr_i_l_lmt            = 0;
+    int32_t out_curr_i_l_lmt           = 0;
+    int32_t in_volt_i_l_lmt            = 0;
+    int32_t i_l_lmt                    = 0;
 
     if (buck_fsm_read_published(&task_setpoint) == 0U)
     {
@@ -441,11 +443,11 @@ static void buck_ctrl_task(void)
         return;
     }
 
-    v_in = *p_hal->p_v_in;
+    v_in  = *p_hal->p_v_in;
     v_out = *p_hal->p_v_out;
 
-    cmp = buck_ctrl_calc_cmp(0, v_in, v_out);
-    pwr_i_in_lmt = buck_ctrl_div_pos_i32(task_setpoint.pwr_lmt, v_in);
+    cmp              = buck_ctrl_calc_cmp(0, v_in, v_out);
+    pwr_i_in_lmt     = buck_ctrl_div_pos_i32(task_setpoint.pwr_lmt, v_in);
     in_curr_i_in_lmt = buck_ctrl_min_i32(task_setpoint.in_curr_lmt, pwr_i_in_lmt);
 
     in_volt_lmt_loop.input.p_act = &task_setpoint.in_volt_lmt;
@@ -453,17 +455,15 @@ static void buck_ctrl_task(void)
     in_volt_i_l_lmt = buck_ctrl_limit_pos_i32(in_volt_lmt_loop.output.val);
 
     /* Candidate current limits are compared in the K2 current domain. */
-    in_curr_i_l_lmt = buck_ctrl_scale_ind_curr_to_k2(
-        buck_ctrl_div_by_cmp_i32(in_curr_i_in_lmt, cmp));
-    out_curr_i_l_lmt = buck_ctrl_scale_ind_curr_to_k2(
-        buck_ctrl_limit_pos_i32(task_setpoint.out_curr_lmt));
+    in_curr_i_l_lmt  = buck_ctrl_scale_ind_curr_to_k2(buck_ctrl_div_by_cmp_i32(in_curr_i_in_lmt, cmp));
+    out_curr_i_l_lmt = buck_ctrl_scale_ind_curr_to_k2(buck_ctrl_limit_pos_i32(task_setpoint.out_curr_lmt));
 
     i_l_lmt = buck_ctrl_min_i32(in_volt_i_l_lmt, in_curr_i_l_lmt);
     i_l_lmt = buck_ctrl_min_i32(i_l_lmt, out_curr_i_l_lmt);
 
     param.i_l_lmt = buck_ctrl_limit_pos_i32(i_l_lmt);
-    param.up_en = 1U;
-    param.dn_en = 1U;
+    param.up_en   = 1U;
+    param.dn_en   = 1U;
     buck_ctrl_isr_param_request_update(param);
 }
 

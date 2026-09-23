@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    inv_fsm.c
- * @brief   inv_fsm control module.
+ * @file inv_fsm.c
+ * @brief inv_fsm control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,9 +32,9 @@
 
 #define p_hal (inv_hal_get_fsm())
 static volatile inv_fsm_cmd_e fsm_cmd = inv_fsm_cmd_null;
-static uint32_t init_dly = 0U;
-static uint32_t inv_rly_on_dly = 0U;
-static inv_fsm_ev_e fsm_ev = inv_fsm_ev_null;
+static uint32_t init_dly              = 0U;
+static uint32_t inv_rly_on_dly        = 0U;
+static inv_fsm_ev_e fsm_ev            = inv_fsm_ev_null;
 
 void inv_fsm_set_cmd(inv_fsm_cmd_e cmd)
 {
@@ -49,7 +49,7 @@ void inv_fsm_set_p_hal(inv_fsm_hal_t *p)
 static inv_fsm_cmd_e inv_fsm_get_cmd(void)
 {
     inv_fsm_cmd_e cmd = fsm_cmd;
-    fsm_cmd = inv_fsm_cmd_null;
+    fsm_cmd           = inv_fsm_cmd_null;
     return cmd;
 }
 
@@ -67,8 +67,8 @@ static void inv_fsm_init_exe(void)
     }
     else
     {
-        if ((p_hal != NULL) &&
-            (inv_cfg_is_ready() == 1U))
+        if (    (p_hal != NULL)
+             && (inv_cfg_is_ready() == 1U))
         {
             PLECS_LOG("inv_fsm init ready, goto idle\n");
             fsm_ev = inv_fsm_ev_to_idle;
@@ -100,8 +100,8 @@ static void inv_fsm_idle_in(void)
     inv_hal_unlock_binding();
     PLECS_LOG("inv_fsm enter idle\n");
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_inv_rly_off_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_inv_rly_off_func != NULL))
     {
         p_hal->p_inv_rly_off_func();
         PLECS_LOG("inv_fsm relay off\n");
@@ -146,8 +146,8 @@ static void inv_fsm_rly_on_in(void)
     inv_rly_on_dly = 0U;
     PLECS_LOG("inv_fsm enter relay_on\n");
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_inv_rly_on_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_inv_rly_on_func != NULL))
     {
         p_hal->p_inv_rly_on_func();
         PLECS_LOG("inv_fsm relay on\n");
@@ -202,8 +202,8 @@ static void inv_fsm_run_in(void)
     inv_cfg_set_run_allowed(1U);
     inv_cfg_publish_building();
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL))
     {
         p_hal->p_enter_run_func();
         PLECS_LOG("inv_fsm control enabled\n");
@@ -233,8 +233,8 @@ static void inv_fsm_run_out(void)
 {
     PLECS_LOG("inv_fsm leave run\n");
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         p_hal->p_exit_run_func();
         PLECS_LOG("inv_fsm control disabled\n");
@@ -258,6 +258,7 @@ inv_run_sta_e inv_fsm_get_run_sta(void)
     {
         return inv_run_sta_init;
     }
+
     if (sta == inv_fsm_sta_idle)
     {
         return inv_run_sta_idle;

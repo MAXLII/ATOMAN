@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    hw_params.h
- * @brief   hw_params control public interface.
+ * @file hw_params.h
+ * @brief hw_params control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -29,12 +29,12 @@
 #ifndef __HW_PARAMS_H
 #define __HW_PARAMS_H
 
-#define HW_DC_BUS_CAP_VALUE 1300e-6f
+#define HW_DC_BUS_CAP_VALUE  1300e-6f
 #define HW_AC_SIDE_IND_VALUE 440e-6f
 #define HW_AC_SIDE_CAP_VALUE 12e-6f
 
-#define HW_BUCK_BOOST_INPUT_CAP_VALUE 0.0f
+#define HW_BUCK_BOOST_INPUT_CAP_VALUE  0.0f
 #define HW_BUCK_BOOST_OUTPUT_CAP_VALUE 0.0f
-#define HW_BUCK_BOOST_IND_VALUE 0.0f
+#define HW_BUCK_BOOST_IND_VALUE        0.0f
 
 #endif

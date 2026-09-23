@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    resonant_i32.h
- * @brief   Integer ideal resonant controller public interface.
+ * @file resonant_i32.h
+ * @brief Integer ideal resonant controller public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Runtime path uses no division
  *          - No hardware access
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -45,11 +45,11 @@ typedef struct
 typedef struct
 {
     resonant_i32_coeff_t coeff; /**< Coefficients used by the ISR calculation. */
-    int32_t x1;                 /**< Previous input sample. */
-    int32_t x2;                 /**< Input delayed by 2 samples. */
-    int32_t y1;                 /**< Previous output sample. */
-    int32_t y2;                 /**< Output delayed by 2 samples. */
-    int64_t residual_q29;       /**< Bounded fractional recurrence residue retained across samples. */
+    int32_t x1;           /**< Previous input sample. */
+    int32_t x2;           /**< Input delayed by 2 samples. */
+    int32_t y1;           /**< Previous output sample. */
+    int32_t y2;           /**< Output delayed by 2 samples. */
+    int64_t residual_q29; /**< Bounded fractional recurrence residue retained across samples. */
 } resonant_i32_t;
 
 bool resonant_i32_design_coeff(resonant_i32_coeff_t *p_coeff,

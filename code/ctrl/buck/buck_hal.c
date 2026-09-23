@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    buck_hal.c
- * @brief   buck_hal control module.
+ * @file buck_hal.c
+ * @brief buck_hal control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -51,7 +51,7 @@ static void buck_hal_exit_run(void)
 
 buck_fsm_hal_t buck_fsm_hal = {
     .p_enter_run_func = buck_hal_enter_run,
-    .p_exit_run_func = buck_hal_exit_run,
+    .p_exit_run_func  = buck_hal_exit_run,
 };
 
 buck_ctrl_hal_t *buck_hal_get_ctrl(void)
@@ -110,8 +110,8 @@ void buck_hal_set_v_out_ptr(int32_t *p)
 
 void buck_hal_set_i_l_ptr(uint32_t ch, int32_t *p)
 {
-    if ((buck_hal_binding_locked != 0U) ||
-        (ch >= BUCK_CTRL_IND_CURR_CH_NUM))
+    if (    (buck_hal_binding_locked != 0U)
+         || (ch >= BUCK_CTRL_IND_CURR_CH_NUM))
     {
         return;
     }
@@ -120,8 +120,8 @@ void buck_hal_set_i_l_ptr(uint32_t ch, int32_t *p)
 
 void buck_hal_set_pwm_setter(uint32_t ch, buck_pwm_setter_t p)
 {
-    if ((buck_hal_binding_locked != 0U) ||
-        (ch >= BUCK_CTRL_IND_CURR_CH_NUM))
+    if (    (buck_hal_binding_locked != 0U)
+         || (ch >= BUCK_CTRL_IND_CURR_CH_NUM))
     {
         return;
     }

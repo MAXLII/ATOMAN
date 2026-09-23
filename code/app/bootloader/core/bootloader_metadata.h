@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bootloader_metadata.h
- * @brief   Stable codec for redundant bootloader upgrade metadata.
+ * @file bootloader_metadata.h
+ * @brief Stable codec for redundant bootloader upgrade metadata.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Pure functions are reentrant when the CRC callback is reentrant
  *          - Flash access remains behind the bootloader logical flash service
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

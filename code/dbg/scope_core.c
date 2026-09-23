@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    scope_core.c
- * @brief   Scope core module.
+ * @file scope_core.c
+ * @brief Scope core module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,15 +36,15 @@ void scope_core_run(scope_t *scope)
     float **var_ptrs;
     float *buf_base;
     uint32_t write_idx;
-    const uint32_t buf_size = scope->buffer_size;
+    const uint32_t buf_size  = scope->buffer_size;
     const uint32_t var_count = scope->var_count;
 
     if (scope->state == SCOPE_STATE_IDLE)
     {
         if (scope->is_running)
         {
-            scope->state = SCOPE_STATE_RUNNING;
-            scope->write_index = 0u;
+            scope->state           = SCOPE_STATE_RUNNING;
+            scope->write_index     = 0u;
             scope->trigger_counter = 0u;
         }
         else
@@ -53,34 +53,37 @@ void scope_core_run(scope_t *scope)
         }
     }
 
-    buffer = scope->buffer;
+    buffer    = scope->buffer;
     write_idx = scope->write_index;
-    var_ptrs = scope->var_ptrs;
-    buf_base = buffer + write_idx;
+    var_ptrs  = scope->var_ptrs;
+    buf_base  = buffer + write_idx;
+
     for (uint32_t i = 0u; i < var_count; ++i)
     {
         buf_base[i * buf_size] = *(var_ptrs[i]);
     }
 
-    if ((scope->state == SCOPE_STATE_RUNNING) && (scope->is_triggered != 0u))
+    if (    (scope->state == SCOPE_STATE_RUNNING)
+         && (scope->is_triggered != 0u))
     {
         scope->trigger_index = write_idx;
-        scope->is_triggered = 0u;
-        scope->in_trigger = 1u;
-        scope->state = SCOPE_STATE_TRIGGERED;
+        scope->is_triggered  = 0u;
+        scope->in_trigger    = 1u;
+        scope->state         = SCOPE_STATE_TRIGGERED;
     }
     else if (scope->state == SCOPE_STATE_TRIGGERED)
     {
         if (++scope->trigger_counter >= scope->trigger_post_cnt)
         {
             scope->trigger_counter = 0u;
-            scope->is_running = 0u;
-            scope->in_trigger = 0u;
-            scope->state = SCOPE_STATE_IDLE;
+            scope->is_running      = 0u;
+            scope->in_trigger      = 0u;
+            scope->state           = SCOPE_STATE_IDLE;
         }
     }
 
     ++write_idx;
+
     if (write_idx >= buf_size)
     {
         write_idx = 0u;
@@ -90,13 +93,14 @@ void scope_core_run(scope_t *scope)
 
 void scope_core_start(scope_t *scope)
 {
-    if ((scope != NULL) && (scope->state == SCOPE_STATE_IDLE))
+    if (    (scope != NULL)
+         && (scope->state == SCOPE_STATE_IDLE))
     {
-        scope->is_running = 1u;
-        scope->write_index = 0u;
+        scope->is_running      = 1u;
+        scope->write_index     = 0u;
         scope->trigger_counter = 0u;
-        scope->in_trigger = 0u;
-        scope->is_triggered = 0u;
+        scope->in_trigger      = 0u;
+        scope->is_triggered    = 0u;
     }
 }
 
@@ -105,14 +109,15 @@ void scope_core_stop(scope_t *scope)
     if (scope != NULL)
     {
         scope->is_running = 0u;
-        scope->state = SCOPE_STATE_IDLE;
+        scope->state      = SCOPE_STATE_IDLE;
         scope->in_trigger = 0u;
     }
 }
 
 void scope_core_trigger(scope_t *scope)
 {
-    if ((scope != NULL) && (scope->state == SCOPE_STATE_RUNNING))
+    if (    (scope != NULL)
+         && (scope->state == SCOPE_STATE_RUNNING))
     {
         scope->is_triggered = 1u;
     }
@@ -122,11 +127,11 @@ void scope_core_reset(scope_t *scope)
 {
     if (scope != NULL)
     {
-        scope->write_index = 0u;
+        scope->write_index     = 0u;
         scope->trigger_counter = 0u;
-        scope->is_triggered = 0u;
-        scope->is_running = 0u;
-        scope->in_trigger = 0u;
-        scope->state = SCOPE_STATE_IDLE;
+        scope->is_triggered    = 0u;
+        scope->is_running      = 0u;
+        scope->in_trigger      = 0u;
+        scope->state           = SCOPE_STATE_IDLE;
     }
 }

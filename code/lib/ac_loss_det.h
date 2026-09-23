@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    ac_loss_det.h
- * @brief   ac_loss_det library public interface.
+ * @file ac_loss_det.h
+ * @brief ac_loss_det library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,7 +31,7 @@
 
 #include "stdint.h"
 
-#define AC_LOSS_DET_TS 100e-6f
+#define AC_LOSS_DET_TS        100e-6f
 #define AC_LOSS_DET_BUFF_SIZE (333 + 10) // 100us的周期时间最短频率30hz
 
 #define AC_LOSS_DET_ZERO_VOLT_POS 50.0f
@@ -39,7 +39,7 @@
 
 #define AC_LOSS_DET_DIFF 20.0f
 
-#define AC_LOSS_DET_DIFF_OVF_TIME 0.001f
+#define AC_LOSS_DET_DIFF_OVF_TIME     0.001f
 #define AC_LOSS_DET_DIFF_OVF_TIME_CNT ((uint32_t)(AC_LOSS_DET_DIFF_OVF_TIME / AC_LOSS_DET_TS))
 
 typedef enum

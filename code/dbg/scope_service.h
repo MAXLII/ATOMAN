@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    scope_service.h
- * @brief   Scope service public interface (protocol layer).
+ * @file scope_service.h
+ * @brief Scope service public interface (protocol layer).
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -14,8 +14,8 @@
  *          - No dynamic memory allocation
  *          - scope_service.h depends on scope.h + shell.h (one-way, no circular)
  *
- * @author  Max.Li
- * @date    2026-04-30
+ * @author Max.Li
+ * @date 2026-04-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -54,8 +54,11 @@ int scope_printf_data_is_active(void);
 
 #define SCOPE_DATA_STEP_START(name, my_printf) scope_printf_data_start(&scope_##name, my_printf)
 
-#define REG_SCOPE_DATA_STEP_CMD(name)                                                             \
-    static void scope_data_step_##name(DEC_MY_PRINTF) { SCOPE_DATA_STEP_START(name, my_printf); } \
+#define REG_SCOPE_DATA_STEP_CMD(name)                 \
+    static void scope_data_step_##name(DEC_MY_PRINTF) \
+    {                                                 \
+        SCOPE_DATA_STEP_START(name, my_printf);       \
+    }                                                 \
     REG_SHELL_CMD(scp_pf_##name, scope_data_step_##name)
 #else
 #define REG_SCOPE_STATUS_CMD(name)
@@ -76,31 +79,31 @@ int scope_printf_data_is_active(void);
 /* Protocol command words and payload layouts */
 #define CMD_SET_SCOPE 0x01
 
-#define CMD_WORD_SCOPE_LIST_QUERY 0x18
-#define CMD_WORD_SCOPE_INFO_QUERY 0x19
-#define CMD_WORD_SCOPE_VAR_QUERY 0x1A
-#define CMD_WORD_SCOPE_START 0x1B
-#define CMD_WORD_SCOPE_TRIGGER 0x1C
-#define CMD_WORD_SCOPE_STOP 0x1D
-#define CMD_WORD_SCOPE_RESET 0x1E
+#define CMD_WORD_SCOPE_LIST_QUERY   0x18
+#define CMD_WORD_SCOPE_INFO_QUERY   0x19
+#define CMD_WORD_SCOPE_VAR_QUERY    0x1A
+#define CMD_WORD_SCOPE_START        0x1B
+#define CMD_WORD_SCOPE_TRIGGER      0x1C
+#define CMD_WORD_SCOPE_STOP         0x1D
+#define CMD_WORD_SCOPE_RESET        0x1E
 #define CMD_WORD_SCOPE_SAMPLE_QUERY 0x1F
 
 typedef enum
 {
     SCOPE_READ_MODE_NORMAL = 0,
-    SCOPE_READ_MODE_FORCE = 1,
+    SCOPE_READ_MODE_FORCE  = 1,
 } scope_read_mode_e;
 
 typedef enum
 {
-    SCOPE_TOOL_STATUS_OK = 0,
-    SCOPE_TOOL_STATUS_SCOPE_ID_INVALID = 1,
-    SCOPE_TOOL_STATUS_VAR_INDEX_INVALID = 2,
+    SCOPE_TOOL_STATUS_OK                   = 0,
+    SCOPE_TOOL_STATUS_SCOPE_ID_INVALID     = 1,
+    SCOPE_TOOL_STATUS_VAR_INDEX_INVALID    = 2,
     SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID = 3,
-    SCOPE_TOOL_STATUS_RUNNING_DENIED = 4,
-    SCOPE_TOOL_STATUS_DATA_NOT_READY = 5,
-    SCOPE_TOOL_STATUS_BUSY = 6,
-    SCOPE_TOOL_STATUS_CAPTURE_CHANGED = 7,
+    SCOPE_TOOL_STATUS_RUNNING_DENIED       = 4,
+    SCOPE_TOOL_STATUS_DATA_NOT_READY       = 5,
+    SCOPE_TOOL_STATUS_BUSY                 = 6,
+    SCOPE_TOOL_STATUS_CAPTURE_CHANGED      = 7,
 } scope_tool_status_e;
 
 #pragma pack(push, 1)

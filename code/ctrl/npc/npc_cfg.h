@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    npc_cfg.h
- * @brief   Application parameters, timing and unpublished control setpoints.
+ * @file npc_cfg.h
+ * @brief Application parameters, timing and unpublished control setpoints.
  * @details Base digital power framework. C11, static storage, no allocation.
  *          Bindings change only while stopped. PLECS serializes the dispatcher;
  *          ISR setpoints use the FSM publication snapshot.
- * @author  Max.Li
- * @date    2026-09-13
+ * @author Max.Li
+ * @date 2026-09-13
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License. See LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License. See LICENSE in the project root.
  */
 #ifndef NPC_CFG_H
 #define NPC_CFG_H
@@ -20,20 +20,20 @@
 /** 固定控制系数，由控制器初始化时复制。 */
 typedef struct npc_ctrl_cfg
 {
-    float ts;                  /* 控制周期，s。 */
-    float omega;               /* DSOGI 中心角频率，rad/s；内部不含 PLL。 */
-    float sogi_k;              /* DSOGI 阻尼系数。 */
-    float kp_v;                /* 4 个电压轴共用的比例增益，A/V。 */
-    float ki_v;                /* 电压积分增益，A/(V·s)，计算时乘控制周期。 */
-    float kp_i;                /* 4 个电流轴共用的比例增益，V/A。 */
-    float ki_i;                /* 电流积分增益，V/(A·s)，计算时乘控制周期。 */
-    float kaw_v;               /* 电压环限幅回算速率，1/s。 */
-    float kaw_i;               /* 电流环限幅回算速率，1/s。 */
-    float current_peak;        /* 正负序电流给定幅值之和的上限，A。 */
-    float modulation_headroom; /* 总母线电压的可用比例，范围 (0,1]。 */
-    float current_bias_cutoff_hz; /* 非基波电流低频偏置提取截止频率，Hz。 */
-    float current_bias_resistance; /* 偏置电流的负反馈电压系数，ohm；0 关闭补偿。 */
-    float voltage_damping_gain;    /* 电压非基波高通残差补偿增益，无量纲；0 关闭补偿。 */
+    float ts;           /* 控制周期，s。 */
+    float omega;        /* DSOGI 中心角频率，rad/s；内部不含 PLL。 */
+    float sogi_k;       /* DSOGI 阻尼系数。 */
+    float kp_v;         /* 4 个电压轴共用的比例增益，A/V。 */
+    float ki_v;         /* 电压积分增益，A/(V·s)，计算时乘控制周期。 */
+    float kp_i;         /* 4 个电流轴共用的比例增益，V/A。 */
+    float ki_i;         /* 电流积分增益，V/(A·s)，计算时乘控制周期。 */
+    float kaw_v;        /* 电压环限幅回算速率，1/s。 */
+    float kaw_i;        /* 电流环限幅回算速率，1/s。 */
+    float current_peak; /* 正负序电流给定幅值之和的上限，A。 */
+    float modulation_headroom;       /* 总母线电压的可用比例，范围 (0,1]。 */
+    float current_bias_cutoff_hz;    /* 非基波电流低频偏置提取截止频率，Hz。 */
+    float current_bias_resistance;   /* 偏置电流的负反馈电压系数，ohm；0 关闭补偿。 */
+    float voltage_damping_gain;      /* 电压非基波高通残差补偿增益，无量纲；0 关闭补偿。 */
     float voltage_damping_cutoff_hz; /* 残差高通的截止频率，Hz。 */
 } npc_ctrl_cfg_t;
 
@@ -57,9 +57,9 @@ typedef struct npc_cfg
 typedef struct npc_ctrl_setpoint
 {
     float vd_pos_slew_vps; /* 已发布的软启动斜率，V/s。 */
-    float freq_hz;        /* 已发布的 DSOGI 中心频率，Hz。 */
-    float v_dc_half_min;  /* 已发布的单侧母线最低允许电压，V。 */
-    uint8_t run_allowed; /* 运行许可，0 禁止、1 允许；仅由状态机授予。 */
+    float freq_hz;         /* 已发布的 DSOGI 中心频率，Hz。 */
+    float v_dc_half_min;   /* 已发布的单侧母线最低允许电压，V。 */
+    uint8_t run_allowed;   /* 运行许可，0 禁止、1 允许；仅由状态机授予。 */
 } npc_ctrl_setpoint_t;
 
 /** 对外运行状态，与故障诊断码分开。 */

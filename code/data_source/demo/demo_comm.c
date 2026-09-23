@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_comm.c
- * @brief   comm section demo.
+ * @file demo_comm.c
+ * @brief comm section demo.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-18
+ * @author Max.Li
+ * @date 2026-05-18
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,38 +36,40 @@
 static void demo_comm_frame_loopback(void *p_frame, DEC_MY_PRINTF)
 {
     section_packform_t *p_pack = (section_packform_t *)p_frame;
-    section_packform_t ack = {0};
+    section_packform_t ack     = {0};
 
-    if ((p_pack == NULL) ||
-        ((p_pack->len > 0U) && (p_pack->p_data == NULL)))
+    if (    (p_pack == NULL)
+         || (    (p_pack->len > 0U)
+              && (p_pack->p_data == NULL)))
     {
         return;
     }
 
-    ack.sop = p_pack->sop;
-    ack.version = p_pack->version;
-    ack.src = p_pack->dst;
-    ack.d_src = p_pack->d_dst;
-    ack.dst = p_pack->src;
-    ack.d_dst = p_pack->d_src;
-    ack.cmd_set = p_pack->cmd_set;
+    ack.sop      = p_pack->sop;
+    ack.version  = p_pack->version;
+    ack.src      = p_pack->dst;
+    ack.d_src    = p_pack->d_dst;
+    ack.dst      = p_pack->src;
+    ack.d_dst    = p_pack->d_src;
+    ack.cmd_set  = p_pack->cmd_set;
     ack.cmd_word = p_pack->cmd_word;
-    ack.is_ack = 1U;
-    ack.seq = p_pack->seq;
-    ack.len = p_pack->len;
-    ack.p_data = p_pack->p_data;
+    ack.is_ack   = 1U;
+    ack.seq      = p_pack->seq;
+    ack.len      = p_pack->len;
+    ack.p_data   = p_pack->p_data;
     comm_send_data(&ack, my_printf);
 }
 
 static void demo_comm_loopback(void *p_frame, DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
-    section_packform_t ack = {0};
-    demo_comm_frame_t frame = {0};
+    section_packform_t *p_pack         = (section_packform_t *)p_frame;
+    section_packform_t ack             = {0};
+    demo_comm_frame_t frame            = {0};
     demo_data_pool_snapshot_t snapshot = {0};
     uint16_t copy_len;
 
-    if ((p_pack == NULL) || (p_pack->p_data == NULL))
+    if (    (p_pack == NULL)
+         || (p_pack->p_data == NULL))
     {
         return;
     }
@@ -75,23 +77,23 @@ static void demo_comm_loopback(void *p_frame, DEC_MY_PRINTF)
     copy_len = (p_pack->len < sizeof(frame)) ? p_pack->len : sizeof(frame);
     memcpy(&frame, p_pack->p_data, copy_len);
 
-    snapshot.counter = frame.counter;
-    snapshot.led_mask = frame.led_mask;
+    snapshot.counter         = frame.counter;
+    snapshot.led_mask        = frame.led_mask;
     snapshot.temperature_x10 = frame.temperature_x10;
     demo_data_pool_exchange_write(&snapshot);
 
-    ack.sop = p_pack->sop;
-    ack.version = p_pack->version;
-    ack.src = p_pack->dst;
-    ack.d_src = p_pack->d_dst;
-    ack.dst = p_pack->src;
-    ack.d_dst = p_pack->d_src;
-    ack.cmd_set = p_pack->cmd_set;
+    ack.sop      = p_pack->sop;
+    ack.version  = p_pack->version;
+    ack.src      = p_pack->dst;
+    ack.d_src    = p_pack->d_dst;
+    ack.dst      = p_pack->src;
+    ack.d_dst    = p_pack->d_src;
+    ack.cmd_set  = p_pack->cmd_set;
     ack.cmd_word = p_pack->cmd_word;
-    ack.is_ack = 1u;
-    ack.seq = p_pack->seq;
-    ack.len = sizeof(frame);
-    ack.p_data = (uint8_t *)&frame;
+    ack.is_ack   = 1u;
+    ack.seq      = p_pack->seq;
+    ack.len      = sizeof(frame);
+    ack.p_data   = (uint8_t *)&frame;
     comm_send_data(&ack, my_printf);
 }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_perf.c
- * @brief   perf section demo.
+ * @file demo_perf.c
+ * @brief perf section demo.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-18
+ * @author Max.Li
+ * @date 2026-05-18
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,7 +33,7 @@
 
 #include <stdint.h>
 
-static uint32_t s_demo_perf_loop_count = 2000u;
+static uint32_t s_demo_perf_loop_count      = 2000u;
 static volatile uint32_t s_demo_perf_result = 0u;
 
 REG_PERF_RECORD(demo_perf_shell)
@@ -61,7 +61,8 @@ static void demo_perf_cmd(DEC_MY_PRINTF)
     demo_perf_workload(s_demo_perf_loop_count);
     PERF_END(demo_perf_shell);
 
-    if ((my_printf != NULL) && (my_printf->my_printf != NULL))
+    if (    (my_printf != NULL)
+         && (my_printf->my_printf != NULL))
     {
         my_printf->my_printf("perf shell: loop=%lu time=%lu max=%lu result=%lu\r\n",
                              (unsigned long)s_demo_perf_loop_count,

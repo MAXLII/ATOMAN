@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    buck_fsm.c
- * @brief   buck_fsm control module.
+ * @file buck_fsm.c
+ * @brief buck_fsm control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -44,14 +44,12 @@ typedef struct
 } buck_fsm_published_t;
 
 static buck_fsm_published_t published_setpoint = {
-    .sequence = ATOMIC_VAR_INIT(0U),
-    .run_allowed = ATOMIC_VAR_INIT(0U),
-    .out_volt_ref = ATOMIC_VAR_INIT(
-        BUCK_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(BUCK_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V)),
-    .in_volt_lmt = ATOMIC_VAR_INIT(
-        BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V)),
-    .pwr_lmt = ATOMIC_VAR_INIT(BUCK_CTRL_IN_PWR_LMT_TO_CODE(BUCK_CTRL_IN_PWR_LMT_DEFAULT_W)),
-    .in_curr_lmt = ATOMIC_VAR_INIT(BUCK_CTRL_IN_CURR_LMT_TO_CODE(BUCK_CTRL_IN_CURR_LMT_DEFAULT_A)),
+    .sequence     = ATOMIC_VAR_INIT(0U),
+    .run_allowed  = ATOMIC_VAR_INIT(0U),
+    .out_volt_ref = ATOMIC_VAR_INIT(BUCK_CTRL_OUT_VOLT_LOOP_REF_TO_CODE(BUCK_CTRL_OUT_VOLT_LOOP_REF_DEFAULT_V)),
+    .in_volt_lmt  = ATOMIC_VAR_INIT(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_TO_CODE(BUCK_CTRL_IN_VOLT_LMT_LOOP_REF_DEFAULT_V)),
+    .pwr_lmt      = ATOMIC_VAR_INIT(BUCK_CTRL_IN_PWR_LMT_TO_CODE(BUCK_CTRL_IN_PWR_LMT_DEFAULT_W)),
+    .in_curr_lmt  = ATOMIC_VAR_INIT(BUCK_CTRL_IN_CURR_LMT_TO_CODE(BUCK_CTRL_IN_CURR_LMT_DEFAULT_A)),
     .out_curr_lmt = ATOMIC_VAR_INIT(BUCK_CTRL_OUT_CURR_LMT_TO_CODE(BUCK_CTRL_OUT_CURR_LMT_DEFAULT_A)),
 };
 
@@ -61,57 +59,38 @@ static uint32_t fsm_ev = buck_fsm_ev_null;
 static void buck_fsm_publish_building(uint8_t run_allowed)
 {
     const buck_ctrl_setpoint_t *p_building = buck_cfg_get_p_building();
-    uint_least32_t sequence =
-        atomic_load_explicit(&published_setpoint.sequence, memory_order_relaxed);
+    uint_least32_t sequence                = atomic_load_explicit(&published_setpoint.sequence, memory_order_relaxed);
 
     atomic_store_explicit(&published_setpoint.sequence, sequence + 1U, memory_order_seq_cst);
-    atomic_store_explicit(&published_setpoint.run_allowed,
-                          (run_allowed != 0U) ? 1U : 0U,
-                          memory_order_relaxed);
-    atomic_store_explicit(&published_setpoint.out_volt_ref,
-                          p_building->out_volt_ref,
-                          memory_order_relaxed);
-    atomic_store_explicit(&published_setpoint.in_volt_lmt,
-                          p_building->in_volt_lmt,
-                          memory_order_relaxed);
-    atomic_store_explicit(&published_setpoint.pwr_lmt,
-                          p_building->pwr_lmt,
-                          memory_order_relaxed);
-    atomic_store_explicit(&published_setpoint.in_curr_lmt,
-                          p_building->in_curr_lmt,
-                          memory_order_relaxed);
-    atomic_store_explicit(&published_setpoint.out_curr_lmt,
-                          p_building->out_curr_lmt,
-                          memory_order_relaxed);
+    atomic_store_explicit(&published_setpoint.run_allowed, (run_allowed != 0U) ? 1U : 0U, memory_order_relaxed);
+    atomic_store_explicit(&published_setpoint.out_volt_ref, p_building->out_volt_ref, memory_order_relaxed);
+    atomic_store_explicit(&published_setpoint.in_volt_lmt, p_building->in_volt_lmt, memory_order_relaxed);
+    atomic_store_explicit(&published_setpoint.pwr_lmt, p_building->pwr_lmt, memory_order_relaxed);
+    atomic_store_explicit(&published_setpoint.in_curr_lmt, p_building->in_curr_lmt, memory_order_relaxed);
+    atomic_store_explicit(&published_setpoint.out_curr_lmt, p_building->out_curr_lmt, memory_order_relaxed);
     atomic_store_explicit(&published_setpoint.sequence, sequence + 2U, memory_order_seq_cst);
 }
 
 uint8_t buck_fsm_read_published(buck_ctrl_setpoint_t *p_setpoint)
 {
-    buck_ctrl_setpoint_t snapshot = {0};
-    uint_least32_t sequence_before =
-        atomic_load_explicit(&published_setpoint.sequence, memory_order_acquire);
-    uint_least32_t sequence_after = 0U;
+    buck_ctrl_setpoint_t snapshot  = {0};
+    uint_least32_t sequence_before = atomic_load_explicit(&published_setpoint.sequence, memory_order_acquire);
+    uint_least32_t sequence_after  = 0U;
 
     if ((sequence_before & 1U) != 0U)
     {
         return 0U;
     }
 
-    snapshot.run_allowed =
-        (uint8_t)atomic_load_explicit(&published_setpoint.run_allowed, memory_order_relaxed);
-    snapshot.out_volt_ref =
-        (int32_t)atomic_load_explicit(&published_setpoint.out_volt_ref, memory_order_relaxed);
-    snapshot.in_volt_lmt =
-        (int32_t)atomic_load_explicit(&published_setpoint.in_volt_lmt, memory_order_relaxed);
-    snapshot.pwr_lmt =
-        (int32_t)atomic_load_explicit(&published_setpoint.pwr_lmt, memory_order_relaxed);
-    snapshot.in_curr_lmt =
-        (int32_t)atomic_load_explicit(&published_setpoint.in_curr_lmt, memory_order_relaxed);
-    snapshot.out_curr_lmt =
-        (int32_t)atomic_load_explicit(&published_setpoint.out_curr_lmt, memory_order_relaxed);
+    snapshot.run_allowed  = (uint8_t)atomic_load_explicit(&published_setpoint.run_allowed, memory_order_relaxed);
+    snapshot.out_volt_ref = (int32_t)atomic_load_explicit(&published_setpoint.out_volt_ref, memory_order_relaxed);
+    snapshot.in_volt_lmt  = (int32_t)atomic_load_explicit(&published_setpoint.in_volt_lmt, memory_order_relaxed);
+    snapshot.pwr_lmt      = (int32_t)atomic_load_explicit(&published_setpoint.pwr_lmt, memory_order_relaxed);
+    snapshot.in_curr_lmt  = (int32_t)atomic_load_explicit(&published_setpoint.in_curr_lmt, memory_order_relaxed);
+    snapshot.out_curr_lmt = (int32_t)atomic_load_explicit(&published_setpoint.out_curr_lmt, memory_order_relaxed);
 
     sequence_after = atomic_load_explicit(&published_setpoint.sequence, memory_order_acquire);
+
     if (sequence_before != sequence_after)
     {
         return 0U;
@@ -246,8 +225,8 @@ static void buck_fsm_run_in(void)
 
 static void buck_fsm_run_exe(void)
 {
-    if ((buck_cfg_get_run_request() == 0U) ||
-        (buck_hal_hard_protect_is_latched() != 0U))
+    if (    (buck_cfg_get_run_request() == 0U)
+         || (buck_hal_hard_protect_is_latched() != 0U))
     {
         buck_fsm_publish_building(0U);
         PLECS_LOG("buck_fsm stop condition met, goto idle\n");
@@ -287,6 +266,7 @@ buck_run_sta_e buck_fsm_get_run_sta(void)
     {
         return buck_run_sta_init;
     }
+
     if (sta == buck_fsm_sta_idle)
     {
         return buck_run_sta_idle;

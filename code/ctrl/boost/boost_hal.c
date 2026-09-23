@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    boost_hal.c
- * @brief   boost_hal control module.
+ * @file boost_hal.c
+ * @brief boost_hal control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -51,12 +51,11 @@ static void exit_run(void)
     {
         ctrl_hal.p_pwm_disable();
     }
-
 }
 
 static boost_fsm_hal_t fsm_hal = {
     .p_enter_run_func = enter_run,
-    .p_exit_run_func = exit_run,
+    .p_exit_run_func  = exit_run,
 };
 
 boost_ctrl_hal_t *boost_hal_get_ctrl(void)
@@ -109,14 +108,14 @@ static uint8_t pwm_setter_ready(void)
 
 uint8_t boost_hal_is_ready(void)
 {
-    return (uint8_t)((ctrl_hal.p_v_in != NULL) &&
-                     (ctrl_hal.p_v_out != NULL) &&
-                     (ind_curr_ready() != 0U) &&
-                     (pwm_setter_ready() != 0U) &&
-                     (ctrl_hal.p_pwm_enable != NULL) &&
-                     (ctrl_hal.p_pwm_disable != NULL) &&
-                     (fsm_hal.p_enter_run_func != NULL) &&
-                     (fsm_hal.p_exit_run_func != NULL));
+    return (uint8_t)(    (ctrl_hal.p_v_in != NULL)
+                      && (ctrl_hal.p_v_out != NULL)
+                      && (ind_curr_ready() != 0U)
+                      && (pwm_setter_ready() != 0U)
+                      && (ctrl_hal.p_pwm_enable != NULL)
+                      && (ctrl_hal.p_pwm_disable != NULL)
+                      && (fsm_hal.p_enter_run_func != NULL)
+                      && (fsm_hal.p_exit_run_func != NULL));
 }
 
 void boost_hal_lock_binding(void)
@@ -149,8 +148,8 @@ void boost_hal_set_v_out_ptr(volatile uint32_t *p)
 
 void boost_hal_set_i_l_ptr(uint32_t ch, volatile uint32_t *p)
 {
-    if ((binding_locked != 0U) ||
-        (ch >= BOOST_CTRL_IND_CURR_CH_NUM))
+    if (    (binding_locked != 0U)
+         || (ch >= BOOST_CTRL_IND_CURR_CH_NUM))
     {
         return;
     }
@@ -159,8 +158,8 @@ void boost_hal_set_i_l_ptr(uint32_t ch, volatile uint32_t *p)
 
 void boost_hal_set_pwm_setter(uint32_t ch, boost_pwm_setter_t p)
 {
-    if ((binding_locked != 0U) ||
-        (ch >= BOOST_CTRL_IND_CURR_CH_NUM))
+    if (    (binding_locked != 0U)
+         || (ch >= BOOST_CTRL_IND_CURR_CH_NUM))
     {
         return;
     }

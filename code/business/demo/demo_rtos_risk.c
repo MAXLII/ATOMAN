@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_rtos_risk.c
- * @brief   SRTOS risk-oriented test module.
+ * @file demo_rtos_risk.c
+ * @brief SRTOS risk-oriented test module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-30
+ * @author Max.Li
+ * @date 2026-06-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -51,21 +51,24 @@ static void demo_rtos_risk_mark(uint32_t tag)
 static void demo_rtos_risk_fast_1tick(void)
 {
     const uint32_t now = SECTION_SYS_TICK;
-    uint32_t delta = 0u;
+    uint32_t delta     = 0u;
 
     if (g_demo_rtos_risk_debug.start_tick == 0u)
     {
         g_demo_rtos_risk_debug.start_tick = now;
-        s_fast_last_tick = now;
+        s_fast_last_tick                  = now;
     }
 
     delta = now - s_fast_last_tick;
+
     if (delta > 0u)
     {
-        if ((g_demo_rtos_risk_debug.min_fast_delta == 0u) || (delta < g_demo_rtos_risk_debug.min_fast_delta))
+        if (    (g_demo_rtos_risk_debug.min_fast_delta == 0u)
+             || (delta < g_demo_rtos_risk_debug.min_fast_delta))
         {
             g_demo_rtos_risk_debug.min_fast_delta = delta;
         }
+
         if (delta > g_demo_rtos_risk_debug.max_fast_delta)
         {
             g_demo_rtos_risk_debug.max_fast_delta = delta;
@@ -104,8 +107,8 @@ static void demo_rtos_risk_same_period(uint32_t id)
     }
 
     g_demo_rtos_risk_debug.same_period_count[id]++;
-    demo_rtos_risk_mark(0xB0000000u | ((id & 0x000000FFu) << 16) |
-                        (g_demo_rtos_risk_debug.same_period_count[id] & 0x0000FFFFu));
+    demo_rtos_risk_mark(0xB0000000u | ((id & 0x000000FFu) << 16)
+                        | (g_demo_rtos_risk_debug.same_period_count[id] & 0x0000FFFFu));
 }
 
 static void demo_rtos_risk_same0(void)
@@ -152,11 +155,12 @@ static void demo_rtos_risk_variable(void)
 {
     const uint32_t start = SECTION_SYS_TICK;
     const uint32_t enter = g_demo_rtos_risk_debug.variable_enter_count;
-    uint32_t guard_a = 0x13579BDFu ^ enter;
-    uint32_t guard_b = 0x2468ACE0u + enter;
-    uint32_t run_ticks = 0u;
+    uint32_t guard_a     = 0x13579BDFu ^ enter;
+    uint32_t guard_b     = 0x2468ACE0u + enter;
+    uint32_t run_ticks   = 0u;
 
     g_demo_rtos_risk_debug.variable_enter_count++;
+
     if ((g_demo_rtos_risk_debug.variable_enter_count & 0x00000003u) == 0u)
     {
         const uint32_t long_start = SECTION_SYS_TICK;
@@ -182,12 +186,14 @@ static void demo_rtos_risk_variable(void)
         g_demo_rtos_risk_debug.variable_short_count++;
     }
 
-    if ((guard_a != (0x13579BDFu ^ enter)) || (guard_b != (0x2468ACE0u + enter)))
+    if (    (guard_a != (0x13579BDFu ^ enter))
+         || (guard_b != (0x2468ACE0u + enter)))
     {
         g_demo_rtos_risk_debug.variable_error_count++;
     }
 
     run_ticks = SECTION_SYS_TICK - start;
+
     if (run_ticks > g_demo_rtos_risk_debug.variable_max_run_ticks)
     {
         g_demo_rtos_risk_debug.variable_max_run_ticks = run_ticks;
@@ -198,10 +204,11 @@ static void demo_rtos_risk_long(void)
 {
     const uint32_t start = SECTION_SYS_TICK;
     const uint32_t enter = g_demo_rtos_risk_debug.long_enter_count;
-    uint32_t guard = 0x89ABCDEFu ^ enter;
-    uint32_t run_ticks = 0u;
+    uint32_t guard       = 0x89ABCDEFu ^ enter;
+    uint32_t run_ticks   = 0u;
 
     g_demo_rtos_risk_debug.long_enter_count++;
+
     while ((uint32_t)(SECTION_SYS_TICK - start) < 55u)
     {
         guard ^= 0xAA55AA55u;
@@ -216,6 +223,7 @@ static void demo_rtos_risk_long(void)
     }
 
     run_ticks = SECTION_SYS_TICK - start;
+
     if (run_ticks > g_demo_rtos_risk_debug.long_max_run_ticks)
     {
         g_demo_rtos_risk_debug.long_max_run_ticks = run_ticks;
@@ -248,7 +256,7 @@ static uint32_t demo_rtos_risk_nested_level1(uint32_t value)
 
 static void demo_rtos_risk_nested(void)
 {
-    const uint32_t seed = g_demo_rtos_risk_debug.nested_count ^ 0xCAFEBABEu;
+    const uint32_t seed   = g_demo_rtos_risk_debug.nested_count ^ 0xCAFEBABEu;
     const uint32_t result = demo_rtos_risk_nested_level1(seed);
 
     if (result != seed)
@@ -261,12 +269,13 @@ static void demo_rtos_risk_nested(void)
 static void demo_rtos_risk_stack(void)
 {
     uint32_t local_words[32] = {0u};
-    uint32_t checksum = 0u;
+    uint32_t checksum        = 0u;
 
     for (uint32_t i = 0u; i < 32u; ++i)
     {
         local_words[i] = 0xA5A50000u | i;
     }
+
     for (uint32_t i = 0u; i < 32u; ++i)
     {
         checksum ^= local_words[i];
@@ -282,8 +291,8 @@ static void demo_rtos_risk_stack(void)
 static void demo_rtos_risk_float(void)
 {
     const float seed = (float)(g_demo_rtos_risk_debug.float_count & 0x000000FFu);
-    float acc = seed;
-    uint32_t bits = 0u;
+    float acc        = seed;
+    uint32_t bits    = 0u;
 
     acc = (acc * 1.25f) + 0.5f;
     acc = (acc - 0.5f) / 1.25f;
@@ -306,7 +315,8 @@ static void demo_rtos_risk_monitor(void)
     g_demo_rtos_risk_debug.monitor_count++;
     g_demo_rtos_risk_debug.last_tick = SECTION_SYS_TICK;
 
-    if ((same0 > (same7 + 1u)) || (same7 > (same0 + 1u)))
+    if (    (same0 > (same7 + 1u))
+         || (same7 > (same0 + 1u)))
     {
         g_demo_rtos_risk_debug.ready_fairness_error++;
     }

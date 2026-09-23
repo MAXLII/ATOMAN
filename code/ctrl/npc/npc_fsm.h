@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    npc_fsm.h
- * @brief   Lifecycle states and bounded access to the FSM-owned control snapshot.
+ * @file npc_fsm.h
+ * @brief Lifecycle states and bounded access to the FSM-owned control snapshot.
  * @details Base digital power framework. C11, static storage, no allocation.
  *          Bindings change only while stopped. PLECS serializes the dispatcher;
  *          ISR setpoints use the FSM publication snapshot.
- * @author  Max.Li
- * @date    2026-09-13
+ * @author Max.Li
+ * @date 2026-09-13
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License. See LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License. See LICENSE in the project root.
  */
 #ifndef NPC_FSM_H
 #define NPC_FSM_H

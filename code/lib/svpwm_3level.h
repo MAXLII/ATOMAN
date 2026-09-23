@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    svpwm_3level.h
- * @brief   Three-phase 3-level SVPWM interface contract.
+ * @file svpwm_3level.h
+ * @brief Three-phase 3-level SVPWM interface contract.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Caller supplies a coherent input snapshot for each PWM period
  *          - Gate mapping, dead time and shutdown belong to HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-09-12
+ * @author Max.Li
+ * @date 2026-09-12
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -53,16 +53,16 @@ typedef struct svpwm_3level_input
 
 typedef struct svpwm_3level_cfg
 {
-    float v_dc_half_min; /* Minimum permitted voltage of EACH half bus in V; finite and > 0. */
-    float midpoint_kp;   /* Balance gain, A/V; 0 disables balance, positive enables it. */
+    float v_dc_half_min;  /* Minimum permitted voltage of EACH half bus in V; finite and > 0. */
+    float midpoint_kp;    /* Balance gain, A/V; 0 disables balance, positive enables it. */
     bool average_balance; /* Regulate filtered bus difference rather than instantaneous neutral current. */
-    float ts;                 /* Calculation period for averaged balancing, s. */
-    float midpoint_filter_hz; /* Bus difference and current-magnitude filter cutoff, Hz. */
-    float midpoint_ki;        /* Average bus-difference integral gain, A/(V s). */
-    float midpoint_kaw;       /* Offset saturation tracking rate, 1/s. */
+    float ts;             /* Calculation period for averaged balancing, s. */
+    float midpoint_filter_hz;   /* Bus difference and current-magnitude filter cutoff, Hz. */
+    float midpoint_ki;          /* Average bus-difference integral gain, A/(V s). */
+    float midpoint_kaw;         /* Offset saturation tracking rate, 1/s. */
     float midpoint_current_min; /* Minimum current magnitude used to normalize balance authority, A. */
     float midpoint_slope_floor_ratio; /* Regularization relative to total current magnitude. */
-    float midpoint_offset_max;  /* Maximum correction around the centered common mode, V. */
+    float midpoint_offset_max;        /* Maximum correction around the centered common mode, V. */
 } svpwm_3level_cfg_t;
 
 typedef struct svpwm_3level_inter
@@ -98,12 +98,12 @@ typedef struct svpwm_3level_output
     svpwm_3level_phase_output_t phase_a; /* Phase A dwell ratios for the latest calculation. */
     svpwm_3level_phase_output_t phase_b; /* Phase B dwell ratios for the latest calculation. */
     svpwm_3level_phase_output_t phase_c; /* Phase C dwell ratios for the latest calculation. */
-    float midpoint_current_ref;         /* Requested current out of the midpoint, A. */
-    float midpoint_current;             /* Predicted mean current out of the midpoint, A. */
-    float common_mode_v;                /* Selected common-mode voltage relative to the raw reference, V. */
-    float midpoint_delta_filtered;      /* Low-pass bus difference used by averaged balancing, V. */
-    float midpoint_correction_v;        /* Applied shift relative to centered common mode, V. */
-    float midpoint_current_magnitude;   /* Filtered sum of absolute fundamental phase currents, A. */
+    float midpoint_current_ref;          /* Requested current out of the midpoint, A. */
+    float midpoint_current;        /* Predicted mean current out of the midpoint, A. */
+    float common_mode_v;           /* Selected common-mode voltage relative to the raw reference, V. */
+    float midpoint_delta_filtered; /* Low-pass bus difference used by averaged balancing, V. */
+    float midpoint_correction_v;   /* Applied shift relative to centered common mode, V. */
+    float midpoint_current_magnitude; /* Filtered sum of absolute fundamental phase currents, A. */
 } svpwm_3level_output_t;
 
 typedef struct svpwm_3level
@@ -118,20 +118,20 @@ typedef struct svpwm_3level
  * @brief Initialize an instance and copy validated configuration without checking it.
  * @param p_svpwm Valid caller-owned instance; p_cfg may point to its cfg member.
  * @param p_cfg Valid configuration source; copied, not retained.
- * Clears input, runtime history and dwell ratios. The caller keeps PWM disabled until cal().
+ *        Clears input, runtime history and dwell ratios. The caller keeps PWM disabled until cal().
  */
 void svpwm_3level_init(svpwm_3level_t *p_svpwm, const svpwm_3level_cfg_t *p_cfg);
 
 /**
  * @brief Calculate one complete PWM period, radially limiting commands to the attainable hexagon.
  * @param p_svpwm Valid initialized instance with exclusive access for this call.
- * The caller validates configuration, finite voltages/currents and strictly positive half buses.
- * No pointer, configuration, input-finiteness or undervoltage checks occur here.
- * A command whose phase maximum minus minimum exceeds the total bus is scaled uniformly;
- * vector direction is retained and every phase receives bounded P/O/N dwell ratios.
- * Both instantaneous and averaged midpoint-balance modes use this limited reference.
- * Zero reference uses OOO in the instantaneous mode. An O state is an active midpoint
- * connection; hardware shutdown, dead time and input protection remain caller responsibilities.
+ *        The caller validates configuration, finite voltages/currents and strictly positive half buses.
+ *        No pointer, configuration, input-finiteness or undervoltage checks occur here.
+ *        A command whose phase maximum minus minimum exceeds the total bus is scaled uniformly;
+ *        vector direction is retained and every phase receives bounded P/O/N dwell ratios.
+ *        Both instantaneous and averaged midpoint-balance modes use this limited reference.
+ *        Zero reference uses OOO in the instantaneous mode. An O state is an active midpoint
+ *        connection; hardware shutdown, dead time and input protection remain caller responsibilities.
  */
 void svpwm_3level_cal(svpwm_3level_t *p_svpwm);
 

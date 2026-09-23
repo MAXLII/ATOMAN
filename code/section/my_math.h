@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    my_math.h
- * @brief   Control math helper macros and inline coordinate transforms.
+ * @file my_math.h
+ * @brief Control math helper macros and inline coordinate transforms.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,17 +39,16 @@
 #endif
 
 /* In-place clamp helpers. */
-#define UP_LMT(in, lmt) (in = ((in > (lmt)) ? (lmt) : in))
-#define DN_LMT(in, lmt) (in = ((in < (lmt)) ? (lmt) : in))
+#define UP_LMT(in, lmt)               (in = ((in > (lmt)) ? (lmt) : in))
+#define DN_LMT(in, lmt)               (in = ((in < (lmt)) ? (lmt) : in))
 #define UP_DN_LMT(in, up_lmt, dn_lmt) (in = ((in > (up_lmt)) ? (up_lmt) : ((in < (dn_lmt)) ? (dn_lmt) : in)))
 
 /* Assign the smaller value of a and b to val. */
 #define MIN(val, a, b) (val) = ((a) < (b)) ? (a) : (b)
 
 /* First-order high-pass filter in discrete form. */
-#define HPF(in, in_last, out, Ts, wc) out = 2.0f / (Ts * wc + 2.0f) * in -      \
-                                            2.0f / (Ts * wc + 2.0f) * in_last - \
-                                            (Ts * wc - 2) / (Ts * wc + 2) * out
+#define HPF(in, in_last, out, Ts, wc) \
+    out = 2.0f / (Ts * wc + 2.0f) * in - 2.0f / (Ts * wc + 2.0f) * in_last - (Ts * wc - 2) / (Ts * wc + 2) * out
 
 /* First-order low-pass filter in discrete form; updates in_last internally. */
 #define LPF(in, in_last, out, Ts, wc)                   \
@@ -58,9 +57,7 @@
         const float b0 = Ts * wc / (Ts * wc + 2.0f);    \
         const float b1 = b0;                            \
         const float a1 = (Ts * wc - 2) / (Ts * wc + 2); \
-        out = b0 * in +                                 \
-              b1 * in_last -                            \
-              a1 * out;                                 \
+        out = b0 * in + b1 * in_last - a1 * out;        \
         in_last = in;                                   \
     } while (0)
 
@@ -155,7 +152,6 @@
 #endif
 #define M_SQRT1_2 0.70710678118654752440f
 
-
 #ifdef M_SQRT3_2
 #undef M_SQRT3_2
 #endif
@@ -179,7 +175,11 @@
  * @param p_alpha Alpha output; valid and distinct from p_beta.
  * @param p_beta Beta output; valid and distinct from p_alpha.
  */
-static inline void clarke(float a, float b, float c, float *p_alpha, float *p_beta)
+static inline void clarke(float a,
+                          float b,
+                          float c,
+                          float *p_alpha,
+                          float *p_beta)
 {
     *p_alpha = (2.0f * a - b - c) / 3.0f;
     *p_beta = (b - c) * M_1_SQRT3;
@@ -193,7 +193,11 @@ static inline void clarke(float a, float b, float c, float *p_alpha, float *p_be
  * @param p_b Phase B output.
  * @param p_c Phase C output.
  */
-static inline void inv_clarke(float alpha, float beta, float *p_a, float *p_b, float *p_c)
+static inline void inv_clarke(float alpha,
+                              float beta,
+                              float *p_a,
+                              float *p_b,
+                              float *p_c)
 {
     *p_a = alpha;
     *p_b = -0.5f * alpha + M_SQRT3_2 * beta;
@@ -209,7 +213,12 @@ static inline void inv_clarke(float alpha, float beta, float *p_a, float *p_b, f
  * @param p_d Direct-axis output; valid and distinct from p_q.
  * @param p_q Quadrature-axis output; valid and distinct from p_d.
  */
-static inline void park(float alpha, float beta, float sine, float cosine, float *p_d, float *p_q)
+static inline void park(float alpha,
+                        float beta,
+                        float sine,
+                        float cosine,
+                        float *p_d,
+                        float *p_q)
 {
     *p_d = cosine * alpha + sine * beta;
     *p_q = -sine * alpha + cosine * beta;
@@ -224,35 +233,33 @@ static inline void park(float alpha, float beta, float sine, float cosine, float
  * @param p_alpha Alpha output; valid and distinct from p_beta.
  * @param p_beta Beta output; valid and distinct from p_alpha.
  */
-static inline void inv_park(float d, float q, float sine, float cosine, float *p_alpha, float *p_beta)
+static inline void inv_park(float d,
+                            float q,
+                            float sine,
+                            float cosine,
+                            float *p_alpha,
+                            float *p_beta)
 {
     *p_alpha = cosine * d - sine * q;
     *p_beta = sine * d + cosine * q;
 }
 
 /* Symmetric ramp: move act toward tag with the same step in both directions. */
-#define RAMP(act, tag, step)            \
-    do                                  \
-    {                                   \
-        const float step_temp = step;   \
-        (act > tag + step_temp)         \
-            ? (act -= step_temp)        \
-            : ((act < tag - step_temp)  \
-                   ? (act += step_temp) \
-                   : (act = tag));      \
+#define RAMP(act, tag, step)                                                                                         \
+    do                                                                                                               \
+    {                                                                                                                \
+        const float step_temp = step;                                                                                \
+        (act > tag + step_temp) ? (act -= step_temp) : ((act < tag - step_temp) ? (act += step_temp) : (act = tag)); \
     } while (0)
 
 /* Asymmetric ramp: independent rising and falling slew limits. */
-#define RAMP_UP_DN(act, tag, up_step, dn_step) \
-    do                                         \
-    {                                          \
-        const float up_step_temp = up_step;    \
-        const float dn_step_temp = dn_step;    \
-        (act > tag + dn_step_temp)             \
-            ? (act -= dn_step_temp)            \
-            : ((act < tag - up_step_temp)      \
-                   ? (act += up_step_temp)     \
-                   : (act = tag));             \
+#define RAMP_UP_DN(act, tag, up_step, dn_step)                                                           \
+    do                                                                                                   \
+    {                                                                                                    \
+        const float up_step_temp = up_step;                                                              \
+        const float dn_step_temp = dn_step;                                                              \
+        (act > tag + dn_step_temp) ? (act -= dn_step_temp)                                               \
+                                   : ((act < tag - up_step_temp) ? (act += up_step_temp) : (act = tag)); \
     } while (0)
 
 /* Number of elements in a static array. */
@@ -279,36 +286,35 @@ static inline uint8_t struct_all_ptr_valid(const void *obj, uint16_t ptr_count)
 }
 
 /* Check whether every member in a pointer-only struct is non-NULL. */
-#define STRUCT_ALL_PTR_VALID(obj) \
-    struct_all_ptr_valid(&(obj), (uint16_t)(sizeof(obj) / sizeof(uintptr_t)))
+#define STRUCT_ALL_PTR_VALID(obj) struct_all_ptr_valid(&(obj), (uint16_t)(sizeof(obj) / sizeof(uintptr_t)))
 
 /* Time constants expressed in 1 ms task ticks. */
-#define TIME_CNT_1MS_IN_1MS (1)
-#define TIME_CNT_5MS_IN_1MS (5 * TIME_CNT_1MS_IN_1MS)
-#define TIME_CNT_10MS_IN_1MS (10 * TIME_CNT_1MS_IN_1MS)
-#define TIME_CNT_20MS_IN_1MS (20 * TIME_CNT_1MS_IN_1MS)
-#define TIME_CNT_50MS_IN_1MS (50 * TIME_CNT_1MS_IN_1MS)
+#define TIME_CNT_1MS_IN_1MS   (1)
+#define TIME_CNT_5MS_IN_1MS   (5 * TIME_CNT_1MS_IN_1MS)
+#define TIME_CNT_10MS_IN_1MS  (10 * TIME_CNT_1MS_IN_1MS)
+#define TIME_CNT_20MS_IN_1MS  (20 * TIME_CNT_1MS_IN_1MS)
+#define TIME_CNT_50MS_IN_1MS  (50 * TIME_CNT_1MS_IN_1MS)
 #define TIME_CNT_100MS_IN_1MS (100 * TIME_CNT_1MS_IN_1MS)
 #define TIME_CNT_200MS_IN_1MS (200 * TIME_CNT_1MS_IN_1MS)
 #define TIME_CNT_300MS_IN_1MS (300 * TIME_CNT_1MS_IN_1MS)
 #define TIME_CNT_400MS_IN_1MS (400 * TIME_CNT_1MS_IN_1MS)
 #define TIME_CNT_500MS_IN_1MS (500 * TIME_CNT_1MS_IN_1MS)
-#define TIME_CNT_1S_IN_1MS (1000 * TIME_CNT_1MS_IN_1MS)
-#define TIME_CNT_2S_IN_1MS (2 * TIME_CNT_1S_IN_1MS)
-#define TIME_CNT_3S_IN_1MS (3 * TIME_CNT_1S_IN_1MS)
-#define TIME_CNT_5S_IN_1MS (5 * TIME_CNT_1S_IN_1MS)
-#define TIME_CNT_10S_IN_1MS (10 * TIME_CNT_1S_IN_1MS)
+#define TIME_CNT_1S_IN_1MS    (1000 * TIME_CNT_1MS_IN_1MS)
+#define TIME_CNT_2S_IN_1MS    (2 * TIME_CNT_1S_IN_1MS)
+#define TIME_CNT_3S_IN_1MS    (3 * TIME_CNT_1S_IN_1MS)
+#define TIME_CNT_5S_IN_1MS    (5 * TIME_CNT_1S_IN_1MS)
+#define TIME_CNT_10S_IN_1MS   (10 * TIME_CNT_1S_IN_1MS)
 
 /* Time constants expressed in control ISR ticks. */
-#define TIME_CNT_1MS_IN_CTRL ((uint32_t)(0.001f / CTRL_TS))
-#define TIME_CNT_10MS_IN_CTRL (10 * TIME_CNT_1MS_IN_CTRL)
-#define TIME_CNT_50MS_IN_CTRL (50 * TIME_CNT_1MS_IN_CTRL)
+#define TIME_CNT_1MS_IN_CTRL   ((uint32_t)(0.001f / CTRL_TS))
+#define TIME_CNT_10MS_IN_CTRL  (10 * TIME_CNT_1MS_IN_CTRL)
+#define TIME_CNT_50MS_IN_CTRL  (50 * TIME_CNT_1MS_IN_CTRL)
 #define TIME_CNT_100MS_IN_CTRL (100 * TIME_CNT_1MS_IN_CTRL)
 
 /* Time constants expressed in 100 us base ticks. */
 #define TIME_CNT_100US_IN_100US (1)
-#define TIME_CNT_1MS_IN_100US (10 * TIME_CNT_100US_IN_100US)
-#define TIME_CNT_10MS_IN_100US (10 * TIME_CNT_1MS_IN_100US)
+#define TIME_CNT_1MS_IN_100US   (10 * TIME_CNT_100US_IN_100US)
+#define TIME_CNT_10MS_IN_100US  (10 * TIME_CNT_1MS_IN_100US)
 #define TIME_CNT_500MS_IN_100US (500 * TIME_CNT_1MS_IN_100US)
 
 #endif

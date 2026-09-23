@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    iap_update_service.h
- * @brief   Platform-independent IAP upgrade-trigger service interface.
+ * @file iap_update_service.h
+ * @brief Platform-independent IAP upgrade-trigger service interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The service depends only on FRAME communication and Section runtime contracts
  *          - The implementation publishes the accepted request before reset
  *
- * @author  Max.Li
- * @date    2026-07-29
+ * @author Max.Li
+ * @date 2026-07-29
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,9 +36,9 @@
 
 typedef enum
 {
-    IAP_UPDATE_PREPARE_READY_E = 0,    /**< Preparation completed; reset is now permitted. */
-    IAP_UPDATE_PREPARE_IN_PROGRESS_E,  /**< Preparation is active and must be polled again. */
-    IAP_UPDATE_PREPARE_FAILED_E        /**< Preparation failed; remain in the current IAP. */
+    IAP_UPDATE_PREPARE_READY_E = 0,   /**< Preparation completed; reset is now permitted. */
+    IAP_UPDATE_PREPARE_IN_PROGRESS_E, /**< Preparation is active and must be polled again. */
+    IAP_UPDATE_PREPARE_FAILED_E       /**< Preparation failed; remain in the current IAP. */
 } iap_update_prepare_result_t;
 
 typedef bootloader_protocol_info_request_t iap_update_info_t;

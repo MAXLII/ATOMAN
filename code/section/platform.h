@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    platform.h
- * @brief   Section platform adaptation layer.
+ * @file platform.h
+ * @brief Section platform adaptation layer.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,10 +32,9 @@
 #include <stddef.h>
 
 /* -------------------------------------------------------------------------- */
-/* Toolchain selection                                                        */
+/* Toolchain selection */
 /* -------------------------------------------------------------------------- */
-#if !defined(TOOLCHAIN_MDK) && !defined(TOOLCHAIN_GCC) && !defined(TOOLCHAIN_MSVC) && \
-    !defined(TOOLCHAIN_TI_C2000)
+#if !defined(TOOLCHAIN_MDK) && !defined(TOOLCHAIN_GCC) && !defined(TOOLCHAIN_MSVC) && !defined(TOOLCHAIN_TI_C2000)
 #if defined(__CC_ARM) || defined(__ARMCC_VERSION)
 #define TOOLCHAIN_MDK 1
 #elif defined(_MSC_VER)
@@ -49,30 +48,24 @@
 #endif
 #endif
 
-#if (defined(TOOLCHAIN_MDK) + defined(TOOLCHAIN_GCC) + defined(TOOLCHAIN_MSVC) + \
-     defined(TOOLCHAIN_TI_C2000)) != 1
+#if (defined(TOOLCHAIN_MDK) + defined(TOOLCHAIN_GCC) + defined(TOOLCHAIN_MSVC) + defined(TOOLCHAIN_TI_C2000)) != 1
 #error "Define exactly one supported TOOLCHAIN_* identity macro."
 #endif
 
-#if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + \
-     defined(PLATFORM_GD32G553C) + defined(PLATFORM_GD32E507) + \
-     defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558) + \
-     defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + \
-     defined(PLATFORM_TMS320F28P55) + defined(PLATFORM_TMS320F280049C)) != 1
+#if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + defined(PLATFORM_GD32G553C) + defined(PLATFORM_GD32E507) + defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558) + defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + defined(PLATFORM_TMS320F28P55) + defined(PLATFORM_TMS320F280049C)) != 1
 #error "Define exactly one PLATFORM_* identity macro."
 #endif
 
-#if defined(TOOLCHAIN_MSVC) || \
-    (defined(TOOLCHAIN_GCC) && defined(_WIN32) && \
-     (defined(PLATFORM_MATLAB) || defined(PLATFORM_PLECS)))
+#if defined(TOOLCHAIN_MSVC) \
+ || (defined(TOOLCHAIN_GCC) && defined(_WIN32) && (defined(PLATFORM_MATLAB) || defined(PLATFORM_PLECS)))
 #define SECTION_LINKER_SENTINELS 1
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Section compiler capability contract                                       */
-/*                                                                            */
-/* Section runtime code consumes only these normalized macros. Raw compiler    */
-/* identification remains inside the platform boundary.                       */
+/* Section compiler capability contract */
+/* */
+/* Section runtime code consumes only these normalized macros. Raw compiler */
+/* identification remains inside the platform boundary. */
 /* -------------------------------------------------------------------------- */
 #if defined(TOOLCHAIN_GCC) || defined(TOOLCHAIN_MDK) || defined(TOOLCHAIN_TI_C2000)
 #define SECTION_WEAK __attribute__((weak))
@@ -88,24 +81,23 @@
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #define SECTION_STATIC_ASSERT_JOIN_(a, b) a##b
-#define SECTION_STATIC_ASSERT_JOIN(a, b) SECTION_STATIC_ASSERT_JOIN_(a, b)
-#define SECTION_STATIC_ASSERT(condition, message)                                      \
+#define SECTION_STATIC_ASSERT_JOIN(a, b)  SECTION_STATIC_ASSERT_JOIN_(a, b)
+#define SECTION_STATIC_ASSERT(condition, message) \
     typedef char SECTION_STATIC_ASSERT_JOIN(section_static_assert_, __LINE__)[(condition) ? 1 : -1]
 #else
 #define SECTION_STATIC_ASSERT(condition, message) _Static_assert((condition), message)
 #endif
 
 #if defined(TOOLCHAIN_GCC)
-#define likely(condition) __builtin_expect(!!(condition), 1)
+#define likely(condition)   __builtin_expect(!!(condition), 1)
 #define unlikely(condition) __builtin_expect(!!(condition), 0)
-#define DBG_NOINLINE __attribute__((noinline))
-#define DBG_FLOAT_DIAGNOSTIC_BEGIN                                                 \
-    _Pragma("GCC diagnostic push")                                               \
-    _Pragma("GCC diagnostic ignored \"-Wdouble-promotion\"")                    \
-    _Pragma("GCC diagnostic ignored \"-Wfloat-conversion\"")
+#define DBG_NOINLINE        __attribute__((noinline))
+#define DBG_FLOAT_DIAGNOSTIC_BEGIN                                                          \
+    _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wdouble-promotion\"") \
+        _Pragma("GCC diagnostic ignored \"-Wfloat-conversion\"")
 #define DBG_FLOAT_DIAGNOSTIC_END _Pragma("GCC diagnostic pop")
 #else
-#define likely(condition) (condition)
+#define likely(condition)   (condition)
 #define unlikely(condition) (condition)
 #define DBG_NOINLINE
 #define DBG_FLOAT_DIAGNOSTIC_BEGIN
@@ -113,40 +105,39 @@
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Runtime platform contract                                                  */
-/*                                                                            */
-/* Porting boundary: each platform block should provide the complete section   */
-/* runtime contract used by section.c/section.h. When creating a new MCU       */
-/* project, copy the closest MCU block and adjust the symbols listed below.    */
-/*                                                                            */
-/* Required contract per platform block:                                      */
-/* - SECTION_SYS_TICK: monotonic scheduler tick source                         */
-/* - SECTION_SYS_TICK_UNIT_US: tick unit in microseconds                       */
-/* - SECTION_START / SECTION_STOP: REG_TASK linker section boundaries          */
-/* - SYSTEM_RESET: platform reset expression                                  */
-/* - FUNC_RAM: optional RAM-function attribute                                */
-/* - SECTION_PORT_CONTEXT_SWITCH_REQUEST: Cortex-M context-switch request       */
-/* - SECTION_PORT_FPU_LAZY_STACKING_DISABLE: Cortex-M FPU context policy        */
-/* - SECTION_PORT_FAULT_HOOK: Cortex-M scheduler fault action                   */
+/* Runtime platform contract */
+/* */
+/* Porting boundary: each platform block should provide the complete section */
+/* runtime contract used by section.c/section.h. When creating a new MCU */
+/* project, copy the closest MCU block and adjust the symbols listed below. */
+/* */
+/* Required contract per platform block: */
+/* - SECTION_SYS_TICK: monotonic scheduler tick source */
+/* - SECTION_SYS_TICK_UNIT_US: tick unit in microseconds */
+/* - SECTION_START / SECTION_STOP: REG_TASK linker section boundaries */
+/* - SYSTEM_RESET: platform reset expression */
+/* - FUNC_RAM: optional RAM-function attribute */
+/* - SECTION_PORT_CONTEXT_SWITCH_REQUEST: Cortex-M context-switch request */
+/* - SECTION_PORT_FPU_LAZY_STACKING_DISABLE: Cortex-M FPU context policy */
+/* - SECTION_PORT_FAULT_HOOK: Cortex-M scheduler fault action */
 /* -------------------------------------------------------------------------- */
 
 /* Host testbench */
 #if defined(PLATFORM_TESTBENCH)
-#define SECTION_SYS_TICK 0u
+#define SECTION_SYS_TICK         0u
 #define SECTION_SYS_TICK_UNIT_US 1u
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
-#define SECTION_STOP __stop_section
+#define SECTION_STOP  __stop_section
 #define SYSTEM_RESET
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM
-#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
-#define __STREXB(value, address) \
-    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
-#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#define __LDREXB(address)        __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address) ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB()                  __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
     do                                        \
     {                                         \
@@ -165,287 +156,284 @@ extern size_t __stop_section;
 #elif defined(PLATFORM_MATLAB)
 #include "sim_sfunc.h"
 extern uint32_t sim_time_100us;
-#define SECTION_SYS_TICK sim_time_100us
+#define SECTION_SYS_TICK         sim_time_100us
 #define SECTION_SYS_TICK_UNIT_US SIM_TICK_UNIT_US
-#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
-#define __STREXB(value, address) \
-    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
-#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#define __LDREXB(address)        __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address) ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB()                  __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
-#define SECTION_STOP __stop_section
+#define SECTION_STOP  __stop_section
 #endif
 #define SYSTEM_RESET
 #define PLECS_LOG(...) SIM_LOG(__VA_ARGS__)
 #define FUNC_RAM
 #define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
-    do                     \
-    {                      \
+    do                                        \
+    {                                         \
     } while (0)
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
-    do                                    \
-    {                                     \
+    do                                           \
+    {                                            \
     } while (0)
 #define SECTION_PORT_FAULT_HOOK(reason) \
-    do                           \
-    {                            \
-        (void)(reason);          \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
     } while (0)
 
 /* Simulation: PLECS */
 #elif defined(PLATFORM_PLECS)
 #include "plecs.h"
 extern uint32_t plecs_time_100us;
-#define SECTION_SYS_TICK __atomic_load_n(&plecs_time_100us, __ATOMIC_RELAXED)
-#define SECTION_SYS_TICK_UNIT_US 100u
+#define SECTION_SYS_TICK                __atomic_load_n(&plecs_time_100us, __ATOMIC_RELAXED)
+#define SECTION_SYS_TICK_UNIT_US        100u
 #define PLATFORM_PERF_COUNTER_REFRESH() plecs_perf_counter_refresh()
-#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
-#define __STREXB(value, address) \
-    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
-#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#define __LDREXB(address)               __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address)        ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB()                         __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #if !defined(SECTION_LINKER_SENTINELS)
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
-#define SECTION_STOP __stop_section
+#define SECTION_STOP  __stop_section
 #endif
 #define SYSTEM_RESET
 #define FUNC_RAM
 #define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
-    do                     \
-    {                      \
+    do                                        \
+    {                                         \
     } while (0)
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
-    do                                    \
-    {                                     \
+    do                                           \
+    {                                            \
     } while (0)
 #define SECTION_PORT_FAULT_HOOK(reason) \
-    do                           \
-    {                            \
-        (void)(reason);          \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
     } while (0)
 
 /* MCU: GD32G553 */
 #elif defined(PLATFORM_GD32G553C)
 #include "systick.h"
 #include "gd32g5x3.h"
-#define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK         systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t section_image_base __asm("Image$$SECTION$$Base");
 extern uint32_t section_image_limit __asm("Image$$SECTION$$Limit");
 #define SECTION_START section_image_base
-#define SECTION_STOP section_image_limit
+#define SECTION_STOP  section_image_limit
 #else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
-#define SECTION_STOP __section_end
+#define SECTION_STOP  __section_end
 #endif
 #define SYSTEM_RESET NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
-    do                                      \
-    {                                       \
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
-        __DSB();                            \
-        __ISB();                            \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;   \
+        __DSB();                              \
+        __ISB();                              \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
-    do                                      \
-    {                                       \
-        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;      \
     } while (0)
 #else
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
-    do                                    \
-    {                                     \
+    do                                           \
+    {                                            \
     } while (0)
 #endif
 #define SECTION_PORT_FAULT_HOOK(reason) \
-    do                           \
-    {                            \
-        (void)(reason);          \
-        __disable_irq();         \
-        for (;;)                 \
-        {                        \
-        }                        \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+        __disable_irq();                \
+        for (;;)                        \
+        {                               \
+        }                               \
     } while (0)
 
 /* MCU: GD32E507 */
 #elif defined(PLATFORM_GD32E507)
 #include "systick.h"
 #include "gd32e50x.h"
-#define SECTION_SYS_TICK systick_gettime_100us()
-#define SECTION_SYS_TICK_UNIT_US 100u
-#define PLATFORM_PERF_COUNT_UNIT_US 0.5f
+#define SECTION_SYS_TICK                       systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US               100u
+#define PLATFORM_PERF_COUNT_UNIT_US            0.5f
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 200UL
 extern uint32_t __section_start;
 extern uint32_t __section_end;
-#define SECTION_START __section_start
-#define SECTION_STOP __section_end
-#define SYSTEM_RESET NVIC_SystemReset()
+#define SECTION_START                          __section_start
+#define SECTION_STOP                           __section_end
+#define SYSTEM_RESET                           NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
-    do                                                         \
-    {                                                          \
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;                    \
-        __DSB();                                               \
-        __ISB();                                               \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;   \
+        __DSB();                              \
+        __ISB();                              \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()               \
-    do                                                         \
-    {                                                          \
-        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;                    \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;      \
     } while (0)
 #else
-#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()               \
-    do                                                         \
-    {                                                          \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
     } while (0)
 #endif
-#define SECTION_PORT_FAULT_HOOK(reason)                        \
-    do                                                         \
-    {                                                          \
-        (void)(reason);                                        \
-        __disable_irq();                                       \
-        for (;;)                                               \
-        {                                                      \
-        }                                                      \
+#define SECTION_PORT_FAULT_HOOK(reason) \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+        __disable_irq();                \
+        for (;;)                        \
+        {                               \
+        }                               \
     } while (0)
 
 /* MCU: HC32F334 */
 #elif defined(PLATFORM_HC32F334)
 #include "systick.h"
 #include "hc32f3xx.h"
-#define SECTION_SYS_TICK systick_gettime_100us()
-#define SECTION_SYS_TICK_UNIT_US 100u
-#define PLATFORM_PERF_COUNT_UNIT_US (8.0f / 15.0f)
+#define SECTION_SYS_TICK                       systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US               100u
+#define PLATFORM_PERF_COUNT_UNIT_US            (8.0f / 15.0f)
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 188UL
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t section_load_base __asm("Load$$SECTION$$Base");
 extern uint32_t section_load_limit __asm("Load$$SECTION$$Limit");
 #define SECTION_START section_load_base
-#define SECTION_STOP section_load_limit
+#define SECTION_STOP  section_load_limit
 #else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
-#define SECTION_STOP __section_end
+#define SECTION_STOP  __section_end
 #endif
 #define SYSTEM_RESET NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
-    do                                      \
-    {                                       \
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
-        __DSB();                            \
-        __ISB();                            \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;   \
+        __DSB();                              \
+        __ISB();                              \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
-    do                                      \
-    {                                       \
-        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;      \
     } while (0)
 #else
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
-    do                                    \
-    {                                     \
+    do                                           \
+    {                                            \
     } while (0)
 #endif
 #define SECTION_PORT_FAULT_HOOK(reason) \
-    do                           \
-    {                            \
-        (void)(reason);          \
-        __disable_irq();         \
-        for (;;)                 \
-        {                        \
-        }                        \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+        __disable_irq();                \
+        for (;;)                        \
+        {                               \
+        }                               \
     } while (0)
 
 /* MCU: HC32F558 */
 #elif defined(PLATFORM_HC32F558)
 #include "systick.h"
 #include "hc32f5xx.h"
-#define SECTION_SYS_TICK systick_gettime_100us()
+#define SECTION_SYS_TICK         systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 #if defined(TOOLCHAIN_MDK)
 extern uint32_t section_load_base __asm("Load$$SECTION$$Base");
 extern uint32_t section_load_limit __asm("Load$$SECTION$$Limit");
 #define SECTION_START section_load_base
-#define SECTION_STOP section_load_limit
+#define SECTION_STOP  section_load_limit
 #else
 extern uint32_t __section_start;
 extern uint32_t __section_end;
 #define SECTION_START __section_start
-#define SECTION_STOP __section_end
+#define SECTION_STOP  __section_end
 #endif
 #define SYSTEM_RESET NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
-    do                                      \
-    {                                       \
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
-        __DSB();                            \
-        __ISB();                            \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;   \
+        __DSB();                              \
+        __ISB();                              \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
-    do                                      \
-    {                                       \
-        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;      \
     } while (0)
 #else
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
-    do                                    \
-    {                                     \
+    do                                           \
+    {                                            \
     } while (0)
 #endif
 #define SECTION_PORT_FAULT_HOOK(reason) \
-    do                           \
-    {                            \
-        (void)(reason);          \
-        __disable_irq();         \
-        for (;;)                 \
-        {                        \
-        }                        \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+        __disable_irq();                \
+        for (;;)                        \
+        {                               \
+        }                               \
     } while (0)
 
 /* SoC: Xilinx Zynq-7020 Cortex-A9 */
 #elif defined(PLATFORM_ZYNQ7020)
 #include "bsp_platform.h"
 #include "bsp_timer.h"
-#define APP_START_ADDR 0x00100000UL
-#define SECTION_SYS_TICK bsp_timer_gettime_100us()
-#define SECTION_SYS_TICK_UNIT_US 100u
-#define PLATFORM_PERF_COUNT_UNIT_US 0.003f
+#define APP_START_ADDR                         0x00100000UL
+#define SECTION_SYS_TICK                       bsp_timer_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US               100u
+#define PLATFORM_PERF_COUNT_UNIT_US            0.003f
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 33333UL
-#define __LDREXB(address) __atomic_load_n((address), __ATOMIC_RELAXED)
-#define __STREXB(value, address) \
-    ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
-#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#define __LDREXB(address)                      __atomic_load_n((address), __ATOMIC_RELAXED)
+#define __STREXB(value, address)               ((void)(value), (__atomic_test_and_set((address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB()                                __atomic_thread_fence(__ATOMIC_SEQ_CST)
 extern uint32_t __section_start;
 extern uint32_t __section_end;
-#define SECTION_START __section_start
-#define SECTION_STOP __section_end
-#define SYSTEM_RESET bsp_platform_reset()
+#define SECTION_START                          __section_start
+#define SECTION_STOP                           __section_end
+#define SYSTEM_RESET                           bsp_platform_reset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
@@ -455,45 +443,45 @@ extern uint32_t __section_end;
 #elif defined(PLATFORM_APM32F402)
 #include "apm32f402_403.h"
 #include "apm32f402_403_int.h"
-#define APP_START_ADDR 0x08000000UL
-#define SECTION_SYS_TICK systick_gettime_100us()
+#define APP_START_ADDR           0x08000000UL
+#define SECTION_SYS_TICK         systick_gettime_100us()
 #define SECTION_SYS_TICK_UNIT_US 100u
 extern uint32_t __section_start;
 extern uint32_t __section_end;
-#define SECTION_START __section_start
-#define SECTION_STOP __section_end
-#define SYSTEM_RESET NVIC_SystemReset()
+#define SECTION_START            __section_start
+#define SECTION_STOP             __section_end
+#define SYSTEM_RESET             NVIC_SystemReset()
 #ifndef PLECS_LOG
 #define PLECS_LOG(...)
 #endif
 #define FUNC_RAM __attribute__((section(".func_ram"), noinline, used))
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()                  \
-    do                                      \
-    {                                       \
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk; \
-        __DSB();                            \
-        __ISB();                            \
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;   \
+        __DSB();                              \
+        __ISB();                              \
     } while (0)
 #if defined(FPU) && (__FPU_PRESENT == 1U)
-#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE()   \
-    do                                      \
-    {                                       \
-        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk; \
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
+    do                                           \
+    {                                            \
+        FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;      \
     } while (0)
 #else
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() \
-    do                                    \
-    {                                     \
+    do                                           \
+    {                                            \
     } while (0)
 #endif
 #define SECTION_PORT_FAULT_HOOK(reason) \
-    do                           \
-    {                            \
-        (void)(reason);          \
-        __disable_irq();         \
-        for (;;)                 \
-        {                        \
-        }                        \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+        __disable_irq();                \
+        for (;;)                        \
+        {                               \
+        }                               \
     } while (0)
 
 /* MCU: TI C2000 TMS320F28P55 */
@@ -503,20 +491,20 @@ extern uint32_t __section_end;
 #include "tms320f28p55_platform.h"
 extern const uint16_t __section_start;
 extern const uint16_t __section_end;
-#define SECTION_SYS_TICK tms320f28p55_section_tick_get()
+#define SECTION_SYS_TICK         tms320f28p55_section_tick_get()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#define SECTION_START __section_start
-#define SECTION_STOP __section_end
-#define SYSTEM_RESET SysCtl_resetDevice()
+#define SECTION_START            __section_start
+#define SECTION_STOP             __section_end
+#define SYSTEM_RESET             SysCtl_resetDevice()
 #define FUNC_RAM
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() ((void)0)
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()    ((void)0)
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() ((void)0)
-#define SECTION_PORT_FAULT_HOOK(reason) ((void)(reason))
-#define __LDREXB(p_address) (*(p_address))
-#define __STREXB(value, p_address) ((*(p_address) = (value)), 0u)
-#define __DMB() ((void)0)
-#define PLATFORM_PERF_COUNT_UNIT_US (1.0f / 150.0f)
-#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 15000u
+#define SECTION_PORT_FAULT_HOOK(reason)          ((void)(reason))
+#define __LDREXB(p_address)                      (*(p_address))
+#define __STREXB(value, p_address)               ((*(p_address) = (value)), 0u)
+#define __DMB()                                  ((void)0)
+#define PLATFORM_PERF_COUNT_UNIT_US              (1.0f / 150.0f)
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK   15000u
 
 /* MCU: TI C2000 TMS320F280049C */
 #elif defined(PLATFORM_TMS320F280049C)
@@ -525,20 +513,20 @@ extern const uint16_t __section_end;
 #include "tms320f280049c_platform.h"
 extern const uint16_t __section_start;
 extern const uint16_t __section_end;
-#define SECTION_SYS_TICK tms320f280049c_section_tick_get()
+#define SECTION_SYS_TICK         tms320f280049c_section_tick_get()
 #define SECTION_SYS_TICK_UNIT_US 100u
-#define SECTION_START __section_start
-#define SECTION_STOP __section_end
-#define SYSTEM_RESET SysCtl_resetDevice()
+#define SECTION_START            __section_start
+#define SECTION_STOP             __section_end
+#define SYSTEM_RESET             SysCtl_resetDevice()
 #define FUNC_RAM
-#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() ((void)0)
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST()    ((void)0)
 #define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() ((void)0)
-#define SECTION_PORT_FAULT_HOOK(reason) ((void)(reason))
-#define __LDREXB(p_address) (*(p_address))
-#define __STREXB(value, p_address) ((*(p_address) = (value)), 0u)
-#define __DMB() ((void)0)
-#define PLATFORM_PERF_COUNT_UNIT_US (1.0f / 100.0f)
-#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 10000u
+#define SECTION_PORT_FAULT_HOOK(reason)          ((void)(reason))
+#define __LDREXB(p_address)                      (*(p_address))
+#define __STREXB(value, p_address)               ((*(p_address) = (value)), 0u)
+#define __DMB()                                  ((void)0)
+#define PLATFORM_PERF_COUNT_UNIT_US              (1.0f / 100.0f)
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK   10000u
 #endif
 
 #ifndef PLECS_LOG
@@ -546,7 +534,7 @@ extern const uint16_t __section_end;
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Optional platform capabilities                                             */
+/* Optional platform capabilities */
 /* -------------------------------------------------------------------------- */
 
 #ifndef PLATFORM_PERF_COUNT_UNIT_US
@@ -562,28 +550,26 @@ extern const uint16_t __section_end;
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Section registration attributes                                            */
-/*                                                                            */
-/* These macros place REG_TASK records into the linker-visible section range   */
-/* selected by the active runtime platform block above.                        */
+/* Section registration attributes */
+/* */
+/* These macros place REG_TASK records into the linker-visible section range */
+/* selected by the active runtime platform block above. */
 /* -------------------------------------------------------------------------- */
 #if defined(TOOLCHAIN_MSVC)
 #pragma section("section$a", read)
 #pragma section("section$m", read)
 #pragma section("section$z", read)
-#define SECTION_SENTINEL_REG_SECTION 1
-#define SECTION_REG_ATTR_PREFIX __declspec(allocate("section$m"))
+#define SECTION_SENTINEL_REG_SECTION  1
+#define SECTION_REG_ATTR_PREFIX       __declspec(allocate("section$m"))
 #define SECTION_REG_START_ATTR_PREFIX __declspec(allocate("section$a"))
-#define SECTION_REG_STOP_ATTR_PREFIX __declspec(allocate("section$z"))
+#define SECTION_REG_STOP_ATTR_PREFIX  __declspec(allocate("section$z"))
 #define AUTO_REG_SECTION
-#elif defined(TOOLCHAIN_GCC) && defined(_WIN32) && \
-    (defined(PLATFORM_MATLAB) || defined(PLATFORM_PLECS))
-#define SECTION_SENTINEL_REG_SECTION 1
+#elif defined(TOOLCHAIN_GCC) && defined(_WIN32) && (defined(PLATFORM_MATLAB) || defined(PLATFORM_PLECS))
+#define SECTION_SENTINEL_REG_SECTION  1
 #define SECTION_REG_START_ATTR_PREFIX __attribute__((used, section("section$a")))
-#define SECTION_REG_STOP_ATTR_PREFIX __attribute__((used, section("section$z")))
-#define AUTO_REG_SECTION __attribute__((used, section("section$m")))
-#elif defined(TOOLCHAIN_GCC) && \
-    (defined(PLATFORM_MATLAB) || defined(PLATFORM_PLECS))
+#define SECTION_REG_STOP_ATTR_PREFIX  __attribute__((used, section("section$z")))
+#define AUTO_REG_SECTION              __attribute__((used, section("section$m")))
+#elif defined(TOOLCHAIN_GCC) && (defined(PLATFORM_MATLAB) || defined(PLATFORM_PLECS))
 #define AUTO_REG_SECTION __attribute__((__section__("section")))
 #elif defined(TOOLCHAIN_TI_C2000)
 #define AUTO_REG_SECTION __attribute__((section("AUTO_REG_SECTION")))

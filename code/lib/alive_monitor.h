@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    alive_monitor.h
- * @brief   Activity timeout monitor public interface.
+ * @file alive_monitor.h
+ * @brief Activity timeout monitor public interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - One call to alive_monitor_tick represents one configured time step
  *          - No hardware or framework dependencies
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

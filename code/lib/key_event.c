@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    key_event.c
- * @brief   Timed key-event detector implementation.
+ * @file key_event.c
+ * @brief Timed key-event detector implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Press duration saturates instead of wrapping
  *          - Invalid input state is normalized to released
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,8 +33,9 @@
 
 uint8_t key_event_init(key_event_t *p_event, const key_event_cfg_t *p_cfg)
 {
-    if ((p_event == NULL) || /* A detector object is required. */
-        (p_cfg == NULL))     /* Configuration must be supplied explicitly. */
+    if (    (p_event == NULL)
+         || /* A detector object is required. */
+            (p_cfg == NULL)) /* Configuration must be supplied explicitly. */
     {
         return 0u;
     }
@@ -43,12 +44,13 @@ uint8_t key_event_init(key_event_t *p_event, const key_event_cfg_t *p_cfg)
     p_event->cfg.release_required = (p_cfg->release_required == 1u) ? 1u : 0u;
     key_event_reset(p_event);
 
-    if ((p_event->cfg.release_required == 1u) && /* Release uses a bounded duration window. */
-        (p_event->cfg.max_press_ticks < p_event->cfg.min_press_ticks)) /* Window must not invert. */
+    if (    (p_event->cfg.release_required == 1u)
+         && /* Release uses a bounded duration window. */
+            (p_event->cfg.max_press_ticks < p_event->cfg.min_press_ticks)) /* Window must not invert. */
     {
-        p_event->cfg.min_press_ticks = 0u;
-        p_event->cfg.max_press_ticks = 0u;
-        p_event->cfg.cooldown_ticks = 0u;
+        p_event->cfg.min_press_ticks  = 0u;
+        p_event->cfg.max_press_ticks  = 0u;
+        p_event->cfg.cooldown_ticks   = 0u;
         p_event->cfg.release_required = 0u;
         return 0u;
     }
@@ -63,9 +65,9 @@ void key_event_reset(key_event_t *p_event)
         return;
     }
 
-    p_event->inter.press_ticks = 0u;
+    p_event->inter.press_ticks              = 0u;
     p_event->inter.cooldown_remaining_ticks = 0u;
-    p_event->output.event_pending = 0u;
+    p_event->output.event_pending           = 0u;
 }
 
 void key_event_update(key_event_t *p_event, uint8_t is_pressed)
@@ -78,6 +80,7 @@ void key_event_update(key_event_t *p_event, uint8_t is_pressed)
     }
 
     pressed = (is_pressed == 1u) ? 1u : 0u;
+
     if (p_event->inter.cooldown_remaining_ticks > 0u)
     {
         if (pressed == 0u)
@@ -95,21 +98,24 @@ void key_event_update(key_event_t *p_event, uint8_t is_pressed)
             p_event->inter.press_ticks++;
         }
 
-        if ((p_event->cfg.release_required == 0u) && /* Press duration directly qualifies the event. */
-            (p_event->inter.press_ticks >= p_event->cfg.min_press_ticks)) /* Minimum evidence is complete. */
+        if (    (p_event->cfg.release_required == 0u)
+             && /* Press duration directly qualifies the event. */
+                (p_event->inter.press_ticks >= p_event->cfg.min_press_ticks)) /* Minimum evidence is complete. */
         {
-            p_event->output.event_pending = 1u;
+            p_event->output.event_pending           = 1u;
             p_event->inter.cooldown_remaining_ticks = p_event->cfg.cooldown_ticks;
-            p_event->inter.press_ticks = 0u;
+            p_event->inter.press_ticks              = 0u;
         }
         return;
     }
 
-    if ((p_event->cfg.release_required == 1u) && /* Release closes the measurement window. */
-        (p_event->inter.press_ticks >= p_event->cfg.min_press_ticks) && /* Press was long enough. */
-        (p_event->inter.press_ticks <= p_event->cfg.max_press_ticks)) /* Press did not exceed the window. */
+    if (    (p_event->cfg.release_required == 1u)
+         && /* Release closes the measurement window. */
+            (p_event->inter.press_ticks >= p_event->cfg.min_press_ticks)
+         && /* Press was long enough. */
+            (p_event->inter.press_ticks <= p_event->cfg.max_press_ticks)) /* Press did not exceed the window. */
     {
-        p_event->output.event_pending = 1u;
+        p_event->output.event_pending           = 1u;
         p_event->inter.cooldown_remaining_ticks = p_event->cfg.cooldown_ticks;
     }
     p_event->inter.press_ticks = 0u;
@@ -124,7 +130,7 @@ uint8_t key_event_take(key_event_t *p_event)
         return 0u;
     }
 
-    event_pending = p_event->output.event_pending;
+    event_pending                 = p_event->output.event_pending;
     p_event->output.event_pending = 0u;
     return event_pending;
 }

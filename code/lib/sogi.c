@@ -1,7 +1,7 @@
 ﻿// SPDX-License-Identifier: MIT
 /**
- * @file    sogi.c
- * @brief   sogi library module.
+ * @file sogi.c
+ * @brief sogi library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,8 +34,8 @@
 // 内部函数：重新计算滤波器系数
 static void calculate_coefficients(sogi_t *sogi)
 {
-    float k = sogi->k;
-    float w = sogi->w;
+    float k  = sogi->k;
+    float w  = sogi->w;
     float Ts = sogi->Ts;
 
     float n0 = 2 * Ts * k * w;
@@ -75,8 +75,8 @@ void sogi_init(sogi_t *sogi,
 
     // 设置固定参数
     sogi->Ts = Ts;
-    sogi->w = w;
-    sogi->k = k;
+    sogi->w  = w;
+    sogi->k  = k;
 
     // 计算初始系数
     calculate_coefficients(sogi);
@@ -94,19 +94,14 @@ void sogi_cal(sogi_t *sogi)
     sogi->u[0] = *sogi->p_val;
 
     // 计算正交输出
-    sogi->osg_u[0] = ((sogi->b0 * sogi->u[0]) -
-                      (sogi->b0 * sogi->u[2]) -
-                      (sogi->a1 * sogi->osg_u[1] * SOGI_NUM_GAIN) -
-                      (sogi->a2 * sogi->osg_u[2] * SOGI_NUM_GAIN)) /
-                     SOGI_NUM_GAIN;
+    sogi->osg_u[0] = ((sogi->b0 * sogi->u[0]) - (sogi->b0 * sogi->u[2]) - (sogi->a1 * sogi->osg_u[1] * SOGI_NUM_GAIN)
+                      - (sogi->a2 * sogi->osg_u[2] * SOGI_NUM_GAIN))
+                   / SOGI_NUM_GAIN;
 
     // 计算正交信号输出
-    sogi->osg_qu[0] = ((sogi->qb0 * sogi->u[0]) +
-                       (sogi->qb1 * sogi->u[1]) +
-                       (sogi->qb2 * sogi->u[2]) -
-                       (sogi->a1 * sogi->osg_qu[1] * SOGI_NUM_GAIN) -
-                       (sogi->a2 * sogi->osg_qu[2] * SOGI_NUM_GAIN)) /
-                      SOGI_NUM_GAIN;
+    sogi->osg_qu[0] = ((sogi->qb0 * sogi->u[0]) + (sogi->qb1 * sogi->u[1]) + (sogi->qb2 * sogi->u[2])
+                       - (sogi->a1 * sogi->osg_qu[1] * SOGI_NUM_GAIN) - (sogi->a2 * sogi->osg_qu[2] * SOGI_NUM_GAIN))
+                    / SOGI_NUM_GAIN;
 
     // 更新历史状态
     sogi->osg_u[2] = sogi->osg_u[1];
@@ -114,7 +109,7 @@ void sogi_cal(sogi_t *sogi)
 
     sogi->osg_qu[2] = sogi->osg_qu[1];
     sogi->osg_qu[1] = sogi->osg_qu[0];
-    sogi->err = sogi->u[0] - sogi->osg_u[0];
+    sogi->err       = sogi->u[0] - sogi->osg_u[0];
 }
 
 void sogi_update_frequency(sogi_t *sogi, float new_w)

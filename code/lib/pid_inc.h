@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pid_inc.h
- * @brief   pid_inc library public interface.
+ * @file pid_inc.h
+ * @brief pid_inc library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -60,7 +60,10 @@ void pid_inc_Init(pid_inc_t *pid,
 
 float pid_inc_Calculate(pid_inc_t *pid, float target, float feedback);
 
-void pid_inc_SetParameters(pid_inc_t *pid, float kp, float ki, float kd);
+void pid_inc_SetParameters(pid_inc_t *pid,
+                           float kp,
+                           float ki,
+                           float kd);
 
 void pid_inc_Reset(pid_inc_t *pid);
 

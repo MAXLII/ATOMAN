@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    key_event.h
- * @brief   Timed key-event detector public interface.
+ * @file key_event.h
+ * @brief Timed key-event detector public interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - One call to key_event_update represents one configured time step
  *          - GPIO sampling and task registration remain caller responsibilities
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,7 +42,7 @@ typedef struct
 
 typedef struct
 {
-    uint32_t press_ticks;              /* Saturating duration of the current press. */
+    uint32_t press_ticks; /* Saturating duration of the current press. */
     uint32_t cooldown_remaining_ticks; /* Released ticks remaining in cooldown. */
 } key_event_inter_t;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    cllc_fsm.c
- * @brief   Bidirectional CLLC common FSM module.
+ * @file cllc_fsm.c
+ * @brief Bidirectional CLLC common FSM module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Scheduled by REG_FSM at the common 1 ms FSM cadence
  *          - Emergency shutdown is immediate; state transition follows asynchronously
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -44,20 +44,22 @@ typedef enum
     CLLC_FSM_EVENT_FAULT     /* Move to fault. */
 } CLLC_FSM_EVENT_E;
 
-static uint32_t fsm_event = CLLC_FSM_EVENT_NULL;                /* Pending transition event. */
-static volatile CLLC_FSM_CMD_E fsm_command = CLLC_FSM_CMD_NULL; /* Command shared with protection context. */
-static uint32_t startup_count = 0u;                             /* Remaining bridge-settling FSM ticks. */
-static CLLC_DIRECTION_E run_direction = CLLC_DIRECTION_FORWARD; /* Direction latched at start. */
-static uint8_t init_wait_logged = 0u;                           /* Prevent repeated dependency-wait log messages. */
+static uint32_t fsm_event                  = CLLC_FSM_EVENT_NULL; /* Pending transition event. */
+static volatile CLLC_FSM_CMD_E fsm_command = CLLC_FSM_CMD_NULL;   /* Command shared with protection context. */
+static uint32_t startup_count              = 0u; /* Remaining bridge-settling FSM ticks. */
+static CLLC_DIRECTION_E run_direction      = CLLC_DIRECTION_FORWARD; /* Direction latched at start. */
+static uint8_t init_wait_logged            = 0u; /* Prevent repeated dependency-wait log messages. */
 
 #define CLLC_FSM_HAL (cllc_hal_get_fsm())
 
 void cllc_fsm_set_cmd(CLLC_FSM_CMD_E command)
 {
-    if ((command >= CLLC_FSM_CMD_NULL) && /* Reject negative enum values from external casts. */
-        (command <= CLLC_FSM_CMD_RESET))  /* Accept only public command values. */
+    if (    (command >= CLLC_FSM_CMD_NULL)
+         && /* Reject negative enum values from external casts. */
+            (command <= CLLC_FSM_CMD_RESET)) /* Accept only public command values. */
     {
         fsm_command = command;
+
         if (command != CLLC_FSM_CMD_NULL)
         {
             PLECS_LOG("cllc_fsm command posted: %u\n", (unsigned int)command);
@@ -89,8 +91,8 @@ static uint8_t hard_fault_is_active(void)
 {
     cllc_fsm_hal_t *p_hal = CLLC_FSM_HAL; /* FSM HAL binding object. */
 
-    if ((p_hal == NULL) ||
-        (p_hal->p_latched == NULL)) /* Missing latch binding is treated as a hard fault. */
+    if (    (p_hal == NULL)
+         || (p_hal->p_latched == NULL)) /* Missing latch binding is treated as a hard fault. */
     {
         return 1u;
     }
@@ -109,14 +111,16 @@ static void init_execute(void)
 {
     cllc_fsm_hal_t *p_hal = CLLC_FSM_HAL; /* FSM HAL binding object. */
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run != NULL) && /* Run preparation and direction-aware PWM enable are available. */
-        (p_hal->p_exit_run != NULL))    /* A safe stop callback is available. */
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run != NULL)
+         && /* Run preparation and direction-aware PWM enable are available. */
+            (p_hal->p_exit_run != NULL)) /* A safe stop callback is available. */
     {
         PLECS_LOG("cllc_fsm init ready, goto idle\n");
         fsm_event = CLLC_FSM_EVENT_IDLE;
         return;
     }
+
     if (init_wait_logged == 0u)
     {
         PLECS_LOG("cllc_fsm init waiting for lifecycle HAL callbacks\n");
@@ -147,24 +151,27 @@ static void idle_in(void)
 /** Validate configuration, protection, and direction before startup. */
 static void idle_execute(void)
 {
-    CLLC_FSM_CMD_E command = get_command();  /* Command consumed by the idle state. */
-    cllc_ctrl_setpoint_t *p_setpoint = NULL; /* Staged start configuration. */
+    CLLC_FSM_CMD_E command           = get_command(); /* Command consumed by the idle state. */
+    cllc_ctrl_setpoint_t *p_setpoint = NULL;          /* Staged start configuration. */
 
     if (command != CLLC_FSM_CMD_START)
     {
         return;
     }
     PLECS_LOG("cllc_fsm idle received start command\n");
+
     if (cllc_hal_is_ready() == 0u)
     {
         PLECS_LOG("cllc_fsm start rejected: HAL binding is not ready\n");
         return;
     }
+
     if (cllc_cfg_is_ready() == 0u)
     {
         PLECS_LOG("cllc_fsm start rejected: timing or setpoint buffer is not ready\n");
         return;
     }
+
     if (hard_fault_is_active() != 0u)
     {
         PLECS_LOG("cllc_fsm start rejected: hard fault is active\n");
@@ -172,9 +179,12 @@ static void idle_execute(void)
         return;
     }
     p_setpoint = cllc_cfg_get_p_building();
-    if ((p_setpoint == NULL) ||                             /* Start requires a complete staged configuration. */
-        (p_setpoint->direction < CLLC_DIRECTION_FORWARD) || /* Reject negative enum values. */
-        (p_setpoint->direction >= CLLC_DIRECTION_MAX))      /* Start requires one defined direction. */
+
+    if (    (p_setpoint == NULL)
+         || /* Start requires a complete staged configuration. */
+            (p_setpoint->direction < CLLC_DIRECTION_FORWARD)
+         || /* Reject negative enum values. */
+            (p_setpoint->direction >= CLLC_DIRECTION_MAX)) /* Start requires one defined direction. */
     {
         PLECS_LOG("cllc_fsm start rejected: direction is invalid\n");
         return;
@@ -183,7 +193,7 @@ static void idle_execute(void)
     cllc_cfg_set_run_allowed(1u);
     cllc_cfg_publish_building();
     cllc_cfg_sync_building_to_active();
-    p_setpoint = cllc_cfg_get_p_active();
+    p_setpoint    = cllc_cfg_get_p_active();
     run_direction = p_setpoint->direction;
     PLECS_LOG("cllc_fsm start accepted: direction=%u, goto startup\n", (unsigned int)run_direction);
     fsm_event = CLLC_FSM_EVENT_STARTUP;
@@ -196,6 +206,7 @@ static uint32_t idle_check(uint32_t event)
     {
         return (uint32_t)CLLC_FSM_STATE_STARTUP;
     }
+
     if (event == CLLC_FSM_EVENT_FAULT)
     {
         return (uint32_t)CLLC_FSM_STATE_FAULT;
@@ -220,8 +231,9 @@ static void startup_in(void)
     PLECS_LOG("cllc_fsm enter startup: direction=%u, delay_ticks=%lu\n",
               (unsigned int)run_direction,
               (unsigned long)startup_count);
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run != NULL)) /* Callback was validated before leaving idle. */
+
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run != NULL)) /* Callback was validated before leaving idle. */
     {
         p_hal->p_enter_run(run_direction);
     }
@@ -231,13 +243,14 @@ static void startup_in(void)
 static void startup_execute(void)
 {
     CLLC_FSM_CMD_E command = get_command(); /* Command consumed during startup. */
-    cllc_fsm_hal_t *p_hal = CLLC_FSM_HAL;   /* FSM lifecycle callback owner. */
+    cllc_fsm_hal_t *p_hal  = CLLC_FSM_HAL;  /* FSM lifecycle callback owner. */
 
     if (hard_fault_is_active() != 0u)
     {
         PLECS_LOG("cllc_fsm startup interrupted by hard fault\n");
-        if ((p_hal != NULL) &&
-            (p_hal->p_exit_run != NULL)) /* Stop power transfer before entering fault. */
+
+        if (    (p_hal != NULL)
+             && (p_hal->p_exit_run != NULL)) /* Stop power transfer before entering fault. */
         {
             p_hal->p_exit_run();
         }
@@ -246,11 +259,13 @@ static void startup_execute(void)
         fsm_event = CLLC_FSM_EVENT_FAULT;
         return;
     }
+
     if (command == CLLC_FSM_CMD_STOP)
     {
         PLECS_LOG("cllc_fsm startup received stop, goto idle\n");
-        if ((p_hal != NULL) &&
-            (p_hal->p_exit_run != NULL)) /* Cancel an in-progress startup safely. */
+
+        if (    (p_hal != NULL)
+             && (p_hal->p_exit_run != NULL)) /* Cancel an in-progress startup safely. */
         {
             p_hal->p_exit_run();
         }
@@ -264,6 +279,7 @@ static void startup_execute(void)
     {
         startup_count--;
     }
+
     if (startup_count == 0u)
     {
         PLECS_LOG("cllc_fsm startup delay complete, goto run\n");
@@ -278,10 +294,12 @@ static uint32_t startup_check(uint32_t event)
     {
         return (uint32_t)CLLC_FSM_STATE_RUN;
     }
+
     if (event == CLLC_FSM_EVENT_IDLE)
     {
         return (uint32_t)CLLC_FSM_STATE_IDLE;
     }
+
     if (event == CLLC_FSM_EVENT_FAULT)
     {
         return (uint32_t)CLLC_FSM_STATE_FAULT;
@@ -312,6 +330,7 @@ static void run_execute(void)
         fsm_event = CLLC_FSM_EVENT_FAULT;
         return;
     }
+
     if (command == CLLC_FSM_CMD_STOP)
     {
         PLECS_LOG("cllc_fsm run received stop, goto idle\n");
@@ -326,6 +345,7 @@ static uint32_t run_check(uint32_t event)
     {
         return (uint32_t)CLLC_FSM_STATE_IDLE;
     }
+
     if (event == CLLC_FSM_EVENT_FAULT)
     {
         return (uint32_t)CLLC_FSM_STATE_FAULT;
@@ -339,8 +359,9 @@ static void run_out(void)
     cllc_fsm_hal_t *p_hal = CLLC_FSM_HAL; /* FSM lifecycle callback owner. */
 
     PLECS_LOG("cllc_fsm leave run\n");
-    if ((p_hal != NULL) &&
-        (p_hal->p_exit_run != NULL)) /* Stop either direction through one common path. */
+
+    if (    (p_hal != NULL)
+         && (p_hal->p_exit_run != NULL)) /* Stop either direction through one common path. */
     {
         p_hal->p_exit_run();
     }

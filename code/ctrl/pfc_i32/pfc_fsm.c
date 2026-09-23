@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_fsm.c
- * @brief   PFC int32 FSM module.
+ * @file pfc_fsm.c
+ * @brief PFC int32 FSM module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-27
+ * @author Max.Li
+ * @date 2026-06-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,10 +31,10 @@
 #include "my_math.h"
 #include "section.h"
 
-static uint32_t init_dly = 0U;
-static uint32_t soft_start_dly = 0U;
-static uint32_t main_rly_dly = 0U;
-static pfc_fsm_ev_e fsm_ev = pfc_fsm_ev_null;
+static uint32_t init_dly              = 0U;
+static uint32_t soft_start_dly        = 0U;
+static uint32_t main_rly_dly          = 0U;
+static pfc_fsm_ev_e fsm_ev            = pfc_fsm_ev_null;
 static volatile pfc_fsm_cmd_e fsm_cmd = pfc_fsm_cmd_null;
 
 #define p_hal (pfc_hal_get_fsm())
@@ -52,7 +52,7 @@ void pfc_fsm_set_p_hal(pfc_fsm_hal_t *p)
 static pfc_fsm_cmd_e get_fsm_cmd(void)
 {
     pfc_fsm_cmd_e temp = fsm_cmd;
-    fsm_cmd = pfc_fsm_cmd_null;
+    fsm_cmd            = pfc_fsm_cmd_null;
     return temp;
 }
 
@@ -70,8 +70,8 @@ static void pfc_fsm_init_exe(void)
     }
     else
     {
-        if ((p_hal != NULL) &&
-            (pfc_cfg_is_ready() == 1U))
+        if (    (p_hal != NULL)
+             && (pfc_cfg_is_ready() == 1U))
         {
             PLECS_LOG("PFC_fsm init ready, goto idle\n");
             fsm_ev = pfc_fsm_ev_to_idle;
@@ -174,8 +174,8 @@ static void pfc_fsm_soft_start_exe(void)
         return;
     }
 
-    if ((*p_hal->p_vbus_sta == pfc_vbus_sta_at_input_peak) ||
-        (*p_hal->p_vbus_sta == pfc_vbus_sta_in_regulation))
+    if (    (*p_hal->p_vbus_sta == pfc_vbus_sta_at_input_peak)
+         || (*p_hal->p_vbus_sta == pfc_vbus_sta_in_regulation))
     {
         PLECS_LOG("PFC_fsm soft_start bus ready, goto main_rly\n");
         fsm_ev = pfc_fsm_ev_to_main_rly;
@@ -195,6 +195,7 @@ static uint32_t pfc_fsm_soft_start_chk(uint32_t ev)
     {
         return (uint32_t)pfc_fsm_sta_main_rly;
     }
+
     if (ev == (uint32_t)pfc_fsm_ev_to_idle)
     {
         return (uint32_t)pfc_fsm_sta_idle;
@@ -246,8 +247,8 @@ static void pfc_fsm_main_rly_exe(void)
         return;
     }
 
-    if ((p_hal->p_main_rly_is_closed != NULL) &&
-        (*p_hal->p_main_rly_is_closed == 1U))
+    if (    (p_hal->p_main_rly_is_closed != NULL)
+         && (*p_hal->p_main_rly_is_closed == 1U))
     {
         PLECS_LOG("PFC_fsm main_rly confirmed closed, goto run\n");
         fsm_ev = pfc_fsm_ev_to_run;
@@ -267,6 +268,7 @@ static uint32_t pfc_fsm_main_rly_chk(uint32_t ev)
     {
         return (uint32_t)pfc_fsm_sta_run;
     }
+
     if (ev == (uint32_t)pfc_fsm_ev_to_idle)
     {
         return (uint32_t)pfc_fsm_sta_idle;
@@ -354,8 +356,8 @@ static void pfc_fsm_run_out(void)
         PLECS_LOG("PFC_fsm run exit skipped: exit_run hook is null\n");
     }
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_main_rly_off_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_main_rly_off_func != NULL))
     {
         p_hal->p_main_rly_off_func();
         PLECS_LOG("PFC_fsm main relay off\n");
@@ -372,8 +374,10 @@ static void pfc_fsm_run_out(void)
 REG_FSM(PFC_FSM, pfc_fsm_sta_init, fsm_ev,
         FSM_ENTRY(pfc_fsm_sta_init, pfc_fsm_init_in, pfc_fsm_init_exe, pfc_fsm_init_chk, pfc_fsm_init_out),
         FSM_ENTRY(pfc_fsm_sta_idle, pfc_fsm_idle_in, pfc_fsm_idle_exe, pfc_fsm_idle_chk, pfc_fsm_idle_out),
-        FSM_ENTRY(pfc_fsm_sta_soft_start, pfc_fsm_soft_start_in, pfc_fsm_soft_start_exe, pfc_fsm_soft_start_chk, pfc_fsm_soft_start_out),
-        FSM_ENTRY(pfc_fsm_sta_main_rly, pfc_fsm_main_rly_in, pfc_fsm_main_rly_exe, pfc_fsm_main_rly_chk, pfc_fsm_main_rly_out),
+        FSM_ENTRY(pfc_fsm_sta_soft_start, pfc_fsm_soft_start_in, pfc_fsm_soft_start_exe, pfc_fsm_soft_start_chk,
+                  pfc_fsm_soft_start_out),
+        FSM_ENTRY(pfc_fsm_sta_main_rly, pfc_fsm_main_rly_in, pfc_fsm_main_rly_exe, pfc_fsm_main_rly_chk,
+                  pfc_fsm_main_rly_out),
         FSM_ENTRY(pfc_fsm_sta_run, pfc_fsm_run_in, pfc_fsm_run_exe, pfc_fsm_run_chk, pfc_fsm_run_out), )
 
 pfc_run_sta_e pfc_fsm_get_run_sta(void)
@@ -384,6 +388,7 @@ pfc_run_sta_e pfc_fsm_get_run_sta(void)
     {
         return pfc_run_sta_init;
     }
+
     if (sta == pfc_fsm_sta_idle)
     {
         return pfc_run_sta_idle;

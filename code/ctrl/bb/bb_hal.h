@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_hal.h
- * @brief   bb_hal control public interface.
+ * @file bb_hal.h
+ * @brief bb_hal control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,13 +38,9 @@ typedef struct
     float *p_v_out; /* p_v_out: output-voltage sample */
     float *p_i_out; /* p_i_out: output-current sample */
     float *p_i_l;   /* p_i_l: inductor-current sample */
-    void (*p_set_pwm_func)(float buck_duty,
-                           uint8_t buck_up_en,
-                           uint8_t buck_dn_en,
-                           float boost_duty,
-                           uint8_t boost_up_en,
-                           uint8_t boost_dn_en); /* p_set_pwm_func: buck-boost PWM update hook */
-    void (*p_pwm_disable)(void);                 /* p_pwm_disable: fast PWM shutdown hook */
+    void (*p_set_pwm_func)(float buck_duty, uint8_t buck_up_en, uint8_t buck_dn_en, float boost_duty,
+                           uint8_t boost_up_en, uint8_t boost_dn_en); /* p_set_pwm_func: buck-boost PWM update hook */
+    void (*p_pwm_disable)(void); /* p_pwm_disable: fast PWM shutdown hook */
 } bb_ctrl_hal_t;
 
 typedef struct

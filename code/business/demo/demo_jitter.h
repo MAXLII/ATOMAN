@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_jitter.h
- * @brief   SRTOS interrupt jitter test interface.
+ * @file demo_jitter.h
+ * @brief SRTOS interrupt jitter test interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR path writes fixed-size RAM records only
  *          - Hardware access is limited to the GD32 timer counter used as timestamp source
  *
- * @author  Max.Li
- * @date    2026-06-30
+ * @author Max.Li
+ * @date 2026-06-30
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

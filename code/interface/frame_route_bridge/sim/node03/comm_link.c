@@ -7,8 +7,8 @@
  * @author Max.Li
  * @date 2026-09-16
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li. All rights reserved.
- * Licensed under the MIT License; see LICENSE in the project root.
+ *          Copyright (c) 2026 Max.Li. All rights reserved.
+ *          Licensed under the MIT License; see LICENSE in the project root.
  */
 #include "bsp_tcp.h"
 #include "comm.h"
@@ -36,7 +36,6 @@ static const section_link_handler_item_t iso_handlers[] = {
     {.func = comm_run, .ctx = &iso_ctx},
 }; /**< Protocol dispatch stays in the project interface. */
 REG_LINK(TCP_ISO_LINK, iso_tx, bsp_tcp_iso_rx_get_byte, iso_handlers, ARRAY_SIZE(iso_handlers))
-
 
 REG_COMM_ROUTE(TCP_DBG_LINK, TCP_ISO_LINK, COMM_LINK_PEER_ADDR)
 REG_COMM_ROUTE(TCP_ISO_LINK, TCP_DBG_LINK, COMM_LINK_PC_ADDR)

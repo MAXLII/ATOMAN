@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    codec_dict.c
- * @brief   COMM v1 static dictionary codec implementation.
+ * @file codec_dict.c
+ * @brief COMM v1 static dictionary codec implementation.
  * @details
  *          This file is part of the base digital power framework project.
  *
@@ -22,8 +22,8 @@
  *          - Literal runs hold at most 128 bytes (token 0x7F)
  *          - No per-frame history is kept between encode or decode calls
  *
- * @author  Max.Li
- * @date    2026-11-04
+ * @author Max.Li
+ * @date 2026-11-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -48,23 +48,22 @@
 #define CODEC_DICT_INDEX_MASK 0x3Fu
 
 /* Built-in codebook content. Both peers must preset the identical table. */
-static const char s_codec_dict_entry_data[] =
-    "counter\0"
-    "led_mask\0"
-    "temperature\0"
-    "voltage\0"
-    "current\0"
-    "power\0"
-    "frequency\0"
-    "status\0"
-    "error\0"
-    "scope\0"
-    "sfra\0"
-    "perf\0"
-    "trace\0"
-    "ok\0"
-    "fail\0"
-    "version";
+static const char s_codec_dict_entry_data[] = "counter\0"
+                                              "led_mask\0"
+                                              "temperature\0"
+                                              "voltage\0"
+                                              "current\0"
+                                              "power\0"
+                                              "frequency\0"
+                                              "status\0"
+                                              "error\0"
+                                              "scope\0"
+                                              "sfra\0"
+                                              "perf\0"
+                                              "trace\0"
+                                              "ok\0"
+                                              "fail\0"
+                                              "version";
 
 typedef struct
 {
@@ -92,8 +91,8 @@ static const codec_dict_entry_t s_codec_dict_entries[] = {
 };
 
 #define CODEC_DICT_ENTRY_COUNT (sizeof(s_codec_dict_entries) / sizeof(s_codec_dict_entries[0]))
-#define CODEC_DICT_ID 0u
-#define CODEC_DICT_VERSION 1u
+#define CODEC_DICT_ID          0u
+#define CODEC_DICT_VERSION     1u
 
 /* One bit per dictionary entry for each possible first byte. */
 static uint64_t s_codec_dict_first_byte_bucket[256];
@@ -102,7 +101,7 @@ static uint8_t s_codec_dict_ready = 0u;
 
 static void codec_dict_init(void)
 {
-    uint16_t byte_index = 0u;
+    uint16_t byte_index  = 0u;
     uint16_t entry_index = 0u;
 
     for (byte_index = 0u; byte_index < 256u; ++byte_index)
@@ -127,30 +126,34 @@ static int8_t codec_dict_fail(uint16_t *p_output_len)
     return 0;
 }
 
-int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
-                         uint16_t *p_output_len, uint8_t *p_output,
+int8_t codec_dict_encode(uint16_t input_len,
+                         const uint8_t *p_input,
+                         uint16_t *p_output_len,
+                         uint8_t *p_output,
                          uint16_t limit_len)
 {
-    uint16_t out_len = 0u;
-    uint16_t capacity = 0u;
-    uint16_t index = 0u;
+    uint16_t out_len       = 0u;
+    uint16_t capacity      = 0u;
+    uint16_t index         = 0u;
     uint16_t literal_start = 0u;
-    uint16_t literal_len = 0u;
+    uint16_t literal_len   = 0u;
 
     if (p_output_len == NULL)
     {
         return 0;
     }
-    if ((p_input == NULL) ||
-        (p_output == NULL) ||
-        (input_len == 0u) ||
-        (limit_len == 0u))
+
+    if (    (p_input == NULL)
+         || (p_output == NULL)
+         || (input_len == 0u)
+         || (limit_len == 0u))
     {
         return codec_dict_fail(p_output_len);
     }
 
-    capacity = *p_output_len;
+    capacity      = *p_output_len;
     *p_output_len = 0u;
+
     if (capacity == 0u)
     {
         return 0;
@@ -166,9 +169,9 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
     while (index < input_len)
     {
         /* Find the longest matching entry and prefer the smallest index on ties. */
-        uint16_t best_len = 0u;
-        uint8_t best_index = 0u;
-        uint64_t candidates = s_codec_dict_first_byte_bucket[p_input[index]];
+        uint16_t best_len    = 0u;
+        uint8_t best_index   = 0u;
+        uint64_t candidates  = s_codec_dict_first_byte_bucket[p_input[index]];
         uint16_t entry_index = 0u;
 
         for (entry_index = 0u; entry_index < CODEC_DICT_ENTRY_COUNT; ++entry_index)
@@ -182,22 +185,23 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
             }
 
             entry_len = (uint16_t)s_codec_dict_entries[entry_index].length;
+
             if (entry_len > (input_len - index))
             {
                 /* The remaining input is shorter than this entry. */
                 continue;
             }
-            if (memcmp(&p_input[index],
-                       &s_codec_dict_entry_data[s_codec_dict_entries[entry_index].offset],
-                       entry_len) != 0)
+
+            if (memcmp(&p_input[index], &s_codec_dict_entry_data[s_codec_dict_entries[entry_index].offset], entry_len) != 0)
             {
                 continue;
             }
 
-            if ((entry_len > best_len) ||
-                ((entry_len == best_len) && (entry_index < best_index)))
+            if (    (entry_len > best_len)
+                 || (    (entry_len == best_len)
+                      && (entry_index < best_index)))
             {
-                best_len = entry_len;
+                best_len   = entry_len;
                 best_index = (uint8_t)entry_index;
             }
         }
@@ -214,6 +218,7 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
                 {
                     return 0;
                 }
+
                 if ((out_len + 1u + literal_len) >= limit_len)
                 {
                     return codec_dict_fail(p_output_len);
@@ -223,19 +228,21 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
                 out_len++;
                 (void)memcpy(&p_output[out_len], &p_input[literal_start], literal_len);
                 out_len += literal_len;
-                literal_len = 0u;
+                literal_len   = 0u;
                 literal_start = index;
             }
         }
         else
         {
             /* Flush the pending literal run before emitting the reference. */
+
             if (literal_len != 0u)
             {
                 if ((out_len + 1u + literal_len) > capacity)
                 {
                     return 0;
                 }
+
                 if ((out_len + 1u + literal_len) >= limit_len)
                 {
                     return codec_dict_fail(p_output_len);
@@ -252,6 +259,7 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
             {
                 return 0;
             }
+
             if ((out_len + 1u) >= limit_len)
             {
                 return codec_dict_fail(p_output_len);
@@ -265,12 +273,14 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* Flush the trailing literal run. */
+
     if (literal_len != 0u)
     {
         if ((out_len + 1u + literal_len) > capacity)
         {
             return 0;
         }
+
         if ((out_len + 1u + literal_len) >= limit_len)
         {
             return codec_dict_fail(p_output_len);
@@ -283,7 +293,9 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* A successful result must be non-empty and strictly shorter than the limit. */
-    if ((out_len == 0u) || (out_len >= limit_len))
+
+    if (    (out_len == 0u)
+         || (out_len >= limit_len))
     {
         return codec_dict_fail(p_output_len);
     }
@@ -292,28 +304,32 @@ int8_t codec_dict_encode(uint16_t input_len, const uint8_t *p_input,
     return 1;
 }
 
-int8_t codec_dict_decode(uint16_t input_len, const uint8_t *p_input,
-                         uint16_t *p_output_len, uint8_t *p_output,
+int8_t codec_dict_decode(uint16_t input_len,
+                         const uint8_t *p_input,
+                         uint16_t *p_output_len,
+                         uint8_t *p_output,
                          uint16_t limit_len)
 {
-    uint16_t out_len = 0u;
+    uint16_t out_len  = 0u;
     uint16_t capacity = 0u;
-    uint16_t index = 0u;
+    uint16_t index    = 0u;
 
     if (p_output_len == NULL)
     {
         return 0;
     }
-    if ((p_input == NULL) ||
-        (p_output == NULL) ||
-        (input_len == 0u) ||
-        (limit_len == 0u))
+
+    if (    (p_input == NULL)
+         || (p_output == NULL)
+         || (input_len == 0u)
+         || (limit_len == 0u))
     {
         return codec_dict_fail(p_output_len);
     }
 
-    capacity = *p_output_len;
+    capacity      = *p_output_len;
     *p_output_len = 0u;
+
     if (capacity == 0u)
     {
         return 0;
@@ -333,10 +349,12 @@ int8_t codec_dict_decode(uint16_t input_len, const uint8_t *p_input,
                 /* The literal payload is truncated. */
                 return codec_dict_fail(p_output_len);
             }
+
             if ((out_len + literal_len) > capacity)
             {
                 return codec_dict_fail(p_output_len);
             }
+
             if ((out_len + literal_len) >= limit_len)
             {
                 return codec_dict_fail(p_output_len);
@@ -358,10 +376,12 @@ int8_t codec_dict_decode(uint16_t input_len, const uint8_t *p_input,
             }
 
             entry_len = (uint16_t)s_codec_dict_entries[entry_index].length;
+
             if ((out_len + entry_len) > capacity)
             {
                 return codec_dict_fail(p_output_len);
             }
+
             if ((out_len + entry_len) >= limit_len)
             {
                 return codec_dict_fail(p_output_len);
@@ -380,7 +400,9 @@ int8_t codec_dict_decode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* A successful result must be non-empty and strictly shorter than the limit. */
-    if ((out_len == 0u) || (out_len >= limit_len))
+
+    if (    (out_len == 0u)
+         || (out_len >= limit_len))
     {
         return codec_dict_fail(p_output_len);
     }
@@ -401,11 +423,12 @@ uint8_t codec_dict_codebook_version(void)
 
 uint32_t codec_dict_codebook_crc32(void)
 {
-    uint32_t crc = 0xFFFFFFFFu;
+    uint32_t crc         = 0xFFFFFFFFu;
     uint16_t entry_index = 0u;
-    uint16_t byte_index = 0u;
+    uint16_t byte_index  = 0u;
 
     /* 仅覆盖条目内容字节，不含分隔符，与上位机实现保持一致。 */
+
     for (entry_index = 0u; entry_index < CODEC_DICT_ENTRY_COUNT; ++entry_index)
     {
         const uint8_t *p_entry = (const uint8_t *)&s_codec_dict_entry_data[s_codec_dict_entries[entry_index].offset];
@@ -415,6 +438,7 @@ uint32_t codec_dict_codebook_crc32(void)
             uint32_t bit_index = 0u;
 
             crc ^= (uint32_t)p_entry[byte_index];
+
             for (bit_index = 0u; bit_index < 8u; ++bit_index)
             {
                 const uint32_t mask = (uint32_t)(0u - (crc & 1u));

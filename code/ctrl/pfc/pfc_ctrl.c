@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_ctrl.c
- * @brief   pfc_ctrl control module.
+ * @file pfc_ctrl.c
+ * @brief pfc_ctrl control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,55 +42,55 @@
 #define p_hal (p_ctrl_hal) /* p_hal: control-side HAL pointer */
 
 /* Bus-voltage conditioning and outer voltage-loop regulator. */
-static notch_t vbus_notch_filter = {0};  /* vbus_notch_filter: bus-voltage notch filter */
+static notch_t vbus_notch_filter  = {0}; /* vbus_notch_filter: bus-voltage notch filter */
 static pi_tustin_t vbus_volt_loop = {0}; /* vbus_volt_loop: DC-bus voltage outer PI */
-static pi_tustin_t ind_curr_loop = {0};  /* ind_curr_loop: inductor-current inner PI */
-static pr_t ind_curr_loop_pr = {0};      /* ind_curr_loop_pr: inductor-current inner PR */
+static pi_tustin_t ind_curr_loop  = {0}; /* ind_curr_loop: inductor-current inner PI */
+static pr_t ind_curr_loop_pr      = {0}; /* ind_curr_loop_pr: inductor-current inner PR */
 
 /* Grid-voltage orthogonal signal generator and frequency estimator. */
-static sogi_t grid_sogi = {0};     /* grid_sogi: SOGI state for grid voltage */
+static sogi_t grid_sogi     = {0}; /* grid_sogi: SOGI state for grid voltage */
 static fll_state_t grid_fll = {0}; /* grid_fll: FLL state for grid frequency */
 
 /* Slewed bus-voltage reference consumed by the PI loop. */
-static pfc_ctrl_hal_t *p_ctrl_hal = NULL;
-static pfc_ctrl_setpoint_t pfc_ctrl_safe_setpoint = {0};
+static pfc_ctrl_hal_t *p_ctrl_hal                  = NULL;
+static pfc_ctrl_setpoint_t pfc_ctrl_safe_setpoint  = {0};
 static pfc_ctrl_setpoint_t *p_ctrl_active_setpoint = &pfc_ctrl_safe_setpoint;
-static float v_g_fb = 0.0f;
-static float v_cap_fb = 0.0f;
-static float i_l_fb = 0.0f;
-static float v_bus_fb = 0.0f;
-static float v_rms_fb = 0.0f;
-static uint8_t main_rly_is_closed_fb = 0U;
-static float vbus_ref_ramped_v = 0.0f;                                /* vbus_ref_ramped_v: ramped bus-voltage reference */
-static float ind_curr_ref_cmd_a = 0.0f;                               /* ind_curr_ref_cmd_a: commanded inductor-current reference */
-static float ind_curr_ref_act_a = 0.0f;                               /* ind_curr_ref_act_a: ramped inductor-current reference */
-static float ind_curr_ctrl_u_raw_v = 0.0f;                            /* ind_curr_ctrl_u_raw_v: raw PR output */
-static float ind_curr_ctrl_u_sat_v = 0.0f;                            /* ind_curr_ctrl_u_sat_v: saturated PR output */
-static float pfc_pwm_cmd_v = 0.0f;                                    /* pfc_pwm_cmd_v: PWM voltage command */
-static float pfc_pwm_cmd_raw_v = 0.0f;                                /* pfc_pwm_cmd_raw_v: unclamped PWM voltage command */
-static float pfc_duty_cmd = 0.0f;                                     /* pfc_duty_cmd: final duty command */
-static float pfc_sogi_omega_pending = PFC_CTRL_GRID_OMEGA_INIT_RADPS; /* pfc_sogi_omega_pending: requested SOGI omega update */
-static float pfc_pr_w0_pending = PFC_CTRL_GRID_OMEGA_INIT_RADPS;      /* pfc_pr_w0_pending: requested PR center frequency update */
-static uint8_t pfc_sogi_update_pending = 0U;                          /* pfc_sogi_update_pending: deferred SOGI update flag */
-static uint8_t pfc_pr_update_pending = 0U;                            /* pfc_pr_update_pending: deferred PR update flag */
-static uint8_t pfc_ctrl_run_active = 0U;                              /* pfc_ctrl_run_active: latched run gate state */
+static float v_g_fb                                = 0.0f;
+static float v_cap_fb                              = 0.0f;
+static float i_l_fb                                = 0.0f;
+static float v_bus_fb                              = 0.0f;
+static float v_rms_fb                              = 0.0f;
+static uint8_t main_rly_is_closed_fb               = 0U;
+static float vbus_ref_ramped_v                     = 0.0f; /* vbus_ref_ramped_v: ramped bus-voltage reference */
+static float ind_curr_ref_cmd_a                    = 0.0f; /* ind_curr_ref_cmd_a: commanded inductor-current reference */
+static float ind_curr_ref_act_a                    = 0.0f; /* ind_curr_ref_act_a: ramped inductor-current reference */
+static float ind_curr_ctrl_u_raw_v                 = 0.0f; /* ind_curr_ctrl_u_raw_v: raw PR output */
+static float ind_curr_ctrl_u_sat_v                 = 0.0f; /* ind_curr_ctrl_u_sat_v: saturated PR output */
+static float pfc_pwm_cmd_v                         = 0.0f; /* pfc_pwm_cmd_v: PWM voltage command */
+static float pfc_pwm_cmd_raw_v                     = 0.0f; /* pfc_pwm_cmd_raw_v: unclamped PWM voltage command */
+static float pfc_duty_cmd                          = 0.0f; /* pfc_duty_cmd: final duty command */
+static float pfc_sogi_omega_pending                = PFC_CTRL_GRID_OMEGA_INIT_RADPS; /* pfc_sogi_omega_pending: requested SOGI omega update */
+static float pfc_pr_w0_pending                     = PFC_CTRL_GRID_OMEGA_INIT_RADPS; /* pfc_pr_w0_pending: requested PR center frequency update */
+static uint8_t pfc_sogi_update_pending             = 0U; /* pfc_sogi_update_pending: deferred SOGI update flag */
+static uint8_t pfc_pr_update_pending               = 0U; /* pfc_pr_update_pending: deferred PR update flag */
+static uint8_t pfc_ctrl_run_active                 = 0U; /* pfc_ctrl_run_active: latched run gate state */
 
 static inline void pfc_ctrl_update_feedback(pfc_ctrl_hal_t *p)
 {
-    v_g_fb = *p->p_v_g;
-    v_cap_fb = *p->p_v_cap;
-    i_l_fb = *p->p_i_l;
-    v_bus_fb = *p->p_v_bus;
-    v_rms_fb = *p->p_v_rms;
+    v_g_fb                = *p->p_v_g;
+    v_cap_fb              = *p->p_v_cap;
+    i_l_fb                = *p->p_i_l;
+    v_bus_fb              = *p->p_v_bus;
+    v_rms_fb              = *p->p_v_rms;
     main_rly_is_closed_fb = *p->p_main_rly_is_closed;
 }
 
 static inline void pfc_ctrl_request_freq_update(float omega)
 {
-    pfc_sogi_omega_pending = omega;
-    pfc_pr_w0_pending = omega;
+    pfc_sogi_omega_pending  = omega;
+    pfc_pr_w0_pending       = omega;
     pfc_sogi_update_pending = 1U;
-    pfc_pr_update_pending = 1U;
+    pfc_pr_update_pending   = 1U;
 }
 
 static inline void pfc_ctrl_apply_pending_freq_update(void)
@@ -113,27 +113,27 @@ static inline void pfc_ctrl_reset_loops(void)
     pi_tustin_reset(&vbus_volt_loop);
     pi_tustin_reset(&ind_curr_loop);
     pr_reset(&ind_curr_loop_pr);
-    ind_curr_ref_cmd_a = 0.0f;
-    ind_curr_ref_act_a = 0.0f;
+    ind_curr_ref_cmd_a    = 0.0f;
+    ind_curr_ref_act_a    = 0.0f;
     ind_curr_ctrl_u_raw_v = 0.0f;
     ind_curr_ctrl_u_sat_v = 0.0f;
-    pfc_pwm_cmd_raw_v = 0.0f;
-    pfc_pwm_cmd_v = 0.0f;
-    pfc_duty_cmd = 0.0f;
+    pfc_pwm_cmd_raw_v     = 0.0f;
+    pfc_pwm_cmd_v         = 0.0f;
+    pfc_duty_cmd          = 0.0f;
 }
 
 static inline void pfc_ctrl_force_safe_output(void)
 {
-    ind_curr_ref_cmd_a = 0.0f;
-    ind_curr_ref_act_a = 0.0f;
+    ind_curr_ref_cmd_a    = 0.0f;
+    ind_curr_ref_act_a    = 0.0f;
     ind_curr_ctrl_u_raw_v = 0.0f;
     ind_curr_ctrl_u_sat_v = 0.0f;
-    pfc_pwm_cmd_raw_v = 0.0f;
-    pfc_pwm_cmd_v = 0.0f;
-    pfc_duty_cmd = 0.0f;
+    pfc_pwm_cmd_raw_v     = 0.0f;
+    pfc_pwm_cmd_v         = 0.0f;
+    pfc_duty_cmd          = 0.0f;
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_pwm_disable != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_pwm_disable != NULL))
     {
         p_hal->p_pwm_disable();
     }
@@ -146,7 +146,7 @@ static inline float pfc_ctrl_get_startup_vbus_ref_init(void)
 
 static inline float pfc_ctrl_calc_ind_curr_ref(void)
 {
-    float grid_rms_v = v_rms_fb;                    /* grid_rms_v: measured grid RMS voltage */
+    float grid_rms_v     = v_rms_fb; /* grid_rms_v: measured grid RMS voltage */
     float grid_rms_sq_v2 = grid_rms_v * grid_rms_v; /* grid_rms_sq_v2: squared grid RMS voltage */
 
     DN_LMT(grid_rms_sq_v2, 0.001f);
@@ -156,11 +156,8 @@ static inline float pfc_ctrl_calc_ind_curr_ref(void)
      * 1) an active-power term following the in-phase SOGI output;
      * 2) an input-capacitor compensation term on the quadrature axis.
      */
-    return (vbus_volt_loop.output.val *
-            PFC_CTRL_GRID_RMS_NOMINAL_V *
-            grid_sogi.osg_u[0] /
-            grid_rms_sq_v2) +
-           (grid_sogi.osg_qu[0] * grid_fll.omega * HW_AC_SIDE_CAP_VALUE);
+    return (vbus_volt_loop.output.val * PFC_CTRL_GRID_RMS_NOMINAL_V * grid_sogi.osg_u[0] / grid_rms_sq_v2)
+         + (grid_sogi.osg_qu[0] * grid_fll.omega * HW_AC_SIDE_CAP_VALUE);
 }
 
 static inline float pfc_ctrl_apply_pwm_clamp(float pwm_cmd_raw_v)
@@ -211,7 +208,7 @@ static inline void pfc_ctrl_run_current_loop(float i_ref_abs_lmt_a)
 
     /* Clamp the final modulation command rather than only clipping the PR output. */
     pfc_pwm_cmd_raw_v = v_cap_fb - ind_curr_ctrl_u_sat_v;
-    pfc_pwm_cmd_v = pfc_ctrl_apply_pwm_clamp(pfc_pwm_cmd_raw_v);
+    pfc_pwm_cmd_v     = pfc_ctrl_apply_pwm_clamp(pfc_pwm_cmd_raw_v);
 
     p_hal->p_set_pwm_func(pfc_pwm_cmd_v, v_bus_fb);
 }
@@ -219,27 +216,27 @@ static inline void pfc_ctrl_run_current_loop(float i_ref_abs_lmt_a)
 static inline void pfc_ctrl_reinit_states(void)
 {
     pfc_ctrl_setpoint_t *p_active_setpoint = NULL;
-    float ctrl_ts = pfc_cfg_get_ctrl_ts();
+    float ctrl_ts                          = pfc_cfg_get_ctrl_ts();
     fll_params_t grid_fll_params = {
-        .gamma = PFC_CTRL_FLL_GAIN,
+        .gamma      = PFC_CTRL_FLL_GAIN,
         .omega_init = PFC_CTRL_GRID_OMEGA_INIT_RADPS,
-        .ts = ctrl_ts,
+        .ts         = ctrl_ts,
     };
 
-    p_ctrl_hal = pfc_hal_get_ctrl();
+    p_ctrl_hal          = pfc_hal_get_ctrl();
     pfc_ctrl_run_active = 0U;
     pfc_cfg_sync_building_to_active();
     p_active_setpoint = pfc_cfg_get_p_active();
 
-    if ((p_hal == NULL) ||
-        (pfc_cfg_is_ready() == 0U) ||
-        (p_active_setpoint == NULL) ||
-        (p_hal->p_v_bus == NULL) ||
-        (p_hal->p_v_g == NULL) ||
-        (p_hal->p_v_rms == NULL) ||
-        (p_hal->p_i_l == NULL) ||
-        (p_hal->p_v_cap == NULL) ||
-        (p_hal->p_main_rly_is_closed == NULL))
+    if (    (p_hal == NULL)
+         || (pfc_cfg_is_ready() == 0U)
+         || (p_active_setpoint == NULL)
+         || (p_hal->p_v_bus == NULL)
+         || (p_hal->p_v_g == NULL)
+         || (p_hal->p_v_rms == NULL)
+         || (p_hal->p_i_l == NULL)
+         || (p_hal->p_v_cap == NULL)
+         || (p_hal->p_main_rly_is_closed == NULL))
     {
         return;
     }
@@ -289,17 +286,9 @@ static inline void pfc_ctrl_reinit_states(void)
             &i_l_fb);
 
     /* Track grid phase with SOGI, and let FLL adapt the center frequency. */
-    sogi_init(&grid_sogi,
-              ctrl_ts,
-              grid_fll_params.omega_init,
-              PFC_CTRL_SOGI_GAIN,
-              &v_g_fb);
+    sogi_init(&grid_sogi, ctrl_ts, grid_fll_params.omega_init, PFC_CTRL_SOGI_GAIN, &v_g_fb);
 
-    fll_init(&grid_fll,
-             &grid_fll_params,
-             &grid_sogi.osg_u[0],
-             &grid_sogi.osg_qu[0],
-             &grid_sogi.err);
+    fll_init(&grid_fll, &grid_fll_params, &grid_sogi.osg_u[0], &grid_sogi.osg_qu[0], &grid_sogi.err);
 
     vbus_ref_ramped_v = pfc_ctrl_get_startup_vbus_ref_init();
     pfc_ctrl_request_freq_update(grid_fll_params.omega_init);
@@ -315,20 +304,20 @@ REG_INIT(0, pfc_ctrl_init)
 
 static void pfc_ctrl_isr(void)
 {
-    pfc_ctrl_hal_t *p_hal_isr = p_hal;
+    pfc_ctrl_hal_t *p_hal_isr       = p_hal;
     pfc_ctrl_setpoint_t *p_setpoint = p_ctrl_active_setpoint; /* p_setpoint: active PFC setpoint */
 
-    if ((p_hal_isr == NULL) ||
-        (pfc_cfg_is_ready() == 0) ||
-        (p_setpoint == NULL) ||
-        (p_hal_isr->p_i_l == NULL) ||
-        (p_hal_isr->p_v_cap == NULL) ||
-        (p_hal_isr->p_v_g == NULL) ||
-        (p_hal_isr->p_v_bus == NULL) ||
-        (p_hal_isr->p_v_rms == NULL) ||
-        (p_hal_isr->p_main_rly_is_closed == NULL) ||
-        (p_hal_isr->p_pwm_disable == NULL) ||
-        (p_hal_isr->p_set_pwm_func == NULL))
+    if (    (p_hal_isr == NULL)
+         || (pfc_cfg_is_ready() == 0)
+         || (p_setpoint == NULL)
+         || (p_hal_isr->p_i_l == NULL)
+         || (p_hal_isr->p_v_cap == NULL)
+         || (p_hal_isr->p_v_g == NULL)
+         || (p_hal_isr->p_v_bus == NULL)
+         || (p_hal_isr->p_v_rms == NULL)
+         || (p_hal_isr->p_main_rly_is_closed == NULL)
+         || (p_hal_isr->p_pwm_disable == NULL)
+         || (p_hal_isr->p_set_pwm_func == NULL))
     {
         return;
     }
@@ -340,8 +329,9 @@ static void pfc_ctrl_isr(void)
     /* Update orthogonal grid components and online frequency estimate. */
     pfc_ctrl_apply_pending_freq_update();
     sogi_cal((sogi_t *)&grid_sogi);
-    if ((p_setpoint->run_allowed != 0U) &&
-        (main_rly_is_closed_fb == 1U))
+
+    if (    (p_setpoint->run_allowed != 0U)
+         && (main_rly_is_closed_fb == 1U))
     {
         fll_cal((fll_state_t *)&grid_fll);
     }
@@ -354,8 +344,9 @@ static void pfc_ctrl_isr(void)
     /* Keep controller states frozen until the upper layer allows run and the
      * main relay has been confirmed closed.
      */
-    if ((p_setpoint->run_allowed == 0U) ||
-        (main_rly_is_closed_fb == 0U))
+
+    if (    (p_setpoint->run_allowed == 0U)
+         || (main_rly_is_closed_fb == 0U))
     {
         if (pfc_ctrl_run_active != 0U)
         {
@@ -379,23 +370,24 @@ REG_INTERRUPT(3, pfc_ctrl_isr)
 
 static void pfc_ctrl_task(void)
 {
-    pfc_ctrl_hal_t *p_hal_task = p_hal;
+    pfc_ctrl_hal_t *p_hal_task     = p_hal;
     static uint32_t grid_freq_last = 0U; /* grid_freq_last: last quantized requested omega */
-    uint32_t grid_freq_now = 0U;
-    float target_omega = PFC_CTRL_GRID_OMEGA_INIT_RADPS;
+    uint32_t grid_freq_now         = 0U;
+    float target_omega             = PFC_CTRL_GRID_OMEGA_INIT_RADPS;
 
-    if ((p_hal_task != NULL) &&
-        (pfc_cfg_is_ready() != 0U) &&
-        (p_ctrl_active_setpoint != NULL) &&
-        (p_ctrl_active_setpoint->run_allowed != 0U) &&
-        (p_hal_task->p_v_g != NULL) &&
-        (p_hal_task->p_v_cap != NULL) &&
-        (p_hal_task->p_i_l != NULL) &&
-        (p_hal_task->p_v_bus != NULL) &&
-        (p_hal_task->p_v_rms != NULL) &&
-        (p_hal_task->p_main_rly_is_closed != NULL))
+    if (    (p_hal_task != NULL)
+         && (pfc_cfg_is_ready() != 0U)
+         && (p_ctrl_active_setpoint != NULL)
+         && (p_ctrl_active_setpoint->run_allowed != 0U)
+         && (p_hal_task->p_v_g != NULL)
+         && (p_hal_task->p_v_cap != NULL)
+         && (p_hal_task->p_i_l != NULL)
+         && (p_hal_task->p_v_bus != NULL)
+         && (p_hal_task->p_v_rms != NULL)
+         && (p_hal_task->p_main_rly_is_closed != NULL))
     {
         pfc_ctrl_update_feedback(p_hal_task);
+
         if (main_rly_is_closed_fb == 1U)
         {
             target_omega = grid_fll.omega;

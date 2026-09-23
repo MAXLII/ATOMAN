@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pwm.h
- * @brief   Bidirectional CLLC normalized-modulation interface.
+ * @file pwm.h
+ * @brief Bidirectional CLLC normalized-modulation interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Functions are allocation-free and suitable for control-interrupt use
  *          - Platform-specific timer updates remain in bsp_pwm
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

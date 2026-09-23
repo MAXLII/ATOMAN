@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pi_tustin_i32.h
- * @brief   Integer PI Tustin controller public interface.
+ * @file pi_tustin_i32.h
+ * @brief Integer PI Tustin controller public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe when caller owns the instance and input pointers
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -107,6 +107,7 @@ static inline int32_t pi_tustin_i32_div_i64_sat_i32(int64_t numerator, int32_t d
     int32_t numerator_i32 = 0;
 
     numerator_i32 = pi_tustin_i32_sat_i64_to_i32(numerator);
+
     if (denominator == 0)
     {
         return numerator_i32;
@@ -117,16 +118,14 @@ static inline int32_t pi_tustin_i32_div_i64_sat_i32(int64_t numerator, int32_t d
 
 static inline void pi_tustin_i32_cal_inline(pi_tustin_i32_t *p_str)
 {
-    int64_t val = 0;
+    int64_t val         = 0;
     int64_t anti_windup = 0;
 
-    p_str->inter.e[0] = pi_tustin_i32_sat_i64_to_i32((int64_t)*p_str->input.p_ref -
-                                                     (int64_t)*p_str->input.p_act);
+    p_str->inter.e[0] = pi_tustin_i32_sat_i64_to_i32((int64_t)*p_str->input.p_ref - (int64_t)*p_str->input.p_act);
     p_str->inter.u[1] = p_str->inter.u[0];
 
-    val = (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] +
-          (int64_t)p_str->inter.b1 * (int64_t)p_str->inter.e[1] -
-          (int64_t)p_str->inter.a1 * (int64_t)p_str->inter.u[1];
+    val = (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] + (int64_t)p_str->inter.b1 * (int64_t)p_str->inter.e[1]
+        - (int64_t)p_str->inter.a1 * (int64_t)p_str->inter.u[1];
 
     if (val > (int64_t)p_str->inter.up_lmt)
     {
@@ -137,8 +136,8 @@ static inline void pi_tustin_i32_cal_inline(pi_tustin_i32_t *p_str)
         val = p_str->inter.dn_lmt;
     }
 
-    if ((val == (int64_t)p_str->inter.up_lmt) ||
-        (val == (int64_t)p_str->inter.dn_lmt))
+    if (    (val == (int64_t)p_str->inter.up_lmt)
+         || (val == (int64_t)p_str->inter.dn_lmt))
     {
         if (p_str->inter.b1 == 0)
         {
@@ -146,11 +145,9 @@ static inline void pi_tustin_i32_cal_inline(pi_tustin_i32_t *p_str)
         }
         else
         {
-            anti_windup = val -
-                          (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] +
-                          (int64_t)p_str->inter.a1 * (int64_t)p_str->inter.u[1];
-            p_str->inter.e[1] = pi_tustin_i32_div_i64_sat_i32(anti_windup,
-                                                              p_str->inter.b1);
+            anti_windup = val - (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0]
+                        + (int64_t)p_str->inter.a1 * (int64_t)p_str->inter.u[1];
+            p_str->inter.e[1] = pi_tustin_i32_div_i64_sat_i32(anti_windup, p_str->inter.b1);
         }
     }
     else
@@ -164,17 +161,15 @@ static inline void pi_tustin_i32_cal_inline(pi_tustin_i32_t *p_str)
 
 static inline void pi_tustin_i32_cal_a1_neg1_inline(pi_tustin_i32_t *p_str)
 {
-    int64_t val = 0;
+    int64_t val         = 0;
     int64_t anti_windup = 0;
 
-    p_str->inter.e[0] = pi_tustin_i32_sat_i64_to_i32((int64_t)*p_str->input.p_ref -
-                                                     (int64_t)*p_str->input.p_act);
+    p_str->inter.e[0] = pi_tustin_i32_sat_i64_to_i32((int64_t)*p_str->input.p_ref - (int64_t)*p_str->input.p_act);
     p_str->inter.u[1] = p_str->inter.u[0];
 
     /* Fast Tustin path for controllers whose update equation always has a1 equal to minus one. */
-    val = (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] +
-          (int64_t)p_str->inter.b1 * (int64_t)p_str->inter.e[1] +
-          (int64_t)p_str->inter.u[1];
+    val = (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] + (int64_t)p_str->inter.b1 * (int64_t)p_str->inter.e[1]
+        + (int64_t)p_str->inter.u[1];
 
     if (val > (int64_t)p_str->inter.up_lmt)
     {
@@ -185,8 +180,8 @@ static inline void pi_tustin_i32_cal_a1_neg1_inline(pi_tustin_i32_t *p_str)
         val = p_str->inter.dn_lmt;
     }
 
-    if ((val == (int64_t)p_str->inter.up_lmt) ||
-        (val == (int64_t)p_str->inter.dn_lmt))
+    if (    (val == (int64_t)p_str->inter.up_lmt)
+         || (val == (int64_t)p_str->inter.dn_lmt))
     {
         if (p_str->inter.b1 == 0)
         {
@@ -194,11 +189,8 @@ static inline void pi_tustin_i32_cal_a1_neg1_inline(pi_tustin_i32_t *p_str)
         }
         else
         {
-            anti_windup = val -
-                          (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] -
-                          (int64_t)p_str->inter.u[1];
-            p_str->inter.e[1] = pi_tustin_i32_div_i64_sat_i32(anti_windup,
-                                                              p_str->inter.b1);
+            anti_windup = val - (int64_t)p_str->inter.b0 * (int64_t)p_str->inter.e[0] - (int64_t)p_str->inter.u[1];
+            p_str->inter.e[1] = pi_tustin_i32_div_i64_sat_i32(anti_windup, p_str->inter.b1);
         }
     }
     else

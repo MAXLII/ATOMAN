@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    apf_i32.h
- * @brief   Integer first-order all-pass filter public interface.
+ * @file apf_i32.h
+ * @brief Integer first-order all-pass filter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Runtime path uses no division
  *          - No hardware access
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

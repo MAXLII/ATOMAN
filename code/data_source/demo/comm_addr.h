@@ -1,7 +1,7 @@
 #ifndef __COMM_ADDR_H
 #define __COMM_ADDR_H
 
-#define PC_ADDR 0x01
+#define PC_ADDR  0x01
 #define LLC_ADDR 0x02
 #define PFC_ADDR 0x03
 #define APP_ADDR 0x04

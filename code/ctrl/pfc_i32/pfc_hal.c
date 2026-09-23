@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_hal.c
- * @brief   PFC int32 HAL binding module.
+ * @file pfc_hal.c
+ * @brief PFC int32 HAL binding module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-27
+ * @author Max.Li
+ * @date 2026-06-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -35,10 +35,10 @@
 static void pfc_hal_enter_run(void);
 static void pfc_hal_exit_run(void);
 static uint8_t pfc_hal_binding_locked = 1U;
-static pfc_ctrl_hal_t pfc_ctrl_hal = {0};
+static pfc_ctrl_hal_t pfc_ctrl_hal    = {0};
 static pfc_fsm_hal_t pfc_fsm_hal = {
     .p_enter_run_func = pfc_hal_enter_run,
-    .p_exit_run_func = pfc_hal_exit_run,
+    .p_exit_run_func  = pfc_hal_exit_run,
 };
 
 static void pfc_hal_enter_run(void)
@@ -84,21 +84,21 @@ void pfc_hal_hard_protect_trip(void)
 
 uint8_t pfc_hal_is_ready(void)
 {
-    return (uint8_t)((pfc_ctrl_hal.p_v_g != NULL) &&
-                     (pfc_ctrl_hal.p_v_cap != NULL) &&
-                     (pfc_ctrl_hal.p_i_l != NULL) &&
-                     (pfc_ctrl_hal.p_v_bus != NULL) &&
-                     (pfc_ctrl_hal.p_v_rms != NULL) &&
-                     (pfc_ctrl_hal.p_main_rly_is_closed != NULL) &&
-                     (pfc_ctrl_hal.p_set_pwm_func != NULL) &&
-                     (pfc_ctrl_hal.p_pwm_enable != NULL) &&
-                     (pfc_ctrl_hal.p_pwm_disable != NULL) &&
-                     (pfc_fsm_hal.p_vbus_sta != NULL) &&
-                     (pfc_fsm_hal.p_main_rly_is_closed != NULL) &&
-                     (pfc_fsm_hal.p_enter_run_func != NULL) &&
-                     (pfc_fsm_hal.p_exit_run_func != NULL) &&
-                     (pfc_fsm_hal.p_main_rly_on_func != NULL) &&
-                     (pfc_fsm_hal.p_main_rly_off_func != NULL));
+    return (uint8_t)(    (pfc_ctrl_hal.p_v_g != NULL)
+                      && (pfc_ctrl_hal.p_v_cap != NULL)
+                      && (pfc_ctrl_hal.p_i_l != NULL)
+                      && (pfc_ctrl_hal.p_v_bus != NULL)
+                      && (pfc_ctrl_hal.p_v_rms != NULL)
+                      && (pfc_ctrl_hal.p_main_rly_is_closed != NULL)
+                      && (pfc_ctrl_hal.p_set_pwm_func != NULL)
+                      && (pfc_ctrl_hal.p_pwm_enable != NULL)
+                      && (pfc_ctrl_hal.p_pwm_disable != NULL)
+                      && (pfc_fsm_hal.p_vbus_sta != NULL)
+                      && (pfc_fsm_hal.p_main_rly_is_closed != NULL)
+                      && (pfc_fsm_hal.p_enter_run_func != NULL)
+                      && (pfc_fsm_hal.p_exit_run_func != NULL)
+                      && (pfc_fsm_hal.p_main_rly_on_func != NULL)
+                      && (pfc_fsm_hal.p_main_rly_off_func != NULL));
 }
 
 void pfc_hal_lock_binding(void)
@@ -156,7 +156,7 @@ void pfc_hal_set_main_rly_is_closed_ptr(uint8_t *p)
     if (pfc_hal_binding_locked == 0U)
     {
         pfc_ctrl_hal.p_main_rly_is_closed = p;
-        pfc_fsm_hal.p_main_rly_is_closed = p;
+        pfc_fsm_hal.p_main_rly_is_closed  = p;
     }
 }
 

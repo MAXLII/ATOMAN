@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_storage_record.h
- * @brief   Encode and validate versioned demo parameter records and separate commit pages.
+ * @file demo_storage_record.h
+ * @brief Encode and validate versioned demo parameter records and separate commit pages.
  * @details
  *          This file is part of the base project.
  *          Module responsibilities:
@@ -11,8 +11,8 @@
  *          - C11 compatible; no dynamic memory allocation.
  *          - Task-context API; not ISR-safe.
  *          - Hardware access is confined to the platform BSP.
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -27,8 +27,12 @@
 uint8_t demo_storage_record_params_valid(const demo_storage_params_t *p_params);
 /** @param p_data 数据页。 @param p_commit 提交页。 @param size 页字节数。
  * @param kind 1 参数、2 日志、3 测试。 @param sequence 非零序号。 @param p_params 冻结的参数。 */
-void demo_storage_record_encode(uint8_t *p_data, uint8_t *p_commit, uint32_t size,
-    uint32_t kind, uint32_t sequence, const demo_storage_params_t *p_params);
+void demo_storage_record_encode(uint8_t *p_data,
+                                uint8_t *p_commit,
+                                uint32_t size,
+                                uint32_t kind,
+                                uint32_t sequence,
+                                const demo_storage_params_t *p_params);
 /** @param p_data 数据页。 @param kind 预期类型。 @return 1 数据页完整，0 非法。 */
 uint8_t demo_storage_record_data_valid(const uint8_t *p_data, uint32_t kind);
 /** @param p_data 数据页。 @param p_commit 提交页。 @return 1 提交完整且匹配，0 非法。 */

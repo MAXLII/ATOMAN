@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    cllc_hal.c
- * @brief   Bidirectional CLLC HAL binding module.
+ * @file cllc_hal.c
+ * @brief Bidirectional CLLC HAL binding module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Hard-protection trip is safe to call from interrupt context
  *          - Platform-specific PWM details remain behind callbacks
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,19 +36,21 @@
 static void enter_run(CLLC_DIRECTION_E direction);
 static void exit_run(void);
 
-static uint8_t hard_protect_latched = 0u; /* Shared hardware-protection latch. */
-static uint8_t binding_locked = 1u;       /* Nonzero rejects platform rebinding. */
-static cllc_ctrl_hal_t ctrl_hal = {0};    /* Fast-loop hardware bindings. */
-static cllc_fsm_hal_t fsm_hal = {         /* FSM lifecycle bindings. */
+static uint8_t hard_protect_latched = 0u;  /* Shared hardware-protection latch. */
+static uint8_t binding_locked       = 1u;  /* Nonzero rejects platform rebinding. */
+static cllc_ctrl_hal_t ctrl_hal     = {0}; /* Fast-loop hardware bindings. */
+static cllc_fsm_hal_t fsm_hal = {
+    /* FSM lifecycle bindings. */
     .p_enter_run = enter_run,
-    .p_exit_run = exit_run,
-    .p_latched = &hard_protect_latched,
+    .p_exit_run  = exit_run,
+    .p_latched   = &hard_protect_latched,
 };
 
 /** Prepare controller state and enable the bridge selected by the FSM. */
 static void enter_run(CLLC_DIRECTION_E direction)
 {
     cllc_ctrl_prepare_run(direction);
+
     if (ctrl_hal.p_pwm_enable != NULL)
     {
         ctrl_hal.p_pwm_enable(direction);
@@ -77,30 +79,37 @@ uint8_t cllc_hal_is_ready(void)
     {
         return 0u;
     }
+
     if (ctrl_hal.p_i_battery == NULL)
     {
         return 0u;
     }
+
     if (ctrl_hal.p_v_bus == NULL)
     {
         return 0u;
     }
+
     if (ctrl_hal.p_set_modulation == NULL)
     {
         return 0u;
     }
+
     if (ctrl_hal.p_pwm_enable == NULL)
     {
         return 0u;
     }
+
     if (ctrl_hal.p_pwm_disable == NULL)
     {
         return 0u;
     }
+
     if (fsm_hal.p_enter_run == NULL)
     {
         return 0u;
     }
+
     if (fsm_hal.p_exit_run == NULL)
     {
         return 0u;
@@ -129,6 +138,7 @@ void cllc_hal_pwm_disable(void)
 void cllc_hal_hard_protect_trip(void)
 {
     cllc_hal_pwm_disable();
+
     if (fsm_hal.p_latched != NULL)
     {
         *fsm_hal.p_latched = 1u;

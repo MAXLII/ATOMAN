@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    llc_cfg.c
- * @brief   LLC control configuration module.
+ * @file llc_cfg.c
+ * @brief LLC control configuration module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -37,29 +37,31 @@ static llc_ctrl_setpoint_t setpoint_building = {
 static llc_ctrl_timing_t ctrl_timing = {0};
 
 llc_ctrl_setpoint_mgr_t llc_cfg_setpoint_mgr = {
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0U,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0U,
-    },
+    .active =
+        {
+            .p_data  = &setpoint_active,
+            .version = 0U,
+        },
+    .building =
+        {
+            .p_data  = &setpoint_building,
+            .version = 0U,
+        },
 };
 
 static uint8_t llc_cfg_timing_is_valid(const llc_ctrl_timing_t *p_timing)
 {
-    return (uint8_t)((p_timing != NULL) &&
-                     (p_timing->ctrl_ts > 0.0f) &&
-                     (p_timing->task_ts > 0.0f));
+    return (uint8_t)(    (p_timing != NULL)
+                      && (p_timing->ctrl_ts > 0.0f)
+                      && (p_timing->task_ts > 0.0f));
 }
 
 void llc_cfg_set_timing(const llc_ctrl_timing_t *p_timing)
 {
     if (llc_cfg_timing_is_valid(p_timing) == 0U)
     {
-        ctrl_timing.ctrl_ts = 0.0f;
-        ctrl_timing.task_ts = 0.0f;
+        ctrl_timing.ctrl_ts             = 0.0f;
+        ctrl_timing.task_ts             = 0.0f;
         ctrl_timing.startup_delay_ticks = 0U;
         return;
     }
@@ -132,8 +134,8 @@ void llc_cfg_set_v_out_ref(float v_out_ref_v)
 
 void llc_cfg_publish_building(void)
 {
-    if ((llc_cfg_setpoint_mgr.building.p_data == NULL) ||
-        (llc_cfg_setpoint_mgr.active.p_data == NULL))
+    if (    (llc_cfg_setpoint_mgr.building.p_data == NULL)
+         || (llc_cfg_setpoint_mgr.active.p_data == NULL))
     {
         return;
     }
@@ -143,9 +145,9 @@ void llc_cfg_publish_building(void)
 
 uint8_t llc_cfg_is_ready(void)
 {
-    return (uint8_t)((llc_cfg_setpoint_mgr.active.p_data != NULL) &&
-                     (llc_cfg_setpoint_mgr.building.p_data != NULL) &&
-                     (llc_cfg_timing_is_valid(&ctrl_timing) != 0U));
+    return (uint8_t)(    (llc_cfg_setpoint_mgr.active.p_data != NULL)
+                      && (llc_cfg_setpoint_mgr.building.p_data != NULL)
+                      && (llc_cfg_timing_is_valid(&ctrl_timing) != 0U));
 }
 
 const llc_ctrl_setpoint_mgr_t *llc_cfg_get_mgr(void)

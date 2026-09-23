@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_scope.c
- * @brief   scope section demo.
+ * @file demo_scope.c
+ * @brief scope section demo.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-18
+ * @author Max.Li
+ * @date 2026-05-18
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -35,9 +35,7 @@
 
 static uint32_t s_demo_scope_tick = 0u;
 
-REG_SCOPE_EX(demo_scope_wave, 100, 50, 10000u,
-             demo_scope_sin,
-             demo_scope_cos)
+REG_SCOPE_EX(demo_scope_wave, 100, 50, 10000u, demo_scope_sin, demo_scope_cos)
 
 static void demo_scope_task_10ms(void)
 {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    demo_sfra.c
- * @brief   SFRA demo.
+ * @file demo_sfra.c
+ * @brief SFRA demo.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-18
+ * @author Max.Li
+ * @date 2026-05-18
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -41,14 +41,7 @@ static pi_tustin_t s_demo_sfra_pi;
 
 static void demo_sfra_prepare_freq(void *p_ctx);
 
-REG_SFRA(demo_sfra,
-         0U,
-         0.0001f,
-         1.0f,
-         10.0f,
-         5000.0f,
-         demo_sfra_prepare_freq,
-         &s_demo_sfra_pi)
+REG_SFRA(demo_sfra, 0U, 0.0001f, 1.0f, 10.0f, 5000.0f, demo_sfra_prepare_freq, &s_demo_sfra_pi)
 
 static void demo_sfra_prepare_freq(void *p_ctx)
 {
@@ -64,14 +57,7 @@ static void demo_sfra_prepare_freq(void *p_ctx)
 
 static void demo_sfra_init(void)
 {
-    (void)pi_tustin_init(&s_demo_sfra_pi,
-                         1.0f,
-                         400.0f,
-                         0.0001f,
-                         100.0f,
-                         -100.0f,
-                         &s_demo_sfra_ref,
-                         &s_demo_sfra_fbk);
+    (void)pi_tustin_init(&s_demo_sfra_pi, 1.0f, 400.0f, 0.0001f, 100.0f, -100.0f, &s_demo_sfra_ref, &s_demo_sfra_fbk);
 }
 
 static void demo_sfra_isr_10k_task(void)
@@ -79,6 +65,7 @@ static void demo_sfra_isr_10k_task(void)
     static uint8_t s_sfra_isr_divider = 0u;
 
     s_sfra_isr_divider++;
+
     if (s_sfra_isr_divider < DEMO_SFRA_ISR_DIVIDER)
     {
         return;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    section.h
- * @brief   Bare-metal section framework public interface.
+ * @file section.h
+ * @brief Bare-metal section framework public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -17,8 +17,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -48,7 +48,7 @@
 
 typedef struct section_item
 {
-    void *p_obj;                 /* Business object owned by the registration module. */
+    void *p_obj; /* Business object owned by the registration module. */
     struct section_item *p_next; /* Next wrapper in one runtime registration list. */
 } section_item_t;
 
@@ -71,18 +71,18 @@ typedef struct
 
 typedef enum
 {
-    SECTION_INIT = 0,   /* Initialization-function registration entry. */
-    SECTION_TASK,       /* Periodic-task registration entry. */
-    SECTION_INTERRUPT,  /* Interrupt-dispatch registration entry. */
-    SECTION_SHELL,      /* Shell command or variable registration entry. */
-    SECTION_LINK,       /* Communication-link registration entry. */
-    SECTION_PERF,       /* Performance-counter registration entry. */
-    SECTION_COMM,       /* Communication-command registration entry. */
-    SECTION_COMM_ROUTE, /* Communication-route registration entry. */
-    SECTION_SCOPE,      /* Scope-instance registration entry. */
-    SECTION_SFRA,       /* SFRA-instance registration entry. */
-    SECTION_DBG_LIST,   /* Debug-visible list-head registration entry. */
-    SECTION_SIM_TCP,    /* Simulation TCP endpoint registration. */
+    SECTION_INIT = 0,      /* Initialization-function registration entry. */
+    SECTION_TASK,          /* Periodic-task registration entry. */
+    SECTION_INTERRUPT,     /* Interrupt-dispatch registration entry. */
+    SECTION_SHELL,         /* Shell command or variable registration entry. */
+    SECTION_LINK,          /* Communication-link registration entry. */
+    SECTION_PERF,          /* Performance-counter registration entry. */
+    SECTION_COMM,          /* Communication-command registration entry. */
+    SECTION_COMM_ROUTE,    /* Communication-route registration entry. */
+    SECTION_SCOPE,         /* Scope-instance registration entry. */
+    SECTION_SFRA,          /* SFRA-instance registration entry. */
+    SECTION_DBG_LIST,      /* Debug-visible list-head registration entry. */
+    SECTION_SIM_TCP,       /* Simulation TCP endpoint registration. */
     SECTION_SIM_DISCOVERY, /* Simulation discovery advertisement registration. */
 } SECTION_E;
 

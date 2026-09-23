@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    codec_rle.c
- * @brief   COMM v1 RLE / PackBits codec implementation.
+ * @file codec_rle.c
+ * @brief COMM v1 RLE / PackBits codec implementation.
  * @details
  *          This file is part of the base digital power framework project.
  *
@@ -21,8 +21,8 @@
  *          - Literal runs hold at most 128 bytes (token 0x7F)
  *          - Repeat runs hold at most 130 bytes (token 0xFF)
  *
- * @author  Max.Li
- * @date    2026-11-04
+ * @author Max.Li
+ * @date 2026-11-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -48,28 +48,32 @@ static int8_t codec_rle_decode_fail(uint16_t *p_output_len)
     return 0;
 }
 
-int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
-                        uint16_t *p_output_len, uint8_t *p_output,
+int8_t codec_rle_encode(uint16_t input_len,
+                        const uint8_t *p_input,
+                        uint16_t *p_output_len,
+                        uint8_t *p_output,
                         uint16_t limit_len)
 {
-    uint16_t out_len = 0u;
+    uint16_t out_len  = 0u;
     uint16_t capacity = 0u;
-    uint16_t index = 0u;
+    uint16_t index    = 0u;
 
     if (p_output_len == NULL)
     {
         return 0;
     }
-    if ((p_input == NULL) ||
-        (p_output == NULL) ||
-        (input_len == 0u) ||
-        (limit_len == 0u))
+
+    if (    (p_input == NULL)
+         || (p_output == NULL)
+         || (input_len == 0u)
+         || (limit_len == 0u))
     {
         return codec_rle_decode_fail(p_output_len);
     }
 
-    capacity = *p_output_len;
+    capacity      = *p_output_len;
     *p_output_len = 0u;
+
     if (capacity == 0u)
     {
         return 0;
@@ -79,9 +83,10 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
     {
         uint16_t run = 1u;
 
-        while (((index + run) < input_len) && /* The next byte still belongs to the same run. */
-               (p_input[index + run] == p_input[index]) &&
-               (run < CODEC_RLE_REPEAT_MAX)) /* One token cannot express a longer run. */
+        while (    ((index + run) < input_len)
+                && /* The next byte still belongs to the same run. */
+                   (p_input[index + run] == p_input[index])
+                && (run < CODEC_RLE_REPEAT_MAX)) /* One token cannot express a longer run. */
         {
             run++;
         }
@@ -89,10 +94,12 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
         if (run >= CODEC_RLE_REPEAT_MIN)
         {
             /* The repeat token plus its value byte must fit and stay below the limit. */
+
             if ((out_len + 2u) > capacity)
             {
                 return 0;
             }
+
             if ((out_len + 2u) >= limit_len)
             {
                 return codec_rle_decode_fail(p_output_len);
@@ -108,15 +115,16 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
         {
             /* Collect a literal run; short identical pairs stay literal. */
             uint16_t literal_start = index;
-            uint16_t literal_len = 0u;
+            uint16_t literal_len   = 0u;
 
-            while ((index < input_len) && (literal_len < CODEC_RLE_LITERAL_MAX))
+            while (    (index < input_len)
+                    && (literal_len < CODEC_RLE_LITERAL_MAX))
             {
                 uint16_t ahead = 1u;
 
-                while (((index + ahead) < input_len) &&
-                       (p_input[index + ahead] == p_input[index]) &&
-                       (ahead < CODEC_RLE_REPEAT_MAX))
+                while (    ((index + ahead) < input_len)
+                        && (p_input[index + ahead] == p_input[index])
+                        && (ahead < CODEC_RLE_REPEAT_MAX))
                 {
                     ahead++;
                 }
@@ -126,6 +134,7 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
                     /* The next run belongs to a repeat token instead. */
                     break;
                 }
+
                 if ((literal_len + ahead) > CODEC_RLE_LITERAL_MAX)
                 {
                     /* The remaining identical bytes do not fit this literal run. */
@@ -140,6 +149,7 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
             {
                 return 0;
             }
+
             if ((out_len + 1u + literal_len) >= limit_len)
             {
                 return codec_rle_decode_fail(p_output_len);
@@ -153,7 +163,9 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* A successful result must be non-empty and strictly shorter than the limit. */
-    if ((out_len == 0u) || (out_len >= limit_len))
+
+    if (    (out_len == 0u)
+         || (out_len >= limit_len))
     {
         return codec_rle_decode_fail(p_output_len);
     }
@@ -162,28 +174,32 @@ int8_t codec_rle_encode(uint16_t input_len, const uint8_t *p_input,
     return 1;
 }
 
-int8_t codec_rle_decode(uint16_t input_len, const uint8_t *p_input,
-                        uint16_t *p_output_len, uint8_t *p_output,
+int8_t codec_rle_decode(uint16_t input_len,
+                        const uint8_t *p_input,
+                        uint16_t *p_output_len,
+                        uint8_t *p_output,
                         uint16_t limit_len)
 {
-    uint16_t out_len = 0u;
+    uint16_t out_len  = 0u;
     uint16_t capacity = 0u;
-    uint16_t index = 0u;
+    uint16_t index    = 0u;
 
     if (p_output_len == NULL)
     {
         return 0;
     }
-    if ((p_input == NULL) ||
-        (p_output == NULL) ||
-        (input_len == 0u) ||
-        (limit_len == 0u))
+
+    if (    (p_input == NULL)
+         || (p_output == NULL)
+         || (input_len == 0u)
+         || (limit_len == 0u))
     {
         return codec_rle_decode_fail(p_output_len);
     }
 
-    capacity = *p_output_len;
+    capacity      = *p_output_len;
     *p_output_len = 0u;
+
     if (capacity == 0u)
     {
         return 0;
@@ -203,10 +219,12 @@ int8_t codec_rle_decode(uint16_t input_len, const uint8_t *p_input,
                 /* The literal payload is truncated. */
                 return codec_rle_decode_fail(p_output_len);
             }
+
             if ((out_len + literal_len) > capacity)
             {
                 return codec_rle_decode_fail(p_output_len);
             }
+
             if ((out_len + literal_len) >= limit_len)
             {
                 return codec_rle_decode_fail(p_output_len);
@@ -225,10 +243,12 @@ int8_t codec_rle_decode(uint16_t input_len, const uint8_t *p_input,
                 /* The repeat value byte is missing. */
                 return codec_rle_decode_fail(p_output_len);
             }
+
             if ((out_len + repeat_len) > capacity)
             {
                 return codec_rle_decode_fail(p_output_len);
             }
+
             if ((out_len + repeat_len) >= limit_len)
             {
                 return codec_rle_decode_fail(p_output_len);
@@ -241,7 +261,9 @@ int8_t codec_rle_decode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* A successful result must be non-empty and strictly shorter than the limit. */
-    if ((out_len == 0u) || (out_len >= limit_len))
+
+    if (    (out_len == 0u)
+         || (out_len >= limit_len))
     {
         return codec_rle_decode_fail(p_output_len);
     }

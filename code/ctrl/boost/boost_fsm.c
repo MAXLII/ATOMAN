@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    boost_fsm.c
- * @brief   boost_fsm control module.
+ * @file boost_fsm.c
+ * @brief boost_fsm control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-23
+ * @author Max.Li
+ * @date 2026-05-23
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,7 +30,7 @@
 #include "boost_cfg.h"
 #include <stddef.h>
 
-static uint32_t fsm_ev = boost_fsm_ev_null;
+static uint32_t fsm_ev                  = boost_fsm_ev_null;
 static volatile boost_fsm_cmd_e fsm_cmd = boost_fsm_cmd_null;
 #define p_hal (boost_hal_get_fsm())
 
@@ -53,7 +53,7 @@ void boost_fsm_set_p_hal(boost_fsm_hal_t *p)
 static boost_fsm_cmd_e get_cmd(void)
 {
     boost_fsm_cmd_e temp = fsm_cmd;
-    fsm_cmd = boost_fsm_cmd_null;
+    fsm_cmd              = boost_fsm_cmd_null;
     return temp;
 }
 
@@ -63,9 +63,9 @@ static void init_in(void)
 
 static void init_exe(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         fsm_ev = boost_fsm_ev_to_idle;
     }
@@ -93,8 +93,9 @@ static void idle_exe(void)
 {
     if (get_cmd() == boost_fsm_cmd_start)
     {
-        if ((boost_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
-            (boost_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
+        if (    (boost_hal_is_ready() == 0U)
+             || /* 启动前必须完成全部硬件绑定。 */
+                (boost_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
         {
             return;
         }
@@ -121,8 +122,8 @@ static void idle_out(void)
 
 static void run_in(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL))
     {
         p_hal->p_enter_run_func();
     }
@@ -147,8 +148,8 @@ static uint32_t run_chk(uint32_t event)
 
 static void run_out(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         p_hal->p_exit_run_func();
     }
@@ -157,8 +158,7 @@ static void run_out(void)
     boost_cfg_publish_building();
 }
 
-REG_FSM(boost_fsm, boost_fsm_sta_init, fsm_ev,
-        FSM_ENTRY(boost_fsm_sta_init, init_in, init_exe, init_chk, init_out),
+REG_FSM(boost_fsm, boost_fsm_sta_init, fsm_ev, FSM_ENTRY(boost_fsm_sta_init, init_in, init_exe, init_chk, init_out),
         FSM_ENTRY(boost_fsm_sta_idle, idle_in, idle_exe, idle_chk, idle_out),
         FSM_ENTRY(boost_fsm_sta_run, run_in, run_exe, run_chk, run_out), )
 
@@ -170,6 +170,7 @@ boost_run_sta_e boost_fsm_get_run_sta(void)
     {
         return boost_run_sta_init;
     }
+
     if (sta == boost_fsm_sta_idle)
     {
         return boost_run_sta_idle;

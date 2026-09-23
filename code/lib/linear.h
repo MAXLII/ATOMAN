@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    linear.h
- * @brief   linear library public interface.
+ * @file linear.h
+ * @brief linear library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -42,7 +42,10 @@ typedef struct
     uint8_t err;         // 错误标志
 } linear_t;
 
-bool linear_init(linear_t *p_str, float *p_in, float (*p_x_y)[2], uint32_t size);
+bool linear_init(linear_t *p_str,
+                 float *p_in,
+                 float (*p_x_y)[2],
+                 uint32_t size);
 
 void linear_func(linear_t *p_str);
 

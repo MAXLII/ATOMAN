@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    fal_core.h
- * @brief   Platform-independent Flash Abstraction Layer interface.
+ * @file fal_core.h
+ * @brief Platform-independent Flash Abstraction Layer interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Not ISR-safe; one execution context owns each fal_t instance
  *          - Hardware access is supplied exclusively through fal_flash_ops_t
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,26 +32,25 @@
 
 #include <stdint.h>
 
-#define FAL_ZONE_PERMISSION_READ (1u << 0u)  /**< Permit reads from a logical zone. */
+#define FAL_ZONE_PERMISSION_READ  (1u << 0u) /**< Permit reads from a logical zone. */
 #define FAL_ZONE_PERMISSION_WRITE (1u << 1u) /**< Permit programming a logical zone. */
 #define FAL_ZONE_PERMISSION_ERASE (1u << 2u) /**< Permit erasing a logical zone. */
-#define FAL_ZONE_PERMISSION_ALL (FAL_ZONE_PERMISSION_READ | FAL_ZONE_PERMISSION_WRITE | \
-                                 FAL_ZONE_PERMISSION_ERASE) /**< Permit every operation. */
+#define FAL_ZONE_PERMISSION_ALL   (FAL_ZONE_PERMISSION_READ | FAL_ZONE_PERMISSION_WRITE | FAL_ZONE_PERMISSION_ERASE) /**< Permit every operation. */
 
 typedef uint16_t fal_zone_id_t;   /**< Platform-defined logical partition identifier. */
 typedef uint16_t fal_device_id_t; /**< Platform-defined physical flash identifier. */
 
 typedef enum
 {
-    FAL_RESULT_SUCCESS = 0,            /**< Operation completed successfully. */
-    FAL_RESULT_IN_PROGRESS = 1,        /**< Operation is accepted and still active. */
-    FAL_RESULT_BUSY = 2,               /**< Another operation already owns the instance. */
-    FAL_RESULT_INVALID_ARGUMENT = -1,  /**< A caller argument is invalid. */
-    FAL_RESULT_OUT_OF_RANGE = -2,      /**< A request exceeds its logical partition. */
-    FAL_RESULT_CONFIG_ERROR = -3,      /**< The mounted device or zone table is invalid. */
+    FAL_RESULT_SUCCESS           = 0,  /**< Operation completed successfully. */
+    FAL_RESULT_IN_PROGRESS       = 1,  /**< Operation is accepted and still active. */
+    FAL_RESULT_BUSY              = 2,  /**< Another operation already owns the instance. */
+    FAL_RESULT_INVALID_ARGUMENT  = -1, /**< A caller argument is invalid. */
+    FAL_RESULT_OUT_OF_RANGE      = -2, /**< A request exceeds its logical partition. */
+    FAL_RESULT_CONFIG_ERROR      = -3, /**< The mounted device or zone table is invalid. */
     FAL_RESULT_PERMISSION_DENIED = -4, /**< Zone permissions reject the operation. */
-    FAL_RESULT_DRIVER_ERROR = -5,      /**< A platform flash operation failed. */
-    FAL_RESULT_STOPPED = -6            /**< The instance has entered its stopped state. */
+    FAL_RESULT_DRIVER_ERROR      = -5, /**< A platform flash operation failed. */
+    FAL_RESULT_STOPPED           = -6  /**< The instance has entered its stopped state. */
 } fal_result_t;
 
 typedef enum
@@ -64,13 +63,13 @@ typedef enum
 typedef enum
 {
     FAL_STATE_UNINITIALIZED = 0, /**< No valid configuration has been mounted. */
-    FAL_STATE_IDLE,              /**< No operation is active. */
-    FAL_STATE_READ,              /**< The next read chunk is ready to issue. */
-    FAL_STATE_WRITE,             /**< The next program chunk is ready to issue. */
-    FAL_STATE_ERASE,             /**< The next erase block is ready to issue. */
-    FAL_STATE_WAIT_DEVICE,       /**< A device operation is in flight. */
-    FAL_STATE_STOPPED,           /**< New work is rejected until reinitialization. */
-    FAL_STATE_ERROR              /**< Initialization or runtime configuration failed. */
+    FAL_STATE_IDLE,        /**< No operation is active. */
+    FAL_STATE_READ,        /**< The next read chunk is ready to issue. */
+    FAL_STATE_WRITE,       /**< The next program chunk is ready to issue. */
+    FAL_STATE_ERASE,       /**< The next erase block is ready to issue. */
+    FAL_STATE_WAIT_DEVICE, /**< A device operation is in flight. */
+    FAL_STATE_STOPPED,     /**< New work is rejected until reinitialization. */
+    FAL_STATE_ERROR        /**< Initialization or runtime configuration failed. */
 } fal_state_t;
 
 typedef enum
@@ -83,21 +82,13 @@ typedef enum
 
 typedef struct
 {
-    void *p_context;                                    /**< Platform driver instance passed to every callback. */
+    void *p_context; /**< Platform driver instance passed to every callback. */
     fal_result_t (*p_init)(void *p_context);            /**< Initialize the physical flash device. */
     fal_device_state_t (*p_get_state)(void *p_context); /**< Query asynchronous device state. */
-    fal_result_t (*p_read)(void *p_context,
-                           uint32_t address,
-                           uint32_t length,
-                           uint8_t *p_data); /**< Start a physical read operation. */
-    fal_result_t (*p_program)(void *p_context,
-                              uint32_t address,
-                              uint32_t length,
-                              const uint8_t *p_data); /**< Start a physical program operation. */
-    fal_result_t (*p_erase)(void *p_context,
-                            uint32_t address,
-                            uint32_t length); /**< Start a physical erase operation. */
-    fal_result_t (*p_sync)(void *p_context);  /**< Optionally flush driver-side buffered work. */
+    fal_result_t (*p_read)(void *p_context, uint32_t address, uint32_t length, uint8_t *p_data);          /**< Start a physical read operation. */
+    fal_result_t (*p_program)(void *p_context, uint32_t address, uint32_t length, const uint8_t *p_data); /**< Start a physical program operation. */
+    fal_result_t (*p_erase)(void *p_context, uint32_t address, uint32_t length); /**< Start a physical erase operation. */
+    fal_result_t (*p_sync)(void *p_context); /**< Optionally flush driver-side buffered work. */
 } fal_flash_ops_t;
 
 typedef struct
@@ -109,15 +100,15 @@ typedef struct
 
 typedef struct
 {
-    fal_device_id_t device_id;       /**< Physical Flash identifier. */
-    uint32_t capacity;               /**< Addressable device capacity in bytes. */
-    uint32_t program_page_size;      /**< Maximum program page size in bytes. */
-    uint32_t erase_block_size;       /**< Minimum erase block size in bytes. */
-    uint32_t max_read_size;          /**< Maximum read chunk; 0 permits the full request. */
-    const fal_zone_cfg_t *p_zones;   /**< Ordered zones located on this device. */
-    uint16_t zone_count;             /**< Number of zones on this device. */
-    fal_flash_ops_t ops;             /**< Mounted platform Flash operations. */
-    uint32_t program_unit_size;      /**< Required address/length alignment; 0 means 1 for existing NOR adapters. */
+    fal_device_id_t device_id;     /**< Physical Flash identifier. */
+    uint32_t capacity;             /**< Addressable device capacity in bytes. */
+    uint32_t program_page_size;    /**< Maximum program page size in bytes. */
+    uint32_t erase_block_size;     /**< Minimum erase block size in bytes. */
+    uint32_t max_read_size;        /**< Maximum read chunk; 0 permits the full request. */
+    const fal_zone_cfg_t *p_zones; /**< Ordered zones located on this device. */
+    uint16_t zone_count;           /**< Number of zones on this device. */
+    fal_flash_ops_t ops;           /**< Mounted platform Flash operations. */
+    uint32_t program_unit_size;    /**< Required address/length alignment; 0 means 1 for existing NOR adapters. */
 } fal_device_cfg_t;
 
 typedef struct
@@ -128,9 +119,9 @@ typedef struct
 
 typedef struct
 {
-    fal_zone_id_t zone_id;      /**< Queried logical partition identifier. */
-    fal_device_id_t device_id;  /**< Physical device containing the partition. */
-    uint32_t size;              /**< Partition capacity in bytes. */
+    fal_zone_id_t zone_id;     /**< Queried logical partition identifier. */
+    fal_device_id_t device_id; /**< Physical device containing the partition. */
+    uint32_t size;             /**< Partition capacity in bytes. */
     uint32_t program_page_size; /**< Device program page size in bytes. */
     uint32_t erase_block_size;  /**< Device erase block size in bytes. */
     uint8_t permissions;        /**< Effective FAL_ZONE_PERMISSION_* mask. */
@@ -138,31 +129,31 @@ typedef struct
 
 typedef struct
 {
-    const fal_cfg_t *p_cfg;           /**< Mounted platform configuration. */
-    uint8_t *p_read_data;             /**< Caller read destination retained until completion. */
-    const uint8_t *p_write_data;      /**< Caller write source retained until completion. */
-    uint32_t physical_address;        /**< Address of the next chunk within the device. */
-    uint32_t remaining;               /**< Request bytes not yet completed. */
-    uint32_t chunk_length;            /**< In-flight chunk length in bytes. */
+    const fal_cfg_t *p_cfg;      /**< Mounted platform configuration. */
+    uint8_t *p_read_data;        /**< Caller read destination retained until completion. */
+    const uint8_t *p_write_data; /**< Caller write source retained until completion. */
+    uint32_t physical_address;   /**< Address of the next chunk within the device. */
+    uint32_t remaining;          /**< Request bytes not yet completed. */
+    uint32_t chunk_length;       /**< In-flight chunk length in bytes. */
     fal_device_id_t active_device_id; /**< Device selected by the active request. */
-    fal_state_t state;                /**< Public state-machine state. */
-    fal_state_t operation_state;      /**< READ, WRITE, or ERASE state to resume. */
-    fal_operation_type_t operation;   /**< Active request type. */
-    fal_result_t result;              /**< Last submitted operation result. */
-    uint8_t stop_requested;           /**< Deferred stop request flag. */
-    uint8_t sync_issued;              /**< Final optional sync has been issued. */
+    fal_state_t state;           /**< Public state-machine state. */
+    fal_state_t operation_state; /**< READ, WRITE, or ERASE state to resume. */
+    fal_operation_type_t operation; /**< Active request type. */
+    fal_result_t result;            /**< Last submitted operation result. */
+    uint8_t stop_requested;         /**< Deferred stop request flag. */
+    uint8_t sync_issued;            /**< Final optional sync has been issued. */
 } fal_t;
 
 typedef struct
 {
-    fal_t *p_instances;          /**< Caller-owned, initially zeroed independent instances. */
-    const fal_cfg_t *p_configs;  /**< Configuration array paired one-to-one with instances. */
-    uint16_t instance_count;     /**< Number of entries in both arrays; bounds each scheduling pass. */
+    fal_t *p_instances;         /**< Caller-owned, initially zeroed independent instances. */
+    const fal_cfg_t *p_configs; /**< Configuration array paired one-to-one with instances. */
+    uint16_t instance_count;    /**< Number of entries in both arrays; bounds each scheduling pass. */
 } fal_runtime_t;
 
 /** @param p_runtime Immutable binding with initially zeroed instances.
  * @return SUCCESS when all mount, BUSY without changes if any request is active,
- * otherwise the first failure. Other independent instances are still initialized.
+ *         otherwise the first failure. Other independent instances are still initialized.
  * @note All runtime and request APIs require the same serialized task context. */
 fal_result_t fal_runtime_init(const fal_runtime_t *p_runtime);
 /** @param p_runtime Runtime binding; arrays and configuration outlive every request.
@@ -171,7 +162,7 @@ fal_result_t fal_runtime_init(const fal_runtime_t *p_runtime);
 fal_result_t fal_runtime_mount(const fal_runtime_t *p_runtime, uint16_t instance_index);
 /** @param p_runtime Runtime binding for one bounded pass over all instances.
  * @return SUCCESS for a completed scheduling pass, INVALID_ARGUMENT for an invalid binding.
- * Inspect fal_result_get() on each instance for its asynchronous operation outcome. */
+ *         Inspect fal_result_get() on each instance for its asynchronous operation outcome. */
 fal_result_t fal_runtime_process(const fal_runtime_t *p_runtime);
 
 fal_result_t fal_init(fal_t *p_fal, const fal_cfg_t *p_cfg);
@@ -187,7 +178,10 @@ fal_result_t fal_write(fal_t *p_fal,
                        uint32_t offset,
                        uint32_t length,
                        const uint8_t *p_data);
-fal_result_t fal_erase(fal_t *p_fal, fal_zone_id_t zone_id, uint32_t offset, uint32_t length);
+fal_result_t fal_erase(fal_t *p_fal,
+                       fal_zone_id_t zone_id,
+                       uint32_t offset,
+                       uint32_t length);
 uint8_t fal_is_busy(const fal_t *p_fal);
 fal_state_t fal_state_get(const fal_t *p_fal);
 fal_result_t fal_result_get(const fal_t *p_fal);

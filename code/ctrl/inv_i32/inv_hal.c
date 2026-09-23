@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    inv_hal.c
- * @brief   Inverter int32 HAL binding module.
+ * @file inv_hal.c
+ * @brief Inverter int32 HAL binding module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Binding validation occurs before run entry
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,18 +39,19 @@ static void exit_run(void);
 static void relay_on_unbound(void);
 static void relay_off_unbound(void);
 
-static uint8_t binding_locked = 1U; /**< Prevents runtime changes to ISR bindings. */
+static uint8_t binding_locked  = 1U;  /**< Prevents runtime changes to ISR bindings. */
 static inv_ctrl_hal_t ctrl_hal = {0}; /**< Integer control HAL bindings. */
 static inv_fsm_hal_t fsm_hal = {
-    .p_enter_run_func = enter_run,
-    .p_exit_run_func = exit_run,
-    .p_inv_rly_on_func = relay_on_unbound,
+    .p_enter_run_func   = enter_run,
+    .p_exit_run_func    = exit_run,
+    .p_inv_rly_on_func  = relay_on_unbound,
     .p_inv_rly_off_func = relay_off_unbound,
 }; /**< FSM callback bindings. */
 
 static void enter_run(void)
 {
     inv_ctrl_prepare_run();
+
     if (ctrl_hal.p_pwm_enable != NULL)
     {
         ctrl_hal.p_pwm_enable();
@@ -96,8 +97,8 @@ void inv_hal_hard_protect_trip(void)
 
 uint8_t inv_hal_is_ready(void)
 {
-    return (uint8_t)((STRUCT_ALL_PTR_VALID(ctrl_hal) != 0) &&
-                     (STRUCT_ALL_PTR_VALID(fsm_hal) != 0));
+    return (uint8_t)(    (STRUCT_ALL_PTR_VALID(ctrl_hal) != 0)
+                      && (STRUCT_ALL_PTR_VALID(fsm_hal) != 0));
 }
 
 void inv_hal_lock_binding(void)

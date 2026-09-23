@@ -1,7 +1,7 @@
 ﻿// SPDX-License-Identifier: MIT
 /**
- * @file    sogi.h
- * @brief   sogi library public interface.
+ * @file sogi.h
+ * @brief sogi library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -60,7 +60,11 @@ typedef struct
 } sogi_t;
 
 // 初始化正交信号发生器
-void sogi_init(sogi_t *sogi, float Ts, float w, float k, float *p_val);
+void sogi_init(sogi_t *sogi,
+               float Ts,
+               float w,
+               float k,
+               float *p_val);
 
 // 更新正交信号发生器状态并计算输出
 void sogi_cal(sogi_t *sogi);

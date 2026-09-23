@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    llc_ctrl.h
- * @brief   LLC control public interface.
+ * @file llc_ctrl.h
+ * @brief LLC control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

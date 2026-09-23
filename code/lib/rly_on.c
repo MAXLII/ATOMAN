@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    rly_on.c
- * @brief   rly_on library module.
+ * @file rly_on.c
+ * @brief rly_on library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -69,25 +69,25 @@ void rly_on_init(rly_on_t *p_str,
     }
 
     /* Bind external input signals */
-    p_str->input.p_freq = p_freq;
-    p_str->input.p_is_equal = p_is_equal;
+    p_str->input.p_freq         = p_freq;
+    p_str->input.p_is_equal     = p_is_equal;
     p_str->input.p_rly_off_trig = p_rly_off_trig;
-    p_str->input.p_rly_on_trig = p_rly_on_trig;
+    p_str->input.p_rly_on_trig  = p_rly_on_trig;
 
     /* Configuration parameters */
-    p_str->cfg.ctrl_freq = ctrl_freq;
+    p_str->cfg.ctrl_freq       = ctrl_freq;
     p_str->cfg.rly_on_time_def = rly_on_time_def;
 
     /* Hardware callback binding */
     p_str->func.rly_off = rly_off;
-    p_str->func.rly_on = rly_on;
+    p_str->func.rly_on  = rly_on;
 
     /* Reset runtime state */
-    p_str->inter.dly_cnt = 0U;
-    p_str->inter.dly = 0U;
-    p_str->inter.on_cnt = 0U;
+    p_str->inter.dly_cnt    = 0U;
+    p_str->inter.dly        = 0U;
+    p_str->inter.on_cnt     = 0U;
     p_str->inter.on_confirm = 0U;
-    p_str->inter.sta = RLY_ON_STA_INIT;
+    p_str->inter.sta        = RLY_ON_STA_INIT;
     p_str->output.is_closed = 0U;
 }
 
@@ -122,11 +122,11 @@ void rly_on_init(rly_on_t *p_str,
  */
 void rly_on_func(rly_on_t *p_str)
 {
-    if ((p_str == NULL) ||
-        (p_str->input.p_rly_on_trig == NULL) ||
-        (p_str->input.p_rly_off_trig == NULL) ||
-        (p_str->input.p_is_equal == NULL) ||
-        (p_str->input.p_freq == NULL))
+    if (    (p_str == NULL)
+         || (p_str->input.p_rly_on_trig == NULL)
+         || (p_str->input.p_rly_off_trig == NULL)
+         || (p_str->input.p_is_equal == NULL)
+         || (p_str->input.p_freq == NULL))
     {
         return;
     }
@@ -139,8 +139,9 @@ void rly_on_func(rly_on_t *p_str)
          * Ensure hardware callbacks are valid.
          * If not valid, remain in INIT state.
          */
-        if ((p_str->func.rly_off == NULL) ||
-            (p_str->func.rly_on == NULL))
+
+        if (    (p_str->func.rly_off == NULL)
+             || (p_str->func.rly_on == NULL))
         {
             return;
         }
@@ -160,15 +161,16 @@ void rly_on_func(rly_on_t *p_str)
          * Wait for external ON trigger.
          * Trigger is edge-like: cleared immediately after detection.
          */
+
         if (*p_str->input.p_rly_on_trig == 1)
         {
             *p_str->input.p_rly_on_trig = 0;
-            p_str->inter.dly_cnt = 0U;
-            p_str->inter.dly = 0U;
-            p_str->inter.on_cnt = 0U;
-            p_str->inter.on_confirm = 0U;
-            p_str->output.is_closed = 0U;
-            p_str->inter.sta = RLY_ON_STA_WAIT;
+            p_str->inter.dly_cnt        = 0U;
+            p_str->inter.dly            = 0U;
+            p_str->inter.on_cnt         = 0U;
+            p_str->inter.on_confirm     = 0U;
+            p_str->output.is_closed     = 0U;
+            p_str->inter.sta            = RLY_ON_STA_WAIT;
         }
         break;
 
@@ -180,6 +182,7 @@ void rly_on_func(rly_on_t *p_str)
          *   - Voltage amplitude match
          *   - Phase alignment match
          */
+
         if (*p_str->input.p_is_equal == 1)
         {
             /* Read grid frequency */
@@ -203,9 +206,9 @@ void rly_on_func(rly_on_t *p_str)
              * Therefore:
              *   tdelay = (grid_ts - (ton mod grid_ts)) mod grid_ts
              */
-            float rly_on_time = p_str->cfg.rly_on_time_def;
+            float rly_on_time     = p_str->cfg.rly_on_time_def;
             float rly_on_time_mod = fmodf(rly_on_time, grid_ts);
-            float dly_s = 0.0f;
+            float dly_s           = 0.0f;
 
             if (rly_on_time_mod < 0.0f)
             {
@@ -219,10 +222,10 @@ void rly_on_func(rly_on_t *p_str)
 
             p_str->inter.dly = (uint32_t)(p_str->cfg.ctrl_freq * dly_s + 0.5f);
             p_str->inter.on_confirm = (uint32_t)(p_str->cfg.ctrl_freq * p_str->cfg.rly_on_time_def + 0.5f);
-            p_str->inter.dly_cnt = 0U;
-            p_str->inter.on_cnt = 0U;
+            p_str->inter.dly_cnt    = 0U;
+            p_str->inter.on_cnt     = 0U;
             p_str->output.is_closed = 0U;
-            p_str->inter.sta = RLY_ON_STA_DLY;
+            p_str->inter.sta        = RLY_ON_STA_DLY;
         }
         break;
 
@@ -232,14 +235,15 @@ void rly_on_func(rly_on_t *p_str)
          * Wait until dly_cnt reaches computed delay.
          * dly_cnt increments once per control call.
          */
+
         if (p_str->inter.dly_cnt >= p_str->inter.dly)
         {
             /* Execute hardware relay ON */
             p_str->func.rly_on();
 
             /* Reset delay counter */
-            p_str->inter.dly_cnt = 0U;
-            p_str->inter.on_cnt = 0U;
+            p_str->inter.dly_cnt    = 0U;
+            p_str->inter.on_cnt     = 0U;
             p_str->output.is_closed = 0U;
 
             /* Enter RUN state */
@@ -261,6 +265,7 @@ void rly_on_func(rly_on_t *p_str)
          * Relay is active.
          * Wait for OFF trigger.
          */
+
         if (p_str->output.is_closed == 0U)
         {
             if (p_str->inter.on_cnt >= p_str->inter.on_confirm)
@@ -281,10 +286,10 @@ void rly_on_func(rly_on_t *p_str)
             p_str->func.rly_off();
 
             /* Return to IDLE state */
-            p_str->inter.sta = RLY_ON_STA_IDLE;
-            p_str->inter.dly_cnt = 0U;
-            p_str->inter.dly = 0U;
-            p_str->inter.on_cnt = 0U;
+            p_str->inter.sta        = RLY_ON_STA_IDLE;
+            p_str->inter.dly_cnt    = 0U;
+            p_str->inter.dly        = 0U;
+            p_str->inter.on_cnt     = 0U;
             p_str->inter.on_confirm = 0U;
             p_str->output.is_closed = 0U;
 

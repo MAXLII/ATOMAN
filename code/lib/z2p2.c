@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    z2p2.c
- * @brief   z2p2 library module.
+ * @file z2p2.c
+ * @brief z2p2 library module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,8 +39,8 @@ void z2p2_init(z2p2_t *p_str,
                float *p_ref,
                float *p_act)
 {
-    p_str->input.p_act = p_act;
-    p_str->input.p_ref = p_ref;
+    p_str->input.p_act  = p_act;
+    p_str->input.p_ref  = p_ref;
     p_str->inter.up_lmt = up_lmt;
     p_str->inter.dn_lmt = dn_lmt;
     float wz1 = 2.0f * M_PI * fz;
@@ -86,13 +86,10 @@ void z2p2_cal(z2p2_t *p_str)
     p_str->inter.u[3] = p_str->inter.u[2];
     p_str->inter.u[2] = p_str->inter.u[1];
     p_str->inter.u[1] = p_str->inter.u[0];
-    p_str->inter.u[0] = p_str->inter.b0 * p_str->inter.e[0] +
-                        p_str->inter.b1 * p_str->inter.e[1] +
-                        p_str->inter.b2 * p_str->inter.e[2] +
-                        p_str->inter.b3 * p_str->inter.e[3] -
-                        p_str->inter.a1 * p_str->inter.u[1] -
-                        p_str->inter.a2 * p_str->inter.u[2] -
-                        p_str->inter.a3 * p_str->inter.u[3];
+    p_str->inter.u[0] = p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.b1 * p_str->inter.e[1]
+                      + p_str->inter.b2 * p_str->inter.e[2] + p_str->inter.b3 * p_str->inter.e[3]
+                      - p_str->inter.a1 * p_str->inter.u[1] - p_str->inter.a2 * p_str->inter.u[2]
+                      - p_str->inter.a3 * p_str->inter.u[3];
 
     UP_DN_LMT(p_str->inter.u[0], p_str->inter.up_lmt, p_str->inter.dn_lmt);
     p_str->output.val = p_str->inter.u[0];

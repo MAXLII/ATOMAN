@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_fsm.c
- * @brief   bb_fsm control module.
+ * @file bb_fsm.c
+ * @brief bb_fsm control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -29,7 +29,7 @@
 #include "bb_fsm.h"
 #include "bb_cfg.h"
 
-static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null;    /* fsm_ev: pending transition event consumed by REG_FSM */
+static bb_fsm_ev_e fsm_ev            = bb_fsm_ev_null;  /* fsm_ev: pending transition event consumed by REG_FSM */
 static volatile bb_fsm_cmd_e fsm_cmd = bb_fsm_cmd_null; /* fsm_cmd: command shared with protection context */
 #define p_hal (bb_hal_get_fsm())
 
@@ -61,7 +61,7 @@ void bb_fsm_set_p_hal(bb_fsm_hal_t *p)
 static bb_fsm_cmd_e bb_fsm_get_cmd(void)
 {
     bb_fsm_cmd_e temp = fsm_cmd; /* temp: one-shot command snapshot */
-    fsm_cmd = bb_fsm_cmd_null;
+    fsm_cmd           = bb_fsm_cmd_null;
     return temp;
 }
 
@@ -82,9 +82,9 @@ static void bb_fsm_init_in(void)
  */
 static void bb_fsm_init_exe(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         PLECS_LOG("bb_fsm init ready, goto idle\n");
         fsm_ev = bb_fsm_ev_to_idle;
@@ -135,8 +135,9 @@ static void bb_fsm_idle_exe(void)
 {
     if (bb_fsm_get_cmd() == bb_fsm_cmd_start)
     {
-        if ((bb_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
-            (bb_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
+        if (    (bb_hal_is_ready() == 0U)
+             || /* 启动前必须完成全部硬件绑定。 */
+                (bb_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
         {
             PLECS_LOG("bb_fsm start rejected by hal binding invalid\n");
             return;
@@ -189,8 +190,8 @@ static void bb_fsm_run_in(void)
 {
     PLECS_LOG("bb_fsm enter run\n");
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL))
     {
         p_hal->p_enter_run_func();
         PLECS_LOG("bb_fsm control prepared\n");
@@ -234,8 +235,8 @@ static void bb_fsm_run_out(void)
 {
     PLECS_LOG("bb_fsm leave run\n");
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         p_hal->p_exit_run_func();
         PLECS_LOG("bb_fsm control stopped\n");
@@ -263,6 +264,7 @@ bb_run_sta_e bb_fsm_get_run_sta(void)
     {
         return bb_run_sta_init;
     }
+
     if (sta == bb_fsm_sta_idle)
     {
         return bb_run_sta_idle;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    mppt.h
- * @brief   mppt library public interface.
+ * @file mppt.h
+ * @brief mppt library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,8 +34,8 @@
 
 #define CLAMP(val, dn, up) UP_DN_LMT(val, up, dn)
 
-#define MPPT_DIR_INCREASE 1
-#define MPPT_DIR_DECREASE (-1)
+#define MPPT_DIR_INCREASE  1
+#define MPPT_DIR_DECREASE  (-1)
 #define MPPT_VOLT_MIN_COFF 0.2f
 #define MPPT_VOLT_MAX_COFF 0.85f
 

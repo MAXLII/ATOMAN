@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bootloader_core.c
- * @brief   Platform-independent boot and firmware installation state machine.
+ * @file bootloader_core.c
+ * @brief Platform-independent boot and firmware installation state machine.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Not ISR-safe; Section or another scheduler serializes calls
  *          - Hardware and storage access are abstracted through mounted operation tables
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,30 +33,29 @@
 #include <stddef.h>
 #include <string.h>
 
-#define BOOTLOADER_FOOTER_FW_TYPE_OFFSET 4u
-#define BOOTLOADER_FOOTER_VERSION_OFFSET 5u
+#define BOOTLOADER_FOOTER_FW_TYPE_OFFSET   4u
+#define BOOTLOADER_FOOTER_VERSION_OFFSET   5u
 #define BOOTLOADER_FOOTER_FILE_SIZE_OFFSET 9u
-#define BOOTLOADER_FOOTER_MODULE_OFFSET 29u
-#define BOOTLOADER_FOOTER_CRC_OFFSET 30u
-#define BOOTLOADER_FOOTER_IAP_TYPE 1u
+#define BOOTLOADER_FOOTER_MODULE_OFFSET    29u
+#define BOOTLOADER_FOOTER_CRC_OFFSET       30u
+#define BOOTLOADER_FOOTER_IAP_TYPE         1u
 
 static uint32_t read_u32_le(const uint8_t *p_data)
 {
-    return (uint32_t)p_data[0] |
-           ((uint32_t)p_data[1] << 8u) |
-           ((uint32_t)p_data[2] << 16u) |
-           ((uint32_t)p_data[3] << 24u);
+    return (uint32_t)p_data[0] | ((uint32_t)p_data[1] << 8u) | ((uint32_t)p_data[2] << 16u)
+         | ((uint32_t)p_data[3] << 24u);
 }
 
 static uint32_t footer_crc32_calculate(const uint8_t *p_data, uint32_t length)
 {
-    uint32_t crc = 0xFFFFFFFFu; /* FRAME footer CRC32 accumulator. */
-    uint32_t byte_index = 0u;   /* Footer byte being folded into the CRC. */
-    uint8_t bit_index = 0u;     /* Reflected CRC bit iteration. */
+    uint32_t crc        = 0xFFFFFFFFu; /* FRAME footer CRC32 accumulator. */
+    uint32_t byte_index = 0u;          /* Footer byte being folded into the CRC. */
+    uint8_t bit_index   = 0u;          /* Reflected CRC bit iteration. */
 
     for (byte_index = 0u; byte_index < length; byte_index++)
     {
         crc ^= p_data[byte_index];
+
         for (bit_index = 0u; bit_index < 8u; bit_index++)
         {
             crc = ((crc & 1u) != 0u) ? ((crc >> 1u) ^ 0xEDB88320u) : (crc >> 1u);
@@ -73,13 +72,12 @@ static void footer_tail_update(bootloader_t *p_bootloader,
 
     if (length >= BOOTLOADER_FOOTER_SIZE)
     {
-        (void)memcpy(p_bootloader->footer_buffer,
-                     &p_data[length - BOOTLOADER_FOOTER_SIZE],
-                     BOOTLOADER_FOOTER_SIZE);
+        (void)memcpy(p_bootloader->footer_buffer, &p_data[length - BOOTLOADER_FOOTER_SIZE], BOOTLOADER_FOOTER_SIZE);
         p_bootloader->footer_length = BOOTLOADER_FOOTER_SIZE;
         return;
     }
     keep_length = (uint32_t)p_bootloader->footer_length;
+
     if ((keep_length + length) > BOOTLOADER_FOOTER_SIZE)
     {
         keep_length = BOOTLOADER_FOOTER_SIZE - length;
@@ -93,80 +91,75 @@ static void footer_tail_update(bootloader_t *p_bootloader,
 
 static uint8_t footer_is_valid(const bootloader_t *p_bootloader)
 {
-    const uint8_t *p_footer = p_bootloader->footer_buffer;            /* Complete wire-format footer. */
-    const uint32_t image_size = p_bootloader->upgrade_info.file_size; /* Received package bytes. */
-    const uint32_t footer_file_size =
-        read_u32_le(&p_footer[BOOTLOADER_FOOTER_FILE_SIZE_OFFSET]); /* Footer-declared length. */
-    const uint32_t footer_crc =
-        read_u32_le(&p_footer[BOOTLOADER_FOOTER_CRC_OFFSET]); /* Stored footer CRC32. */
-    const uint8_t size_valid =
-        ((footer_file_size == image_size) ||
-         ((image_size >= BOOTLOADER_FOOTER_SIZE) &&
-          (footer_file_size == (image_size - BOOTLOADER_FOOTER_SIZE))))
-            ? 1u
-            : 0u;
+    const uint8_t *p_footer         = p_bootloader->footer_buffer;          /* Complete wire-format footer. */
+    const uint32_t image_size       = p_bootloader->upgrade_info.file_size; /* Received package bytes. */
+    const uint32_t footer_file_size = read_u32_le(&p_footer[BOOTLOADER_FOOTER_FILE_SIZE_OFFSET]); /* Footer-declared length. */
+    const uint32_t footer_crc       = read_u32_le(&p_footer[BOOTLOADER_FOOTER_CRC_OFFSET]);       /* Stored footer CRC32. */
+    const uint8_t size_valid = (    (footer_file_size == image_size)
+                                 || (    (image_size >= BOOTLOADER_FOOTER_SIZE)
+                                      && (footer_file_size == (image_size - BOOTLOADER_FOOTER_SIZE))))
+                                 ? 1u
+                                 : 0u;
 
-    return ((p_bootloader->footer_length == BOOTLOADER_FOOTER_SIZE) &&
-            (p_footer[BOOTLOADER_FOOTER_FW_TYPE_OFFSET] == BOOTLOADER_FOOTER_IAP_TYPE) &&
-            (read_u32_le(&p_footer[BOOTLOADER_FOOTER_VERSION_OFFSET]) ==
-             p_bootloader->upgrade_info.version) &&
-            (size_valid == 1u) &&
-            (p_footer[BOOTLOADER_FOOTER_MODULE_OFFSET] ==
-             p_bootloader->upgrade_info.module_id) &&
-            (footer_crc32_calculate(p_footer, BOOTLOADER_FOOTER_CRC_OFFSET) == footer_crc))
-               ? 1u
-               : 0u;
+    return (    (p_bootloader->footer_length == BOOTLOADER_FOOTER_SIZE)
+             && (p_footer[BOOTLOADER_FOOTER_FW_TYPE_OFFSET] == BOOTLOADER_FOOTER_IAP_TYPE)
+             && (read_u32_le(&p_footer[BOOTLOADER_FOOTER_VERSION_OFFSET]) == p_bootloader->upgrade_info.version)
+             && (size_valid == 1u)
+             && (p_footer[BOOTLOADER_FOOTER_MODULE_OFFSET] == p_bootloader->upgrade_info.module_id)
+             && (footer_crc32_calculate(p_footer, BOOTLOADER_FOOTER_CRC_OFFSET) == footer_crc))
+             ? 1u
+             : 0u;
 }
 
 static uint8_t flash_ops_valid(const bootloader_flash_ops_t *p_ops)
 {
-    return ((p_ops != NULL) &&
-            (p_ops->p_zone_info_get != NULL) &&
-            (p_ops->p_read != NULL) &&
-            (p_ops->p_write != NULL) &&
-            (p_ops->p_erase != NULL) &&
-            (p_ops->p_is_busy != NULL) &&
-            (p_ops->p_result_get != NULL))
-               ? 1u
-               : 0u;
+    return (    (p_ops != NULL)
+             && (p_ops->p_zone_info_get != NULL)
+             && (p_ops->p_read != NULL)
+             && (p_ops->p_write != NULL)
+             && (p_ops->p_erase != NULL)
+             && (p_ops->p_is_busy != NULL)
+             && (p_ops->p_result_get != NULL))
+             ? 1u
+             : 0u;
 }
 
 static uint8_t platform_ops_valid(const bootloader_platform_ops_t *p_ops)
 {
-    return ((p_ops != NULL) &&
-            (p_ops->p_boot_reason_get != NULL) &&
-            (p_ops->p_boot_reason_clear != NULL) &&
-            (p_ops->p_image_header_is_valid != NULL) &&
-            (p_ops->p_jump_to_iap != NULL))
-               ? 1u
-               : 0u;
+    return (    (p_ops != NULL)
+             && (p_ops->p_boot_reason_get != NULL)
+             && (p_ops->p_boot_reason_clear != NULL)
+             && (p_ops->p_image_header_is_valid != NULL)
+             && (p_ops->p_jump_to_iap != NULL))
+             ? 1u
+             : 0u;
 }
 
 static void resident_failure(bootloader_t *p_bootloader, bootloader_result_t result)
 {
-    p_bootloader->session_active = 0u;
+    p_bootloader->session_active        = 0u;
     p_bootloader->pending_packet_offset = 0u;
     p_bootloader->pending_packet_length = 0u;
-    p_bootloader->copy_chunk_length = 0u;
-    p_bootloader->state = BOOTLOADER_STATE_WAIT_UPGRADE_E;
-    p_bootloader->result = result;
+    p_bootloader->copy_chunk_length     = 0u;
+    p_bootloader->state                 = BOOTLOADER_STATE_WAIT_UPGRADE_E;
+    p_bootloader->result                = result;
 }
 
 static bootloader_result_t metadata_encode_current(bootloader_t *p_bootloader)
 {
     const bootloader_metadata_t metadata = {
-        .state = (bootloader_metadata_state_t)p_bootloader->metadata_state,
-        .mode = p_bootloader->mode,
-        .module_id = p_bootloader->upgrade_info.module_id,
-        .retry_count = p_bootloader->metadata_retry_count,
-        .sequence = p_bootloader->metadata_sequence + 1u,
-        .version = p_bootloader->upgrade_info.version,
-        .file_size = p_bootloader->upgrade_info.file_size,
-        .expected_crc = p_bootloader->expected_crc,
+        .state           = (bootloader_metadata_state_t)p_bootloader->metadata_state,
+        .mode            = p_bootloader->mode,
+        .module_id       = p_bootloader->upgrade_info.module_id,
+        .retry_count     = p_bootloader->metadata_retry_count,
+        .sequence        = p_bootloader->metadata_sequence + 1u,
+        .version         = p_bootloader->upgrade_info.version,
+        .file_size       = p_bootloader->upgrade_info.file_size,
+        .expected_crc    = p_bootloader->expected_crc,
         .received_length = p_bootloader->received_length,
-        .running_crc = p_bootloader->running_crc,
-        .copy_offset = p_bootloader->copy_offset,
-        .error_code = 0u,
+        .running_crc     = p_bootloader->running_crc,
+        .copy_offset     = p_bootloader->copy_offset,
+        .error_code      = 0u,
     };
     return bootloader_metadata_encode(&metadata,
                                       p_bootloader->config.p_copy_buffer,
@@ -179,19 +172,19 @@ static void metadata_commit_start(bootloader_t *p_bootloader,
 {
     bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E;
 
-    p_bootloader->metadata_state = (uint8_t)metadata_state;
+    p_bootloader->metadata_state      = (uint8_t)metadata_state;
     p_bootloader->metadata_next_state = next_state;
-    p_bootloader->metadata_target_zone =
-        (p_bootloader->metadata_source_zone == BOOTLOADER_FLASH_ZONE_META_A_E)
-            ? BOOTLOADER_FLASH_ZONE_META_B_E
-            : BOOTLOADER_FLASH_ZONE_META_A_E;
+    p_bootloader->metadata_target_zone = (p_bootloader->metadata_source_zone == BOOTLOADER_FLASH_ZONE_META_A_E)
+                                           ? BOOTLOADER_FLASH_ZONE_META_B_E
+                                           : BOOTLOADER_FLASH_ZONE_META_A_E;
     result = metadata_encode_current(p_bootloader);
+
     if (result != BOOTLOADER_RESULT_SUCCESS_E)
     {
         resident_failure(p_bootloader, result);
         return;
     }
-    p_bootloader->state = BOOTLOADER_STATE_METADATA_ERASE_E;
+    p_bootloader->state  = BOOTLOADER_STATE_METADATA_ERASE_E;
     p_bootloader->result = BOOTLOADER_RESULT_IN_PROGRESS_E;
 }
 
@@ -200,13 +193,13 @@ static void metadata_read_submit(bootloader_t *p_bootloader,
                                  uint32_t buffer_offset,
                                  bootloader_state_t wait_state)
 {
-    bootloader_result_t result = p_bootloader->flash_ops.p_read(
-        zone,
-        0u,
-        BOOTLOADER_METADATA_ENCODED_SIZE,
-        &p_bootloader->config.p_copy_buffer[buffer_offset]);
+    bootloader_result_t result = p_bootloader->flash_ops.p_read(zone,
+                                                                0u,
+                                                                BOOTLOADER_METADATA_ENCODED_SIZE,
+                                                                &p_bootloader->config.p_copy_buffer[buffer_offset]);
 
-    if ((result == BOOTLOADER_RESULT_SUCCESS_E) || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
+    if (    (result == BOOTLOADER_RESULT_SUCCESS_E)
+         || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
     {
         p_bootloader->state = wait_state;
     }
@@ -220,32 +213,32 @@ static void metadata_startup_evaluate(bootloader_t *p_bootloader)
 {
     bootloader_metadata_t metadata = {0};
     bootloader_flash_zone_t source = BOOTLOADER_FLASH_ZONE_META_A_E;
-    const bootloader_result_t result = bootloader_metadata_select(
-        p_bootloader->config.p_copy_buffer,
-        &p_bootloader->config.p_copy_buffer[BOOTLOADER_METADATA_ENCODED_SIZE],
-        &metadata,
-        &source);
+    const bootloader_result_t result =
+        bootloader_metadata_select(p_bootloader->config.p_copy_buffer,
+                                   &p_bootloader->config.p_copy_buffer[BOOTLOADER_METADATA_ENCODED_SIZE],
+                                   &metadata,
+                                   &source);
 
     if (result == BOOTLOADER_RESULT_SUCCESS_E)
     {
-        p_bootloader->metadata_valid = 1u;
-        p_bootloader->metadata_source_zone = source;
-        p_bootloader->metadata_sequence = metadata.sequence;
-        p_bootloader->metadata_state = (uint8_t)metadata.state;
-        p_bootloader->metadata_retry_count = metadata.retry_count;
-        p_bootloader->mode = metadata.mode;
+        p_bootloader->metadata_valid         = 1u;
+        p_bootloader->metadata_source_zone   = source;
+        p_bootloader->metadata_sequence      = metadata.sequence;
+        p_bootloader->metadata_state         = (uint8_t)metadata.state;
+        p_bootloader->metadata_retry_count   = metadata.retry_count;
+        p_bootloader->mode                   = metadata.mode;
         p_bootloader->upgrade_info.module_id = metadata.module_id;
-        p_bootloader->upgrade_info.version = metadata.version;
+        p_bootloader->upgrade_info.version   = metadata.version;
         p_bootloader->upgrade_info.file_size = metadata.file_size;
-        p_bootloader->received_length = metadata.received_length;
-        p_bootloader->running_crc = metadata.running_crc;
-        p_bootloader->expected_crc = metadata.expected_crc;
-        p_bootloader->copy_offset = metadata.copy_offset;
+        p_bootloader->received_length        = metadata.received_length;
+        p_bootloader->running_crc            = metadata.running_crc;
+        p_bootloader->expected_crc           = metadata.expected_crc;
+        p_bootloader->copy_offset            = metadata.copy_offset;
 
-        if (((metadata.state == BOOTLOADER_METADATA_STATE_INSTALL_PENDING) ||
-             (metadata.state == BOOTLOADER_METADATA_STATE_COPYING)) &&
-            (metadata.mode == BOOTLOADER_UPGRADE_MODE_STAGED_E) &&
-            (metadata.file_size != 0u))
+        if (    (    (metadata.state == BOOTLOADER_METADATA_STATE_INSTALL_PENDING)
+                  || (metadata.state == BOOTLOADER_METADATA_STATE_COPYING))
+             && (metadata.mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
+             && (metadata.file_size != 0u))
         {
             if (metadata.retry_count >= 3u)
             {
@@ -254,17 +247,16 @@ static void metadata_startup_evaluate(bootloader_t *p_bootloader)
             }
             p_bootloader->metadata_retry_count++;
             p_bootloader->copy_offset = 0u;
-            metadata_commit_start(p_bootloader,
-                                  BOOTLOADER_METADATA_STATE_COPYING,
-                                  BOOTLOADER_STATE_COPY_ERASE_E);
+            metadata_commit_start(p_bootloader, BOOTLOADER_METADATA_STATE_COPYING, BOOTLOADER_STATE_COPY_ERASE_E);
             return;
         }
-        if ((metadata.state == BOOTLOADER_METADATA_STATE_DOWNLOAD_DIRECT) ||
-            (metadata.state == BOOTLOADER_METADATA_STATE_DOWNLOAD_STAGED) ||
-            (metadata.state == BOOTLOADER_METADATA_STATE_FAILED))
+
+        if (    (metadata.state == BOOTLOADER_METADATA_STATE_DOWNLOAD_DIRECT)
+             || (metadata.state == BOOTLOADER_METADATA_STATE_DOWNLOAD_STAGED)
+             || (metadata.state == BOOTLOADER_METADATA_STATE_FAILED))
         {
-            if ((p_bootloader->boot_reason != BOOTLOADER_BOOT_REASON_IAP_REQUEST_E) ||
-                (p_bootloader->startup_upgrade_info_valid == 0u))
+            if (    (p_bootloader->boot_reason != BOOTLOADER_BOOT_REASON_IAP_REQUEST_E)
+                 || (p_bootloader->startup_upgrade_info_valid == 0u))
             {
                 resident_failure(p_bootloader, BOOTLOADER_RESULT_RECOVERY_REQUIRED_E);
                 return;
@@ -273,22 +265,22 @@ static void metadata_startup_evaluate(bootloader_t *p_bootloader)
     }
     else
     {
-        p_bootloader->metadata_valid = 0u;
+        p_bootloader->metadata_valid       = 0u;
         p_bootloader->metadata_source_zone = BOOTLOADER_FLASH_ZONE_META_B_E;
-        p_bootloader->metadata_sequence = 0u;
+        p_bootloader->metadata_sequence    = 0u;
     }
 
-    if ((p_bootloader->boot_reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E) ||
-        (p_bootloader->boot_reason == BOOTLOADER_BOOT_REASON_RECOVERY_E))
+    if (    (p_bootloader->boot_reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E)
+         || (p_bootloader->boot_reason == BOOTLOADER_BOOT_REASON_RECOVERY_E))
     {
         p_bootloader->state = BOOTLOADER_STATE_WAIT_UPGRADE_E;
-        if ((p_bootloader->boot_reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E) &&
-            (p_bootloader->startup_upgrade_info_valid == 1u))
+
+        if (    (p_bootloader->boot_reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E)
+             && (p_bootloader->startup_upgrade_info_valid == 1u))
         {
-            const bootloader_result_t begin_result = bootloader_upgrade_begin(
-                p_bootloader,
-                &p_bootloader->startup_upgrade_info,
-                p_bootloader->config.default_mode);
+            const bootloader_result_t begin_result = bootloader_upgrade_begin(p_bootloader,
+                                                                              &p_bootloader->startup_upgrade_info,
+                                                                              p_bootloader->config.default_mode);
 
             if (begin_result != BOOTLOADER_RESULT_SUCCESS_E)
             {
@@ -308,18 +300,20 @@ static bootloader_result_t zone_requirements_check(bootloader_t *p_bootloader,
                                                    bootloader_flash_zone_t zone,
                                                    uint32_t required_size)
 {
-    bootloader_flash_zone_info_t info = {0};                  /* Mounted logical zone geometry. */
-    bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E; /* Geometry query result. */
+    bootloader_flash_zone_info_t info = {0}; /* Mounted logical zone geometry. */
+    bootloader_result_t result        = BOOTLOADER_RESULT_SUCCESS_E; /* Geometry query result. */
 
     result = p_bootloader->flash_ops.p_zone_info_get(zone, &info);
+
     if (result != BOOTLOADER_RESULT_SUCCESS_E)
     {
         return result;
     }
-    if ((required_size > info.size) ||
-        (info.readable == 0u) ||
-        (info.writable == 0u) ||
-        (info.erasable == 0u))
+
+    if (    (required_size > info.size)
+         || (info.readable == 0u)
+         || (info.writable == 0u)
+         || (info.erasable == 0u))
     {
         return BOOTLOADER_RESULT_CONFIG_ERROR_E;
     }
@@ -328,14 +322,14 @@ static bootloader_result_t zone_requirements_check(bootloader_t *p_bootloader,
 
 static void startup_read_submit(bootloader_t *p_bootloader)
 {
-    bootloader_flash_zone_info_t info = {0};                  /* IAP zone geometry used to bound the prefix read. */
-    bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E; /* Flash submission result. */
+    bootloader_flash_zone_info_t info = {0}; /* IAP zone geometry used to bound the prefix read. */
+    bootloader_result_t result        = BOOTLOADER_RESULT_SUCCESS_E; /* Flash submission result. */
 
-    result = p_bootloader->flash_ops.p_zone_info_get(BOOTLOADER_FLASH_ZONE_IAP_E,
-                                                     &info);
-    if ((result != BOOTLOADER_RESULT_SUCCESS_E) ||
-        (info.readable == 0u) ||
-        (p_bootloader->config.image_header_length > info.size))
+    result = p_bootloader->flash_ops.p_zone_info_get(BOOTLOADER_FLASH_ZONE_IAP_E, &info);
+
+    if (    (result != BOOTLOADER_RESULT_SUCCESS_E)
+         || (info.readable == 0u)
+         || (p_bootloader->config.image_header_length > info.size))
     {
         resident_failure(p_bootloader, BOOTLOADER_RESULT_CONFIG_ERROR_E);
         return;
@@ -344,6 +338,7 @@ static void startup_read_submit(bootloader_t *p_bootloader)
                                             0u,
                                             p_bootloader->config.image_header_length,
                                             p_bootloader->config.p_packet_buffer);
+
     if (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
     {
         p_bootloader->state = BOOTLOADER_STATE_STARTUP_WAIT_E;
@@ -360,59 +355,58 @@ static void startup_read_submit(bootloader_t *p_bootloader)
 
 static void installed_header_evaluate(bootloader_t *p_bootloader, uint8_t final_image)
 {
-    bootloader_flash_zone_info_t info = {0};                    /* IAP zone geometry supplied to platform validation. */
-    bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E;   /* Platform validation result. */
-    uint8_t valid = 0u;                                         /* Normalized platform image validity. */
-    uint32_t image_size = p_bootloader->upgrade_info.file_size; /* Installed or provisioned image size. */
+    bootloader_flash_zone_info_t info = {0}; /* IAP zone geometry supplied to platform validation. */
+    bootloader_result_t result        = BOOTLOADER_RESULT_SUCCESS_E; /* Platform validation result. */
+    uint8_t valid                     = 0u; /* Normalized platform image validity. */
+    uint32_t image_size               = p_bootloader->upgrade_info.file_size; /* Installed or provisioned image size. */
 
     if (image_size == 0u)
     {
-        result = p_bootloader->flash_ops.p_zone_info_get(BOOTLOADER_FLASH_ZONE_IAP_E,
-                                                         &info);
+        result = p_bootloader->flash_ops.p_zone_info_get(BOOTLOADER_FLASH_ZONE_IAP_E, &info);
+
         if (result != BOOTLOADER_RESULT_SUCCESS_E)
         {
             resident_failure(p_bootloader, result);
             return;
         }
-        image_size = info.size;
+        image_size                           = info.size;
         p_bootloader->upgrade_info.file_size = image_size;
     }
 
-    result = p_bootloader->platform_ops.p_image_header_is_valid(
-        p_bootloader->platform_ops.p_context,
-        p_bootloader->config.p_packet_buffer,
-        p_bootloader->config.image_header_length,
-        image_size,
-        &valid);
-    if ((result != BOOTLOADER_RESULT_SUCCESS_E) || (valid == 0u))
+    result = p_bootloader->platform_ops.p_image_header_is_valid(p_bootloader->platform_ops.p_context,
+                                                                p_bootloader->config.p_packet_buffer,
+                                                                p_bootloader->config.image_header_length,
+                                                                image_size,
+                                                                &valid);
+
+    if (    (result != BOOTLOADER_RESULT_SUCCESS_E)
+         || (valid == 0u))
     {
         resident_failure(p_bootloader, BOOTLOADER_RESULT_IMAGE_INVALID_E);
         return;
     }
+
     if (final_image != 0u)
     {
         p_bootloader->metadata_retry_count = 0u;
-        metadata_commit_start(p_bootloader,
-                              BOOTLOADER_METADATA_STATE_VALID,
-                              BOOTLOADER_STATE_JUMP_PENDING_E);
+        metadata_commit_start(p_bootloader, BOOTLOADER_METADATA_STATE_VALID, BOOTLOADER_STATE_JUMP_PENDING_E);
     }
     else
     {
-        p_bootloader->state = BOOTLOADER_STATE_JUMP_PENDING_E;
+        p_bootloader->state  = BOOTLOADER_STATE_JUMP_PENDING_E;
         p_bootloader->result = BOOTLOADER_RESULT_SUCCESS_E;
     }
 }
 
 static void final_read_submit(bootloader_t *p_bootloader)
 {
-    bootloader_result_t result = p_bootloader->flash_ops.p_read(
-        BOOTLOADER_FLASH_ZONE_IAP_E,
-        0u,
-        p_bootloader->config.image_header_length,
-        p_bootloader->config.p_packet_buffer); /* Installed header read submission result. */
+    bootloader_result_t result = p_bootloader->flash_ops.p_read(BOOTLOADER_FLASH_ZONE_IAP_E,
+                                                                0u,
+                                                                p_bootloader->config.image_header_length,
+                                                                p_bootloader->config.p_packet_buffer); /* Installed header read submission result. */
 
-    if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-        (result == BOOTLOADER_RESULT_SUCCESS_E))
+    if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+         || (result == BOOTLOADER_RESULT_SUCCESS_E))
     {
         p_bootloader->state = BOOTLOADER_STATE_FINAL_READ_WAIT_E;
     }
@@ -424,18 +418,18 @@ static void final_read_submit(bootloader_t *p_bootloader)
 
 static void copy_read_submit(bootloader_t *p_bootloader)
 {
-    bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E;                              /* Staging read submission result. */
-    uint32_t remaining = p_bootloader->upgrade_info.file_size - p_bootloader->copy_offset; /* Bytes left. */
+    bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E; /* Staging read submission result. */
+    uint32_t remaining         = p_bootloader->upgrade_info.file_size - p_bootloader->copy_offset; /* Bytes left. */
 
-    p_bootloader->copy_chunk_length = (remaining < p_bootloader->config.copy_buffer_size)
-                                          ? remaining
-                                          : p_bootloader->config.copy_buffer_size;
+    p_bootloader->copy_chunk_length =
+        (remaining < p_bootloader->config.copy_buffer_size) ? remaining : p_bootloader->config.copy_buffer_size;
     result = p_bootloader->flash_ops.p_read(BOOTLOADER_FLASH_ZONE_STAGING_E,
                                             p_bootloader->copy_offset,
                                             p_bootloader->copy_chunk_length,
                                             p_bootloader->config.p_copy_buffer);
-    if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-        (result == BOOTLOADER_RESULT_SUCCESS_E))
+
+    if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+         || (result == BOOTLOADER_RESULT_SUCCESS_E))
     {
         p_bootloader->state = BOOTLOADER_STATE_COPY_READ_WAIT_E;
     }
@@ -447,14 +441,13 @@ static void copy_read_submit(bootloader_t *p_bootloader)
 
 static void copy_verify_read_submit(bootloader_t *p_bootloader)
 {
-    const bootloader_result_t result = p_bootloader->flash_ops.p_read(
-        BOOTLOADER_FLASH_ZONE_IAP_E,
-        p_bootloader->copy_offset,
-        p_bootloader->copy_chunk_length,
-        p_bootloader->config.p_copy_buffer); /* Copied-chunk readback submission result. */
+    const bootloader_result_t result = p_bootloader->flash_ops.p_read(BOOTLOADER_FLASH_ZONE_IAP_E,
+                                                                      p_bootloader->copy_offset,
+                                                                      p_bootloader->copy_chunk_length,
+                                                                      p_bootloader->config.p_copy_buffer); /* Copied-chunk readback submission result. */
 
-    if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-        (result == BOOTLOADER_RESULT_SUCCESS_E))
+    if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+         || (result == BOOTLOADER_RESULT_SUCCESS_E))
     {
         p_bootloader->state = BOOTLOADER_STATE_COPY_VERIFY_READ_WAIT_E;
     }
@@ -466,22 +459,19 @@ static void copy_verify_read_submit(bootloader_t *p_bootloader)
 
 static void verify_read_submit(bootloader_t *p_bootloader)
 {
-    const uint32_t remaining =
-        p_bootloader->upgrade_info.file_size - p_bootloader->verify_offset; /* Target bytes left. */
-    const uint32_t chunk = (remaining < p_bootloader->config.copy_buffer_size)
-                               ? remaining
-                               : p_bootloader->config.copy_buffer_size; /* Next target read length. */
-    const bootloader_result_t result = p_bootloader->flash_ops.p_read(
-        BOOTLOADER_FLASH_ZONE_IAP_E,
-        p_bootloader->verify_offset,
-        chunk,
-        p_bootloader->config.p_copy_buffer); /* Complete-target read submission result. */
+    const uint32_t remaining = p_bootloader->upgrade_info.file_size - p_bootloader->verify_offset; /* Target bytes left. */
+    const uint32_t chunk =
+        (remaining < p_bootloader->config.copy_buffer_size) ? remaining : p_bootloader->config.copy_buffer_size; /* Next target read length. */
+    const bootloader_result_t result = p_bootloader->flash_ops.p_read(BOOTLOADER_FLASH_ZONE_IAP_E,
+                                                                      p_bootloader->verify_offset,
+                                                                      chunk,
+                                                                      p_bootloader->config.p_copy_buffer); /* Complete-target read submission result. */
 
-    if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-        (result == BOOTLOADER_RESULT_SUCCESS_E))
+    if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+         || (result == BOOTLOADER_RESULT_SUCCESS_E))
     {
         p_bootloader->copy_chunk_length = chunk;
-        p_bootloader->state = BOOTLOADER_STATE_VERIFY_READ_WAIT_E;
+        p_bootloader->state             = BOOTLOADER_STATE_VERIFY_READ_WAIT_E;
     }
     else
     {
@@ -498,6 +488,7 @@ static void storage_wait_handle(bootloader_t *p_bootloader)
         return;
     }
     result = p_bootloader->flash_ops.p_result_get();
+
     if (result != BOOTLOADER_RESULT_SUCCESS_E)
     {
         resident_failure(p_bootloader, result);
@@ -516,76 +507,66 @@ static void storage_wait_handle(bootloader_t *p_bootloader)
         installed_header_evaluate(p_bootloader, 0u);
         break;
     case BOOTLOADER_STATE_DOWNLOAD_ERASE_WAIT_E:
-        metadata_commit_start(
-            p_bootloader,
-            (p_bootloader->mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
-                ? BOOTLOADER_METADATA_STATE_DOWNLOAD_STAGED
-                : BOOTLOADER_METADATA_STATE_DOWNLOAD_DIRECT,
-            BOOTLOADER_STATE_DOWNLOAD_READY_E);
+        metadata_commit_start(p_bootloader,
+                              (p_bootloader->mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
+                                  ? BOOTLOADER_METADATA_STATE_DOWNLOAD_STAGED
+                                  : BOOTLOADER_METADATA_STATE_DOWNLOAD_DIRECT,
+                              BOOTLOADER_STATE_DOWNLOAD_READY_E);
         break;
     case BOOTLOADER_STATE_PACKET_WRITE_WAIT_E:
-        footer_tail_update(p_bootloader,
-                           p_bootloader->config.p_packet_buffer,
-                           p_bootloader->pending_packet_length);
-        p_bootloader->running_crc = p_bootloader->config.p_crc16_update(
-            p_bootloader->config.p_packet_buffer,
-            p_bootloader->pending_packet_length,
-            p_bootloader->running_crc);
+        footer_tail_update(p_bootloader, p_bootloader->config.p_packet_buffer, p_bootloader->pending_packet_length);
+        p_bootloader->running_crc        = p_bootloader->config.p_crc16_update(p_bootloader->config.p_packet_buffer,
+                                                                        p_bootloader->pending_packet_length,
+                                                                        p_bootloader->running_crc);
         p_bootloader->last_packet_offset = p_bootloader->pending_packet_offset;
         p_bootloader->last_packet_length = p_bootloader->pending_packet_length;
         p_bootloader->received_length += p_bootloader->pending_packet_length;
         p_bootloader->pending_packet_offset = 0u;
         p_bootloader->pending_packet_length = 0u;
-        p_bootloader->state = BOOTLOADER_STATE_DOWNLOAD_READY_E;
-        p_bootloader->result = BOOTLOADER_RESULT_SUCCESS_E;
+        p_bootloader->state                 = BOOTLOADER_STATE_DOWNLOAD_READY_E;
+        p_bootloader->result                = BOOTLOADER_RESULT_SUCCESS_E;
         break;
     case BOOTLOADER_STATE_COPY_ERASE_WAIT_E:
         p_bootloader->copy_offset = 0u;
-        p_bootloader->state = BOOTLOADER_STATE_COPY_READ_E;
+        p_bootloader->state       = BOOTLOADER_STATE_COPY_READ_E;
         break;
     case BOOTLOADER_STATE_COPY_READ_WAIT_E:
-        p_bootloader->copy_chunk_crc = p_bootloader->config.p_crc16_update(
-            p_bootloader->config.p_copy_buffer,
-            p_bootloader->copy_chunk_length,
-            p_bootloader->config.p_crc16_init());
-        p_bootloader->state = BOOTLOADER_STATE_COPY_WRITE_E;
+        p_bootloader->copy_chunk_crc = p_bootloader->config.p_crc16_update(p_bootloader->config.p_copy_buffer,
+                                                                           p_bootloader->copy_chunk_length,
+                                                                           p_bootloader->config.p_crc16_init());
+        p_bootloader->state          = BOOTLOADER_STATE_COPY_WRITE_E;
         break;
     case BOOTLOADER_STATE_COPY_WRITE_WAIT_E:
         p_bootloader->state = BOOTLOADER_STATE_COPY_VERIFY_READ_E;
         break;
     case BOOTLOADER_STATE_COPY_VERIFY_READ_WAIT_E:
-        if (p_bootloader->config.p_crc16_update(
-                p_bootloader->config.p_copy_buffer,
-                p_bootloader->copy_chunk_length,
-                p_bootloader->config.p_crc16_init()) != p_bootloader->copy_chunk_crc)
+
+        if (p_bootloader->config.p_crc16_update(p_bootloader->config.p_copy_buffer, p_bootloader->copy_chunk_length, p_bootloader->config.p_crc16_init()) != p_bootloader->copy_chunk_crc)
         {
             resident_failure(p_bootloader, BOOTLOADER_RESULT_IMAGE_INVALID_E);
             break;
         }
         p_bootloader->copy_offset += p_bootloader->copy_chunk_length;
         p_bootloader->copy_chunk_length = 0u;
+
         if (p_bootloader->copy_offset >= p_bootloader->upgrade_info.file_size)
         {
             p_bootloader->verify_offset = 0u;
-            p_bootloader->verify_crc = p_bootloader->config.p_crc16_init();
-            metadata_commit_start(p_bootloader,
-                                  BOOTLOADER_METADATA_STATE_COPYING,
-                                  BOOTLOADER_STATE_VERIFY_READ_E);
+            p_bootloader->verify_crc    = p_bootloader->config.p_crc16_init();
+            metadata_commit_start(p_bootloader, BOOTLOADER_METADATA_STATE_COPYING, BOOTLOADER_STATE_VERIFY_READ_E);
         }
         else
         {
-            metadata_commit_start(p_bootloader,
-                                  BOOTLOADER_METADATA_STATE_COPYING,
-                                  BOOTLOADER_STATE_COPY_READ_E);
+            metadata_commit_start(p_bootloader, BOOTLOADER_METADATA_STATE_COPYING, BOOTLOADER_STATE_COPY_READ_E);
         }
         break;
     case BOOTLOADER_STATE_VERIFY_READ_WAIT_E:
-        p_bootloader->verify_crc = p_bootloader->config.p_crc16_update(
-            p_bootloader->config.p_copy_buffer,
-            p_bootloader->copy_chunk_length,
-            p_bootloader->verify_crc);
+        p_bootloader->verify_crc = p_bootloader->config.p_crc16_update(p_bootloader->config.p_copy_buffer,
+                                                                       p_bootloader->copy_chunk_length,
+                                                                       p_bootloader->verify_crc);
         p_bootloader->verify_offset += p_bootloader->copy_chunk_length;
         p_bootloader->copy_chunk_length = 0u;
+
         if (p_bootloader->verify_offset >= p_bootloader->upgrade_info.file_size)
         {
             if (p_bootloader->verify_crc != p_bootloader->expected_crc)
@@ -611,11 +592,11 @@ static void storage_wait_handle(bootloader_t *p_bootloader)
     case BOOTLOADER_STATE_METADATA_WRITE_WAIT_E:
         p_bootloader->metadata_sequence++;
         p_bootloader->metadata_source_zone = p_bootloader->metadata_target_zone;
-        p_bootloader->metadata_valid = 1u;
-        p_bootloader->state = p_bootloader->metadata_next_state;
+        p_bootloader->metadata_valid       = 1u;
+        p_bootloader->state                = p_bootloader->metadata_next_state;
         p_bootloader->result = (p_bootloader->state == BOOTLOADER_STATE_DOWNLOAD_READY_E)
-                                   ? BOOTLOADER_RESULT_SUCCESS_E
-                                   : BOOTLOADER_RESULT_IN_PROGRESS_E;
+                                 ? BOOTLOADER_RESULT_SUCCESS_E
+                                 : BOOTLOADER_RESULT_IN_PROGRESS_E;
         break;
     default:
         resident_failure(p_bootloader, BOOTLOADER_RESULT_CONFIG_ERROR_E);
@@ -630,9 +611,10 @@ bootloader_result_t bootloader_flash_ops_init(bootloader_t *p_bootloader,
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
+
     if (flash_ops_valid(p_flash_ops) == 0u)
     {
-        p_bootloader->state = BOOTLOADER_STATE_CONFIG_ERROR_E;
+        p_bootloader->state  = BOOTLOADER_STATE_CONFIG_ERROR_E;
         p_bootloader->result = BOOTLOADER_RESULT_CONFIG_ERROR_E;
         return BOOTLOADER_RESULT_CONFIG_ERROR_E;
     }
@@ -645,8 +627,8 @@ bootloader_result_t bootloader_init(bootloader_t *p_bootloader,
                                     const bootloader_config_t *p_config,
                                     const bootloader_platform_ops_t *p_platform_ops)
 {
-    bootloader_boot_reason_t reason = BOOTLOADER_BOOT_REASON_POWER_ON_E; /* Startup reason. */
-    bootloader_flash_ops_t flash_ops = {0};                            /* Flash mount retained across reset. */
+    bootloader_boot_reason_t reason  = BOOTLOADER_BOOT_REASON_POWER_ON_E; /* Startup reason. */
+    bootloader_flash_ops_t flash_ops = {0}; /* Flash mount retained across reset. */
 
     if (p_bootloader == NULL)
     {
@@ -655,43 +637,43 @@ bootloader_result_t bootloader_init(bootloader_t *p_bootloader,
     flash_ops = p_bootloader->flash_ops;
     (void)memset(p_bootloader, 0, sizeof(*p_bootloader));
     p_bootloader->flash_ops = flash_ops;
-    p_bootloader->state = BOOTLOADER_STATE_UNINITIALIZED_E;
-    p_bootloader->result = BOOTLOADER_RESULT_CONFIG_ERROR_E;
+    p_bootloader->state     = BOOTLOADER_STATE_UNINITIALIZED_E;
+    p_bootloader->result    = BOOTLOADER_RESULT_CONFIG_ERROR_E;
 
-    if ((p_config == NULL) ||
-        (flash_ops_valid(&p_bootloader->flash_ops) == 0u) ||
-        (platform_ops_valid(p_platform_ops) == 0u) ||
-        (p_config->p_packet_buffer == NULL) ||
-        (p_config->packet_buffer_size < BOOTLOADER_PACKET_DATA_SIZE) ||
-        (p_config->p_copy_buffer == NULL) ||
-        (p_config->copy_buffer_size < (2u * BOOTLOADER_METADATA_ENCODED_SIZE)) ||
-        (p_config->image_header_length == 0u) ||
-        (p_config->image_header_length > p_config->packet_buffer_size) ||
-        (p_config->p_crc16_init == NULL) ||
-        (p_config->p_crc16_update == NULL) ||
-        (p_config->default_mode > BOOTLOADER_UPGRADE_MODE_STAGED_E))
+    if (    (p_config == NULL)
+         || (flash_ops_valid(&p_bootloader->flash_ops) == 0u)
+         || (platform_ops_valid(p_platform_ops) == 0u)
+         || (p_config->p_packet_buffer == NULL)
+         || (p_config->packet_buffer_size < BOOTLOADER_PACKET_DATA_SIZE)
+         || (p_config->p_copy_buffer == NULL)
+         || (p_config->copy_buffer_size < (2u * BOOTLOADER_METADATA_ENCODED_SIZE))
+         || (p_config->image_header_length == 0u)
+         || (p_config->image_header_length > p_config->packet_buffer_size)
+         || (p_config->p_crc16_init == NULL)
+         || (p_config->p_crc16_update == NULL)
+         || (p_config->default_mode > BOOTLOADER_UPGRADE_MODE_STAGED_E))
     {
         p_bootloader->state = BOOTLOADER_STATE_CONFIG_ERROR_E;
         return BOOTLOADER_RESULT_CONFIG_ERROR_E;
     }
 
-    p_bootloader->config = *p_config;
+    p_bootloader->config       = *p_config;
     p_bootloader->platform_ops = *p_platform_ops;
-    p_bootloader->mode = p_config->default_mode;
+    p_bootloader->mode         = p_config->default_mode;
 
-    reason = p_bootloader->platform_ops.p_boot_reason_get(p_bootloader->platform_ops.p_context);
+    reason                    = p_bootloader->platform_ops.p_boot_reason_get(p_bootloader->platform_ops.p_context);
     p_bootloader->boot_reason = reason;
-    if ((reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E) &&
-        (p_bootloader->platform_ops.p_upgrade_info_get != NULL) &&
-        (p_bootloader->platform_ops.p_upgrade_info_get(p_bootloader->platform_ops.p_context,
-                                                       &p_bootloader->startup_upgrade_info) ==
-         BOOTLOADER_RESULT_SUCCESS_E))
+
+    if (
+        (reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E)
+     && (p_bootloader->platform_ops.p_upgrade_info_get != NULL)
+     && (p_bootloader->platform_ops.p_upgrade_info_get(p_bootloader->platform_ops.p_context, &p_bootloader->startup_upgrade_info) == BOOTLOADER_RESULT_SUCCESS_E))
     {
         p_bootloader->startup_upgrade_info_valid = 1u;
     }
     p_bootloader->metadata_source_zone = BOOTLOADER_FLASH_ZONE_META_B_E;
-    p_bootloader->state = BOOTLOADER_STATE_META_A_READ_E;
-    p_bootloader->result = BOOTLOADER_RESULT_SUCCESS_E;
+    p_bootloader->state                = BOOTLOADER_STATE_META_A_READ_E;
+    p_bootloader->result               = BOOTLOADER_RESULT_SUCCESS_E;
     return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
@@ -703,17 +685,16 @@ void bootloader_process(bootloader_t *p_bootloader)
     {
         return;
     }
+
     if (p_bootloader->platform_ops.p_watchdog_kick != NULL)
     {
         p_bootloader->platform_ops.p_watchdog_kick(p_bootloader->platform_ops.p_context);
     }
+
     switch (p_bootloader->state)
     {
     case BOOTLOADER_STATE_META_A_READ_E:
-        metadata_read_submit(p_bootloader,
-                             BOOTLOADER_FLASH_ZONE_META_A_E,
-                             0u,
-                             BOOTLOADER_STATE_META_A_WAIT_E);
+        metadata_read_submit(p_bootloader, BOOTLOADER_FLASH_ZONE_META_A_E, 0u, BOOTLOADER_STATE_META_A_WAIT_E);
         break;
     case BOOTLOADER_STATE_META_B_READ_E:
         metadata_read_submit(p_bootloader,
@@ -740,11 +721,10 @@ void bootloader_process(bootloader_t *p_bootloader)
         storage_wait_handle(p_bootloader);
         break;
     case BOOTLOADER_STATE_DOWNLOAD_ERASE_E:
-        result = p_bootloader->flash_ops.p_erase(p_bootloader->download_zone,
-                                                 0u,
-                                                 p_bootloader->upgrade_info.file_size);
-        if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-            (result == BOOTLOADER_RESULT_SUCCESS_E))
+        result = p_bootloader->flash_ops.p_erase(p_bootloader->download_zone, 0u, p_bootloader->upgrade_info.file_size);
+
+        if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+             || (result == BOOTLOADER_RESULT_SUCCESS_E))
         {
             p_bootloader->state = BOOTLOADER_STATE_DOWNLOAD_ERASE_WAIT_E;
         }
@@ -754,11 +734,10 @@ void bootloader_process(bootloader_t *p_bootloader)
         }
         break;
     case BOOTLOADER_STATE_COPY_ERASE_E:
-        result = p_bootloader->flash_ops.p_erase(BOOTLOADER_FLASH_ZONE_IAP_E,
-                                                 0u,
-                                                 p_bootloader->upgrade_info.file_size);
-        if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-            (result == BOOTLOADER_RESULT_SUCCESS_E))
+        result = p_bootloader->flash_ops.p_erase(BOOTLOADER_FLASH_ZONE_IAP_E, 0u, p_bootloader->upgrade_info.file_size);
+
+        if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+             || (result == BOOTLOADER_RESULT_SUCCESS_E))
         {
             p_bootloader->state = BOOTLOADER_STATE_COPY_ERASE_WAIT_E;
         }
@@ -775,8 +754,9 @@ void bootloader_process(bootloader_t *p_bootloader)
                                                  p_bootloader->copy_offset,
                                                  p_bootloader->copy_chunk_length,
                                                  p_bootloader->config.p_copy_buffer);
-        if ((result == BOOTLOADER_RESULT_IN_PROGRESS_E) ||
-            (result == BOOTLOADER_RESULT_SUCCESS_E))
+
+        if (    (result == BOOTLOADER_RESULT_IN_PROGRESS_E)
+             || (result == BOOTLOADER_RESULT_SUCCESS_E))
         {
             p_bootloader->state = BOOTLOADER_STATE_COPY_WRITE_WAIT_E;
         }
@@ -795,10 +775,11 @@ void bootloader_process(bootloader_t *p_bootloader)
         final_read_submit(p_bootloader);
         break;
     case BOOTLOADER_STATE_METADATA_ERASE_E:
-        result = p_bootloader->flash_ops.p_erase(p_bootloader->metadata_target_zone,
-                                                 0u,
-                                                 BOOTLOADER_METADATA_ENCODED_SIZE);
-        if ((result == BOOTLOADER_RESULT_SUCCESS_E) || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
+        result =
+            p_bootloader->flash_ops.p_erase(p_bootloader->metadata_target_zone, 0u, BOOTLOADER_METADATA_ENCODED_SIZE);
+
+        if (    (result == BOOTLOADER_RESULT_SUCCESS_E)
+             || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
         {
             p_bootloader->state = BOOTLOADER_STATE_METADATA_ERASE_WAIT_E;
         }
@@ -812,7 +793,9 @@ void bootloader_process(bootloader_t *p_bootloader)
                                                  0u,
                                                  BOOTLOADER_METADATA_ENCODED_SIZE,
                                                  p_bootloader->config.p_copy_buffer);
-        if ((result == BOOTLOADER_RESULT_SUCCESS_E) || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
+
+        if (    (result == BOOTLOADER_RESULT_SUCCESS_E)
+             || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
         {
             p_bootloader->state = BOOTLOADER_STATE_METADATA_WRITE_WAIT_E;
         }
@@ -822,14 +805,17 @@ void bootloader_process(bootloader_t *p_bootloader)
         }
         break;
     case BOOTLOADER_STATE_JUMP_PENDING_E:
+
         if (p_bootloader->jump_called == 0u)
         {
             result = p_bootloader->platform_ops.p_boot_reason_clear(p_bootloader->platform_ops.p_context);
+
             if (result == BOOTLOADER_RESULT_SUCCESS_E)
             {
                 p_bootloader->jump_called = 1u;
                 result = p_bootloader->platform_ops.p_jump_to_iap(p_bootloader->platform_ops.p_context);
             }
+
             if (result != BOOTLOADER_RESULT_SUCCESS_E)
             {
                 resident_failure(p_bootloader, result);
@@ -851,32 +837,36 @@ bootloader_result_t bootloader_upgrade_begin(bootloader_t *p_bootloader,
 {
     bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E; /* Zone capacity validation result. */
 
-    if ((p_bootloader == NULL) || (p_info == NULL))
+    if (    (p_bootloader == NULL)
+         || (p_info == NULL))
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
-    if ((p_bootloader->state != BOOTLOADER_STATE_WAIT_UPGRADE_E) ||
-        (p_bootloader->flash_ops.p_is_busy() == 1u))
+
+    if (    (p_bootloader->state != BOOTLOADER_STATE_WAIT_UPGRADE_E)
+         || (p_bootloader->flash_ops.p_is_busy() == 1u))
     {
         return BOOTLOADER_RESULT_BUSY_E;
     }
-    if ((p_info->module_id != p_bootloader->config.expected_module_id) ||
-        (p_info->file_size == 0u) ||
-        (mode > BOOTLOADER_UPGRADE_MODE_STAGED_E))
+
+    if (    (p_info->module_id != p_bootloader->config.expected_module_id)
+         || (p_info->file_size == 0u)
+         || (mode > BOOTLOADER_UPGRADE_MODE_STAGED_E))
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
 
     result = zone_requirements_check(p_bootloader, BOOTLOADER_FLASH_ZONE_IAP_E, p_info->file_size);
+
     if (result != BOOTLOADER_RESULT_SUCCESS_E)
     {
         return result;
     }
+
     if (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
     {
-        result = zone_requirements_check(p_bootloader,
-                                         BOOTLOADER_FLASH_ZONE_STAGING_E,
-                                         p_info->file_size);
+        result = zone_requirements_check(p_bootloader, BOOTLOADER_FLASH_ZONE_STAGING_E, p_info->file_size);
+
         if (result != BOOTLOADER_RESULT_SUCCESS_E)
         {
             return result;
@@ -884,33 +874,30 @@ bootloader_result_t bootloader_upgrade_begin(bootloader_t *p_bootloader,
     }
 
     p_bootloader->upgrade_info = *p_info;
-    p_bootloader->mode = mode;
-    p_bootloader->download_zone = (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
-                                      ? BOOTLOADER_FLASH_ZONE_STAGING_E
-                                      : BOOTLOADER_FLASH_ZONE_IAP_E;
-    p_bootloader->received_length = 0u;
+    p_bootloader->mode         = mode;
+    p_bootloader->download_zone =
+        (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E) ? BOOTLOADER_FLASH_ZONE_STAGING_E : BOOTLOADER_FLASH_ZONE_IAP_E;
+    p_bootloader->received_length       = 0u;
     p_bootloader->pending_packet_offset = 0u;
     p_bootloader->pending_packet_length = 0u;
-    p_bootloader->last_packet_offset = 0u;
-    p_bootloader->last_packet_length = 0u;
-    p_bootloader->copy_offset = 0u;
-    p_bootloader->copy_chunk_length = 0u;
-    p_bootloader->verify_offset = 0u;
-    p_bootloader->copy_chunk_crc = 0u;
-    p_bootloader->verify_crc = p_bootloader->config.p_crc16_init();
-    p_bootloader->running_crc = p_bootloader->config.p_crc16_init();
-    p_bootloader->expected_crc = 0u;
-    p_bootloader->footer_length = 0u;
+    p_bootloader->last_packet_offset    = 0u;
+    p_bootloader->last_packet_length    = 0u;
+    p_bootloader->copy_offset           = 0u;
+    p_bootloader->copy_chunk_length     = 0u;
+    p_bootloader->verify_offset         = 0u;
+    p_bootloader->copy_chunk_crc        = 0u;
+    p_bootloader->verify_crc            = p_bootloader->config.p_crc16_init();
+    p_bootloader->running_crc           = p_bootloader->config.p_crc16_init();
+    p_bootloader->expected_crc          = 0u;
+    p_bootloader->footer_length         = 0u;
     (void)memset(p_bootloader->footer_buffer, 0, sizeof(p_bootloader->footer_buffer));
-    p_bootloader->session_active = 1u;
-    p_bootloader->jump_called = 0u;
+    p_bootloader->session_active       = 1u;
+    p_bootloader->jump_called          = 0u;
     p_bootloader->metadata_retry_count = 0u;
-    metadata_commit_start(
-        p_bootloader,
-        (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
-            ? BOOTLOADER_METADATA_STATE_DOWNLOAD_STAGED
-            : BOOTLOADER_METADATA_STATE_DOWNLOAD_DIRECT,
-        BOOTLOADER_STATE_DOWNLOAD_ERASE_E);
+    metadata_commit_start(p_bootloader,
+                          (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E) ? BOOTLOADER_METADATA_STATE_DOWNLOAD_STAGED
+                                                                     : BOOTLOADER_METADATA_STATE_DOWNLOAD_DIRECT,
+                          BOOTLOADER_STATE_DOWNLOAD_ERASE_E);
     return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
@@ -921,27 +908,30 @@ bootloader_result_t bootloader_packet_submit(bootloader_t *p_bootloader,
 {
     bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E; /* Packet write submission result. */
 
-    if ((p_bootloader == NULL) ||
-        (p_data == NULL) ||
-        (length == 0u) ||
-        (length > BOOTLOADER_PACKET_DATA_SIZE))
+    if (    (p_bootloader == NULL)
+         || (p_data == NULL)
+         || (length == 0u)
+         || (length > BOOTLOADER_PACKET_DATA_SIZE))
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
-    if ((p_bootloader->state != BOOTLOADER_STATE_DOWNLOAD_READY_E) ||
-        (p_bootloader->session_active == 0u))
+
+    if (    (p_bootloader->state != BOOTLOADER_STATE_DOWNLOAD_READY_E)
+         || (p_bootloader->session_active == 0u))
     {
         return BOOTLOADER_RESULT_BUSY_E;
     }
-    if ((p_bootloader->last_packet_length != 0u) &&
-        (offset == p_bootloader->last_packet_offset) &&
-        (length == p_bootloader->last_packet_length) &&
-        (memcmp(p_bootloader->config.p_packet_buffer, p_data, length) == 0))
+
+    if (    (p_bootloader->last_packet_length != 0u)
+         && (offset == p_bootloader->last_packet_offset)
+         && (length == p_bootloader->last_packet_length)
+         && (memcmp(p_bootloader->config.p_packet_buffer, p_data, length) == 0))
     {
         return BOOTLOADER_RESULT_SUCCESS_E;
     }
-    if ((offset != p_bootloader->received_length) ||
-        (length > (p_bootloader->upgrade_info.file_size - p_bootloader->received_length)))
+
+    if (    (offset != p_bootloader->received_length)
+         || (length > (p_bootloader->upgrade_info.file_size - p_bootloader->received_length)))
     {
         return BOOTLOADER_RESULT_PROTOCOL_ERROR_E;
     }
@@ -951,16 +941,17 @@ bootloader_result_t bootloader_packet_submit(bootloader_t *p_bootloader,
                                              offset,
                                              length,
                                              p_bootloader->config.p_packet_buffer);
-    if ((result != BOOTLOADER_RESULT_IN_PROGRESS_E) &&
-        (result != BOOTLOADER_RESULT_SUCCESS_E))
+
+    if (    (result != BOOTLOADER_RESULT_IN_PROGRESS_E)
+         && (result != BOOTLOADER_RESULT_SUCCESS_E))
     {
         resident_failure(p_bootloader, result);
         return result;
     }
     p_bootloader->pending_packet_offset = offset;
     p_bootloader->pending_packet_length = length;
-    p_bootloader->state = BOOTLOADER_STATE_PACKET_WRITE_WAIT_E;
-    p_bootloader->result = BOOTLOADER_RESULT_IN_PROGRESS_E;
+    p_bootloader->state                 = BOOTLOADER_STATE_PACKET_WRITE_WAIT_E;
+    p_bootloader->result                = BOOTLOADER_RESULT_IN_PROGRESS_E;
     return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
@@ -970,32 +961,33 @@ bootloader_result_t bootloader_upgrade_end(bootloader_t *p_bootloader, uint16_t 
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
-    if ((p_bootloader->state != BOOTLOADER_STATE_DOWNLOAD_READY_E) ||
-        (p_bootloader->session_active == 0u))
+
+    if (    (p_bootloader->state != BOOTLOADER_STATE_DOWNLOAD_READY_E)
+         || (p_bootloader->session_active == 0u))
     {
         return BOOTLOADER_RESULT_BUSY_E;
     }
-    if ((p_bootloader->received_length != p_bootloader->upgrade_info.file_size) ||
-        (p_bootloader->running_crc != expected_crc) ||
-        (footer_is_valid(p_bootloader) == 0u))
+
+    if (    (p_bootloader->received_length != p_bootloader->upgrade_info.file_size)
+         || (p_bootloader->running_crc != expected_crc)
+         || (footer_is_valid(p_bootloader) == 0u))
     {
         resident_failure(p_bootloader, BOOTLOADER_RESULT_IMAGE_INVALID_E);
         return BOOTLOADER_RESULT_IMAGE_INVALID_E;
     }
 
-    p_bootloader->expected_crc = expected_crc;
+    p_bootloader->expected_crc   = expected_crc;
     p_bootloader->session_active = 0u;
+
     if (p_bootloader->mode == BOOTLOADER_UPGRADE_MODE_STAGED_E)
     {
-        metadata_commit_start(p_bootloader,
-                              BOOTLOADER_METADATA_STATE_INSTALL_PENDING,
-                              BOOTLOADER_STATE_COPY_ERASE_E);
+        metadata_commit_start(p_bootloader, BOOTLOADER_METADATA_STATE_INSTALL_PENDING, BOOTLOADER_STATE_COPY_ERASE_E);
     }
     else
     {
         p_bootloader->verify_offset = 0u;
-        p_bootloader->verify_crc = p_bootloader->config.p_crc16_init();
-        p_bootloader->state = BOOTLOADER_STATE_VERIFY_READ_E;
+        p_bootloader->verify_crc    = p_bootloader->config.p_crc16_init();
+        p_bootloader->state         = BOOTLOADER_STATE_VERIFY_READ_E;
     }
     p_bootloader->result = BOOTLOADER_RESULT_IN_PROGRESS_E;
     return BOOTLOADER_RESULT_SUCCESS_E;
@@ -1003,10 +995,10 @@ bootloader_result_t bootloader_upgrade_end(bootloader_t *p_bootloader, uint16_t 
 
 uint8_t bootloader_is_download_ready(const bootloader_t *p_bootloader)
 {
-    return ((p_bootloader != NULL) &&
-            (p_bootloader->state == BOOTLOADER_STATE_DOWNLOAD_READY_E))
-               ? 1u
-               : 0u;
+    return (    (p_bootloader != NULL)
+             && (p_bootloader->state == BOOTLOADER_STATE_DOWNLOAD_READY_E))
+             ? 1u
+             : 0u;
 }
 
 bootloader_state_t bootloader_state_get(const bootloader_t *p_bootloader)

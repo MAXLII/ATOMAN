@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    time_share.h
- * @brief   time_share library public interface.
+ * @file time_share.h
+ * @brief time_share library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,11 +31,12 @@
 
 #include "stdint.h"
 
-#define TIME_SHARE_REG_FUNC(_func, _period) { \
-    .func = (_func),                          \
-    .period = (_period),                      \
-    .cnt = 0u,                                \
-}
+#define TIME_SHARE_REG_FUNC(_func, _period) \
+    {                                       \
+        .func   = (_func),                  \
+        .period = (_period),                \
+        .cnt    = 0u,                       \
+    }
 
 typedef struct
 {

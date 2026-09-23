@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    trace_service.c
- * @brief   Execution trace service module.
+ * @file trace_service.c
+ * @brief Execution trace service module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -97,21 +97,21 @@ static dbg_trace_print_ctx_t g_dbg_trace_print_ctx = {0};
 static void dbg_trace_print_start(DEC_MY_PRINTF)
 {
     g_dbg_trace_print_ctx.my_printf = my_printf;
-    g_dbg_trace_print_ctx.active = 1u;
+    g_dbg_trace_print_ctx.active    = 1u;
 }
 
 static void dbg_trace_clear_cmd(DEC_MY_PRINTF)
 {
     (void)my_printf;
     dbg_trace_clear();
-    g_dbg_trace_print_ctx.active = 0u;
+    g_dbg_trace_print_ctx.active    = 0u;
     g_dbg_trace_print_ctx.my_printf = NULL;
 }
 
 void dbg_trace_service_print_task(void)
 {
-    uint32_t time_value = 0u;
-    uint32_t line_value = 0u;
+    uint32_t time_value                   = 0u;
+    uint32_t line_value                   = 0u;
     section_link_tx_func_t *p_link_printf = g_dbg_trace_print_ctx.my_printf;
 
     if (g_dbg_trace_print_ctx.active == 0u)
@@ -121,7 +121,7 @@ void dbg_trace_service_print_task(void)
 
     if (dbg_trace_read(&time_value, &line_value) == 0u)
     {
-        g_dbg_trace_print_ctx.active = 0u;
+        g_dbg_trace_print_ctx.active    = 0u;
         g_dbg_trace_print_ctx.my_printf = NULL;
         return;
     }
@@ -142,30 +142,33 @@ static void dbg_trace_binary_capture_route(section_packform_t *p_pack, DEC_MY_PR
     }
 
     g_dbg_trace_binary_ctx.my_printf = my_printf;
-    g_dbg_trace_binary_ctx.sop = p_pack->sop;
-    g_dbg_trace_binary_ctx.version = p_pack->version;
-    g_dbg_trace_binary_ctx.seq = p_pack->seq;
-    g_dbg_trace_binary_ctx.src = p_pack->dst;
-    g_dbg_trace_binary_ctx.d_src = p_pack->d_dst;
-    g_dbg_trace_binary_ctx.dst = p_pack->src;
-    g_dbg_trace_binary_ctx.d_dst = p_pack->d_src;
+    g_dbg_trace_binary_ctx.sop       = p_pack->sop;
+    g_dbg_trace_binary_ctx.version   = p_pack->version;
+    g_dbg_trace_binary_ctx.seq       = p_pack->seq;
+    g_dbg_trace_binary_ctx.src       = p_pack->dst;
+    g_dbg_trace_binary_ctx.d_src     = p_pack->d_dst;
+    g_dbg_trace_binary_ctx.dst       = p_pack->src;
+    g_dbg_trace_binary_ctx.d_dst     = p_pack->d_src;
 }
 
-static void dbg_trace_binary_send(uint8_t cmd_word, uint8_t is_ack, uint8_t *p_data, uint16_t len)
+static void dbg_trace_binary_send(uint8_t cmd_word,
+                                  uint8_t is_ack,
+                                  uint8_t *p_data,
+                                  uint16_t len)
 {
     section_packform_t pack = {0};
 
     if (is_ack != 0u)
     {
         /* 直接应答继承请求的协议标识、版本与 SEQ。 */
-        pack.sop = g_dbg_trace_binary_ctx.sop;
+        pack.sop     = g_dbg_trace_binary_ctx.sop;
         pack.version = g_dbg_trace_binary_ctx.version;
-        pack.seq = g_dbg_trace_binary_ctx.seq;
+        pack.seq     = g_dbg_trace_binary_ctx.seq;
     }
     else if (g_dbg_trace_binary_ctx.sop == COMM_V1_SOP)
     {
         /* v1 主动上报：继承会话协议，SEQ 0~7 循环递增。 */
-        pack.sop = COMM_V1_SOP;
+        pack.sop     = COMM_V1_SOP;
         pack.version = g_dbg_trace_binary_ctx.version;
         g_dbg_trace_binary_ctx.seq = (uint8_t)((g_dbg_trace_binary_ctx.seq + 1u) & 0x07u);
         pack.seq = g_dbg_trace_binary_ctx.seq;
@@ -175,22 +178,22 @@ static void dbg_trace_binary_send(uint8_t cmd_word, uint8_t is_ack, uint8_t *p_d
         /* 旧会话主动上报沿用 0xE8。 */
         pack.sop = 0xE8u;
     }
-    pack.src = g_dbg_trace_binary_ctx.src;
-    pack.d_src = g_dbg_trace_binary_ctx.d_src;
-    pack.dst = g_dbg_trace_binary_ctx.dst;
-    pack.d_dst = g_dbg_trace_binary_ctx.d_dst;
-    pack.cmd_set = TRACE_SERVICE_CMD_SET;
+    pack.src      = g_dbg_trace_binary_ctx.src;
+    pack.d_src    = g_dbg_trace_binary_ctx.d_src;
+    pack.dst      = g_dbg_trace_binary_ctx.dst;
+    pack.d_dst    = g_dbg_trace_binary_ctx.d_dst;
+    pack.cmd_set  = TRACE_SERVICE_CMD_SET;
     pack.cmd_word = cmd_word;
-    pack.is_ack = is_ack;
-    pack.len = len;
-    pack.p_data = p_data;
+    pack.is_ack   = is_ack;
+    pack.len      = len;
+    pack.p_data   = p_data;
 
     comm_send_data(&pack, g_dbg_trace_binary_ctx.my_printf);
 }
 
 static void dbg_trace_control_act(void *p_frame, DEC_MY_PRINTF)
 {
-    section_packform_t *p_pack = (section_packform_t *)p_frame;
+    section_packform_t *p_pack  = (section_packform_t *)p_frame;
     dbg_trace_control_req_t req = {0};
     dbg_trace_control_ack_t ack = {0};
     uint16_t copy_len;
@@ -201,7 +204,9 @@ static void dbg_trace_control_act(void *p_frame, DEC_MY_PRINTF)
     }
 
     copy_len = (p_pack->len < (uint16_t)sizeof(req)) ? p_pack->len : (uint16_t)sizeof(req);
-    if ((copy_len != 0u) && (p_pack->p_data != NULL))
+
+    if (    (copy_len != 0u)
+         && (p_pack->p_data != NULL))
     {
         memcpy((uint8_t *)&req, p_pack->p_data, copy_len);
     }
@@ -217,8 +222,8 @@ static void dbg_trace_control_act(void *p_frame, DEC_MY_PRINTF)
         g_dbg_trace_binary_ctx.running = 0u;
     }
 
-    ack.success = 1u;
-    ack.running = g_dbg_trace_binary_ctx.running;
+    ack.success      = 1u;
+    ack.running      = g_dbg_trace_binary_ctx.running;
     ack.time_unit_us = TRACE_SERVICE_TIME_UNIT_US;
     dbg_trace_binary_send(TRACE_SERVICE_CMD_CONTROL, 1u, (uint8_t *)&ack, (uint16_t)sizeof(ack));
 }
@@ -226,16 +231,16 @@ static void dbg_trace_control_act(void *p_frame, DEC_MY_PRINTF)
 void dbg_trace_service_binary_task(void)
 {
     dbg_trace_record_report_t report = {0};
-    uint32_t line_value = 0u;
-    uint16_t report_count = 0u;
+    uint32_t line_value              = 0u;
+    uint16_t report_count            = 0u;
 
     if (g_dbg_trace_binary_ctx.running == 0u)
     {
         return;
     }
 
-    while ((report_count < DBG_TRACE_BINARY_MAX_REPORT_PER_TASK) &&
-           (dbg_trace_read(&report.time, &line_value) != 0u))
+    while (    (report_count < DBG_TRACE_BINARY_MAX_REPORT_PER_TASK)
+            && (dbg_trace_read(&report.time, &line_value) != 0u))
     {
         report.line = (uint16_t)line_value;
         dbg_trace_binary_send(TRACE_SERVICE_CMD_RECORD_REPORT, 0u, (uint8_t *)&report, (uint16_t)sizeof(report));

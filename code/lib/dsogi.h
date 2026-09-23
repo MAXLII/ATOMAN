@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    dsogi.h
- * @brief   Dual SOGI positive/negative sequence extraction, without a PLL.
+ * @file dsogi.h
+ * @brief Dual SOGI positive/negative sequence extraction, without a PLL.
  * @details
  *          This file is part of the base digital power framework project.
  *          Caller-owned state; C11; no dynamic allocation or hardware access.
- * @author  Max.Li
- * @date    2026-09-12
+ * @author Max.Li
+ * @date 2026-09-12
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li.
- * All rights reserved.
- * This file is licensed under the MIT License.
- * See the LICENSE file in the project root for full license text.
+ *          Copyright (c) 2026 Max.Li.
+ *          All rights reserved.
+ *          This file is licensed under the MIT License.
+ *          See the LICENSE file in the project root for full license text.
  */
 #ifndef DSOGI_H
 #define DSOGI_H
@@ -57,17 +57,20 @@ typedef struct dsogi
 } dsogi_t;
 
 /** @param p_dsogi Instance to initialize.
- *  @param p_cfg Configuration; require 0.001 <= omega_min*ts <= omega_max*ts <= 1.
- *  @param p_alpha Live alpha source.
- *  @param p_beta Live beta source.
- *  @param p_omega Live center frequency within configured limits.
- *  @return true if initialized; failed init invalidates the instance. Inputs may not alias the instance. */
-bool dsogi_init(dsogi_t *p_dsogi, const dsogi_cfg_t *p_cfg,
-                float *p_alpha, float *p_beta, float *p_omega);
+ * @param p_cfg Configuration; require 0.001 <= omega_min*ts <= omega_max*ts <= 1.
+ * @param p_alpha Live alpha source.
+ * @param p_beta Live beta source.
+ * @param p_omega Live center frequency within configured limits.
+ * @return true if initialized; failed init invalidates the instance. Inputs may not alias the instance. */
+bool dsogi_init(dsogi_t *p_dsogi,
+                const dsogi_cfg_t *p_cfg,
+                float *p_alpha,
+                float *p_beta,
+                float *p_omega);
 /** @param p_dsogi Instance; clears histories/outputs while retaining configuration and bindings. */
 void dsogi_reset(dsogi_t *p_dsogi);
 /** @param p_dsogi Initialized instance; call once per configured sample period.
- *  @return true on a finite update; false clears histories/outputs, allowing recovery on valid input.
- *  No PLL, Clarke transform, FLL, DC rejection or lock detector is included. */
+ * @return true on a finite update; false clears histories/outputs, allowing recovery on valid input.
+ *         No PLL, Clarke transform, FLL, DC rejection or lock detector is included. */
 bool dsogi_cal(dsogi_t *p_dsogi);
 #endif

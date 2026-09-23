@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_cfg.c
- * @brief   pfc_cfg control module.
+ * @file pfc_cfg.c
+ * @brief pfc_cfg control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,27 +32,30 @@
 
 static pfc_ctrl_setpoint_t setpoint_active = {0};
 static pfc_ctrl_setpoint_t setpoint_building = {
-    .run_allowed = 0,
-    .vbus_ref_v = PFC_CFG_DEFAULT_VBUS_REF_V,
+    .run_allowed   = 0,
+    .vbus_ref_v    = PFC_CFG_DEFAULT_VBUS_REF_V,
     .vbus_slew_vps = PFC_CFG_DEFAULT_VBUS_SLEW_VPS,
 };
 
 static pfc_ctrl_setpoint_mgr_t setpoint_mgr = {
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0,
-    },
+    .active =
+        {
+            .p_data  = &setpoint_active,
+            .version = 0,
+        },
+    .building =
+        {
+            .p_data  = &setpoint_building,
+            .version = 0,
+        },
 };
 
 static pfc_ctrl_timing_t ctrl_timing = {0};
 
 static uint8_t pfc_cfg_timing_is_valid(const pfc_ctrl_timing_t *p_timing)
 {
-    return (p_timing != NULL) && (p_timing->ctrl_ts > 0.0f);
+    return (p_timing != NULL)
+        && (p_timing->ctrl_ts > 0.0f);
 }
 
 void pfc_cfg_set_timing(const pfc_ctrl_timing_t *p_timing)
@@ -139,8 +142,8 @@ void pfc_cfg_set_run_allowed(uint8_t run_allowed)
 
 void pfc_cfg_publish_building(void)
 {
-    if ((setpoint_mgr.building.p_data == NULL) ||
-        (setpoint_mgr.active.p_data == NULL))
+    if (    (setpoint_mgr.building.p_data == NULL)
+         || (setpoint_mgr.active.p_data == NULL))
     {
         return;
     }
@@ -157,15 +160,15 @@ void pfc_cfg_publish_building(void)
 
 uint8_t pfc_cfg_is_ready(void)
 {
-    return (setpoint_mgr.active.p_data != NULL) &&
-           (setpoint_mgr.building.p_data != NULL) &&
-           (pfc_cfg_timing_is_valid(&ctrl_timing) != 0U);
+    return (setpoint_mgr.active.p_data != NULL)
+        && (setpoint_mgr.building.p_data != NULL)
+        && (pfc_cfg_timing_is_valid(&ctrl_timing) != 0U);
 }
 
 void pfc_cfg_sync_building_to_active(void)
 {
-    if ((setpoint_mgr.building.p_data == NULL) ||
-        (setpoint_mgr.active.p_data == NULL))
+    if (    (setpoint_mgr.building.p_data == NULL)
+         || (setpoint_mgr.active.p_data == NULL))
     {
         return;
     }

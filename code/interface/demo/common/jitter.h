@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    jitter.h
- * @brief   Demo timer-observation Interface.
+ * @file jitter.h
+ * @brief Demo timer-observation Interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Read functions are used from the timer interrupt path
  *          - Hardware access is implemented by the selected Platform Interface
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

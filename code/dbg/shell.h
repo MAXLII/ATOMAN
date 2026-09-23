@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    shell.h
- * @brief   Shell Section adapter public interface.
+ * @file shell.h
+ * @brief Shell Section adapter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Linker-section access is implemented only by shell.c
  *          - Protocol handling belongs to shell_service.c
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    cllc_cfg.c
- * @brief   Bidirectional CLLC control configuration module.
+ * @file cllc_cfg.c
+ * @brief Bidirectional CLLC control configuration module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Setters are update-side APIs and are not called by the fast ISR
  *          - References are clamped to the rated hardware range
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,25 +31,29 @@
 #include <stddef.h>
 
 static cllc_ctrl_setpoint_t setpoint_active = {0}; /* Stable control-side setpoint snapshot. */
-static cllc_ctrl_setpoint_t setpoint_building = {  /* Application-side staged setpoint. */
-    .run_allowed = 0u,
-    .direction = CLLC_DIRECTION_FORWARD,
-    .battery_voltage_ref_v = CLLC_HW_BATTERY_VOLTAGE_NOMINAL_V,
+static cllc_ctrl_setpoint_t setpoint_building = {
+    /* Application-side staged setpoint. */
+    .run_allowed             = 0u,
+    .direction               = CLLC_DIRECTION_FORWARD,
+    .battery_voltage_ref_v   = CLLC_HW_BATTERY_VOLTAGE_NOMINAL_V,
     .battery_current_limit_a = CLLC_HW_FORWARD_CURRENT_LIMIT_A,
-    .bus_voltage_ref_v = CLLC_HW_BUS_VOLTAGE_NOMINAL_V,
+    .bus_voltage_ref_v       = CLLC_HW_BUS_VOLTAGE_NOMINAL_V,
 };
 static cllc_ctrl_timing_t ctrl_timing = {0}; /* Runtime control and FSM periods. */
-static uint8_t direction_locked = 1u;         /* Nonzero rejects direction updates outside the idle state. */
+static uint8_t direction_locked       = 1u;  /* Nonzero rejects direction updates outside the idle state. */
 
-cllc_ctrl_setpoint_mgr_t g_cllc_cfg_setpoint_mgr = { /* Public manager used by fast inline synchronization. */
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0u,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0u,
-    },
+cllc_ctrl_setpoint_mgr_t g_cllc_cfg_setpoint_mgr = {
+    /* Public manager used by fast inline synchronization. */
+    .active =
+        {
+            .p_data  = &setpoint_active,
+            .version = 0u,
+        },
+    .building =
+        {
+            .p_data  = &setpoint_building,
+            .version = 0u,
+        },
 };
 
 /** Clamp one floating-point value to an inclusive range. */
@@ -59,6 +63,7 @@ static float clamp_float(float value, float lower, float upper)
     {
         return upper;
     }
+
     if (value < lower)
     {
         return lower;
@@ -73,10 +78,12 @@ static uint8_t timing_is_valid(const cllc_ctrl_timing_t *p_timing)
     {
         return 0u;
     }
+
     if (p_timing->ctrl_ts <= 0.0f)
     {
         return 0u;
     }
+
     if (p_timing->task_ts <= 0.0f)
     {
         return 0u;
@@ -115,6 +122,7 @@ uint32_t cllc_cfg_get_startup_delay_ticks(void)
     {
         return ctrl_timing.startup_delay_ticks;
     }
+
     if (ctrl_timing.task_ts <= 0.0f)
     {
         return 0u;
@@ -154,10 +162,13 @@ void cllc_cfg_set_direction(CLLC_DIRECTION_E direction)
 {
     cllc_ctrl_setpoint_t *p_setpoint = g_cllc_cfg_setpoint_mgr.building.p_data; /* Staged setpoint target. */
 
-    if ((direction_locked == 0u) && /* Direction changes are accepted only while the FSM is idle. */
-        (p_setpoint != NULL) && /* A valid staging buffer is bound. */
-        (direction >= CLLC_DIRECTION_FORWARD) && /* Reject negative enum values from external casts. */
-        (direction < CLLC_DIRECTION_MAX)) /* Only defined power-flow directions may be staged. */
+    if (    (direction_locked == 0u)
+         && /* Direction changes are accepted only while the FSM is idle. */
+            (p_setpoint != NULL)
+         && /* A valid staging buffer is bound. */
+            (direction >= CLLC_DIRECTION_FORWARD)
+         && /* Reject negative enum values from external casts. */
+            (direction < CLLC_DIRECTION_MAX)) /* Only defined power-flow directions may be staged. */
     {
         p_setpoint->direction = direction;
     }
@@ -179,10 +190,8 @@ void cllc_cfg_set_battery_voltage_ref(float voltage_v)
 
     if (p_setpoint != NULL)
     {
-        p_setpoint->battery_voltage_ref_v = clamp_float(
-            voltage_v,
-            CLLC_HW_BATTERY_VOLTAGE_MIN_V,
-            CLLC_HW_BATTERY_VOLTAGE_MAX_V);
+        p_setpoint->battery_voltage_ref_v =
+            clamp_float(voltage_v, CLLC_HW_BATTERY_VOLTAGE_MIN_V, CLLC_HW_BATTERY_VOLTAGE_MAX_V);
     }
 }
 
@@ -192,10 +201,7 @@ void cllc_cfg_set_battery_current_limit(float current_a)
 
     if (p_setpoint != NULL)
     {
-        p_setpoint->battery_current_limit_a = clamp_float(
-            current_a,
-            0.0f,
-            CLLC_HW_FORWARD_CURRENT_LIMIT_A);
+        p_setpoint->battery_current_limit_a = clamp_float(current_a, 0.0f, CLLC_HW_FORWARD_CURRENT_LIMIT_A);
     }
 }
 
@@ -205,10 +211,7 @@ void cllc_cfg_set_bus_voltage_ref(float voltage_v)
 
     if (p_setpoint != NULL)
     {
-        p_setpoint->bus_voltage_ref_v = clamp_float(
-            voltage_v,
-            CLLC_HW_BUS_VOLTAGE_MIN_V,
-            CLLC_HW_BUS_VOLTAGE_MAX_V);
+        p_setpoint->bus_voltage_ref_v = clamp_float(voltage_v, CLLC_HW_BUS_VOLTAGE_MIN_V, CLLC_HW_BUS_VOLTAGE_MAX_V);
     }
 }
 
@@ -226,6 +229,7 @@ uint8_t cllc_cfg_is_ready(void)
     {
         return 0u;
     }
+
     if (g_cllc_cfg_setpoint_mgr.building.p_data == NULL)
     {
         return 0u;

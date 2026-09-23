@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    inv_cfg.c
- * @brief   inv_cfg control module.
+ * @file inv_cfg.c
+ * @brief inv_cfg control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,38 +32,40 @@
 
 static inv_ctrl_setpoint_t setpoint_active = {0};
 static inv_ctrl_setpoint_t setpoint_building = {
-    .run_allowed = INV_CFG_DEFAULT_RUN_ALLOWED,
-    .freq_hz = INV_CFG_DEFAULT_FREQ_HZ,
+    .run_allowed    = INV_CFG_DEFAULT_RUN_ALLOWED,
+    .freq_hz        = INV_CFG_DEFAULT_FREQ_HZ,
     .freq_slew_hzps = INV_CFG_DEFAULT_FREQ_SLEW_HZPS,
-    .rms_ref_v = INV_CFG_DEFAULT_RMS_REF_V,
-    .rms_slew_vps = INV_CFG_DEFAULT_RMS_SLEW_VPS,
+    .rms_ref_v      = INV_CFG_DEFAULT_RMS_REF_V,
+    .rms_slew_vps   = INV_CFG_DEFAULT_RMS_SLEW_VPS,
 };
 
 static inv_ctrl_setpoint_mgr_t setpoint_mgr = {
-    .active = {
-        .p_data = &setpoint_active,
-        .version = 0u,
-    },
-    .building = {
-        .p_data = &setpoint_building,
-        .version = 0u,
-    },
+    .active =
+        {
+            .p_data  = &setpoint_active,
+            .version = 0u,
+        },
+    .building =
+        {
+            .p_data  = &setpoint_building,
+            .version = 0u,
+        },
 };
 
 static inv_ctrl_timing_t ctrl_timing = {0};
 
 static uint8_t inv_cfg_timing_is_valid(const inv_ctrl_timing_t *p_timing)
 {
-    return (p_timing != NULL) &&
-           (p_timing->ctrl_ts > 0.0f) &&
-           (p_timing->ctrl_freq > 0.0f);
+    return (p_timing != NULL)
+        && (p_timing->ctrl_ts > 0.0f)
+        && (p_timing->ctrl_freq > 0.0f);
 }
 
 void inv_cfg_set_timing(const inv_ctrl_timing_t *p_timing)
 {
     if (inv_cfg_timing_is_valid(p_timing) == 0U)
     {
-        ctrl_timing.ctrl_ts = 0.0f;
+        ctrl_timing.ctrl_ts   = 0.0f;
         ctrl_timing.ctrl_freq = 0.0f;
         return;
     }
@@ -177,8 +179,8 @@ void inv_cfg_set_rms_slew_vps(float rms_slew_vps)
 
 void inv_cfg_publish_building(void)
 {
-    if ((setpoint_mgr.building.p_data == NULL) ||
-        (setpoint_mgr.active.p_data == NULL))
+    if (    (setpoint_mgr.building.p_data == NULL)
+         || (setpoint_mgr.active.p_data == NULL))
     {
         return;
     }
@@ -197,15 +199,15 @@ void inv_cfg_publish_building(void)
 
 uint8_t inv_cfg_is_ready(void)
 {
-    return (setpoint_mgr.active.p_data != NULL) &&
-           (setpoint_mgr.building.p_data != NULL) &&
-           (inv_cfg_timing_is_valid(&ctrl_timing) != 0U);
+    return (setpoint_mgr.active.p_data != NULL)
+        && (setpoint_mgr.building.p_data != NULL)
+        && (inv_cfg_timing_is_valid(&ctrl_timing) != 0U);
 }
 
 void inv_cfg_sync_building_to_active(void)
 {
-    if ((setpoint_mgr.building.p_data == NULL) ||
-        (setpoint_mgr.active.p_data == NULL))
+    if (    (setpoint_mgr.building.p_data == NULL)
+         || (setpoint_mgr.active.p_data == NULL))
     {
         return;
     }

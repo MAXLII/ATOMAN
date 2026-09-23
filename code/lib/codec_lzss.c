@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    codec_lzss.c
- * @brief   COMM v1 LZSS-256 codec implementation.
+ * @file codec_lzss.c
+ * @brief COMM v1 LZSS-256 codec implementation.
  * @details
  *          This file is part of the base digital power framework project.
  *
@@ -25,8 +25,8 @@
  *          - Back references hold 3..130 bytes (token 0x80..0xFF)
  *          - Matches shorter than 3 bytes stay inside literal runs
  *
- * @author  Max.Li
- * @date    2026-11-04
+ * @author Max.Li
+ * @date 2026-11-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -54,30 +54,34 @@ static int8_t codec_lzss_fail(uint16_t *p_output_len)
     return 0;
 }
 
-int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
-                         uint16_t *p_output_len, uint8_t *p_output,
+int8_t codec_lzss_encode(uint16_t input_len,
+                         const uint8_t *p_input,
+                         uint16_t *p_output_len,
+                         uint8_t *p_output,
                          uint16_t limit_len)
 {
-    uint16_t out_len = 0u;
-    uint16_t capacity = 0u;
-    uint16_t index = 0u;
+    uint16_t out_len       = 0u;
+    uint16_t capacity      = 0u;
+    uint16_t index         = 0u;
     uint16_t literal_start = 0u;
-    uint16_t literal_len = 0u;
+    uint16_t literal_len   = 0u;
 
     if (p_output_len == NULL)
     {
         return 0;
     }
-    if ((p_input == NULL) ||
-        (p_output == NULL) ||
-        (input_len == 0u) ||
-        (limit_len == 0u))
+
+    if (    (p_input == NULL)
+         || (p_output == NULL)
+         || (input_len == 0u)
+         || (limit_len == 0u))
     {
         return codec_lzss_fail(p_output_len);
     }
 
-    capacity = *p_output_len;
+    capacity      = *p_output_len;
     *p_output_len = 0u;
+
     if (capacity == 0u)
     {
         return 0;
@@ -86,7 +90,7 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
     while (index < input_len)
     {
         /* Greedy match search inside the 256-byte history window. */
-        uint16_t best_len = 0u;
+        uint16_t best_len    = 0u;
         uint16_t best_offset = 0u;
         const uint16_t max_offset = (index < CODEC_LZSS_WINDOW) ? index : CODEC_LZSS_WINDOW;
         uint16_t offset = 0u;
@@ -95,17 +99,18 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
         {
             uint16_t match_len = 0u;
 
-            while ((match_len < CODEC_LZSS_REF_LEN_MAX) &&
-                   ((index + match_len) < input_len) &&
-                   (p_input[index + match_len] == p_input[index - offset + match_len]))
+            while (    (match_len < CODEC_LZSS_REF_LEN_MAX)
+                    && ((index + match_len) < input_len)
+                    && (p_input[index + match_len] == p_input[index - offset + match_len]))
             {
                 match_len++;
             }
 
             if (match_len > best_len)
             {
-                best_len = match_len;
+                best_len    = match_len;
                 best_offset = offset;
+
                 if (match_len == CODEC_LZSS_REF_LEN_MAX)
                 {
                     /* No longer match exists for this token length. */
@@ -117,12 +122,14 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
         if (best_len >= CODEC_LZSS_REF_LEN_MIN)
         {
             /* Flush the pending literal run before emitting the reference. */
+
             if (literal_len != 0u)
             {
                 if ((out_len + 1u + literal_len) > capacity)
                 {
                     return 0;
                 }
+
                 if ((out_len + 1u + literal_len) >= limit_len)
                 {
                     return codec_lzss_fail(p_output_len);
@@ -139,6 +146,7 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
             {
                 return 0;
             }
+
             if ((out_len + 2u) >= limit_len)
             {
                 return codec_lzss_fail(p_output_len);
@@ -163,6 +171,7 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
                 {
                     return 0;
                 }
+
                 if ((out_len + 1u + literal_len) >= limit_len)
                 {
                     return codec_lzss_fail(p_output_len);
@@ -172,19 +181,21 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
                 out_len++;
                 (void)memcpy(&p_output[out_len], &p_input[literal_start], literal_len);
                 out_len += literal_len;
-                literal_len = 0u;
+                literal_len   = 0u;
                 literal_start = index;
             }
         }
     }
 
     /* Flush the trailing literal run. */
+
     if (literal_len != 0u)
     {
         if ((out_len + 1u + literal_len) > capacity)
         {
             return 0;
         }
+
         if ((out_len + 1u + literal_len) >= limit_len)
         {
             return codec_lzss_fail(p_output_len);
@@ -197,7 +208,9 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* A successful result must be non-empty and strictly shorter than the limit. */
-    if ((out_len == 0u) || (out_len >= limit_len))
+
+    if (    (out_len == 0u)
+         || (out_len >= limit_len))
     {
         return codec_lzss_fail(p_output_len);
     }
@@ -206,28 +219,32 @@ int8_t codec_lzss_encode(uint16_t input_len, const uint8_t *p_input,
     return 1;
 }
 
-int8_t codec_lzss_decode(uint16_t input_len, const uint8_t *p_input,
-                         uint16_t *p_output_len, uint8_t *p_output,
+int8_t codec_lzss_decode(uint16_t input_len,
+                         const uint8_t *p_input,
+                         uint16_t *p_output_len,
+                         uint8_t *p_output,
                          uint16_t limit_len)
 {
-    uint16_t out_len = 0u;
+    uint16_t out_len  = 0u;
     uint16_t capacity = 0u;
-    uint16_t index = 0u;
+    uint16_t index    = 0u;
 
     if (p_output_len == NULL)
     {
         return 0;
     }
-    if ((p_input == NULL) ||
-        (p_output == NULL) ||
-        (input_len == 0u) ||
-        (limit_len == 0u))
+
+    if (    (p_input == NULL)
+         || (p_output == NULL)
+         || (input_len == 0u)
+         || (limit_len == 0u))
     {
         return codec_lzss_fail(p_output_len);
     }
 
-    capacity = *p_output_len;
+    capacity      = *p_output_len;
     *p_output_len = 0u;
+
     if (capacity == 0u)
     {
         return 0;
@@ -247,10 +264,12 @@ int8_t codec_lzss_decode(uint16_t input_len, const uint8_t *p_input,
                 /* The literal payload is truncated. */
                 return codec_lzss_fail(p_output_len);
             }
+
             if ((out_len + literal_len) > capacity)
             {
                 return codec_lzss_fail(p_output_len);
             }
+
             if ((out_len + literal_len) >= limit_len)
             {
                 return codec_lzss_fail(p_output_len);
@@ -263,7 +282,7 @@ int8_t codec_lzss_decode(uint16_t input_len, const uint8_t *p_input,
         else
         {
             const uint16_t ref_len = (uint16_t)(token & 0x7Fu) + CODEC_LZSS_REF_LEN_MIN;
-            uint16_t offset = 0u;
+            uint16_t offset     = 0u;
             uint16_t copy_index = 0u;
 
             if (index >= input_len)
@@ -280,16 +299,19 @@ int8_t codec_lzss_decode(uint16_t input_len, const uint8_t *p_input,
                 /* The offset must stay inside the decoded history. */
                 return codec_lzss_fail(p_output_len);
             }
+
             if ((out_len + ref_len) > capacity)
             {
                 return codec_lzss_fail(p_output_len);
             }
+
             if ((out_len + ref_len) >= limit_len)
             {
                 return codec_lzss_fail(p_output_len);
             }
 
             /* Copy one byte at a time so overlapping references expand correctly. */
+
             for (copy_index = 0u; copy_index < ref_len; ++copy_index)
             {
                 p_output[out_len] = p_output[out_len - offset];
@@ -299,7 +321,9 @@ int8_t codec_lzss_decode(uint16_t input_len, const uint8_t *p_input,
     }
 
     /* A successful result must be non-empty and strictly shorter than the limit. */
-    if ((out_len == 0u) || (out_len >= limit_len))
+
+    if (    (out_len == 0u)
+         || (out_len >= limit_len))
     {
         return codec_lzss_fail(p_output_len);
     }

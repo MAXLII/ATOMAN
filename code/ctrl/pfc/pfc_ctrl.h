@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_ctrl.h
- * @brief   pfc_ctrl control public interface.
+ * @file pfc_ctrl.h
+ * @brief pfc_ctrl control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,16 +34,20 @@
 #include "my_math.h"
 
 #define PFC_CTRL_VOLT_LOOP_FREQ_CUT 20.0f
-#define PFC_CTRL_VOLT_LOOP_PM 60.0f
-#define PFC_CTRL_VOLT_LOOP_W_CUT (2.0f * M_PI * PFC_CTRL_VOLT_LOOP_FREQ_CUT)
-#define PFC_CTRL_VOLT_LOOP_KP (sinf(PFC_CTRL_VOLT_LOOP_PM * M_PI / 180.0f) * PFC_CTRL_VOLT_LOOP_W_CUT * HW_DC_BUS_CAP_VALUE)
-#define PFC_CTRL_VOLT_LOOP_KI (PFC_CTRL_VOLT_LOOP_W_CUT * PFC_CTRL_VOLT_LOOP_KP / tanf(PFC_CTRL_VOLT_LOOP_PM * M_PI / 180.0f))
+#define PFC_CTRL_VOLT_LOOP_PM       60.0f
+#define PFC_CTRL_VOLT_LOOP_W_CUT    (2.0f * M_PI * PFC_CTRL_VOLT_LOOP_FREQ_CUT)
+#define PFC_CTRL_VOLT_LOOP_KP \
+    (sinf(PFC_CTRL_VOLT_LOOP_PM * M_PI / 180.0f) * PFC_CTRL_VOLT_LOOP_W_CUT * HW_DC_BUS_CAP_VALUE)
+#define PFC_CTRL_VOLT_LOOP_KI \
+    (PFC_CTRL_VOLT_LOOP_W_CUT * PFC_CTRL_VOLT_LOOP_KP / tanf(PFC_CTRL_VOLT_LOOP_PM * M_PI / 180.0f))
 
 #define PFC_CTRL_CURR_LOOP_FREQ_CUT 2500.0f
-#define PFC_CTRL_CURR_LOOP_W_CUT (2.0f * M_PI * PFC_CTRL_CURR_LOOP_FREQ_CUT)
-#define PFC_CTRL_CURR_LOOP_PM 60.0f
-#define PFC_CTRL_CURR_LOOP_KP (sinf(PFC_CTRL_CURR_LOOP_PM / 180.0f * M_PI) * PFC_CTRL_CURR_LOOP_W_CUT * HW_AC_SIDE_IND_VALUE)
-#define PFC_CTRL_CURR_LOOP_KI (PFC_CTRL_CURR_LOOP_KP * PFC_CTRL_CURR_LOOP_W_CUT / tanf(PFC_CTRL_CURR_LOOP_PM / 180.0f * M_PI))
+#define PFC_CTRL_CURR_LOOP_W_CUT    (2.0f * M_PI * PFC_CTRL_CURR_LOOP_FREQ_CUT)
+#define PFC_CTRL_CURR_LOOP_PM       60.0f
+#define PFC_CTRL_CURR_LOOP_KP \
+    (sinf(PFC_CTRL_CURR_LOOP_PM / 180.0f * M_PI) * PFC_CTRL_CURR_LOOP_W_CUT * HW_AC_SIDE_IND_VALUE)
+#define PFC_CTRL_CURR_LOOP_KI \
+    (PFC_CTRL_CURR_LOOP_KP * PFC_CTRL_CURR_LOOP_W_CUT / tanf(PFC_CTRL_CURR_LOOP_PM / 180.0f * M_PI))
 
 /*
  * PR inner-current-loop design:
@@ -61,15 +65,20 @@
  *   kr ~= L * wx^2 * cos(phim) / (2 * wc)
  */
 #define PFC_CTRL_CURR_LOOP_PR_FREQ_CUT 2500.0f
-#define PFC_CTRL_CURR_LOOP_PR_W_CUT (2.0f * M_PI * PFC_CTRL_CURR_LOOP_PR_FREQ_CUT)
-#define PFC_CTRL_CURR_LOOP_PR_PM 50.0f
-#define PFC_CTRL_CURR_LOOP_PR_W0 (2.0f * M_PI * 50.0f)
-#define PFC_CTRL_CURR_LOOP_PR_WC (2.0f * M_PI * 2.0f)
-#define PFC_CTRL_CURR_LOOP_PR_KP ((HW_AC_SIDE_IND_VALUE * PFC_CTRL_CURR_LOOP_PR_W_CUT * sinf(PFC_CTRL_CURR_LOOP_PR_PM / 180.0f * M_PI)) - (2.0f * HW_AC_SIDE_IND_VALUE * PFC_CTRL_CURR_LOOP_PR_WC * cosf(PFC_CTRL_CURR_LOOP_PR_PM / 180.0f * M_PI)))
-#define PFC_CTRL_CURR_LOOP_PR_KR ((HW_AC_SIDE_IND_VALUE * PFC_CTRL_CURR_LOOP_PR_W_CUT * PFC_CTRL_CURR_LOOP_PR_W_CUT * cosf(PFC_CTRL_CURR_LOOP_PR_PM / 180.0f * M_PI)) / (2.0f * PFC_CTRL_CURR_LOOP_PR_WC))
+#define PFC_CTRL_CURR_LOOP_PR_W_CUT    (2.0f * M_PI * PFC_CTRL_CURR_LOOP_PR_FREQ_CUT)
+#define PFC_CTRL_CURR_LOOP_PR_PM       50.0f
+#define PFC_CTRL_CURR_LOOP_PR_W0       (2.0f * M_PI * 50.0f)
+#define PFC_CTRL_CURR_LOOP_PR_WC       (2.0f * M_PI * 2.0f)
+#define PFC_CTRL_CURR_LOOP_PR_KP                                                                           \
+    ((HW_AC_SIDE_IND_VALUE * PFC_CTRL_CURR_LOOP_PR_W_CUT * sinf(PFC_CTRL_CURR_LOOP_PR_PM / 180.0f * M_PI)) \
+     - (2.0f * HW_AC_SIDE_IND_VALUE * PFC_CTRL_CURR_LOOP_PR_WC * cosf(PFC_CTRL_CURR_LOOP_PR_PM / 180.0f * M_PI)))
+#define PFC_CTRL_CURR_LOOP_PR_KR                                                       \
+    ((HW_AC_SIDE_IND_VALUE * PFC_CTRL_CURR_LOOP_PR_W_CUT * PFC_CTRL_CURR_LOOP_PR_W_CUT \
+      * cosf(PFC_CTRL_CURR_LOOP_PR_PM / 180.0f * M_PI))                                \
+     / (2.0f * PFC_CTRL_CURR_LOOP_PR_WC))
 
 /* Bus-voltage notch filter design parameters. */
-#define PFC_CTRL_VBUS_NOTCH_CENTER_RADPS (2.0f * M_PI * 100.0f)
+#define PFC_CTRL_VBUS_NOTCH_CENTER_RADPS    (2.0f * M_PI * 100.0f)
 #define PFC_CTRL_VBUS_NOTCH_BANDWIDTH_RADPS (2.0f * M_PI * 10.0f)
 
 /* Outer bus-voltage loop output limits. */
@@ -82,16 +91,16 @@
 
 /* Startup reference preset used before the controller fully takes over. */
 #define PFC_CTRL_STARTUP_VBUS_INIT_BOOST_V (30.0f)
-#define PFC_CTRL_VBUS_OV_RELAX_RATIO (1.05f)
-#define PFC_CTRL_VBUS_OV_HIST_DECAY (0.90f)
+#define PFC_CTRL_VBUS_OV_RELAX_RATIO       (1.05f)
+#define PFC_CTRL_VBUS_OV_HIST_DECAY        (0.90f)
 
 /* Final modulation clamp handled at the PWM command side. */
 #define PFC_CTRL_PWM_DUTY_MIN (-0.98f)
 #define PFC_CTRL_PWM_DUTY_MAX (0.98f)
 
 /* Grid synchronization parameters. */
-#define PFC_CTRL_SOGI_GAIN (1.0f)
-#define PFC_CTRL_FLL_GAIN (150.0f)
+#define PFC_CTRL_SOGI_GAIN             (1.0f)
+#define PFC_CTRL_FLL_GAIN              (150.0f)
 #define PFC_CTRL_GRID_OMEGA_INIT_RADPS (2.0f * M_PI * 50.0f)
 
 /* Current-reference shaping parameter. */

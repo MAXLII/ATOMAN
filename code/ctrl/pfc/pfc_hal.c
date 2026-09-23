@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_hal.c
- * @brief   pfc_hal control module.
+ * @file pfc_hal.c
+ * @brief pfc_hal control module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,7 +39,7 @@ static pfc_ctrl_hal_t pfc_ctrl_hal = {0};
 
 static pfc_fsm_hal_t pfc_fsm_hal = {
     .p_enter_run_func = pfc_hal_enter_run,
-    .p_exit_run_func = pfc_hal_exit_run,
+    .p_exit_run_func  = pfc_hal_exit_run,
 };
 
 static void pfc_hal_enter_run(void)
@@ -82,41 +82,49 @@ uint8_t pfc_hal_is_ready(void)
         PLECS_LOG("pfc_hal not ready: p_v_g is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_v_cap == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_v_cap is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_i_l == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_i_l is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_v_bus == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_v_bus is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_v_rms == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_v_rms is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_main_rly_is_closed == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_main_rly_is_closed is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_set_pwm_func == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_set_pwm_func is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_pwm_enable == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_pwm_enable is null\n");
         is_ready = 0U;
     }
+
     if (pfc_ctrl_hal.p_pwm_disable == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_pwm_disable is null\n");
@@ -128,31 +136,37 @@ uint8_t pfc_hal_is_ready(void)
         PLECS_LOG("pfc_hal not ready: p_vbus_sta is null\n");
         is_ready = 0U;
     }
+
     if (pfc_fsm_hal.p_main_rly_is_closed == NULL)
     {
         PLECS_LOG("pfc_hal not ready: fsm p_main_rly_is_closed is null\n");
         is_ready = 0U;
     }
+
     if (pfc_fsm_hal.p_enter_run_func == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_enter_run_func is null\n");
         is_ready = 0U;
     }
+
     if (pfc_fsm_hal.p_exit_run_func == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_exit_run_func is null\n");
         is_ready = 0U;
     }
+
     if (pfc_fsm_hal.p_main_rly_on_func == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_main_rly_on_func is null\n");
         is_ready = 0U;
     }
+
     if (pfc_fsm_hal.p_main_rly_off_func == NULL)
     {
         PLECS_LOG("pfc_hal not ready: p_main_rly_off_func is null\n");
         is_ready = 0U;
     }
+
     if (is_ready != 0U)
     {
         PLECS_LOG("pfc_hal ready\n");
@@ -223,7 +237,7 @@ void pfc_hal_set_main_rly_is_closed_ptr(uint8_t *p)
         return;
     }
     pfc_ctrl_hal.p_main_rly_is_closed = p;
-    pfc_fsm_hal.p_main_rly_is_closed = p;
+    pfc_fsm_hal.p_main_rly_is_closed  = p;
 }
 
 void pfc_hal_set_pwm_setter(void (*p)(float v_pwm, float v_bus))

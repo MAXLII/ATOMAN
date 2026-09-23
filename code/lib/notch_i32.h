@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    notch_i32.h
- * @brief   Integer notch filter public interface.
+ * @file notch_i32.h
+ * @brief Integer notch filter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe when caller owns the instance and input pointer
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-27
+ * @author Max.Li
+ * @date 2026-06-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

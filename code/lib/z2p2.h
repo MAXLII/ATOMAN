@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    z2p2.h
- * @brief   z2p2 library public interface.
+ * @file z2p2.h
+ * @brief z2p2 library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -62,7 +62,15 @@ typedef struct
     z2p2_output_t output;
 } z2p2_t;
 
-void z2p2_init(z2p2_t *p_str, float k, float fz, float fp, float ts, float up_lmt, float dn_lmt, float *p_ref, float *p_act);
+void z2p2_init(z2p2_t *p_str,
+               float k,
+               float fz,
+               float fp,
+               float ts,
+               float up_lmt,
+               float dn_lmt,
+               float *p_ref,
+               float *p_act);
 
 void z2p2_cal(z2p2_t *p_str);
 

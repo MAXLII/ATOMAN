@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    apf.h
- * @brief   First-order all-pass filter public interface.
+ * @file apf.h
+ * @brief First-order all-pass filter public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Calculation is suitable for ISR use after initialization
  *          - No hardware access
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

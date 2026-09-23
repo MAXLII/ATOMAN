@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    llc_fsm.c
- * @brief   LLC FSM module.
+ * @file llc_fsm.c
+ * @brief LLC FSM module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-10
+ * @author Max.Li
+ * @date 2026-06-10
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,16 +34,16 @@
 
 typedef enum
 {
-    llc_fsm_ev_null = 0,
+    llc_fsm_ev_null    = 0,
     llc_fsm_ev_to_idle = 1,
     llc_fsm_ev_to_startup,
     llc_fsm_ev_to_run,
 } llc_fsm_ev_e;
 
-static uint32_t fsm_ev = llc_fsm_ev_null;
+static uint32_t fsm_ev                = llc_fsm_ev_null;
 static volatile llc_fsm_cmd_e fsm_cmd = llc_fsm_cmd_null;
-static uint32_t startup_cnt = 0U;
-static uint8_t is_ups_trig = 0U;
+static uint32_t startup_cnt           = 0U;
+static uint8_t is_ups_trig            = 0U;
 
 #define p_hal (llc_hal_get_fsm())
 
@@ -66,7 +66,7 @@ void llc_fsm_set_p_hal(llc_fsm_hal_t *p)
 static llc_fsm_cmd_e get_cmd(void)
 {
     llc_fsm_cmd_e temp = fsm_cmd;
-    fsm_cmd = llc_fsm_cmd_null;
+    fsm_cmd            = llc_fsm_cmd_null;
     return temp;
 }
 
@@ -76,9 +76,9 @@ static void init_in(void)
 
 static void init_exe(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         fsm_ev = llc_fsm_ev_to_idle;
     }
@@ -106,8 +106,9 @@ static void idle_exe(void)
 {
     if (get_cmd() == llc_fsm_cmd_start)
     {
-        if ((llc_hal_is_ready() == 0U) || /* 启动前必须完成全部硬件绑定。 */
-            (llc_cfg_is_ready() == 0U))   /* 启动前必须具备完整配置和有效时基。 */
+        if (    (llc_hal_is_ready() == 0U)
+             || /* 启动前必须完成全部硬件绑定。 */
+                (llc_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
         {
             return;
         }
@@ -136,8 +137,8 @@ static void startup_in(void)
 {
     startup_cnt = llc_cfg_get_startup_delay_ticks();
 
-    if ((p_hal != NULL) &&
-        (p_hal->p_enter_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_enter_run_func != NULL))
     {
         p_hal->p_enter_run_func();
     }
@@ -147,8 +148,8 @@ static void startup_exe(void)
 {
     if (get_cmd() == llc_fsm_cmd_stop)
     {
-        if ((p_hal != NULL) &&
-            (p_hal->p_exit_run_func != NULL))
+        if (    (p_hal != NULL)
+             && (p_hal->p_exit_run_func != NULL))
         {
             p_hal->p_exit_run_func();
         }
@@ -159,6 +160,7 @@ static void startup_exe(void)
     }
 
     DN_CNT(startup_cnt);
+
     if (startup_cnt == 0U)
     {
         fsm_ev = llc_fsm_ev_to_run;
@@ -171,6 +173,7 @@ static uint32_t startup_chk(uint32_t event)
     {
         return llc_fsm_sta_run;
     }
+
     if (event == llc_fsm_ev_to_idle)
     {
         return llc_fsm_sta_idle;
@@ -205,8 +208,8 @@ static uint32_t run_chk(uint32_t event)
 
 static void run_out(void)
 {
-    if ((p_hal != NULL) &&
-        (p_hal->p_exit_run_func != NULL))
+    if (    (p_hal != NULL)
+         && (p_hal->p_exit_run_func != NULL))
     {
         p_hal->p_exit_run_func();
     }
@@ -215,8 +218,7 @@ static void run_out(void)
     llc_cfg_publish_building();
 }
 
-REG_FSM(llc_fsm, llc_fsm_sta_init, fsm_ev,
-        FSM_ENTRY(llc_fsm_sta_init, init_in, init_exe, init_chk, init_out),
+REG_FSM(llc_fsm, llc_fsm_sta_init, fsm_ev, FSM_ENTRY(llc_fsm_sta_init, init_in, init_exe, init_chk, init_out),
         FSM_ENTRY(llc_fsm_sta_idle, idle_in, idle_exe, idle_chk, idle_out),
         FSM_ENTRY(llc_fsm_sta_startup, startup_in, startup_exe, startup_chk, startup_out),
         FSM_ENTRY(llc_fsm_sta_run, run_in, run_exe, run_chk, run_out), )
@@ -229,10 +231,12 @@ llc_run_sta_e llc_fsm_get_run_sta(void)
     {
         return llc_run_sta_init;
     }
+
     if (sta == llc_fsm_sta_idle)
     {
         return llc_run_sta_idle;
     }
+
     if (sta == llc_fsm_sta_startup)
     {
         return llc_run_sta_startup;
@@ -243,6 +247,6 @@ llc_run_sta_e llc_fsm_get_run_sta(void)
 uint8_t llc_fsm_get_is_ups_trig(void)
 {
     uint8_t temp = is_ups_trig;
-    is_ups_trig = 0U;
+    is_ups_trig  = 0U;
     return temp;
 }

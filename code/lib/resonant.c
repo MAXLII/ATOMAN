@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    resonant.c
- * @brief   Ideal resonant controller module.
+ * @file resonant.c
+ * @brief Ideal resonant controller module.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Calculation is suitable for ISR use after initialization
  *          - No hardware access
  *
- * @author  Max.Li
- * @date    2026-08-01
+ * @author Max.Li
+ * @date 2026-08-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,17 +36,20 @@ bool resonant_init(resonant_t *p_resonant,
                    float omega_radps,
                    float ts)
 {
-    if ((p_resonant == NULL) || /* Controller instance must be valid. */
-        (gain < 0.0f) ||        /* Gain cannot be negative. */
-        (order <= 0.0f) ||      /* Harmonic order must be positive. */
-        (ts <= 0.0f))           /* Sample time must be positive. */
+    if (    (p_resonant == NULL)
+         || /* Controller instance must be valid. */
+            (gain < 0.0f)
+         || /* Gain cannot be negative. */
+            (order <= 0.0f)
+         || /* Harmonic order must be positive. */
+            (ts <= 0.0f)) /* Sample time must be positive. */
     {
         return false;
     }
 
-    p_resonant->gain = gain;
+    p_resonant->gain  = gain;
     p_resonant->order = order;
-    p_resonant->ts = ts;
+    p_resonant->ts    = ts;
     resonant_reset(p_resonant);
     return resonant_update_frequency(p_resonant, omega_radps);
 }
@@ -54,19 +57,24 @@ bool resonant_init(resonant_t *p_resonant,
 bool resonant_update_frequency(resonant_t *p_resonant, float omega_radps)
 {
     float omega_n = 0.0f; /**< Target resonant angular frequency. */
-    float d0 = 0.0f;      /**< Bilinear-transform denominator. */
+    float d0      = 0.0f; /**< Bilinear-transform denominator. */
 
-    if ((p_resonant == NULL) ||        /* Controller instance must be valid. */
-        (p_resonant->gain < 0.0f) ||   /* Gain cannot be negative. */
-        (p_resonant->order <= 0.0f) || /* Harmonic order must be positive. */
-        (p_resonant->ts <= 0.0f) ||    /* Sample time must be configured. */
-        (omega_radps <= 0.0f))         /* Fundamental frequency must be positive. */
+    if (    (p_resonant == NULL)
+         || /* Controller instance must be valid. */
+            (p_resonant->gain < 0.0f)
+         || /* Gain cannot be negative. */
+            (p_resonant->order <= 0.0f)
+         || /* Harmonic order must be positive. */
+            (p_resonant->ts <= 0.0f)
+         || /* Sample time must be configured. */
+            (omega_radps <= 0.0f)) /* Fundamental frequency must be positive. */
     {
         return false;
     }
 
     omega_n = p_resonant->order * omega_radps;
     d0 = 4.0f + (p_resonant->ts * p_resonant->ts * omega_n * omega_n);
+
     if (d0 == 0.0f)
     {
         return false;
@@ -101,10 +109,8 @@ float resonant_cal(resonant_t *p_resonant, float input)
         return 0.0f;
     }
 
-    output = (p_resonant->b0 * input) +
-             (p_resonant->b2 * p_resonant->x2) -
-             (p_resonant->a1 * p_resonant->y1) -
-             (p_resonant->a2 * p_resonant->y2);
+    output = (p_resonant->b0 * input) + (p_resonant->b2 * p_resonant->x2) - (p_resonant->a1 * p_resonant->y1)
+           - (p_resonant->a2 * p_resonant->y2);
     p_resonant->x2 = p_resonant->x1;
     p_resonant->x1 = input;
     p_resonant->y2 = p_resonant->y1;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    trace.c
- * @brief   Execution trace compatibility adapter implementation.
+ * @file trace.c
+ * @brief Execution trace compatibility adapter implementation.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - The portable implementation is available through trace_core.h
  *          - Protocol handling belongs to trace_service.c
  *
- * @author  Max.Li
- * @date    2026-08-02
+ * @author Max.Li
+ * @date 2026-08-02
  * @version 2.0.0
  *
  * Copyright (c) 2026 Max.Li.

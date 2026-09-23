@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    hys_cmp.h
- * @brief   hys_cmp library public interface.
+ * @file hys_cmp.h
+ * @brief hys_cmp library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -129,8 +129,10 @@ void hys_cmp_init(hys_cmp_t *p_str,
                   float thr_hys,
                   uint32_t time,
                   uint32_t time_hys,
-                  uint8_t (*p_cmp_func)(float val, float thr),
-                  uint8_t (*p_cmp_hys_func)(float val, float thr));
+                  uint8_t (*p_cmp_func)(float val,
+                                        float thr),
+                  uint8_t (*p_cmp_hys_func)(float val,
+                                            float thr));
 
 /* Periodic execution function */
 void hys_cmp_func(hys_cmp_t *p_str);

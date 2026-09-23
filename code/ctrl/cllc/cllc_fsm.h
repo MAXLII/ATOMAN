@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    cllc_fsm.h
- * @brief   Bidirectional CLLC common FSM public interface.
+ * @file cllc_fsm.h
+ * @brief Bidirectional CLLC common FSM public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - Direction cannot change while startup or run is active
  *          - Hard protection disables PWM before the scheduled FSM observes the latch
  *
- * @author  Max.Li
- * @date    2026-07-26
+ * @author Max.Li
+ * @date 2026-07-26
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,12 +36,12 @@
 /** Internal lifecycle states registered with the common section FSM runner. */
 typedef enum
 {
-    CLLC_FSM_STATE_NULL = 0,    /* Invalid sentinel used by the section FSM. */
-    CLLC_FSM_STATE_INIT = 1,    /* Wait for internal HAL lifecycle callbacks. */
-    CLLC_FSM_STATE_IDLE,        /* Permit binding/configuration and wait for start. */
-    CLLC_FSM_STATE_STARTUP,     /* Enable selected direction and wait bridge settling time. */
-    CLLC_FSM_STATE_RUN,         /* Execute the selected controller in the fast ISR. */
-    CLLC_FSM_STATE_FAULT,       /* Hold PWM disabled until an explicit reset command. */
+    CLLC_FSM_STATE_NULL = 0, /* Invalid sentinel used by the section FSM. */
+    CLLC_FSM_STATE_INIT = 1, /* Wait for internal HAL lifecycle callbacks. */
+    CLLC_FSM_STATE_IDLE,     /* Permit binding/configuration and wait for start. */
+    CLLC_FSM_STATE_STARTUP,  /* Enable selected direction and wait bridge settling time. */
+    CLLC_FSM_STATE_RUN,      /* Execute the selected controller in the fast ISR. */
+    CLLC_FSM_STATE_FAULT,    /* Hold PWM disabled until an explicit reset command. */
     CLLC_FSM_STATE_MAX
 } CLLC_FSM_STATE_E;
 

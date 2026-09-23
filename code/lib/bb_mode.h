@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bb_mode.h
- * @brief   bb_mode library public interface.
+ * @file bb_mode.h
+ * @brief bb_mode library public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,10 +31,10 @@
 
 #include <stdint.h>
 
-#define BB_MODE_SSW_TO_BB_MODE_THR (0.95f)
-#define BB_MODE_BB_MODE_TO_SSW_THR (0.85f)
-#define BB_MODE_DUTY_SUM (1.9f)
-#define BB_MODE_DUTY_MAX (0.97f)
+#define BB_MODE_SSW_TO_BB_MODE_THR          (0.95f)
+#define BB_MODE_BB_MODE_TO_SSW_THR          (0.85f)
+#define BB_MODE_DUTY_SUM                    (1.9f)
+#define BB_MODE_DUTY_MAX                    (0.97f)
 #define BB_MODE_BUCK_BOOST_FIXED_BOOST_DUTY (0.93f)
 
 typedef enum

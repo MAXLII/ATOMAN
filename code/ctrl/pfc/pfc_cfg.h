@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    pfc_cfg.h
- * @brief   pfc_cfg control public interface.
+ * @file pfc_cfg.h
+ * @brief pfc_cfg control public interface.
  * @details
  *          This file is part of the digital power framework project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-05-01
+ * @author Max.Li
+ * @date 2026-05-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -31,7 +31,7 @@
 
 #include <stdint.h>
 
-#define PFC_CFG_DEFAULT_VBUS_REF_V (400.0f)    /* unit:V */
+#define PFC_CFG_DEFAULT_VBUS_REF_V    (400.0f) /* unit:V */
 #define PFC_CFG_DEFAULT_VBUS_SLEW_VPS (200.0f) /* unit:V/s */
 
 typedef struct
