@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    gd32e50x_it.h
- * @brief   GD32E507 exception and timer interrupt interface.
+ * @file gd32e50x_it.h
+ * @brief GD32E507 exception and timer interrupt interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - SVC and PendSV handlers are naked context-switch paths
  *          - Timer access is contained in the platform interrupt module
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

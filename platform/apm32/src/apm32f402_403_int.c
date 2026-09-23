@@ -1,5 +1,5 @@
-/* @file    apm32f402_403_int.c
- * @brief   PFC项目中断服务程序文件.
+/* @file apm32f402_403_int.c
+ * @brief PFC项目中断服务程序文件.
  * @details
  *          This file is part of the PFC project.
  *
@@ -14,8 +14,8 @@
  *          - 异常处理进入死循环（系统故障）
  *          - systick_cnt用于系统时间计数
  *
- * @author  Max.Li
- * @date    2024-03-27
+ * @author Max.Li
+ * @date 2024-03-27
  * @version 1.0.0
  */
 
@@ -26,7 +26,7 @@
 /* 系统滴答计数器
  * 用于提供系统时间基准
  * 每10ms递增一次（由SysTick中断驱动） */
-uint32_t systick_cnt = 0;
+uint32_t systick_cnt             = 0;
 volatile uint32_t sys_tick_100us = 0;
 
 /* 获取系统时间（100微秒为单位）

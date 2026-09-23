@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    boot_interrupt.c
- * @brief   Minimal HC32F334 bootloader interrupt implementation.
+ * @file boot_interrupt.c
+ * @brief Minimal HC32F334 bootloader interrupt implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - SysTick is the only interrupt used by the polling bootloader
  *          - Hardware access remains in the platform layer
  *
- * @author  Max.Li
- * @date    2026-07-28
+ * @author Max.Li
+ * @date 2026-07-28
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_platform.h
- * @brief   Zynq-7020 platform control interface.
+ * @file bsp_platform.h
+ * @brief Zynq-7020 platform control interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Reset execution does not return
  *          - Hardware access is isolated in the Zynq BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    syscalls.c
- * @brief   Newlib system-call adaptation for the GD32E507 demo.
+ * @file syscalls.c
+ * @brief Newlib system-call adaptation for the GD32E507 demo.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - System calls are not used from ISR paths
  *          - Hardware access is not required by this adaptation
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -104,10 +104,12 @@ void *_sbrk(ptrdiff_t increment)
     extern char _end[];
     extern char _heap_end[];
     static char *p_heap_current = _end;
-    char *p_previous = p_heap_current;
+    char *p_previous            = p_heap_current;
 
-    if (((increment > 0) && (increment > (_heap_end - p_heap_current))) ||
-        ((increment < 0) && (increment < (_end - p_heap_current))))
+    if (    (    (increment > 0)
+              && (increment > (_heap_end - p_heap_current)))
+         || (    (increment < 0)
+              && (increment < (_end - p_heap_current))))
     {
         errno = ENOMEM;
         return (void *)-1;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_usart.h
- * @brief   GD32E507Z-EVAL USART BSP interface.
+ * @file bsp_usart.h
+ * @brief GD32E507Z-EVAL USART BSP interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - USART0 transmit requests are serialized through a software ring buffer drained by DMA0 channel 3
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,7 +34,7 @@
 
 #define BSP_COMM_LINK_ENABLE_ISO 0u
 #define BSP_COMM_LINK_ENABLE_CAN 0u
-#define BSP_COMM_LINK_ENABLE_PL 0u
+#define BSP_COMM_LINK_ENABLE_PL  0u
 
 extern volatile uint32_t g_bsp_usart_dbg_tx_drop_count;
 extern volatile uint32_t g_bsp_usart_dbg_rx_drop_count;

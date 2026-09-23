@@ -2,9 +2,9 @@
 #include "section.h"
 #include "perf.h"
 
-#define BSP_TIMER_PERF_UNIT (CM_TMRA_1)
-#define BSP_TIMER_PERF_FCG (FCG2_PERIPH_TMRA_1)
-#define BSP_TIMER_PERF_CLK_DIV (TMRA_CLK_DIV64)
+#define BSP_TIMER_PERF_UNIT         (CM_TMRA_1)
+#define BSP_TIMER_PERF_FCG          (FCG2_PERIPH_TMRA_1)
+#define BSP_TIMER_PERF_CLK_DIV      (TMRA_CLK_DIV64)
 #define BSP_TIMER_PERF_PERIOD_VALUE (0xFFFFFFFFUL)
 
 REG_PERF_BASE_CNT((uint32_t *)&BSP_TIMER_PERF_UNIT->CNTER, ((8.0f / 15.0f) * 1.0e-6f))
@@ -18,15 +18,16 @@ int32_t bsp_timer_init(void)
     FCG_Fcg2PeriphClockCmd(BSP_TIMER_PERF_FCG, ENABLE);
 
     (void)TMRA_StructInit(&stcTmraInit);
-    stcTmraInit.u8CountSrc = TMRA_CNT_SRC_SW;
-    stcTmraInit.sw_count.u8ClockDiv = BSP_TIMER_PERF_CLK_DIV;
+    stcTmraInit.u8CountSrc           = TMRA_CNT_SRC_SW;
+    stcTmraInit.sw_count.u8ClockDiv  = BSP_TIMER_PERF_CLK_DIV;
     stcTmraInit.sw_count.u8CountMode = TMRA_MD_SAWTOOTH;
-    stcTmraInit.sw_count.u8CountDir = TMRA_DIR_UP;
-    stcTmraInit.u8CountReload = TMRA_CNT_RELOAD_ENABLE;
-    stcTmraInit.u32PeriodValue = BSP_TIMER_PERF_PERIOD_VALUE;
+    stcTmraInit.sw_count.u8CountDir  = TMRA_DIR_UP;
+    stcTmraInit.u8CountReload        = TMRA_CNT_RELOAD_ENABLE;
+    stcTmraInit.u32PeriodValue       = BSP_TIMER_PERF_PERIOD_VALUE;
 
     TMRA_Stop(BSP_TIMER_PERF_UNIT);
     TMRA_SetCountValue(BSP_TIMER_PERF_UNIT, 0UL);
+
     if (LL_OK != TMRA_Init(BSP_TIMER_PERF_UNIT, &stcTmraInit))
     {
         LL_PERIPH_WP(LL_PERIPH_FCG);

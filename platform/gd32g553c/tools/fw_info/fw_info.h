@@ -39,10 +39,7 @@ typedef struct
 
 // 版本信息组合宏
 #define COMPOSE_VERSION(hard, vendor, release, debug) \
-    (((uint32_t)(hard) << 24) |                       \
-     ((uint32_t)(vendor) << 16) |                     \
-     ((uint32_t)(release) << 8) |                     \
-     ((uint32_t)(debug)))
+    (((uint32_t)(hard) << 24) | ((uint32_t)(vendor) << 16) | ((uint32_t)(release) << 8) | ((uint32_t)(debug)))
 
 // 固件类型枚举
 typedef enum

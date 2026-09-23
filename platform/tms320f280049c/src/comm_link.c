@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    comm_link.c
- * @brief   F280049C SCIA CommLink binding.
+ * @file comm_link.c
+ * @brief F280049C SCIA CommLink binding.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - RX dequeue and protocol parsing run in cooperative task context
  *          - Queue-copy TX releases the shared COMM buffer after the callback returns
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -40,7 +40,8 @@ typedef enum
 
 static void f280049c_scia_tx_callback(char *p_data, int length)
 {
-    if ((p_data == NULL) || (length <= 0))
+    if (    (p_data == NULL)
+         || (length <= 0))
     {
         return;
     }
@@ -53,17 +54,11 @@ static section_link_tx_func_t s_f280049c_scia_tx = {
     .tx_by_dma = f280049c_scia_tx_callback,
 };
 
-DECLARE_COMM_CTX(s_f280049c_scia_comm,
-                 F280049C_COMM_PAYLOAD_SIZE,
-                 HOST_ADDR,
-                 F280049C_SCIA_LINK);
+DECLARE_COMM_CTX(s_f280049c_scia_comm, F280049C_COMM_PAYLOAD_SIZE, HOST_ADDR, F280049C_SCIA_LINK);
 
 static const section_link_handler_item_t s_f280049c_scia_handlers[] = {
     {.func = comm_run, .ctx = (void *)&s_f280049c_scia_comm},
 };
 
-REG_LINK(F280049C_SCIA_LINK,
-         s_f280049c_scia_tx,
-         tms320f280049c_uart_rx_get_byte,
-         s_f280049c_scia_handlers,
+REG_LINK(F280049C_SCIA_LINK, s_f280049c_scia_tx, tms320f280049c_uart_rx_get_byte, s_f280049c_scia_handlers,
          sizeof(s_f280049c_scia_handlers) / sizeof(s_f280049c_scia_handlers[0]))

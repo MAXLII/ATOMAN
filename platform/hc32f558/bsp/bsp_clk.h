@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_clk.h
- * @brief   HC32F558 system clock BSP interface.
+ * @file bsp_clk.h
+ * @brief HC32F558 system clock BSP interface.
  * @details
  *          This file is part of the HC32F558 project.
  *
@@ -15,8 +15,8 @@
  *          - ISR-safe path is not required; initialization runs before scheduler start
  *          - Hardware access is abstracted through the HC32 LL driver
  *
- * @author  Max.Li
- * @date    2026-06-06
+ * @author Max.Li
+ * @date 2026-06-06
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,7 +32,8 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #define BSP_CLK_SYSCLK_HZ (240000000UL)
@@ -43,7 +44,7 @@ extern "C" {
 #define BSP_CLK_PCLK3_HZ  (60000000UL)
 #define BSP_CLK_PCLK4_HZ  (120000000UL)
 
-int32_t bsp_clk_init(void);
+    int32_t bsp_clk_init(void);
 
 #ifdef __cplusplus
 }

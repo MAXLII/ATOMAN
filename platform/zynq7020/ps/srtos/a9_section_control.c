@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    a9_section_control.c
- * @brief   Cortex-A9 control operations for the section SRTOS port.
+ * @file a9_section_control.c
+ * @brief Cortex-A9 control operations for the section SRTOS port.
  * @details
  *          This file is part of the Zynq-7020 platform project.
  *
@@ -16,8 +16,8 @@
  *          - Request publication is ordered with a Cortex-A9 data barrier
  *          - Fatal fault handling intentionally does not return
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,10 +33,10 @@
 
 volatile uint32_t g_a9_section_switch_requested = 0U; /* Task-switch request consumed by the IRQ return path. */
 volatile a9_section_port_debug_t g_a9_section_port_debug = {
-    .yield_request_count = 0U,
+    .yield_request_count      = 0U,
     .irq_switch_request_count = 0U,
-    .idle_wait_count = 0U,
-    .fault_reason = A9_SECTION_PORT_FAULT_NONE,
+    .idle_wait_count          = 0U,
+    .fault_reason             = A9_SECTION_PORT_FAULT_NONE,
 }; /* Cortex-A9 section SRTOS architecture-port diagnostics. */
 
 void a9_section_port_yield(void)
@@ -70,6 +70,7 @@ uint32_t a9_section_port_irq_save(void)
 void a9_section_port_irq_restore(uint32_t saved_cpsr)
 {
     __asm volatile("dsb" ::: "memory");
+
     if ((saved_cpsr & 0x00000080U) == 0U) /* IRQ delivery was enabled before entering the critical section. */
     {
         __asm volatile("cpsie i" ::: "memory", "cc");
@@ -81,8 +82,8 @@ void a9_section_port_wait_for_interrupt(void)
 {
     g_a9_section_port_debug.idle_wait_count++;
     __asm volatile("dsb\n\t"
-                   "wfi"
-                   ::: "memory"); /* Avoid repeated SVC polling while waiting for the next scheduler tick. */
+                   "wfi" ::
+                       : "memory"); /* Avoid repeated SVC polling while waiting for the next scheduler tick. */
 }
 
 void a9_section_port_fault(uint32_t reason)

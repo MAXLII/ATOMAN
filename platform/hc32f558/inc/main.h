@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  platform/hc32f558/inc/main.h
+ * @file platform/hc32f558/inc/main.h
  * @brief This file contains the including files of main routine.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *

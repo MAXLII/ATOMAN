@@ -75,10 +75,11 @@ void *_sbrk(ptrdiff_t increment)
 {
     extern char __HeapBase;
     extern char __HeapLimit;
-    static char *heap_end = &__HeapBase;
+    static char *heap_end   = &__HeapBase;
     char *previous_heap_end = heap_end;
 
-    if ((increment < 0) || (increment > (&__HeapLimit - heap_end)))
+    if (    (increment < 0)
+         || (increment > (&__HeapLimit - heap_end)))
     {
         errno = ENOMEM;
         return (void *)-1;

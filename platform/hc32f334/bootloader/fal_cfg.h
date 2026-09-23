@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    fal_cfg.h
- * @brief   HC32F334 bootloader flash device and partition configuration.
+ * @file fal_cfg.h
+ * @brief HC32F334 bootloader flash device and partition configuration.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Configuration is immutable after link
  *          - Hardware operations remain in HC32 BSP drivers
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,17 +32,17 @@
 
 #include "fal_core.h"
 
-#define HC32F334_EFM_BLOCK_SIZE (4UL * 1024UL)
+#define HC32F334_EFM_BLOCK_SIZE    (4UL * 1024UL)
 #define HC32F334_W25Q64_BLOCK_SIZE (4UL * 1024UL)
 
 #define HC32F334_BOOT_SIZE (4UL * HC32F334_EFM_BLOCK_SIZE)
-#define HC32F334_IAP_SIZE (28UL * HC32F334_EFM_BLOCK_SIZE)
+#define HC32F334_IAP_SIZE  (28UL * HC32F334_EFM_BLOCK_SIZE)
 #define HC32F334_FLASH_END (32UL * HC32F334_EFM_BLOCK_SIZE)
 
 #define HC32F334_STAGING_SIZE (32UL * HC32F334_W25Q64_BLOCK_SIZE)
-#define HC32F334_META_A_SIZE (1UL * HC32F334_W25Q64_BLOCK_SIZE)
-#define HC32F334_META_B_SIZE (1UL * HC32F334_W25Q64_BLOCK_SIZE)
-#define HC32F334_LAYOUT_SIZE (1UL * HC32F334_W25Q64_BLOCK_SIZE)
+#define HC32F334_META_A_SIZE  (1UL * HC32F334_W25Q64_BLOCK_SIZE)
+#define HC32F334_META_B_SIZE  (1UL * HC32F334_W25Q64_BLOCK_SIZE)
+#define HC32F334_LAYOUT_SIZE  (1UL * HC32F334_W25Q64_BLOCK_SIZE)
 
 #ifndef HC32F334_IAP_BASE
 #define HC32F334_IAP_BASE HC32F334_BOOT_SIZE
@@ -50,7 +50,7 @@
 
 typedef enum
 {
-    FAL_DEVICE_HC32_EFM_E = 1U,
+    FAL_DEVICE_HC32_EFM_E    = 1U,
     FAL_DEVICE_HC32_W25Q64_E = 2U
 } hc32f334_fal_device_id_t;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    gd32e50x_it.c
- * @brief   GD32E507 exception and timer interrupt implementation.
+ * @file gd32e50x_it.c
+ * @brief GD32E507 exception and timer interrupt implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - SVC and PendSV are naked handlers with explicit register frames
  *          - TIMER2 flags are cleared before the registered ISR chain runs
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -39,6 +39,7 @@
 static void fault_loop(void)
 {
     __disable_irq();
+
     for (;;)
     {
     }
@@ -71,11 +72,10 @@ void UsageFault_Handler(void)
 
 void GD32_EXCEPTION_NAKED SVC_Handler(void)
 {
-    __ASM volatile(
-        "push {r0, lr}                     \n"
-        "bl section_task_start_request     \n"
-        "pop {r0, r1}                      \n"
-        "bx r1                             \n");
+    __ASM volatile("push {r0, lr}                     \n"
+                   "bl section_task_start_request     \n"
+                   "pop {r0, r1}                      \n"
+                   "bx r1                             \n");
 }
 
 void DebugMon_Handler(void)
@@ -86,61 +86,59 @@ void DebugMon_Handler(void)
 void GD32_EXCEPTION_NAKED PendSV_Handler(void)
 {
 #if defined(__FPU_USED) && (__FPU_USED == 1U)
-    __ASM volatile(
-        "push {r0, lr}                     \n"
-        "bl section_task_scheduler_started \n"
-        "cmp r0, #0                        \n"
-        "beq 1f                            \n"
-        "ldr lr, [sp, #4]                  \n"
-        "tst lr, #0x04                     \n"
-        "beq 2f                            \n"
-        "mrs r0, psp                       \n"
-        "cbz r0, 2f                        \n"
-        "tst lr, #0x10                     \n"
-        "it eq                             \n"
-        "vstmdbeq r0!, {s16-s31}           \n"
-        "stmdb r0!, {r4-r11, lr}           \n"
-        "b 3f                              \n"
-        "2:                                \n"
-        "movs r0, #0                       \n"
-        "3:                                \n"
-        "bl section_task_switch_sp         \n"
-        "cbz r0, 1f                        \n"
-        "ldmia r0!, {r4-r11, lr}           \n"
-        "tst lr, #0x10                     \n"
-        "it eq                             \n"
-        "vldmiaeq r0!, {s16-s31}           \n"
-        "msr psp, r0                       \n"
-        "add sp, sp, #8                    \n"
-        "bx lr                             \n"
-        "1:                                \n"
-        "pop {r0, r1}                      \n"
-        "bx r1                             \n");
+    __ASM volatile("push {r0, lr}                     \n"
+                   "bl section_task_scheduler_started \n"
+                   "cmp r0, #0                        \n"
+                   "beq 1f                            \n"
+                   "ldr lr, [sp, #4]                  \n"
+                   "tst lr, #0x04                     \n"
+                   "beq 2f                            \n"
+                   "mrs r0, psp                       \n"
+                   "cbz r0, 2f                        \n"
+                   "tst lr, #0x10                     \n"
+                   "it eq                             \n"
+                   "vstmdbeq r0!, {s16-s31}           \n"
+                   "stmdb r0!, {r4-r11, lr}           \n"
+                   "b 3f                              \n"
+                   "2:                                \n"
+                   "movs r0, #0                       \n"
+                   "3:                                \n"
+                   "bl section_task_switch_sp         \n"
+                   "cbz r0, 1f                        \n"
+                   "ldmia r0!, {r4-r11, lr}           \n"
+                   "tst lr, #0x10                     \n"
+                   "it eq                             \n"
+                   "vldmiaeq r0!, {s16-s31}           \n"
+                   "msr psp, r0                       \n"
+                   "add sp, sp, #8                    \n"
+                   "bx lr                             \n"
+                   "1:                                \n"
+                   "pop {r0, r1}                      \n"
+                   "bx r1                             \n");
 #else
-    __ASM volatile(
-        "push {r0, lr}                     \n"
-        "bl section_task_scheduler_started \n"
-        "cmp r0, #0                        \n"
-        "beq 1f                            \n"
-        "ldr lr, [sp, #4]                  \n"
-        "tst lr, #0x04                     \n"
-        "beq 2f                            \n"
-        "mrs r0, psp                       \n"
-        "cbz r0, 2f                        \n"
-        "stmdb r0!, {r4-r11, lr}           \n"
-        "b 3f                              \n"
-        "2:                                \n"
-        "movs r0, #0                       \n"
-        "3:                                \n"
-        "bl section_task_switch_sp         \n"
-        "cbz r0, 1f                        \n"
-        "ldmia r0!, {r4-r11, lr}           \n"
-        "msr psp, r0                       \n"
-        "add sp, sp, #8                    \n"
-        "bx lr                             \n"
-        "1:                                \n"
-        "pop {r0, r1}                      \n"
-        "bx r1                             \n");
+    __ASM volatile("push {r0, lr}                     \n"
+                   "bl section_task_scheduler_started \n"
+                   "cmp r0, #0                        \n"
+                   "beq 1f                            \n"
+                   "ldr lr, [sp, #4]                  \n"
+                   "tst lr, #0x04                     \n"
+                   "beq 2f                            \n"
+                   "mrs r0, psp                       \n"
+                   "cbz r0, 2f                        \n"
+                   "stmdb r0!, {r4-r11, lr}           \n"
+                   "b 3f                              \n"
+                   "2:                                \n"
+                   "movs r0, #0                       \n"
+                   "3:                                \n"
+                   "bl section_task_switch_sp         \n"
+                   "cbz r0, 1f                        \n"
+                   "ldmia r0!, {r4-r11, lr}           \n"
+                   "msr psp, r0                       \n"
+                   "add sp, sp, #8                    \n"
+                   "bx lr                             \n"
+                   "1:                                \n"
+                   "pop {r0, r1}                      \n"
+                   "bx r1                             \n");
 #endif
 }
 

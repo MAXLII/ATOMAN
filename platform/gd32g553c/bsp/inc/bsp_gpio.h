@@ -5,60 +5,61 @@
 #include "gd32g5x3_rcu.h"
 
 /*!
-    \brief      set GPIO mode
-    \param[in]  gpio_periph: GPIOx(x = A,B,C,D,E,F,G)
+  \brief set GPIO mode
+  \param[in]  gpio_periph: GPIOx(x = A,B,C,D,E,F,G)
                 only one parameter can be selected which is shown as below:
-      \arg        GPIOx(x = A,B,C,D,E,F,G)
-    \param[in]  mode: gpio pin mode
+  \arg GPIOx(x = A,B,C,D,E,F,G)
+  \param[in]  mode: gpio pin mode
                 only one parameter can be selected which is shown as below:
-      \arg        GPIO_MODE_INPUT: input mode
-      \arg        GPIO_MODE_OUTPUT: output mode
-      \arg        GPIO_MODE_AF: alternate function mode
-      \arg        GPIO_MODE_ANALOG: analog mode
-    \param[in]  pull_up_down: gpio pin with pull-up or pull-down resistor
+  \arg GPIO_MODE_INPUT: input mode
+  \arg GPIO_MODE_OUTPUT: output mode
+  \arg GPIO_MODE_AF: alternate function mode
+  \arg GPIO_MODE_ANALOG: analog mode
+  \param[in]  pull_up_down: gpio pin with pull-up or pull-down resistor
                 only one parameter can be selected which is shown as below:
-      \arg        GPIO_PUPD_NONE: floating mode, no pull-up and pull-down resistors
-      \arg        GPIO_PUPD_PULLUP: with pull-up resistor
-      \arg        GPIO_PUPD_PULLDOWN:with pull-down resistor
-    \param[in]  pin: GPIO pin
+  \arg GPIO_PUPD_NONE: floating mode, no pull-up and pull-down resistors
+  \arg GPIO_PUPD_PULLUP: with pull-up resistor
+  \arg GPIO_PUPD_PULLDOWN:with pull-down resistor
+  \param[in]  pin: GPIO pin
                 one or more parameters can be selected which are shown as below:
-      \arg        GPIO_PIN_x(x=0..15), GPIO_PIN_ALL
-    \param[out] none
-    \retval     none
-*/
+  \arg GPIO_PIN_x(x=0..15), GPIO_PIN_ALL
+  \param[out] none
+  \retval none
+ */
 
 /*!
-    \brief      set GPIO output type and speed
-    \param[in]  gpio_periph: GPIOx(x = A,B,C,D,E,F,G)
+  \brief set GPIO output type and speed
+  \param[in]  gpio_periph: GPIOx(x = A,B,C,D,E,F,G)
                 only one parameter can be selected which is shown as below:
-      \arg        GPIOx(x = A,B,C,D,E,F,G)
-    \param[in]  otype: gpio pin output mode
+  \arg GPIOx(x = A,B,C,D,E,F,G)
+  \param[in]  otype: gpio pin output mode
                 only one parameter can be selected which is shown as below:
-      \arg        GPIO_OTYPE_PP: push pull mode
-      \arg        GPIO_OTYPE_OD: open drain mode
-    \param[in]  speed: gpio pin output max speed
+  \arg GPIO_OTYPE_PP: push pull mode
+  \arg GPIO_OTYPE_OD: open drain mode
+  \param[in]  speed: gpio pin output max speed
                 only one parameter can be selected which is shown as below:
-      \arg        GPIO_OSPEED_12MHZ: output max speed 12MHz
-      \arg        GPIO_OSPEED_60MHZ: output max speed 60MHz
-      \arg        GPIO_OSPEED_85MHZ: output max speed 85MHz
-      \arg        GPIO_OSPEED_100_220MHZ: output max speed 100/220MHz
-    \param[in]  pin: GPIO pin
+  \arg GPIO_OSPEED_12MHZ: output max speed 12MHz
+  \arg GPIO_OSPEED_60MHZ: output max speed 60MHz
+  \arg GPIO_OSPEED_85MHZ: output max speed 85MHz
+  \arg GPIO_OSPEED_100_220MHZ: output max speed 100/220MHz
+  \param[in]  pin: GPIO pin
                 one or more parameters can be selected which are shown as below:
-      \arg        GPIO_PIN_x(x=0..15), GPIO_PIN_ALL
-    \param[out] none
-    \retval     none
-*/
+  \arg GPIO_PIN_x(x=0..15), GPIO_PIN_ALL
+  \param[out] none
+  \retval none
+ */
 
-#define GPIO_REG_PARM(name, gpx, _pin, _mode, _otype, pud, _speed) { \
-    .bsp_gpio_table = name,                                          \
-    .gpio_periph = gpx,                                              \
-    .mode = GPIO_MODE_##_mode,                                       \
-    .pull_up_down = GPIO_PUPD_##pud,                                 \
-    .pin = GPIO_PIN_##_pin,                                          \
-    .speed = GPIO_OSPEED##_speed,                                    \
-    .otype = GPIO_OTYPE_##_otype,                                    \
-    .rcu_periph = RCU_##gpx,                                         \
-}
+#define GPIO_REG_PARM(name, gpx, _pin, _mode, _otype, pud, _speed) \
+    {                                                              \
+        .bsp_gpio_table = name,                                    \
+        .gpio_periph    = gpx,                                     \
+        .mode           = GPIO_MODE_##_mode,                       \
+        .pull_up_down   = GPIO_PUPD_##pud,                         \
+        .pin            = GPIO_PIN_##_pin,                         \
+        .speed          = GPIO_OSPEED##_speed,                     \
+        .otype          = GPIO_OTYPE_##_otype,                     \
+        .rcu_periph     = RCU_##gpx,                               \
+    }
 
 typedef enum
 {

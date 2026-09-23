@@ -5,20 +5,21 @@
 #include "hc32_ll_gpio.h"
 
 #define GPIO_MODE_OUT_PP 0
-#define GPIO_MODE_IPD 1
+#define GPIO_MODE_IPD    1
 #define GPIO_MODE_OUT_OD 2
 // 其他类型定义按实际需要增加
 
 // 以下定义中，speed与rcu_periph用不到，直接给0
-#define GPIO_REG_PARM(_name, _gpx, _pin, _mode, _def_lv) { \
-    .bsp_gpio_table = _name,                               \
-    .gpio_periph = _gpx,                                   \
-    .mode = GPIO_MODE_##_mode,                             \
-    .speed = 0,                                            \
-    .pin = GPIO_PIN_##_pin,                                \
-    .rcu_periph = 0,                                       \
-    .def_lv = _def_lv,                                     \
-}
+#define GPIO_REG_PARM(_name, _gpx, _pin, _mode, _def_lv) \
+    {                                                    \
+        .bsp_gpio_table = _name,                         \
+        .gpio_periph    = _gpx,                          \
+        .mode           = GPIO_MODE_##_mode,             \
+        .speed          = 0,                             \
+        .pin            = GPIO_PIN_##_pin,               \
+        .rcu_periph     = 0,                             \
+        .def_lv         = _def_lv,                       \
+    }
 
 typedef enum
 {

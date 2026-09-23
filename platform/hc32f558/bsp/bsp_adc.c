@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_adc.c
- * @brief   HC32F558 ADC BSP implementation.
+ * @file bsp_adc.c
+ * @brief HC32F558 ADC BSP implementation.
  * @details
  *          This file is part of the HC32F558 AC project.
  *
@@ -16,8 +16,8 @@
  *          - ADC data reads use hardware data registers directly
  *          - Hardware access is abstracted through HC32 LL ADC/AOS/GPIO APIs
  *
- * @author  Max.Li
- * @date    2026-06-06
+ * @author Max.Li
+ * @date 2026-06-06
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -56,7 +56,8 @@ static void bsp_adc_gpio_init(void)
     (void)GPIO_StructInit(&gpio_init);
     gpio_init.u16PinAttr = PIN_ATTR_ANALOG;
 
-    for (i = 0UL; i < (uint32_t)BSP_ADC_SIG_MAX; i++) {
+    for (i = 0UL; i < (uint32_t)BSP_ADC_SIG_MAX; i++)
+    {
         (void)GPIO_Init(bsp_adc_param[i].port, bsp_adc_param[i].pin, &gpio_init);
     }
 
@@ -68,9 +69,9 @@ static void bsp_adc_unit_init(CM_ADC_TypeDef *unit)
     stc_adc_init_t adc_init;
 
     (void)ADC_StructInit(&adc_init);
-    adc_init.u16ScanMode = ADC_MD_SEQA_SINGLESHOT;
+    adc_init.u16ScanMode   = ADC_MD_SEQA_SINGLESHOT;
     adc_init.u16Resolution = ADC_RESOLUTION_12BIT;
-    adc_init.u16DataAlign = ADC_DATAALIGN_RIGHT;
+    adc_init.u16DataAlign  = ADC_DATAALIGN_RIGHT;
     (void)ADC_Init(unit, &adc_init);
 }
 
@@ -78,24 +79,17 @@ static void bsp_adc_channel_init(void)
 {
     uint32_t i;
 
-    for (i = 0UL; i < (uint32_t)BSP_ADC_SIG_MAX; i++) {
-        ADC_ChCmd(bsp_adc_param[i].adc_periph,
-                  ADC_SEQ_A,
-                  bsp_adc_param[i].adc_ch,
-                  ENABLE);
-        ADC_SetSampleTime(bsp_adc_param[i].adc_periph,
-                          bsp_adc_param[i].adc_ch,
-                          bsp_adc_param[i].sample_time);
+    for (i = 0UL; i < (uint32_t)BSP_ADC_SIG_MAX; i++)
+    {
+        ADC_ChCmd(bsp_adc_param[i].adc_periph, ADC_SEQ_A, bsp_adc_param[i].adc_ch, ENABLE);
+        ADC_SetSampleTime(bsp_adc_param[i].adc_periph, bsp_adc_param[i].adc_ch, bsp_adc_param[i].sample_time);
     }
 }
 
 void bsp_adc_init(void)
 {
     LL_PERIPH_WE(LL_PERIPH_FCG);
-    FCG_Fcg3PeriphClockCmd(FCG3_PERIPH_ADC1 |
-                               FCG3_PERIPH_ADC2 |
-                               FCG3_PERIPH_ADC3,
-                           ENABLE);
+    FCG_Fcg3PeriphClockCmd(FCG3_PERIPH_ADC1 | FCG3_PERIPH_ADC2 | FCG3_PERIPH_ADC3, ENABLE);
     FCG_Fcg0PeriphClockCmd(FCG0_PERIPH_AOS, ENABLE);
     LL_PERIPH_WP(LL_PERIPH_FCG);
 

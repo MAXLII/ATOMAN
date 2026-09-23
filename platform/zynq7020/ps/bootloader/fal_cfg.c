@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    fal_cfg.c
- * @brief   Zynq-7020 bootloader FAL device and zone tables.
+ * @file fal_cfg.c
+ * @brief Zynq-7020 bootloader FAL device and zone tables.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Configuration objects are immutable after construction
  *          - QSPI register access remains in the BSP driver
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,60 +36,61 @@
 
 static const fal_zone_cfg_t s_qspi_zones[] = {
     {
-        .zone_id = FAL_ZONE_ZYNQ_BOOT,
-        .size = ZYNQ7020_QSPI_BOOT_SIZE,
+        .zone_id     = FAL_ZONE_ZYNQ_BOOT,
+        .size        = ZYNQ7020_QSPI_BOOT_SIZE,
         .permissions = FAL_ZONE_PERMISSION_READ,
     },
     {
-        .zone_id = FAL_ZONE_ZYNQ_IAP,
-        .size = ZYNQ7020_QSPI_IAP_SIZE,
+        .zone_id     = FAL_ZONE_ZYNQ_IAP,
+        .size        = ZYNQ7020_QSPI_IAP_SIZE,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     },
     {
-        .zone_id = FAL_ZONE_ZYNQ_IAP_STAGING,
-        .size = ZYNQ7020_QSPI_STAGING_SIZE,
+        .zone_id     = FAL_ZONE_ZYNQ_IAP_STAGING,
+        .size        = ZYNQ7020_QSPI_STAGING_SIZE,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     },
     {
-        .zone_id = FAL_ZONE_ZYNQ_UPDATE_META_A,
-        .size = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
+        .zone_id     = FAL_ZONE_ZYNQ_UPDATE_META_A,
+        .size        = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     },
     {
-        .zone_id = FAL_ZONE_ZYNQ_UPDATE_META_B,
-        .size = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
+        .zone_id     = FAL_ZONE_ZYNQ_UPDATE_META_B,
+        .size        = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
         .permissions = FAL_ZONE_PERMISSION_ALL,
     },
     {
-        .zone_id = FAL_ZONE_ZYNQ_LAYOUT,
-        .size = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
+        .zone_id     = FAL_ZONE_ZYNQ_LAYOUT,
+        .size        = ZYNQ7020_QSPI_SMALL_ZONE_SIZE,
         .permissions = FAL_ZONE_PERMISSION_READ,
     },
 };
 
 static const fal_device_cfg_t s_devices[] = {
     {
-        .device_id = FAL_DEVICE_ZYNQ_QSPI,
-        .capacity = BSP_QSPI_FLASH_CAPACITY,
+        .device_id         = FAL_DEVICE_ZYNQ_QSPI,
+        .capacity          = BSP_QSPI_FLASH_CAPACITY,
         .program_page_size = BSP_QSPI_FLASH_PAGE_SIZE,
-        .erase_block_size = BSP_QSPI_FLASH_ERASE_SIZE,
-        .max_read_size = BSP_QSPI_FLASH_MAX_READ,
-        .p_zones = s_qspi_zones,
-        .zone_count = (uint16_t)(sizeof(s_qspi_zones) / sizeof(s_qspi_zones[0])),
-        .ops = {
-            .p_context = NULL,
-            .p_init = bsp_qspi_flash_init,
-            .p_get_state = bsp_qspi_flash_state_get,
-            .p_read = bsp_qspi_flash_read,
-            .p_program = bsp_qspi_flash_program,
-            .p_erase = bsp_qspi_flash_erase,
-            .p_sync = bsp_qspi_flash_sync,
-        },
+        .erase_block_size  = BSP_QSPI_FLASH_ERASE_SIZE,
+        .max_read_size     = BSP_QSPI_FLASH_MAX_READ,
+        .p_zones           = s_qspi_zones,
+        .zone_count        = (uint16_t)(sizeof(s_qspi_zones) / sizeof(s_qspi_zones[0])),
+        .ops =
+            {
+                .p_context   = NULL,
+                .p_init      = bsp_qspi_flash_init,
+                .p_get_state = bsp_qspi_flash_state_get,
+                .p_read      = bsp_qspi_flash_read,
+                .p_program   = bsp_qspi_flash_program,
+                .p_erase     = bsp_qspi_flash_erase,
+                .p_sync      = bsp_qspi_flash_sync,
+            },
     },
 };
 
 const fal_cfg_t g_zynq7020_fal_cfg = {
-    .p_devices = s_devices,
+    .p_devices    = s_devices,
     .device_count = (uint16_t)(sizeof(s_devices) / sizeof(s_devices[0])),
 };
 

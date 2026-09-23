@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    main.c
- * @brief   Zynq-7020 bootloader runtime entry point.
+ * @file main.c
+ * @brief Zynq-7020 bootloader runtime entry point.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Bootloader services initialize through Section registration
  *          - Platform composition remains outside the entry point
  *
- * @author  Max.Li
- * @date    2026-07-29
+ * @author Max.Li
+ * @date 2026-07-29
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -41,14 +41,17 @@ int main(void)
     bsp_timer_init();
     section_port_init();
     status = bsp_usart_init();
+
     if (status == XST_SUCCESS)
     {
         status = bsp_interrupt_init();
     }
+
     if (status == XST_SUCCESS)
     {
         status = bsp_ethernet_init();
     }
+
     if (status != XST_SUCCESS)
     {
         for (;;)

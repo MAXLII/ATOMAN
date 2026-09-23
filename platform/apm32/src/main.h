@@ -1,11 +1,11 @@
 /**
- * @file        main.h
+ * @file main.h
  *
- * @brief       Header for main.c module
+ * @brief Header for main.c module
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -32,14 +32,14 @@ extern "C"
 {
 #endif
 
-/* Includes ***************************************************************/
+/* Includes ************************************************************** */
 #include "apm32f402_403.h"
 
-  /* Exported macro *********************************************************/
+    /* Exported macro ******************************************************** */
 
-  /* Exported typedef *******************************************************/
+    /* Exported typedef ****************************************************** */
 
-  /* Exported function prototypes *******************************************/
+    /* Exported function prototypes ****************************************** */
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_interrupt.h
- * @brief   Zynq-7020 shared GIC service interface.
+ * @file bsp_interrupt.h
+ * @brief Zynq-7020 shared GIC service interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Registration is completed before global IRQ enable
  *          - Hardware access is abstracted through the Xilinx standalone BSP
  *
- * @author  Max.Li
- * @date    2026-07-25
+ * @author Max.Li
+ * @date 2026-07-25
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

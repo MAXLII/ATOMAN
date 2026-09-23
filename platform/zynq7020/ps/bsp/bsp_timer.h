@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_timer.h
- * @brief   Zynq-7020 section time-base interface.
+ * @file bsp_timer.h
+ * @brief Zynq-7020 section time-base interface.
  * @details
  *          This file is part of the base project.
  *
@@ -17,8 +17,8 @@
  *          - The read path is safe in task and IRQ context
  *          - Hardware access is isolated in the Zynq BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  platform/hc32f558/inc/hc32f5xx_conf.h
+ * @file platform/hc32f558/inc/hc32f5xx_conf.h
  * @brief This file contains HC32 Series Device Driver Library usage management.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -40,90 +40,90 @@ extern "C"
 
 /**
  * @brief This is the list of modules to be used in the Device Driver Library.
- * Select the modules you need to use to DDL_ON.
+ *        Select the modules you need to use to DDL_ON.
  * @note LL_ICG_ENABLE must be turned on(DDL_ON) to ensure that the chip works
- * properly.
+ *       properly.
  * @note LL_UTILITY_ENABLE must be turned on(DDL_ON) if using Device Driver
- * Library.
+ *       Library.
  * @note LL_PRINT_ENABLE must be turned on(DDL_ON) if using printf function.
  */
-#define LL_ICG_ENABLE                               (DDL_ON)
-#define LL_UTILITY_ENABLE                           (DDL_ON)
-#define LL_PRINT_ENABLE                             (DDL_OFF)
+#define LL_ICG_ENABLE     (DDL_ON)
+#define LL_UTILITY_ENABLE (DDL_ON)
+#define LL_PRINT_ENABLE   (DDL_OFF)
 
-#define LL_ADC_ENABLE                               (DDL_ON)
-#define LL_AOS_ENABLE                               (DDL_ON)
-#define LL_CLK_ENABLE                               (DDL_ON)
-#define LL_CMP_ENABLE                               (DDL_OFF)
-#define LL_CORDIC_ENABLE                            (DDL_OFF)
-#define LL_CRC_ENABLE                               (DDL_OFF)
-#define LL_CTC_ENABLE                               (DDL_OFF)
-#define LL_DAC_ENABLE                               (DDL_OFF)
-#define LL_DBGC_ENABLE                              (DDL_OFF)
-#define LL_DMA_ENABLE                               (DDL_ON)
-#define LL_DSOGI_PLL_ENABLE                         (DDL_OFF)
-#define LL_EFM_ENABLE                               (DDL_ON)
-#define LL_EMB_ENABLE                               (DDL_OFF)
-#define LL_ERMU_ENABLE                              (DDL_OFF)
-#define LL_EVENT_PORT_ENABLE                        (DDL_OFF)
-#define LL_FCG_ENABLE                               (DDL_ON)
-#define LL_FCM_ENABLE                               (DDL_OFF)
-#define LL_FMAC_ENABLE                              (DDL_OFF)
-#define LL_GPIO_ENABLE                              (DDL_ON)
-#define LL_HASH_ENABLE                              (DDL_OFF)
-#define LL_HRPWM_ENABLE                             (DDL_ON)
-#define LL_I2C_ENABLE                               (DDL_OFF)
-#define LL_INTERRUPTS_ENABLE                        (DDL_ON)
-#define LL_MCAN_ENABLE                              (DDL_OFF)
-#define LL_MPU_ENABLE                               (DDL_OFF)
-#define LL_OTS_ENABLE                               (DDL_OFF)
-#define LL_PID_ENABLE                               (DDL_OFF)
-#define LL_PLA_ENABLE                               (DDL_OFF)
-#define LL_PWC_ENABLE                               (DDL_ON)
-#define LL_RMU_ENABLE                               (DDL_OFF)
-#define LL_SDFM_ENABLE                              (DDL_OFF)
-#define LL_SKE_ENABLE                               (DDL_OFF)
-#define LL_SPI_ENABLE                               (DDL_OFF)
-#define LL_SRAM_ENABLE                              (DDL_ON)
-#define LL_SWDT_ENABLE                              (DDL_OFF)
-#define LL_TMR0_ENABLE                              (DDL_OFF)
-#define LL_TMR6_ENABLE                              (DDL_ON)
-#define LL_TRLPWM_ENABLE                            (DDL_OFF)
-#define LL_TRNG_ENABLE                              (DDL_OFF)
-#define LL_USART_ENABLE                             (DDL_ON)
-#define LL_VREF_ENABLE                              (DDL_OFF)
-#define LL_WDT_ENABLE                               (DDL_OFF)
-#define LL_XBAR_ENABLE                              (DDL_OFF)
+#define LL_ADC_ENABLE        (DDL_ON)
+#define LL_AOS_ENABLE        (DDL_ON)
+#define LL_CLK_ENABLE        (DDL_ON)
+#define LL_CMP_ENABLE        (DDL_OFF)
+#define LL_CORDIC_ENABLE     (DDL_OFF)
+#define LL_CRC_ENABLE        (DDL_OFF)
+#define LL_CTC_ENABLE        (DDL_OFF)
+#define LL_DAC_ENABLE        (DDL_OFF)
+#define LL_DBGC_ENABLE       (DDL_OFF)
+#define LL_DMA_ENABLE        (DDL_ON)
+#define LL_DSOGI_PLL_ENABLE  (DDL_OFF)
+#define LL_EFM_ENABLE        (DDL_ON)
+#define LL_EMB_ENABLE        (DDL_OFF)
+#define LL_ERMU_ENABLE       (DDL_OFF)
+#define LL_EVENT_PORT_ENABLE (DDL_OFF)
+#define LL_FCG_ENABLE        (DDL_ON)
+#define LL_FCM_ENABLE        (DDL_OFF)
+#define LL_FMAC_ENABLE       (DDL_OFF)
+#define LL_GPIO_ENABLE       (DDL_ON)
+#define LL_HASH_ENABLE       (DDL_OFF)
+#define LL_HRPWM_ENABLE      (DDL_ON)
+#define LL_I2C_ENABLE        (DDL_OFF)
+#define LL_INTERRUPTS_ENABLE (DDL_ON)
+#define LL_MCAN_ENABLE       (DDL_OFF)
+#define LL_MPU_ENABLE        (DDL_OFF)
+#define LL_OTS_ENABLE        (DDL_OFF)
+#define LL_PID_ENABLE        (DDL_OFF)
+#define LL_PLA_ENABLE        (DDL_OFF)
+#define LL_PWC_ENABLE        (DDL_ON)
+#define LL_RMU_ENABLE        (DDL_OFF)
+#define LL_SDFM_ENABLE       (DDL_OFF)
+#define LL_SKE_ENABLE        (DDL_OFF)
+#define LL_SPI_ENABLE        (DDL_OFF)
+#define LL_SRAM_ENABLE       (DDL_ON)
+#define LL_SWDT_ENABLE       (DDL_OFF)
+#define LL_TMR0_ENABLE       (DDL_OFF)
+#define LL_TMR6_ENABLE       (DDL_ON)
+#define LL_TRLPWM_ENABLE     (DDL_OFF)
+#define LL_TRNG_ENABLE       (DDL_OFF)
+#define LL_USART_ENABLE      (DDL_ON)
+#define LL_VREF_ENABLE       (DDL_OFF)
+#define LL_WDT_ENABLE        (DDL_OFF)
+#define LL_XBAR_ENABLE       (DDL_OFF)
 
 /**
  * @brief The following is a list of currently supported BSP boards.
  */
-#define BSP_EV_HC32F558_LQFP128                     (1U)
+#define BSP_EV_HC32F558_LQFP128 (1U)
 
 /**
  * @brief The macro BSP_EV_HC32F5XX is used to specify the BSP board currently
- * in use.
- * The value should be set to one of the list of currently supported BSP boards.
- * @note  If there is no supported BSP board or the BSP function is not used,
- * the value needs to be set to 0U.
+ *        in use.
+ *        The value should be set to one of the list of currently supported BSP boards.
+ * @note If there is no supported BSP board or the BSP function is not used,
+ *       the value needs to be set to 0U.
  */
-#define BSP_EV_HC32F5XX                             (0U)
+#define BSP_EV_HC32F5XX (0U)
 
 /**
  * @brief This is the list of BSP components to be used.
- * Select the components you need to use to DDL_ON.
+ *        Select the components you need to use to DDL_ON.
  */
-#define BSP_24CXX_ENABLE                            (DDL_OFF)
-#define BSP_W25QXX_ENABLE                           (DDL_OFF)
-#define BSP_INT_KEY_ENABLE                          (DDL_OFF)
+#define BSP_24CXX_ENABLE   (DDL_OFF)
+#define BSP_W25QXX_ENABLE  (DDL_OFF)
+#define BSP_INT_KEY_ENABLE (DDL_OFF)
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
- * Global function prototypes (definition in C source)
- ******************************************************************************/
+    /*******************************************************************************
+     * Global function prototypes (definition in C source)
+     ******************************************************************************/
 
 #ifdef __cplusplus
 }

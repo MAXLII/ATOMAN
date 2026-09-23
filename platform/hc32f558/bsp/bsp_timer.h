@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_timer.h
- * @brief   HC32F558 timer BSP interface.
+ * @file bsp_timer.h
+ * @brief HC32F558 timer BSP interface.
  * @details
  *          This file is part of the HC32F558 project.
  *
@@ -15,8 +15,8 @@
  *          - ISR-safe reads use the hardware 32-bit counter register
  *          - Hardware access is abstracted through HC32 LL timer APIs
  *
- * @author  Max.Li
- * @date    2026-06-06
+ * @author Max.Li
+ * @date 2026-06-06
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

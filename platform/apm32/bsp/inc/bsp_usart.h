@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_usart.h
- * @brief   APM32 USART BSP interface.
+ * @file bsp_usart.h
+ * @brief APM32 USART BSP interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - RX uses circular DMA buffers; TX uses software ring buffers and DMA
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-01
+ * @author Max.Li
+ * @date 2026-06-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,7 +33,7 @@
 
 #define BSP_COMM_LINK_ENABLE_ISO 1u
 #define BSP_COMM_LINK_ENABLE_CAN 1u
-#define BSP_COMM_LINK_ENABLE_PL 0u
+#define BSP_COMM_LINK_ENABLE_PL  0u
 
 void bsp_usart_dbg_printf(const char *__format, ...);
 void bsp_usart_dbg_tx(char *ptr, int len);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bootloader_fal_adapter.c
- * @brief   HC32F334 FAL-to-Bootloader Flash adapter implementation.
+ * @file bootloader_fal_adapter.c
+ * @brief HC32F334 FAL-to-Bootloader Flash adapter implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Bootloader Core receives only bootloader_flash_ops_t
  *          - Hardware access remains behind FAL configuration
  *
- * @author  Max.Li
- * @date    2026-07-28
+ * @author Max.Li
+ * @date 2026-07-28
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -45,10 +45,10 @@
 #define HC32_BOOTLOADER_DEFAULT_MODE BOOTLOADER_UPGRADE_MODE_STAGED_E
 #endif
 
-static bootloader_t bootloader = {0};
-static bootloader_protocol_t protocol = {0};
+static bootloader_t bootloader                            = {0};
+static bootloader_protocol_t protocol                     = {0};
 static uint8_t packet_buffer[BOOTLOADER_PACKET_DATA_SIZE] = {0};
-static uint8_t copy_buffer[BSP_W25Q64_SECTOR_SIZE] = {0};
+static uint8_t copy_buffer[BSP_W25Q64_SECTOR_SIZE]        = {0};
 
 static uint16_t firmware_crc_init(void)
 {
@@ -72,15 +72,15 @@ static uint16_t packet_crc(const uint8_t *p_data, uint32_t length)
 }
 
 static const bootloader_config_t config = {
-    .expected_module_id = HOST_ADDR,
-    .default_mode = HC32_BOOTLOADER_DEFAULT_MODE,
+    .expected_module_id  = HOST_ADDR,
+    .default_mode        = HC32_BOOTLOADER_DEFAULT_MODE,
     .image_header_length = 8UL,
-    .p_packet_buffer = packet_buffer,
-    .packet_buffer_size = (uint32_t)sizeof(packet_buffer),
-    .p_copy_buffer = copy_buffer,
-    .copy_buffer_size = (uint32_t)sizeof(copy_buffer),
-    .p_crc16_init = firmware_crc_init,
-    .p_crc16_update = firmware_crc_update,
+    .p_packet_buffer     = packet_buffer,
+    .packet_buffer_size  = (uint32_t)sizeof(packet_buffer),
+    .p_copy_buffer       = copy_buffer,
+    .copy_buffer_size    = (uint32_t)sizeof(copy_buffer),
+    .p_crc16_init        = firmware_crc_init,
+    .p_crc16_update      = firmware_crc_update,
 };
 
 static bootloader_result_t result_convert(fal_result_t result)
@@ -141,30 +141,31 @@ static bootloader_result_t fal_zone_get(bootloader_flash_zone_t zone,
     return BOOTLOADER_RESULT_SUCCESS_E;
 }
 
-static bootloader_result_t bootloader_flash_zone_info_get(
-    bootloader_flash_zone_t zone,
-    bootloader_flash_zone_info_t *p_info)
+static bootloader_result_t bootloader_flash_zone_info_get(bootloader_flash_zone_t zone,
+                                                          bootloader_flash_zone_info_t *p_info)
 {
     fal_zone_info_t fal_info = {0};
-    fal_zone_id_t fal_zone = 0u;
-    fal_result_t result = FAL_RESULT_INVALID_ARGUMENT;
+    fal_zone_id_t fal_zone   = 0u;
+    fal_result_t result      = FAL_RESULT_INVALID_ARGUMENT;
 
     if (p_info == NULL)
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
+
     if (fal_zone_get(zone, &fal_zone) != BOOTLOADER_RESULT_SUCCESS_E)
     {
         return BOOTLOADER_RESULT_INVALID_ARGUMENT_E;
     }
     result = fal_zone_info_get(&g_hc32f334_fal, fal_zone, &fal_info);
+
     if (result != FAL_RESULT_SUCCESS)
     {
         return result_convert(result);
     }
-    p_info->size = fal_info.size;
+    p_info->size              = fal_info.size;
     p_info->program_page_size = fal_info.program_page_size;
-    p_info->erase_block_size = fal_info.erase_block_size;
+    p_info->erase_block_size  = fal_info.erase_block_size;
     p_info->readable = ((fal_info.permissions & FAL_ZONE_PERMISSION_READ) != 0u) ? 1u : 0u;
     p_info->writable = ((fal_info.permissions & FAL_ZONE_PERMISSION_WRITE) != 0u) ? 1u : 0u;
     p_info->erasable = ((fal_info.permissions & FAL_ZONE_PERMISSION_ERASE) != 0u) ? 1u : 0u;
@@ -224,11 +225,11 @@ static bootloader_result_t bootloader_flash_result_get(void)
 
 static const bootloader_flash_ops_t flash_ops = {
     .p_zone_info_get = bootloader_flash_zone_info_get,
-    .p_read = bootloader_flash_read,
-    .p_write = bootloader_flash_write,
-    .p_erase = bootloader_flash_erase,
-    .p_is_busy = bootloader_flash_is_busy,
-    .p_result_get = bootloader_flash_result_get,
+    .p_read          = bootloader_flash_read,
+    .p_write         = bootloader_flash_write,
+    .p_erase         = bootloader_flash_erase,
+    .p_is_busy       = bootloader_flash_is_busy,
+    .p_result_get    = bootloader_flash_result_get,
 };
 
 static void bootloader_halt(void)
@@ -241,29 +242,31 @@ static void bootloader_halt(void)
 static void bootloader_fal_adapter_init(void)
 {
     bootloader_platform_ops_t platform_ops = hc32_boot_platform_ops_make();
-    fal_state_t fal_state = fal_state_get(&g_hc32f334_fal);
+    fal_state_t fal_state                  = fal_state_get(&g_hc32f334_fal);
 
-    if ((LL_OK != hc32_boot_uart_init()) ||
-        (fal_state == FAL_STATE_UNINITIALIZED) ||
-        (fal_state == FAL_STATE_ERROR) ||
-        (fal_state == FAL_STATE_STOPPED))
+    if (    (LL_OK != hc32_boot_uart_init())
+         || (fal_state == FAL_STATE_UNINITIALIZED)
+         || (fal_state == FAL_STATE_ERROR)
+         || (fal_state == FAL_STATE_STOPPED))
     {
         bootloader_halt();
     }
+
     if (BOOTLOADER_RESULT_SUCCESS_E != bootloader_flash_ops_init(&bootloader, &flash_ops))
     {
         bootloader_halt();
     }
-    if (BOOTLOADER_RESULT_SUCCESS_E !=
-        bootloader_init(&bootloader, &config, &platform_ops))
+
+    if (BOOTLOADER_RESULT_SUCCESS_E != bootloader_init(&bootloader, &config, &platform_ops))
     {
         bootloader_halt();
     }
-    if (BOOTLOADER_RESULT_SUCCESS_E !=
-        bootloader_protocol_init(&protocol, &bootloader, packet_crc, config.default_mode))
+
+    if (BOOTLOADER_RESULT_SUCCESS_E != bootloader_protocol_init(&protocol, &bootloader, packet_crc, config.default_mode))
     {
         bootloader_halt();
     }
+
     if (BOOTLOADER_RESULT_SUCCESS_E != bootloader_protocol_mount(&protocol))
     {
         bootloader_halt();

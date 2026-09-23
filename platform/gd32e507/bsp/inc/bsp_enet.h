@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_enet.h
- * @brief   GD32E507Z-EVAL Ethernet BSP interface.
+ * @file bsp_enet.h
+ * @brief GD32E507Z-EVAL Ethernet BSP interface.
  * @details
  *          This file is part of the base project.
  *
@@ -17,8 +17,8 @@
  *          - The ENET path is polled from background context
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -62,9 +62,9 @@ uint8_t bsp_enet_rx_frame_pending(void);
  * @return BSP discovery handling result; the caller always retains p_packet ownership.
  */
 bsp_enet_discovery_result_t bsp_enet_discovery_udp_process(struct udp_pcb *p_endpoint,
-                                                            const struct pbuf *p_packet,
-                                                            const struct ip4_addr *p_local_address,
-                                                            const struct ip4_addr *p_remote_address,
-                                                            uint16_t remote_port);
+                                                           const struct pbuf *p_packet,
+                                                           const struct ip4_addr *p_local_address,
+                                                           const struct ip4_addr *p_remote_address,
+                                                           uint16_t remote_port);
 
 #endif /* BSP_ENET_H */

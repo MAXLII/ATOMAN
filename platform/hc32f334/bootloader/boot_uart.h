@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    boot_uart.h
- * @brief   Minimal HC32F334 bootloader USART2 interface.
+ * @file boot_uart.h
+ * @brief Minimal HC32F334 bootloader USART2 interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Foreground polling only; no UART ISR ownership
  *          - Hardware access is confined to the HC32 bootloader platform
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

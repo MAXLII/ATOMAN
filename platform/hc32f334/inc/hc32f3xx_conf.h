@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  template/source/hc32f3xx_conf.h
+ * @file template/source/hc32f3xx_conf.h
  * @brief This file contains HC32 Series Device Driver Library usage management.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -40,80 +40,80 @@ extern "C"
 
 /**
  * @brief This is the list of modules to be used in the Device Driver Library.
- * Select the modules you need to use to DDL_ON.
+ *        Select the modules you need to use to DDL_ON.
  * @note LL_ICG_ENABLE must be turned on(DDL_ON) to ensure that the chip works
- * properly.
+ *       properly.
  * @note LL_UTILITY_ENABLE must be turned on(DDL_ON) if using Device Driver
- * Library.
+ *       Library.
  * @note LL_PRINT_ENABLE must be turned on(DDL_ON) if using printf function.
  */
-#define LL_ICG_ENABLE                               (DDL_ON)
-#define LL_UTILITY_ENABLE                           (DDL_ON)
-#define LL_PRINT_ENABLE                             (DDL_OFF)
+#define LL_ICG_ENABLE     (DDL_ON)
+#define LL_UTILITY_ENABLE (DDL_ON)
+#define LL_PRINT_ENABLE   (DDL_OFF)
 
-#define LL_ADC_ENABLE                               (DDL_ON)
-#define LL_AOS_ENABLE                               (DDL_ON)
-#define LL_CLK_ENABLE                               (DDL_ON)
-#define LL_CMP_ENABLE                               (DDL_OFF)
-#define LL_CRC_ENABLE                               (DDL_OFF)
-#define LL_CTC_ENABLE                               (DDL_OFF)
-#define LL_DAC_ENABLE                               (DDL_OFF)
-#define LL_DBGC_ENABLE                              (DDL_OFF)
-#define LL_DMA_ENABLE                               (DDL_ON)
-#define LL_EFM_ENABLE                               (DDL_ON)
-#define LL_EMB_ENABLE                               (DDL_OFF)
-#define LL_EVENT_PORT_ENABLE                        (DDL_OFF)
-#define LL_FCG_ENABLE                               (DDL_ON)
-#define LL_FCM_ENABLE                               (DDL_ON)
-#define LL_GPIO_ENABLE                              (DDL_ON)
-#define LL_HRPWM_ENABLE                             (DDL_ON)
-#define LL_I2C_ENABLE                               (DDL_OFF)
-#define LL_INTERRUPTS_ENABLE                        (DDL_ON)
-#define LL_MCAN_ENABLE                              (DDL_ON)
-#define LL_MPU_ENABLE                               (DDL_OFF)
-#define LL_PLA_ENABLE                               (DDL_OFF)
-#define LL_PWC_ENABLE                               (DDL_ON)
-#define LL_RMU_ENABLE                               (DDL_OFF)
-#define LL_RTC_ENABLE                               (DDL_OFF)
-#define LL_SPI_ENABLE                               (DDL_ON)
-#define LL_SRAM_ENABLE                              (DDL_OFF)
-#define LL_SWDT_ENABLE                              (DDL_OFF)
-#define LL_TMR0_ENABLE                              (DDL_OFF)
-#define LL_TMR4_ENABLE                              (DDL_OFF)
-#define LL_TMR6_ENABLE                              (DDL_OFF)
-#define LL_TMRA_ENABLE                              (DDL_ON)
-#define LL_USART_ENABLE                             (DDL_ON)
-#define LL_WDT_ENABLE                               (DDL_OFF)
+#define LL_ADC_ENABLE        (DDL_ON)
+#define LL_AOS_ENABLE        (DDL_ON)
+#define LL_CLK_ENABLE        (DDL_ON)
+#define LL_CMP_ENABLE        (DDL_OFF)
+#define LL_CRC_ENABLE        (DDL_OFF)
+#define LL_CTC_ENABLE        (DDL_OFF)
+#define LL_DAC_ENABLE        (DDL_OFF)
+#define LL_DBGC_ENABLE       (DDL_OFF)
+#define LL_DMA_ENABLE        (DDL_ON)
+#define LL_EFM_ENABLE        (DDL_ON)
+#define LL_EMB_ENABLE        (DDL_OFF)
+#define LL_EVENT_PORT_ENABLE (DDL_OFF)
+#define LL_FCG_ENABLE        (DDL_ON)
+#define LL_FCM_ENABLE        (DDL_ON)
+#define LL_GPIO_ENABLE       (DDL_ON)
+#define LL_HRPWM_ENABLE      (DDL_ON)
+#define LL_I2C_ENABLE        (DDL_OFF)
+#define LL_INTERRUPTS_ENABLE (DDL_ON)
+#define LL_MCAN_ENABLE       (DDL_ON)
+#define LL_MPU_ENABLE        (DDL_OFF)
+#define LL_PLA_ENABLE        (DDL_OFF)
+#define LL_PWC_ENABLE        (DDL_ON)
+#define LL_RMU_ENABLE        (DDL_OFF)
+#define LL_RTC_ENABLE        (DDL_OFF)
+#define LL_SPI_ENABLE        (DDL_ON)
+#define LL_SRAM_ENABLE       (DDL_OFF)
+#define LL_SWDT_ENABLE       (DDL_OFF)
+#define LL_TMR0_ENABLE       (DDL_OFF)
+#define LL_TMR4_ENABLE       (DDL_OFF)
+#define LL_TMR6_ENABLE       (DDL_OFF)
+#define LL_TMRA_ENABLE       (DDL_ON)
+#define LL_USART_ENABLE      (DDL_ON)
+#define LL_WDT_ENABLE        (DDL_OFF)
 
 /**
  * @brief The following is a list of currently supported BSP boards.
  */
-#define BSP_EV_HC32F334_LQFP64                      (1U)
+#define BSP_EV_HC32F334_LQFP64 (1U)
 
 /**
  * @brief The macro BSP_EV_HC32F3XX is used to specify the BSP board currently
- * in use.
- * The value should be set to one of the list of currently supported BSP boards.
- * @note  If there is no supported BSP board or the BSP function is not used,
- * the value needs to be set to 0U.
+ *        in use.
+ *        The value should be set to one of the list of currently supported BSP boards.
+ * @note If there is no supported BSP board or the BSP function is not used,
+ *       the value needs to be set to 0U.
  */
-#define BSP_EV_HC32F3XX                             (BSP_EV_HC32F334_LQFP64)
+#define BSP_EV_HC32F3XX (BSP_EV_HC32F334_LQFP64)
 
 /**
  * @brief This is the list of BSP components to be used.
- * Select the components you need to use to DDL_ON.
+ *        Select the components you need to use to DDL_ON.
  */
-#define BSP_24CXX_ENABLE                            (DDL_OFF)
-#define BSP_W25QXX_ENABLE                           (DDL_OFF)
-#define BSP_INT_KEY_ENABLE                          (DDL_OFF)
+#define BSP_24CXX_ENABLE   (DDL_OFF)
+#define BSP_W25QXX_ENABLE  (DDL_OFF)
+#define BSP_INT_KEY_ENABLE (DDL_OFF)
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
- * Global function prototypes (definition in C source)
- ******************************************************************************/
+    /*******************************************************************************
+     * Global function prototypes (definition in C source)
+     ******************************************************************************/
 
 #ifdef __cplusplus
 }

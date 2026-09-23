@@ -1,5 +1,5 @@
-/* @file    syscalls.c
- * @brief   Newlib系统调用实现文件.
+/* @file syscalls.c
+ * @brief Newlib系统调用实现文件.
  * @details
  *          This file is part of the PFC project.
  *
@@ -14,8 +14,8 @@
  *          - 所有文件操作返回失败或固定值（嵌入式环境无真实文件系统）
  *          - _exit实现为死循环（禁止程序退出）
  *
- * @author  Max.Li
- * @date    2024-03-27
+ * @author Max.Li
+ * @date 2024-03-27
  * @version 1.0.0
  */
 
@@ -69,7 +69,10 @@ int _isatty_r(struct _reent *ptr, int fd)
  * whence: 起始位置（未使用）
  *
  * 返回：0（总是返回0，嵌入式环境无真实文件系统） */
-off_t _lseek_r(struct _reent *ptr, int fd, off_t pos, int whence)
+off_t _lseek_r(struct _reent *ptr,
+               int fd,
+               off_t pos,
+               int whence)
 {
     (void)ptr;
     (void)fd;
@@ -85,7 +88,10 @@ off_t _lseek_r(struct _reent *ptr, int fd, off_t pos, int whence)
  * cnt: 要读取的字节数（未使用）
  *
  * 返回：0（总是返回0，表示读取0字节） */
-ssize_t _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
+ssize_t _read_r(struct _reent *ptr,
+                int fd,
+                void *buf,
+                size_t cnt)
 {
     (void)ptr;
     (void)fd;
@@ -137,6 +143,7 @@ int _stat_r(struct _reent *ptr, const char *file, struct stat *pstat)
 void _exit(int status)
 {
     (void)status;
+
     while (1)
     {
         __asm__("nop");

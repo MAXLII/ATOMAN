@@ -11,7 +11,7 @@ const bsp_gpio_parm_t bsp_gpio_parm_table[] = {
 void bsp_gpio_init(void)
 {
     uint8_t gpio_num = 0;
-    gpio_num = sizeof(bsp_gpio_parm_table) / sizeof(bsp_gpio_parm_t);
+    gpio_num         = sizeof(bsp_gpio_parm_table) / sizeof(bsp_gpio_parm_t);
     uint8_t i;
 
     for (i = 0; i < gpio_num; i++)
@@ -21,6 +21,7 @@ void bsp_gpio_init(void)
                       bsp_gpio_parm_table[i].mode,
                       bsp_gpio_parm_table[i].pull_up_down,
                       bsp_gpio_parm_table[i].pin);
+
         if (bsp_gpio_parm_table[i].mode == GPIO_MODE_OUTPUT)
         {
             gpio_output_options_set(bsp_gpio_parm_table[i].gpio_periph,

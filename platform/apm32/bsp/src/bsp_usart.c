@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_usart.c
- * @brief   APM32 USART BSP module.
+ * @file bsp_usart.c
+ * @brief APM32 USART BSP module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - RX and TX paths are protected for task/ISR concurrency with PRIMASK
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-01
+ * @author Max.Li
+ * @date 2026-06-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -40,41 +40,41 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BSP_USART_DBG_UNIT (UART4)
-#define BSP_USART_DBG_CLK_PERIPH (RCM_APB1_PERIPH_UART4)
-#define BSP_USART_DBG_CLK_APB1 (1U)
+#define BSP_USART_DBG_UNIT           (UART4)
+#define BSP_USART_DBG_CLK_PERIPH     (RCM_APB1_PERIPH_UART4)
+#define BSP_USART_DBG_CLK_APB1       (1U)
 #define BSP_USART_DBG_TX_GPIO_PERIPH (RCM_APB2_PERIPH_GPIOC)
 #define BSP_USART_DBG_RX_GPIO_PERIPH (RCM_APB2_PERIPH_GPIOC)
-#define BSP_USART_DBG_TX_PORT (GPIOC)
-#define BSP_USART_DBG_TX_PIN (GPIO_PIN_10)
-#define BSP_USART_DBG_RX_PORT (GPIOC)
-#define BSP_USART_DBG_RX_PIN (GPIO_PIN_11)
-#define BSP_USART_DBG_BAUDRATE (115200UL)
-#define BSP_USART_DBG_RX_DMA_CH (DMA2_Channel3)
-#define BSP_USART_DBG_TX_DMA_CH (DMA2_Channel5)
-#define BSP_USART_DBG_RX_DMA_FLAG_G (DMA2_FLAG_GINT3)
-#define BSP_USART_DBG_TX_DMA_FLAG_G (DMA2_FLAG_GINT5)
+#define BSP_USART_DBG_TX_PORT        (GPIOC)
+#define BSP_USART_DBG_TX_PIN         (GPIO_PIN_10)
+#define BSP_USART_DBG_RX_PORT        (GPIOC)
+#define BSP_USART_DBG_RX_PIN         (GPIO_PIN_11)
+#define BSP_USART_DBG_BAUDRATE       (115200UL)
+#define BSP_USART_DBG_RX_DMA_CH      (DMA2_Channel3)
+#define BSP_USART_DBG_TX_DMA_CH      (DMA2_Channel5)
+#define BSP_USART_DBG_RX_DMA_FLAG_G  (DMA2_FLAG_GINT3)
+#define BSP_USART_DBG_TX_DMA_FLAG_G  (DMA2_FLAG_GINT5)
 #define BSP_USART_DBG_TX_DMA_FLAG_TC (DMA2_FLAG_TC5)
 
-#define BSP_USART_ISO_UNIT (USART1)
-#define BSP_USART_ISO_CLK_PERIPH (RCM_APB2_PERIPH_USART1)
-#define BSP_USART_ISO_CLK_APB1 (0U)
+#define BSP_USART_ISO_UNIT           (USART1)
+#define BSP_USART_ISO_CLK_PERIPH     (RCM_APB2_PERIPH_USART1)
+#define BSP_USART_ISO_CLK_APB1       (0U)
 #define BSP_USART_ISO_TX_GPIO_PERIPH (RCM_APB2_PERIPH_GPIOB)
 #define BSP_USART_ISO_RX_GPIO_PERIPH (RCM_APB2_PERIPH_GPIOB)
-#define BSP_USART_ISO_TX_PORT (GPIOB)
-#define BSP_USART_ISO_TX_PIN (GPIO_PIN_6)
-#define BSP_USART_ISO_RX_PORT (GPIOB)
-#define BSP_USART_ISO_RX_PIN (GPIO_PIN_7)
-#define BSP_USART_ISO_BAUDRATE (38400UL)
-#define BSP_USART_ISO_RX_DMA_CH (DMA1_Channel5)
-#define BSP_USART_ISO_TX_DMA_CH (DMA1_Channel4)
-#define BSP_USART_ISO_RX_DMA_FLAG_G (DMA1_FLAG_GINT5)
-#define BSP_USART_ISO_TX_DMA_FLAG_G (DMA1_FLAG_GINT4)
+#define BSP_USART_ISO_TX_PORT        (GPIOB)
+#define BSP_USART_ISO_TX_PIN         (GPIO_PIN_6)
+#define BSP_USART_ISO_RX_PORT        (GPIOB)
+#define BSP_USART_ISO_RX_PIN         (GPIO_PIN_7)
+#define BSP_USART_ISO_BAUDRATE       (38400UL)
+#define BSP_USART_ISO_RX_DMA_CH      (DMA1_Channel5)
+#define BSP_USART_ISO_TX_DMA_CH      (DMA1_Channel4)
+#define BSP_USART_ISO_RX_DMA_FLAG_G  (DMA1_FLAG_GINT5)
+#define BSP_USART_ISO_TX_DMA_FLAG_G  (DMA1_FLAG_GINT4)
 #define BSP_USART_ISO_TX_DMA_FLAG_TC (DMA1_FLAG_TC4)
 
-#define BSP_USART_RX_DMA_BUF_SIZE (512U)
-#define BSP_USART_TX_RING_BUF_SIZE (1024U)
-#define BSP_USART_TX_DMA_TIMEOUT (0x00FFFFFFUL)
+#define BSP_USART_RX_DMA_BUF_SIZE     (512U)
+#define BSP_USART_TX_RING_BUF_SIZE    (1024U)
+#define BSP_USART_TX_DMA_TIMEOUT      (0x00FFFFFFUL)
 #define BSP_USART_DBG_PRINTF_BUF_SIZE (256U)
 #define BSP_USART_ISO_PRINTF_BUF_SIZE (256U)
 
@@ -116,47 +116,47 @@ static bsp_usart_port_ctx_t s_bsp_usart_dbg_ctx = {0};
 static bsp_usart_port_ctx_t s_bsp_usart_iso_ctx = {0};
 
 static const bsp_usart_port_cfg_t s_bsp_usart_dbg_cfg = {
-    .unit = BSP_USART_DBG_UNIT,
+    .unit             = BSP_USART_DBG_UNIT,
     .usart_clk_periph = BSP_USART_DBG_CLK_PERIPH,
-    .usart_clk_apb1 = BSP_USART_DBG_CLK_APB1,
-    .tx_gpio_periph = BSP_USART_DBG_TX_GPIO_PERIPH,
-    .rx_gpio_periph = BSP_USART_DBG_RX_GPIO_PERIPH,
-    .tx_port = BSP_USART_DBG_TX_PORT,
-    .tx_pin = BSP_USART_DBG_TX_PIN,
-    .rx_port = BSP_USART_DBG_RX_PORT,
-    .rx_pin = BSP_USART_DBG_RX_PIN,
-    .baudrate = BSP_USART_DBG_BAUDRATE,
-    .rx_dma_ch = BSP_USART_DBG_RX_DMA_CH,
-    .tx_dma_ch = BSP_USART_DBG_TX_DMA_CH,
-    .rx_dma_flag_g = BSP_USART_DBG_RX_DMA_FLAG_G,
-    .tx_dma_flag_g = BSP_USART_DBG_TX_DMA_FLAG_G,
-    .tx_dma_flag_tc = BSP_USART_DBG_TX_DMA_FLAG_TC,
-    .rx_dma_buf_size = BSP_USART_RX_DMA_BUF_SIZE,
+    .usart_clk_apb1   = BSP_USART_DBG_CLK_APB1,
+    .tx_gpio_periph   = BSP_USART_DBG_TX_GPIO_PERIPH,
+    .rx_gpio_periph   = BSP_USART_DBG_RX_GPIO_PERIPH,
+    .tx_port          = BSP_USART_DBG_TX_PORT,
+    .tx_pin           = BSP_USART_DBG_TX_PIN,
+    .rx_port          = BSP_USART_DBG_RX_PORT,
+    .rx_pin           = BSP_USART_DBG_RX_PIN,
+    .baudrate         = BSP_USART_DBG_BAUDRATE,
+    .rx_dma_ch        = BSP_USART_DBG_RX_DMA_CH,
+    .tx_dma_ch        = BSP_USART_DBG_TX_DMA_CH,
+    .rx_dma_flag_g    = BSP_USART_DBG_RX_DMA_FLAG_G,
+    .tx_dma_flag_g    = BSP_USART_DBG_TX_DMA_FLAG_G,
+    .tx_dma_flag_tc   = BSP_USART_DBG_TX_DMA_FLAG_TC,
+    .rx_dma_buf_size  = BSP_USART_RX_DMA_BUF_SIZE,
     .tx_ring_buf_size = BSP_USART_TX_RING_BUF_SIZE,
-    .tx_dma_timeout = BSP_USART_TX_DMA_TIMEOUT,
-    .remap_usart1 = 0U,
+    .tx_dma_timeout   = BSP_USART_TX_DMA_TIMEOUT,
+    .remap_usart1     = 0U,
 };
 
 static const bsp_usart_port_cfg_t s_bsp_usart_iso_cfg = {
-    .unit = BSP_USART_ISO_UNIT,
+    .unit             = BSP_USART_ISO_UNIT,
     .usart_clk_periph = BSP_USART_ISO_CLK_PERIPH,
-    .usart_clk_apb1 = BSP_USART_ISO_CLK_APB1,
-    .tx_gpio_periph = BSP_USART_ISO_TX_GPIO_PERIPH,
-    .rx_gpio_periph = BSP_USART_ISO_RX_GPIO_PERIPH,
-    .tx_port = BSP_USART_ISO_TX_PORT,
-    .tx_pin = BSP_USART_ISO_TX_PIN,
-    .rx_port = BSP_USART_ISO_RX_PORT,
-    .rx_pin = BSP_USART_ISO_RX_PIN,
-    .baudrate = BSP_USART_ISO_BAUDRATE,
-    .rx_dma_ch = BSP_USART_ISO_RX_DMA_CH,
-    .tx_dma_ch = BSP_USART_ISO_TX_DMA_CH,
-    .rx_dma_flag_g = BSP_USART_ISO_RX_DMA_FLAG_G,
-    .tx_dma_flag_g = BSP_USART_ISO_TX_DMA_FLAG_G,
-    .tx_dma_flag_tc = BSP_USART_ISO_TX_DMA_FLAG_TC,
-    .rx_dma_buf_size = BSP_USART_RX_DMA_BUF_SIZE,
+    .usart_clk_apb1   = BSP_USART_ISO_CLK_APB1,
+    .tx_gpio_periph   = BSP_USART_ISO_TX_GPIO_PERIPH,
+    .rx_gpio_periph   = BSP_USART_ISO_RX_GPIO_PERIPH,
+    .tx_port          = BSP_USART_ISO_TX_PORT,
+    .tx_pin           = BSP_USART_ISO_TX_PIN,
+    .rx_port          = BSP_USART_ISO_RX_PORT,
+    .rx_pin           = BSP_USART_ISO_RX_PIN,
+    .baudrate         = BSP_USART_ISO_BAUDRATE,
+    .rx_dma_ch        = BSP_USART_ISO_RX_DMA_CH,
+    .tx_dma_ch        = BSP_USART_ISO_TX_DMA_CH,
+    .rx_dma_flag_g    = BSP_USART_ISO_RX_DMA_FLAG_G,
+    .tx_dma_flag_g    = BSP_USART_ISO_TX_DMA_FLAG_G,
+    .tx_dma_flag_tc   = BSP_USART_ISO_TX_DMA_FLAG_TC,
+    .rx_dma_buf_size  = BSP_USART_RX_DMA_BUF_SIZE,
     .tx_ring_buf_size = BSP_USART_TX_RING_BUF_SIZE,
-    .tx_dma_timeout = BSP_USART_TX_DMA_TIMEOUT,
-    .remap_usart1 = 1U,
+    .tx_dma_timeout   = BSP_USART_TX_DMA_TIMEOUT,
+    .remap_usart1     = 1U,
 };
 
 static uint32_t bsp_usart_irq_lock(void)
@@ -206,16 +206,16 @@ static void bsp_usart_dma_config(DMA_Channel_T *channel,
     DMA_Reset(channel);
     DMA_ConfigStructInit(&dma_cfg);
     dma_cfg.peripheralBaseAddr = periph_addr;
-    dma_cfg.memoryBaseAddr = memory_addr;
-    dma_cfg.dir = direction;
-    dma_cfg.bufferSize = data_count;
-    dma_cfg.peripheralInc = DMA_PERIPHERAL_INC_DISABLE;
-    dma_cfg.memoryInc = DMA_MEMORY_INC_ENABLE;
+    dma_cfg.memoryBaseAddr     = memory_addr;
+    dma_cfg.dir                = direction;
+    dma_cfg.bufferSize         = data_count;
+    dma_cfg.peripheralInc      = DMA_PERIPHERAL_INC_DISABLE;
+    dma_cfg.memoryInc          = DMA_MEMORY_INC_ENABLE;
     dma_cfg.peripheralDataSize = DMA_PERIPHERAL_DATA_SIZE_BYTE;
-    dma_cfg.memoryDataSize = DMA_MEMORY_DATA_SIZE_BYTE;
-    dma_cfg.loopMode = loop_mode;
-    dma_cfg.priority = DMA_PRIORITY_MEDIUM;
-    dma_cfg.M2M = DMA_M2MEN_DISABLE;
+    dma_cfg.memoryDataSize     = DMA_MEMORY_DATA_SIZE_BYTE;
+    dma_cfg.loopMode           = loop_mode;
+    dma_cfg.priority           = DMA_PRIORITY_MEDIUM;
+    dma_cfg.M2M                = DMA_M2MEN_DISABLE;
     DMA_Config(channel, &dma_cfg);
 }
 
@@ -233,12 +233,7 @@ static void bsp_usart_rx_dma_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_por
 
 static void bsp_usart_tx_dma_init(const bsp_usart_port_cfg_t *cfg)
 {
-    bsp_usart_dma_config(cfg->tx_dma_ch,
-                         (uint32_t)&cfg->unit->DATA,
-                         0U,
-                         0U,
-                         DMA_DIR_PERIPHERAL_DST,
-                         DMA_MODE_NORMAL);
+    bsp_usart_dma_config(cfg->tx_dma_ch, (uint32_t)&cfg->unit->DATA, 0U, 0U, DMA_DIR_PERIPHERAL_DST, DMA_MODE_NORMAL);
     DMA_ClearStatusFlag(cfg->tx_dma_flag_g);
 }
 
@@ -255,10 +250,10 @@ static uint16_t bsp_usart_rx_dma_get_write_idx(const bsp_usart_port_cfg_t *cfg)
 
 static uint8_t bsp_usart_rx_has_error(const bsp_usart_port_cfg_t *cfg)
 {
-    return (uint8_t)((USART_ReadStatusFlag(cfg->unit, USART_FLAG_OVRE) == SET) ||
-                     (USART_ReadStatusFlag(cfg->unit, USART_FLAG_NE) == SET) ||
-                     (USART_ReadStatusFlag(cfg->unit, USART_FLAG_FE) == SET) ||
-                     (USART_ReadStatusFlag(cfg->unit, USART_FLAG_PE) == SET));
+    return (uint8_t)(    (USART_ReadStatusFlag(cfg->unit, USART_FLAG_OVRE) == SET)
+                      || (USART_ReadStatusFlag(cfg->unit, USART_FLAG_NE) == SET)
+                      || (USART_ReadStatusFlag(cfg->unit, USART_FLAG_FE) == SET)
+                      || (USART_ReadStatusFlag(cfg->unit, USART_FLAG_PE) == SET));
 }
 
 static void bsp_usart_rx_recover_if_error(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg)
@@ -290,7 +285,10 @@ static uint16_t bsp_usart_tx_ring_read(bsp_usart_port_ctx_t *ctx,
 {
     uint16_t read_len;
 
-    if ((ctx == NULL) || (cfg == NULL) || (pp_data == NULL) || (ctx->tx_ring_head == ctx->tx_ring_tail))
+    if (    (ctx == NULL)
+         || (cfg == NULL)
+         || (pp_data == NULL)
+         || (ctx->tx_ring_head == ctx->tx_ring_tail))
     {
         return 0U;
     }
@@ -313,13 +311,17 @@ static void bsp_usart_tx_dma_start(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
     uint8_t *p_data = NULL;
     uint16_t len;
 
-    if ((ctx == NULL) || (cfg == NULL) || (ctx->tx_dma_busy != 0U))
+    if (    (ctx == NULL)
+         || (cfg == NULL)
+         || (ctx->tx_dma_busy != 0U))
     {
         return;
     }
 
     len = bsp_usart_tx_ring_read(ctx, cfg, &p_data);
-    if ((len == 0U) || (p_data == NULL))
+
+    if (    (len == 0U)
+         || (p_data == NULL))
     {
         return;
     }
@@ -330,22 +332,23 @@ static void bsp_usart_tx_dma_start(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
     DMA_ConfigDataNumber(cfg->tx_dma_ch, len);
     USART_ClearStatusFlag(cfg->unit, USART_FLAG_TXC);
 
-    ctx->tx_dma_len = len;
+    ctx->tx_dma_len  = len;
     ctx->tx_dma_busy = 1U;
     DMA_Enable(cfg->tx_dma_ch);
 }
 
 static void bsp_usart_tx_dma_service(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg)
 {
-    if ((ctx == NULL) || (cfg == NULL))
+    if (    (ctx == NULL)
+         || (cfg == NULL))
     {
         return;
     }
 
     if (ctx->tx_dma_busy != 0U)
     {
-        if ((DMA_ReadStatusFlag((DMA_FLAG_T)cfg->tx_dma_flag_tc) == RESET) ||
-            (USART_ReadStatusFlag(cfg->unit, USART_FLAG_TXC) == RESET))
+        if (    (DMA_ReadStatusFlag((DMA_FLAG_T)cfg->tx_dma_flag_tc) == RESET)
+             || (USART_ReadStatusFlag(cfg->unit, USART_FLAG_TXC) == RESET))
         {
             return;
         }
@@ -353,7 +356,7 @@ static void bsp_usart_tx_dma_service(bsp_usart_port_ctx_t *ctx, const bsp_usart_
         DMA_ClearStatusFlag(cfg->tx_dma_flag_g);
         DMA_Disable(cfg->tx_dma_ch);
         ctx->tx_ring_tail = (uint16_t)((ctx->tx_ring_tail + ctx->tx_dma_len) % cfg->tx_ring_buf_size);
-        ctx->tx_dma_len = 0U;
+        ctx->tx_dma_len  = 0U;
         ctx->tx_dma_busy = 0U;
     }
 
@@ -367,25 +370,29 @@ static uint16_t bsp_usart_tx_ring_write(bsp_usart_port_ctx_t *ctx,
 {
     uint16_t offset = 0U;
 
-    if ((ctx == NULL) || (cfg == NULL) || (data == NULL))
+    if (    (ctx == NULL)
+         || (cfg == NULL)
+         || (data == NULL))
     {
         return 0U;
     }
 
     while (offset < len)
     {
-        uint16_t free_len = bsp_usart_tx_ring_free(ctx, cfg);
-        uint16_t to_end = (uint16_t)(cfg->tx_ring_buf_size - ctx->tx_ring_head);
+        uint16_t free_len  = bsp_usart_tx_ring_free(ctx, cfg);
+        uint16_t to_end    = (uint16_t)(cfg->tx_ring_buf_size - ctx->tx_ring_head);
         uint16_t write_len = (uint16_t)(len - offset);
 
         if (free_len == 0U)
         {
             break;
         }
+
         if (write_len > free_len)
         {
             write_len = free_len;
         }
+
         if (write_len > to_end)
         {
             write_len = to_end;
@@ -399,12 +406,18 @@ static uint16_t bsp_usart_tx_ring_write(bsp_usart_port_ctx_t *ctx,
     return offset;
 }
 
-static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_cfg_t *cfg, const uint8_t *data, uint16_t len)
+static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx,
+                                const bsp_usart_port_cfg_t *cfg,
+                                const uint8_t *data,
+                                uint16_t len)
 {
     uint32_t primask;
     uint32_t timeout;
 
-    if ((ctx == NULL) || (cfg == NULL) || (data == NULL) || (len == 0U))
+    if (    (ctx == NULL)
+         || (cfg == NULL)
+         || (data == NULL)
+         || (len == 0U))
     {
         return 0U;
     }
@@ -415,6 +428,7 @@ static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
     }
 
     timeout = cfg->tx_dma_timeout;
+
     while (1)
     {
         uint16_t free_len;
@@ -422,8 +436,9 @@ static uint16_t bsp_usart_write(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
 
         bsp_usart_tx_dma_service(ctx, cfg);
 
-        primask = bsp_usart_irq_lock();
+        primask  = bsp_usart_irq_lock();
         free_len = bsp_usart_tx_ring_free(ctx, cfg);
+
         if (len <= free_len)
         {
             written = bsp_usart_tx_ring_write(ctx, cfg, data, len);
@@ -449,7 +464,9 @@ static int32_t bsp_usart_read_byte(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
 {
     uint16_t write_idx;
 
-    if ((ctx == NULL) || (cfg == NULL) || (data == NULL))
+    if (    (ctx == NULL)
+         || (cfg == NULL)
+         || (data == NULL))
     {
         return -1;
     }
@@ -461,6 +478,7 @@ static int32_t bsp_usart_read_byte(bsp_usart_port_ctx_t *ctx, const bsp_usart_po
     {
         *data = ctx->rx_dma_buf[ctx->rx_read_idx];
         ctx->rx_read_idx++;
+
         if (ctx->rx_read_idx >= cfg->rx_dma_buf_size)
         {
             ctx->rx_read_idx = 0U;
@@ -484,13 +502,13 @@ static void bsp_usart_port_gpio_init(const bsp_usart_port_cfg_t *cfg)
         GPIO_ConfigPinRemap(GPIO_REMAP_USART1);
     }
 
-    gpio_cfg.mode = GPIO_MODE_AF_PP;
-    gpio_cfg.pin = cfg->tx_pin;
+    gpio_cfg.mode  = GPIO_MODE_AF_PP;
+    gpio_cfg.pin   = cfg->tx_pin;
     gpio_cfg.speed = GPIO_SPEED_50MHz;
     GPIO_Config(cfg->tx_port, &gpio_cfg);
 
-    gpio_cfg.mode = GPIO_MODE_IN_PU;
-    gpio_cfg.pin = cfg->rx_pin;
+    gpio_cfg.mode  = GPIO_MODE_IN_PU;
+    gpio_cfg.pin   = cfg->rx_pin;
     gpio_cfg.speed = GPIO_SPEED_50MHz;
     GPIO_Config(cfg->rx_port, &gpio_cfg);
 }
@@ -499,12 +517,14 @@ static void bsp_usart_port_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
 {
     USART_Config_T usart_cfg;
 
-    if ((ctx == NULL) || (cfg == NULL))
+    if (    (ctx == NULL)
+         || (cfg == NULL))
     {
         return;
     }
 
     RCM_EnableAHBPeriphClock(RCM_AHB_PERIPH_DMA1 | RCM_AHB_PERIPH_DMA2);
+
     if (cfg->usart_clk_apb1 != 0U)
     {
         RCM_EnableAPB1PeriphClock(cfg->usart_clk_periph);
@@ -518,21 +538,21 @@ static void bsp_usart_port_init(bsp_usart_port_ctx_t *ctx, const bsp_usart_port_
 
     USART_Reset(cfg->unit);
     USART_ConfigStructInit(&usart_cfg);
-    usart_cfg.baudRate = cfg->baudrate;
+    usart_cfg.baudRate     = cfg->baudrate;
     usart_cfg.hardwareFlow = USART_HARDWARE_FLOW_NONE;
-    usart_cfg.mode = USART_MODE_TX_RX;
-    usart_cfg.parity = USART_PARITY_NONE;
-    usart_cfg.stopBits = USART_STOP_BIT_1;
-    usart_cfg.wordLength = USART_WORD_LEN_8B;
+    usart_cfg.mode         = USART_MODE_TX_RX;
+    usart_cfg.parity       = USART_PARITY_NONE;
+    usart_cfg.stopBits     = USART_STOP_BIT_1;
+    usart_cfg.wordLength   = USART_WORD_LEN_8B;
     USART_Config(cfg->unit, &usart_cfg);
     USART_EnableDMA(cfg->unit, USART_DMA_TX_RX);
     USART_Enable(cfg->unit);
 
-    ctx->rx_read_idx = 0U;
+    ctx->rx_read_idx  = 0U;
     ctx->tx_ring_head = 0U;
     ctx->tx_ring_tail = 0U;
-    ctx->tx_dma_len = 0U;
-    ctx->tx_dma_busy = 0U;
+    ctx->tx_dma_len   = 0U;
+    ctx->tx_dma_busy  = 0U;
     memset(ctx->rx_dma_buf, 0, cfg->rx_dma_buf_size);
     memset(ctx->tx_ring_buf, 0, cfg->tx_ring_buf_size);
 
@@ -572,7 +592,8 @@ void bsp_usart_dbg_tx(char *ptr, int len)
 {
     uint16_t req_len;
 
-    if ((ptr == NULL) || (len <= 0))
+    if (    (ptr == NULL)
+         || (len <= 0))
     {
         return;
     }
@@ -600,6 +621,7 @@ void bsp_usart_dbg_printf(const char *__format, ...)
     {
         return;
     }
+
     if (len > (int)(sizeof(buf) - 1U))
     {
         len = (int)(sizeof(buf) - 1U);
@@ -617,7 +639,8 @@ void bsp_usart_iso_tx(char *ptr, int len)
 {
     uint16_t req_len;
 
-    if ((ptr == NULL) || (len <= 0))
+    if (    (ptr == NULL)
+         || (len <= 0))
     {
         return;
     }
@@ -645,6 +668,7 @@ void bsp_usart_iso_printf(const char *__format, ...)
     {
         return;
     }
+
     if (len > (int)(sizeof(buf) - 1U))
     {
         len = (int)(sizeof(buf) - 1U);
@@ -660,7 +684,8 @@ uint8_t bsp_usart_iso_rx_get_byte(uint8_t *p_data)
 
 int bsp_usart_dbg_tx_dma(const uint8_t *p_data, uint32_t len)
 {
-    if ((p_data == NULL) || (len > 0xFFFFUL))
+    if (    (p_data == NULL)
+         || (len > 0xFFFFUL))
     {
         return -1;
     }

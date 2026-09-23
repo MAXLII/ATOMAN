@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    main.c
- * @brief   TMS320F280049C SECTION demo entry point.
+ * @file main.c
+ * @brief TMS320F280049C SECTION demo entry point.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Interrupts start after all SECTION registrations are initialized
  *          - Hardware access is abstracted through C2000Ware and the platform port
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

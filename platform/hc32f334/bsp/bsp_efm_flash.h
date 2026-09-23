@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_efm_flash.h
- * @brief   HC32F334 embedded flash physical driver interface.
+ * @file bsp_efm_flash.h
+ * @brief HC32F334 embedded flash physical driver interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Not ISR-safe; operations execute from the bootloader foreground
  *          - Flash controller access is confined to this BSP module
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -33,15 +33,15 @@
 #include <stdint.h>
 
 #define BSP_EFM_FLASH_CAPACITY_BYTES 0x00020000UL
-#define BSP_EFM_FLASH_PROGRAM_SIZE 4UL
-#define BSP_EFM_FLASH_ERASE_SIZE 0x00001000UL
+#define BSP_EFM_FLASH_PROGRAM_SIZE   4UL
+#define BSP_EFM_FLASH_ERASE_SIZE     0x00001000UL
 
 typedef enum
 {
-    BSP_EFM_FLASH_RESULT_SUCCESS = 0,
+    BSP_EFM_FLASH_RESULT_SUCCESS          = 0,
     BSP_EFM_FLASH_RESULT_INVALID_ARGUMENT = -1,
-    BSP_EFM_FLASH_RESULT_OUT_OF_RANGE = -2,
-    BSP_EFM_FLASH_RESULT_IO_ERROR = -3
+    BSP_EFM_FLASH_RESULT_OUT_OF_RANGE     = -2,
+    BSP_EFM_FLASH_RESULT_IO_ERROR         = -3
 } bsp_efm_flash_result_t;
 
 typedef enum

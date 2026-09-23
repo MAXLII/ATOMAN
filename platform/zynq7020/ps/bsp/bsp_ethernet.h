@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_ethernet.h
- * @brief   Zynq-7020 PS GEM0 and lwIP TCP service interface.
+ * @file bsp_ethernet.h
+ * @brief Zynq-7020 PS GEM0 and lwIP TCP service interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - GEM DMA interrupt registration is provided by the Xilinx lwIP adapter
  *          - Hardware access is abstracted through the Xilinx XEmacPs BSP
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

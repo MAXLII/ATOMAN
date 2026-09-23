@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_usart.h
- * @brief   Zynq-7020 PS UART1 and PL UART DMA communication interface.
+ * @file bsp_usart.h
+ * @brief Zynq-7020 PS UART1 and PL UART DMA communication interface.
  * @details
  *          This file is part of the base project.
  *
@@ -17,8 +17,8 @@
  *          - PS UART1 uses polling and PL UART traffic uses DDR ring DMA
  *          - Hardware access is isolated in the Zynq BSP
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -35,13 +35,13 @@
 
 #define BSP_COMM_LINK_ENABLE_ISO 0u
 #define BSP_COMM_LINK_ENABLE_CAN 0u
-#define BSP_COMM_LINK_ENABLE_PL 1u
+#define BSP_COMM_LINK_ENABLE_PL  1u
 
 typedef enum
 {
     BSP_USART_PL_PARITY_NONE = 0,
     BSP_USART_PL_PARITY_EVEN = 1,
-    BSP_USART_PL_PARITY_ODD = 2,
+    BSP_USART_PL_PARITY_ODD  = 2,
 } bsp_usart_pl_parity_t;
 
 typedef struct

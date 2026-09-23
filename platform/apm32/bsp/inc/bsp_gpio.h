@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_gpio.h
- * @brief   APM32 GPIO BSP interface.
+ * @file bsp_gpio.h
+ * @brief APM32 GPIO BSP interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-01
+ * @author Max.Li
+ * @date 2026-06-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -35,12 +35,12 @@
 
 #define GPIO_REG_PARM(name, gpx, _pin, _mode, _speed, _def_lv) \
     [name] = {                                                 \
-        .periph = RCM_APB2_PERIPH_##gpx,                       \
-        .port = gpx,                                           \
-        .pin = GPIO_PIN_##_pin,                                \
-        .mode = GPIO_MODE_##_mode,                             \
-        .speed = GPIO_SPEED_##_speed,                          \
-        .def_lv = (_def_lv),                                   \
+        .periph         = RCM_APB2_PERIPH_##gpx,               \
+        .port           = gpx,                                 \
+        .pin            = GPIO_PIN_##_pin,                     \
+        .mode           = GPIO_MODE_##_mode,                   \
+        .speed          = GPIO_SPEED_##_speed,                 \
+        .def_lv         = (_def_lv),                           \
         .bsp_gpio_table = (name),                              \
     }
 

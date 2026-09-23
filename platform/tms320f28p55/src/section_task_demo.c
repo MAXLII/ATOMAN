@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    section_task_demo.c
- * @brief   TMS320F28P55 SECTION registration demo.
+ * @file section_task_demo.c
+ * @brief TMS320F28P55 SECTION registration demo.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The demo task executes in the cooperative main-loop context
  *          - Hardware access is abstracted by the local platform interface
  *
- * @author  Max.Li
- * @date    2026-09-04
+ * @author Max.Li
+ * @date 2026-09-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

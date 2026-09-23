@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_timer.c
- * @brief   HC32F558 timer BSP module.
+ * @file bsp_timer.c
+ * @brief HC32F558 timer BSP module.
  * @details
  *          This file is part of the HC32F558 project.
  *
@@ -16,8 +16,8 @@
  *          - Perf reads are ISR-safe 32-bit register reads
  *          - Hardware access is abstracted through HC32 LL timer APIs
  *
- * @author  Max.Li
- * @date    2026-06-06
+ * @author Max.Li
+ * @date 2026-06-06
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -53,15 +53,16 @@ int32_t bsp_timer_init(void)
     FCG_Fcg2PeriphClockCmd(BSP_TIMER_PERF_FCG, ENABLE);
 
     (void)TMR6_StructInit(&tmr6_init);
-    tmr6_init.u8CountSrc = TMR6_CNT_SRC_SW;
-    tmr6_init.sw_count.u32ClockDiv = BSP_TIMER_PERF_CLK_DIV;
+    tmr6_init.u8CountSrc            = TMR6_CNT_SRC_SW;
+    tmr6_init.sw_count.u32ClockDiv  = BSP_TIMER_PERF_CLK_DIV;
     tmr6_init.sw_count.u32CountMode = TMR6_MD_SAWTOOTH;
-    tmr6_init.sw_count.u32CountDir = TMR6_CNT_UP;
-    tmr6_init.u32CountReload = TMR6_CNT_RELOAD_ON;
-    tmr6_init.u32PeriodValue = BSP_TIMER_PERF_PERIOD_VAL;
+    tmr6_init.sw_count.u32CountDir  = TMR6_CNT_UP;
+    tmr6_init.u32CountReload        = TMR6_CNT_RELOAD_ON;
+    tmr6_init.u32PeriodValue        = BSP_TIMER_PERF_PERIOD_VAL;
 
     TMR6_Stop(BSP_TIMER_PERF_UNIT);
     TMR6_SetCountValue(BSP_TIMER_PERF_UNIT, 0UL);
+
     if (LL_OK != TMR6_Init(BSP_TIMER_PERF_UNIT, &tmr6_init))
     {
         LL_PERIPH_WP(LL_PERIPH_FCG);

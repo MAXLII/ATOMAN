@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    systick.h
- * @brief   HC32F558 SysTick timing interface.
+ * @file systick.h
+ * @brief HC32F558 SysTick timing interface.
  * @details
  *          This file is part of the HC32F558 project.
  *
@@ -16,8 +16,8 @@
  *          - delay_decrement() is called from SysTick ISR context
  *          - Hardware access is abstracted through CMSIS SysTick APIs
  *
- * @author  Max.Li
- * @date    2026-06-06
+ * @author Max.Li
+ * @date 2026-06-06
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -38,4 +38,3 @@ void delay_decrement(void);
 uint32_t systick_gettime_100us(void);
 
 #endif /* SYSTICK_H */
-

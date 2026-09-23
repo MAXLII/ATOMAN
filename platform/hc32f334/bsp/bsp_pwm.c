@@ -5,18 +5,18 @@
 #include "my_math.h"
 
 #define BSP_PWM_MASTER_UNIT CM_HRPWM1
-#define BSP_PWM_FAST_UNIT CM_HRPWM2
-#define BSP_PWM_SLOW_UNIT CM_HRPWM3
+#define BSP_PWM_FAST_UNIT   CM_HRPWM2
+#define BSP_PWM_SLOW_UNIT   CM_HRPWM3
 
-#define BSP_PWM_MASTER_IRQn HRPWM_1_OVF_UDF_IRQn
+#define BSP_PWM_MASTER_IRQn     HRPWM_1_OVF_UDF_IRQn
 #define BSP_PWM_MASTER_IRQ_PRIO DDL_IRQ_PRIO_01
 
-#define BSP_PWM_CLK_HZ (120000000.0f * 64.0f)
-#define BSP_PWM_PERIOD_REG ((uint32_t)((BSP_PWM_CLK_HZ / PFC_PWM_FREQ / 2.0f) + 0.5f))
+#define BSP_PWM_CLK_HZ          (120000000.0f * 64.0f)
+#define BSP_PWM_PERIOD_REG      ((uint32_t)((BSP_PWM_CLK_HZ / PFC_PWM_FREQ / 2.0f) + 0.5f))
 #define BSP_PWM_COMPARE_MIN_REG (0x000000C0UL)
-#define BSP_PWM_DEADTIME_REG (60UL * 64UL)
+#define BSP_PWM_DEADTIME_REG    (60UL * 64UL)
 
-#define BSP_PWM_POL_LOW (0UL)
+#define BSP_PWM_POL_LOW  (0UL)
 #define BSP_PWM_POL_HIGH (1UL)
 #define BSP_PWM_POL_HOLD (2UL)
 
@@ -35,6 +35,7 @@ static float bsp_pwm_clamp(float value, float min, float max)
     {
         return min;
     }
+
     if (value > max)
     {
         return max;
@@ -42,7 +43,10 @@ static float bsp_pwm_clamp(float value, float min, float max)
     return value;
 }
 
-static void bsp_pwm_write_unit_buffer(CM_HRPWM_TypeDef *unit, float duty, uint8_t up_en, uint8_t dn_en)
+static void bsp_pwm_write_unit_buffer(CM_HRPWM_TypeDef *unit,
+                                      float duty,
+                                      uint8_t up_en,
+                                      uint8_t dn_en)
 {
     uint32_t compare;
     uint32_t forca_cfg;
@@ -62,23 +66,23 @@ static void bsp_pwm_write_unit_buffer(CM_HRPWM_TypeDef *unit, float duty, uint8_
 
     if (compare <= BSP_PWM_COMPARE_MIN_REG)
     {
-        compare = BSP_PWM_COMPARE_MIN_REG + 1U;
+        compare    = BSP_PWM_COMPARE_MIN_REG + 1U;
         cmauca_cfg = 2UL;
         cmadca_cfg = 2UL;
-        forca_cfg = 2UL;
+        forca_cfg  = 2UL;
     }
     else if (compare >= (BSP_PWM_PERIOD_REG - 0x40))
     {
-        compare = BSP_PWM_PERIOD_REG - 0x41U;
+        compare    = BSP_PWM_PERIOD_REG - 0x41U;
         cmauca_cfg = 2UL;
         cmadca_cfg = 2UL;
-        forca_cfg = 3UL;
+        forca_cfg  = 3UL;
     }
     else
     {
         cmauca_cfg = 0UL;
         cmadca_cfg = 1UL;
-        forca_cfg = 0UL;
+        forca_cfg  = 0UL;
     }
 
     if (compare >= BSP_PWM_PERIOD_REG)
@@ -92,35 +96,30 @@ static void bsp_pwm_write_unit_buffer(CM_HRPWM_TypeDef *unit, float duty, uint8_
 
     if (up_en == 0)
     {
-        bpcnxr1 |= (unit->BPCNAR1 & ~(HRPWM_BPCNAR1_CMAUCA | HRPWM_BPCNAR1_CMADCA |
-                                      HRPWM_BPCNAR1_FORCA | HRPWM_BPCNAR1_OUTENA)) |
-                   (cmauca_cfg << HRPWM_BPCNAR1_CMAUCA_POS) |
-                   (cmadca_cfg << HRPWM_BPCNAR1_CMADCA_POS) |
-                   (forca_cfg << HRPWM_BPCNAR1_FORCA_POS) |
-                   (0 << HRPWM_BPCNAR1_OUTENA_POS);
+        bpcnxr1 |= (unit->BPCNAR1
+                    & ~(HRPWM_BPCNAR1_CMAUCA | HRPWM_BPCNAR1_CMADCA | HRPWM_BPCNAR1_FORCA | HRPWM_BPCNAR1_OUTENA))
+                 | (cmauca_cfg << HRPWM_BPCNAR1_CMAUCA_POS) | (cmadca_cfg << HRPWM_BPCNAR1_CMADCA_POS)
+                 | (forca_cfg << HRPWM_BPCNAR1_FORCA_POS) | (0 << HRPWM_BPCNAR1_OUTENA_POS);
     }
     else
     {
-        bpcnxr1 |= (unit->BPCNAR1 & ~(HRPWM_BPCNAR1_CMAUCA | HRPWM_BPCNAR1_CMADCA |
-                                      HRPWM_BPCNAR1_FORCA | HRPWM_BPCNAR1_OUTENA)) |
-                   (cmauca_cfg << HRPWM_BPCNAR1_CMAUCA_POS) |
-                   (cmadca_cfg << HRPWM_BPCNAR1_CMADCA_POS) |
-                   (forca_cfg << HRPWM_BPCNAR1_FORCA_POS) |
-                   (1 << HRPWM_BPCNAR1_OUTENA_POS);
+        bpcnxr1 |= (unit->BPCNAR1
+                    & ~(HRPWM_BPCNAR1_CMAUCA | HRPWM_BPCNAR1_CMADCA | HRPWM_BPCNAR1_FORCA | HRPWM_BPCNAR1_OUTENA))
+                 | (cmauca_cfg << HRPWM_BPCNAR1_CMAUCA_POS) | (cmadca_cfg << HRPWM_BPCNAR1_CMADCA_POS)
+                 | (forca_cfg << HRPWM_BPCNAR1_FORCA_POS) | (1 << HRPWM_BPCNAR1_OUTENA_POS);
     }
 
     unit->BPCNAR1 = bpcnxr1;
 
-    unit->BPCNBR1 = (unit->BPCNBR1 & ~HRPWM_BPCNBR1_OUTENB) |
-                    (((dn_en != 0U) ? 1UL : 0UL) << HRPWM_BPCNBR1_OUTENB_POS);
+    unit->BPCNBR1 = (unit->BPCNBR1 & ~HRPWM_BPCNBR1_OUTENB) | (((dn_en != 0U) ? 1UL : 0UL) << HRPWM_BPCNBR1_OUTENB_POS);
 }
 
 static void bsp_pwm_config_channel_waveform(CM_HRPWM_TypeDef *unit)
 {
     unit->HRGCMAR = BSP_PWM_COMPARE_MIN_REG;
-    unit->PCNAR1 = 0x0000AAAAUL;
-    unit->PCNAR2 = 0x0AAAAAAAUL;
-    unit->PCNAR3 = 0x0AAAAAAAUL;
+    unit->PCNAR1  = 0x0000AAAAUL;
+    unit->PCNAR2  = 0x0AAAAAAAUL;
+    unit->PCNAR3  = 0x0AAAAAAAUL;
     unit->BPCNAR1 = 0x0000AAAAUL;
     unit->BPCNAR2 = 0x0AAAAAAAUL;
     unit->BPCNAR3 = 0x0AAAAAAAUL;
@@ -128,11 +127,9 @@ static void bsp_pwm_config_channel_waveform(CM_HRPWM_TypeDef *unit)
 
 static void bsp_pwm_config_buffer(CM_HRPWM_TypeDef *unit)
 {
-    unit->BCONR1 |= (1 << 0) |
-                    (1 << 3);
+    unit->BCONR1 |= (1 << 0) | (1 << 3);
 
-    unit->BCONR2 = (1UL << 12) |
-                   (1UL << 14);
+    unit->BCONR2 = (1UL << 12) | (1UL << 14);
 }
 
 static void bsp_pwm_config_output_unit(CM_HRPWM_TypeDef *unit)
@@ -140,7 +137,7 @@ static void bsp_pwm_config_output_unit(CM_HRPWM_TypeDef *unit)
     stc_hrpwm_init_t base;
 
     (void)HRPWM_StructInit(&base);
-    base.u32CountMode = HRPWM_MD_TRIANGLE;
+    base.u32CountMode   = HRPWM_MD_TRIANGLE;
     base.u32PeriodValue = BSP_PWM_PERIOD_REG;
     base.u32CountReload = HRPWM_CNT_RELOAD_ON;
     (void)HRPWM_Init(unit, &base);
@@ -152,7 +149,7 @@ static void bsp_pwm_config_output_unit(CM_HRPWM_TypeDef *unit)
     unit->HRDTDAR = BSP_PWM_DEADTIME_REG;
     unit->HRDTUBR = BSP_PWM_DEADTIME_REG;
     unit->HRDTDBR = BSP_PWM_DEADTIME_REG;
-    unit->DCONR = (1UL << HRPWM_DCONR_DTCEN_POS);
+    unit->DCONR   = (1UL << HRPWM_DCONR_DTCEN_POS);
 
     unit->GCONR = 1 << 2;
 
@@ -168,16 +165,9 @@ void bsp_pwm_int_handler(void)
 
 static void bsp_pwm_init(void)
 {
-    FCG_Fcg2PeriphClockCmd(FCG2_PERIPH_HRPWM_1 |
-                               FCG2_PERIPH_HRPWM_2 |
-                               FCG2_PERIPH_HRPWM_3,
-                           ENABLE);
+    FCG_Fcg2PeriphClockCmd(FCG2_PERIPH_HRPWM_1 | FCG2_PERIPH_HRPWM_2 | FCG2_PERIPH_HRPWM_3, ENABLE);
 
-    GPIO_HrpwmPinCmd(GPIO_HRPWM2_PWMA |
-                         GPIO_HRPWM2_PWMB |
-                         GPIO_HRPWM3_PWMA |
-                         GPIO_HRPWM3_PWMB,
-                     ENABLE);
+    GPIO_HrpwmPinCmd(GPIO_HRPWM2_PWMA | GPIO_HRPWM2_PWMB | GPIO_HRPWM3_PWMA | GPIO_HRPWM3_PWMB, ENABLE);
 
     HRPWM_CommonDeInit();
     HRPWM_CALIB_PeriodInit(HRPWM_CALIB_PERIOD_8P7_MS);
@@ -185,15 +175,15 @@ static void bsp_pwm_init(void)
     /* HRPWM1 */
     CM_HRPWM1->CR |= 1 << 3;
 
-    CM_HRPWM1->CNTER = 0;
-    CM_HRPWM1->UPDAR = 0;
-    CM_HRPWM1->HRPERAR = 0xFFFF << 6;
-    CM_HRPWM1->HRPERBR = 0xFFFF << 6;
+    CM_HRPWM1->CNTER               = 0;
+    CM_HRPWM1->UPDAR               = 0;
+    CM_HRPWM1->HRPERAR             = 0xFFFF << 6;
+    CM_HRPWM1->HRPERBR             = 0xFFFF << 6;
     bCM_HRPWM1->HCLRR2_b.HCLRGCMA1 = 1;
 
     bCM_HRPWM1->HCLRR1_b.CLES = 1;
 
-    bCM_HRPWM1->BCONR1_b.BENAE = 1;
+    bCM_HRPWM1->BCONR1_b.BENAE  = 1;
     bCM_HRPWM1->BCONR1_b.BTRDAE = 1;
 
     CM_HRPWM1->ICONR |= 1 << 7;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    main.c
- * @brief   GD32E507 demo platform entry module.
+ * @file main.c
+ * @brief GD32E507 demo platform entry module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Interrupt sources are enabled by registered BSP initialization
  *          - Hardware access is contained in the GD32E507 BSP
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

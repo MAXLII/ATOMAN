@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    zynq_boot_platform.h
- * @brief   Zynq-7020 boot reason, image loading, and jump service.
+ * @file zynq_boot_platform.h
+ * @brief Zynq-7020 boot reason, image loading, and jump service.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Transfer functions execute with interrupts disabled
  *          - Zynq cache and address details remain confined to this platform module
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,9 +32,9 @@
 
 #include "bootloader_core.h"
 
-#define ZYNQ7020_IAP_DDR_ADDRESS 0x00100000u
+#define ZYNQ7020_IAP_DDR_ADDRESS        0x00100000u
 #define ZYNQ7020_BOOTLOADER_DDR_ADDRESS 0x04000000u
-#define ZYNQ7020_DMA_RESERVED_ADDRESS 0x1FF00000u
+#define ZYNQ7020_DMA_RESERVED_ADDRESS   0x1FF00000u
 
 bootloader_platform_ops_t zynq_boot_platform_ops_make(bootloader_t *p_bootloader);
 #endif /* ZYNQ_BOOT_PLATFORM_H */

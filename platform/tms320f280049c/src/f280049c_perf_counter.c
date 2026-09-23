@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    f280049c_perf_counter.c
- * @brief   F280049C performance-counter registration.
+ * @file f280049c_perf_counter.c
+ * @brief F280049C performance-counter registration.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ERAD Counter1 is configured before SECTION initialization
  *          - Hardware setup remains in the platform port
  *
- * @author  Max.Li
- * @date    2026-09-05
+ * @author Max.Li
+ * @date 2026-09-05
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -30,7 +30,6 @@
 #include "perf.h"
 
 #define F280049C_PERF_COUNTER_PERIOD_S (0.00000001f)
-#define F280049C_PERF_COUNTER_ADDRESS \
-    ((volatile uint32_t *)(ERAD_COUNTER1_BASE + ERAD_O_CTM_COUNT))
+#define F280049C_PERF_COUNTER_ADDRESS  ((volatile uint32_t *)(ERAD_COUNTER1_BASE + ERAD_O_CTM_COUNT))
 
 REG_PERF_BASE_CNT(F280049C_PERF_COUNTER_ADDRESS, F280049C_PERF_COUNTER_PERIOD_S)

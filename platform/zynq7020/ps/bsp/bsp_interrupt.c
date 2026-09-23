@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_interrupt.c
- * @brief   Zynq-7020 shared GIC service implementation.
+ * @file bsp_interrupt.c
+ * @brief Zynq-7020 shared GIC service implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Handler registration is performed outside ISR context
  *          - Hardware access is abstracted through the Xilinx standalone BSP
  *
- * @author  Max.Li
- * @date    2026-07-25
+ * @author Max.Li
+ * @date 2026-07-25
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -36,13 +36,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static XScuGic s_interrupt_controller; /* Shared Cortex-A9 GIC instance. */
+static XScuGic s_interrupt_controller;       /* Shared Cortex-A9 GIC instance. */
 static uint8_t s_interrupt_initialized = 0U; /* GIC initialization state. */
 
 int32_t bsp_interrupt_init(void)
 {
-    XScuGic_Config *config = NULL; /* Xilinx GIC hardware description. */
-    int32_t status = XST_FAILURE;  /* Driver initialization result. */
+    XScuGic_Config *config = NULL;        /* Xilinx GIC hardware description. */
+    int32_t status         = XST_FAILURE; /* Driver initialization result. */
 
     if (s_interrupt_initialized != 0U)
     {
@@ -50,14 +50,14 @@ int32_t bsp_interrupt_init(void)
     }
 
     config = XScuGic_LookupConfig(XPAR_SCUGIC_SINGLE_DEVICE_ID);
+
     if (config == NULL)
     {
         return XST_FAILURE;
     }
 
-    status = XScuGic_CfgInitialize(&s_interrupt_controller,
-                                   config,
-                                   config->CpuBaseAddress);
+    status = XScuGic_CfgInitialize(&s_interrupt_controller, config, config->CpuBaseAddress);
+
     if (status != XST_SUCCESS)
     {
         return status;
@@ -76,15 +76,13 @@ int32_t bsp_interrupt_connect(uint32_t interrupt_id,
                               Xil_ExceptionHandler handler,
                               void *callback_ref)
 {
-    if ((s_interrupt_initialized == 0U) || (handler == NULL))
+    if (    (s_interrupt_initialized == 0U)
+         || (handler == NULL))
     {
         return XST_FAILURE;
     }
 
-    return XScuGic_Connect(&s_interrupt_controller,
-                           interrupt_id,
-                           handler,
-                           callback_ref);
+    return XScuGic_Connect(&s_interrupt_controller, interrupt_id, handler, callback_ref);
 }
 
 void bsp_interrupt_enable(uint32_t interrupt_id)

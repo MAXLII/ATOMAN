@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  platform/hc32f558/src/main.c
+ * @file platform/hc32f558/src/main.c
  * @brief Main program template for the Device Driver Library.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -62,14 +62,16 @@
  ******************************************************************************/
 
 /**
- * @brief  Main function of template project
- * @param  None
+ * @brief Main function of template project
+ * @param None
  * @retval int32_t return value, if needed
  */
 int32_t main(void)
 {
-    if (LL_OK != bsp_clk_init()) {
-        for (;;) {
+    if (LL_OK != bsp_clk_init())
+    {
+        for (;;)
+        {
         }
     }
     systick_config();
@@ -77,7 +79,8 @@ int32_t main(void)
     section_init();
     bsp_usart_dbg_printf("HC32F558 comm link ready\r\n");
 
-    for (;;) {
+    for (;;)
+    {
         run_task();
     }
 }

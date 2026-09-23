@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_gpio.h
- * @brief   GD32E507Z-EVAL GPIO BSP interface.
+ * @file bsp_gpio.h
+ * @brief GD32E507Z-EVAL GPIO BSP interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - GPIO functions are background-safe and use atomic set/reset registers
  *          - Hardware access uses the GD32E50x standard peripheral library
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

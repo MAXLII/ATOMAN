@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bsp_gpio.c
- * @brief   APM32 GPIO BSP module.
+ * @file bsp_gpio.c
+ * @brief APM32 GPIO BSP module.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-01
+ * @author Max.Li
+ * @date 2026-06-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -49,13 +49,11 @@ void bsp_gpio_init(void)
     {
         RCM_EnableAPB2PeriphClock(bsp_gpio_parm_table[i].periph);
 
-        gpio_cfg.pin = bsp_gpio_parm_table[i].pin;
-        gpio_cfg.mode = (GPIO_MODE_T)bsp_gpio_parm_table[i].mode;
+        gpio_cfg.pin   = bsp_gpio_parm_table[i].pin;
+        gpio_cfg.mode  = (GPIO_MODE_T)bsp_gpio_parm_table[i].mode;
         gpio_cfg.speed = (GPIO_SPEED_T)bsp_gpio_parm_table[i].speed;
         GPIO_Config(bsp_gpio_parm_table[i].port, &gpio_cfg);
-        GPIO_WriteBitValue(bsp_gpio_parm_table[i].port,
-                           bsp_gpio_parm_table[i].pin,
-                           bsp_gpio_parm_table[i].def_lv);
+        GPIO_WriteBitValue(bsp_gpio_parm_table[i].port, bsp_gpio_parm_table[i].pin, bsp_gpio_parm_table[i].def_lv);
     }
 }
 
@@ -68,18 +66,16 @@ void bsp_gpio_set_bit(bsp_gpio_table_e num, uint8_t val)
         return;
     }
 
-    GPIO_WriteBitValue(bsp_gpio_parm_table[num].port,
-                       bsp_gpio_parm_table[num].pin,
-                       (val != 0U) ? 1U : 0U);
+    GPIO_WriteBitValue(bsp_gpio_parm_table[num].port, bsp_gpio_parm_table[num].pin, (val != 0U) ? 1U : 0U);
 }
 
 void bsp_gpio_get_bit(bsp_gpio_table_e num, uint8_t *val)
 {
-    if (((uint32_t)num >= (uint32_t)GPIO_TABLE_MAX) || (val == NULL))
+    if (    ((uint32_t)num >= (uint32_t)GPIO_TABLE_MAX)
+         || (val == NULL))
     {
         return;
     }
 
-    *val = GPIO_ReadInputBit(bsp_gpio_parm_table[num].port,
-                             bsp_gpio_parm_table[num].pin);
+    *val = GPIO_ReadInputBit(bsp_gpio_parm_table[num].port, bsp_gpio_parm_table[num].pin);
 }

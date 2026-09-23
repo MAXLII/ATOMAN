@@ -4,7 +4,7 @@
 #include "section.h"
 #include "perf.h"
 
-#define BSP_TIMER_CNT_FREQ_HZ 2000000u
+#define BSP_TIMER_CNT_FREQ_HZ  2000000u
 #define BSP_TIMER_CNT_PERIOD_S (0.5e-6f)
 
 REG_PERF_BASE_CNT((uint32_t *)(uintptr_t)(TIMER1 + 0x00000024u), BSP_TIMER_CNT_PERIOD_S)
@@ -23,16 +23,17 @@ void bsp_timer_init(void)
      * SystemCoreClock. Set the prescaler so one counter step equals 0.5us.
      */
     timer_clk_hz = SystemCoreClock;
+
     if (timer_clk_hz < BSP_TIMER_CNT_FREQ_HZ)
     {
         timer_clk_hz = BSP_TIMER_CNT_FREQ_HZ;
     }
 
     timer_initpara.prescaler = (uint16_t)((timer_clk_hz / BSP_TIMER_CNT_FREQ_HZ) - 1u);
-    timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
-    timer_initpara.counterdirection = TIMER_COUNTER_UP;
-    timer_initpara.period = 0xFFFFFFFFu;
-    timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
+    timer_initpara.alignedmode       = TIMER_COUNTER_EDGE;
+    timer_initpara.counterdirection  = TIMER_COUNTER_UP;
+    timer_initpara.period            = 0xFFFFFFFFu;
+    timer_initpara.clockdivision     = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 0u;
 
     timer_init(TIMER1, &timer_initpara);

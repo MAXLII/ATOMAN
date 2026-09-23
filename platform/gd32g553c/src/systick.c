@@ -1,9 +1,9 @@
 /*!
-    \file    systick.c
-    \brief   the systick configuration file
-
-    \version 2025-02-18, V1.1.0, demo for GD32G5x3
-*/
+  \file systick.c
+  \brief the systick configuration file
+ 
+  \version 2025-02-18, V1.1.0, demo for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3.h"
 #include "systick.h"
@@ -39,17 +39,21 @@ static volatile uint32_t delay;
 volatile uint32_t sys_tick_100us;
 
 /*!
-    \brief      configure systick
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief configure systick
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void systick_config(void)
 {
     /* setup systick timer for 10000Hz interrupts */
-    if(SysTick_Config(SystemCoreClock / 10000U)) {
+
+    if (SysTick_Config(SystemCoreClock / 10000U))
+    {
         /* capture error */
-        while(1) {
+
+        while (1)
+        {
         }
     }
     /* configure the systick handler priority */
@@ -58,35 +62,37 @@ void systick_config(void)
 }
 
 /*!
-    \brief      delay a time in milliseconds
-    \param[in]  count: count in milliseconds
-    \param[out] none
-    \retval     none
-*/
+  \brief delay a time in milliseconds
+  \param[in]  count: count in milliseconds
+  \param[out] none
+  \retval none
+ */
 void delay_1ms(uint32_t count)
 {
     delay = count;
 
-    while(0U != delay) {
+    while (0U != delay)
+    {
     }
 }
 
 /*!
-    \brief      delay decrement
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief delay decrement
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void delay_decrement(void)
 {
-	sys_tick_100us++;
-    if(0U != delay) {
+    sys_tick_100us++;
+
+    if (0U != delay)
+    {
         delay--;
     }
 }
 
 uint32_t systick_gettime_100us(void)
 {
-	return sys_tick_100us;
+    return sys_tick_100us;
 }
-

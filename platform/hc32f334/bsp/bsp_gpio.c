@@ -47,19 +47,19 @@ void bsp_gpio_init(void)
         switch (bsp_gpio_parm_table[i].mode)
         {
         case GPIO_MODE_OUT_PP:
-            stcGpioInit.u16PinDir = PIN_DIR_OUT;
-            stcGpioInit.u16PinDrv = PIN_HIGH_DRV;
+            stcGpioInit.u16PinDir        = PIN_DIR_OUT;
+            stcGpioInit.u16PinDrv        = PIN_HIGH_DRV;
             stcGpioInit.u16PinOutputType = PIN_OUT_TYPE_CMOS;
             break;
 
         case GPIO_MODE_IPD:
-            stcGpioInit.u16PinDir = PIN_DIR_IN;
+            stcGpioInit.u16PinDir   = PIN_DIR_IN;
             stcGpioInit.u16PullDown = PIN_PD_ON;
             break;
 
         case GPIO_MODE_OUT_OD:
-            stcGpioInit.u16PinDir = PIN_DIR_OUT;
-            stcGpioInit.u16PinDrv = PIN_HIGH_DRV;
+            stcGpioInit.u16PinDir        = PIN_DIR_OUT;
+            stcGpioInit.u16PinDrv        = PIN_HIGH_DRV;
             stcGpioInit.u16PinOutputType = PIN_OUT_TYPE_NMOS;
             break;
 
@@ -69,8 +69,8 @@ void bsp_gpio_init(void)
 
         GPIO_Init(bsp_gpio_parm_table[i].gpio_periph, bsp_gpio_parm_table[i].pin, &stcGpioInit);
 
-        if ((bsp_gpio_parm_table[i].mode == GPIO_MODE_OUT_PP) ||
-            (bsp_gpio_parm_table[i].mode == GPIO_MODE_OUT_OD))
+        if (    (bsp_gpio_parm_table[i].mode == GPIO_MODE_OUT_PP)
+             || (bsp_gpio_parm_table[i].mode == GPIO_MODE_OUT_OD))
         {
             GPIO_OutputCmd(bsp_gpio_parm_table[i].gpio_periph, bsp_gpio_parm_table[i].pin, ENABLE);
         }

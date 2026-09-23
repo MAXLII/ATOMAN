@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    zynq_iap_update_service.c
- * @brief   Independent Zynq IAP upgrade-trigger implementation.
+ * @file zynq_iap_update_service.c
+ * @brief Independent Zynq IAP upgrade-trigger implementation.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The boot request occupies a fixed on-chip-memory address
  *          - Cache and interrupt shutdown occurs immediately before transfer
  *
- * @author  Max.Li
- * @date    2026-07-28
+ * @author Max.Li
+ * @date 2026-07-28
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -66,14 +66,12 @@ static uint32_t transfer_request_tick;
 
 static uint32_t read_u32_le(const uint8_t *p_data)
 {
-    return (uint32_t)p_data[0] |
-           ((uint32_t)p_data[1] << 8u) |
-           ((uint32_t)p_data[2] << 16u) |
-           ((uint32_t)p_data[3] << 24u);
+    return (uint32_t)p_data[0] | ((uint32_t)p_data[1] << 8u) | ((uint32_t)p_data[2] << 16u)
+         | ((uint32_t)p_data[3] << 24u);
 }
 
 static zynq_iap_update_result_t default_prepare(void *p_context,
-                                                 const zynq_iap_update_info_t *p_info)
+                                                const zynq_iap_update_info_t *p_info)
 {
     (void)p_context;
     (void)p_info;
@@ -85,7 +83,7 @@ static void boot_reason_set(void)
     volatile zynq_iap_boot_reason_record_t *p_record =
         (volatile zynq_iap_boot_reason_record_t *)(uintptr_t)ZYNQ_BOOT_REASON_ADDRESS;
 
-    p_record->reason = ZYNQ_BOOT_REASON_IAP_REQUEST;
+    p_record->reason         = ZYNQ_BOOT_REASON_IAP_REQUEST;
     p_record->inverted_magic = (uint32_t)(~ZYNQ_BOOT_REASON_MAGIC);
     __asm__ volatile("dmb sy" ::: "memory");
     p_record->magic = ZYNQ_BOOT_REASON_MAGIC;
@@ -94,50 +92,52 @@ static void boot_reason_set(void)
 
 static void info_handle(void *p_frame, DEC_MY_PRINTF)
 {
-    section_packform_t *p_request = (section_packform_t *)p_frame;
-    section_packform_t response = {0};
-    zynq_iap_update_info_t info = {0};
+    section_packform_t *p_request    = (section_packform_t *)p_frame;
+    section_packform_t response      = {0};
+    zynq_iap_update_info_t info      = {0};
     uint8_t ack[ZYNQ_IAP_ACK_LENGTH] = {ZYNQ_IAP_ACK_REJECTED, 0u, 0u};
 
-    if ((p_request == NULL) || (my_printf == NULL))
+    if (    (p_request == NULL)
+         || (my_printf == NULL))
     {
         return;
     }
-    if ((p_request->p_data != NULL) &&
-        (p_request->len >= ZYNQ_IAP_INFO_LENGTH) &&
-        (transfer_pending == 0u))
+
+    if (    (p_request->p_data != NULL)
+         && (p_request->len >= ZYNQ_IAP_INFO_LENGTH)
+         && (transfer_pending == 0u))
     {
-        info.module_id = p_request->p_data[0];
-        info.version = read_u32_le(&p_request->p_data[1]);
-        info.file_size = read_u32_le(&p_request->p_data[5]);
+        info.module_id   = p_request->p_data[0];
+        info.version     = read_u32_le(&p_request->p_data[1]);
+        info.file_size   = read_u32_le(&p_request->p_data[5]);
         info.update_type = p_request->p_data[9];
+
         if (p_prepare_callback(p_prepare_context, &info) == ZYNQ_IAP_UPDATE_RESULT_SUCCESS)
         {
             boot_reason_set();
-            transfer_pending = 1u;
-            transfer_called = 0u;
+            transfer_pending      = 1u;
+            transfer_called       = 0u;
             transfer_request_tick = bsp_timer_gettime_100us();
-            ack[0] = ZYNQ_IAP_ACK_ACCEPTED;
+            ack[0]                = ZYNQ_IAP_ACK_ACCEPTED;
         }
     }
-    response.cmd_set = p_request->cmd_set;
+    response.cmd_set  = p_request->cmd_set;
     response.cmd_word = p_request->cmd_word;
-    response.dst = p_request->src;
-    response.d_dst = p_request->d_src;
-    response.src = p_request->dst;
-    response.d_src = p_request->d_dst;
-    response.is_ack = 1u;
-    response.len = ZYNQ_IAP_ACK_LENGTH;
-    response.p_data = ack;
+    response.dst      = p_request->src;
+    response.d_dst    = p_request->d_src;
+    response.src      = p_request->dst;
+    response.d_src    = p_request->d_dst;
+    response.is_ack   = 1u;
+    response.len      = ZYNQ_IAP_ACK_LENGTH;
+    response.p_data   = ack;
     comm_send_data(&response, my_printf);
 }
 
 static void process(void)
 {
-    if ((transfer_pending == 1u) &&
-        (transfer_called == 0u) &&
-        ((bsp_timer_gettime_100us() - transfer_request_tick) >=
-         ZYNQ_IAP_HANDOFF_DELAY_TICKS))
+    if (    (transfer_pending == 1u)
+         && (transfer_called == 0u)
+         && ((bsp_timer_gettime_100us() - transfer_request_tick) >= ZYNQ_IAP_HANDOFF_DELAY_TICKS))
     {
         transfer_called = 1u;
         bsp_ethernet_prepare_handoff();
@@ -159,14 +159,14 @@ static void init(void)
 }
 
 zynq_iap_update_result_t zynq_iap_update_prepare_mount(zynq_iap_prepare_t p_prepare,
-                                                        void *p_context)
+                                                       void *p_context)
 {
     if (p_prepare == NULL)
     {
         return ZYNQ_IAP_UPDATE_RESULT_INVALID_ARGUMENT;
     }
     p_prepare_callback = p_prepare;
-    p_prepare_context = p_context;
+    p_prepare_context  = p_context;
     return ZYNQ_IAP_UPDATE_RESULT_SUCCESS;
 }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    a9_section_port.h
- * @brief   Cortex-A9 exception port interface for the section SRTOS.
+ * @file a9_section_port.h
+ * @brief Cortex-A9 exception port interface for the section SRTOS.
  * @details
  *          This file is part of the Zynq-7020 platform project.
  *
@@ -16,8 +16,8 @@
  *          - Context save and restore are implemented in a9_section_port.S
  *          - Scheduler C code executes on the banked SVC stack
  *
- * @author  Max.Li
- * @date    2026-07-17
+ * @author Max.Li
+ * @date 2026-07-17
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,10 +34,10 @@
 
 typedef enum
 {
-    A9_SECTION_PORT_FAULT_NONE = 0U,            /* No architecture-port fault has been recorded. */
-    A9_SECTION_PORT_FAULT_CONTEXT = 0xA901U,    /* The scheduler returned an invalid task context. */
-    A9_SECTION_PORT_FAULT_UNDEFINED = 0xA902U,  /* The processor entered the undefined-instruction vector. */
-    A9_SECTION_PORT_FAULT_PREFETCH = 0xA903U,   /* The processor entered the prefetch-abort vector. */
+    A9_SECTION_PORT_FAULT_NONE       = 0U,      /* No architecture-port fault has been recorded. */
+    A9_SECTION_PORT_FAULT_CONTEXT    = 0xA901U, /* The scheduler returned an invalid task context. */
+    A9_SECTION_PORT_FAULT_UNDEFINED  = 0xA902U, /* The processor entered the undefined-instruction vector. */
+    A9_SECTION_PORT_FAULT_PREFETCH   = 0xA903U, /* The processor entered the prefetch-abort vector. */
     A9_SECTION_PORT_FAULT_DATA_ABORT = 0xA904U, /* The processor entered the data-abort vector. */
 } a9_section_port_fault_t;
 

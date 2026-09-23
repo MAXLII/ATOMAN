@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    systick.h
- * @brief   GD32E507 SysTick time-base interface.
+ * @file systick.h
+ * @brief GD32E507 SysTick time-base interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The tick counter is updated in SysTick_Handler
  *          - Hardware access uses CMSIS SysTick services
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

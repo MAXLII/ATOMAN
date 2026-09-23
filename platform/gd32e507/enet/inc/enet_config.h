@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    enet_config.h
- * @brief   GD32E507 Ethernet communication configuration.
+ * @file enet_config.h
+ * @brief GD32E507 Ethernet communication configuration.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The address is selected for the directly connected 192.168.1.0/24 network
  *          - Hardware access is abstracted through the GD32E507 ENET BSP
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -53,6 +53,6 @@
 #define ENET_CONFIG_GATEWAY_ADDR3 0u
 
 #define ENET_CONFIG_TCP_FRAME_PORT 5000u
-#define ENET_CONFIG_UDP_ECHO_PORT 5000u
+#define ENET_CONFIG_UDP_ECHO_PORT  5000u
 
 #endif /* ENET_CONFIG_H */

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    hc32_boot_platform.h
- * @brief   HC32F334 retained boot reason and IAP jump interface.
+ * @file hc32_boot_platform.h
+ * @brief HC32F334 retained boot reason and IAP jump interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Jump executes with interrupts disabled
  *          - HC32 registers and memory ranges remain in this platform module
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

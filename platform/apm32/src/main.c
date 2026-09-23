@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    main.c
- * @brief   APM32 demo firmware entry.
+ * @file main.c
+ * @brief APM32 demo firmware entry.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - ISR-safe path should be explicitly documented
  *          - Hardware access should be abstracted through HAL / BSP
  *
- * @author  Max.Li
- * @date    2026-06-01
+ * @author Max.Li
+ * @date 2026-06-01
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

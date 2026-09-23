@@ -1,9 +1,9 @@
 /*!
-    \file    main.c
-    \brief   running led
-
-    \version 2025-02-18, V1.1.0, demo for GD32G5x3
-*/
+  \file main.c
+  \brief running led
+ 
+  \version 2025-02-18, V1.1.0, demo for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32g5x3.h"
 #include "systick.h"
@@ -40,15 +40,16 @@ OF SUCH DAMAGE.
 #include "demo_jitter.h"
 
 /*!
-    \brief      main function
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief main function
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 int main(void)
 {
     systick_config();
     section_init();
+
     while (1)
     {
         run_task();
@@ -58,6 +59,7 @@ int main(void)
 void TIMER2_IRQHandler(void)
 {
     demo_jitter_timer2_isr_entry();
+
     if (timer_interrupt_flag_get(TIMER2, TIMER_INT_FLAG_UP) != RESET)
     {
         timer_interrupt_flag_clear(TIMER2, TIMER_INT_FLAG_UP);

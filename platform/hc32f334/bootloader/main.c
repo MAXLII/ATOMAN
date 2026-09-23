@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    main.c
- * @brief   HC32F334 bootloader runtime entry point.
+ * @file main.c
+ * @brief HC32F334 bootloader runtime entry point.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Bootloader services initialize through Section registration
  *          - Platform composition remains outside the entry point
  *
- * @author  Max.Li
- * @date    2026-07-28
+ * @author Max.Li
+ * @date 2026-07-28
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -32,8 +32,8 @@
 #include "section.h"
 #include "systick.h"
 
-#define HC32_BOOT_LL_PERIPH_SEL (LL_PERIPH_GPIO | LL_PERIPH_FCG | LL_PERIPH_PWC_CLK_RMU | \
-                                 LL_PERIPH_EFM | LL_PERIPH_SRAM)
+#define HC32_BOOT_LL_PERIPH_SEL \
+    (LL_PERIPH_GPIO | LL_PERIPH_FCG | LL_PERIPH_PWC_CLK_RMU | LL_PERIPH_EFM | LL_PERIPH_SRAM)
 
 int main(void)
 {
@@ -41,6 +41,7 @@ int main(void)
     BSP_CLK_Init();
     systick_config();
     section_init();
+
     while (1)
     {
         run_task();

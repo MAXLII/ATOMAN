@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    tms320f28p55_platform.h
- * @brief   TMS320F28P55 demo platform interface.
+ * @file tms320f28p55_platform.h
+ * @brief TMS320F28P55 demo platform interface.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The tick getter is safe for the 32-bit C28x CPU
  *          - GPIO and SCI access remain inside the platform layer
  *
- * @author  Max.Li
- * @date    2026-09-04
+ * @author Max.Li
+ * @date 2026-09-04
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

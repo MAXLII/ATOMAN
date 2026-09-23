@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    bootloader_comm_link.c
- * @brief   Dedicated FRAME communication link for the Zynq bootloader image.
+ * @file bootloader_comm_link.c
+ * @brief Dedicated FRAME communication link for the Zynq bootloader image.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - lwIP input and timers are advanced by the Section task
  *          - Hardware access remains in bsp_ethernet
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,12 +34,13 @@
 
 #include <stddef.h>
 
-#define ZYNQ_BOOTLOADER_LINK_ID 0u
+#define ZYNQ_BOOTLOADER_LINK_ID         0u
 #define ZYNQ_BOOTLOADER_RX_PAYLOAD_SIZE 1033u
 
 static void bootloader_tx(char *p_data, int length)
 {
-    if ((p_data != NULL) && (length > 0))
+    if (    (p_data != NULL)
+         && (length > 0))
     {
         (void)bsp_ethernet_tx((const uint8_t *)p_data, (uint32_t)length);
     }
@@ -50,19 +51,13 @@ static section_link_tx_func_t s_bootloader_tx = {
     .tx_by_dma = bootloader_tx,
 };
 
-DECLARE_COMM_CTX(s_bootloader_comm,
-                 ZYNQ_BOOTLOADER_RX_PAYLOAD_SIZE,
-                 HOST_ADDR,
-                 ZYNQ_BOOTLOADER_LINK_ID);
+DECLARE_COMM_CTX(s_bootloader_comm, ZYNQ_BOOTLOADER_RX_PAYLOAD_SIZE, HOST_ADDR, ZYNQ_BOOTLOADER_LINK_ID);
 
 static const section_link_handler_item_t s_handlers[] = {
     {.func = comm_run, .ctx = &s_bootloader_comm},
 };
 
-REG_LINK(ZYNQ_BOOTLOADER_LINK_ID,
-         s_bootloader_tx,
-         bsp_ethernet_rx_get_byte,
-         s_handlers,
+REG_LINK(ZYNQ_BOOTLOADER_LINK_ID, s_bootloader_tx, bsp_ethernet_rx_get_byte, s_handlers,
          sizeof(s_handlers) / sizeof(s_handlers[0]))
 
 static void bootloader_ethernet_poll(void)

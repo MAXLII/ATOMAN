@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    systick.c
- * @brief   HC32F558 SysTick timing module.
+ * @file systick.c
+ * @brief HC32F558 SysTick timing module.
  * @details
  *          This file is part of the HC32F558 project.
  *
@@ -16,8 +16,8 @@
  *          - delay_decrement() runs in SysTick ISR context
  *          - Hardware access is abstracted through CMSIS SysTick APIs
  *
- * @author  Max.Li
- * @date    2026-06-06
+ * @author Max.Li
+ * @date 2026-06-06
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -37,8 +37,10 @@ void systick_config(void)
 {
     SystemCoreClockUpdate();
 
-    if (0UL != SysTick_Config(SystemCoreClock / 10000UL)) {
-        for (;;) {
+    if (0UL != SysTick_Config(SystemCoreClock / 10000UL))
+    {
+        for (;;)
+        {
         }
     }
 
@@ -49,7 +51,8 @@ void delay_1ms(uint32_t count)
 {
     s_delay_tick = count * 10UL;
 
-    while (0UL != s_delay_tick) {
+    while (0UL != s_delay_tick)
+    {
     }
 }
 
@@ -57,7 +60,8 @@ void delay_decrement(void)
 {
     sys_tick_100us++;
 
-    if (0UL != s_delay_tick) {
+    if (0UL != s_delay_tick)
+    {
         s_delay_tick--;
     }
 }

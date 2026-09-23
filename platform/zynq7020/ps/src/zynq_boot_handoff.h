@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    zynq_boot_handoff.h
- * @brief   Shared retained handoff between Zynq IAP and Bootloader images.
+ * @file zynq_boot_handoff.h
+ * @brief Shared retained handoff between Zynq IAP and Bootloader images.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - The record occupies a fixed on-chip-memory location
  *          - Cache and interrupt handling remain confined to this platform module
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    ethernet_comm_link.c
- * @brief   Zynq-7020 PS GEM0-to-Section communication link adapter.
+ * @file ethernet_comm_link.c
+ * @brief Zynq-7020 PS GEM0-to-Section communication link adapter.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - No Ethernet or lwIP processing occurs in the Section timer ISR
  *          - Hardware access is abstracted through bsp_ethernet
  *
- * @author  Max.Li
- * @date    2026-08-08
+ * @author Max.Li
+ * @date 2026-08-08
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -40,7 +40,8 @@
 
 static void ethernet_tx_callback(char *p_data, int length)
 {
-    if ((p_data != NULL) && (length > 0))
+    if (    (p_data != NULL)
+         && (length > 0))
     {
         (void)bsp_ethernet_tx((const uint8_t *)p_data, (uint32_t)length);
     }
@@ -52,10 +53,7 @@ static section_link_tx_func_t s_ethernet_tx = {
 };
 
 DECLARE_SHELL_CTX(s_ethernet_shell_context);
-DECLARE_COMM_CTX(s_ethernet_comm_context,
-                 ZYNQ_ETHERNET_COMM_PAYLOAD_SIZE,
-                 HOST_ADDR,
-                 ETHERNET_LINK);
+DECLARE_COMM_CTX(s_ethernet_comm_context, ZYNQ_ETHERNET_COMM_PAYLOAD_SIZE, HOST_ADDR, ETHERNET_LINK);
 
 static const section_link_handler_item_t s_ethernet_handlers[] = {
     {.func = shell_run, .ctx = (void *)&s_ethernet_shell_context},
@@ -67,9 +65,6 @@ static void ethernet_poll_task(void)
     bsp_ethernet_poll();
 }
 
-REG_LINK(ETHERNET_LINK,
-         s_ethernet_tx,
-         bsp_ethernet_rx_get_byte,
-         s_ethernet_handlers,
+REG_LINK(ETHERNET_LINK, s_ethernet_tx, bsp_ethernet_rx_get_byte, s_ethernet_handlers,
          sizeof(s_ethernet_handlers) / sizeof(s_ethernet_handlers[0]))
 REG_TASK_MS(1, ethernet_poll_task)

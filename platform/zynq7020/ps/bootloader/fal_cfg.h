@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    fal_cfg.h
- * @brief   Zynq-7020 QSPI device and bootloader partition configuration.
+ * @file fal_cfg.h
+ * @brief Zynq-7020 QSPI device and bootloader partition configuration.
  * @details
  *          This file is part of the base project.
  *
@@ -16,8 +16,8 @@
  *          - Configuration objects are immutable after construction
  *          - QSPI register access remains in the BSP driver
  *
- * @author  Max.Li
- * @date    2026-07-27
+ * @author Max.Li
+ * @date 2026-07-27
  * @version 1.0.0
  *
  * Copyright (c) 2026 Max.Li.
@@ -34,9 +34,9 @@
 
 #include <stdint.h>
 
-#define ZYNQ7020_QSPI_BOOT_SIZE 0x00500000u
-#define ZYNQ7020_QSPI_IAP_SIZE 0x00300000u
-#define ZYNQ7020_QSPI_STAGING_SIZE 0x00300000u
+#define ZYNQ7020_QSPI_BOOT_SIZE       0x00500000u
+#define ZYNQ7020_QSPI_IAP_SIZE        0x00300000u
+#define ZYNQ7020_QSPI_STAGING_SIZE    0x00300000u
 #define ZYNQ7020_QSPI_SMALL_ZONE_SIZE 0x00010000u
 
 typedef enum

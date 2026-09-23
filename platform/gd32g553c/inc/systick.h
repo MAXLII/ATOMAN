@@ -1,9 +1,9 @@
 /*!
-    \file    systick.h
-    \brief   the header file of systick
-
-    \version 2025-02-18, V1.1.0, demo for GD32G5x3
-*/
+  \file systick.h
+  \brief the header file of systick
+ 
+  \version 2025-02-18, V1.1.0, demo for GD32G5x3
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef SYSTICK_H
 #define SYSTICK_H
