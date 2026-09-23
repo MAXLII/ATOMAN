@@ -450,4 +450,8 @@ static inline void boost_cfg_sync_building_to_active_fast(void)
     }
 }
 
+/* FSM-only lifecycle APIs: grant run permission and publish staged configuration. */
+void boost_cfg_set_run_allowed(uint8_t run_allowed);
+void boost_cfg_publish_building(void);
+
 #endif

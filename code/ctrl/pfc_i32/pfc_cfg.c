@@ -27,7 +27,6 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "pfc_cfg.h"
-#include "pfc_cfg_fsm.h"
 #include <stddef.h>
 
 static pfc_ctrl_setpoint_t setpoint_active = {0};

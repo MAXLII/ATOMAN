@@ -28,7 +28,6 @@
  */
 #include "bb_fsm.h"
 #include "bb_cfg.h"
-#include "bb_cfg_fsm.h"
 
 static bb_fsm_ev_e fsm_ev = bb_fsm_ev_null;    /* fsm_ev: pending transition event consumed by REG_FSM */
 static volatile bb_fsm_cmd_e fsm_cmd = bb_fsm_cmd_null; /* fsm_cmd: command shared with protection context */

@@ -75,4 +75,8 @@ void pfc_cfg_sync_building_to_active(void);
 
 const pfc_ctrl_setpoint_mgr_t *pfc_cfg_get_mgr(void);
 
+/* FSM-only lifecycle APIs: grant run permission and publish staged configuration. */
+void pfc_cfg_set_run_allowed(uint8_t run_allowed);
+void pfc_cfg_publish_building(void);
+
 #endif

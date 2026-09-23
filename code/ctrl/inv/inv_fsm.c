@@ -28,7 +28,6 @@
  */
 #include "inv_fsm.h"
 #include "inv_cfg.h"
-#include "inv_cfg_fsm.h"
 #include "my_math.h"
 
 #define p_hal (inv_hal_get_fsm())

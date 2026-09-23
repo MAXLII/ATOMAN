@@ -104,4 +104,8 @@ static inline void llc_cfg_sync_building_to_active(void)
     }
 }
 
+/* FSM-only lifecycle APIs: grant run permission and publish staged configuration. */
+void llc_cfg_set_run_allowed(uint8_t run_allowed);
+void llc_cfg_publish_building(void);
+
 #endif

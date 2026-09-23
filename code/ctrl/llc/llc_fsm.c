@@ -28,7 +28,6 @@
  */
 #include "llc_fsm.h"
 #include "llc_cfg.h"
-#include "llc_cfg_fsm.h"
 #include "llc_hal.h"
 #include "my_math.h"
 #include <stddef.h>

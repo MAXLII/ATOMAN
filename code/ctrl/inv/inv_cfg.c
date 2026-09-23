@@ -27,7 +27,6 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "inv_cfg.h"
-#include "inv_cfg_fsm.h"
 #include <stddef.h>
 #include "section.h"
 

@@ -28,7 +28,6 @@
  */
 #include "pfc_fsm.h"
 #include "pfc_cfg.h"
-#include "pfc_cfg_fsm.h"
 #include "section.h"
 #include "my_math.h"
 

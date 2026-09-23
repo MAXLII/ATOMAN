@@ -28,7 +28,7 @@
  */
 #include "cllc_fsm.h"
 
-#include "cllc_cfg_fsm.h"
+#include "cllc_cfg.h"
 #include "cllc_hal.h"
 #include "section.h"
 

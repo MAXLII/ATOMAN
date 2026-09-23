@@ -27,7 +27,6 @@
  * See the LICENSE file in the project root for full license text.
  */
 #include "bb_cfg.h"
-#include "bb_cfg_fsm.h"
 #include <stddef.h>
 
 static bb_ctrl_setpoint_t setpoint_active = {0};   /* setpoint_active: snapshot consumed by control logic */

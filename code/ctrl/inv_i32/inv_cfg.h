@@ -114,4 +114,8 @@ uint8_t inv_cfg_is_ready(void);
 void inv_cfg_sync_building_to_active(void);
 const inv_ctrl_setpoint_mgr_t *inv_cfg_get_mgr(void);
 
+/* FSM-only lifecycle APIs: grant run permission and publish staged configuration. */
+void inv_cfg_set_run_allowed(uint8_t run_allowed);
+void inv_cfg_publish_building(void);
+
 #endif

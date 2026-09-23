@@ -28,7 +28,6 @@
  */
 #include "boost_fsm.h"
 #include "boost_cfg.h"
-#include "boost_cfg_fsm.h"
 #include <stddef.h>
 
 static uint32_t fsm_ev = boost_fsm_ev_null;
