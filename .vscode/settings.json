@@ -8,6 +8,9 @@
         "gd32g5x3_libopt.h": "c"
     },
     "cmake.ignoreCMakeListsMissing": true,
+    "extensions.experimental.affinity": {
+        "maxli.c-sizeof-hover": 1
+    },
     "files.watcherExclude": {
         "**/references/**": true,
         "**/.Xil/**": true,
@@ -15,7 +18,7 @@
         "**/RemoteSystemsTempFiles/**": true,
         "build/**": true,
         "platform/**/build/**": true,
-        "platform/plecs/**/build*/**": true
+        "platform/**/build*/**": true
     },
     "search.exclude": {
         "**/references/**": true,
@@ -24,7 +27,7 @@
         "**/RemoteSystemsTempFiles/**": true,
         "build/**": true,
         "platform/**/build/**": true,
-        "platform/plecs/**/build*/**": true
+        "platform/**/build*/**": true
     },
     "C_Cpp.files.exclude": {
         "**/references/**": true,
@@ -33,7 +36,7 @@
         "**/RemoteSystemsTempFiles/**": true,
         "build/**": true,
         "platform/**/build/**": true,
-        "platform/plecs/**/build*/**": true
+        "platform/**/build*/**": true
     },
     "C_Cpp.codeAnalysis.exclude": {
         "**/references/**": true,
@@ -42,7 +45,7 @@
         "**/RemoteSystemsTempFiles/**": true,
         "build/**": true,
         "platform/**/build/**": true,
-        "platform/plecs/**/build*/**": true
+        "platform/**/build*/**": true
     },
     "C_Cpp.workspaceParsingPriority": "medium",
     "C_Cpp.intelliSenseCacheSize": 1024
