@@ -239,9 +239,8 @@ void bsp_usart_dbg_tx(char *p_data, int length)
 {
     uint32_t transfer_length = 0u; /* Length constrained to the software queue API. */
 
-    if (    (p_data == NULL)
-         || /* No transmit buffer was provided. */
-            (length <= 0)) /* There are no bytes to transmit. */
+    if (    (p_data == NULL) /* No transmit buffer was provided. */
+         || (length <= 0))   /* There are no bytes to transmit. */
     {
         return;
     }

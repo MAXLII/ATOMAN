@@ -115,9 +115,8 @@ int32_t bsp_timer_interrupt_start(uint32_t frequency_hz)
     timer_clock_hz = (uint64_t)XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ / 2ULL;
     timer_load     = timer_clock_hz / (uint64_t)frequency_hz;
 
-    if (    (timer_load == 0ULL)
-         || /* 目标频率高于私有定时器输入时钟。 */
-            (timer_load > (uint64_t)UINT32_MAX)) /* 目标周期超出 32 位重装寄存器范围。 */
+    if (    (timer_load == 0ULL) /* 目标频率高于私有定时器输入时钟。 */
+         || (timer_load > (uint64_t)UINT32_MAX)) /* 目标周期超出 32 位重装寄存器范围。 */
     {
         return XST_INVALID_PARAM;
     }

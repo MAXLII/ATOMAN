@@ -75,13 +75,10 @@ static uint8_t response_append_text(uint8_t *p_response,
     size_t text_length        = 0u; /* Number of source bytes appended without a terminating NUL. */
     uint16_t available_length = 0u; /* Remaining caller-owned response capacity. */
 
-    if (    (p_response == NULL)
-         || /* The caller did not provide response storage. */
-            (p_response_length == NULL)
-         || /* The current output position is unavailable. */
-            (p_text == NULL)
-         || /* The response fragment is unavailable. */
-            (*p_response_length > response_capacity)) /* The caller supplied an invalid current length. */
+    if (    (p_response == NULL)        /* The caller did not provide response storage. */
+         || (p_response_length == NULL) /* The current output position is unavailable. */
+         || (p_text == NULL)            /* The response fragment is unavailable. */
+         || (*p_response_length > response_capacity)) /* The caller supplied an invalid current length. */
     {
         return 0u;
     }
@@ -116,13 +113,10 @@ static uint8_t response_append_u16(uint8_t *p_response,
         remaining_value = (uint16_t)(remaining_value / 10u);
     } while (remaining_value > 0u);
 
-    if (    (p_response == NULL)
-         || /* The caller did not provide response storage. */
-            (p_response_length == NULL)
-         || /* The current output position is unavailable. */
-            (*p_response_length > response_capacity)
-         || /* The current length is outside the buffer. */
-            (digit_count > (uint16_t)(response_capacity - *p_response_length))) /* Decimal text would overflow. */
+    if (    (p_response == NULL)        /* The caller did not provide response storage. */
+         || (p_response_length == NULL) /* The current output position is unavailable. */
+         || (*p_response_length > response_capacity) /* The current length is outside the buffer. */
+         || (digit_count > (uint16_t)(response_capacity - *p_response_length))) /* Decimal text would overflow. */
     {
         return 0u;
     }
@@ -142,13 +136,10 @@ static uint8_t response_append_hex_u8(uint8_t *p_response,
 {
     static const uint8_t hex_digits[] = "0123456789ABCDEF"; /* Upper-case MAC address alphabet. */
 
-    if (    (p_response == NULL)
-         || /* The caller did not provide response storage. */
-            (p_response_length == NULL)
-         || /* The current output position is unavailable. */
-            (*p_response_length > response_capacity)
-         || /* The current length is outside the buffer. */
-            ((uint16_t)(response_capacity - *p_response_length) < 2u)) /* A MAC octet needs 2 characters. */
+    if (    (p_response == NULL)        /* The caller did not provide response storage. */
+         || (p_response_length == NULL) /* The current output position is unavailable. */
+         || (*p_response_length > response_capacity) /* The current length is outside the buffer. */
+         || ((uint16_t)(response_capacity - *p_response_length) < 2u)) /* A MAC octet needs 2 characters. */
     {
         return 0u;
     }
@@ -243,17 +234,12 @@ static uint16_t discovery_response_build(const uint8_t *p_request,
     static const uint8_t discovery_request[] = "FRAME_DISCOVER_V1"; /* Exact FRAME host discovery probe. */
     uint16_t response_length                 = 0u; /* Number of valid ASCII response bytes produced for the caller. */
 
-    if (    (p_request == NULL)
-         || /* The UDP adapter did not provide request bytes. */
-            (p_local_address == NULL)
-         || /* The active interface address is unavailable. */
-            ip4_addr_isany_val(*p_local_address)
-         || /* Address acquisition is still in progress. */
-            (p_response == NULL)
-         || /* The UDP adapter did not provide response storage. */
-            (request_length != BSP_ENET_DISCOVERY_REQUEST_LENGTH)
-         || /* Only the complete probe is accepted. */
-            (memcmp(p_request, discovery_request, BSP_ENET_DISCOVERY_REQUEST_LENGTH) != 0)) /* Reject UDP Echo traffic. */
+    if (    (p_request == NULL)       /* The UDP adapter did not provide request bytes. */
+         || (p_local_address == NULL) /* The active interface address is unavailable. */
+         || ip4_addr_isany_val(*p_local_address) /* Address acquisition is still in progress. */
+         || (p_response == NULL) /* The UDP adapter did not provide response storage. */
+         || (request_length != BSP_ENET_DISCOVERY_REQUEST_LENGTH) /* Only the complete probe is accepted. */
+         || (memcmp(p_request, discovery_request, BSP_ENET_DISCOVERY_REQUEST_LENGTH) != 0)) /* Reject UDP Echo traffic. */
     {
         return 0u;
     }
@@ -389,15 +375,11 @@ bsp_enet_discovery_result_t bsp_enet_discovery_udp_process(struct udp_pcb *p_end
     struct pbuf *p_response_packet                           = NULL;   /* Temporary LwIP packet carrying the discovery response. */
     err_t send_status                                        = ERR_OK; /* Response copy or UDP transmission result. */
 
-    if (    (p_endpoint == NULL)
-         || /* The UDP service did not provide its bound endpoint. */
-            (p_packet == NULL)
-         || /* The UDP service did not provide a datagram. */
-            (p_local_address == NULL)
-         || /* The interface has no reportable address. */
-            (p_remote_address == NULL)
-         || /* The response destination is unavailable. */
-            (p_packet->tot_len != BSP_ENET_DISCOVERY_REQUEST_LENGTH)) /* Unrelated UDP traffic remains Echo data. */
+    if (    (p_endpoint == NULL)       /* The UDP service did not provide its bound endpoint. */
+         || (p_packet == NULL)         /* The UDP service did not provide a datagram. */
+         || (p_local_address == NULL)  /* The interface has no reportable address. */
+         || (p_remote_address == NULL) /* The response destination is unavailable. */
+         || (p_packet->tot_len != BSP_ENET_DISCOVERY_REQUEST_LENGTH)) /* Unrelated UDP traffic remains Echo data. */
     {
         return BSP_ENET_DISCOVERY_NOT_HANDLED_E;
     }

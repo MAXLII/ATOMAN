@@ -165,9 +165,8 @@ int npc_log_start(void)
     }
     length = GetModuleFileNameW(module, path, MAX_PATH);
 
-    if (    (length == 0u)
-         || /* API failure. */
-            (length >= MAX_PATH)) /* Reject a truncated path. */
+    if (    (length == 0u)        /* API failure. */
+         || (length >= MAX_PATH)) /* Reject a truncated path. */
     {
         return 0;
     }

@@ -155,9 +155,8 @@ static uint32_t frame_perf_sequence            = 0u;  /* Last sequence allocated
  */
 static uint8_t frame_perf_request_is_command(const section_packform_t *p_request)
 {
-    if (    (p_request == NULL)
-         || /* A request object is required. */
-            (p_request->is_ack != 0u)) /* ACK frames must not recursively trigger handlers. */
+    if (    (p_request == NULL)        /* A request object is required. */
+         || (p_request->is_ack != 0u)) /* ACK frames must not recursively trigger handlers. */
     {
         return 0u;
     }
@@ -173,11 +172,9 @@ static uint8_t frame_perf_request_is_command(const section_packform_t *p_request
 static uint8_t frame_perf_request_payload_is_valid(const section_packform_t *p_request,
                                                    uint16_t minimum_length)
 {
-    if (    (frame_perf_request_is_command(p_request) == 0u)
-         || /* Reject missing and ACK frames. */
-            (p_request->p_data == NULL)
-         || /* Required bytes need readable storage. */
-            (p_request->len < minimum_length)) /* Tail extensions are accepted safely. */
+    if (    (frame_perf_request_is_command(p_request) == 0u) /* Reject missing and ACK frames. */
+         || (p_request->p_data == NULL)        /* Required bytes need readable storage. */
+         || (p_request->len < minimum_length)) /* Tail extensions are accepted safely. */
     {
         return 0u;
     }
@@ -284,9 +281,8 @@ static uint8_t frame_perf_record_type_get(uint8_t record_type)
 static uint8_t frame_perf_record_matches(uint8_t protocol_type,
                                          uint8_t type_filter)
 {
-    if (    (protocol_type < PERF_OPT_TYPE_TASK)
-         || /* Type 0 is the wildcard only, never a record. */
-            (protocol_type > PERF_OPT_TYPE_CODE)) /* Values above CODE are not published record types. */
+    if (    (protocol_type < PERF_OPT_TYPE_TASK)  /* Type 0 is the wildcard only, never a record. */
+         || (protocol_type > PERF_OPT_TYPE_CODE)) /* Values above CODE are not published record types. */
     {
         return 0u;
     }
@@ -316,9 +312,8 @@ static uint16_t frame_perf_record_count(uint8_t type_filter)
         {
             uint8_t protocol_type = frame_perf_record_type_get(p_record->record_type); /* FRAME-facing record type. */
 
-            if (    (frame_perf_record_matches(protocol_type, type_filter) == 1u)
-                 && /* Filter accepts it. */
-                    (count != UINT16_MAX)) /* Count cannot wrap. */
+            if (    (frame_perf_record_matches(protocol_type, type_filter) == 1u) /* Filter accepts it. */
+                 && (count != UINT16_MAX)) /* Count cannot wrap. */
             {
                 count++;
             }
@@ -368,16 +363,14 @@ static uint8_t frame_perf_name_copy(wire_octet_t *p_destination,
 {
     uint16_t index = 0u; /* Native character currently converted to one wire octet. */
 
-    if (    (p_destination == NULL)
-         || /* Bounded output storage is required. */
-            (p_name == NULL)) /* A missing name is represented by zero length. */
+    if (    (p_destination == NULL) /* Bounded output storage is required. */
+         || (p_name == NULL))       /* A missing name is represented by zero length. */
     {
         return 0u;
     }
 
-    while (    (index < FRAME_PERF_DICT_NAME_LENGTH_MAX)
-            && /* Keep the report inside its fixed buffer. */
-               (p_name[index] != '\0')) /* Stop at the native string terminator. */
+    while (    (index < FRAME_PERF_DICT_NAME_LENGTH_MAX) /* Keep the report inside its fixed buffer. */
+            && (p_name[index] != '\0')) /* Stop at the native string terminator. */
     {
         p_destination[index] = wire_octet_get((uint16_t)p_name[index]);
         index++;
@@ -424,9 +417,8 @@ static uint8_t frame_perf_transfer_start(const section_packform_t *p_request,
                                          perf_opt_pull_type_t pull_type,
                                          uint8_t *p_reject_reason)
 {
-    if (    (p_request == NULL)
-         || /* Route metadata is required. */
-            (p_reject_reason == NULL)) /* The caller must receive a deterministic rejection reason. */
+    if (    (p_request == NULL)        /* Route metadata is required. */
+         || (p_reject_reason == NULL)) /* The caller must receive a deterministic rejection reason. */
     {
         return 0u;
     }
@@ -443,17 +435,15 @@ static uint8_t frame_perf_transfer_start(const section_packform_t *p_request,
         return 0u;
     }
 
-    if (    (p_output == NULL)
-         || /* Deferred reports need a persistent link object. */
-            (p_output->tx_by_dma == NULL)) /* The link must own or synchronously consume each frame. */
+    if (    (p_output == NULL)             /* Deferred reports need a persistent link object. */
+         || (p_output->tx_by_dma == NULL)) /* The link must own or synchronously consume each frame. */
     {
         *p_reject_reason = PERF_OPT_REJECT_NO_BUFFER;
         return 0u;
     }
 
-    if (    (pull_type != PERF_OPT_PULL_DICT)
-         && /* Only dictionary transfers are supported here. */
-            (pull_type != PERF_OPT_PULL_SAMPLE)) /* Only sample transfers are supported here. */
+    if (    (pull_type != PERF_OPT_PULL_DICT)    /* Only dictionary transfers are supported here. */
+         && (pull_type != PERF_OPT_PULL_SAMPLE)) /* Only sample transfers are supported here. */
     {
         *p_reject_reason = PERF_OPT_REJECT_UNSUPPORTED;
         return 0u;
@@ -551,9 +541,8 @@ static void frame_perf_dictionary_poll(void)
     p_item   = frame_perf_record_find_next(frame_perf_context.p_item, frame_perf_context.type_filter);
     p_record = perf_record_from_item(p_item);
 
-    if (    (p_item == NULL)
-         || /* The captured count promised another matching record. */
-            (p_record == NULL)) /* The Section wrapper must still resolve through perf.c. */
+    if (    (p_item == NULL)    /* The captured count promised another matching record. */
+         || (p_record == NULL)) /* The Section wrapper must still resolve through perf.c. */
     {
         frame_perf_transfer_end(PERF_OPT_END_INTERNAL_ERROR);
         return;
@@ -594,9 +583,8 @@ static uint16_t frame_perf_sample_item_write(section_perf_record_t *p_record,
 {
     uint16_t item_size = 0u; /* Type-specific sample item wire length. */
 
-    if (    (p_record == NULL)
-         || /* A shared Perf record is required. */
-            (p_destination == NULL)) /* The caller must provide bounded payload storage. */
+    if (    (p_record == NULL)       /* A shared Perf record is required. */
+         || (p_destination == NULL)) /* The caller must provide bounded payload storage. */
     {
         return 0u;
     }
@@ -661,9 +649,8 @@ static void frame_perf_sample_poll(void)
     p_item   = frame_perf_record_find_next(frame_perf_context.p_item, frame_perf_context.type_filter);
     p_record = perf_record_from_item(p_item);
 
-    if (    (p_item == NULL)
-         || /* The captured count promised another matching record. */
-            (p_record == NULL)) /* The Section wrapper must still resolve through perf.c. */
+    if (    (p_item == NULL)    /* The captured count promised another matching record. */
+         || (p_record == NULL)) /* The Section wrapper must still resolve through perf.c. */
     {
         frame_perf_transfer_end(PERF_OPT_END_INTERNAL_ERROR);
         return;
@@ -901,9 +888,8 @@ static void frame_perf_report_control_act(void *p_frame,
         payload[FRAME_PERF_CONTROL_ACK_SUCCESS_OFFSET] = 1u;
     }
 
-    if (    (p_request->dst == 0u)
-         && /* Broadcast controls execute locally. */
-            (p_request->d_dst == 0u)) /* Broadcast acknowledgements would collide. */
+    if (    (p_request->dst == 0u)    /* Broadcast controls execute locally. */
+         && (p_request->d_dst == 0u)) /* Broadcast acknowledgements would collide. */
     {
         return;
     }

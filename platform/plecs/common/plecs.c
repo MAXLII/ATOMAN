@@ -179,9 +179,8 @@ DLLEXPORT void plecsOutput(struct SimulationState *aState)
         output_tick_last = tick;
     }
 
-    if (    (interrupt_time_valid == 0u)
-         || /* Execute the initial sample exactly once. */
-            (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
+    if (    (interrupt_time_valid == 0u) /* Execute the initial sample exactly once. */
+         || (plecs_astate->time > interrupt_time_last)) /* Reject repeated output evaluations at the same sample time. */
     {
         section_interrupt();
         interrupt_time_last  = plecs_astate->time;

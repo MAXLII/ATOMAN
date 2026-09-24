@@ -200,9 +200,8 @@ static void sfra_prepare(PI_TEST_SCENARIO_E scenario,
     fixture_reset(scenario);
     csv_open(p_csv_path, "point_index,frequency_hz,magnitude,magnitude_db,phase_deg");
 
-    if (    (p_csv_file != NULL)
-         && /* The waveform output is available. */
-            (include_dc_point == 1u)) /* A finite DC result exists for this transfer function. */
+    if (    (p_csv_file != NULL)      /* The waveform output is available. */
+         && (include_dc_point == 1u)) /* A finite DC result exists for this transfer function. */
     {
         if (fprintf(p_csv_file, "0,0.000000,1.000000,0.000000,0.000000\n") < 0)
         {
@@ -539,9 +538,8 @@ static TESTBENCH_CASE_STATE_E step_after_dut(double time_s)
     step_response_evaluate(time_s);
     step_record(time_s);
 
-    if (    (fixture.dut_init_ok == 1u)
-         && /* The production PI initialized successfully. */
-            (step_finished(time_s) == 0u)) /* The response still requires additional DUT runs. */
+    if (    (fixture.dut_init_ok == 1u)    /* The production PI initialized successfully. */
+         && (step_finished(time_s) == 0u)) /* The response still requires additional DUT runs. */
     {
         return TESTBENCH_CASE_RUNNING;
     }
@@ -550,9 +548,8 @@ static TESTBENCH_CASE_STATE_E step_after_dut(double time_s)
 
 static TESTBENCH_CASE_STATE_E sfra_closed_loop_after_dut(double time_s)
 {
-    if (    (fixture.dut_init_ok == 0u)
-         || /* The production PI cannot execute valid samples. */
-            (fixture.sfra_init_ok == 0u)) /* The requested SFRA sweep could not start. */
+    if (    (fixture.dut_init_ok == 0u)   /* The production PI cannot execute valid samples. */
+         || (fixture.sfra_init_ok == 0u)) /* The requested SFRA sweep could not start. */
     {
         return assertion_state_get(sfra_closed_loop_assert());
     }
@@ -568,9 +565,8 @@ static TESTBENCH_CASE_STATE_E sfra_closed_loop_after_dut(double time_s)
 
 static TESTBENCH_CASE_STATE_E sfra_open_loop_after_dut(double time_s)
 {
-    if (    (fixture.dut_init_ok == 0u)
-         || /* The production PI cannot execute valid samples. */
-            (fixture.sfra_init_ok == 0u)) /* The requested SFRA sweep could not start. */
+    if (    (fixture.dut_init_ok == 0u)   /* The production PI cannot execute valid samples. */
+         || (fixture.sfra_init_ok == 0u)) /* The requested SFRA sweep could not start. */
     {
         return assertion_state_get(sfra_open_loop_assert());
     }

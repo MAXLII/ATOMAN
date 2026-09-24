@@ -150,17 +150,12 @@ static void isolate_callbacks(void)
         {
             reg_init_t *p_init = p_item->p_obj; /* Application or fixture initializer. */
 
-            if (    (p_init->p_func != init_a)
-                 && /* Keep fixture callbacks only. */
-                    (p_init->p_func != init_b)
-                 && /* Keep fixture callbacks only. */
-                    (p_init->p_func != init_c)
-                 && /* Keep fixture callbacks only. */
-                    (p_init->p_func != init_d)
-                 && /* Keep fixture callbacks only. */
-                    (p_init->p_func != init_e)
-                 && /* Keep fixture callbacks only. */
-                    (p_init->p_func != init_f)) /* Keep fixture callbacks only. */
+            if (    (p_init->p_func != init_a)  /* Keep fixture callbacks only. */
+                 && (p_init->p_func != init_b)  /* Keep fixture callbacks only. */
+                 && (p_init->p_func != init_c)  /* Keep fixture callbacks only. */
+                 && (p_init->p_func != init_d)  /* Keep fixture callbacks only. */
+                 && (p_init->p_func != init_e)  /* Keep fixture callbacks only. */
+                 && (p_init->p_func != init_f)) /* Keep fixture callbacks only. */
             {
                 p_init->p_func = idle;
             }
@@ -169,17 +164,12 @@ static void isolate_callbacks(void)
         {
             reg_interrupt_t *p_irq = p_item->p_obj; /* Application or fixture interrupt callback. */
 
-            if (    (p_irq->p_func != irq_a)
-                 && /* Keep fixture callbacks only. */
-                    (p_irq->p_func != irq_b)
-                 && /* Keep fixture callbacks only. */
-                    (p_irq->p_func != irq_c)
-                 && /* Keep fixture callbacks only. */
-                    (p_irq->p_func != irq_d)
-                 && /* Keep fixture callbacks only. */
-                    (p_irq->p_func != irq_e)
-                 && /* Keep fixture callbacks only. */
-                    (p_irq->p_func != irq_f)) /* Keep fixture callbacks only. */
+            if (    (p_irq->p_func != irq_a)  /* Keep fixture callbacks only. */
+                 && (p_irq->p_func != irq_b)  /* Keep fixture callbacks only. */
+                 && (p_irq->p_func != irq_c)  /* Keep fixture callbacks only. */
+                 && (p_irq->p_func != irq_d)  /* Keep fixture callbacks only. */
+                 && (p_irq->p_func != irq_e)  /* Keep fixture callbacks only. */
+                 && (p_irq->p_func != irq_f)) /* Keep fixture callbacks only. */
             {
                 p_irq->p_func = idle;
             }
@@ -188,11 +178,9 @@ static void isolate_callbacks(void)
         {
             reg_task_t *p_task = p_item->p_obj; /* Application or fixture periodic task. */
 
-            if (    (p_task->p_func != task_a)
-                 && /* Keep fixture callbacks only. */
-                    (p_task->p_func != task_b)
-                 && /* Keep fixture callbacks only. */
-                    (p_task->p_func != task_c)) /* Keep fixture callbacks only. */
+            if (    (p_task->p_func != task_a)  /* Keep fixture callbacks only. */
+                 && (p_task->p_func != task_b)  /* Keep fixture callbacks only. */
+                 && (p_task->p_func != task_c)) /* Keep fixture callbacks only. */
             {
                 p_task->p_func = idle;
             }

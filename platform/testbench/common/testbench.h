@@ -93,15 +93,11 @@ extern "C"
 #define TESTBENCH_PRIVATE_STRING_IMPL(value) #value
 #define TESTBENCH_PRIVATE_STRING(value) TESTBENCH_PRIVATE_STRING_IMPL(value)
 
-#define TESTBENCH_PRIVATE_MODULE_VARIABLE_IMPL(test_name) \
-    testbench_module_##test_name
-#define TESTBENCH_PRIVATE_MODULE_VARIABLE(test_name) \
-    TESTBENCH_PRIVATE_MODULE_VARIABLE_IMPL(test_name)
+#define TESTBENCH_PRIVATE_MODULE_VARIABLE_IMPL(test_name) testbench_module_##test_name
+#define TESTBENCH_PRIVATE_MODULE_VARIABLE(test_name)      TESTBENCH_PRIVATE_MODULE_VARIABLE_IMPL(test_name)
 
-#define TESTBENCH_PRIVATE_CASE_VARIABLE_IMPL(test_name, case_name) \
-    testbench_case_##test_name##_##case_name
-#define TESTBENCH_PRIVATE_CASE_VARIABLE(test_name, case_name) \
-    TESTBENCH_PRIVATE_CASE_VARIABLE_IMPL(test_name, case_name)
+#define TESTBENCH_PRIVATE_CASE_VARIABLE_IMPL(test_name, case_name) testbench_case_##test_name##_##case_name
+#define TESTBENCH_PRIVATE_CASE_VARIABLE(test_name, case_name)      TESTBENCH_PRIVATE_CASE_VARIABLE_IMPL(test_name, case_name)
 
 #define TESTBENCH_PRIVATE_CASE_SECTION_TOKEN_IMPL(test_name) \
     testbench_case_##test_name
@@ -110,15 +106,11 @@ extern "C"
 #define TESTBENCH_PRIVATE_CASE_SECTION(test_name) \
     TESTBENCH_PRIVATE_STRING(TESTBENCH_PRIVATE_CASE_SECTION_TOKEN(test_name))
 
-#define TESTBENCH_PRIVATE_CASE_BEGIN_IMPL(test_name) \
-    __start_testbench_case_##test_name
-#define TESTBENCH_PRIVATE_CASE_BEGIN(test_name) \
-    TESTBENCH_PRIVATE_CASE_BEGIN_IMPL(test_name)
+#define TESTBENCH_PRIVATE_CASE_BEGIN_IMPL(test_name) __start_testbench_case_##test_name
+#define TESTBENCH_PRIVATE_CASE_BEGIN(test_name)      TESTBENCH_PRIVATE_CASE_BEGIN_IMPL(test_name)
 
-#define TESTBENCH_PRIVATE_CASE_END_IMPL(test_name) \
-    __stop_testbench_case_##test_name
-#define TESTBENCH_PRIVATE_CASE_END(test_name) \
-    TESTBENCH_PRIVATE_CASE_END_IMPL(test_name)
+#define TESTBENCH_PRIVATE_CASE_END_IMPL(test_name) __stop_testbench_case_##test_name
+#define TESTBENCH_PRIVATE_CASE_END(test_name)      TESTBENCH_PRIVATE_CASE_END_IMPL(test_name)
 
 /**
  * @brief Register one DUT module in the common testbench module section.

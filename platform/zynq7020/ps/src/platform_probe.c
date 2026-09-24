@@ -179,9 +179,8 @@ static void self_test_tx_capture(char *data, int length)
     uint16_t *captured_length = &s_self_test_request_len; /* 当前帧捕获长度地址。 */
     uint16_t copy_length      = 0U; /* 经容量约束后的帧复制长度。 */
 
-    if (    (data == NULL)
-         || /* 发送回调未提供有效帧地址。 */
-            (length <= 0)) /* 发送回调未提供有效帧长度。 */
+    if (    (data == NULL) /* 发送回调未提供有效帧地址。 */
+         || (length <= 0)) /* 发送回调未提供有效帧长度。 */
     {
         return;
     }
@@ -380,9 +379,8 @@ static uint8_t interrupt_perf_has_run(void)
         section_perf_record_t *record = perf_record_from_item(p_item);
 
         if (    (record != NULL)
-             && (record->record_type == SECTION_PERF_RECORD_INTERRUPT)
-             && /* 当前记录属于中断回调。 */
-                (record->run_time > 0U)) /* 当前中断回调已经累计运行时间。 */
+             && (record->record_type == SECTION_PERF_RECORD_INTERRUPT) /* 当前记录属于中断回调。 */
+             && (record->run_time > 0U)) /* 当前中断回调已经累计运行时间。 */
         {
             return 1U;
         }
@@ -457,9 +455,8 @@ static void platform_self_test_report(void)
         passed = 0U;
     }
 
-    if (    (section_runtime_preemptive_get() == 1U)
-         && /* 当前选择的是抢占式 section 实现。 */
-            (scheduler_started == 0U)) /* 抢占调度器尚未成功接管任务现场。 */
+    if (    (section_runtime_preemptive_get() == 1U) /* 当前选择的是抢占式 section 实现。 */
+         && (scheduler_started == 0U)) /* 抢占调度器尚未成功接管任务现场。 */
     {
         passed = 0U;
     }
@@ -529,9 +526,8 @@ static void platform_probe_task(void)
     s_probe_task_count++; /* 累计周期任务运行次数，供串口状态命令检查。 */
     elapsed_tick = bsp_timer_gettime_100us() - s_probe_start_tick;
 
-    if (    (s_self_test_reported == 0U)
-         && /* 当前启动周期尚未输出自主测试结果。 */
-            (elapsed_tick >= 25000U)) /* 平台已运行至少 2.5 秒，避开启动阶段输出。 */
+    if (    (s_self_test_reported == 0U) /* 当前启动周期尚未输出自主测试结果。 */
+         && (elapsed_tick >= 25000U))    /* 平台已运行至少 2.5 秒，避开启动阶段输出。 */
     {
         s_self_test_reported = 1U;
         platform_self_test_report(); /* 汇总 section、dbg 与 app demo 的运行证据。 */
@@ -542,9 +538,8 @@ REG_TASK_MS(100, platform_probe_task)
 
 static void platform_status_command(DEC_MY_PRINTF)
 {
-    if (    (my_printf == NULL)
-         || /* 当前 Shell 链路未提供发送上下文。 */
-            (my_printf->my_printf == NULL)) /* 当前 Shell 链路未绑定格式化输出函数。 */
+    if (    (my_printf == NULL)             /* 当前 Shell 链路未提供发送上下文。 */
+         || (my_printf->my_printf == NULL)) /* 当前 Shell 链路未绑定格式化输出函数。 */
     {
         return;
     }
@@ -572,9 +567,8 @@ static void platform_iir_test_command(DEC_MY_PRINTF)
     bsp_iir_self_test_result_t result = {0}; /* 当前 Shell 命令生成的 IIR 自测数据。 */
     uint8_t passed                    = 0U;  /* 当前 IIR 外设自测结果。 */
 
-    if (    (my_printf == NULL)
-         || /* 当前 Shell 链路未提供发送上下文。 */
-            (my_printf->my_printf == NULL)) /* 当前 Shell 链路未绑定格式化输出函数。 */
+    if (    (my_printf == NULL)             /* 当前 Shell 链路未提供发送上下文。 */
+         || (my_printf->my_printf == NULL)) /* 当前 Shell 链路未绑定格式化输出函数。 */
     {
         return;
     }

@@ -128,17 +128,12 @@ static testbench_module_t *link_testbench_modules(void)
  */
 static uint8_t case_configuration_valid(const testbench_module_t *p_module, const testbench_case_t *p_case)
 {
-    if (    (p_module->run_period_s <= 0.0)
-         || /* Elapsed time requires a positive module period. */
-            (p_module->p_dut_init == nullptr)
-         || /* Every case requires DUT initialization. */
-            (p_module->p_dut_run == nullptr)
-         || /* Every period requires the DUT body. */
-            (p_case->p_init == nullptr)
-         || /* The case must initialize its isolated environment. */
-            (p_case->p_before_dut == nullptr)
-         || /* The case must prepare each DUT input period. */
-            (p_case->p_after_dut == nullptr)) /* The case must apply feedback and return its state. */
+    if (    (p_module->run_period_s <= 0.0)   /* Elapsed time requires a positive module period. */
+         || (p_module->p_dut_init == nullptr) /* Every case requires DUT initialization. */
+         || (p_module->p_dut_run == nullptr)  /* Every period requires the DUT body. */
+         || (p_case->p_init == nullptr)       /* The case must initialize its isolated environment. */
+         || (p_case->p_before_dut == nullptr) /* The case must prepare each DUT input period. */
+         || (p_case->p_after_dut == nullptr)) /* The case must apply feedback and return its state. */
     {
         return 0u;
     }
@@ -184,11 +179,9 @@ static TESTBENCH_CASE_STATE_E run_case(const testbench_module_t *p_module, const
         elapsed_time_s = static_cast<double>(run_count) * p_module->run_period_s;
     }
 
-    if (    (case_state != TESTBENCH_CASE_COMPLETE)
-         && /* The case did not report neutral completion. */
-            (case_state != TESTBENCH_CASE_PASS)
-         && /* The case did not report successful completion. */
-            (case_state != TESTBENCH_CASE_FAIL)) /* The case did not report an assertion failure. */
+    if (    (case_state != TESTBENCH_CASE_COMPLETE) /* The case did not report neutral completion. */
+         && (case_state != TESTBENCH_CASE_PASS)     /* The case did not report successful completion. */
+         && (case_state != TESTBENCH_CASE_FAIL))    /* The case did not report an assertion failure. */
     {
         std::cout << "    RESULT FAIL | invalid case state=" << static_cast<unsigned int>(case_state) << '\n';
         return TESTBENCH_CASE_FAIL;

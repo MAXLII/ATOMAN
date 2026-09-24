@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file    npc_pwm_test.c
- * @brief   5 kHz NPC duty-output DLL integration tests.
+ * @file npc_pwm_test.c
+ * @brief 5 kHz NPC duty-output DLL integration tests.
  * @details
  *          This file is part of the base digital power framework project.
  *          Verify 6 state-based duties, bridge enable, sample-and-hold timing and fault recovery.
  *          C11 compatible; no dynamic allocation; single simulation instance.
- * @author  Max.Li
- * @date    2026-09-12
+ * @author Max.Li
+ * @date 2026-09-12
  * @version 1.0.0
- * Copyright (c) 2026 Max.Li.
- * All rights reserved.
- * This file is licensed under the MIT License.
- * See the LICENSE file in the project root for full license text.
+ *          Copyright (c) 2026 Max.Li.
+ *          All rights reserved.
+ *          This file is licensed under the MIT License.
+ *          See the LICENSE file in the project root for full license text.
  */
 
 #include "DllHeader.h"
@@ -47,18 +47,19 @@ static void scheduler_probe(void)
 REG_TASK_MS(1, scheduler_probe)
 
 #define CHECK(value) check((value), __LINE__) /* Assertions remain active in release builds. */
-static double inputs[PLECS_INPUT_MAX]; /* Half-bus voltage input fixture. */
-static double outputs[PLECS_OUTPUT_MAX]; /* Actual DLL duty and enable outputs. */
+static double inputs[PLECS_INPUT_MAX];        /* Half-bus voltage input fixture. */
+static double outputs[PLECS_OUTPUT_MAX];      /* Actual DLL duty and enable outputs. */
 static double ref_alpha; /* Independently expected generated alpha voltage. */
 static double ref_beta;  /* Independently expected generated beta voltage. */
-static uint32_t checks; /* Assertion count. */
-static uint32_t calls; /* Actual DLL output callback count. */
+static uint32_t checks;  /* Assertion count. */
+static uint32_t calls;   /* Actual DLL output callback count. */
 static double max_error; /* Largest reconstructed alpha/beta error in V. */
 
 /** @param value Assertion result. @param line Test source line. */
 static void check(bool value, int line)
 {
     ++checks;
+
     if (value == false)
     {
         (void)fprintf(stderr, "FAIL line %d call %lu\n", line, (unsigned long)calls);
@@ -76,7 +77,7 @@ static void discard_output(const char *p_format, ...)
 static void shell_set(const char *p_name, double value)
 {
     char command[80]; /* Bounded Shell assignment string. */
-    shell_ctx_t context = {0}; /* Independent text-parser input context. */
+    shell_ctx_t context       = {0}; /* Independent text-parser input context. */
     section_link_tx_func_t io = {.my_printf = discard_output}; /* Real Shell text-output facade. */
     section_shell_t *p_item; /* Descriptor discovered through Section registration. */
     const int length = snprintf(command, sizeof(command), "%s:%.9f\r\n", p_name, value); /* Decimal-only Shell grammar. */
@@ -84,10 +85,12 @@ static void shell_set(const char *p_name, double value)
     CHECK((size_t)length < sizeof(command));
     p_item = shell_find(p_name, (uint8_t)strlen(p_name));
     CHECK(p_item != NULL);
+
     for (int i = 0; i < length; ++i) /* Feed the same bytes accepted by the text Shell service. */
     {
         shell_run((uint8_t)command[i], &io, &context);
     }
+
     if (p_item->type == (uint32_t)SHELL_FP32)
     {
         CHECK(fabs((double)*(float *)p_item->p_var - value) < 0.0001);
@@ -106,6 +109,7 @@ static void check_monitor(const char *p_name, double expected)
     p_item = shell_find(p_name, (uint8_t)strlen(p_name));
     CHECK(p_item != NULL);
     CHECK(p_item->type == (uint32_t)SHELL_FP32);
+
     if (expected != expected) /* NaN comparison avoids MinGW's narrowing double classification macro. */
     {
         CHECK(isnan(*(float *)p_item->p_var) != 0);
@@ -146,11 +150,13 @@ static void check_off(void)
 static void check_duty(void)
 {
     double pole[3] = {0}; /* Average phase-to-midpoint voltages derived from P and N. */
-    double error = 0.0; /* Maximum alpha/beta component error in V. */
+    double error   = 0.0; /* Maximum alpha/beta component error in V. */
     CHECK(outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0);
+
     for (uint32_t phase = 0u; phase < 3u; ++phase) /* Phase index. */
     {
         const double *p_duty = &outputs[2u * phase]; /* Positive and negative fractions. */
+
         for (uint32_t q = 0u; q < 2u; ++q) /* State-based duty index. */
         {
             CHECK(p_duty[q] >= 0.0);
@@ -168,11 +174,11 @@ static void check_duty(void)
 /** @brief Check transform normalization, rotation signs and inverse consistency independently of NPC. */
 static void check_coordinate_transforms(void)
 {
-    float alpha = 0.0f; /* Stationary alpha result. */
-    float beta = 0.0f; /* Stationary beta result. */
-    float d = 0.0f; /* Rotating direct-axis result. */
-    float q = 0.0f; /* Rotating quadrature-axis result. */
-    float abc[3] = {0}; /* Reconstructed phase values. */
+    float alpha  = 0.0f; /* Stationary alpha result. */
+    float beta   = 0.0f; /* Stationary beta result. */
+    float d      = 0.0f; /* Rotating direct-axis result. */
+    float q      = 0.0f; /* Rotating quadrature-axis result. */
+    float abc[3] = {0};  /* Reconstructed phase values. */
     clarke(1.0f, 0.0f, 0.0f, &alpha, &beta);
     CHECK(fabsf(alpha - 2.0f / 3.0f) < 1.0e-6f);
     CHECK(beta == 0.0f);
@@ -196,10 +202,11 @@ static void check_coordinate_transforms(void)
     inv_park(4.0f, -3.0f, 1.0f, 0.0f, &alpha, &beta);
     CHECK(alpha == 3.0f);
     CHECK(beta == 4.0f);
+
     for (int32_t index = -32; index <= 32; ++index) /* Both rotation directions and every quadrant. */
     {
         float angle = (float)index * M_PI / 16.0f; /* Test electrical angle, rad. */
-        float sine = sinf(angle); /* Unit rotation sine. */
+        float sine   = sinf(angle); /* Unit rotation sine. */
         float cosine = cosf(angle); /* Unit rotation cosine. */
         park(3.0f, 4.0f, sine, cosine, &d, &q);
         CHECK(fabsf(d * d + q * q - 25.0f) < 1.0e-5f);
@@ -216,15 +223,15 @@ static void check_coordinate_transforms(void)
 /** @return EXIT_SUCCESS if the actual DLL meets the duty and 5 kHz timing contract. */
 int main(void)
 {
-    struct SimulationSizes sizes = {0}; /* Actual DLL port dimensions. */
-    double time_s = 0.0; /* Current 200 us control grid time. */
-    double saved[PLECS_OUTPUT_MAX] = {0}; /* Held output frame between controller ticks. */
-    bool saw_fractional_duty = false; /* Confirm state duties rather than binary gates. */
-    npc_ctrl_cfg_t cfg = npc_cfg_default(); /* Coefficients for an independent zero-feedback PI recurrence. */
-    float expected_ramp = 0.0f; /* Expected amplitude held across five 200 us controller ticks. */
-    float expected_integral_v = 0.0f; /* Independent outer-loop integral in the unsaturated fixture. */
-    float expected_integral_i = 0.0f; /* Independent inner-loop integral in the unsaturated fixture. */
-    uint32_t ramp_checks = 0u; /* Samples whose voltage command proves the ramp cadence. */
+    struct SimulationSizes sizes   = {0};   /* Actual DLL port dimensions. */
+    double time_s                  = 0.0;   /* Current 200 us control grid time. */
+    double saved[PLECS_OUTPUT_MAX] = {0};   /* Held output frame between controller ticks. */
+    bool saw_fractional_duty       = false; /* Confirm state duties rather than binary gates. */
+    npc_ctrl_cfg_t cfg             = npc_cfg_default(); /* Coefficients for an independent zero-feedback PI recurrence. */
+    float expected_ramp            = 0.0f; /* Expected amplitude held across five 200 us controller ticks. */
+    float expected_integral_v      = 0.0f; /* Independent outer-loop integral in the unsaturated fixture. */
+    float expected_integral_i      = 0.0f; /* Independent inner-loop integral in the unsaturated fixture. */
+    uint32_t ramp_checks           = 0u;   /* Samples whose voltage command proves the ramp cadence. */
     check_coordinate_transforms();
     plecsSetSizes(&sizes);
     CHECK(sizes.numInputs == 8);
@@ -233,34 +240,39 @@ int main(void)
     CHECK(sizes.numStates == 0);
     start_at(time_s);
     shell_set("TRACE_ENABLE", 0.0); /* Keep this deterministic fixture free of automatic CSV captures. */
-    shell_set("NP_BAL_KP", 0.0); /* Isolate duty reconstruction from midpoint balancing. */
+    shell_set("NP_BAL_KP", 0.0);    /* Isolate duty reconstruction from midpoint balancing. */
     shell_set("VD_POS_REF", 100.0); /* Exercise the closed-loop soft-start path. */
-    shell_set("RUN_ENABLE", 1.0); /* Request run through the real application/FSM boundary. */
-    inputs[0] = 350.0;
-    inputs[1] = 350.0;
+    shell_set("RUN_ENABLE", 1.0);   /* Request run through the real application/FSM boundary. */
+    inputs[0]  = 350.0;
+    inputs[1]  = 350.0;
     task_calls = 0u;
+
     for (uint32_t tick = 0u; tick < 2000u; ++tick) /* Exercise the actual closed-loop dispatcher for 0.4 s. */
     {
         time_s = (double)tick * PLECS_NPC_CONTROL_PERIOD_S;
+
         if (tick == 100u)
         {
             shell_set("VD_POS_REF", 0.0); /* Exercise downward slew using the same 1 ms task. */
         }
+
         if (tick == 1000u)
         {
             inputs[0] = 250.0;
-            inputs[1] = 450.0; /* Unequal half buses must retain the same voltage command mapping. */
+            inputs[1] = 450.0;          /* Unequal half buses must retain the same voltage command mapping. */
             shell_set("FREQ_HZ", 60.0); /* Rebind observers at the lifecycle update boundary. */
         }
         CHECK(output_at(time_s) == true);
         CHECK(task_calls == (tick + 1u) / 5u);
-        if ((tick < 200u) && (outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0))
+
+        if (    (tick < 200u)
+             && (outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0))
         {
             section_shell_t *p_alpha = shell_find("V_ALPHA_PWM", 11u); /* Actual modulation command. */
-            section_shell_t *p_beta = shell_find("V_BETA_PWM", 10u); /* Actual modulation command. */
-            float expected_current = cfg.kp_v * expected_ramp + expected_integral_v; /* Zero-feedback outer PI. */
+            section_shell_t *p_beta  = shell_find("V_BETA_PWM", 10u);  /* Actual modulation command. */
+            float expected_current = cfg.kp_v * expected_ramp + expected_integral_v;    /* Zero-feedback outer PI. */
             float expected_voltage = cfg.kp_i * expected_current + expected_integral_i; /* Zero-feedback inner PI. */
-            float target = (tick < 100u) ? 100.0f : 0.0f; /* Independent rise/fall fixture target. */
+            float target = (tick < 100u) ? 100.0f : 0.0f;           /* Independent rise/fall fixture target. */
             float step = NPC_CFG_DEFAULT_VD_POS_SLEW_VPS / 1000.0f; /* Requested V/s over a 1 ms interval. */
             CHECK(p_alpha != NULL);
             CHECK(p_beta != NULL);
@@ -268,27 +280,33 @@ int main(void)
             CHECK(expected_current < cfg.current_peak); /* PI recurrence assumes no current saturation. */
             expected_integral_v += cfg.ts * cfg.ki_v * expected_ramp;
             expected_integral_i += cfg.ts * cfg.ki_i * expected_current;
+
             if (((tick + 1u) % 5u) == 0u) /* The task runs after this controller sample. */
             {
                 expected_ramp = (expected_ramp < target) ? fminf(expected_ramp + step, target)
-                                                       : fmaxf(expected_ramp - step, target);
+                                                         : fmaxf(expected_ramp - step, target);
             }
             ++ramp_checks;
         }
+
         if (tick >= 50u)
         {
             section_shell_t *p_alpha = shell_find("V_ALPHA_PWM", 11u); /* Actual HAL alpha command. */
-            section_shell_t *p_beta = shell_find("V_BETA_PWM", 10u); /* Actual HAL beta command. */
+            section_shell_t *p_beta  = shell_find("V_BETA_PWM", 10u);  /* Actual HAL beta command. */
             CHECK(p_alpha != NULL);
             CHECK(p_beta != NULL);
             ref_alpha = (double)*(float *)p_alpha->p_var;
-            ref_beta = (double)*(float *)p_beta->p_var;
+            ref_beta  = (double)*(float *)p_beta->p_var;
             check_duty();
         }
+
         for (uint32_t channel = 0u; channel < PLECS_OUTPUT_MAX; ++channel)
         {
             saved[channel] = outputs[channel];
-            if ((channel < BSP_PWM_CHANNEL_COUNT) && (outputs[channel] > 0.0) && (outputs[channel] < 1.0))
+
+            if (    (channel < BSP_PWM_CHANNEL_COUNT)
+                 && (outputs[channel] > 0.0)
+                 && (outputs[channel] < 1.0))
             {
                 saw_fractional_duty = true;
             }
@@ -296,6 +314,7 @@ int main(void)
         CHECK(output_at(time_s) == true);
         CHECK(output_at(time_s + 0.0001) == true);
         CHECK(task_calls == (tick + 1u) / 5u);
+
         for (uint32_t channel = 0u; channel < PLECS_OUTPUT_MAX; ++channel)
         {
             CHECK(outputs[channel] == saved[channel]); /* Repeated and faster callbacks hold all ports. */
@@ -322,6 +341,7 @@ int main(void)
     check_off();
     CHECK(npc_hal_hard_protect_is_latched() == 0u);
     shell_set("RUN_ENABLE", 1.0);
+
     for (uint32_t tick = 0u; tick < 50u; ++tick) /* Allow the real 1 ms FSM to complete restart. */
     {
         time_s += PLECS_NPC_CONTROL_PERIOD_S;
@@ -348,23 +368,25 @@ int main(void)
     CHECK(output_at(3.0) == true);
     {
         bsp_pwm_phase_duty_t duty[BSP_PWM_PHASE_COUNT] = { /* Distinct phase pairs exercise publication order. */
-            {.positive_duty = 0.1f, .negative_duty = 0.4f},
-            {.positive_duty = 0.2f, .negative_duty = 0.5f},
-            {.positive_duty = 0.3f, .negative_duty = 0.6f}
-        };
+                                                          {.positive_duty = 0.1f, .negative_duty = 0.4f},
+                                                          {.positive_duty = 0.2f, .negative_duty = 0.5f},
+                                                          {.positive_duty = 0.3f, .negative_duty = 0.6f}};
         CHECK(bsp_pwm_set_duty(duty) == true);
         CHECK(output_at(3.0) == true); /* Publish BSP cache without running another control tick. */
         CHECK(outputs[PLECS_OUTPUT_PWM_ENABLE] == 1.0);
+
         for (uint32_t phase = 0u; phase < BSP_PWM_PHASE_COUNT; ++phase) /* Check every named field reaches its port. */
         {
             CHECK(outputs[2u * phase] == (double)duty[phase].positive_duty);
             CHECK(outputs[2u * phase + 1u] == (double)duty[phase].negative_duty);
         }
+
         for (uint32_t fault = 0u; fault < 6u; ++fault) /* Reject P+N overflow, non-finite values and bounds. */
         {
             duty[2].positive_duty = 0.3f;
             duty[2].negative_duty = 0.6f;
             CHECK(bsp_pwm_set_duty(duty) == true);
+
             if (fault == 0u)
             {
                 duty[2].negative_duty = 0.8f;
@@ -403,7 +425,9 @@ int main(void)
     }
     check_off();
     (void)printf("PASS NPC 5 kHz duty DLL: %lu calls, %lu checks, max_error_v=%.9g\n",
-                 (unsigned long)calls, (unsigned long)checks, max_error);
+                 (unsigned long)calls,
+                 (unsigned long)checks,
+                 max_error);
     return EXIT_SUCCESS;
 }
 

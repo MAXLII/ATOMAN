@@ -73,13 +73,10 @@ static void loopback_act(void *p_frame, DEC_MY_PRINTF)
     section_packform_t *p_pack = (section_packform_t *)p_frame;
     section_packform_t ack     = {0}; /* Direct response preserving command and payload bytes. */
 
-    if (    (p_pack == NULL)
-         || /* No validated request is available. */
-            (p_pack->is_ack != 0u)
-         || /* ACK frames never generate another ACK. */
-            (    (p_pack->len > 0u)
-              && /* A non-empty request claims payload bytes. */
-                 (p_pack->p_data == NULL))) /* The claimed payload is not readable. */
+    if (    (p_pack == NULL)        /* No validated request is available. */
+         || (p_pack->is_ack != 0u)  /* ACK frames never generate another ACK. */
+         || (    (p_pack->len > 0u) /* A non-empty request claims payload bytes. */
+              && (p_pack->p_data == NULL))) /* The claimed payload is not readable. */
     {
         return;
     }

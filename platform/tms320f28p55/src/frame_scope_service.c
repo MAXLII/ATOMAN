@@ -127,13 +127,10 @@ static frame_scope_list_context_t frame_scope_list_context = {0}; /* Deferred Sc
 static uint8_t frame_scope_request_is_valid(const section_packform_t *p_request,
                                             uint16_t expected_length)
 {
-    if (    (p_request == NULL)
-         || /* A request object is required. */
-            (p_request->is_ack != 0u)
-         || /* ACK frames must not recursively trigger handlers. */
-            (p_request->p_data == NULL)
-         || /* Every current Scope request has a payload. */
-            (p_request->len < expected_length)) /* Ignore compatible fields appended by newer hosts. */
+    if (    (p_request == NULL)         /* A request object is required. */
+         || (p_request->is_ack != 0u)   /* ACK frames must not recursively trigger handlers. */
+         || (p_request->p_data == NULL) /* Every current Scope request has a payload. */
+         || (p_request->len < expected_length)) /* Ignore compatible fields appended by newer hosts. */
     {
         return 0u;
     }
@@ -151,16 +148,14 @@ static uint8_t frame_scope_name_copy(wire_octet_t *p_destination,
 {
     uint16_t index = 0u; /* Current character converted to one logical wire octet. */
 
-    if (    (p_destination == NULL)
-         || /* The caller must provide bounded payload storage. */
-            (p_name == NULL)) /* A missing name is encoded as an empty string. */
+    if (    (p_destination == NULL) /* The caller must provide bounded payload storage. */
+         || (p_name == NULL))       /* A missing name is encoded as an empty string. */
     {
         return 0u;
     }
 
-    while (    (index < FRAME_SCOPE_NAME_LENGTH_MAX)
-            && /* Bound the response payload. */
-               (p_name[index] != '\0')) /* Stop at the native string terminator. */
+    while (    (index < FRAME_SCOPE_NAME_LENGTH_MAX) /* Bound the response payload. */
+            && (p_name[index] != '\0')) /* Stop at the native string terminator. */
     {
         p_destination[index] = wire_octet_get((uint16_t)p_name[index]);
         index++;
@@ -181,11 +176,9 @@ static scope_registration_t *frame_scope_find_by_id(uint8_t scope_id)
     {
         scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj; /* Scope metadata owned by scope.c. */
 
-        if (    (p_registration != NULL)
-             && /* Ignore an invalid Section object. */
-                (p_registration->p_scope != NULL)
-             && /* Only initialized Scope objects can serve data. */
-                (p_registration->scope_id == scope_id)) /* Match the stable protocol identifier. */
+        if (    (p_registration != NULL)          /* Ignore an invalid Section object. */
+             && (p_registration->p_scope != NULL) /* Only initialized Scope objects can serve data. */
+             && (p_registration->scope_id == scope_id)) /* Match the stable protocol identifier. */
         {
             return p_registration;
         }
@@ -220,11 +213,9 @@ static void frame_scope_capture_tag_increment(scope_registration_t *p_registrati
  */
 static uint32_t frame_scope_trigger_display_index_get(const scope_t *p_scope)
 {
-    if (    (p_scope == NULL)
-         || /* Scope metadata is required. */
-            (p_scope->buffer_size == 0u)
-         || /* Modulo operations need a nonzero size. */
-            (p_scope->trigger_post_cnt >= p_scope->buffer_size)) /* Post samples must fit the capture. */
+    if (    (p_scope == NULL)            /* Scope metadata is required. */
+         || (p_scope->buffer_size == 0u) /* Modulo operations need a nonzero size. */
+         || (p_scope->trigger_post_cnt >= p_scope->buffer_size)) /* Post samples must fit the capture. */
     {
         return 0u;
     }
@@ -240,18 +231,15 @@ static uint32_t frame_scope_trigger_display_index_get(const scope_t *p_scope)
 static uint32_t frame_scope_logical_start_index_get(const scope_t *p_scope,
                                                     uint8_t read_mode)
 {
-    if (    (p_scope == NULL)
-         || /* Scope metadata is required. */
-            (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
+    if (    (p_scope == NULL)             /* Scope metadata is required. */
+         || (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
     {
         return 0u;
     }
 
-    if (    (read_mode == (uint8_t)SCOPE_READ_MODE_FORCE)
-         && /* Force mode may inspect a live ring. */
-            (p_scope->state == SCOPE_STATE_RUNNING)
-         && /* The ring is currently advancing. */
-            (p_scope->in_trigger == 0u)) /* Trigger ordering has not been fixed yet. */
+    if (    (read_mode == (uint8_t)SCOPE_READ_MODE_FORCE) /* Force mode may inspect a live ring. */
+         && (p_scope->state == SCOPE_STATE_RUNNING)       /* The ring is currently advancing. */
+         && (p_scope->in_trigger == 0u)) /* Trigger ordering has not been fixed yet. */
     {
         return p_scope->write_index % p_scope->buffer_size;
     }
@@ -272,9 +260,8 @@ static uint32_t frame_scope_physical_index_get(const scope_t *p_scope,
 {
     uint32_t start_index = 0u; /* Physical index represented by logical sample 0. */
 
-    if (    (p_scope == NULL)
-         || /* Scope metadata is required. */
-            (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
+    if (    (p_scope == NULL)             /* Scope metadata is required. */
+         || (p_scope->buffer_size == 0u)) /* Modulo operations need a nonzero size. */
     {
         return 0u;
     }
@@ -299,9 +286,8 @@ static void frame_scope_reply(const section_packform_t *p_request,
 {
     section_packform_t reply = {0}; /* FRAME response metadata and logical payload. */
 
-    if (    (p_request == NULL)
-         || /* A route cannot be derived without request metadata. */
-            (p_output == NULL)) /* No transport is available for the response. */
+    if (    (p_request == NULL) /* A route cannot be derived without request metadata. */
+         || (p_output == NULL)) /* No transport is available for the response. */
     {
         return;
     }
@@ -356,15 +342,13 @@ static void frame_scope_state_poll(void)
     {
         scope_registration_t *p_registration = (scope_registration_t *)p_item->p_obj; /* Current Scope service metadata. */
 
-        if (    (p_registration != NULL)
-             && /* Ignore an invalid Section object. */
-                (p_registration->p_scope != NULL)) /* Only initialized Scope objects have state. */
+        if (    (p_registration != NULL)           /* Ignore an invalid Section object. */
+             && (p_registration->p_scope != NULL)) /* Only initialized Scope objects have state. */
         {
             scope_t *p_scope = p_registration->p_scope; /* Capture state observed this tick. */
 
-            if (    (p_registration->last_state == SCOPE_STATE_TRIGGERED)
-                 && /* Capture was finishing. */
-                    (p_scope->state == SCOPE_STATE_IDLE)) /* Core completed the post-trigger samples. */
+            if (    (p_registration->last_state == SCOPE_STATE_TRIGGERED) /* Capture was finishing. */
+                 && (p_scope->state == SCOPE_STATE_IDLE)) /* Core completed the post-trigger samples. */
             {
                 p_registration->data_ready = 1u;
                 frame_scope_capture_tag_increment(p_registration);
@@ -402,9 +386,8 @@ static void frame_scope_list_poll(void)
     p_registration                  = (scope_registration_t *)p_item->p_obj;
     frame_scope_list_context.p_item = p_item->p_next;
 
-    if (    (p_registration == NULL)
-         || /* A corrupt registration cannot be described. */
-            (p_registration->p_scope == NULL)) /* Scope state must remain owned by a valid object. */
+    if (    (p_registration == NULL)           /* A corrupt registration cannot be described. */
+         || (p_registration->p_scope == NULL)) /* Scope state must remain owned by a valid object. */
     {
         frame_scope_list_context.active = 0u;
         return;
@@ -593,9 +576,8 @@ static void frame_scope_control_reply(section_packform_t *p_pack,
     payload[FRAME_SCOPE_CONTROL_ACK_SCOPE_ID_OFFSET] = scope_id;
     payload[FRAME_SCOPE_CONTROL_ACK_STATUS_OFFSET]   = wire_octet_get((uint16_t)status);
 
-    if (    (p_registration != NULL)
-         && /* Invalid ids retain zero state fields. */
-            (p_registration->p_scope != NULL)) /* Valid metadata must own a Scope object. */
+    if (    (p_registration != NULL)           /* Invalid ids retain zero state fields. */
+         && (p_registration->p_scope != NULL)) /* Valid metadata must own a Scope object. */
     {
         payload[FRAME_SCOPE_CONTROL_ACK_STATE_OFFSET] = wire_octet_get((uint16_t)p_registration->p_scope->state);
         payload[FRAME_SCOPE_CONTROL_ACK_DATA_READY_OFFSET] = (p_registration->data_ready != 0u) ? 1u : 0u;
@@ -795,35 +777,29 @@ static void frame_scope_sample_query_act(void *p_frame,
         p_scope = p_registration->p_scope;
         wire_u32_le_write(&payload[FRAME_SCOPE_SAMPLE_ACK_CAPTURE_TAG_OFFSET], p_registration->capture_tag);
 
-        if (    (read_mode != (uint8_t)SCOPE_READ_MODE_NORMAL)
-             && /* Only two parser modes are defined. */
-                (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Unknown modes cannot define ordering. */
+        if (    (read_mode != (uint8_t)SCOPE_READ_MODE_NORMAL) /* Only two parser modes are defined. */
+             && (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Unknown modes cannot define ordering. */
         {
             status = SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID;
         }
-        else if (    (read_mode == (uint8_t)SCOPE_READ_MODE_NORMAL)
-                  && /* Normal reads require a frozen capture. */
-                     (p_scope->state != SCOPE_STATE_IDLE)) /* A running ring is not stable. */
+        else if (    (read_mode == (uint8_t)SCOPE_READ_MODE_NORMAL) /* Normal reads require a frozen capture. */
+                  && (p_scope->state != SCOPE_STATE_IDLE))          /* A running ring is not stable. */
         {
             status = SCOPE_TOOL_STATUS_RUNNING_DENIED;
         }
-        else if (    (expected_capture_tag != 0u)
-                  && /* Zero explicitly disables generation matching. */
-                     (expected_capture_tag != p_registration->capture_tag)) /* The capture changed since discovery. */
+        else if (    (expected_capture_tag != 0u) /* Zero explicitly disables generation matching. */
+                  && (expected_capture_tag != p_registration->capture_tag)) /* The capture changed since discovery. */
         {
             status = SCOPE_TOOL_STATUS_CAPTURE_CHANGED;
         }
-        else if (    (p_registration->data_ready == 0u)
-                  && /* No completed capture has been published. */
-                     (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Force mode intentionally bypasses readiness. */
+        else if (    (p_registration->data_ready == 0u)             /* No completed capture has been published. */
+                  && (read_mode != (uint8_t)SCOPE_READ_MODE_FORCE)) /* Force mode intentionally bypasses readiness. */
         {
             status = SCOPE_TOOL_STATUS_DATA_NOT_READY;
         }
-        else if (    (p_scope->buffer == NULL)
-                  || /* No sample storage is available. */
-                     (p_scope->buffer_size == 0u)
-                  || /* A zero-length ring cannot be indexed. */
-                     (sample_index >= p_scope->buffer_size)) /* Requested sample lies outside the capture. */
+        else if (    (p_scope->buffer == NULL)    /* No sample storage is available. */
+                  || (p_scope->buffer_size == 0u) /* A zero-length ring cannot be indexed. */
+                  || (sample_index >= p_scope->buffer_size)) /* Requested sample lies outside the capture. */
         {
             status = SCOPE_TOOL_STATUS_SAMPLE_INDEX_INVALID;
         }

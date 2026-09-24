@@ -115,9 +115,8 @@ static void before_dut(double time_s)
         dut.input.v_dc_n = 700.0f - dut.input.v_dc_p;
     }
 
-    if (    (step >= 200u)
-         && /* Fault starts after valid output has been produced. */
-            (step < 400u)) /* Leave enough subsequent periods to verify recovery. */
+    if (    (step >= 200u) /* Fault starts after valid output has been produced. */
+         && (step < 400u)) /* Leave enough subsequent periods to verify recovery. */
     {
         if (scenario == SVPWM_TEST_RANGE)
         {
@@ -195,9 +194,8 @@ static TESTBENCH_CASE_STATE_E after_dut(double time_s)
         return TESTBENCH_CASE_RUNNING;
     }
 
-    if (    (scenario == SVPWM_TEST_RANGE)
-         || /* Command fault must have exactly 200 limited periods. */
-            (scenario == SVPWM_TEST_SMALL_BUS)) /* Same length for the small-bus interval. */
+    if (    (scenario == SVPWM_TEST_RANGE)      /* Command fault must have exactly 200 limited periods. */
+         || (scenario == SVPWM_TEST_SMALL_BUS)) /* Same length for the small-bus interval. */
     {
         expect(limited == 200u);
     }

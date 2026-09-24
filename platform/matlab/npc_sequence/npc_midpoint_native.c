@@ -115,9 +115,8 @@ int main(int argc, char **p_argv)
 
     if (    (mode > 16)
          && (mode != 80)
-         && (mode != 82)
-         &&             /* Production modes retain the actual C configuration. */
-            (argc > 4)) /* Otherwise retain the real production default. */
+         && (mode != 82) /* Production modes retain the actual C configuration. */
+         && (argc > 4))  /* Otherwise retain the real production default. */
     {
         cfg.voltage_damping_gain = (float)damping;
     }
@@ -125,9 +124,8 @@ int main(int argc, char **p_argv)
 
     if (    (mode > 16)
          && (mode != 80)
-         && (mode != 82)
-         &&             /* Filter-frequency sweeps are offline only. */
-            (argc > 7)) /* Production case 16 always retains its configured cutoff. */
+         && (mode != 82) /* Filter-frequency sweeps are offline only. */
+         && (argc > 7))  /* Production case 16 always retains its configured cutoff. */
     {
         cfg.voltage_damping_cutoff_hz = (float)atof(p_argv[7]);
     }
@@ -251,9 +249,8 @@ int main(int argc, char **p_argv)
         {
             currents[p] = sample.i_l[p];
 
-            if (    (mode == 2)
-                 || /* Released fundamental-current balancing path. */
-                    (mode >= 4)) /* Offline damping / common-mode slew experiments. */
+            if (    (mode == 2)  /* Released fundamental-current balancing path. */
+                 || (mode >= 4)) /* Offline damping / common-mode slew experiments. */
             {
                 currents[p] = control.output.i_fundamental[p];
             }
@@ -267,9 +264,8 @@ int main(int argc, char **p_argv)
         mod.input.i_b = (float)currents[1];
         mod.input.i_c = (float)currents[2];
 
-        if (    (mode >= 26)
-             && /* Candidate selective harmonic rejection outside the unchanged dq PI loops. */
-                (mode < 30)) /* Later cases isolate dead-time compensation without resonant controllers. */
+        if (    (mode >= 26) /* Candidate selective harmonic rejection outside the unchanged dq PI loops. */
+             && (mode < 30)) /* Later cases isolate dead-time compensation without resonant controllers. */
         {
             float correction[2] = {0};
             harmonic_residual[0] =
@@ -289,9 +285,8 @@ int main(int argc, char **p_argv)
             mod.input.v_beta += correction[1];
         }
 
-        if (    (mode >= 8)
-             && /* Start of the offline voltage-damping candidates. */
-                (mode < 16)) /* Production mode already computes compensation before the voltage limiter. */
+        if (    (mode >= 8)  /* Start of the offline voltage-damping candidates. */
+             && (mode < 16)) /* Production mode already computes compensation before the voltage limiter. */
         {
             double residual[2] = {
                 control.inter.v_ab[0] - control.inter.voltage.output.alpha_pos - control.inter.voltage.output.alpha_neg,
@@ -302,9 +297,8 @@ int main(int argc, char **p_argv)
             previous_voltage_residual[1] = residual[1];
         }
 
-        if (    (mode == 4)
-             || /* Historical offline bias candidate. */
-                (mode == 5)) /* Historical bias + common-mode slew candidate. */
+        if (    (mode == 4)  /* Historical offline bias candidate. */
+             || (mode == 5)) /* Historical bias + common-mode slew candidate. */
         {
             double residual[3] = {0};
 
@@ -333,9 +327,8 @@ int main(int argc, char **p_argv)
             candidate_average_balance(&mod, mode);
         }
 
-        if (    (mode == 5)
-             || /* Historical common-mode slew candidate. */
-                (mode == 34)) /* Repeat with the production damping filter and a smaller slew. */
+        if (    (mode == 5)   /* Historical common-mode slew candidate. */
+             || (mode == 34)) /* Repeat with the production damping filter and a smaller slew. */
         {
             double phase_v[3] = {0};
             double minimum    = 1e9;
@@ -496,9 +489,8 @@ int main(int argc, char **p_argv)
                 }
             }
 
-            if (    (k >= 59000)
-                 && /* Last 0.2 s contains ten complete fundamental cycles. */
-                    ((sub + 1) % (SUBSTEPS / 10) == 0)) /* Ten samples per 200 us control period. */
+            if (    (k >= 59000) /* Last 0.2 s contains ten complete fundamental cycles. */
+                 && ((sub + 1) % (SUBSTEPS / 10) == 0)) /* Ten samples per 200 us control period. */
             {
                 fprintf(p_fast, "%.8f", t + (sub + 1) * DT);
 
@@ -538,9 +530,8 @@ int main(int argc, char **p_argv)
             duty[p][1] = phases[p].duty_n;
 
             if (    (    (mode >= 13)
-                      && (mode < 16))
-                 || /* Historical differential-damping cases. */
-                    (    (mode >= 30)
+                      && (mode < 16)) /* Historical differential-damping cases. */
+                 || (    (mode >= 30)
                       && (mode <= 33))
                  || (    (    (    mode >= 73
                                 && mode < 80)
@@ -566,9 +557,8 @@ int main(int argc, char **p_argv)
             production_gate_duties(&mod, duty);
         }
 
-        if (    (k % 50 == 0)
-             || /* Decimated startup record. */
-                (k >= 55000)) /* Full-rate final second for sequence and harmonic analysis. */
+        if (    (k % 50 == 0) /* Decimated startup record. */
+             || (k >= 55000)) /* Full-rate final second for sequence and harmonic analysis. */
         {
             fprintf(p_file,
                     "%.5f,%.6f,%.6f,%.6f,%.6f,%.6f",

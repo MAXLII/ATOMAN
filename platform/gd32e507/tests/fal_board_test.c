@@ -380,16 +380,14 @@ static void concurrent_case(void)
 
     if (step == 2u)
     {
-        if (    (nor_busy == 1u)
-             && /* NOR byte-program state still owns its request. */
-                (nand_busy == 0u)) /* NAND has already completed independently. */
+        if (    (nor_busy == 1u)   /* NOR byte-program state still owns its request. */
+             && (nand_busy == 0u)) /* NAND has already completed independently. */
         {
             independent = 1u;
         }
 
-        if (    (nor_busy == 1u)
-             || /* Wait for both independently submitted requests. */
-                (nand_busy == 1u)) /* No assumption about simultaneous hardware completion. */
+        if (    (nor_busy == 1u)   /* Wait for both independently submitted requests. */
+             || (nand_busy == 1u)) /* No assumption about simultaneous hardware completion. */
         {
             return;
         }
@@ -461,9 +459,8 @@ static void process(void)
     {
         uint32_t command = g_fal_board_report.command; /* Debugger publishes only while unarmed. */
 
-        if (    (command != 1u)
-             && /* Full explicit test request. */
-                (command != 2u)) /* Post-reset bounded test request. */
+        if (    (command != 1u)  /* Full explicit test request. */
+             && (command != 2u)) /* Post-reset bounded test request. */
         {
             return;
         }

@@ -43,19 +43,13 @@ bool bsp_pwm_set_duty(const bsp_pwm_phase_duty_t *p_duty)
 
     for (uint32_t i = 0u; i < BSP_PWM_PHASE_COUNT; ++i) /* Validate all phase pairs before publishing. */
     {
-        if (    (isfinite(p_duty[i].positive_duty) == 0)
-             || /* Finite P fraction. */
-                (isfinite(p_duty[i].negative_duty) == 0)
-             || /* Finite N fraction. */
-                (p_duty[i].positive_duty < 0.0f)
-             || /* P must be non-negative. */
-                (p_duty[i].positive_duty > 1.0f)
-             || /* P upper bound. */
-                (p_duty[i].negative_duty < 0.0f)
-             || /* N must be non-negative. */
-                (p_duty[i].negative_duty > 1.0f)
-             || /* N upper bound. */
-                ((p_duty[i].positive_duty + p_duty[i].negative_duty) > 1.0f)) /* O must be non-negative. */
+        if (    (isfinite(p_duty[i].positive_duty) == 0) /* Finite P fraction. */
+             || (isfinite(p_duty[i].negative_duty) == 0) /* Finite N fraction. */
+             || (p_duty[i].positive_duty < 0.0f)         /* P must be non-negative. */
+             || (p_duty[i].positive_duty > 1.0f)         /* P upper bound. */
+             || (p_duty[i].negative_duty < 0.0f)         /* N must be non-negative. */
+             || (p_duty[i].negative_duty > 1.0f)         /* N upper bound. */
+             || ((p_duty[i].positive_duty + p_duty[i].negative_duty) > 1.0f)) /* O must be non-negative. */
         {
             bsp_pwm_disable();
             return false;

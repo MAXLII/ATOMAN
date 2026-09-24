@@ -70,9 +70,8 @@ void bsp_gpio_set_bit(bsp_gpio_table_e number, uint8_t value)
 
 void bsp_gpio_get_bit(bsp_gpio_table_e number, uint8_t *p_value)
 {
-    if (    ((uint32_t)number >= (uint32_t)GPIO_TABLE_MAX)
-         || /* Logical GPIO number is outside the board map. */
-            (p_value == NULL)) /* The caller did not provide output storage. */
+    if (    ((uint32_t)number >= (uint32_t)GPIO_TABLE_MAX) /* Logical GPIO number is outside the board map. */
+         || (p_value == NULL)) /* The caller did not provide output storage. */
     {
         return;
     }

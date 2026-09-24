@@ -333,9 +333,8 @@ static err_t tcp_sent_callback(void *p_argument,
     uint32_t primask = 0u; /* Interrupt mask protecting transmit-ring ownership updates. */
     uint16_t tail    = 0u; /* Oldest retained byte after releasing the acknowledged range. */
 
-    if (    (p_connection != p_tcp_connection)
-         || /* Ignore a callback from a connection being replaced. */
-            (p_argument != (void *)p_connection)) /* Require the callback context installed during accept. */
+    if (    (p_connection != p_tcp_connection)    /* Ignore a callback from a connection being replaced. */
+         || (p_argument != (void *)p_connection)) /* Require the callback context installed during accept. */
     {
         return ERR_OK;
     }
@@ -358,9 +357,8 @@ static void tcp_transmit_service(void)
     uint8_t output_required   = 0u;            /* Indicates that at least one tcp_write call succeeded. */
     err_t write_status        = ERR_OK;        /* LwIP zero-copy queue result. */
 
-    if (    (p_tcp_connection == NULL)
-         || /* No active FRAME TCP client. */
-            (submit == tcp_tx_head)) /* Every queued byte is already submitted. */
+    if (    (p_tcp_connection == NULL) /* No active FRAME TCP client. */
+         || (submit == tcp_tx_head))   /* Every queued byte is already submitted. */
     {
         return;
     }
@@ -426,9 +424,8 @@ static void tcp_transmit_service(void)
     {
         write_status = tcp_output(p_tcp_connection);
 
-        if (    (write_status != ERR_OK)
-             && /* The queued bytes could not be flushed normally. */
-                (write_status != ERR_MEM)) /* Temporary descriptor pressure is retried later. */
+        if (    (write_status != ERR_OK)   /* The queued bytes could not be flushed normally. */
+             && (write_status != ERR_MEM)) /* Temporary descriptor pressure is retried later. */
         {
             g_enet_tcp_tx_error_count++;
         }
@@ -446,9 +443,8 @@ static void udp_receive_callback(void *p_argument,
 
     LWIP_UNUSED_ARG(p_argument);
 
-    if (    (p_packet == NULL)
-         || /* LwIP did not provide a received datagram. */
-            (p_remote_address == NULL)) /* The source address is unavailable. */
+    if (    (p_packet == NULL)          /* LwIP did not provide a received datagram. */
+         || (p_remote_address == NULL)) /* The source address is unavailable. */
     {
         if (p_packet != NULL)
         {
@@ -626,9 +622,8 @@ static void service_task(void)
         return;
     }
 
-    while (    (frame_count < ENET_COMM_RX_BUDGET)
-            && /* Bound the service time for cooperative scheduling. */
-               (bsp_enet_rx_frame_pending() == 1u)) /* The DMA owns at least one complete received frame. */
+    while (    (frame_count < ENET_COMM_RX_BUDGET)  /* Bound the service time for cooperative scheduling. */
+            && (bsp_enet_rx_frame_pending() == 1u)) /* The DMA owns at least one complete received frame. */
     {
         if (ethernetif_input(&network_interface) == ERR_OK)
         {

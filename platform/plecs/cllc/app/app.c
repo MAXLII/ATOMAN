@@ -127,18 +127,15 @@ static void process_fault_commands(void)
     uint8_t hard_fault = (plecs_get_input(PLECS_INPUT_HARD_FAULT) > 0.5f) ? (uint8_t)1u : (uint8_t)0u;
     uint8_t fault_reset = (plecs_get_input(PLECS_INPUT_FAULT_RESET) > 0.5f) ? (uint8_t)1u : (uint8_t)0u;
 
-    if (    (hard_fault == 1u)
-         && /* The external fault input is active. */
-            (hard_fault_last == 0u)) /* Only its rising edge issues a new trip. */
+    if (    (hard_fault == 1u)       /* The external fault input is active. */
+         && (hard_fault_last == 0u)) /* Only its rising edge issues a new trip. */
     {
         cllc_hal_hard_protect_trip();
     }
 
-    if (    (fault_reset == 1u)
-         && /* The external reset input has a rising edge. */
-            (fault_reset_last == 0u)
-         && /* Avoid reposting reset every task tick. */
-            (hard_fault == 0u)) /* Never clear a fault while its source remains active. */
+    if (    (fault_reset == 1u)      /* The external reset input has a rising edge. */
+         && (fault_reset_last == 0u) /* Avoid reposting reset every task tick. */
+         && (hard_fault == 0u))      /* Never clear a fault while its source remains active. */
     {
         cllc_fsm_set_cmd(CLLC_FSM_CMD_RESET);
     }
@@ -166,9 +163,8 @@ static void process_run_command(void)
         return;
     }
 
-    if (    (run_state == CLLC_RUN_STATE_STARTUP)
-         || /* Cancel an in-progress bridge startup. */
-            (run_state == CLLC_RUN_STATE_RUN)) /* Stop either active power-flow direction. */
+    if (    (run_state == CLLC_RUN_STATE_STARTUP) /* Cancel an in-progress bridge startup. */
+         || (run_state == CLLC_RUN_STATE_RUN))    /* Stop either active power-flow direction. */
     {
         cllc_fsm_set_cmd(CLLC_FSM_CMD_STOP);
     }
@@ -217,9 +213,8 @@ static void log_forward_control_trace(void)
 {
     cllc_ctrl_debug_t debug = {0}; /* Coherent controller values sampled by the 1 ms application task. */
 
-    if (    (cllc_fsm_get_run_state() != CLLC_RUN_STATE_RUN)
-         || /* Log only settled control operation. */
-            (cllc_ctrl_get_direction() != CLLC_DIRECTION_FORWARD)) /* Exclude the reverse control law. */
+    if (    (cllc_fsm_get_run_state() != CLLC_RUN_STATE_RUN)       /* Log only settled control operation. */
+         || (cllc_ctrl_get_direction() != CLLC_DIRECTION_FORWARD)) /* Exclude the reverse control law. */
     {
         trace_header_written = 0u;
         return;

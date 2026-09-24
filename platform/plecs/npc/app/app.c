@@ -136,9 +136,8 @@ REG_SHELL_VAR(V_DC_N, v_dc_n, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_AUT
  * @param time_s Simulation timestamp of the transition. */
 static void report_status(NPC_APP_STATUS_E status, uint32_t detail, double time_s)
 {
-    if (    (ctrl_status == (uint32_t)status)
-         && /* Avoid printing the same failure every 200 us. */
-            (ctrl_detail == detail)) /* Changed failure details still need a record. */
+    if (    (ctrl_status == (uint32_t)status) /* Avoid printing the same failure every 200 us. */
+         && (ctrl_detail == detail))          /* Changed failure details still need a record. */
     {
         return;
     }
@@ -163,9 +162,8 @@ static void report_status(NPC_APP_STATUS_E status, uint32_t detail, double time_
 /** @param value DLL double input. @return true for finite double values without narrowing. */
 static inline bool finite_value(double value)
 {
-    return (value >= -DBL_MAX)
-        && /* Excludes negative infinity and NaN. */
-           (value <= DBL_MAX); /* Excludes positive infinity. */
+    return (value >= -DBL_MAX) /* Excludes negative infinity and NaN. */
+        && (value <= DBL_MAX); /* Excludes positive infinity. */
 }
 
 /** @param alpha Alpha voltage. @param beta Beta voltage. @param vdc_p Positive half bus.
@@ -248,9 +246,8 @@ static void publish(const struct SimulationState *p_state)
 
 void plecs_set_output(PLECS_OUTPUT_E num, float val)
 {
-    if (    ((int)num >= 0)
-         && /* Reject negative channel identifiers. */
-            (num < PLECS_OUTPUT_MAX)) /* Keep BSP writes inside the held frame. */
+    if (    ((int)num >= 0)           /* Reject negative channel identifiers. */
+         && (num < PLECS_OUTPUT_MAX)) /* Keep BSP writes inside the held frame. */
     {
         output_frame[num] = val;
     }
@@ -385,9 +382,8 @@ static void generate_reference(void)
 /** @param value Host feedback sample. @return Float sample, or NaN for invalid/out-of-range input. */
 static inline float sample_feedback(double value)
 {
-    if (    (finite_value(value) == false)
-         || /* Invalid host sample. */
-            (fabs(value) > FLT_MAX)) /* Prevent float conversion overflow. */
+    if (    (finite_value(value) == false) /* Invalid host sample. */
+         || (fabs(value) > FLT_MAX))       /* Prevent float conversion overflow. */
     {
         return nanf("");
     }
@@ -420,9 +416,8 @@ static void update(const struct SimulationState *p_state)
         return;
     }
 
-    if (    (v_dc_half_min != applied_half_min)
-         || /* Apply a changed half-bus threshold. */
-            (midpoint_kp != applied_midpoint_kp)) /* Apply a changed balance gain without stale configuration. */
+    if (    (v_dc_half_min != applied_half_min)   /* Apply a changed half-bus threshold. */
+         || (midpoint_kp != applied_midpoint_kp)) /* Apply a changed balance gain without stale configuration. */
     {
         if (npc_cfg_set_v_dc_half_min(v_dc_half_min) == 0U) /* Application validates the bus threshold. */
         {
@@ -536,11 +531,9 @@ static void output_locked(struct SimulationState *p_state)
         return;
     }
 
-    if (    (initialized == false)
-         || /* Start must initialize the modulator. */
-            (p_state->inputs == NULL)
-         || /* Require the 8 declared inputs. */
-            (p_state->outputs == NULL)) /* Require the 7 declared outputs. */
+    if (    (initialized == false)      /* Start must initialize the modulator. */
+         || (p_state->inputs == NULL)   /* Require the 8 declared inputs. */
+         || (p_state->outputs == NULL)) /* Require the 7 declared outputs. */
     {
         report_status(NPC_APP_INIT, 1u, p_state->time);
         disable_control();
@@ -550,9 +543,8 @@ static void output_locked(struct SimulationState *p_state)
     }
     time_tolerance += 8.0 * DBL_EPSILON * fmax(fabs(p_state->time), fabs(last_call_time));
 
-    if (    (finite_value(p_state->time) == false)
-         || /* Reject invalid simulation timestamps. */
-            (p_state->time < (last_call_time - time_tolerance))) /* Rollback cannot restore private DLL state. */
+    if (    (finite_value(p_state->time) == false) /* Reject invalid simulation timestamps. */
+         || (p_state->time < (last_call_time - time_tolerance))) /* Rollback cannot restore private DLL state. */
     {
         report_status(NPC_APP_TIMING, 1u, p_state->time);
         disable_control();

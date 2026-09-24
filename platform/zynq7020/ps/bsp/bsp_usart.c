@@ -170,9 +170,8 @@ void bsp_usart_dbg_tx(char *data, int length)
 {
     int index = 0; /* 当前待发送字节索引。 */
 
-    if (    (data == NULL)
-         || /* 调用方未提供有效发送缓冲区。 */
-            (length <= 0)) /* 当前请求不包含可发送字节。 */
+    if (    (data == NULL) /* 调用方未提供有效发送缓冲区。 */
+         || (length <= 0)) /* 当前请求不包含可发送字节。 */
     {
         return;
     }
@@ -213,9 +212,8 @@ void bsp_usart_dbg_printf(const char *format, ...)
 
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *data)
 {
-    if (    (data == NULL)
-         || /* 调用方未提供接收目标地址。 */
-            (s_uart_initialized == 0U)) /* UART 尚未完成初始化。 */
+    if (    (data == NULL) /* 调用方未提供接收目标地址。 */
+         || (s_uart_initialized == 0U)) /* UART 尚未完成初始化。 */
     {
         return 0U;
     }
