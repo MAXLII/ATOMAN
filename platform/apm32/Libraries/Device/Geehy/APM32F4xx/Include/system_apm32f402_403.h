@@ -1,12 +1,12 @@
 /**
  *
- * @file        system_apm32f402_403.h
+ * @file system_apm32f402_403.h
  *
- * @brief       CMSIS Cortex-M4 Device System Source File for APM32F402/403xx devices.
+ * @brief CMSIS Cortex-M4 Device System Source File for APM32F402/403xx devices.
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -29,31 +29,32 @@
 #define __SYSTEM_APM32F402_403_H
 
 #ifdef __cplusplus
- extern "C" {
-#endif 
+extern "C"
+{
+#endif
 
-/** @addtogroup CMSIS
-  @{
-*/
+    /** @addtogroup CMSIS
+      @{
+     */
 
-/** @addtogroup APM32F402_403_System
-  @{
-*/
+    /** @addtogroup APM32F402_403_System
+      @{
+     */
 
-/** @defgroup System_Functions
-  @{
-*/
-extern uint32_t SystemCoreClock;          /*!< System Clock Frequency (Core Clock) */
+    /** @defgroup System_Functions
+      @{
+     */
+    extern uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock) */
 
-extern void SystemInit(void);
-extern void SystemCoreClockUpdate(void);
+    extern void SystemInit(void);
+    extern void SystemCoreClockUpdate(void);
 
-/**@} end of group System_Functions */
-/**@} end of group APM32F402_403_System */
-/**@} end of group CMSIS */
+    /** @} end of group System_Functions */
+    /** @} end of group APM32F402_403_System */
+    /** @} end of group CMSIS */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /*__SYSTEM_APM32F402_403_H */
+#endif /* __SYSTEM_APM32F402_403_H */

@@ -1,16 +1,16 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_rtc.c
+ * @file hc32_ll_rtc.c
  * @brief This file provides firmware functions to manage the Real-Time
  *        Clock(RTC).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
    2024-06-30       CDT             Modify RTC_EnterRwMode,RTC_ExitRwMode,RTC_ConfirmLPMCond,RTC_SetIntPeriod,RTC_AlarmCmd,RTC_IntCmd,RTC_ClearStatus for coupling risk
    2024-08-31       CDT             Modify assert IS_RTC_CLK_SRC
    2025-01-20       CDT             Add operation attention for RTC_SetDate,RTC_GetDate,RTC_SetTime,RTC_GetTime functions
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -54,109 +54,80 @@
  */
 
 /* RTC TPCR register Mask */
-#define RTC_TPCR_CLR_MASK                   (RTC_TPCR0_TPCT0 | RTC_TPCR0_TPNF0 | RTC_TPCR0_TSTPE0)
+#define RTC_TPCR_CLR_MASK (RTC_TPCR0_TPCT0 | RTC_TPCR0_TPNF0 | RTC_TPCR0_TSTPE0)
 /* Get the specified register address of the RTC Intrusion Control */
-#define RTC_TPCRx(__CH__)                   ((uint32_t)(&(CM_RTC->TPCR0)) + (uint32_t)(__CH__))
+#define RTC_TPCRx(__CH__) ((uint32_t)(&(CM_RTC->TPCR0)) + (uint32_t)(__CH__))
 
 /* RTC CR2 & TPSR flag mask */
-#define RTC_CR2_FLAG_MASK                       (RTC_CR2_ALMF | RTC_CR2_PRDF)
+#define RTC_CR2_FLAG_MASK (RTC_CR2_ALMF | RTC_CR2_PRDF)
 
 /* RTC software reset timeout(ms) */
-#define RTC_SW_RST_TIMEOUT                  (100UL)
+#define RTC_SW_RST_TIMEOUT (100UL)
 /* RTC mode switch timeout(ms) */
-#define RTC_MD_SWITCH_TIMEOUT               (100UL)
+#define RTC_MD_SWITCH_TIMEOUT (100UL)
 
 /**
  * @defgroup RTC_Check_Parameters_Validity RTC Check Parameters Validity
  * @{
  */
-#define IS_RTC_DATA_FMT(x)                                                     \
-(   ((x) == RTC_DATA_FMT_DEC)                       ||                         \
-    ((x) == RTC_DATA_FMT_BCD))
+#define IS_RTC_DATA_FMT(x) (((x) == RTC_DATA_FMT_DEC) || ((x) == RTC_DATA_FMT_BCD))
 
-#define IS_RTC_CLK_SRC(x)                                                      \
-(   ((x) == RTC_CLK_SRC_XTAL32)                     ||                         \
-    ((x) == RTC_CLK_SRC_LRC)                        ||                         \
-    ((x) == RTC_CLK_SRC_EXTCLK)                     ||                         \
-    ((x) == RTC_CLK_SRC_XTAL_DIV))
+#define IS_RTC_CLK_SRC(x)                                                                   \
+    (((x) == RTC_CLK_SRC_XTAL32) || ((x) == RTC_CLK_SRC_LRC) || ((x) == RTC_CLK_SRC_EXTCLK) \
+  || ((x) == RTC_CLK_SRC_XTAL_DIV))
 
-#define IS_RTC_HOUR_FMT(x)                                                     \
-(   ((x) == RTC_HOUR_FMT_12H)                       ||                         \
-    ((x) == RTC_HOUR_FMT_24H))
+#define IS_RTC_HOUR_FMT(x) (((x) == RTC_HOUR_FMT_12H) || ((x) == RTC_HOUR_FMT_24H))
 
-#define IS_RTC_INT_PERIOD(x)                                                   \
-(   ((x) == RTC_INT_PERIOD_INVD)                    ||                         \
-    ((x) == RTC_INT_PERIOD_PER_HALF_SEC)            ||                         \
-    ((x) == RTC_INT_PERIOD_PER_SEC)                 ||                         \
-    ((x) == RTC_INT_PERIOD_PER_MINUTE)              ||                         \
-    ((x) == RTC_INT_PERIOD_PER_HOUR)                ||                         \
-    ((x) == RTC_INT_PERIOD_PER_DAY)                 ||                         \
-    ((x) == RTC_INT_PERIOD_PER_MONTH))
+#define IS_RTC_INT_PERIOD(x)                                                                                   \
+    (((x) == RTC_INT_PERIOD_INVD) || ((x) == RTC_INT_PERIOD_PER_HALF_SEC) || ((x) == RTC_INT_PERIOD_PER_SEC)   \
+  || ((x) == RTC_INT_PERIOD_PER_MINUTE) || ((x) == RTC_INT_PERIOD_PER_HOUR) || ((x) == RTC_INT_PERIOD_PER_DAY) \
+  || ((x) == RTC_INT_PERIOD_PER_MONTH))
 
-#define IS_RTC_CLK_COMPEN(x)                                                   \
-(   ((x) == RTC_CLK_COMPEN_DISABLE)                 ||                         \
-    ((x) == RTC_CLK_COMPEN_ENABLE))
+#define IS_RTC_CLK_COMPEN(x) (((x) == RTC_CLK_COMPEN_DISABLE) || ((x) == RTC_CLK_COMPEN_ENABLE))
 
-#define IS_RTC_CLK_COMPEN_MD(x)                                                \
-(   ((x) == RTC_CLK_COMPEN_MD_DISTRIBUTED)          ||                         \
-    ((x) == RTC_CLK_COMPEN_MD_UNIFORM))
+#define IS_RTC_CLK_COMPEN_MD(x) (((x) == RTC_CLK_COMPEN_MD_DISTRIBUTED) || ((x) == RTC_CLK_COMPEN_MD_UNIFORM))
 
-#define IS_RTC_HOUR_12H_AM_PM(x)                                               \
-(   ((x) == RTC_HOUR_12H_AM)                        ||                         \
-    ((x) == RTC_HOUR_12H_PM))
+#define IS_RTC_HOUR_12H_AM_PM(x) (((x) == RTC_HOUR_12H_AM) || ((x) == RTC_HOUR_12H_PM))
 
-#define IS_RTC_INTRU_CH(x)                                                     \
-(   ((x) == RTC_INTRU_CH0)                          ||                         \
-    ((x) == RTC_INTRU_CH1))
+#define IS_RTC_INTRU_CH(x) (((x) == RTC_INTRU_CH0) || ((x) == RTC_INTRU_CH1))
 
-#define IS_RTC_INTRU_TIMESTAMP(x)                                              \
-(   ((x) == RTC_INTRU_TS_DISABLE)                   ||                         \
-    ((x) == RTC_INTRU_TS_ENABLE))
+#define IS_RTC_INTRU_TIMESTAMP(x) (((x) == RTC_INTRU_TS_DISABLE) || ((x) == RTC_INTRU_TS_ENABLE))
 
-#define IS_RTC_INTRU_FILTER(x)                                                 \
-(   ((x) == RTC_INTRU_FILTER_INVD)                  ||                         \
-    ((x) == RTC_INTRU_FILTER_THREE_TIME)            ||                         \
-    ((x) == RTC_INTRU_FILTER_THREE_TIME_CLK_DIV32))
+#define IS_RTC_INTRU_FILTER(x)                                              \
+    (((x) == RTC_INTRU_FILTER_INVD) || ((x) == RTC_INTRU_FILTER_THREE_TIME) \
+  || ((x) == RTC_INTRU_FILTER_THREE_TIME_CLK_DIV32))
 
-#define IS_RTC_INTRU_TRIG_EDGE(x)                                              \
-(   ((x) == RTC_INTRU_TRIG_EDGE_NONE)               ||                         \
-    ((x) == RTC_INTRU_TRIG_EDGE_RISING)             ||                         \
-    ((x) == RTC_INTRU_TRIG_EDGE_FALLING)            ||                         \
-    ((x) == RTC_INTRU_TRIG_EDGE_RISING_FALLING))
+#define IS_RTC_INTRU_TRIG_EDGE(x)                                                                                     \
+    (((x) == RTC_INTRU_TRIG_EDGE_NONE) || ((x) == RTC_INTRU_TRIG_EDGE_RISING) || ((x) == RTC_INTRU_TRIG_EDGE_FALLING) \
+  || ((x) == RTC_INTRU_TRIG_EDGE_RISING_FALLING))
 
-#define IS_RTC_GET_FLAG(x)                                                     \
-(   ((x) != 0U)                                     &&                         \
-    (((x) | RTC_FLAG_ALL) == RTC_FLAG_ALL))
+#define IS_RTC_GET_FLAG(x) (((x) != 0U) && (((x) | RTC_FLAG_ALL) == RTC_FLAG_ALL))
 
-#define IS_RTC_CLR_FLAG(x)                                                     \
-(   ((x) != 0U)                                     &&                         \
-    (((x) | RTC_FLAG_CLR_ALL) == RTC_FLAG_CLR_ALL))
+#define IS_RTC_CLR_FLAG(x) (((x) != 0U) && (((x) | RTC_FLAG_CLR_ALL) == RTC_FLAG_CLR_ALL))
 
-#define IS_RTC_INT(x)                                                          \
-(   ((x) != 0U)                                     &&                         \
-    (((x) | RTC_INT_ALL) == RTC_INT_ALL))
+#define IS_RTC_INT(x) (((x) != 0U) && (((x) | RTC_INT_ALL) == RTC_INT_ALL))
 
-#define IS_RTC_YEAR(x)                              ((x) <= 99U)
+#define IS_RTC_YEAR(x) ((x) <= 99U)
 
-#define IS_RTC_MONTH(x)                             (((x) >= 1U) && ((x) <= 12U))
+#define IS_RTC_MONTH(x) (((x) >= 1U) && ((x) <= 12U))
 
-#define IS_RTC_DAY(x)                               (((x) >= 1U) && ((x) <= 31U))
+#define IS_RTC_DAY(x) (((x) >= 1U) && ((x) <= 31U))
 
-#define IS_RTC_HOUR_12H(x)                          (((x) >= 1U) && ((x) <= 12U))
+#define IS_RTC_HOUR_12H(x) (((x) >= 1U) && ((x) <= 12U))
 
-#define IS_RTC_HOUR_24H(x)                          ((x) <= 23U)
+#define IS_RTC_HOUR_24H(x) ((x) <= 23U)
 
-#define IS_RTC_MINUTE(x)                            ((x) <= 59U)
+#define IS_RTC_MINUTE(x) ((x) <= 59U)
 
-#define IS_RTC_SEC(x)                               ((x) <= 59U)
+#define IS_RTC_SEC(x) ((x) <= 59U)
 
-#define IS_RTC_WEEKDAY(x)                           ((x) <= 6U)
+#define IS_RTC_WEEKDAY(x) ((x) <= 6U)
 
-#define IS_RTC_ALARM_WEEKDAY(x)                     (((x) >= 0x01U) && ((x) <= 0x7FU))
+#define IS_RTC_ALARM_WEEKDAY(x) (((x) >= 0x01U) && ((x) <= 0x7FU))
 
-#define IS_RTC_COMPEN_VALUE(x)                      ((x) <= 0x1FFU)
+#define IS_RTC_COMPEN_VALUE(x) ((x) <= 0x1FFU)
 
-#define IS_RTC_PWC_UNLOCKED()                       ((CM_PWC->FPRC & PWC_FPRC_FPRCB1) == PWC_FPRC_FPRCB1)
+#define IS_RTC_PWC_UNLOCKED() ((CM_PWC->FPRC & PWC_FPRC_FPRCB1) == PWC_FPRC_FPRCB1)
 /**
  * @}
  */
@@ -186,11 +157,11 @@
  */
 
 /**
- * @brief  De-Initialize RTC.
- * @param  None
+ * @brief De-Initialize RTC.
+ * @param None
  * @retval int32_t:
- *           - LL_OK: De-Initialize success
- *           - LL_ERR_TIMEOUT: De-Initialize timeout
+ *         - LL_OK: De-Initialize success
+ *         - LL_ERR_TIMEOUT: De-Initialize timeout
  */
 int32_t RTC_DeInit(void)
 {
@@ -200,21 +171,28 @@ int32_t RTC_DeInit(void)
     WRITE_REG32(bCM_RTC->CR0_b.RESET, RESET);
     /* Waiting for normal count status or end of RTC software reset */
     u32Count = RTC_SW_RST_TIMEOUT * (HCLK_VALUE / 20000UL);
-    while (0UL != READ_REG32(bCM_RTC->CR0_b.RESET)) {
-        if (0UL == u32Count) {
+
+    while (0UL != READ_REG32(bCM_RTC->CR0_b.RESET))
+    {
+        if (0UL == u32Count)
+        {
             i32Ret = LL_ERR_TIMEOUT;
             break;
         }
         u32Count--;
     }
 
-    if (LL_OK == i32Ret) {
+    if (LL_OK == i32Ret)
+    {
         /* Reset all RTC registers */
         WRITE_REG32(bCM_RTC->CR0_b.RESET, SET);
         /* Waiting for RTC software reset to complete */
         u32Count = RTC_SW_RST_TIMEOUT * (HCLK_VALUE / 20000UL);
-        while (0UL != READ_REG32(bCM_RTC->CR0_b.RESET)) {
-            if (0UL == u32Count) {
+
+        while (0UL != READ_REG32(bCM_RTC->CR0_b.RESET))
+        {
+            if (0UL == u32Count)
+            {
                 i32Ret = LL_ERR_TIMEOUT;
                 break;
             }
@@ -226,19 +204,22 @@ int32_t RTC_DeInit(void)
 }
 
 /**
- * @brief  Initialize RTC.
- * @param  [in] pstcRtcInit             Pointer to a @ref stc_rtc_init_t structure
+ * @brief Initialize RTC.
+ * @param [in] pstcRtcInit             Pointer to a @ref stc_rtc_init_t structure
  * @retval int32_t:
- *           - LL_OK: Initialize success
- *           - LL_ERR_INVD_PARAM: Invalid parameter
+ *         - LL_OK: Initialize success
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
  */
 int32_t RTC_Init(const stc_rtc_init_t *pstcRtcInit)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcInit) {
+    if (NULL == pstcRtcInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_CLK_SRC(pstcRtcInit->u8ClockSrc));
         DDL_ASSERT(IS_RTC_HOUR_FMT(pstcRtcInit->u8HourFormat));
@@ -249,13 +230,17 @@ int32_t RTC_Init(const stc_rtc_init_t *pstcRtcInit)
         DDL_ASSERT(IS_RTC_PWC_UNLOCKED());
 
         /* RTC CR3 Configuration */
-        MODIFY_REG8(CM_RTC->CR3, (RTC_CR3_LRCEN | RTC_CR3_RCKSEL), pstcRtcInit->u8ClockSrc & (RTC_CR3_LRCEN | RTC_CR3_RCKSEL));
+        MODIFY_REG8(CM_RTC->CR3,
+                    (RTC_CR3_LRCEN | RTC_CR3_RCKSEL),
+                    pstcRtcInit->u8ClockSrc & (RTC_CR3_LRCEN | RTC_CR3_RCKSEL));
         MODIFY_REG8(CM_PWC->PWRC6, PWC_PWRC6_RTCCKSEL, pstcRtcInit->u8ClockSrc & PWC_PWRC6_RTCCKSEL);
         /* RTC CR1 Configuration */
-        MODIFY_REG8(CM_RTC->CR1, (RTC_CR1_PRDS | RTC_CR1_AMPM | RTC_CR1_ONEHZSEL),
+        MODIFY_REG8(CM_RTC->CR1,
+                    (RTC_CR1_PRDS | RTC_CR1_AMPM | RTC_CR1_ONEHZSEL),
                     (pstcRtcInit->u8IntPeriod | pstcRtcInit->u8HourFormat | pstcRtcInit->u8CompenMode));
         /* RTC Compensation Configuration */
-        MODIFY_REG8(CM_RTC->ERRCRH, (RTC_ERRCRH_COMPEN | RTC_ERRCRH_COMP8),
+        MODIFY_REG8(CM_RTC->ERRCRH,
+                    (RTC_ERRCRH_COMPEN | RTC_ERRCRH_COMP8),
                     (pstcRtcInit->u8ClockCompen | (uint8_t)((pstcRtcInit->u16CompenValue >> 8U) & 0x01U)));
         WRITE_REG8(CM_RTC->ERRCRL, (uint8_t)(pstcRtcInit->u16CompenValue & 0xFFU));
     }
@@ -264,19 +249,22 @@ int32_t RTC_Init(const stc_rtc_init_t *pstcRtcInit)
 }
 
 /**
- * @brief  Fills each stc_rtc_init_t member with default value.
- * @param  [out] pstcRtcInit            Pointer to a @ref stc_rtc_init_t structure
+ * @brief Fills each stc_rtc_init_t member with default value.
+ * @param [out] pstcRtcInit            Pointer to a @ref stc_rtc_init_t structure
  * @retval int32_t:
- *           - LL_OK: stc_rtc_init_t member initialize success
- *           - LL_ERR_INVD_PARAM: Invalid parameter
+ *         - LL_OK: stc_rtc_init_t member initialize success
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
  */
 int32_t RTC_StructInit(stc_rtc_init_t *pstcRtcInit)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcInit) {
+    if (NULL == pstcRtcInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         pstcRtcInit->u8ClockSrc     = RTC_CLK_SRC_LRC;
         pstcRtcInit->u8HourFormat   = RTC_HOUR_FMT_24H;
         pstcRtcInit->u8IntPeriod    = RTC_INT_PERIOD_INVD;
@@ -289,11 +277,11 @@ int32_t RTC_StructInit(stc_rtc_init_t *pstcRtcInit)
 }
 
 /**
- * @brief  Enter RTC read/write mode.
- * @param  None
+ * @brief Enter RTC read/write mode.
+ * @param None
  * @retval int32_t:
- *           - LL_OK: Enter mode success
- *           - LL_ERR_TIMEOUT: Enter mode timeout
+ *         - LL_OK: Enter mode success
+ *         - LL_ERR_TIMEOUT: Enter mode timeout
  */
 int32_t RTC_EnterRwMode(void)
 {
@@ -301,14 +289,20 @@ int32_t RTC_EnterRwMode(void)
     int32_t i32Ret = LL_OK;
 
     /* Mode switch when RTC is running */
-    if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
-        if (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
+
+    if (0UL != READ_REG32(bCM_RTC->CR1_b.START))
+    {
+        if (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN))
+        {
             SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK);
 
             /* Waiting for RWEN bit set */
             u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
-            while (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
-                if (0UL == u32Count) {
+
+            while (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN))
+            {
+                if (0UL == u32Count)
+                {
                     i32Ret = LL_ERR_TIMEOUT;
                     break;
                 }
@@ -321,11 +315,11 @@ int32_t RTC_EnterRwMode(void)
 }
 
 /**
- * @brief  Exit RTC read/write mode.
- * @param  None
+ * @brief Exit RTC read/write mode.
+ * @param None
  * @retval int32_t:
- *           - LL_OK: Exit mode success
- *           - LL_ERR_TIMEOUT: Exit mode timeout
+ *         - LL_OK: Exit mode success
+ *         - LL_ERR_TIMEOUT: Exit mode timeout
  */
 int32_t RTC_ExitRwMode(void)
 {
@@ -333,13 +327,19 @@ int32_t RTC_ExitRwMode(void)
     int32_t i32Ret = LL_OK;
 
     /* Mode switch when RTC is running */
-    if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
-        if (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
+
+    if (0UL != READ_REG32(bCM_RTC->CR1_b.START))
+    {
+        if (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN))
+        {
             MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK), ~RTC_CR2_RWREQ);
             /* Waiting for RWEN bit reset */
             u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
-            while (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
-                if (0UL == u32Count) {
+
+            while (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN))
+            {
+                if (0UL == u32Count)
+                {
                     i32Ret = LL_ERR_TIMEOUT;
                     break;
                 }
@@ -352,11 +352,11 @@ int32_t RTC_ExitRwMode(void)
 }
 
 /**
- * @brief  Confirm the condition for RTC to enter low power mode.
- * @param  None
+ * @brief Confirm the condition for RTC to enter low power mode.
+ * @param None
  * @retval int32_t:
- *           - LL_OK: Can enter low power mode
- *           - LL_ERR_TIMEOUT: Can't enter low power mode
+ *         - LL_OK: Can enter low power mode
+ *         - LL_ERR_TIMEOUT: Can't enter low power mode
  */
 int32_t RTC_ConfirmLPMCond(void)
 {
@@ -364,24 +364,33 @@ int32_t RTC_ConfirmLPMCond(void)
     int32_t i32Ret = LL_OK;
 
     /* Check RTC work status */
-    if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
+
+    if (0UL != READ_REG32(bCM_RTC->CR1_b.START))
+    {
         SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK);
         /* Waiting for RTC RWEN bit set */
         u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
-        while (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
-            if (0UL == u32Count) {
+
+        while (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN))
+        {
+            if (0UL == u32Count)
+            {
                 i32Ret = LL_ERR_TIMEOUT;
                 break;
             }
             u32Count--;
         }
 
-        if (LL_OK == i32Ret) {
+        if (LL_OK == i32Ret)
+        {
             MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK), ~RTC_CR2_RWREQ);
             /* Waiting for RTC RWEN bit reset */
             u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
-            while (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
-                if (0UL == u32Count) {
+
+            while (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN))
+            {
+                if (0UL == u32Count)
+                {
                     i32Ret = LL_ERR_TIMEOUT;
                     break;
                 }
@@ -394,16 +403,16 @@ int32_t RTC_ConfirmLPMCond(void)
 }
 
 /**
- * @brief  Set the RTC interrupt period.
- * @param  [in] u8Period                Specifies the interrupt period.
- *         This parameter can be one of the following values:
- *           @arg RTC_INT_PERIOD_INVD:          Period interrupt invalid
- *           @arg RTC_INT_PERIOD_PER_HALF_SEC:  Interrupt per half second
- *           @arg RTC_INT_PERIOD_PER_SEC:       Interrupt per second
- *           @arg RTC_INT_PERIOD_PER_MINUTE:    Interrupt per minute
- *           @arg RTC_INT_PERIOD_PER_HOUR:      Interrupt per hour
- *           @arg RTC_INT_PERIOD_PER_DAY:       Interrupt per day
- *           @arg RTC_INT_PERIOD_PER_MONTH:     Interrupt per month
+ * @brief Set the RTC interrupt period.
+ * @param [in] u8Period                Specifies the interrupt period.
+ *        This parameter can be one of the following values:
+ * @arg RTC_INT_PERIOD_INVD:          Period interrupt invalid
+ * @arg RTC_INT_PERIOD_PER_HALF_SEC:  Interrupt per half second
+ * @arg RTC_INT_PERIOD_PER_SEC:       Interrupt per second
+ * @arg RTC_INT_PERIOD_PER_MINUTE:    Interrupt per minute
+ * @arg RTC_INT_PERIOD_PER_HOUR:      Interrupt per hour
+ * @arg RTC_INT_PERIOD_PER_DAY:       Interrupt per day
+ * @arg RTC_INT_PERIOD_PER_MONTH:     Interrupt per month
  * @retval None
  */
 void RTC_SetIntPeriod(uint8_t u8Period)
@@ -417,7 +426,10 @@ void RTC_SetIntPeriod(uint8_t u8Period)
     u32RtcSta = READ_REG32(bCM_RTC->CR1_b.START);
     u32IntSta = READ_REG32(bCM_RTC->CR2_b.PRDIE);
     /* Disable period interrupt when START=1 and clear period flag after write */
-    if ((0UL != u32IntSta) && (0UL != u32RtcSta)) {
+
+    if (    (0UL != u32IntSta)
+         && (0UL != u32RtcSta))
+    {
         MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_PRDIE | RTC_CR2_FLAG_MASK), ~RTC_CR2_PRDIE);
     }
 
@@ -425,16 +437,18 @@ void RTC_SetIntPeriod(uint8_t u8Period)
     MODIFY_REG8(CM_RTC->CR1, RTC_CR1_PRDS, u8Period);
     MODIFY_REG8(CM_RTC->CR2, RTC_CR2_FLAG_MASK, ~RTC_CR2_PRDF);
 
-    if ((0UL != u32IntSta) && (0UL != u32RtcSta)) {
+    if (    (0UL != u32IntSta)
+         && (0UL != u32RtcSta))
+    {
         SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_PRDIE | RTC_CR2_FLAG_MASK);
     }
 }
 
 /**
- * @brief  Set the RTC clock source.
- * @param  [in] u8Src                   Specifies the clock source.
- *         This parameter can be one of the following values:
- *           @arg @ref RTC_Clock_Source
+ * @brief Set the RTC clock source.
+ * @param [in] u8Src                   Specifies the clock source.
+ *        This parameter can be one of the following values:
+ * @arg @ref RTC_Clock_Source
  * @retval None
  */
 void RTC_SetClockSrc(uint8_t u8Src)
@@ -448,9 +462,9 @@ void RTC_SetClockSrc(uint8_t u8Src)
 }
 
 /**
- * @brief  Set RTC clock compensation value.
- * @param  [in] u16Value                Specifies the clock compensation value of RTC.
- *           @arg This parameter can be a number between Min_Data = 0 and Max_Data = 0x1FF.
+ * @brief Set RTC clock compensation value.
+ * @param [in] u16Value                Specifies the clock compensation value of RTC.
+ * @arg This parameter can be a number between Min_Data = 0 and Max_Data = 0x1FF.
  * @retval None
  */
 void RTC_SetClockCompenValue(uint16_t u16Value)
@@ -463,17 +477,18 @@ void RTC_SetClockCompenValue(uint16_t u16Value)
 }
 
 /**
- * @brief  Get RTC counter status.
- * @param  None
+ * @brief Get RTC counter status.
+ * @param None
  * @retval An @ref en_functional_state_t enumeration value.
- *           - ENABLE: RTC counter started
- *           - DISABLE: RTC counter stopped
+ *         - ENABLE: RTC counter started
+ *         - DISABLE: RTC counter stopped
  */
 en_functional_state_t RTC_GetCounterState(void)
 {
     en_functional_state_t enState = DISABLE;
 
-    if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
+    if (0UL != READ_REG32(bCM_RTC->CR1_b.START))
+    {
         enState = ENABLE;
     }
 
@@ -481,8 +496,8 @@ en_functional_state_t RTC_GetCounterState(void)
 }
 
 /**
- * @brief  Enable or disable RTC count.
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable RTC count.
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void RTC_Cmd(en_functional_state_t enNewState)
@@ -494,8 +509,8 @@ void RTC_Cmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Enable or disable RTC LRC function.
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable RTC LRC function.
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void RTC_LrcCmd(en_functional_state_t enNewState)
@@ -507,8 +522,8 @@ void RTC_LrcCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Enable or disable RTC 1HZ output.
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable RTC 1HZ output.
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void RTC_OneHzOutputCmd(en_functional_state_t enNewState)
@@ -520,8 +535,8 @@ void RTC_OneHzOutputCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Enable or disable clock compensation.
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable clock compensation.
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void RTC_ClockCompenCmd(en_functional_state_t enNewState)
@@ -533,32 +548,39 @@ void RTC_ClockCompenCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Set RTC current date.
- * @param  [in] u8Format                Specifies the format of the entered parameters.
- *         This parameter can be one of the following values:
- *           @arg RTC_DATA_FMT_DEC:     Decimal data format
- *           @arg RTC_DATA_FMT_BCD:     BCD data format
- * @param  [in] pstcRtcDate             Pointer to a @ref stc_rtc_date_t structure
+ * @brief Set RTC current date.
+ * @param [in] u8Format                Specifies the format of the entered parameters.
+ *        This parameter can be one of the following values:
+ * @arg RTC_DATA_FMT_DEC:     Decimal data format
+ * @arg RTC_DATA_FMT_BCD:     BCD data format
+ * @param [in] pstcRtcDate             Pointer to a @ref stc_rtc_date_t structure
  * @retval int32_t:
- *           - LL_OK: Set date success
- *           - LL_ERR: Set date failed
- *           - LL_ERR_INVD_PARAM: Invalid parameter
- * @note   The operation of setting the date must be completed within 1 second
+ *         - LL_OK: Set date success
+ *         - LL_ERR: Set date failed
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
+ * @note The operation of setting the date must be completed within 1 second
  */
 int32_t RTC_SetDate(uint8_t u8Format, stc_rtc_date_t *pstcRtcDate)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcDate) {
+    if (NULL == pstcRtcDate)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_DATA_FMT(u8Format));
-        if (RTC_DATA_FMT_DEC != u8Format) {
+
+        if (RTC_DATA_FMT_DEC != u8Format)
+        {
             DDL_ASSERT(IS_RTC_YEAR(RTC_BCD2DEC(pstcRtcDate->u8Year)));
             DDL_ASSERT(IS_RTC_MONTH(RTC_BCD2DEC(pstcRtcDate->u8Month)));
             DDL_ASSERT(IS_RTC_DAY(RTC_BCD2DEC(pstcRtcDate->u8Day)));
-        } else {
+        }
+        else
+        {
             DDL_ASSERT(IS_RTC_YEAR(pstcRtcDate->u8Year));
             DDL_ASSERT(IS_RTC_MONTH(pstcRtcDate->u8Month));
             DDL_ASSERT(IS_RTC_DAY(pstcRtcDate->u8Day));
@@ -566,22 +588,29 @@ int32_t RTC_SetDate(uint8_t u8Format, stc_rtc_date_t *pstcRtcDate)
         DDL_ASSERT(IS_RTC_WEEKDAY(pstcRtcDate->u8Weekday));
 
         /* Enter read/write mode */
-        if (LL_OK != RTC_EnterRwMode()) {
+
+        if (LL_OK != RTC_EnterRwMode())
+        {
             i32Ret = LL_ERR;
-        } else {
-            if (RTC_DATA_FMT_DEC == u8Format) {
+        }
+        else
+        {
+            if (RTC_DATA_FMT_DEC == u8Format)
+            {
                 pstcRtcDate->u8Year  = RTC_DEC2BCD(pstcRtcDate->u8Year);
                 pstcRtcDate->u8Month = RTC_DEC2BCD(pstcRtcDate->u8Month);
                 pstcRtcDate->u8Day   = RTC_DEC2BCD(pstcRtcDate->u8Day);
             }
 
             WRITE_REG8(CM_RTC->YEAR, pstcRtcDate->u8Year);
-            WRITE_REG8(CM_RTC->MON,  pstcRtcDate->u8Month);
-            WRITE_REG8(CM_RTC->DAY,  pstcRtcDate->u8Day);
+            WRITE_REG8(CM_RTC->MON, pstcRtcDate->u8Month);
+            WRITE_REG8(CM_RTC->DAY, pstcRtcDate->u8Day);
             WRITE_REG8(CM_RTC->WEEK, pstcRtcDate->u8Weekday);
 
             /* Exit read/write mode */
-            if (LL_OK != RTC_ExitRwMode()) {
+
+            if (LL_OK != RTC_ExitRwMode())
+            {
                 i32Ret = LL_ERR;
             }
         }
@@ -591,46 +620,57 @@ int32_t RTC_SetDate(uint8_t u8Format, stc_rtc_date_t *pstcRtcDate)
 }
 
 /**
- * @brief  Get RTC current date.
- * @param  [in] u8Format                Specifies the format of the returned parameters.
- *         This parameter can be one of the following values:
- *           @arg RTC_DATA_FMT_DEC:     Decimal data format
- *           @arg RTC_DATA_FMT_BCD:     BCD data format
- * @param  [out] pstcRtcDate            Pointer to a @ref stc_rtc_date_t structure
+ * @brief Get RTC current date.
+ * @param [in] u8Format                Specifies the format of the returned parameters.
+ *        This parameter can be one of the following values:
+ * @arg RTC_DATA_FMT_DEC:     Decimal data format
+ * @arg RTC_DATA_FMT_BCD:     BCD data format
+ * @param [out] pstcRtcDate            Pointer to a @ref stc_rtc_date_t structure
  * @retval int32_t:
- *           - LL_OK: Get date success
- *           - LL_ERR: Get date failed
- *           - LL_ERR_INVD_PARAM: Invalid parameter
- * @note   The operation of getting the date must be completed within 1 second
+ *         - LL_OK: Get date success
+ *         - LL_ERR: Get date failed
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
+ * @note The operation of getting the date must be completed within 1 second
  */
 int32_t RTC_GetDate(uint8_t u8Format, stc_rtc_date_t *pstcRtcDate)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcDate) {
+    if (NULL == pstcRtcDate)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_DATA_FMT(u8Format));
         /* Enter read/write mode */
-        if (LL_OK != RTC_EnterRwMode()) {
+
+        if (LL_OK != RTC_EnterRwMode())
+        {
             i32Ret = LL_ERR;
-        } else {
+        }
+        else
+        {
             /* Get RTC date registers */
             pstcRtcDate->u8Year    = READ_REG8(CM_RTC->YEAR);
             pstcRtcDate->u8Month   = READ_REG8(CM_RTC->MON);
             pstcRtcDate->u8Day     = READ_REG8(CM_RTC->DAY);
             pstcRtcDate->u8Weekday = READ_REG8(CM_RTC->WEEK);
 
-            /* Check decimal format*/
-            if (RTC_DATA_FMT_DEC == u8Format) {
+            /* Check decimal format */
+
+            if (RTC_DATA_FMT_DEC == u8Format)
+            {
                 pstcRtcDate->u8Year  = RTC_BCD2DEC(pstcRtcDate->u8Year);
                 pstcRtcDate->u8Month = RTC_BCD2DEC(pstcRtcDate->u8Month);
                 pstcRtcDate->u8Day   = RTC_BCD2DEC(pstcRtcDate->u8Day);
             }
 
             /* exit read/write mode */
-            if (LL_OK != RTC_ExitRwMode()) {
+
+            if (LL_OK != RTC_ExitRwMode())
+            {
                 i32Ret = LL_ERR;
             }
         }
@@ -640,41 +680,54 @@ int32_t RTC_GetDate(uint8_t u8Format, stc_rtc_date_t *pstcRtcDate)
 }
 
 /**
- * @brief  Set RTC current time.
- * @param  [in] u8Format                Specifies the format of the entered parameters.
- *         This parameter can be one of the following values:
- *           @arg RTC_DATA_FMT_DEC:     Decimal data format
- *           @arg RTC_DATA_FMT_BCD:     BCD data format
- * @param  [in] pstcRtcTime             Pointer to a @ref stc_rtc_time_t structure
+ * @brief Set RTC current time.
+ * @param [in] u8Format                Specifies the format of the entered parameters.
+ *        This parameter can be one of the following values:
+ * @arg RTC_DATA_FMT_DEC:     Decimal data format
+ * @arg RTC_DATA_FMT_BCD:     BCD data format
+ * @param [in] pstcRtcTime             Pointer to a @ref stc_rtc_time_t structure
  * @retval int32_t:
- *           - LL_OK: Set time success
- *           - LL_ERR: Set time failed
- *           - LL_ERR_INVD_PARAM: Invalid parameter
- * @note   The operation of setting the time must be completed within 1 second
+ *         - LL_OK: Set time success
+ *         - LL_ERR: Set time failed
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
+ * @note The operation of setting the time must be completed within 1 second
  */
 int32_t RTC_SetTime(uint8_t u8Format, stc_rtc_time_t *pstcRtcTime)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcTime) {
+    if (NULL == pstcRtcTime)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_DATA_FMT(u8Format));
-        if (RTC_DATA_FMT_DEC != u8Format) {
-            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) {
+
+        if (RTC_DATA_FMT_DEC != u8Format)
+        {
+            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+            {
                 DDL_ASSERT(IS_RTC_HOUR_12H(RTC_BCD2DEC(pstcRtcTime->u8Hour)));
                 DDL_ASSERT(IS_RTC_HOUR_12H_AM_PM(pstcRtcTime->u8AmPm));
-            } else {
+            }
+            else
+            {
                 DDL_ASSERT(IS_RTC_HOUR_24H(RTC_BCD2DEC(pstcRtcTime->u8Hour)));
             }
             DDL_ASSERT(IS_RTC_MINUTE(RTC_BCD2DEC(pstcRtcTime->u8Minute)));
             DDL_ASSERT(IS_RTC_SEC(RTC_BCD2DEC(pstcRtcTime->u8Second)));
-        } else {
-            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) {
+        }
+        else
+        {
+            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+            {
                 DDL_ASSERT(IS_RTC_HOUR_12H(pstcRtcTime->u8Hour));
                 DDL_ASSERT(IS_RTC_HOUR_12H_AM_PM(pstcRtcTime->u8AmPm));
-            } else {
+            }
+            else
+            {
                 DDL_ASSERT(IS_RTC_HOUR_24H(pstcRtcTime->u8Hour));
             }
             DDL_ASSERT(IS_RTC_MINUTE(pstcRtcTime->u8Minute));
@@ -682,25 +735,34 @@ int32_t RTC_SetTime(uint8_t u8Format, stc_rtc_time_t *pstcRtcTime)
         }
 
         /* Enter read/write mode */
-        if (LL_OK != RTC_EnterRwMode()) {
+
+        if (LL_OK != RTC_EnterRwMode())
+        {
             i32Ret = LL_ERR;
-        } else {
-            if (RTC_DATA_FMT_DEC == u8Format) {
+        }
+        else
+        {
+            if (RTC_DATA_FMT_DEC == u8Format)
+            {
                 pstcRtcTime->u8Hour   = RTC_DEC2BCD(pstcRtcTime->u8Hour);
                 pstcRtcTime->u8Minute = RTC_DEC2BCD(pstcRtcTime->u8Minute);
                 pstcRtcTime->u8Second = RTC_DEC2BCD(pstcRtcTime->u8Second);
             }
-            if ((RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) &&
-                (RTC_HOUR_12H_PM == pstcRtcTime->u8AmPm)) {
+
+            if (    (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+                 && (RTC_HOUR_12H_PM == pstcRtcTime->u8AmPm))
+            {
                 SET_REG8_BIT(pstcRtcTime->u8Hour, RTC_HOUR_12H_PM);
             }
 
             WRITE_REG8(CM_RTC->HOUR, pstcRtcTime->u8Hour);
-            WRITE_REG8(CM_RTC->MIN,  pstcRtcTime->u8Minute);
-            WRITE_REG8(CM_RTC->SEC,  pstcRtcTime->u8Second);
+            WRITE_REG8(CM_RTC->MIN, pstcRtcTime->u8Minute);
+            WRITE_REG8(CM_RTC->SEC, pstcRtcTime->u8Second);
 
             /* Exit read/write mode */
-            if (LL_OK != RTC_ExitRwMode()) {
+
+            if (LL_OK != RTC_ExitRwMode())
+            {
                 i32Ret = LL_ERR;
             }
         }
@@ -710,56 +772,73 @@ int32_t RTC_SetTime(uint8_t u8Format, stc_rtc_time_t *pstcRtcTime)
 }
 
 /**
- * @brief  Get RTC current time.
- * @param  [in] u8Format                Specifies the format of the returned parameters.
- *         This parameter can be one of the following values:
- *           @arg RTC_DATA_FMT_DEC:     Decimal data format
- *           @arg RTC_DATA_FMT_BCD:     BCD data format
- * @param  [out] pstcRtcTime            Pointer to a @ref stc_rtc_time_t structure
+ * @brief Get RTC current time.
+ * @param [in] u8Format                Specifies the format of the returned parameters.
+ *        This parameter can be one of the following values:
+ * @arg RTC_DATA_FMT_DEC:     Decimal data format
+ * @arg RTC_DATA_FMT_BCD:     BCD data format
+ * @param [out] pstcRtcTime            Pointer to a @ref stc_rtc_time_t structure
  * @retval int32_t:
- *           - LL_OK: Get time success
- *           - LL_ERR: Get time failed
- *           - LL_ERR_INVD_PARAM: Invalid parameter
- * @note   The operation of getting the time must be completed within 1 second
+ *         - LL_OK: Get time success
+ *         - LL_ERR: Get time failed
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
+ * @note The operation of getting the time must be completed within 1 second
  */
 int32_t RTC_GetTime(uint8_t u8Format, stc_rtc_time_t *pstcRtcTime)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcTime) {
+    if (NULL == pstcRtcTime)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_DATA_FMT(u8Format));
         /* Enter read/write mode */
-        if (LL_OK != RTC_EnterRwMode()) {
+
+        if (LL_OK != RTC_EnterRwMode())
+        {
             i32Ret = LL_ERR;
-        } else {
+        }
+        else
+        {
             /* Get RTC time registers */
             pstcRtcTime->u8Hour   = READ_REG8(CM_RTC->HOUR);
             pstcRtcTime->u8Minute = READ_REG8(CM_RTC->MIN);
             pstcRtcTime->u8Second = READ_REG8(CM_RTC->SEC);
 
-            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) {
-                if (RTC_HOUR_12H_PM == (pstcRtcTime->u8Hour & RTC_HOUR_12H_PM)) {
+            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+            {
+                if (RTC_HOUR_12H_PM == (pstcRtcTime->u8Hour & RTC_HOUR_12H_PM))
+                {
                     CLR_REG8_BIT(pstcRtcTime->u8Hour, RTC_HOUR_12H_PM);
-                    pstcRtcTime->u8AmPm  = RTC_HOUR_12H_PM;
-                } else {
+                    pstcRtcTime->u8AmPm = RTC_HOUR_12H_PM;
+                }
+                else
+                {
                     pstcRtcTime->u8AmPm = RTC_HOUR_12H_AM;
                 }
-            } else {
+            }
+            else
+            {
                 pstcRtcTime->u8AmPm = RTC_HOUR_24H;
             }
 
-            /* Check decimal format*/
-            if (RTC_DATA_FMT_DEC == u8Format) {
+            /* Check decimal format */
+
+            if (RTC_DATA_FMT_DEC == u8Format)
+            {
                 pstcRtcTime->u8Hour   = RTC_BCD2DEC(pstcRtcTime->u8Hour);
                 pstcRtcTime->u8Minute = RTC_BCD2DEC(pstcRtcTime->u8Minute);
                 pstcRtcTime->u8Second = RTC_BCD2DEC(pstcRtcTime->u8Second);
             }
 
             /* exit read/write mode */
-            if (LL_OK != RTC_ExitRwMode()) {
+
+            if (LL_OK != RTC_ExitRwMode())
+            {
                 i32Ret = LL_ERR;
             }
         }
@@ -769,38 +848,51 @@ int32_t RTC_GetTime(uint8_t u8Format, stc_rtc_time_t *pstcRtcTime)
 }
 
 /**
- * @brief  Set RTC alarm time.
- * @param  [in] u8Format                Specifies the format of the entered parameters.
- *         This parameter can be one of the following values:
- *           @arg RTC_DATA_FMT_DEC:     Decimal data format
- *           @arg RTC_DATA_FMT_BCD:     BCD data format
- * @param  [in] pstcRtcAlarm            Pointer to a @ref stc_rtc_alarm_t structure
+ * @brief Set RTC alarm time.
+ * @param [in] u8Format                Specifies the format of the entered parameters.
+ *        This parameter can be one of the following values:
+ * @arg RTC_DATA_FMT_DEC:     Decimal data format
+ * @arg RTC_DATA_FMT_BCD:     BCD data format
+ * @param [in] pstcRtcAlarm            Pointer to a @ref stc_rtc_alarm_t structure
  * @retval int32_t:
- *           - LL_OK: Set RTC alarm time success
- *           - LL_ERR_INVD_PARAM: Invalid parameter
+ *         - LL_OK: Set RTC alarm time success
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
  */
 int32_t RTC_SetAlarm(uint8_t u8Format, stc_rtc_alarm_t *pstcRtcAlarm)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcAlarm) {
+    if (NULL == pstcRtcAlarm)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_DATA_FMT(u8Format));
-        if (RTC_DATA_FMT_DEC != u8Format) {
-            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) {
+
+        if (RTC_DATA_FMT_DEC != u8Format)
+        {
+            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+            {
                 DDL_ASSERT(IS_RTC_HOUR_12H(RTC_BCD2DEC(pstcRtcAlarm->u8AlarmHour)));
                 DDL_ASSERT(IS_RTC_HOUR_12H_AM_PM(pstcRtcAlarm->u8AlarmAmPm));
-            } else {
+            }
+            else
+            {
                 DDL_ASSERT(IS_RTC_HOUR_24H(RTC_BCD2DEC(pstcRtcAlarm->u8AlarmHour)));
             }
             DDL_ASSERT(IS_RTC_MINUTE(RTC_BCD2DEC(pstcRtcAlarm->u8AlarmMinute)));
-        } else {
-            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) {
+        }
+        else
+        {
+            if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+            {
                 DDL_ASSERT(IS_RTC_HOUR_12H(pstcRtcAlarm->u8AlarmHour));
                 DDL_ASSERT(IS_RTC_HOUR_12H_AM_PM(pstcRtcAlarm->u8AlarmAmPm));
-            } else {
+            }
+            else
+            {
                 DDL_ASSERT(IS_RTC_HOUR_24H(pstcRtcAlarm->u8AlarmHour));
             }
             DDL_ASSERT(IS_RTC_MINUTE(pstcRtcAlarm->u8AlarmMinute));
@@ -808,17 +900,21 @@ int32_t RTC_SetAlarm(uint8_t u8Format, stc_rtc_alarm_t *pstcRtcAlarm)
         DDL_ASSERT(IS_RTC_ALARM_WEEKDAY(pstcRtcAlarm->u8AlarmWeekday));
 
         /* Configure alarm registers */
-        if (RTC_DATA_FMT_DEC == u8Format) {
+
+        if (RTC_DATA_FMT_DEC == u8Format)
+        {
             pstcRtcAlarm->u8AlarmHour   = RTC_DEC2BCD(pstcRtcAlarm->u8AlarmHour);
             pstcRtcAlarm->u8AlarmMinute = RTC_DEC2BCD(pstcRtcAlarm->u8AlarmMinute);
         }
-        if ((RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) &&
-            (RTC_HOUR_12H_PM == pstcRtcAlarm->u8AlarmAmPm)) {
+
+        if (    (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+             && (RTC_HOUR_12H_PM == pstcRtcAlarm->u8AlarmAmPm))
+        {
             SET_REG8_BIT(pstcRtcAlarm->u8AlarmHour, RTC_HOUR_12H_PM);
         }
 
         WRITE_REG8(CM_RTC->ALMHOUR, pstcRtcAlarm->u8AlarmHour);
-        WRITE_REG8(CM_RTC->ALMMIN,  pstcRtcAlarm->u8AlarmMinute);
+        WRITE_REG8(CM_RTC->ALMMIN, pstcRtcAlarm->u8AlarmMinute);
         WRITE_REG8(CM_RTC->ALMWEEK, pstcRtcAlarm->u8AlarmWeekday);
     }
 
@@ -826,23 +922,26 @@ int32_t RTC_SetAlarm(uint8_t u8Format, stc_rtc_alarm_t *pstcRtcAlarm)
 }
 
 /**
- * @brief  Get RTC alarm time.
- * @param  [in] u8Format                Specifies the format of the returned parameters.
- *         This parameter can be one of the following values:
- *           @arg RTC_DATA_FMT_DEC:     Decimal data format
- *           @arg RTC_DATA_FMT_BCD:     BCD data format
- * @param  [out] pstcRtcAlarm           Pointer to a @ref stc_rtc_alarm_t structure
+ * @brief Get RTC alarm time.
+ * @param [in] u8Format                Specifies the format of the returned parameters.
+ *        This parameter can be one of the following values:
+ * @arg RTC_DATA_FMT_DEC:     Decimal data format
+ * @arg RTC_DATA_FMT_BCD:     BCD data format
+ * @param [out] pstcRtcAlarm           Pointer to a @ref stc_rtc_alarm_t structure
  * @retval int32_t:
- *           - LL_OK: Get RTC alarm time success
- *           - LL_ERR_INVD_PARAM: Invalid parameter
+ *         - LL_OK: Get RTC alarm time success
+ *         - LL_ERR_INVD_PARAM: Invalid parameter
  */
 int32_t RTC_GetAlarm(uint8_t u8Format, stc_rtc_alarm_t *pstcRtcAlarm)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcRtcAlarm) {
+    if (NULL == pstcRtcAlarm)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_RTC_DATA_FMT(u8Format));
 
@@ -851,19 +950,27 @@ int32_t RTC_GetAlarm(uint8_t u8Format, stc_rtc_alarm_t *pstcRtcAlarm)
         pstcRtcAlarm->u8AlarmMinute  = READ_REG8(CM_RTC->ALMMIN);
         pstcRtcAlarm->u8AlarmHour    = READ_REG8(CM_RTC->ALMHOUR);
 
-        if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM)) {
-            if (RTC_HOUR_12H_PM == (pstcRtcAlarm->u8AlarmHour & RTC_HOUR_12H_PM)) {
+        if (RTC_HOUR_FMT_12H == READ_REG32(bCM_RTC->CR1_b.AMPM))
+        {
+            if (RTC_HOUR_12H_PM == (pstcRtcAlarm->u8AlarmHour & RTC_HOUR_12H_PM))
+            {
                 CLR_REG8_BIT(pstcRtcAlarm->u8AlarmHour, RTC_HOUR_12H_PM);
                 pstcRtcAlarm->u8AlarmAmPm = RTC_HOUR_12H_PM;
-            } else {
+            }
+            else
+            {
                 pstcRtcAlarm->u8AlarmAmPm = RTC_HOUR_12H_AM;
             }
-        } else {
+        }
+        else
+        {
             pstcRtcAlarm->u8AlarmAmPm = RTC_HOUR_24H;
         }
 
-        /* Check decimal format*/
-        if (RTC_DATA_FMT_DEC == u8Format) {
+        /* Check decimal format */
+
+        if (RTC_DATA_FMT_DEC == u8Format)
+        {
             pstcRtcAlarm->u8AlarmHour   = RTC_BCD2DEC(pstcRtcAlarm->u8AlarmHour);
             pstcRtcAlarm->u8AlarmMinute = RTC_BCD2DEC(pstcRtcAlarm->u8AlarmMinute);
         }
@@ -873,8 +980,8 @@ int32_t RTC_GetAlarm(uint8_t u8Format, stc_rtc_alarm_t *pstcRtcAlarm)
 }
 
 /**
- * @brief  Enable or disable RTC alarm.
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable RTC alarm.
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void RTC_AlarmCmd(en_functional_state_t enNewState)
@@ -882,19 +989,22 @@ void RTC_AlarmCmd(en_functional_state_t enNewState)
     /* Check parameters */
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (enNewState == ENABLE) {
+    if (enNewState == ENABLE)
+    {
         SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_ALME | RTC_CR2_FLAG_MASK);
-    } else {
+    }
+    else
+    {
         MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_ALME | RTC_CR2_FLAG_MASK), ~RTC_CR2_ALME);
     }
 }
 
 /**
- * @brief  Enable or disable specified RTC interrupt.
- * @param  [in] u32IntType              Specifies the RTC interrupt source.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref RTC_Interrupt
- * @param  [in] enNewState                An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable specified RTC interrupt.
+ * @param [in] u32IntType              Specifies the RTC interrupt source.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref RTC_Interrupt
+ * @param [in] enNewState                An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void RTC_IntCmd(uint32_t u32IntType, en_functional_state_t enNewState)
@@ -906,22 +1016,26 @@ void RTC_IntCmd(uint32_t u32IntType, en_functional_state_t enNewState)
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     u32IntTemp = u32IntType & 0x0000FFUL;
-    if (0UL != u32IntTemp) {
-        if (DISABLE != enNewState) {
+
+    if (0UL != u32IntTemp)
+    {
+        if (DISABLE != enNewState)
+        {
             SET_REG8_BIT(CM_RTC->CR2, u32IntTemp | RTC_CR2_FLAG_MASK);
-        } else {
+        }
+        else
+        {
             MODIFY_REG8(CM_RTC->CR2, (u32IntTemp | RTC_CR2_FLAG_MASK), ~u32IntTemp);
         }
     }
-
 }
 
 /**
- * @brief  Get RTC flag status.
- * @param  [in] u32Flag                 Specifies the RTC flag type.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref RTC_Flag
- *           @arg RTC_FLAG_ALL:         All of the above
+ * @brief Get RTC flag status.
+ * @param [in] u32Flag                 Specifies the RTC flag type.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref RTC_Flag
+ * @arg RTC_FLAG_ALL:         All of the above
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t RTC_GetStatus(uint32_t u32Flag)
@@ -933,8 +1047,11 @@ en_flag_status_t RTC_GetStatus(uint32_t u32Flag)
     DDL_ASSERT(IS_RTC_GET_FLAG(u32Flag));
 
     u8FlagTemp = (uint8_t)(u32Flag & 0xFFU);
-    if (0U != u8FlagTemp) {
-        if (0U != (READ_REG8_BIT(CM_RTC->CR2, u8FlagTemp))) {
+
+    if (0U != u8FlagTemp)
+    {
+        if (0U != (READ_REG8_BIT(CM_RTC->CR2, u8FlagTemp)))
+        {
             enFlagSta = SET;
         }
     }
@@ -943,11 +1060,11 @@ en_flag_status_t RTC_GetStatus(uint32_t u32Flag)
 }
 
 /**
- * @brief  Clear RTC flag.
- * @param  [in] u32Flag                 Specifies the RTC flag type.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref RTC_Flag
- *           @arg RTC_FLAG_CLR_ALL:     All of the above
+ * @brief Clear RTC flag.
+ * @param [in] u32Flag                 Specifies the RTC flag type.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref RTC_Flag
+ * @arg RTC_FLAG_CLR_ALL:     All of the above
  * @retval None
  */
 void RTC_ClearStatus(uint32_t u32Flag)
@@ -958,10 +1075,11 @@ void RTC_ClearStatus(uint32_t u32Flag)
     DDL_ASSERT(IS_RTC_CLR_FLAG(u32Flag));
 
     u8FlagTemp = (uint8_t)(u32Flag & 0xFFU);
-    if (0U != u8FlagTemp) {
+
+    if (0U != u8FlagTemp)
+    {
         MODIFY_REG8(CM_RTC->CR2, RTC_CR2_FLAG_MASK, ~u8FlagTemp);
     }
-
 }
 
 /**

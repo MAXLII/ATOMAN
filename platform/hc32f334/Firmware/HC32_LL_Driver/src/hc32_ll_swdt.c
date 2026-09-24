@@ -1,14 +1,14 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_swdt.c
+ * @file hc32_ll_swdt.c
  * @brief This file provides firmware functions to manage the Specialized Watch
  *        Dog Timer(SWDT).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
    2024-06-30       CDT             Modify API SWDT_ClearStatus() for coupling risk
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -52,64 +52,41 @@
  */
 
 /* SWDT Refresh Key */
-#define SWDT_REFRESH_KEY_START          (0x0123UL)
-#define SWDT_REFRESH_KEY_END            (0x3210UL)
+#define SWDT_REFRESH_KEY_START (0x0123UL)
+#define SWDT_REFRESH_KEY_END   (0x3210UL)
 
 /* SWDT clear flag timeout(ms) */
-#define SWDT_CLR_FLAG_TIMEOUT           (400UL)
+#define SWDT_CLR_FLAG_TIMEOUT (400UL)
 
 /* SWDT Registers Clear Mask */
-#define SWDT_CR_CLR_MASK                (SWDT_CR_PERI   | SWDT_CR_CKS | SWDT_CR_WDPT | \
-                                         SWDT_CR_SLPOFF | SWDT_CR_ITS)
+#define SWDT_CR_CLR_MASK (SWDT_CR_PERI | SWDT_CR_CKS | SWDT_CR_WDPT | SWDT_CR_SLPOFF | SWDT_CR_ITS)
 
 /**
  * @defgroup SWDT_Check_Parameters_Validity SWDT Check Parameters Validity
  * @{
  */
 
-#define IS_SWDT_CNT_PERIOD(x)                                                  \
-(   ((x) == SWDT_CNT_PERIOD256)                 ||                             \
-    ((x) == SWDT_CNT_PERIOD4096)                ||                             \
-    ((x) == SWDT_CNT_PERIOD16384)               ||                             \
-    ((x) == SWDT_CNT_PERIOD65536))
+#define IS_SWDT_CNT_PERIOD(x)                                                                     \
+    (((x) == SWDT_CNT_PERIOD256) || ((x) == SWDT_CNT_PERIOD4096) || ((x) == SWDT_CNT_PERIOD16384) \
+  || ((x) == SWDT_CNT_PERIOD65536))
 
-#define IS_SWDT_CLK_DIV(x)                                                     \
-(   ((x) == SWDT_CLK_DIV1)                      ||                             \
-    ((x) == SWDT_CLK_DIV16)                     ||                             \
-    ((x) == SWDT_CLK_DIV32)                     ||                             \
-    ((x) == SWDT_CLK_DIV64)                     ||                             \
-    ((x) == SWDT_CLK_DIV128)                    ||                             \
-    ((x) == SWDT_CLK_DIV256)                    ||                             \
-    ((x) == SWDT_CLK_DIV2048))
+#define IS_SWDT_CLK_DIV(x)                                                                                   \
+    (((x) == SWDT_CLK_DIV1) || ((x) == SWDT_CLK_DIV16) || ((x) == SWDT_CLK_DIV32) || ((x) == SWDT_CLK_DIV64) \
+  || ((x) == SWDT_CLK_DIV128) || ((x) == SWDT_CLK_DIV256) || ((x) == SWDT_CLK_DIV2048))
 
-#define IS_SWDT_REFRESH_RANGE(x)                                               \
-(   ((x) == SWDT_RANGE_0TO100PCT)               ||                             \
-    ((x) == SWDT_RANGE_0TO25PCT)                ||                             \
-    ((x) == SWDT_RANGE_25TO50PCT)               ||                             \
-    ((x) == SWDT_RANGE_0TO50PCT)                ||                             \
-    ((x) == SWDT_RANGE_50TO75PCT)               ||                             \
-    ((x) == SWDT_RANGE_0TO25PCT_50TO75PCT)      ||                             \
-    ((x) == SWDT_RANGE_25TO75PCT)               ||                             \
-    ((x) == SWDT_RANGE_0TO75PCT)                ||                             \
-    ((x) == SWDT_RANGE_75TO100PCT)              ||                             \
-    ((x) == SWDT_RANGE_0TO25PCT_75TO100PCT)     ||                             \
-    ((x) == SWDT_RANGE_25TO50PCT_75TO100PCT)    ||                             \
-    ((x) == SWDT_RANGE_0TO50PCT_75TO100PCT)     ||                             \
-    ((x) == SWDT_RANGE_50TO100PCT)              ||                             \
-    ((x) == SWDT_RANGE_0TO25PCT_50TO100PCT)     ||                             \
-    ((x) == SWDT_RANGE_25TO100PCT))
+#define IS_SWDT_REFRESH_RANGE(x)                                                                             \
+    (((x) == SWDT_RANGE_0TO100PCT) || ((x) == SWDT_RANGE_0TO25PCT) || ((x) == SWDT_RANGE_25TO50PCT)          \
+  || ((x) == SWDT_RANGE_0TO50PCT) || ((x) == SWDT_RANGE_50TO75PCT) || ((x) == SWDT_RANGE_0TO25PCT_50TO75PCT) \
+  || ((x) == SWDT_RANGE_25TO75PCT) || ((x) == SWDT_RANGE_0TO75PCT) || ((x) == SWDT_RANGE_75TO100PCT)         \
+  || ((x) == SWDT_RANGE_0TO25PCT_75TO100PCT) || ((x) == SWDT_RANGE_25TO50PCT_75TO100PCT)                     \
+  || ((x) == SWDT_RANGE_0TO50PCT_75TO100PCT) || ((x) == SWDT_RANGE_50TO100PCT)                               \
+  || ((x) == SWDT_RANGE_0TO25PCT_50TO100PCT) || ((x) == SWDT_RANGE_25TO100PCT))
 
-#define IS_SWDT_LPM_CNT(x)                                                     \
-(   ((x) == SWDT_LPM_CNT_CONT)                  ||                             \
-    ((x) == SWDT_LPM_CNT_STOP))
+#define IS_SWDT_LPM_CNT(x) (((x) == SWDT_LPM_CNT_CONT) || ((x) == SWDT_LPM_CNT_STOP))
 
-#define IS_SWDT_EXP_TYPE(x)                                                    \
-(   ((x) == SWDT_EXP_TYPE_INT)                  ||                             \
-    ((x) == SWDT_EXP_TYPE_RST))
+#define IS_SWDT_EXP_TYPE(x) (((x) == SWDT_EXP_TYPE_INT) || ((x) == SWDT_EXP_TYPE_RST))
 
-#define IS_SWDT_FLAG(x)                                                        \
-(   ((x) != 0UL)                                &&                             \
-    (((x) | SWDT_FLAG_ALL) == SWDT_FLAG_ALL))
+#define IS_SWDT_FLAG(x) (((x) != 0UL) && (((x) | SWDT_FLAG_ALL) == SWDT_FLAG_ALL))
 
 /**
  * @}
@@ -140,20 +117,23 @@
  */
 
 /**
- * @brief  Initializes SWDT.
- * @param  [in] pstcSwdtInit            Pointer to a @ref stc_swdt_init_t structure
+ * @brief Initializes SWDT.
+ * @param [in] pstcSwdtInit            Pointer to a @ref stc_swdt_init_t structure
  * @retval int32_t:
- *           - LL_OK: Initializes success
- *           - LL_ERR_INVD_PARAM: pstcSwdtInit == NULL
+ *         - LL_OK: Initializes success
+ *         - LL_ERR_INVD_PARAM: pstcSwdtInit == NULL
  */
 int32_t SWDT_Init(const stc_swdt_init_t *pstcSwdtInit)
 {
     int32_t i32Ret = LL_OK;
     uint32_t u32Temp;
 
-    if (NULL == pstcSwdtInit) {
+    if (NULL == pstcSwdtInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_SWDT_CNT_PERIOD(pstcSwdtInit->u32CountPeriod));
         DDL_ASSERT(IS_SWDT_CLK_DIV(pstcSwdtInit->u32ClockDiv));
@@ -161,8 +141,8 @@ int32_t SWDT_Init(const stc_swdt_init_t *pstcSwdtInit)
         DDL_ASSERT(IS_SWDT_LPM_CNT(pstcSwdtInit->u32LPMCount));
         DDL_ASSERT(IS_SWDT_EXP_TYPE(pstcSwdtInit->u32ExceptionType));
 
-        u32Temp = pstcSwdtInit->u32CountPeriod  | pstcSwdtInit->u32ClockDiv |
-                  pstcSwdtInit->u32RefreshRange | pstcSwdtInit->u32LPMCount | pstcSwdtInit->u32ExceptionType;
+        u32Temp = pstcSwdtInit->u32CountPeriod | pstcSwdtInit->u32ClockDiv | pstcSwdtInit->u32RefreshRange
+                | pstcSwdtInit->u32LPMCount | pstcSwdtInit->u32ExceptionType;
         /* SWDT CR Configuration(Software Start Mode) */
         MODIFY_REG32(CM_SWDT->CR, SWDT_CR_CLR_MASK, u32Temp);
     }
@@ -171,9 +151,9 @@ int32_t SWDT_Init(const stc_swdt_init_t *pstcSwdtInit)
 }
 
 /**
- * @brief  SWDT feed dog.
- * @note   In software startup mode, Start counter when refreshing for the first time.
- * @param  None
+ * @brief SWDT feed dog.
+ * @note In software startup mode, Start counter when refreshing for the first time.
+ * @param None
  * @retval None
  */
 void SWDT_FeedDog(void)
@@ -183,12 +163,12 @@ void SWDT_FeedDog(void)
 }
 
 /**
- * @brief  Get SWDT flag status.
- * @param  [in] u32Flag                 SWDT flag type
- *         This parameter can be one or any combination of the following values:
- *           @arg SWDT_FLAG_UDF:        Count underflow flag
- *           @arg SWDT_FLAG_REFRESH:    Refresh error flag
- *           @arg SWDT_FLAG_ALL:        All of the above
+ * @brief Get SWDT flag status.
+ * @param [in] u32Flag                 SWDT flag type
+ *        This parameter can be one or any combination of the following values:
+ * @arg SWDT_FLAG_UDF:        Count underflow flag
+ * @arg SWDT_FLAG_REFRESH:    Refresh error flag
+ * @arg SWDT_FLAG_ALL:        All of the above
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t SWDT_GetStatus(uint32_t u32Flag)
@@ -198,7 +178,8 @@ en_flag_status_t SWDT_GetStatus(uint32_t u32Flag)
     /* Check parameters */
     DDL_ASSERT(IS_SWDT_FLAG(u32Flag));
 
-    if (0UL != (READ_REG32_BIT(CM_SWDT->SR, u32Flag))) {
+    if (0UL != (READ_REG32_BIT(CM_SWDT->SR, u32Flag)))
+    {
         enFlagSta = SET;
     }
 
@@ -206,15 +187,15 @@ en_flag_status_t SWDT_GetStatus(uint32_t u32Flag)
 }
 
 /**
- * @brief  Clear SWDT flag.
- * @param  [in] u32Flag                 SWDT flag type
- *         This parameter can be one or any combination of the following values:
- *           @arg SWDT_FLAG_UDF:        Count underflow flag
- *           @arg SWDT_FLAG_REFRESH:    Refresh error flag
- *           @arg SWDT_FLAG_ALL:        All of the above
+ * @brief Clear SWDT flag.
+ * @param [in] u32Flag                 SWDT flag type
+ *        This parameter can be one or any combination of the following values:
+ * @arg SWDT_FLAG_UDF:        Count underflow flag
+ * @arg SWDT_FLAG_REFRESH:    Refresh error flag
+ * @arg SWDT_FLAG_ALL:        All of the above
  * @retval int32_t:
- *           - LL_OK: Clear flag success
- *           - LL_ERR_TIMEOUT: Clear flag timeout
+ *         - LL_OK: Clear flag success
+ *         - LL_ERR_TIMEOUT: Clear flag timeout
  */
 int32_t SWDT_ClearStatus(uint32_t u32Flag)
 {
@@ -226,9 +207,13 @@ int32_t SWDT_ClearStatus(uint32_t u32Flag)
 
     /* Waiting for FLAG bit clear */
     u32Count = SWDT_CLR_FLAG_TIMEOUT * (HCLK_VALUE / 25000UL);
-    while (0UL != READ_REG32_BIT(CM_SWDT->SR, u32Flag)) {
+
+    while (0UL != READ_REG32_BIT(CM_SWDT->SR, u32Flag))
+    {
         MODIFY_REG32(CM_SWDT->SR, SWDT_FLAG_ALL, ~u32Flag);
-        if (0UL == u32Count) {
+
+        if (0UL == u32Count)
+        {
             i32Ret = LL_ERR_TIMEOUT;
             break;
         }

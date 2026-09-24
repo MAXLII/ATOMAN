@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_crc.h
+ * @file apm32f402_403_crc.h
  *
- * @brief       This file contains all the functions prototypes for the CRC firmware library
+ * @brief This file contains all the functions prototypes for the CRC firmware library
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -30,34 +30,35 @@
 #include "apm32f402_403.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/** @addtogroup APM32F402_403_StdPeriphDriver
-  @{
-*/
+    /** @addtogroup APM32F402_403_StdPeriphDriver
+      @{
+     */
 
-/** @addtogroup CRC_Driver CRC Driver
-  @{
-*/
+    /** @addtogroup CRC_Driver CRC Driver
+      @{
+     */
 
-/** @defgroup CRC_Functions Functions
-  @{
-*/
+    /** @defgroup CRC_Functions Functions
+      @{
+     */
 
-/* Reset DATA */
-void CRC_ResetDATA(void);
+    /* Reset DATA */
+    void CRC_ResetDATA(void);
 
-/* Operation functions */
-uint32_t CRC_CalculateCRC(uint32_t data);
-uint32_t CRC_CalculateBlockCRC(uint32_t* buf, uint32_t bufLen);
-uint32_t CRC_ReadCRC(void);
-void CRC_WriteIDRegister(uint8_t inData);
-uint8_t CRC_ReadIDRegister(void);
+    /* Operation functions */
+    uint32_t CRC_CalculateCRC(uint32_t data);
+    uint32_t CRC_CalculateBlockCRC(uint32_t *buf, uint32_t bufLen);
+    uint32_t CRC_ReadCRC(void);
+    void CRC_WriteIDRegister(uint8_t inData);
+    uint8_t CRC_ReadIDRegister(void);
 
-/**@} end of group CRC_Functions*/
-/**@} end of group CRC_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+    /** @} end of group CRC_Functions */
+    /** @} end of group CRC_Driver */
+    /** @} end of group APM32F402_403_StdPeriphDriver */
 
 #ifdef __cplusplus
 }

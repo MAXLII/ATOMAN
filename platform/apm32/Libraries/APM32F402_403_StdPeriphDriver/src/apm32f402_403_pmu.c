@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_pmu.c
+ * @file apm32f402_403_pmu.c
  *
- * @brief       This file provides all the PMU firmware functions.
+ * @brief This file provides all the PMU firmware functions.
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -28,23 +28,23 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup PMU_Driver
-  * @brief PMU driver modules
+ * @brief PMU driver modules
   @{
-*/
+ */
 
-/** @defgroup  PMU_Functions Functions
+/** @defgroup PMU_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Reset the PMU peripheral register.
+ * @brief Reset the PMU peripheral register.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_Reset(void)
 {
@@ -53,23 +53,23 @@ void PMU_Reset(void)
 }
 
 /*!
- * @brief     Enables access to the RTC and backup registers.
+ * @brief Enables access to the RTC and backup registers.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_EnableBackupAccess(void)
 {
-    PMU->CTRL_B.BPWEN = ENABLE ;
+    PMU->CTRL_B.BPWEN = ENABLE;
 }
 
 /*!
- * @brief     Disables access to the RTC and backup registers.
+ * @brief Disables access to the RTC and backup registers.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_DisableBackupAccess(void)
 {
@@ -77,11 +77,11 @@ void PMU_DisableBackupAccess(void)
 }
 
 /*!
- * @brief     Enables the Power Voltage Detector(PVD).
+ * @brief Enables the Power Voltage Detector(PVD).
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_EnablePVD(void)
 {
@@ -89,11 +89,11 @@ void PMU_EnablePVD(void)
 }
 
 /*!
- * @brief     Disables the Power Voltage Detector(PVD).
+ * @brief Disables the Power Voltage Detector(PVD).
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_DisablePVD(void)
 {
@@ -101,20 +101,20 @@ void PMU_DisablePVD(void)
 }
 
 /*!
- * @brief     Configure a voltage threshold detected by a power supply voltage detector (PVD).
+ * @brief Configure a voltage threshold detected by a power supply voltage detector (PVD).
  *
- * @param     level: specifies the PVD detection level
- *                   This parameter can be one of the following values:
- *                   @arg PMU_PVD_LEVEL_2V2 : Config PVD detection level to 2.2V
- *                   @arg PMU_PVD_LEVEL_2V3 : Config PVD detection level to 2.3V
- *                   @arg PMU_PVD_LEVEL_2V4 : Config PVD detection level to 2.4V
- *                   @arg PMU_PVD_LEVEL_2V5 : Config PVD detection level to 2.5V
- *                   @arg PMU_PVD_LEVEL_2V6 : Config PVD detection level to 2.6V
- *                   @arg PMU_PVD_LEVEL_2V7 : Config PVD detection level to 2.7V
- *                   @arg PMU_PVD_LEVEL_2V8 : Config PVD detection level to 2.8V
- *                   @arg PMU_PVD_LEVEL_2V9 : Config PVD detection level to 2.9V
+ * @param level: specifies the PVD detection level
+ *        This parameter can be one of the following values:
+ * @arg PMU_PVD_LEVEL_2V2 : Config PVD detection level to 2.2V
+ * @arg PMU_PVD_LEVEL_2V3 : Config PVD detection level to 2.3V
+ * @arg PMU_PVD_LEVEL_2V4 : Config PVD detection level to 2.4V
+ * @arg PMU_PVD_LEVEL_2V5 : Config PVD detection level to 2.5V
+ * @arg PMU_PVD_LEVEL_2V6 : Config PVD detection level to 2.6V
+ * @arg PMU_PVD_LEVEL_2V7 : Config PVD detection level to 2.7V
+ * @arg PMU_PVD_LEVEL_2V8 : Config PVD detection level to 2.8V
+ * @arg PMU_PVD_LEVEL_2V9 : Config PVD detection level to 2.9V
  *
- * @retval    None
+ * @retval None
  */
 void PMU_ConfigPVDLevel(PMU_PVD_LEVEL_T level)
 {
@@ -126,11 +126,11 @@ void PMU_ConfigPVDLevel(PMU_PVD_LEVEL_T level)
 }
 
 /*!
- * @brief     Enables the WakeUp Pin functionality.
+ * @brief Enables the WakeUp Pin functionality.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_EnableWakeUpPin(void)
 {
@@ -138,11 +138,11 @@ void PMU_EnableWakeUpPin(void)
 }
 
 /*!
- * @brief     Diaables the WakeUp Pin functionality.
+ * @brief Diaables the WakeUp Pin functionality.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_DisableWakeUpPin(void)
 {
@@ -150,14 +150,14 @@ void PMU_DisableWakeUpPin(void)
 }
 
 /*!
- * @brief   Enters Sleep mode
+ * @brief Enters Sleep mode
  *
- * @param   entry :specifies if SLEEP mode in entered with WFI or WFE instruction
- *                 This parameter can be one of the following values:
- *                 @arg PMU_SLEEPENTRY_WFI: enter SLEEP mode with WFI instruction
- *                 @arg PMU_SLEEPENTRY_WFE: enter SLEEP mode with WFE instruction
+ * @param entry :specifies if SLEEP mode in entered with WFI or WFE instruction
+ *        This parameter can be one of the following values:
+ * @arg PMU_SLEEPENTRY_WFI: enter SLEEP mode with WFI instruction
+ * @arg PMU_SLEEPENTRY_WFE: enter SLEEP mode with WFE instruction
  *
- * @retval  None
+ * @retval None
  */
 void PMU_EnterSleepMode(PMU_SLEEPENTRY_T entry)
 {
@@ -176,19 +176,19 @@ void PMU_EnterSleepMode(PMU_SLEEPENTRY_T entry)
 }
 
 /*!
- * @brief     Enters STOP mode.
+ * @brief Enters STOP mode.
  *
- * @param     regulator: specifies the regulator state in STOP mode.
- *                       This parameter can be one of the following values:
- *                         @arg PMU_REGULATOR_ON      : STOP mode with regulator ON
- *                         @arg PMU_REGULATOR_LOWPOWER: STOP mode with regulator in low power mode
+ * @param regulator: specifies the regulator state in STOP mode.
+ *        This parameter can be one of the following values:
+ * @arg PMU_REGULATOR_ON      : STOP mode with regulator ON
+ * @arg PMU_REGULATOR_LOWPOWER: STOP mode with regulator in low power mode
  *
- * @param     entry: specifies if STOP mode in entered with WFI or WFE instruction.
- *                   This parameter can be one of the following values:
- *                     @arg PMU_STOP_ENTRY_WFI: Enter STOP mode with WFI instruction
- *                     @arg PMU_STOP_ENTRY_WFE: Enter STOP mode with WFE instruction
+ * @param entry: specifies if STOP mode in entered with WFI or WFE instruction.
+ *        This parameter can be one of the following values:
+ * @arg PMU_STOP_ENTRY_WFI: Enter STOP mode with WFI instruction
+ * @arg PMU_STOP_ENTRY_WFE: Enter STOP mode with WFE instruction
  *
- * @retval    None
+ * @retval None
  */
 void PMU_EnterSTOPMode(PMU_REGULATOR_T regulator, PMU_STOP_ENTRY_T entry)
 {
@@ -198,9 +198,10 @@ void PMU_EnterSTOPMode(PMU_REGULATOR_T regulator, PMU_STOP_ENTRY_T entry)
     /* Set LPDSCFG bit according to regulator value */
     PMU->CTRL_B.LPDSCFG = regulator;
     /* Set Cortex System Control Register */
-    SCB->SCR |= (uint32_t )0x04;
-    /* Select STOP mode entry*/
-    if(entry == PMU_STOP_ENTRY_WFI)
+    SCB->SCR |= (uint32_t)0x04;
+    /* Select STOP mode entry */
+
+    if (entry == PMU_STOP_ENTRY_WFI)
     {
         /* Request Wait For Interrupt */
         __WFI();
@@ -217,11 +218,11 @@ void PMU_EnterSTOPMode(PMU_REGULATOR_T regulator, PMU_STOP_ENTRY_T entry)
 }
 
 /*!
- * @brief     Enters STANDBY mode.
+ * @brief Enters STANDBY mode.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void PMU_EnterSTANDBYMode(void)
 {
@@ -230,8 +231,8 @@ void PMU_EnterSTANDBYMode(void)
     /* Select STANDBY mode */
     PMU->CTRL_B.PDDSCFG = BIT_SET;
     /* Set Cortex System Control Register */
-    SCB->SCR |= (uint32_t )0x04;
-#if defined ( __CC_ARM   )
+    SCB->SCR |= (uint32_t)0x04;
+#if defined(__CC_ARM)
     __force_stores();
 #endif
     /* Request Wait For Interrupt */
@@ -239,29 +240,29 @@ void PMU_EnterSTANDBYMode(void)
 }
 
 /*!
- * @brief     Read the specified PMU flag is set or not.
+ * @brief Read the specified PMU flag is set or not.
  *
- * @param     flag:Reads the status of specifies the flag.
- *                  This parameter can be one of the following values:
- *                    @arg PMU_FLAG_WUE : Wake Up flag
- *                    @arg PMU_FLAG_SB  : StandBy flag
- *                    @arg PMU_FLAG_PVDO: PVD Output flag
+ * @param flag:Reads the status of specifies the flag.
+ *        This parameter can be one of the following values:
+ * @arg PMU_FLAG_WUE : Wake Up flag
+ * @arg PMU_FLAG_SB  : StandBy flag
+ * @arg PMU_FLAG_PVDO: PVD Output flag
  *
- * @retval    The new state of PMU_FLAG (SET or RESET).
+ * @retval The new state of PMU_FLAG (SET or RESET).
  */
 uint8_t PMU_ReadStatusFlag(PMU_FLAG_T flag)
 {
     uint8_t BitStatus = BIT_RESET;
 
-    if(flag == PMU_FLAG_WUE)
+    if (flag == PMU_FLAG_WUE)
     {
         BitStatus = PMU->CSTS_B.WUEFLG;
     }
-    else if(flag == PMU_FLAG_SB)
+    else if (flag == PMU_FLAG_SB)
     {
         BitStatus = PMU->CSTS_B.SBFLG;
     }
-    else if(flag == PMU_FLAG_PVDO)
+    else if (flag == PMU_FLAG_PVDO)
     {
         BitStatus = PMU->CSTS_B.PVDOFLG;
     }
@@ -270,27 +271,27 @@ uint8_t PMU_ReadStatusFlag(PMU_FLAG_T flag)
 }
 
 /*!
- * @brief     Clears the PMU's pending flags.
+ * @brief Clears the PMU's pending flags.
  *
- * @param     flag:Clears the status of specifies the flag.
- *                  This parameter can be one of the following values:
- *                    @arg PMU_FLAG_WUE : Wake Up flag
- *                    @arg PMU_FLAG_SB  : StandBy flag
+ * @param flag:Clears the status of specifies the flag.
+ *        This parameter can be one of the following values:
+ * @arg PMU_FLAG_WUE : Wake Up flag
+ * @arg PMU_FLAG_SB  : StandBy flag
  *
- * @retval    None
+ * @retval None
  */
 void PMU_ClearStatusFlag(PMU_FLAG_T flag)
 {
-    if(flag == PMU_FLAG_WUE)
+    if (flag == PMU_FLAG_WUE)
     {
         PMU->CTRL_B.WUFLGCLR = BIT_SET;
     }
-    else if(flag == PMU_FLAG_SB)
+    else if (flag == PMU_FLAG_SB)
     {
         PMU->CTRL_B.SBFLGCLR = BIT_SET;
     }
 }
 
-/**@} end of group PMU_Functions */
-/**@} end of group PMU_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group PMU_Functions */
+/** @} end of group PMU_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

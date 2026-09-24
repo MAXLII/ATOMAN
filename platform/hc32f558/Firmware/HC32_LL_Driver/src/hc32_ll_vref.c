@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_vref.c
+ * @file hc32_ll_vref.c
  * @brief This file provides firmware functions to manage the high precision
  *        Reference Voltage(VREF).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -50,27 +50,20 @@
  * @{
  */
 
-#define VREF_RMU_TIMEOUT             (100UL)
+#define VREF_RMU_TIMEOUT (100UL)
 
 /**
  * @defgroup VREF_Check_Parameters_Validity VREF Check Parameters Validity
  * @{
  */
-#define IS_VREF_OPERATING_MD(x)                                                \
-(   ((x) == VREF_EXT_REF_MD)                    ||                             \
-    ((x) == VREF_SHORT_MD)                      ||                             \
-    ((x) == VREF_INTERN_REF_MD))
+#define IS_VREF_OPERATING_MD(x) (((x) == VREF_EXT_REF_MD) || ((x) == VREF_SHORT_MD) || ((x) == VREF_INTERN_REF_MD))
 
-#define IS_VREF_AVCC_DIV_OUTPUT(x)                                             \
-(   ((x) == VREF_AVCC_DIV_QUARTER)              ||                             \
-    ((x) == VREF_AVCC_DIV_ONE_THIRD)            ||                             \
-    ((x) == VREF_AVCC_DIV_TWO_FIFTHS)           ||                             \
-    ((x) == VREF_AVCC_DIV_HALF))
+#define IS_VREF_AVCC_DIV_OUTPUT(x)                                                                           \
+    (((x) == VREF_AVCC_DIV_QUARTER) || ((x) == VREF_AVCC_DIV_ONE_THIRD) || ((x) == VREF_AVCC_DIV_TWO_FIFTHS) \
+  || ((x) == VREF_AVCC_DIV_HALF))
 
-#define IS_VREF_IvrefOutputVolSel(x)                                           \
-(   ((x) == VREF_INTERN_2V9)                    ||                             \
-    ((x) == VREF_INTERN_2V048)                  ||                             \
-    ((x) == VREF_INTERN_2V5))
+#define IS_VREF_IvrefOutputVolSel(x) \
+    (((x) == VREF_INTERN_2V9) || ((x) == VREF_INTERN_2V048) || ((x) == VREF_INTERN_2V5))
 /**
  * @}
  */
@@ -100,8 +93,8 @@
  */
 
 /**
- * @brief  Enable or disable Band Gap Reference circuit.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable Band Gap Reference circuit.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void VREF_BandGapRefCmd(en_functional_state_t enNewState)
@@ -111,8 +104,8 @@ void VREF_BandGapRefCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Enable or disable Current Source circuit.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable Current Source circuit.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void VREF_CurrentSrcCmd(en_functional_state_t enNewState)
@@ -122,23 +115,27 @@ void VREF_CurrentSrcCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  AVCC divider voltage command.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief AVCC divider voltage command.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void VREF_AvccDivCmd(en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
-    if (enNewState == ENABLE) {
+
+    if (enNewState == ENABLE)
+    {
         SET_REG32_BIT(CM_VREF->CR, VREF_CR_AVCCMONEN);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_VREF->CR, VREF_CR_AVCCMONEN);
     }
 }
 
 /**
- * @brief  AVCC divider configure.
- * @param  [in]  u32Div                 AVCC voltage divider @ref VREF_Avcc_Div_Config
+ * @brief AVCC divider configure.
+ * @param [in]  u32Div                 AVCC voltage divider @ref VREF_Avcc_Div_Config
  * @retval None
  */
 void VREF_AvccDivConfig(uint32_t u32Div)
@@ -148,44 +145,52 @@ void VREF_AvccDivConfig(uint32_t u32Div)
 }
 
 /**
- * @brief  VREFINT voltage command
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief VREFINT voltage command
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void VREF_VrefintCmd(en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
-    if (enNewState == ENABLE) {
+
+    if (enNewState == ENABLE)
+    {
         SET_REG32_BIT(CM_VREF->CR, VREF_CR_VREFINTEN);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_VREF->CR, VREF_CR_VREFINTEN);
     }
 }
 
 /**
- * @brief  IVREF(internal reference) voltage command
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief IVREF(internal reference) voltage command
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void VREF_IvrefCmd(en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
-    if (enNewState == ENABLE) {
+
+    if (enNewState == ENABLE)
+    {
         SET_REG32_BIT(CM_VREF->CR, VREF_CR_IVREFEN);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_VREF->CR, VREF_CR_IVREFEN);
     }
 }
 
 /**
- * @brief  Set the mode of IVREF voltage.
- * @param  [in] u32Mode                 VREF operating mode.
- *                                      This parameter can be a value of @ref VREF_Intern_Vref_Mode
- *   @arg  VREF_EXT_REF_MD:             External reference voltage mode, VREFH input as reference voltage.
- *                                      Internal reference voltage is OFF.
- *   @arg  VREF_SHORT_MD:               VREFH is short to VSS. Internal reference voltage is OFF.
- *   @arg  VREF_INTERN_REF_MD:          Use internal reference voltage.
- *                                      External VREFH is short to internal VREF circuit.
+ * @brief Set the mode of IVREF voltage.
+ * @param [in] u32Mode                 VREF operating mode.
+ *        This parameter can be a value of @ref VREF_Intern_Vref_Mode
+ * @arg VREF_EXT_REF_MD:             External reference voltage mode, VREFH input as reference voltage.
+ *      Internal reference voltage is OFF.
+ * @arg VREF_SHORT_MD:               VREFH is short to VSS. Internal reference voltage is OFF.
+ * @arg VREF_INTERN_REF_MD:          Use internal reference voltage.
+ *      External VREFH is short to internal VREF circuit.
  * @retval None
  */
 void VREF_SetIvrefMode(uint32_t u32Mode)
@@ -195,15 +200,15 @@ void VREF_SetIvrefMode(uint32_t u32Mode)
 }
 
 /**
- * @brief  De-initializes the VREF peripheral.
- * @param  None
+ * @brief De-initializes the VREF peripheral.
+ * @param None
  * @retval int32_t:
- *           - LL_OK:                   De-Initialize success.
- *           - LL_ERR_TIMEOUT:          Timeout.
+ *         - LL_OK:                   De-Initialize success.
+ *         - LL_ERR_TIMEOUT:          Timeout.
  */
 int32_t VREF_DeInit(void)
 {
-    int32_t i32Ret = LL_OK;
+    int32_t i32Ret           = LL_OK;
     __IO uint32_t u32TimeOut = 0U;
     /* Check RMU_FRST register protect */
     DDL_ASSERT((CM_PWC->FPRC & PWC_FPRC_FPRCB1) == PWC_FPRC_FPRCB1);
@@ -211,9 +216,13 @@ int32_t VREF_DeInit(void)
     /* Reset */
     WRITE_REG32(bCM_RMU->FRST3_b.VREF, 0UL);
     /* Ensure reset procedure is completed */
-    while (0UL == READ_REG32(bCM_RMU->FRST3_b.VREF)) {
+
+    while (0UL == READ_REG32(bCM_RMU->FRST3_b.VREF))
+    {
         u32TimeOut++;
-        if (u32TimeOut > VREF_RMU_TIMEOUT) {
+
+        if (u32TimeOut > VREF_RMU_TIMEOUT)
+        {
             i32Ret = LL_ERR_TIMEOUT;
             break;
         }
@@ -222,9 +231,9 @@ int32_t VREF_DeInit(void)
 }
 
 /**
- * @brief  Set the IVREF output voltage value.
- * @param  [in] u8OutputVol             VREF output voltage value.
- *                                      This parameter can be a value of @ref Vref_Intern_Vref_Output_Vol
+ * @brief Set the IVREF output voltage value.
+ * @param [in] u8OutputVol             VREF output voltage value.
+ *        This parameter can be a value of @ref Vref_Intern_Vref_Output_Vol
  * @retval None
  */
 void VREF_IvrefOutputVolSel(uint8_t u8OutputVol)

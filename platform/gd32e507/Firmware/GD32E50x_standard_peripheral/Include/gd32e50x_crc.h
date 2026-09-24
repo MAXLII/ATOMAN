@@ -1,9 +1,9 @@
 /*!
-    \file    gd32e50x_crc.h
-    \brief   definitions for the CRC
-
-    \version 2026-02-09, V1.7.0, firmware for GD32E50x
-*/
+  \file gd32e50x_crc.h
+  \brief definitions for the CRC
+ 
+  \version 2026-02-09, V1.7.0, firmware for GD32E50x
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,7 +30,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef GD32E50X_CRC_H
 #define GD32E50X_CRC_H
@@ -38,53 +38,53 @@ OF SUCH DAMAGE.
 #include "gd32e50x.h"
 
 /* CRC definitions */
-#define CRC                            CRC_BASE                        /*!< CRC base address */
+#define CRC CRC_BASE /*!< CRC base address */
 
 /* registers definitions */
-#define CRC_DATA                       REG32((CRC) + 0x00000000U)      /*!< CRC data register */
-#define CRC_FDATA                      REG32((CRC) + 0x00000004U)      /*!< CRC free data register */
-#define CRC_CTL                        REG32((CRC) + 0x00000008U)      /*!< CRC control register */
-#define CRC_IDATA                      REG32((CRC) + 0x00000010U)      /*!< CRC initialization data register */
-#define CRC_POLY                       REG32((CRC) + 0x00000014U)      /*!< CRC polynomial register */
+#define CRC_DATA  REG32((CRC) + 0x00000000U) /*!< CRC data register */
+#define CRC_FDATA REG32((CRC) + 0x00000004U) /*!< CRC free data register */
+#define CRC_CTL   REG32((CRC) + 0x00000008U) /*!< CRC control register */
+#define CRC_IDATA REG32((CRC) + 0x00000010U) /*!< CRC initialization data register */
+#define CRC_POLY  REG32((CRC) + 0x00000014U) /*!< CRC polynomial register */
 
 /* bits definitions */
 /* CRC_DATA */
-#define CRC_DATA_DATA                  BITS(0, 31)                     /*!< CRC data */
+#define CRC_DATA_DATA BITS(0, 31) /*!< CRC data */
 
 /* CRC_FDATA */
-#define CRC_FDATA_FDATA                BITS(0, 7)                      /*!< CRC free data */
+#define CRC_FDATA_FDATA BITS(0, 7) /*!< CRC free data */
 
 /* CRC_CTL */
-#define CRC_CTL_RST                    BIT(0)                          /*!< CRC reset */
-#define CRC_CTL_PS                     BITS(3, 4)                      /*!< size of polynomial */
-#define CRC_CTL_REV_I                  BITS(5, 6)                      /*!< input data reverse */
-#define CRC_CTL_REV_O                  BIT(7)                          /*!< output data reverse */
+#define CRC_CTL_RST   BIT(0)     /*!< CRC reset */
+#define CRC_CTL_PS    BITS(3, 4) /*!< size of polynomial */
+#define CRC_CTL_REV_I BITS(5, 6) /*!< input data reverse */
+#define CRC_CTL_REV_O BIT(7)     /*!< output data reverse */
 
 /* CRC_IDATA */
-#define CRC_IDATA_IDATA                BITS(0, 31)                     /*!< CRC initialization data */
+#define CRC_IDATA_IDATA BITS(0, 31) /*!< CRC initialization data */
 
 /* CRC_POLY */
-#define CRC_POLY_POLY                  BITS(0, 31)                     /*!< CRC polynomial value */
+#define CRC_POLY_POLY BITS(0, 31) /*!< CRC polynomial value */
 
 /* constants definitions */
 /* size of polynomial function */
-#define CTL_PS(regval)                 (BITS(3, 4) & ((regval) << 3))
-#define CRC_CTL_PS_32                  CTL_PS(0)                       /*!< 32-bit polynomial for CRC calculation */
-#define CRC_CTL_PS_16                  CTL_PS(1)                       /*!< 16-bit polynomial for CRC calculation */
-#define CRC_CTL_PS_8                   CTL_PS(2)                       /*!< 8-bit polynomial for CRC calculation */
-#define CRC_CTL_PS_7                   CTL_PS(3)                       /*!< 7-bit polynomial for CRC calculation */
+#define CTL_PS(regval) (BITS(3, 4) & ((regval) << 3))
+#define CRC_CTL_PS_32  CTL_PS(0) /*!< 32-bit polynomial for CRC calculation */
+#define CRC_CTL_PS_16  CTL_PS(1) /*!< 16-bit polynomial for CRC calculation */
+#define CRC_CTL_PS_8   CTL_PS(2) /*!< 8-bit polynomial for CRC calculation */
+#define CRC_CTL_PS_7   CTL_PS(3) /*!< 7-bit polynomial for CRC calculation */
 
 /* input data reverse function */
-#define CTL_REV_I(regval)              (BITS(5, 6) & ((regval) << 5))
-#define CRC_INPUT_DATA_NOT             CTL_REV_I(0)                    /*!< input data not reverse */
-#define CRC_INPUT_DATA_BYTE            CTL_REV_I(1)                    /*!< input data reversed by byte type */
-#define CRC_INPUT_DATA_HALFWORD        CTL_REV_I(2)                    /*!< input data reversed by half-word type */
-#define CRC_INPUT_DATA_WORD            CTL_REV_I(3)                    /*!< input data reversed by word type */
+#define CTL_REV_I(regval)       (BITS(5, 6) & ((regval) << 5))
+#define CRC_INPUT_DATA_NOT      CTL_REV_I(0) /*!< input data not reverse */
+#define CRC_INPUT_DATA_BYTE     CTL_REV_I(1) /*!< input data reversed by byte type */
+#define CRC_INPUT_DATA_HALFWORD CTL_REV_I(2) /*!< input data reversed by half-word type */
+#define CRC_INPUT_DATA_WORD     CTL_REV_I(3) /*!< input data reversed by word type */
 
 /* input data format */
-#define INPUT_FORMAT_WORD              0U                              /*!< input data in word format */
-#define INPUT_FORMAT_HALFWORD          1U                              /*!< input data in half-word format */
-#define INPUT_FORMAT_BYTE              2U                              /*!< input data in byte format */
+#define INPUT_FORMAT_WORD     0U /*!< input data in word format */
+#define INPUT_FORMAT_HALFWORD 1U /*!< input data in half-word format */
+#define INPUT_FORMAT_BYTE     2U /*!< input data in byte format */
 
 /* function declarations */
 /* deinitialize CRC calculation unit */

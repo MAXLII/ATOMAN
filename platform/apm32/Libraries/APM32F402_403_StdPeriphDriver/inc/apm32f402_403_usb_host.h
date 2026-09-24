@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_usb_host.h
+ * @file apm32f402_403_usb_host.h
  *
- * @brief       USB host function handle
+ * @brief USB host function handle
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -33,31 +33,31 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup USB_Host_Driver USB Host Driver
   @{
-*/
+ */
 
 /** @defgroup USB_Host_Macros Macros
   @{
-*/
+ */
 
-#define USBH_FS_RX_FIFO_SIZE                    128
-#define USBH_FS_HNP_TXH_FIFO_SIZE               96
-#define USBH_FS_HP_TXH_FIFO_SIZE                64
-#define USBH_FS_HP_TXH_FIFO_SA                  224
+#define USBH_FS_RX_FIFO_SIZE      128
+#define USBH_FS_HNP_TXH_FIFO_SIZE 96
+#define USBH_FS_HP_TXH_FIFO_SIZE  64
+#define USBH_FS_HP_TXH_FIFO_SA    224
 
-#define USBH_HS_RX_FIFO_SIZE                    512
-#define USBH_HS_HNP_TXH_FIFO_SIZE               256
-#define USBH_HS_HP_TXH_FIFO_SIZE                224
-#define USBH_HS_HP_TXH_FIFO_SA                  768
+#define USBH_HS_RX_FIFO_SIZE      512
+#define USBH_HS_HNP_TXH_FIFO_SIZE 256
+#define USBH_HS_HP_TXH_FIFO_SIZE  224
+#define USBH_HS_HP_TXH_FIFO_SA    768
 
-/**@} end of group USB_Host_Macros*/
+/** @} end of group USB_Host_Macros */
 
 /** @defgroup USB_Host_Enumerations Enumerations
   @{
-*/
+ */
 
 /**
  * @brief USB host device speed type
@@ -69,11 +69,11 @@ typedef enum
     USBH_DEV_SPEED_LOW,
 } USBH_DEV_SPEED_T;
 
-/**@} end of group USB_Host_Enumerations*/
+/** @} end of group USB_Host_Enumerations */
 
 /** @defgroup USB_Host_Structures Structures
   @{
-*/
+ */
 
 /**
  * @brief USB OTG host FIFO status
@@ -86,37 +86,37 @@ typedef struct
 
         struct
         {
-            __IO uint32_t chNum             : 4;
-            __IO uint32_t byteCount         : 11;
-            __IO uint32_t dataPid           : 2;
-            __IO uint32_t packetStatus      : 4;
+            __IO uint32_t chNum        : 4;
+            __IO uint32_t byteCount    : 11;
+            __IO uint32_t dataPid      : 2;
+            __IO uint32_t packetStatus : 4;
         } FIFO_STATUS_B;
     };
 } USBH_FIFO_STA_T;
 
 /**
- * @brief   USB Host transfer buffer management
+ * @brief USB Host transfer buffer management
  */
 typedef struct
 {
-    uint8_t*             buffer;
-    uint32_t            bufLen;
-    uint32_t            bufSize;
-    uint32_t            bufCount;
-    USB_OTG_URB_STA_T   urbStatus;
-    uint16_t            maxPackSize;
-    uint8_t             pidToggleIn;
-    uint8_t             pidToggleOut;
-    uint8_t             pipeState;
-    uint32_t            errorCnt;
-    uint8_t             epType;
-    uint8_t             epNum;
-    USB_EP_DIR_T        epDir;
-    uint8_t             pingStatus;
-    uint8_t             speed;
-    uint8_t             devAddr;
-    uint8_t             chNum;
-    USB_OTG_DATA_PID_T  pid;
+    uint8_t *buffer;
+    uint32_t bufLen;
+    uint32_t bufSize;
+    uint32_t bufCount;
+    USB_OTG_URB_STA_T urbStatus;
+    uint16_t maxPackSize;
+    uint8_t pidToggleIn;
+    uint8_t pidToggleOut;
+    uint8_t pipeState;
+    uint32_t errorCnt;
+    uint8_t epType;
+    uint8_t epNum;
+    USB_EP_DIR_T epDir;
+    uint8_t pingStatus;
+    uint8_t speed;
+    uint8_t devAddr;
+    uint8_t chNum;
+    USB_OTG_DATA_PID_T pid;
 } USBH_XFER_PIPE_T;
 
 /**
@@ -124,54 +124,63 @@ typedef struct
  */
 typedef struct
 {
-    USB_OTG_GLOBAL_T*    usbGlobal;
-    USB_OTG_HOST_T*      usbHost;
-    USB_OTG_FIFO_T*      usbFifo;
-    USB_OTG_PWRCLK_T*    usbPower;
-    USB_OTG_CFG_T       usbCfg;
-    USBH_XFER_PIPE_T    xferPipe[16];
-    void*                dataPoint;
+    USB_OTG_GLOBAL_T *usbGlobal;
+    USB_OTG_HOST_T *usbHost;
+    USB_OTG_FIFO_T *usbFifo;
+    USB_OTG_PWRCLK_T *usbPower;
+    USB_OTG_CFG_T usbCfg;
+    USBH_XFER_PIPE_T xferPipe[16];
+    void *dataPoint;
 } USBH_HANDLE_T;
 
-/**@} end of group USB_Host_Structures*/
+/** @} end of group USB_Host_Structures */
 
 /** @defgroup USB_Host_Functions Functions
   @{
-*/
+ */
 
-void USBH_Config(USBH_HANDLE_T* usbhh);
-void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh);
-void USBH_OTG_StopHost(USBH_HANDLE_T* usbhh);
-void USBH_OTG_StartHost(USBH_HANDLE_T* usbhh);
-void USBH_OTG_ResetHost(USBH_HANDLE_T* usbhh);
-USB_OTG_URB_STA_T USBH_OTG_ReadUrbStatus(USBH_HANDLE_T* usbhh, uint8_t channelNum);
-uint8_t USBH_OTG_ReadSpeed(USBH_HANDLE_T* usbhh);
-void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
-                          uint8_t endPointNum, uint8_t devAddr, \
-                          uint8_t devSpeed, uint8_t epType, uint16_t packetMaxSize);
+void USBH_Config(USBH_HANDLE_T *usbhh);
+void USBH_OTG_IsrHandler(USBH_HANDLE_T *usbhh);
+void USBH_OTG_StopHost(USBH_HANDLE_T *usbhh);
+void USBH_OTG_StartHost(USBH_HANDLE_T *usbhh);
+void USBH_OTG_ResetHost(USBH_HANDLE_T *usbhh);
+USB_OTG_URB_STA_T USBH_OTG_ReadUrbStatus(USBH_HANDLE_T *usbhh, uint8_t channelNum);
+uint8_t USBH_OTG_ReadSpeed(USBH_HANDLE_T *usbhh);
+void USBH_OTG_OpenChannel(USBH_HANDLE_T *usbhh,
+                          uint8_t channelNum,
+                          uint8_t endPointNum,
+                          uint8_t devAddr,
+                          uint8_t devSpeed,
+                          uint8_t epType,
+                          uint16_t packetMaxSize);
 
-void USBH_OTG_ChannelSubReq(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t dir, \
-                            uint8_t epType, uint8_t tokenType, uint8_t* buffer, \
-                            uint16_t length, uint8_t pingStatus);
+void USBH_OTG_ChannelSubReq(USBH_HANDLE_T *usbhh,
+                            uint8_t channelNum,
+                            uint8_t dir,
+                            uint8_t epType,
+                            uint8_t tokenType,
+                            uint8_t *buffer,
+                            uint16_t length,
+                            uint8_t pingStatus);
 
-void USBH_ConfigDataPid(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t dataPid);
-void USBH_CloseChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum);
-uint32_t USBH_OTG_ReadXferSize(USBH_HANDLE_T* usbhh, uint8_t channelNum);
-uint8_t USBH_OTG_ReadToggle(USBH_HANDLE_T* usbhh, uint8_t channelNum);
-void USBH_Reset(USBH_HANDLE_T* usbhh);
-void USBH_OTG_ConfigToggle(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t toggle);
+void USBH_ConfigDataPid(USBH_HANDLE_T *usbhh, uint8_t channelNum, uint8_t dataPid);
+void USBH_CloseChannel(USBH_HANDLE_T *usbhh, uint8_t channelNum);
+uint32_t USBH_OTG_ReadXferSize(USBH_HANDLE_T *usbhh, uint8_t channelNum);
+uint8_t USBH_OTG_ReadToggle(USBH_HANDLE_T *usbhh, uint8_t channelNum);
+void USBH_Reset(USBH_HANDLE_T *usbhh);
+void USBH_OTG_ConfigToggle(USBH_HANDLE_T *usbhh, uint8_t channelNum, uint8_t toggle);
 
-void USBH_SOFCallback(USBH_HANDLE_T* usbhh);
-void USBH_UpdateUrbCallback(USBH_HANDLE_T* usbhh);
-void USBH_PortDisableCallback(USBH_HANDLE_T* usbhh);
-void USBH_PortEnableCallback(USBH_HANDLE_T* usbhh);
-void USBH_ConnectCallback(USBH_HANDLE_T* usbhh);
-void USBH_DisconnectCallback(USBH_HANDLE_T* usbhh);
-void USBH_HardwareResetCallback(USBH_HANDLE_T* usbhh);
-void USBH_UserDelayCallback(USBH_HANDLE_T* usbhh, uint32_t nms);
+void USBH_SOFCallback(USBH_HANDLE_T *usbhh);
+void USBH_UpdateUrbCallback(USBH_HANDLE_T *usbhh);
+void USBH_PortDisableCallback(USBH_HANDLE_T *usbhh);
+void USBH_PortEnableCallback(USBH_HANDLE_T *usbhh);
+void USBH_ConnectCallback(USBH_HANDLE_T *usbhh);
+void USBH_DisconnectCallback(USBH_HANDLE_T *usbhh);
+void USBH_HardwareResetCallback(USBH_HANDLE_T *usbhh);
+void USBH_UserDelayCallback(USBH_HANDLE_T *usbhh, uint32_t nms);
 
-/**@} end of group USB_Host_Functions*/
-/**@} end of group USB_Host_Driver*/
-/**@} end of group APM32F402_403_StdPeriphDriver*/
+/** @} end of group USB_Host_Functions */
+/** @} end of group USB_Host_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */
 
 #endif /* __APM32F402_403_USB_HOST_H */

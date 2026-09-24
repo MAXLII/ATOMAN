@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_cordic.c
+ * @file hc32_ll_cordic.c
  * @brief This file provides firmware functions manage the CORDIC.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -53,75 +53,47 @@
  * @{
  */
 /* Parameter valid check for CORDIC function */
-#define IS_CORDIC_FUNC(x)                                                      \
-(   ((x) == CORDIC_FUNC_COS)                      ||                           \
-    ((x) == CORDIC_FUNC_SIN)                      ||                           \
-    ((x) == CORDIC_FUNC_PHASE)                    ||                           \
-    ((x) == CORDIC_FUNC_MOD)                      ||                           \
-    ((x) == CORDIC_FUNC_ATAN)                     ||                           \
-    ((x) == CORDIC_FUNC_COSH)                     ||                           \
-    ((x) == CORDIC_FUNC_SINH)                     ||                           \
-    ((x) == CORDIC_FUNC_ATANH)                    ||                           \
-    ((x) == CORDIC_FUNC_LN)                       ||                           \
-    ((x) == CORDIC_FUNC_SQRT))
+#define IS_CORDIC_FUNC(x)                                                                                              \
+    (((x) == CORDIC_FUNC_COS) || ((x) == CORDIC_FUNC_SIN) || ((x) == CORDIC_FUNC_PHASE) || ((x) == CORDIC_FUNC_MOD)    \
+  || ((x) == CORDIC_FUNC_ATAN) || ((x) == CORDIC_FUNC_COSH) || ((x) == CORDIC_FUNC_SINH) || ((x) == CORDIC_FUNC_ATANH) \
+  || ((x) == CORDIC_FUNC_LN) || ((x) == CORDIC_FUNC_SQRT))
 
 /* Parameter valid check for CORDIC read interface */
-#define IS_CORDIC_READ_IF(x)                                                   \
-(   ((x) == CORDIC_READ_IF_AHB)                   ||                           \
-    ((x) == CORDIC_READ_IF_EXT))
+#define IS_CORDIC_READ_IF(x) (((x) == CORDIC_READ_IF_AHB) || ((x) == CORDIC_READ_IF_EXT))
 
 /* Parameter valid check for CORDIC data type */
-#define IS_CORDIC_DATA_TYPE(x)                                                 \
-(   ((x) == CORDIC_DATA_TYPE_FLOAT)               ||                           \
-    ((x) == CORDIC_DATA_TYPE_Q))
+#define IS_CORDIC_DATA_TYPE(x) (((x) == CORDIC_DATA_TYPE_FLOAT) || ((x) == CORDIC_DATA_TYPE_Q))
 
 /* Parameter valid check for CORDIC write data number */
-#define IS_CORDIC_WRITE_NUM(x)                                                 \
-(   ((x) == CORDIC_WRITE_NUM_1)                   ||                           \
-    ((x) == CORDIC_WRITE_NUM_2))
+#define IS_CORDIC_WRITE_NUM(x) (((x) == CORDIC_WRITE_NUM_1) || ((x) == CORDIC_WRITE_NUM_2))
 
 /* Parameter valid check for CORDIC read data number */
-#define IS_CORDIC_READ_NUM(x)                                                  \
-(   ((x) == CORDIC_READ_NUM_1)                    ||                           \
-    ((x) == CORDIC_READ_NUM_2))
+#define IS_CORDIC_READ_NUM(x) (((x) == CORDIC_READ_NUM_1) || ((x) == CORDIC_READ_NUM_2))
 
 /* Parameter valid check for CORDIC input data size */
-#define IS_CORDIC_IN_SIZE(x)                                                   \
-(   ((x) == CORDIC_IN_SIZE_16BIT)                 ||                           \
-    ((x) == CORDIC_IN_SIZE_32BIT))
+#define IS_CORDIC_IN_SIZE(x) (((x) == CORDIC_IN_SIZE_16BIT) || ((x) == CORDIC_IN_SIZE_32BIT))
 
-/* Parameter valid check for CORDIC result data size  */
-#define IS_CORDIC_OUT_SIZE(x)                                                  \
-(   ((x) == CORDIC_OUT_SIZE_16BIT)                ||                           \
-    ((x) == CORDIC_OUT_SIZE_32BIT))
+/* Parameter valid check for CORDIC result data size */
+#define IS_CORDIC_OUT_SIZE(x) (((x) == CORDIC_OUT_SIZE_16BIT) || ((x) == CORDIC_OUT_SIZE_32BIT))
 
-/* Parameter valid check for CORDIC DMA type  */
-#define IS_CORDIC_DMA_TYPE(x)                                                  \
-(   ((x) != 0U) && (((x) & (CORDIC_DMA_WRITE | CORDIC_DMA_READ)) != 0U))
+/* Parameter valid check for CORDIC DMA type */
+#define IS_CORDIC_DMA_TYPE(x) (((x) != 0U) && (((x) & (CORDIC_DMA_WRITE | CORDIC_DMA_READ)) != 0U))
 
-/* Parameter valid check for CORDIC precision  */
-#define IS_CORDIC_PRECISION(x)          (((x) >= CORDIC_PRECISION_CYCLE1) && ((x) <= CORDIC_PRECISION_CYCLE15))
+/* Parameter valid check for CORDIC precision */
+#define IS_CORDIC_PRECISION(x) (((x) >= CORDIC_PRECISION_CYCLE1) && ((x) <= CORDIC_PRECISION_CYCLE15))
 
-/* Parameter valid check for CORDIC scale  */
-#define IS_CORDIC_SCALE(x)              ((x) <= CORDIC_SCALE_MAX)
+/* Parameter valid check for CORDIC scale */
+#define IS_CORDIC_SCALE(x) ((x) <= CORDIC_SCALE_MAX)
 
 /* Parameter valid check for CORDIC interrupt */
-#define IS_CORDIC_INT(x)                                                       \
-(   ((x) == CORDIC_INT_ARG1_OVF)            ||                                 \
-    ((x) == CORDIC_INT_RES1_OVF)            ||                                 \
-    ((x) == CORDIC_INT_RES1_UDF)            ||                                 \
-    ((x) == CORDIC_INT_RES2_OVF)            ||                                 \
-    ((x) == CORDIC_INT_RES2_UDF)            ||                                 \
-    ((x) == CORDIC_INT_WRITE_DATA_LOSS))
+#define IS_CORDIC_INT(x)                                                                          \
+    (((x) == CORDIC_INT_ARG1_OVF) || ((x) == CORDIC_INT_RES1_OVF) || ((x) == CORDIC_INT_RES1_UDF) \
+  || ((x) == CORDIC_INT_RES2_OVF) || ((x) == CORDIC_INT_RES2_UDF) || ((x) == CORDIC_INT_WRITE_DATA_LOSS))
 
 /* Parameter valid check for CORDIC interrupt flag */
-#define IS_CORDIC_FLAG(x)                                                      \
-(   ((x) == CORDIC_FLAG_ARG1_OVF)           ||                                 \
-    ((x) == CORDIC_FLAG_RES1_OVF)           ||                                 \
-    ((x) == CORDIC_FLAG_RES1_UDF)           ||                                 \
-    ((x) == CORDIC_FLAG_RES2_OVF)           ||                                 \
-    ((x) == CORDIC_FLAG_RES2_UDF)           ||                                 \
-    ((x) == CORDIC_FLAG_WRITE_DATA_LOSS))
+#define IS_CORDIC_FLAG(x)                                                                            \
+    (((x) == CORDIC_FLAG_ARG1_OVF) || ((x) == CORDIC_FLAG_RES1_OVF) || ((x) == CORDIC_FLAG_RES1_UDF) \
+  || ((x) == CORDIC_FLAG_RES2_OVF) || ((x) == CORDIC_FLAG_RES2_UDF) || ((x) == CORDIC_FLAG_WRITE_DATA_LOSS))
 
 /**
  * @}
@@ -151,8 +123,8 @@
  * @{
  */
 /**
- * @brief  Init CORDIC initial structure with default value.
- * @param  [in] pstcInit                Specifies the parameter of CORDIC initial structure.
+ * @brief Init CORDIC initial structure with default value.
+ * @param [in] pstcInit                Specifies the parameter of CORDIC initial structure.
  * @retval int32_t:
  *         - LL_OK: Initialize success
  *         - LL_ERR_INVD_PARAM: NULL pointer
@@ -162,9 +134,13 @@ int32_t CORDIC_StructInit(stc_cordic_init_t *pstcInit)
     int32_t i32Ret = LL_OK;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcInit) {
+
+    if (NULL == pstcInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         pstcInit->u32IntEn     = (uint32_t)DISABLE;
         pstcInit->u32Func      = CORDIC_FUNC_COS;
         pstcInit->u32Precision = CORDIC_PRECISION_CYCLE5;
@@ -181,8 +157,8 @@ int32_t CORDIC_StructInit(stc_cordic_init_t *pstcInit)
 }
 
 /**
- * @brief  CORDIC initialize
- * @param  [in] pstcInit specifies the CORDIC initial config.
+ * @brief CORDIC initialize
+ * @param [in] pstcInit specifies the CORDIC initial config.
  * @retval int32_t:
  *         - LL_OK: Initialize success
  *         - LL_ERR_INVD_PARAM: NULL pointer
@@ -193,9 +169,13 @@ int32_t CORDIC_Init(stc_cordic_init_t *pstcInit)
     uint32_t u32Value;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcInit) {
+
+    if (NULL == pstcInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         DDL_ASSERT(IS_CORDIC_FUNC(pstcInit->u32Func));
         DDL_ASSERT(IS_CORDIC_READ_IF(pstcInit->u32ReadIF));
         DDL_ASSERT(IS_CORDIC_DATA_TYPE(pstcInit->u32DataType));
@@ -207,11 +187,11 @@ int32_t CORDIC_Init(stc_cordic_init_t *pstcInit)
         DDL_ASSERT(IS_CORDIC_SCALE(pstcInit->u32Scale));
         DDL_ASSERT(IS_FUNCTIONAL_STATE(pstcInit->u32IntEn));
 
-        u32Value = ((pstcInit->u32Func | pstcInit->u32ReadIF | pstcInit->u32DataType | pstcInit->u32WriteNum |      \
-                     pstcInit->u32ReadNum | pstcInit->u32InSize | pstcInit->u32OutSize) | \
-                    (pstcInit->u32Precision << CORDIC_CSR_PRECISION_POS) | \
-                    (pstcInit->u32Scale << CORDIC_CSR_SCALE_POS) | \
-                    ((uint32_t)pstcInit->u32IntEn << CORDIC_CSR_IEN_POS));
+        u32Value =
+            ((pstcInit->u32Func | pstcInit->u32ReadIF | pstcInit->u32DataType | pstcInit->u32WriteNum
+              | pstcInit->u32ReadNum | pstcInit->u32InSize | pstcInit->u32OutSize)
+             | (pstcInit->u32Precision << CORDIC_CSR_PRECISION_POS) | (pstcInit->u32Scale << CORDIC_CSR_SCALE_POS)
+             | ((uint32_t)pstcInit->u32IntEn << CORDIC_CSR_IEN_POS));
 
         WRITE_REG32(CM_CORDIC->CSR, u32Value);
     }
@@ -220,8 +200,8 @@ int32_t CORDIC_Init(stc_cordic_init_t *pstcInit)
 }
 
 /**
- * @brief  Set the CORDIC function.
- * @param  u32Func                      Specifies the CORDIC function source. @ref CORDIC_FUNC_Sel
+ * @brief Set the CORDIC function.
+ * @param u32Func                      Specifies the CORDIC function source. @ref CORDIC_FUNC_Sel
  * @retval None.
  */
 void CORDIC_SetFunc(uint32_t u32Func)
@@ -232,9 +212,9 @@ void CORDIC_SetFunc(uint32_t u32Func)
 }
 
 /**
- * @brief  Enable or Disable CORDIC DMA.
- * @param  [in] u32DmaType              Specifies the CORDIC dma type. @ref CORDIC_Dma_Type
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or Disable CORDIC DMA.
+ * @param [in] u32DmaType              Specifies the CORDIC dma type. @ref CORDIC_Dma_Type
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void CORDIC_DmaCmd(uint32_t u32DmaType, en_functional_state_t enNewState)
@@ -242,16 +222,19 @@ void CORDIC_DmaCmd(uint32_t u32DmaType, en_functional_state_t enNewState)
     DDL_ASSERT(IS_CORDIC_DMA_TYPE(u32DmaType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_CORDIC->CSR, u32DmaType);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_CORDIC->CSR, u32DmaType);
     }
 }
 
 /**
- * @brief  Write CORDIC data.
- * @param  u32Data
+ * @brief Write CORDIC data.
+ * @param u32Data
  * @retval None.
  */
 void CORDIC_WriteData(uint32_t u32Data)
@@ -260,8 +243,8 @@ void CORDIC_WriteData(uint32_t u32Data)
 }
 
 /**
- * @brief  Get CORDIC result.
- * @param  None
+ * @brief Get CORDIC result.
+ * @param None
  * @retval uint32_t  the result.
  */
 uint32_t CORDIC_GetResult(void)
@@ -270,9 +253,9 @@ uint32_t CORDIC_GetResult(void)
 }
 
 /**
- * @brief  Enable or Disable CORDIC interrupt.
- * @param  [in] u32Int                  Specifies the CORDIC interrupt source. @ref CORDIC_Int_Sel
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or Disable CORDIC interrupt.
+ * @param [in] u32Int                  Specifies the CORDIC interrupt source. @ref CORDIC_Int_Sel
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void CORDIC_IntCmd(uint32_t u32Int, en_functional_state_t enNewState)
@@ -280,16 +263,19 @@ void CORDIC_IntCmd(uint32_t u32Int, en_functional_state_t enNewState)
     DDL_ASSERT(IS_CORDIC_INT(u32Int));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_CORDIC->INTEN, u32Int);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_CORDIC->INTEN, u32Int);
     }
 }
 
 /**
- * @brief  Get CORDIC interrupt status.
- * @param  [in] u32Flag                 Specifies the flag to be read. @ref CORDIC_Flag_Sel
+ * @brief Get CORDIC interrupt status.
+ * @param [in] u32Flag                 Specifies the flag to be read. @ref CORDIC_Flag_Sel
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t CORDIC_GetStatus(uint32_t u32Flag)
@@ -300,8 +286,8 @@ en_flag_status_t CORDIC_GetStatus(uint32_t u32Flag)
 }
 
 /**
- * @brief  Clear CORDIC interrupt status.
- * @param  [in] u32Flag                 Specifies the flag to be cleared. @ref CORDIC_Flag_Sel
+ * @brief Clear CORDIC interrupt status.
+ * @param [in] u32Flag                 Specifies the flag to be cleared. @ref CORDIC_Flag_Sel
  * @retval None
  */
 void CORDIC_ClearStatus(uint32_t u32Flag)

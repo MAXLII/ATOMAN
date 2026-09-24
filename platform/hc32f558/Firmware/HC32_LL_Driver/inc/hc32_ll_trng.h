@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_trng.h
+ * @file hc32_ll_trng.h
  * @brief This file contains all the functions prototypes of the TRNG driver
  *        library.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -34,15 +34,15 @@ extern "C"
 
 #include "hc32f5xx.h"
 #include "hc32f5xx_conf.h"
-/**
- * @addtogroup LL_Driver
- * @{
- */
+    /**
+     * @addtogroup LL_Driver
+     * @{
+     */
 
-/**
- * @addtogroup LL_TRNG
- * @{
- */
+    /**
+     * @addtogroup LL_TRNG
+     * @{
+     */
 
 #if (LL_TRNG_ENABLE == DDL_ON)
 
@@ -63,8 +63,8 @@ extern "C"
  * @defgroup TRNG_Reload_Init_Value TRNG Reload Initial Value
  * @{
  */
-#define TRNG_RELOAD_INIT_VAL_ENABLE     (TRNG_MR_LOAD)                /* Enable reload new initial value. */
-#define TRNG_RELOAD_INIT_VAL_DISABLE    (0x0U)                        /* Disable reload new initial value. */
+#define TRNG_RELOAD_INIT_VAL_ENABLE  (TRNG_MR_LOAD) /* Enable reload new initial value. */
+#define TRNG_RELOAD_INIT_VAL_DISABLE (0x0U)         /* Disable reload new initial value. */
 /**
  * @}
  */
@@ -73,60 +73,60 @@ extern "C"
  * @defgroup TRNG_Shift_Ctrl TRNG Shift Control
  * @{
  */
-#define TRNG_SHIFT_CNT32                (0x3UL << TRNG_MR_CNT_POS)    /* Shift 32 times when capturing random noise. */
-#define TRNG_SHIFT_CNT64                (0x4UL << TRNG_MR_CNT_POS)    /* Shift 64 times when capturing random noise. */
-#define TRNG_SHIFT_CNT128               (0x5UL << TRNG_MR_CNT_POS)    /* Shift 128 times when capturing random noise. */
-#define TRNG_SHIFT_CNT256               (0x6UL << TRNG_MR_CNT_POS)    /* Shift 256 times when capturing random noise. */
+#define TRNG_SHIFT_CNT32  (0x3UL << TRNG_MR_CNT_POS) /* Shift 32 times when capturing random noise. */
+#define TRNG_SHIFT_CNT64  (0x4UL << TRNG_MR_CNT_POS) /* Shift 64 times when capturing random noise. */
+#define TRNG_SHIFT_CNT128 (0x5UL << TRNG_MR_CNT_POS) /* Shift 128 times when capturing random noise. */
+#define TRNG_SHIFT_CNT256 (0x6UL << TRNG_MR_CNT_POS) /* Shift 256 times when capturing random noise. */
 /**
  * @}
  */
 
 /**
-* @defgroup TRNG_Source_Selection TRNG Source Selection
-* @{
-*/
-#define TRNG_SOURCE_SEL0               (0x0U)                        /* TRNG source 0. */
-#define TRNG_SOURCE_SEL1               (TRNG_CR_RNGHMSEL)            /* TRNG source 1. */
-/**
- * @}
- */
-
-/**
- * @}
- */
-
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
-
-/*******************************************************************************
-  Global function prototypes (definition in C source)
- ******************************************************************************/
-/**
- * @addtogroup TRNG_Global_Functions
+ * @defgroup TRNG_Source_Selection TRNG Source Selection
  * @{
  */
-int32_t TRNG_DeInit(void);
-void TRNG_Init(uint32_t u32SrcSel, uint32_t u32ShiftCount, uint32_t u32ReloadInitValueEn);
-int32_t TRNG_GenerateRandom(uint32_t *pu32Random, uint32_t u32RandomLen);
+#define TRNG_SOURCE_SEL0 (0x0U)             /* TRNG source 0. */
+#define TRNG_SOURCE_SEL1 (TRNG_CR_RNGHMSEL) /* TRNG source 1. */
+    /**
+     * @}
+     */
 
-void TRNG_Start(void);
-void TRNG_Cmd(en_functional_state_t enNewState);
-int32_t TRNG_GetRandom(uint32_t *pu32Random, uint8_t u8RandomLen);
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
+
+    /*******************************************************************************
+  Global function prototypes (definition in C source)
+     ******************************************************************************/
+    /**
+     * @addtogroup TRNG_Global_Functions
+     * @{
+     */
+    int32_t TRNG_DeInit(void);
+    void TRNG_Init(uint32_t u32SrcSel, uint32_t u32ShiftCount, uint32_t u32ReloadInitValueEn);
+    int32_t TRNG_GenerateRandom(uint32_t *pu32Random, uint32_t u32RandomLen);
+
+    void TRNG_Start(void);
+    void TRNG_Cmd(en_functional_state_t enNewState);
+    int32_t TRNG_GetRandom(uint32_t *pu32Random, uint8_t u8RandomLen);
+
+    /**
+     * @}
+     */
 
 #endif /* LL_TRNG_ENABLE */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }

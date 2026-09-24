@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_bakpr.c
+ * @file apm32f402_403_bakpr.c
  *
- * @brief       This file provides all the BAKPR firmware functions.
+ * @brief This file provides all the BAKPR firmware functions.
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -28,23 +28,23 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup BAKPR_Driver
-  * @brief BAKPR driver modules
+ * @brief BAKPR driver modules
   @{
-*/
+ */
 
 /** @defgroup BAKPR_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief      Reset the BAKPR peripheral registers to their default reset values.
+ * @brief Reset the BAKPR peripheral registers to their default reset values.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_Reset(void)
 {
@@ -53,14 +53,14 @@ void BAKPR_Reset(void)
 }
 
 /*!
- * @brief      Deinitializes the BAKPR peripheral registers to their default reset values.
+ * @brief Deinitializes the BAKPR peripheral registers to their default reset values.
  *
- * @param      value: specifies the RTC output source.
- *                    This parameter can be one of the following values:
- *                    @arg BAKPR_TAMPER_PIN_LEVEL_HIGH: Tamper pin active on high level
- *                    @arg BAKPR_TAMPER_PIN_LEVEL_LOW: Tamper pin active on low level
+ * @param value: specifies the RTC output source.
+ *        This parameter can be one of the following values:
+ * @arg BAKPR_TAMPER_PIN_LEVEL_HIGH: Tamper pin active on high level
+ * @arg BAKPR_TAMPER_PIN_LEVEL_LOW: Tamper pin active on low level
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_ConfigTamperPinLevel(BAKPR_TAMPER_PIN_LEVEL_T value)
 {
@@ -68,11 +68,11 @@ void BAKPR_ConfigTamperPinLevel(BAKPR_TAMPER_PIN_LEVEL_T value)
 }
 
 /*!
- * @brief      Enables the Tamper Pin activation.
+ * @brief Enables the Tamper Pin activation.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_EnableTamperPin(void)
 {
@@ -80,11 +80,11 @@ void BAKPR_EnableTamperPin(void)
 }
 
 /*!
- * @brief      Disables the Tamper Pin activation.
+ * @brief Disables the Tamper Pin activation.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_DisableTamperPin(void)
 {
@@ -92,11 +92,11 @@ void BAKPR_DisableTamperPin(void)
 }
 
 /*!
- * @brief      Enables the Tamper Pin Interrupt.
+ * @brief Enables the Tamper Pin Interrupt.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_EnableInterrupt(void)
 {
@@ -104,11 +104,11 @@ void BAKPR_EnableInterrupt(void)
 }
 
 /*!
- * @brief      Disables the Tamper Pin Interrupt.
+ * @brief Disables the Tamper Pin Interrupt.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_DisableInterrupt(void)
 {
@@ -116,41 +116,44 @@ void BAKPR_DisableInterrupt(void)
 }
 
 /*!
- * @brief   Select the RTC output source to output on the Tamper pin.
+ * @brief Select the RTC output source to output on the Tamper pin.
  *
- * @param   soure: specifies the RTC output source.
- *            This parameter can be one of the following values:
- *            @arg BAKPR_RTC_OUTPUT_SOURCE_NONE             : no RTC output on the Tamper pin.
- *            @arg BAKPR_RTC_OUTPUT_SOURCE_CALIBRATION_CLOCK: output the RTC clock with frequency divided by 64 on the Tamper pin.
- *            @arg BAKPR_RTC_OUTPUT_SOURCE_ALARM            : output the RTC Alarm pulse signal on the Tamper pin.
- *            @arg BAKPR_RTC_OUTPUT_SOURCE_SECOND           : output the RTC Second pulse signal on the Tamper pin.
+ * @param soure: specifies the RTC output source.
+ *        This parameter can be one of the following values:
+ * @arg BAKPR_RTC_OUTPUT_SOURCE_NONE             : no RTC output on the Tamper pin.
+ * @arg BAKPR_RTC_OUTPUT_SOURCE_CALIBRATION_CLOCK: output the RTC clock with frequency divided by 64 on the Tamper pin.
+ * @arg BAKPR_RTC_OUTPUT_SOURCE_ALARM            : output the RTC Alarm pulse signal on the Tamper pin.
+ * @arg BAKPR_RTC_OUTPUT_SOURCE_SECOND           : output the RTC Second pulse signal on the Tamper pin.
  *
- * @retval  None
+ * @retval None
  */
 void BAKPR_ConfigRTCOutput(BAKPR_RTC_OUTPUT_SOURCE_T soure)
 {
-    if(soure == BAKPR_RTC_OUTPUT_SOURCE_NONE)
+    if (soure == BAKPR_RTC_OUTPUT_SOURCE_NONE)
     {
         BAKPR->CLKCAL = RESET;
-    } else if(soure == BAKPR_RTC_OUTPUT_SOURCE_CALIBRATION_CLOCK)
+    }
+    else if (soure == BAKPR_RTC_OUTPUT_SOURCE_CALIBRATION_CLOCK)
     {
         BAKPR->CLKCAL_B.CALCOEN = BIT_SET;
-    } else if(soure == BAKPR_RTC_OUTPUT_SOURCE_ALARM)
+    }
+    else if (soure == BAKPR_RTC_OUTPUT_SOURCE_ALARM)
     {
         BAKPR->CLKCAL_B.ASPOEN = BIT_SET;
-    } else if(soure == BAKPR_RTC_OUTPUT_SOURCE_SECOND)
+    }
+    else if (soure == BAKPR_RTC_OUTPUT_SOURCE_SECOND)
     {
         BAKPR->CLKCAL_B.ASPOSEL = BIT_SET;
     }
 }
 
 /*!
- * @brief      Sets RTC Clock Calibration value.
+ * @brief Sets RTC Clock Calibration value.
  *
- * @param      calibrationValue: Specifies the calibration value.
- *                               This parameter must be a number between 0 and 0x7F.
+ * @param calibrationValue: Specifies the calibration value.
+ *        This parameter must be a number between 0 and 0x7F.
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_ConfigRTCCalibrationValue(uint8_t calibrationValue)
 {
@@ -158,15 +161,15 @@ void BAKPR_ConfigRTCCalibrationValue(uint8_t calibrationValue)
 }
 
 /*!
- * @brief      Set user data to the specified Data Backup Register.
+ * @brief Set user data to the specified Data Backup Register.
  *
- * @param      bakrData : specifies the Data Backup Register.
- *                        This parameter can be BAKPR_DATAx where x is between 1 and 42.
+ * @param bakrData : specifies the Data Backup Register.
+ *        This parameter can be BAKPR_DATAx where x is between 1 and 42.
  *
- * @param      data : data to set
- *                    This parameter can be a 16bit value.
+ * @param data : data to set
+ *        This parameter can be a 16bit value.
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_ConfigBackupRegister(BAKPR_DATA_T bakrData, uint16_t data)
 {
@@ -175,16 +178,16 @@ void BAKPR_ConfigBackupRegister(BAKPR_DATA_T bakrData, uint16_t data)
     tmp = (uint32_t)BAKPR_BASE;
     tmp += bakrData;
 
-    *(__IOM uint32_t *) tmp = data;
+    *(__IOM uint32_t *)tmp = data;
 }
 
 /*!
- * @brief      Reads user data from the specified Data Backup Register.
+ * @brief Reads user data from the specified Data Backup Register.
  *
- * @param      bakrData : specifies the Data Backup Register.
- *                        This parameter can be BAKPR_DATAx where x is between 1 and 42.
+ * @param bakrData : specifies the Data Backup Register.
+ *        This parameter can be BAKPR_DATAx where x is between 1 and 42.
  *
- * @retval     The content of the specified Data Backup Register
+ * @retval The content of the specified Data Backup Register
  */
 uint16_t BAKPR_ReadBackupRegister(BAKPR_DATA_T bakrData)
 {
@@ -193,15 +196,15 @@ uint16_t BAKPR_ReadBackupRegister(BAKPR_DATA_T bakrData)
     tmp = (uint32_t)BAKPR_BASE;
     tmp += bakrData;
 
-    return (*(__IOM uint32_t *) tmp);
+    return (*(__IOM uint32_t *)tmp);
 }
 
 /*!
- * @brief      Read whether the Tamper Pin Event flag is set or not.
+ * @brief Read whether the Tamper Pin Event flag is set or not.
  *
- * @param      None
+ * @param None
  *
- * @retval     Tamper Pin Event flag state
+ * @retval Tamper Pin Event flag state
  */
 uint8_t BAKPR_ReadStatusFlag(void)
 {
@@ -209,11 +212,11 @@ uint8_t BAKPR_ReadStatusFlag(void)
 }
 
 /*!
- * @brief      Clears Tamper Pin Event pending flag.
+ * @brief Clears Tamper Pin Event pending flag.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_ClearStatusFlag(void)
 {
@@ -221,11 +224,11 @@ void BAKPR_ClearStatusFlag(void)
 }
 
 /*!
- * @brief      Get whether the Tamper Pin Interrupt has occurred or not.
+ * @brief Get whether the Tamper Pin Interrupt has occurred or not.
  *
- * @param      None
+ * @param None
  *
- * @retval     Tamper Pin Interrupt State
+ * @retval Tamper Pin Interrupt State
  */
 uint8_t BAKPR_ReadIntFlag(void)
 {
@@ -233,17 +236,17 @@ uint8_t BAKPR_ReadIntFlag(void)
 }
 
 /*!
- * @brief      Clears Tamper Pin Interrupt pending bit.
+ * @brief Clears Tamper Pin Interrupt pending bit.
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void BAKPR_ClearIntFlag(void)
 {
     BAKPR->CSTS_B.TICLR = BIT_SET;
 }
 
-/**@} end of group BAKPR_Functions */
-/**@} end of group BAKPR_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group BAKPR_Functions */
+/** @} end of group BAKPR_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

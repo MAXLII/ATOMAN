@@ -423,17 +423,14 @@ const ip_addr_t *ip6_select_source_address(struct netif *netif, const ip6_addr_t
             return netif_ip_addr6(netif, i); /* Rule 1 */
         }
 
-        if (    (best_addr == NULL)
-             || /* no alternative yet */
-                (    (cand_scope < best_scope)
+        if (    (best_addr == NULL) /* no alternative yet */
+             || (    (cand_scope < best_scope)
                   && (cand_scope >= dest_scope))
              || (    (cand_scope > best_scope)
-                  && (best_scope < dest_scope))
-             || /* Rule 2 */
-                (    (cand_scope == best_scope)
-                  && (    (cand_pref > best_pref)
-                       || /* Rule 3 */
-                          (    (cand_pref == best_pref)
+                  && (best_scope < dest_scope)) /* Rule 2 */
+             || (    (cand_scope == best_scope)
+                  && (    (cand_pref > best_pref) /* Rule 3 */
+                       || (    (cand_pref == best_pref)
                             && (cand_bits > best_bits)))))
         { /* Rule 8 */
             /* We found a new "winning" candidate. */

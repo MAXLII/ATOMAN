@@ -1,9 +1,9 @@
 /*!
-    \file    gd32e50x_wwdgt.c
-    \brief   WWDGT driver
-
-    \version 2026-02-09, V1.7.0, firmware for GD32E50x
-*/
+  \file gd32e50x_wwdgt.c
+  \brief WWDGT driver
+ 
+  \version 2026-02-09, V1.7.0, firmware for GD32E50x
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,16 +30,16 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32e50x_wwdgt.h"
 
 /*!
-    \brief      reset the window watchdog timer configuration
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief reset the window watchdog timer configuration
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void wwdgt_deinit(void)
 {
     rcu_periph_reset_enable(RCU_WWDGTRST);
@@ -47,40 +47,40 @@ void wwdgt_deinit(void)
 }
 
 /*!
-    \brief      start the window watchdog timer counter
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief start the window watchdog timer counter
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void wwdgt_enable(void)
 {
     WWDGT_CTL |= WWDGT_CTL_WDGTEN;
 }
 
 /*!
-    \brief      configure the window watchdog timer counter value
-    \param[in]  counter_value: 0x00 - 0x7F
-    \param[out] none
-    \retval     none
-*/
+  \brief configure the window watchdog timer counter value
+  \param[in]  counter_value: 0x00 - 0x7F
+  \param[out] none
+  \retval none
+ */
 void wwdgt_counter_update(uint16_t counter_value)
 {
     WWDGT_CTL = (uint32_t)(CTL_CNT(counter_value));
 }
 
 /*!
-    \brief      configure counter value, window value, and prescaler divider value
-    \param[in]  counter: 0x00 - 0x7F
-    \param[in]  window: 0x00 - 0x7F
-    \param[in]  prescaler: wwdgt prescaler value
+  \brief configure counter value, window value, and prescaler divider value
+  \param[in]  counter: 0x00 - 0x7F
+  \param[in]  window: 0x00 - 0x7F
+  \param[in]  prescaler: wwdgt prescaler value
                 only one parameter can be selected which is shown as below:
-      \arg        WWDGT_CFG_PSC_DIV1: the time base of window watchdog counter = (PCLK1/4096)/1
-      \arg        WWDGT_CFG_PSC_DIV2: the time base of window watchdog counter = (PCLK1/4096)/2
-      \arg        WWDGT_CFG_PSC_DIV4: the time base of window watchdog counter = (PCLK1/4096)/4
-      \arg        WWDGT_CFG_PSC_DIV8: the time base of window watchdog counter = (PCLK1/4096)/8
-    \param[out] none
-    \retval     none
-*/
+  \arg WWDGT_CFG_PSC_DIV1: the time base of window watchdog counter = (PCLK1/4096)/1
+  \arg WWDGT_CFG_PSC_DIV2: the time base of window watchdog counter = (PCLK1/4096)/2
+  \arg WWDGT_CFG_PSC_DIV4: the time base of window watchdog counter = (PCLK1/4096)/4
+  \arg WWDGT_CFG_PSC_DIV8: the time base of window watchdog counter = (PCLK1/4096)/8
+  \param[out] none
+  \retval none
+ */
 void wwdgt_config(uint16_t counter, uint16_t window, uint32_t prescaler)
 {
     WWDGT_CTL = (uint32_t)(CTL_CNT(counter));
@@ -88,37 +88,39 @@ void wwdgt_config(uint16_t counter, uint16_t window, uint32_t prescaler)
 }
 
 /*!
-    \brief      check early wakeup interrupt state of WWDGT
-    \param[in]  none
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \brief check early wakeup interrupt state of WWDGT
+  \param[in]  none
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus wwdgt_flag_get(void)
 {
     FlagStatus flag_status = RESET;
-    if(WWDGT_STAT & WWDGT_STAT_EWIF) {
+
+    if (WWDGT_STAT & WWDGT_STAT_EWIF)
+    {
         flag_status = SET;
     }
     return flag_status;
 }
 
 /*!
-    \brief      clear early wakeup interrupt state of WWDGT
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief clear early wakeup interrupt state of WWDGT
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void wwdgt_flag_clear(void)
 {
     WWDGT_STAT = (uint32_t)(RESET);
 }
 
 /*!
-    \brief      enable early wakeup interrupt of WWDGT
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable early wakeup interrupt of WWDGT
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void wwdgt_interrupt_enable(void)
 {
     WWDGT_CFG |= WWDGT_CFG_EWIE;

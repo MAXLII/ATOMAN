@@ -1,14 +1,14 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_crc.h
+ * @file hc32_ll_crc.h
  * @brief This file contains all the functions prototypes of the CRC driver
  *        library.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
    2024-11-08       CDT             Modify interface of AccumulateData and Calculate functions
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -36,35 +36,36 @@ extern "C"
 #include "hc32f3xx.h"
 #include "hc32f3xx_conf.h"
 
-/**
- * @addtogroup LL_Driver
- * @{
- */
+    /**
+     * @addtogroup LL_Driver
+     * @{
+     */
 
-/**
- * @addtogroup LL_CRC
- * @{
- */
+    /**
+     * @addtogroup LL_CRC
+     * @{
+     */
 
 #if (LL_CRC_ENABLE == DDL_ON)
 
-/*******************************************************************************
- * Global type definitions ('typedef')
- ******************************************************************************/
-/**
- * @defgroup CRC_Global_Types CRC Global Types
- * @{
- */
+    /*******************************************************************************
+     * Global type definitions ('typedef')
+     ******************************************************************************/
+    /**
+     * @defgroup CRC_Global_Types CRC Global Types
+     * @{
+     */
 
-/**
- * @brief CRC initialization structure definition
- */
-typedef struct {
-    uint32_t u32Protocol;   /*!< Specifies CRC Protocol.
+    /**
+     * @brief CRC initialization structure definition
+     */
+    typedef struct
+    {
+        uint32_t u32Protocol;  /*!< Specifies CRC Protocol.
                                  This parameter can be a value of @ref CRC_Protocol_Control_Bit */
-    uint32_t u32InitValue;  /*!< Specifies initial CRC value.
+        uint32_t u32InitValue; /*!< Specifies initial CRC value.
                                  This parameter can be CRC_INIT_VALUE_DEFAULT @ref CRC_Init_Value_Default */
-} stc_crc_init_t;
+    } stc_crc_init_t;
 
 /**
  * @}
@@ -82,8 +83,8 @@ typedef struct {
  * @defgroup CRC_Protocol_Control_Bit CRC Protocol Control Bit
  * @{
  */
-#define CRC_CRC16                   (0x0UL)
-#define CRC_CRC32                   (CRC_CR_CR)
+#define CRC_CRC16 (0x0UL)
+#define CRC_CRC32 (CRC_CR_CR)
 /**
  * @}
  */
@@ -92,9 +93,9 @@ typedef struct {
  * @defgroup CRC_DATA_Bit_Width CRC Data Bit Width
  * @{
  */
-#define CRC_DATA_WIDTH_8BIT         (1U)
-#define CRC_DATA_WIDTH_16BIT        (2U)
-#define CRC_DATA_WIDTH_32BIT        (4U)
+#define CRC_DATA_WIDTH_8BIT  (1U)
+#define CRC_DATA_WIDTH_16BIT (2U)
+#define CRC_DATA_WIDTH_32BIT (4U)
 /**
  * @}
  */
@@ -103,58 +104,80 @@ typedef struct {
  * @defgroup CRC_Init_Value_Default CRC Default Computation Initialization Value
  * @{
  */
-#define CRC_INIT_VALUE_DEFAULT      (0xFFFFFFFFUL)
-/**
- * @}
- */
+#define CRC_INIT_VALUE_DEFAULT (0xFFFFFFFFUL)
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
+    /*******************************************************************************
   Global function prototypes (definition in C source)
- ******************************************************************************/
-/**
- * @addtogroup CRC_Global_Functions
- * @{
- */
-int32_t CRC_StructInit(stc_crc_init_t *pstcCrcInit);
-int32_t CRC_Init(const stc_crc_init_t *pstcCrcInit);
-int32_t CRC_DeInit(void);
+     ******************************************************************************/
+    /**
+     * @addtogroup CRC_Global_Functions
+     * @{
+     */
+    int32_t CRC_StructInit(stc_crc_init_t *pstcCrcInit);
+    int32_t CRC_Init(const stc_crc_init_t *pstcCrcInit);
+    int32_t CRC_DeInit(void);
 
-uint32_t CRC_GetResult(void);
-void CRC_SetInitValue(uint32_t u32Value);
+    uint32_t CRC_GetResult(void);
+    void CRC_SetInitValue(uint32_t u32Value);
 
-en_flag_status_t CRC_GetResultStatus(void);
+    en_flag_status_t CRC_GetResultStatus(void);
 
-int32_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t *pu16Out);
-int32_t CRC_CRC16_Calculate(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t *pu16Out);
-en_flag_status_t CRC_CRC16_CheckData(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t u16ExpectValue);
-en_flag_status_t CRC_CRC16_GetCheckResult(uint16_t u16ExpectValue);
+    int32_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth,
+                                     const void *pvData,
+                                     uint32_t u32Len,
+                                     uint16_t *pu16Out);
+    int32_t CRC_CRC16_Calculate(uint16_t u16InitValue,
+                                uint8_t u8DataWidth,
+                                const void *pvData,
+                                uint32_t u32Len,
+                                uint16_t *pu16Out);
+    en_flag_status_t CRC_CRC16_CheckData(uint16_t u16InitValue,
+                                         uint8_t u8DataWidth,
+                                         const void *pvData,
+                                         uint32_t u32Len,
+                                         uint16_t u16ExpectValue);
+    en_flag_status_t CRC_CRC16_GetCheckResult(uint16_t u16ExpectValue);
 
-int32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t *pu32Out);
-int32_t CRC_CRC32_Calculate(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t *pu32Out);
-en_flag_status_t CRC_CRC32_CheckData(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t u32ExpectValue);
-en_flag_status_t CRC_CRC32_GetCheckResult(uint32_t u32ExpectValue);
+    int32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth,
+                                     const void *pvData,
+                                     uint32_t u32Len,
+                                     uint32_t *pu32Out);
+    int32_t CRC_CRC32_Calculate(uint32_t u32InitValue,
+                                uint8_t u8DataWidth,
+                                const void *pvData,
+                                uint32_t u32Len,
+                                uint32_t *pu32Out);
+    en_flag_status_t CRC_CRC32_CheckData(uint32_t u32InitValue,
+                                         uint8_t u8DataWidth,
+                                         const void *pvData,
+                                         uint32_t u32Len,
+                                         uint32_t u32ExpectValue);
+    en_flag_status_t CRC_CRC32_GetCheckResult(uint32_t u32ExpectValue);
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #endif /* LL_CRC_ENABLE */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }

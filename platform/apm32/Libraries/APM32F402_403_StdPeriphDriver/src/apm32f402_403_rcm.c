@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_rcm.c
+ * @file apm32f402_403_rcm.c
  *
- * @brief       This file provides all the RCM firmware functions
+ * @brief This file provides all the RCM firmware functions
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -27,23 +27,23 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup RCM_Driver
-  * @brief RCM driver modules
+ * @brief RCM driver modules
   @{
-*/
+ */
 
 /** @defgroup RCM_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Resets the clock configuration to the default state
+ * @brief Resets the clock configuration to the default state
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_Reset(void)
 {
@@ -62,17 +62,17 @@ void RCM_Reset(void)
 }
 
 /*!
- * @brief     Configs the HSE oscillator
+ * @brief Configs the HSE oscillator
  *
- * @param     state: state of the HSE
- *                   This parameter can be one of the following values:
- *                   @arg RCM_HSE_CLOSE:  Turn off the HSE oscillator
- *                   @arg RCM_HSE_OPEN:   Turn on the HSE oscillator
- *                   @arg RCM_HSE_BYPASS: HSE oscillator bypassed with external clock
+ * @param state: state of the HSE
+ *        This parameter can be one of the following values:
+ * @arg RCM_HSE_CLOSE:  Turn off the HSE oscillator
+ * @arg RCM_HSE_OPEN:   Turn on the HSE oscillator
+ * @arg RCM_HSE_BYPASS: HSE oscillator bypassed with external clock
  *
- * @retval    None
+ * @retval None
  *
- * @note      When HSE is not used directly or through the PLL as system clock, it can be stopped.
+ * @note When HSE is not used directly or through the PLL as system clock, it can be stopped.
  */
 void RCM_ConfigHSE(RCM_HSE_T state)
 {
@@ -89,17 +89,17 @@ void RCM_ConfigHSE(RCM_HSE_T state)
     else if (state == RCM_HSE_BYPASS)
     {
         RCM->CTRL_B.HSEBCFG = BIT_SET;
-        RCM->CTRL_B.HSEEN = BIT_SET;
+        RCM->CTRL_B.HSEEN   = BIT_SET;
     }
 }
 
 /*!
- * @brief     Waits for HSE to be ready
+ * @brief Waits for HSE to be ready
  *
- * @param     None
+ * @param None
  *
- * @retval    SUCCESS: HSE oscillator is ready
- *            ERROR  : HSE oscillator is not ready
+ * @retval SUCCESS: HSE oscillator is ready
+ *         ERROR  : HSE oscillator is not ready
  */
 uint8_t RCM_WaitHSEReady(void)
 {
@@ -117,12 +117,12 @@ uint8_t RCM_WaitHSEReady(void)
 }
 
 /*!
- * @brief     Config HSI trimming value
+ * @brief Config HSI trimming value
  *
- * @param     HSITrim: HSI trimming value
- *                     This parameter must be a number between 0 and 0x1F.
+ * @param HSITrim: HSI trimming value
+ *        This parameter must be a number between 0 and 0x1F.
  *
- * @retval    None
+ * @retval None
  */
 void RCM_ConfigHSITrim(uint8_t HSITrim)
 {
@@ -130,11 +130,11 @@ void RCM_ConfigHSITrim(uint8_t HSITrim)
 }
 
 /*!
- * @brief     Enable the HSI
+ * @brief Enable the HSI
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_EnableHSI(void)
 {
@@ -142,13 +142,13 @@ void RCM_EnableHSI(void)
 }
 
 /*!
- * @brief     Disable the HSI
+ * @brief Disable the HSI
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  *
- * @note      When HSI is not used directly or through the PLL as system clock, it can be stopped.
+ * @note When HSI is not used directly or through the PLL as system clock, it can be stopped.
  */
 
 void RCM_DisableHSI(void)
@@ -157,21 +157,21 @@ void RCM_DisableHSI(void)
 }
 
 /*!
- * @brief     Configures the External Low Speed oscillator (LSE)
+ * @brief Configures the External Low Speed oscillator (LSE)
  *
- * @param     state : Specifies the new state of the LSE
- *                    This parameter can be one of the following values:
- *                    @arg RCM_LSE_CLOSE  : Close the LSE
- *                    @arg RCM_LSE_OPEN   : Open the LSE
- *                    @arg RCM_LSE_BYPASS : LSE bypass
+ * @param state : Specifies the new state of the LSE
+ *        This parameter can be one of the following values:
+ * @arg RCM_LSE_CLOSE  : Close the LSE
+ * @arg RCM_LSE_OPEN   : Open the LSE
+ * @arg RCM_LSE_BYPASS : LSE bypass
  *
- * @retval    None
+ * @retval None
  *
  * @note
  */
 void RCM_ConfigLSE(RCM_LSE_T state)
 {
-    RCM->BDCTRL_B.LSEEN = BIT_RESET;
+    RCM->BDCTRL_B.LSEEN   = BIT_RESET;
     RCM->BDCTRL_B.LSEBCFG = BIT_RESET;
 
     if (state == RCM_LSE_OPEN)
@@ -181,16 +181,16 @@ void RCM_ConfigLSE(RCM_LSE_T state)
     else if (state == RCM_LSE_BYPASS)
     {
         RCM->BDCTRL_B.LSEBCFG = BIT_SET;
-        RCM->BDCTRL_B.LSEEN = BIT_SET;
+        RCM->BDCTRL_B.LSEEN   = BIT_SET;
     }
 }
 
 /*!
- * @brief     Enables the Internal Low Speed oscillator (LSI)
+ * @brief Enables the Internal Low Speed oscillator (LSI)
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  *
  * @note
  */
@@ -200,11 +200,11 @@ void RCM_EnableLSI(void)
 }
 
 /*!
- * @brief     Disables the Internal Low Speed oscillator (LSI)
+ * @brief Disables the Internal Low Speed oscillator (LSI)
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  *
  * @note
  */
@@ -214,20 +214,20 @@ void RCM_DisableLSI(void)
 }
 
 /*!
- * @brief     Configs the PLL clock source and multiplication factor
+ * @brief Configs the PLL clock source and multiplication factor
  *
- * @param     pllSelect:   PLL entry clock source select
- *                         This parameter can be one of the following values:
- *                         @arg RCM_PLLSEL_HSI_DIV_2: HSI clock divided by 2 selected as PLL clock source
- *                         @arg RCM_PLLSEL_HSE:       HSE clock selected as PLL clock source
- *                         @arg RCM_PLLSEL_HSE_DIV2:  HSE clock divided by 2 selected as PLL clock source
+ * @param pllSelect:   PLL entry clock source select
+ *        This parameter can be one of the following values:
+ * @arg RCM_PLLSEL_HSI_DIV_2: HSI clock divided by 2 selected as PLL clock source
+ * @arg RCM_PLLSEL_HSE:       HSE clock selected as PLL clock source
+ * @arg RCM_PLLSEL_HSE_DIV2:  HSE clock divided by 2 selected as PLL clock source
  *
- * @param     pllMf:       PLL multiplication factor
- *                         This parameter can be RCM_PLLMF_x where x can be a value from 2 to 16.
+ * @param pllMf:       PLL multiplication factor
+ *        This parameter can be RCM_PLLMF_x where x can be a value from 2 to 16.
  *
- * @retval    None
+ * @retval None
  *
- * @note      PLL should be disabled while use this function.
+ * @note PLL should be disabled while use this function.
  */
 void RCM_ConfigPLL(RCM_PLLSEL_T pllSelect, RCM_PLLMF_T pllMf)
 {
@@ -237,11 +237,11 @@ void RCM_ConfigPLL(RCM_PLLSEL_T pllSelect, RCM_PLLMF_T pllMf)
 }
 
 /*!
- * @brief      Enables the PLL
+ * @brief Enables the PLL
  *
- * @param      None
+ * @param None
  *
- * @retval     None
+ * @retval None
  */
 void RCM_EnablePLL(void)
 {
@@ -249,25 +249,25 @@ void RCM_EnablePLL(void)
 }
 
 /*!
-* @brief      Disable the PLL
-*
-* @param      None
-*
-* @retval     None
-*
-* @note       When PLL is not used as system clock, it can be stopped.
-*/
+ * @brief Disable the PLL
+ *
+ * @param None
+ *
+ * @retval None
+ *
+ * @note When PLL is not used as system clock, it can be stopped.
+ */
 void RCM_DisablePLL(void)
 {
     RCM->CTRL_B.PLLEN = BIT_RESET;
 }
 
 /*!
- * @brief     Enable the Clock Security System
+ * @brief Enable the Clock Security System
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_EnableCSS(void)
 {
@@ -275,11 +275,11 @@ void RCM_EnableCSS(void)
 }
 
 /*!
- * @brief     Disable the Clock Security System
+ * @brief Disable the Clock Security System
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_DisableCSS(void)
 {
@@ -287,17 +287,17 @@ void RCM_DisableCSS(void)
 }
 
 /*!
- * @brief     Selects the MCO pin clock ouput source
+ * @brief Selects the MCO pin clock ouput source
  *
- * @param     mcoClock: specifies the clock source to output
- *                      This parameter can be one of the following values:
- *                      @arg RCM_MCOCLK_NO_CLOCK     : No clock selected.
- *                      @arg RCM_MCOCLK_SYSCLK       : System clock selected.
- *                      @arg RCM_MCOCLK_HSI          : HSI oscillator clock selected.
- *                      @arg RCM_MCOCLK_HSE          : HSE oscillator clock selected.
- *                      @arg RCM_MCOCLK_PLLCLK_DIV_2 : PLL clock divided by 2 selected.
+ * @param mcoClock: specifies the clock source to output
+ *        This parameter can be one of the following values:
+ * @arg RCM_MCOCLK_NO_CLOCK     : No clock selected.
+ * @arg RCM_MCOCLK_SYSCLK       : System clock selected.
+ * @arg RCM_MCOCLK_HSI          : HSI oscillator clock selected.
+ * @arg RCM_MCOCLK_HSE          : HSE oscillator clock selected.
+ * @arg RCM_MCOCLK_PLLCLK_DIV_2 : PLL clock divided by 2 selected.
  *
- * @retval    None
+ * @retval None
  *
  * @note
  */
@@ -307,15 +307,15 @@ void RCM_ConfigMCO(RCM_MCOCLK_T mcoClock)
 }
 
 /*!
- * @brief    Configures the system clock source
+ * @brief Configures the system clock source
  *
- * @param    sysClkSelect: specifies the clock source used as system clock
- *                         This parameter can be one of the following values:
- *                         @arg RCM_SYSCLK_SEL_HSI: HSI is selected as system clock source
- *                         @arg RCM_SYSCLK_SEL_HSE: HSE is selected as system clock source
- *                         @arg RCM_SYSCLK_SEL_PLL: PLL is selected as system clock source
+ * @param sysClkSelect: specifies the clock source used as system clock
+ *        This parameter can be one of the following values:
+ * @arg RCM_SYSCLK_SEL_HSI: HSI is selected as system clock source
+ * @arg RCM_SYSCLK_SEL_HSE: HSE is selected as system clock source
+ * @arg RCM_SYSCLK_SEL_PLL: PLL is selected as system clock source
  *
- * @retva    None
+ * @retva None
  */
 void RCM_ConfigSYSCLK(RCM_SYSCLK_SEL_T sysClkSelect)
 {
@@ -323,11 +323,11 @@ void RCM_ConfigSYSCLK(RCM_SYSCLK_SEL_T sysClkSelect)
 }
 
 /*!
- * @brief     Returns the clock source which is used as system clock
+ * @brief Returns the clock source which is used as system clock
  *
- * @param     None
+ * @param None
  *
- * @retval    The clock source used as system clock
+ * @retval The clock source used as system clock
  */
 RCM_SYSCLK_SEL_T RCM_ReadSYSCLKSource(void)
 {
@@ -339,21 +339,21 @@ RCM_SYSCLK_SEL_T RCM_ReadSYSCLKSource(void)
 }
 
 /*!
- * @brief     Configs the AHB clock prescaler.
+ * @brief Configs the AHB clock prescaler.
  *
- * @param     AHBDiv : Specifies the AHB clock prescaler from the system clock.
- *                     This parameter can be one of the following values:
- *                     @arg RCM_AHB_DIV_1   : HCLK = SYSCLK
- *                     @arg RCM_AHB_DIV_2   : HCLK = SYSCLK / 2
- *                     @arg RCM_AHB_DIV_4   : HCLK = SYSCLK / 4
- *                     @arg RCM_AHB_DIV_8   : HCLK = SYSCLK / 8
- *                     @arg RCM_AHB_DIV_16  : HCLK = SYSCLK / 16
- *                     @arg RCM_AHB_DIV_64  : HCLK = SYSCLK / 64
- *                     @arg RCM_AHB_DIV_128 : HCLK = SYSCLK / 128
- *                     @arg RCM_AHB_DIV_256 : HCLK = SYSCLK / 256
- *                     @arg RCM_AHB_DIV_512 : HCLK = SYSCLK / 512
+ * @param AHBDiv : Specifies the AHB clock prescaler from the system clock.
+ *        This parameter can be one of the following values:
+ * @arg RCM_AHB_DIV_1   : HCLK = SYSCLK
+ * @arg RCM_AHB_DIV_2   : HCLK = SYSCLK / 2
+ * @arg RCM_AHB_DIV_4   : HCLK = SYSCLK / 4
+ * @arg RCM_AHB_DIV_8   : HCLK = SYSCLK / 8
+ * @arg RCM_AHB_DIV_16  : HCLK = SYSCLK / 16
+ * @arg RCM_AHB_DIV_64  : HCLK = SYSCLK / 64
+ * @arg RCM_AHB_DIV_128 : HCLK = SYSCLK / 128
+ * @arg RCM_AHB_DIV_256 : HCLK = SYSCLK / 256
+ * @arg RCM_AHB_DIV_512 : HCLK = SYSCLK / 512
  *
- * @retval    None
+ * @retval None
  *
  * @note
  */
@@ -363,17 +363,17 @@ void RCM_ConfigAHB(RCM_AHB_DIV_T AHBDiv)
 }
 
 /*!
- * @brief     Configs the APB1 clock prescaler.
+ * @brief Configs the APB1 clock prescaler.
  *
- * @param     APB1Div: Specifies the APB1 clock prescaler from the AHB clock.
- *                     This parameter can be one of the following values:
- *                     @arg RCM_APB_DIV_1  : PCLK1 = HCLK
- *                     @arg RCM_APB_DIV_2  : PCLK1 = HCLK / 2
- *                     @arg RCM_APB_DIV_4  : PCLK1 = HCLK / 4
- *                     @arg RCM_APB_DIV_8  : PCLK1 = HCLK / 8
- *                     @arg RCM_APB_DIV_16 : PCLK1 = HCLK / 16
+ * @param APB1Div: Specifies the APB1 clock prescaler from the AHB clock.
+ *        This parameter can be one of the following values:
+ * @arg RCM_APB_DIV_1  : PCLK1 = HCLK
+ * @arg RCM_APB_DIV_2  : PCLK1 = HCLK / 2
+ * @arg RCM_APB_DIV_4  : PCLK1 = HCLK / 4
+ * @arg RCM_APB_DIV_8  : PCLK1 = HCLK / 8
+ * @arg RCM_APB_DIV_16 : PCLK1 = HCLK / 16
  *
- * @retval    None
+ * @retval None
  */
 void RCM_ConfigAPB1(RCM_APB_DIV_T APB1Div)
 {
@@ -381,17 +381,17 @@ void RCM_ConfigAPB1(RCM_APB_DIV_T APB1Div)
 }
 
 /*!
- * @brief     Configs the APB2 clock prescaler
+ * @brief Configs the APB2 clock prescaler
  *
- * @param     APB2Div: Specifies the APB2 clock prescaler from the AHB clock.
- *                     This parameter can be one of the following values:
- *                     @arg RCM_APB_DIV_1  : PCLK2 = HCLK
- *                     @arg RCM_APB_DIV_2  : PCLK2 = HCLK / 2
- *                     @arg RCM_APB_DIV_4  : PCLK2 = HCLK / 4
- *                     @arg RCM_APB_DIV_8  : PCLK2 = HCLK / 8
- *                     @arg RCM_APB_DIV_16 : PCLK2 = HCLK / 16
+ * @param APB2Div: Specifies the APB2 clock prescaler from the AHB clock.
+ *        This parameter can be one of the following values:
+ * @arg RCM_APB_DIV_1  : PCLK2 = HCLK
+ * @arg RCM_APB_DIV_2  : PCLK2 = HCLK / 2
+ * @arg RCM_APB_DIV_4  : PCLK2 = HCLK / 4
+ * @arg RCM_APB_DIV_8  : PCLK2 = HCLK / 8
+ * @arg RCM_APB_DIV_16 : PCLK2 = HCLK / 16
  *
- * @retval    None
+ * @retval None
  */
 void RCM_ConfigAPB2(RCM_APB_DIV_T APB2Div)
 {
@@ -399,16 +399,16 @@ void RCM_ConfigAPB2(RCM_APB_DIV_T APB2Div)
 }
 
 /*!
- * @brief     Configs the USB clock prescaler
+ * @brief Configs the USB clock prescaler
  *
- * @param     USBDiv: Specifies the USB clock prescaler from the PLL clock.
- *                     This parameter can be one of the following values:
- *                     @arg RCM_USB_DIV_1_5 : USBCLK = PLL clock /1.5
- *                     @arg RCM_USB_DIV_1   : USBCLK = PLL clock
- *                     @arg RCM_USB_DIV_2   : USBCLK = PLL clock / 2
- *                     @arg RCM_USB_DIV_2_5 : USBCLK = PLL clock / 2.5 
+ * @param USBDiv: Specifies the USB clock prescaler from the PLL clock.
+ *        This parameter can be one of the following values:
+ * @arg RCM_USB_DIV_1_5 : USBCLK = PLL clock /1.5
+ * @arg RCM_USB_DIV_1   : USBCLK = PLL clock
+ * @arg RCM_USB_DIV_2   : USBCLK = PLL clock / 2
+ * @arg RCM_USB_DIV_2_5 : USBCLK = PLL clock / 2.5
  *
- * @retval    None
+ * @retval None
  */
 void RCM_ConfigUSBCLK(RCM_USB_DIV_T USBDiv)
 {
@@ -416,16 +416,16 @@ void RCM_ConfigUSBCLK(RCM_USB_DIV_T USBDiv)
 }
 
 /*!
- * @brief     Configs the ADC clock prescaler
+ * @brief Configs the ADC clock prescaler
  *
- * @param     ADCDiv : Specifies the ADC clock prescaler from the APB2 clock.
- *                     This parameter can be one of the following values:
- *                     @arg RCM_PCLK2_DIV_2: ADCCLK = PCLK2 / 2
- *                     @arg RCM_PCLK2_DIV_4: ADCCLK = PCLK2 / 4
- *                     @arg RCM_PCLK2_DIV_6: ADCCLK = PCLK2 / 6
- *                     @arg RCM_PCLK2_DIV_8: ADCCLK = PCLK2 / 8
+ * @param ADCDiv : Specifies the ADC clock prescaler from the APB2 clock.
+ *        This parameter can be one of the following values:
+ * @arg RCM_PCLK2_DIV_2: ADCCLK = PCLK2 / 2
+ * @arg RCM_PCLK2_DIV_4: ADCCLK = PCLK2 / 4
+ * @arg RCM_PCLK2_DIV_6: ADCCLK = PCLK2 / 6
+ * @arg RCM_PCLK2_DIV_8: ADCCLK = PCLK2 / 8
  *
- * @retval    None
+ * @retval None
  */
 void RCM_ConfigADCCLK(RCM_PCLK2_DIV_T ADCDiv)
 {
@@ -433,17 +433,17 @@ void RCM_ConfigADCCLK(RCM_PCLK2_DIV_T ADCDiv)
 }
 
 /*!
- * @brief     Configures the RTC clock source
+ * @brief Configures the RTC clock source
  *
- * @param     rtcClkSelect : specifies the RTC clock source.
- *                           This parameter can be one of the following values:
- *                           @arg RCM_RTCCLK_LSE        : RTCCLK = LSE clock
- *                           @arg RCM_RTCCLK_LSI        : RTCCLK = LSI clock
- *                           @arg RCM_RTCCLK_HSE_DIV_128: RTCCLK = HSE clock / 128
+ * @param rtcClkSelect : specifies the RTC clock source.
+ *        This parameter can be one of the following values:
+ * @arg RCM_RTCCLK_LSE        : RTCCLK = LSE clock
+ * @arg RCM_RTCCLK_LSI        : RTCCLK = LSI clock
+ * @arg RCM_RTCCLK_HSE_DIV_128: RTCCLK = HSE clock / 128
  *
- * @retval    None
+ * @retval None
  *
- * @note      Once the RTC clock is configed it can't be changed unless reset the Backup domain.
+ * @note Once the RTC clock is configed it can't be changed unless reset the Backup domain.
  */
 void RCM_ConfigRTCCLK(RCM_RTCCLK_T rtcClkSelect)
 {
@@ -451,11 +451,11 @@ void RCM_ConfigRTCCLK(RCM_RTCCLK_T rtcClkSelect)
 }
 
 /*!
- * @brief     Enables the RTC clock
+ * @brief Enables the RTC clock
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_EnableRTCCLK(void)
 {
@@ -463,11 +463,11 @@ void RCM_EnableRTCCLK(void)
 }
 
 /*!
- * @brief     Disables the RTC clock
+ * @brief Disables the RTC clock
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_DisableRTCCLK(void)
 {
@@ -475,11 +475,11 @@ void RCM_DisableRTCCLK(void)
 }
 
 /*!
- * @brief     Reads the frequency of SYSCLK
+ * @brief Reads the frequency of SYSCLK
  *
- * @param     None
+ * @param None
  *
- * @retval    Return the frequency of SYSCLK
+ * @retval Return the frequency of SYSCLK
  */
 uint32_t RCM_ReadSYSCLKFreq(void)
 {
@@ -490,54 +490,56 @@ uint32_t RCM_ReadSYSCLKFreq(void)
 
     switch (sysClock)
     {
-        /** sys clock is HSI */
-        case RCM_SYSCLK_SEL_HSI:
-            sysClock = HSI_VALUE;
-            break;
+    /** sys clock is HSI */
+    case RCM_SYSCLK_SEL_HSI:
+        sysClock = HSI_VALUE;
+        break;
 
-        /** sys clock is HSE */
-        case RCM_SYSCLK_SEL_HSE:
-            sysClock = HSE_VALUE;
-            break;
+    /** sys clock is HSE */
+    case RCM_SYSCLK_SEL_HSE:
+        sysClock = HSE_VALUE;
+        break;
 
-        /** sys clock is PLL */
-        case RCM_SYSCLK_SEL_PLL:
-            pllMull = RCM->CFG_B.PLLMULCFG + 2;
-            pllSource = RCM->CFG_B.PLLSRCSEL;
+    /** sys clock is PLL */
+    case RCM_SYSCLK_SEL_PLL:
+        pllMull   = RCM->CFG_B.PLLMULCFG + 2;
+        pllSource = RCM->CFG_B.PLLSRCSEL;
 
-            /** PLL entry clock source is HSE */
-            if (pllSource == BIT_SET)
+        /** PLL entry clock source is HSE */
+
+        if (pllSource == BIT_SET)
+        {
+            sysClock = HSE_VALUE * pllMull;
+
+            /** HSE clock divided by 2 */
+
+            if (pllSource == RCM->CFG_B.PLLHSEPSC)
             {
-                sysClock = HSE_VALUE * pllMull;
-
-                /** HSE clock divided by 2 */
-                if (pllSource == RCM->CFG_B.PLLHSEPSC)
-                {
-                    sysClock >>= 1;
-                }
+                sysClock >>= 1;
             }
-            /** PLL entry clock source is HSI/2 */
-            else
-            {
-                sysClock = (HSI_VALUE >> 1) * pllMull;
-            }
+        }
+        /** PLL entry clock source is HSI/2 */
+        else
+        {
+            sysClock = (HSI_VALUE >> 1) * pllMull;
+        }
 
-            break;
+        break;
 
-        default:
-            sysClock  = HSI_VALUE;
-            break;
+    default:
+        sysClock = HSI_VALUE;
+        break;
     }
 
     return sysClock;
 }
 
 /*!
- * @brief     Reads the frequency of HCLK(AHB)
+ * @brief Reads the frequency of HCLK(AHB)
  *
- * @param     None
+ * @param None
  *
- * @retval    Return the frequency of HCLK
+ * @retval Return the frequency of HCLK
  */
 uint32_t RCM_ReadHCLKFreq(void)
 {
@@ -545,7 +547,7 @@ uint32_t RCM_ReadHCLKFreq(void)
     uint32_t sysClk, hclk;
     uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
-    sysClk = RCM_ReadSYSCLKFreq();
+    sysClk  = RCM_ReadSYSCLKFreq();
     divider = AHBPrescTable[RCM->CFG_B.AHBPSC];
     hclk = sysClk >> divider;
 
@@ -553,15 +555,15 @@ uint32_t RCM_ReadHCLKFreq(void)
 }
 
 /*!
- * @brief     Reads the frequency of PCLK1 And PCLK2
+ * @brief Reads the frequency of PCLK1 And PCLK2
  *
- * @param     PCLK1 : Return the frequency of PCLK1
+ * @param PCLK1 : Return the frequency of PCLK1
  *
- * @param     PCLK1 : Return the frequency of PCLK2
+ * @param PCLK1 : Return the frequency of PCLK2
  *
- * @retval    None
+ * @retval None
  */
-void RCM_ReadPCLKFreq(uint32_t* PCLK1, uint32_t* PCLK2)
+void RCM_ReadPCLKFreq(uint32_t *PCLK1, uint32_t *PCLK2)
 {
     uint32_t hclk, divider;
     uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
@@ -582,11 +584,11 @@ void RCM_ReadPCLKFreq(uint32_t* PCLK1, uint32_t* PCLK2)
 }
 
 /*!
- * @brief     Reads the frequency of ADCCLK
+ * @brief Reads the frequency of ADCCLK
  *
- * @param     None
+ * @param None
  *
- * @retval    Return the frequency of ADCCLK
+ * @retval Return the frequency of ADCCLK
  */
 uint32_t RCM_ReadADCCLKFreq(void)
 {
@@ -597,24 +599,24 @@ uint32_t RCM_ReadADCCLKFreq(void)
 
     /** Get ADC CLK */
     divider = ADCPrescTable[RCM->CFG_B.ADCPSC];
-    adcClk = pclk2 / divider;
+    adcClk  = pclk2 / divider;
 
     return adcClk;
 }
 
 /*!
- * @brief    Enables AHB peripheral clock.
+ * @brief Enables AHB peripheral clock.
  *
- * @param    AHBPeriph : Enable the specifies clock of AHB peripheral.
- *                       This parameter can be any combination of the following values:
- *                       @arg RCM_AHB_PERIPH_DMA1  : Enable DMA1 clock
- *                       @arg RCM_AHB_PERIPH_DMA2  : Enable DMA2 clock 
- *                       @arg RCM_AHB_PERIPH_SRAM  : Enable SRAM clock
- *                       @arg RCM_AHB_PERIPH_FMC   : Enable FMC clock
- *                       @arg RCM_AHB_PERIPH_CRC   : Enable CRC clock
- *                       @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS clock
+ * @param AHBPeriph : Enable the specifies clock of AHB peripheral.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_AHB_PERIPH_DMA1  : Enable DMA1 clock
+ * @arg RCM_AHB_PERIPH_DMA2  : Enable DMA2 clock
+ * @arg RCM_AHB_PERIPH_SRAM  : Enable SRAM clock
+ * @arg RCM_AHB_PERIPH_FMC   : Enable FMC clock
+ * @arg RCM_AHB_PERIPH_CRC   : Enable CRC clock
+ * @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS clock
  *
- * @retval   None
+ * @retval None
  */
 void RCM_EnableAHBPeriphClock(uint32_t AHBPeriph)
 {
@@ -622,18 +624,18 @@ void RCM_EnableAHBPeriphClock(uint32_t AHBPeriph)
 }
 
 /*!
- * @brief    Disable AHB peripheral clock.
+ * @brief Disable AHB peripheral clock.
  *
- * @param    AHBPeriph : Disable the specifies clock of AHB peripheral.
- *                       This parameter can be any combination of the following values:
- *                       @arg RCM_AHB_PERIPH_DMA1  : Enable DMA1 clock
- *                       @arg RCM_AHB_PERIPH_DMA2  : Enable DMA2 clock 
- *                       @arg RCM_AHB_PERIPH_SRAM  : Enable SRAM clock
- *                       @arg RCM_AHB_PERIPH_FMC   : Enable FMC clock
- *                       @arg RCM_AHB_PERIPH_CRC   : Enable CRC clock
- *                       @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS clock
+ * @param AHBPeriph : Disable the specifies clock of AHB peripheral.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_AHB_PERIPH_DMA1  : Enable DMA1 clock
+ * @arg RCM_AHB_PERIPH_DMA2  : Enable DMA2 clock
+ * @arg RCM_AHB_PERIPH_SRAM  : Enable SRAM clock
+ * @arg RCM_AHB_PERIPH_FMC   : Enable FMC clock
+ * @arg RCM_AHB_PERIPH_CRC   : Enable CRC clock
+ * @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS clock
  *
- * @retval   None
+ * @retval None
  */
 void RCM_DisableAHBPeriphClock(uint32_t AHBPeriph)
 {
@@ -641,23 +643,23 @@ void RCM_DisableAHBPeriphClock(uint32_t AHBPeriph)
 }
 
 /*!
- * @brief    Enable the High Speed APB (APB2) peripheral clock
+ * @brief Enable the High Speed APB (APB2) peripheral clock
  *
- * @param    APB2Periph : Enable specifies clock of the APB2 peripheral.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB2_PERIPH_AFIO   : Enable AFIO clock
- *                        @arg RCM_APB2_PERIPH_GPIOA  : Enable GPIOA clock
- *                        @arg RCM_APB2_PERIPH_GPIOB  : Enable GPIOB clock
- *                        @arg RCM_APB2_PERIPH_GPIOC  : Enable GPIOC clock
- *                        @arg RCM_APB2_PERIPH_GPIOD  : Enable GPIOD clock
- *                        @arg RCM_APB2_PERIPH_ADC1   : Enable ADC1 clock
- *                        @arg RCM_APB2_PERIPH_ADC2   : Enable ADC2 clock
- *                        @arg RCM_APB2_PERIPH_TMR1   : Enable TMR1 clock
- *                        @arg RCM_APB2_PERIPH_SPI1   : Enable SPI1 clock
- *                        @arg RCM_APB2_PERIPH_TMR8   : Enable TMR8 clock
- *                        @arg RCM_APB2_PERIPH_USART1 : Enable USART1 clock
+ * @param APB2Periph : Enable specifies clock of the APB2 peripheral.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB2_PERIPH_AFIO   : Enable AFIO clock
+ * @arg RCM_APB2_PERIPH_GPIOA  : Enable GPIOA clock
+ * @arg RCM_APB2_PERIPH_GPIOB  : Enable GPIOB clock
+ * @arg RCM_APB2_PERIPH_GPIOC  : Enable GPIOC clock
+ * @arg RCM_APB2_PERIPH_GPIOD  : Enable GPIOD clock
+ * @arg RCM_APB2_PERIPH_ADC1   : Enable ADC1 clock
+ * @arg RCM_APB2_PERIPH_ADC2   : Enable ADC2 clock
+ * @arg RCM_APB2_PERIPH_TMR1   : Enable TMR1 clock
+ * @arg RCM_APB2_PERIPH_SPI1   : Enable SPI1 clock
+ * @arg RCM_APB2_PERIPH_TMR8   : Enable TMR8 clock
+ * @arg RCM_APB2_PERIPH_USART1 : Enable USART1 clock
  *
- * @retval   None
+ * @retval None
  */
 void RCM_EnableAPB2PeriphClock(uint32_t APB2Periph)
 {
@@ -665,23 +667,23 @@ void RCM_EnableAPB2PeriphClock(uint32_t APB2Periph)
 }
 
 /*!
- * @brief    Disable the High Speed APB (APB2) peripheral clock
+ * @brief Disable the High Speed APB (APB2) peripheral clock
  *
- * @param    APB2Periph : Disable specifies clock of the APB2 peripheral.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB2_PERIPH_AFIO   : Disable AFIO clock
- *                        @arg RCM_APB2_PERIPH_GPIOA  : Disable GPIOA clock
- *                        @arg RCM_APB2_PERIPH_GPIOB  : Disable GPIOB clock
- *                        @arg RCM_APB2_PERIPH_GPIOC  : Disable GPIOC clock
- *                        @arg RCM_APB2_PERIPH_GPIOD  : Disable GPIOD clock
- *                        @arg RCM_APB2_PERIPH_ADC1   : Disable ADC1 clock
- *                        @arg RCM_APB2_PERIPH_ADC2   : Disable ADC2 clock
- *                        @arg RCM_APB2_PERIPH_TMR1   : Disable TMR1 clock
- *                        @arg RCM_APB2_PERIPH_SPI1   : Disable SPI1 clock
- *                        @arg RCM_APB2_PERIPH_TMR8   : Disable TMR8 clock 
- *                        @arg RCM_APB2_PERIPH_USART1 : Disable USART1 clock
+ * @param APB2Periph : Disable specifies clock of the APB2 peripheral.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB2_PERIPH_AFIO   : Disable AFIO clock
+ * @arg RCM_APB2_PERIPH_GPIOA  : Disable GPIOA clock
+ * @arg RCM_APB2_PERIPH_GPIOB  : Disable GPIOB clock
+ * @arg RCM_APB2_PERIPH_GPIOC  : Disable GPIOC clock
+ * @arg RCM_APB2_PERIPH_GPIOD  : Disable GPIOD clock
+ * @arg RCM_APB2_PERIPH_ADC1   : Disable ADC1 clock
+ * @arg RCM_APB2_PERIPH_ADC2   : Disable ADC2 clock
+ * @arg RCM_APB2_PERIPH_TMR1   : Disable TMR1 clock
+ * @arg RCM_APB2_PERIPH_SPI1   : Disable SPI1 clock
+ * @arg RCM_APB2_PERIPH_TMR8   : Disable TMR8 clock
+ * @arg RCM_APB2_PERIPH_USART1 : Disable USART1 clock
  *
- * @retval   None
+ * @retval None
  */
 void RCM_DisableAPB2PeriphClock(uint32_t APB2Periph)
 {
@@ -689,26 +691,26 @@ void RCM_DisableAPB2PeriphClock(uint32_t APB2Periph)
 }
 
 /*!
- * @brief    Enable the Low Speed APB (APB1) peripheral clock
+ * @brief Enable the Low Speed APB (APB1) peripheral clock
  *
- * @param    APB1Periph : Enable specifies clock of the APB1 peripheral.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB1_PERIPH_TMR2   : Enable TMR2 clock
- *                        @arg RCM_APB1_PERIPH_TMR3   : Enable TMR3 clock
- *                        @arg RCM_APB1_PERIPH_TMR4   : Enable TMR4 clock
- *                        @arg RCM_APB1_PERIPH_TMR5   : Enable TMR5 clock
- *                        @arg RCM_APB1_PERIPH_WWDT   : Enable WWDT clock
- *                        @arg RCM_APB1_PERIPH_SPI2   : Enable SPI2 clock
- *                        @arg RCM_APB1_PERIPH_USART2 : Enable USART2 clock
- *                        @arg RCM_APB1_PERIPH_USART3 : Enable USART3 clock
- *                        @arg RCM_APB1_PERIPH_UART4  : Enable UART4 clock
- *                        @arg RCM_APB1_PERIPH_I2C1   : Enable I2C1 clock
- *                        @arg RCM_APB1_PERIPH_CAN1   : Enable CAN1 clock
- *                        @arg RCM_APB1_PERIPH_CAN2   : Enable CAN2 clock
- *                        @arg RCM_APB1_PERIPH_BAKR   : Enable BAKR clock
- *                        @arg RCM_APB1_PERIPH_PMU    : Enable PMU clock
+ * @param APB1Periph : Enable specifies clock of the APB1 peripheral.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB1_PERIPH_TMR2   : Enable TMR2 clock
+ * @arg RCM_APB1_PERIPH_TMR3   : Enable TMR3 clock
+ * @arg RCM_APB1_PERIPH_TMR4   : Enable TMR4 clock
+ * @arg RCM_APB1_PERIPH_TMR5   : Enable TMR5 clock
+ * @arg RCM_APB1_PERIPH_WWDT   : Enable WWDT clock
+ * @arg RCM_APB1_PERIPH_SPI2   : Enable SPI2 clock
+ * @arg RCM_APB1_PERIPH_USART2 : Enable USART2 clock
+ * @arg RCM_APB1_PERIPH_USART3 : Enable USART3 clock
+ * @arg RCM_APB1_PERIPH_UART4  : Enable UART4 clock
+ * @arg RCM_APB1_PERIPH_I2C1   : Enable I2C1 clock
+ * @arg RCM_APB1_PERIPH_CAN1   : Enable CAN1 clock
+ * @arg RCM_APB1_PERIPH_CAN2   : Enable CAN2 clock
+ * @arg RCM_APB1_PERIPH_BAKR   : Enable BAKR clock
+ * @arg RCM_APB1_PERIPH_PMU    : Enable PMU clock
  *
- * @retval   None
+ * @retval None
  */
 void RCM_EnableAPB1PeriphClock(uint32_t APB1Periph)
 {
@@ -716,26 +718,26 @@ void RCM_EnableAPB1PeriphClock(uint32_t APB1Periph)
 }
 
 /*!
- * @brief    Disable the Low Speed APB (APB1) peripheral clock
+ * @brief Disable the Low Speed APB (APB1) peripheral clock
  *
- * @param    APB1Periph : Disable specifies clock of the APB1 peripheral.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB1_PERIPH_TMR2   : Disable TMR2 clock
- *                        @arg RCM_APB1_PERIPH_TMR3   : Disable TMR3 clock
- *                        @arg RCM_APB1_PERIPH_TMR4   : Disable TMR4 clock
- *                        @arg RCM_APB1_PERIPH_TMR5   : Disable TMR5 clock
- *                        @arg RCM_APB1_PERIPH_WWDT   : Disable WWDT clock
- *                        @arg RCM_APB1_PERIPH_SPI2   : Disable SPI2 clock
- *                        @arg RCM_APB1_PERIPH_USART2 : Disable USART2 clock
- *                        @arg RCM_APB1_PERIPH_USART3 : Disable USART3 clock
- *                        @arg RCM_APB1_PERIPH_UART4  : Disable UART4 clock
- *                        @arg RCM_APB1_PERIPH_I2C1   : Disable I2C1 clock
- *                        @arg RCM_APB1_PERIPH_CAN1   : Disable CAN1 clock
- *                        @arg RCM_APB1_PERIPH_CAN2   : Disable CAN2 clock
- *                        @arg RCM_APB1_PERIPH_BAKR   : Disable BAKR clock
- *                        @arg RCM_APB1_PERIPH_PMU    : Disable PMU clock
+ * @param APB1Periph : Disable specifies clock of the APB1 peripheral.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB1_PERIPH_TMR2   : Disable TMR2 clock
+ * @arg RCM_APB1_PERIPH_TMR3   : Disable TMR3 clock
+ * @arg RCM_APB1_PERIPH_TMR4   : Disable TMR4 clock
+ * @arg RCM_APB1_PERIPH_TMR5   : Disable TMR5 clock
+ * @arg RCM_APB1_PERIPH_WWDT   : Disable WWDT clock
+ * @arg RCM_APB1_PERIPH_SPI2   : Disable SPI2 clock
+ * @arg RCM_APB1_PERIPH_USART2 : Disable USART2 clock
+ * @arg RCM_APB1_PERIPH_USART3 : Disable USART3 clock
+ * @arg RCM_APB1_PERIPH_UART4  : Disable UART4 clock
+ * @arg RCM_APB1_PERIPH_I2C1   : Disable I2C1 clock
+ * @arg RCM_APB1_PERIPH_CAN1   : Disable CAN1 clock
+ * @arg RCM_APB1_PERIPH_CAN2   : Disable CAN2 clock
+ * @arg RCM_APB1_PERIPH_BAKR   : Disable BAKR clock
+ * @arg RCM_APB1_PERIPH_PMU    : Disable PMU clock
  *
- * @retval   None
+ * @retval None
  */
 void RCM_DisableAPB1PeriphClock(uint32_t APB1Periph)
 {
@@ -743,23 +745,23 @@ void RCM_DisableAPB1PeriphClock(uint32_t APB1Periph)
 }
 
 /*!
- * @brief    Enable High Speed APB (APB2) peripheral reset
+ * @brief Enable High Speed APB (APB2) peripheral reset
  *
- * @param    APB2Periph : Enable specifies APB2 peripheral reset.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB2_PERIPH_AFIO   : Enable AFIO reset
- *                        @arg RCM_APB2_PERIPH_GPIOA  : Enable GPIOA reset
- *                        @arg RCM_APB2_PERIPH_GPIOB  : Enable GPIOB reset
- *                        @arg RCM_APB2_PERIPH_GPIOC  : Enable GPIOC reset
- *                        @arg RCM_APB2_PERIPH_GPIOD  : Enable GPIOD reset
- *                        @arg RCM_APB2_PERIPH_ADC1   : Enable ADC1 reset
- *                        @arg RCM_APB2_PERIPH_ADC2   : Enable ADC2 reset
- *                        @arg RCM_APB2_PERIPH_TMR1   : Enable TMR1 reset
- *                        @arg RCM_APB2_PERIPH_SPI1   : Enable SPI1 reset
- *                        @arg RCM_APB2_PERIPH_TMR8   : Enable TMR8 reset
- *                        @arg RCM_APB2_PERIPH_USART1 : Enable USART1 reset
+ * @param APB2Periph : Enable specifies APB2 peripheral reset.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB2_PERIPH_AFIO   : Enable AFIO reset
+ * @arg RCM_APB2_PERIPH_GPIOA  : Enable GPIOA reset
+ * @arg RCM_APB2_PERIPH_GPIOB  : Enable GPIOB reset
+ * @arg RCM_APB2_PERIPH_GPIOC  : Enable GPIOC reset
+ * @arg RCM_APB2_PERIPH_GPIOD  : Enable GPIOD reset
+ * @arg RCM_APB2_PERIPH_ADC1   : Enable ADC1 reset
+ * @arg RCM_APB2_PERIPH_ADC2   : Enable ADC2 reset
+ * @arg RCM_APB2_PERIPH_TMR1   : Enable TMR1 reset
+ * @arg RCM_APB2_PERIPH_SPI1   : Enable SPI1 reset
+ * @arg RCM_APB2_PERIPH_TMR8   : Enable TMR8 reset
+ * @arg RCM_APB2_PERIPH_USART1 : Enable USART1 reset
  *
- * @retval   None
+ * @retval None
  */
 void RCM_EnableAPB2PeriphReset(uint32_t APB2Periph)
 {
@@ -767,23 +769,23 @@ void RCM_EnableAPB2PeriphReset(uint32_t APB2Periph)
 }
 
 /*!
- * @brief    Disable High Speed APB (APB2) peripheral reset
+ * @brief Disable High Speed APB (APB2) peripheral reset
  *
- * @param    APB2Periph : Disable specifies APB2 peripheral reset.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB2_PERIPH_AFIO   : Disable AFIO reset
- *                        @arg RCM_APB2_PERIPH_GPIOA  : Disable GPIOA reset
- *                        @arg RCM_APB2_PERIPH_GPIOB  : Disable GPIOB reset
- *                        @arg RCM_APB2_PERIPH_GPIOC  : Disable GPIOC reset
- *                        @arg RCM_APB2_PERIPH_GPIOD  : Disable GPIOD reset
- *                        @arg RCM_APB2_PERIPH_ADC1   : Disable ADC1 reset
- *                        @arg RCM_APB2_PERIPH_ADC2   : Disable ADC2 reset
- *                        @arg RCM_APB2_PERIPH_TMR1   : Disable TMR1 reset
- *                        @arg RCM_APB2_PERIPH_SPI1   : Disable SPI1 reset
- *                        @arg RCM_APB2_PERIPH_TMR8   : Disable TMR8 reset
- *                        @arg RCM_APB2_PERIPH_USART1 : Disable USART1 reset
+ * @param APB2Periph : Disable specifies APB2 peripheral reset.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB2_PERIPH_AFIO   : Disable AFIO reset
+ * @arg RCM_APB2_PERIPH_GPIOA  : Disable GPIOA reset
+ * @arg RCM_APB2_PERIPH_GPIOB  : Disable GPIOB reset
+ * @arg RCM_APB2_PERIPH_GPIOC  : Disable GPIOC reset
+ * @arg RCM_APB2_PERIPH_GPIOD  : Disable GPIOD reset
+ * @arg RCM_APB2_PERIPH_ADC1   : Disable ADC1 reset
+ * @arg RCM_APB2_PERIPH_ADC2   : Disable ADC2 reset
+ * @arg RCM_APB2_PERIPH_TMR1   : Disable TMR1 reset
+ * @arg RCM_APB2_PERIPH_SPI1   : Disable SPI1 reset
+ * @arg RCM_APB2_PERIPH_TMR8   : Disable TMR8 reset
+ * @arg RCM_APB2_PERIPH_USART1 : Disable USART1 reset
  *
- * @retval   None
+ * @retval None
  */
 void RCM_DisableAPB2PeriphReset(uint32_t APB2Periph)
 {
@@ -791,26 +793,26 @@ void RCM_DisableAPB2PeriphReset(uint32_t APB2Periph)
 }
 
 /*!
- * @brief    Enable Low Speed APB (APB1) peripheral reset
+ * @brief Enable Low Speed APB (APB1) peripheral reset
  *
- * @param    APB1Periph : Enable specifies APB1 peripheral reset.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB1_PERIPH_TMR2   : Enable TMR2 reset
- *                        @arg RCM_APB1_PERIPH_TMR3   : Enable TMR3 reset
- *                        @arg RCM_APB1_PERIPH_TMR4   : Enable TMR4 reset
- *                        @arg RCM_APB1_PERIPH_TMR5   : Enable TMR5 reset
- *                        @arg RCM_APB1_PERIPH_WWDT   : Enable WWDT reset
- *                        @arg RCM_APB1_PERIPH_SPI2   : Enable SPI2 reset
- *                        @arg RCM_APB1_PERIPH_USART2 : Enable USART2 reset
- *                        @arg RCM_APB1_PERIPH_USART3 : Enable USART3 reset
- *                        @arg RCM_APB1_PERIPH_UART4  : Enable UART4 reset
- *                        @arg RCM_APB1_PERIPH_I2C1   : Enable I2C1 reset
- *                        @arg RCM_APB1_PERIPH_CAN1   : Enable CAN1 reset
- *                        @arg RCM_APB1_PERIPH_CAN2   : Enable CAN2 reset 
- *                        @arg RCM_APB1_PERIPH_BAKR   : Enable BAKR reset
- *                        @arg RCM_APB1_PERIPH_PMU    : Enable PMU reset
+ * @param APB1Periph : Enable specifies APB1 peripheral reset.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB1_PERIPH_TMR2   : Enable TMR2 reset
+ * @arg RCM_APB1_PERIPH_TMR3   : Enable TMR3 reset
+ * @arg RCM_APB1_PERIPH_TMR4   : Enable TMR4 reset
+ * @arg RCM_APB1_PERIPH_TMR5   : Enable TMR5 reset
+ * @arg RCM_APB1_PERIPH_WWDT   : Enable WWDT reset
+ * @arg RCM_APB1_PERIPH_SPI2   : Enable SPI2 reset
+ * @arg RCM_APB1_PERIPH_USART2 : Enable USART2 reset
+ * @arg RCM_APB1_PERIPH_USART3 : Enable USART3 reset
+ * @arg RCM_APB1_PERIPH_UART4  : Enable UART4 reset
+ * @arg RCM_APB1_PERIPH_I2C1   : Enable I2C1 reset
+ * @arg RCM_APB1_PERIPH_CAN1   : Enable CAN1 reset
+ * @arg RCM_APB1_PERIPH_CAN2   : Enable CAN2 reset
+ * @arg RCM_APB1_PERIPH_BAKR   : Enable BAKR reset
+ * @arg RCM_APB1_PERIPH_PMU    : Enable PMU reset
  *
- * @retval   None
+ * @retval None
  */
 void RCM_EnableAPB1PeriphReset(uint32_t APB1Periph)
 {
@@ -818,27 +820,27 @@ void RCM_EnableAPB1PeriphReset(uint32_t APB1Periph)
 }
 
 /*!
- * @brief    Disable Low Speed APB (APB1) peripheral reset
+ * @brief Disable Low Speed APB (APB1) peripheral reset
  *
- * @param    APB1Periph : Disable specifies APB1 peripheral reset.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_APB1_PERIPH_TMR2   : Disable TMR2 reset
- *                        @arg RCM_APB1_PERIPH_TMR3   : Disable TMR3 reset
- *                        @arg RCM_APB1_PERIPH_TMR4   : Disable TMR4 reset
- *                        @arg RCM_APB1_PERIPH_TMR5   : Disable TMR5 reset
- *                        @arg RCM_APB1_PERIPH_WWDT   : Disable WWDT reset
- *                        @arg RCM_APB1_PERIPH_SPI2   : Disable SPI2 reset
- *                        @arg RCM_APB1_PERIPH_USART2 : Disable USART2 reset
- *                        @arg RCM_APB1_PERIPH_USART3 : Disable USART3 reset
- *                        @arg RCM_APB1_PERIPH_UART4  : Disable UART4 reset
- *                        @arg RCM_APB1_PERIPH_I2C1   : Disable I2C1 reset
- *                        @arg RCM_APB1_PERIPH_USB    : Disable USB reset
- *                        @arg RCM_APB1_PERIPH_CAN1   : Disable CAN1 reset
- *                        @arg RCM_APB1_PERIPH_CAN2   : Disable CAN2 reset 
- *                        @arg RCM_APB1_PERIPH_BAKR   : Disable BAKR reset
- *                        @arg RCM_APB1_PERIPH_PMU    : Disable PMU reset
+ * @param APB1Periph : Disable specifies APB1 peripheral reset.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_APB1_PERIPH_TMR2   : Disable TMR2 reset
+ * @arg RCM_APB1_PERIPH_TMR3   : Disable TMR3 reset
+ * @arg RCM_APB1_PERIPH_TMR4   : Disable TMR4 reset
+ * @arg RCM_APB1_PERIPH_TMR5   : Disable TMR5 reset
+ * @arg RCM_APB1_PERIPH_WWDT   : Disable WWDT reset
+ * @arg RCM_APB1_PERIPH_SPI2   : Disable SPI2 reset
+ * @arg RCM_APB1_PERIPH_USART2 : Disable USART2 reset
+ * @arg RCM_APB1_PERIPH_USART3 : Disable USART3 reset
+ * @arg RCM_APB1_PERIPH_UART4  : Disable UART4 reset
+ * @arg RCM_APB1_PERIPH_I2C1   : Disable I2C1 reset
+ * @arg RCM_APB1_PERIPH_USB    : Disable USB reset
+ * @arg RCM_APB1_PERIPH_CAN1   : Disable CAN1 reset
+ * @arg RCM_APB1_PERIPH_CAN2   : Disable CAN2 reset
+ * @arg RCM_APB1_PERIPH_BAKR   : Disable BAKR reset
+ * @arg RCM_APB1_PERIPH_PMU    : Disable PMU reset
  *
- * @retval   None
+ * @retval None
  */
 void RCM_DisableAPB1PeriphReset(uint32_t APB1Periph)
 {
@@ -846,13 +848,13 @@ void RCM_DisableAPB1PeriphReset(uint32_t APB1Periph)
 }
 
 /*!
- * @brief    Enable AHB peripheral reset
+ * @brief Enable AHB peripheral reset
  *
- * @param    APB1Periph : Enable specifies AHB peripheral reset.
- *                        This parameter can be any combination of the following values:
- *                       @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS reset
+ * @param APB1Periph : Enable specifies AHB peripheral reset.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS reset
  *
- * @retval   None
+ * @retval None
  */
 void RCM_EnableAHBPeriphReset(uint32_t AHBPeriph)
 {
@@ -860,13 +862,13 @@ void RCM_EnableAHBPeriphReset(uint32_t AHBPeriph)
 }
 
 /*!
- * @brief    Disable AHB peripheral reset
+ * @brief Disable AHB peripheral reset
  *
- * @param    APB1Periph : Disable specifies AHB peripheral reset.
- *                        This parameter can be any combination of the following values:
- *                       @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS reset
+ * @param APB1Periph : Disable specifies AHB peripheral reset.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_AHB_PERIPH_OTGFS : Enable OTGFS reset
  *
- * @retval   None
+ * @retval None
  */
 void RCM_DisableAHBPeriphReset(uint32_t AHBPeriph)
 {
@@ -874,11 +876,11 @@ void RCM_DisableAHBPeriphReset(uint32_t AHBPeriph)
 }
 
 /*!
- * @brief     Enable the Backup domain reset
+ * @brief Enable the Backup domain reset
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  *
  * @note
  */
@@ -888,11 +890,11 @@ void RCM_EnableBackupReset(void)
 }
 
 /*!
- * @brief     Disable the Backup domain reset
+ * @brief Disable the Backup domain reset
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void RCM_DisableBackupReset(void)
 {
@@ -900,17 +902,17 @@ void RCM_DisableBackupReset(void)
 }
 
 /*!
- * @brief     Enable RCM interrupts
+ * @brief Enable RCM interrupts
  *
- * @param     interrupt : Enable specifies RCM interrupt sources.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_INT_LSIRDY : LSI ready interrupt
- *                        @arg RCM_INT_LSERDY : LSE ready interrupt
- *                        @arg RCM_INT_HSIRDY : HSI ready interrupt
- *                        @arg RCM_INT_HSERDY : HSE ready interrupt
- *                        @arg RCM_INT_PLLRDY : PLL ready interrupt
+ * @param interrupt : Enable specifies RCM interrupt sources.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_INT_LSIRDY : LSI ready interrupt
+ * @arg RCM_INT_LSERDY : LSE ready interrupt
+ * @arg RCM_INT_HSIRDY : HSI ready interrupt
+ * @arg RCM_INT_HSERDY : HSE ready interrupt
+ * @arg RCM_INT_PLLRDY : PLL ready interrupt
  *
- * @retval    None
+ * @retval None
  */
 void RCM_EnableInterrupt(uint32_t interrupt)
 {
@@ -922,17 +924,17 @@ void RCM_EnableInterrupt(uint32_t interrupt)
 }
 
 /*!
- * @brief     Disable RCM interrupts
+ * @brief Disable RCM interrupts
  *
- * @param     interrupt : Disable specifies RCM interrupt sources.
- *                        This parameter can be any combination of the following values:
- *                        @arg RCM_INT_LSIRDY : LSI ready interrupt
- *                        @arg RCM_INT_LSERDY : LSE ready interrupt
- *                        @arg RCM_INT_HSIRDY : HSI ready interrupt
- *                        @arg RCM_INT_HSERDY : HSE ready interrupt
- *                        @arg RCM_INT_PLLRDY : PLL ready interrupt
+ * @param interrupt : Disable specifies RCM interrupt sources.
+ *        This parameter can be any combination of the following values:
+ * @arg RCM_INT_LSIRDY : LSI ready interrupt
+ * @arg RCM_INT_LSERDY : LSE ready interrupt
+ * @arg RCM_INT_HSIRDY : HSI ready interrupt
+ * @arg RCM_INT_HSERDY : HSE ready interrupt
+ * @arg RCM_INT_PLLRDY : PLL ready interrupt
  *
- * @retval    None
+ * @retval None
  */
 void RCM_DisableInterrupt(uint32_t interrupt)
 {
@@ -944,23 +946,23 @@ void RCM_DisableInterrupt(uint32_t interrupt)
 }
 
 /*!
- * @brief     Read the specified RCM flag status
+ * @brief Read the specified RCM flag status
  *
- * @param     flag : Returns specifies the flag status.
- *                   This parameter can be one of the following values:
- *                   @arg RCM_FLAG_HSIRDY  : HSI ready flag
- *                   @arg RCM_FLAG_HSERDY  : HSE ready flag
- *                   @arg RCM_FLAG_PLLRDY  : PLL ready flag
- *                   @arg RCM_FLAG_LSERDY  : LSE ready flag
- *                   @arg RCM_FLAG_LSIRDY  : LSI ready flag
- *                   @arg RCM_FLAG_PINRST  : NRST PIN Reset Occur Flag
- *                   @arg RCM_FLAG_PORRST  : POR/PDR Reset Occur Flag
- *                   @arg RCM_FLAG_SWRST   : Software Reset Occur Flag
- *                   @arg RCM_FLAG_IWDTRST : Independent Watchdog Reset Occur Flag
- *                   @arg RCM_FLAG_WWDTRST : Window Watchdog Reset Occur Flag
- *                   @arg RCM_FLAG_LPRRST  : Low Power Reset Occur Flag
+ * @param flag : Returns specifies the flag status.
+ *        This parameter can be one of the following values:
+ * @arg RCM_FLAG_HSIRDY  : HSI ready flag
+ * @arg RCM_FLAG_HSERDY  : HSE ready flag
+ * @arg RCM_FLAG_PLLRDY  : PLL ready flag
+ * @arg RCM_FLAG_LSERDY  : LSE ready flag
+ * @arg RCM_FLAG_LSIRDY  : LSI ready flag
+ * @arg RCM_FLAG_PINRST  : NRST PIN Reset Occur Flag
+ * @arg RCM_FLAG_PORRST  : POR/PDR Reset Occur Flag
+ * @arg RCM_FLAG_SWRST   : Software Reset Occur Flag
+ * @arg RCM_FLAG_IWDTRST : Independent Watchdog Reset Occur Flag
+ * @arg RCM_FLAG_WWDTRST : Window Watchdog Reset Occur Flag
+ * @arg RCM_FLAG_LPRRST  : Low Power Reset Occur Flag
  *
- * @retval    The new state of flag (SET or RESET)
+ * @retval The new state of flag (SET or RESET)
  */
 uint8_t RCM_ReadStatusFlag(RCM_FLAG_T flag)
 {
@@ -972,20 +974,20 @@ uint8_t RCM_ReadStatusFlag(RCM_FLAG_T flag)
 
     switch (reg)
     {
-        case 0:
-            reg = RCM->CTRL;
-            break;
+    case 0:
+        reg = RCM->CTRL;
+        break;
 
-        case 1:
-            reg = RCM->BDCTRL;
-            break;
+    case 1:
+        reg = RCM->BDCTRL;
+        break;
 
-        case 2:
-            reg = RCM->CSTS;
-            break;
+    case 2:
+        reg = RCM->CSTS;
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     if (reg & bit)
@@ -997,15 +999,15 @@ uint8_t RCM_ReadStatusFlag(RCM_FLAG_T flag)
 }
 
 /*!
- * @brief     Clears all the RCM reset flags
+ * @brief Clears all the RCM reset flags
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  *
- * @note      The reset flags are:
- *            RCM_FLAG_PINRST, RCM_FLAG_PORRST, RCM_FLAG_SWRST
- *            RCM_FLAG_IWDTRST, RCM_FLAG_WWDTRST, RCM_FLAG_LPRRST
+ * @note The reset flags are:
+ *       RCM_FLAG_PINRST, RCM_FLAG_PORRST, RCM_FLAG_SWRST
+ *       RCM_FLAG_IWDTRST, RCM_FLAG_WWDTRST, RCM_FLAG_LPRRST
  */
 void RCM_ClearStatusFlag(void)
 {
@@ -1013,40 +1015,40 @@ void RCM_ClearStatusFlag(void)
 }
 
 /*!
- * @brief     Reads the specified RCM interrupt Flag
+ * @brief Reads the specified RCM interrupt Flag
  *
- * @param     flag : Reads specifies RCM interrupt flag.
- *                   This parameter can be one of the following values:
- *                   @arg RCM_INT_LSIRDY : LSI ready interrupt flag
- *                   @arg RCM_INT_LSERDY : LSE ready interrupt flag
- *                   @arg RCM_INT_HSIRDY : HSI ready interrupt flag
- *                   @arg RCM_INT_HSERDY : HSE ready interrupt flag
- *                   @arg RCM_INT_PLLRDY : PLL ready interrupt flag
- *                   @arg RCM_INT_CSS    : Clock Security System interrupt flag
+ * @param flag : Reads specifies RCM interrupt flag.
+ *        This parameter can be one of the following values:
+ * @arg RCM_INT_LSIRDY : LSI ready interrupt flag
+ * @arg RCM_INT_LSERDY : LSE ready interrupt flag
+ * @arg RCM_INT_HSIRDY : HSI ready interrupt flag
+ * @arg RCM_INT_HSERDY : HSE ready interrupt flag
+ * @arg RCM_INT_PLLRDY : PLL ready interrupt flag
+ * @arg RCM_INT_CSS    : Clock Security System interrupt flag
  *
- * @retval    The new state of intFlag (SET or RESET)
+ * @retval The new state of intFlag (SET or RESET)
  */
 uint8_t RCM_ReadIntFlag(RCM_INT_T flag)
 {
     uint8_t ret;
 
-    ret = (RCM->INT& flag) ? SET : RESET;
+    ret = (RCM->INT & flag) ? SET : RESET;
 
-    return  ret;
+    return ret;
 }
 
 /*!
- * @brief     Clears the interrupt flag
+ * @brief Clears the interrupt flag
  *
- * @param     flag : Clears specifies interrupt flag.
- *                   @arg RCM_INT_LSIRDY : Clear LSI ready interrupt flag
- *                   @arg RCM_INT_LSERDY : Clear LSE ready interrupt flag
- *                   @arg RCM_INT_HSIRDY : Clear HSI ready interrupt flag
- *                   @arg RCM_INT_HSERDY : Clear HSE ready interrupt flag
- *                   @arg RCM_INT_PLLRDY : Clear PLL ready interrupt flag
- *                   @arg RCM_INT_CSS    : Clear Clock Security System interrupt flag
+ * @param flag : Clears specifies interrupt flag.
+ * @arg RCM_INT_LSIRDY : Clear LSI ready interrupt flag
+ * @arg RCM_INT_LSERDY : Clear LSE ready interrupt flag
+ * @arg RCM_INT_HSIRDY : Clear HSI ready interrupt flag
+ * @arg RCM_INT_HSERDY : Clear HSE ready interrupt flag
+ * @arg RCM_INT_PLLRDY : Clear PLL ready interrupt flag
+ * @arg RCM_INT_CSS    : Clear Clock Security System interrupt flag
  *
- * @retval    None
+ * @retval None
  */
 void RCM_ClearIntFlag(uint32_t flag)
 {
@@ -1056,6 +1058,6 @@ void RCM_ClearIntFlag(uint32_t flag)
     RCM->INT |= temp;
 }
 
-/**@} end of group RCM_Functions */
-/**@} end of group RCM_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group RCM_Functions */
+/** @} end of group RCM_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

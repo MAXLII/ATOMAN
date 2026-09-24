@@ -1,9 +1,9 @@
 /*!
-    \file    gd32e50x_spi.c
-    \brief   SPI driver
-
-    \version 2026-02-09, V1.7.0, firmware for GD32E50x
-*/
+  \file gd32e50x_spi.c
+  \brief SPI driver
+ 
+  \version 2026-02-09, V1.7.0, firmware for GD32E50x
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,33 +30,34 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32e50x_spi.h"
 
 /* SPI/I2S parameter initialization mask */
-#define SPI_INIT_MASK                   ((uint32_t)0x00003040U)  /*!< SPI parameter initialization mask */
-#define I2S_INIT_MASK                   ((uint32_t)0x0000F047U)  /*!< I2S parameter initialization mask */
-#define I2S_FULL_DUPLEX_MASK            ((uint32_t)0x00000480U)  /*!< I2S full duples mode configure parameter initialization mask */
+#define SPI_INIT_MASK        ((uint32_t)0x00003040U) /*!< SPI parameter initialization mask */
+#define I2S_INIT_MASK        ((uint32_t)0x0000F047U) /*!< I2S parameter initialization mask */
+#define I2S_FULL_DUPLEX_MASK ((uint32_t)0x00000480U) /*!< I2S full duples mode configure parameter initialization mask */
 
 /* default value */
-#define SPI_I2SPSC_DEFAULT_VALUE        ((uint32_t)0x00000002U)  /*!< default value of SPI_I2SPSC register */
+#define SPI_I2SPSC_DEFAULT_VALUE ((uint32_t)0x00000002U) /*!< default value of SPI_I2SPSC register */
 
 /* I2S clock source selection, multiplication and division mask */
-#define I2S1_CLOCK_SEL                  ((uint32_t)0x00020000U)  /*!< I2S1 clock source selection */
-#define I2S2_CLOCK_SEL                  ((uint32_t)0x00040000U)  /*!< I2S2 clock source selection */
-#define I2S_CLOCK_MUL_MASK              ((uint32_t)0x0000F000U)  /*!< I2S clock multiplication mask */
-#define I2S_CLOCK_DIV_MASK              ((uint32_t)0x000000F0U)  /*!< I2S clock division mask */
+#define I2S1_CLOCK_SEL     ((uint32_t)0x00020000U) /*!< I2S1 clock source selection */
+#define I2S2_CLOCK_SEL     ((uint32_t)0x00040000U) /*!< I2S2 clock source selection */
+#define I2S_CLOCK_MUL_MASK ((uint32_t)0x0000F000U) /*!< I2S clock multiplication mask */
+#define I2S_CLOCK_DIV_MASK ((uint32_t)0x000000F0U) /*!< I2S clock division mask */
 
 /*!
-    \brief      reset SPI and I2S 
-    \param[in]  spi_periph: SPIx(x=0,1,2),include I2S1_ADD and I2S2_ADD
-    \param[out] none
-    \retval     none
-*/
+  \brief reset SPI and I2S
+  \param[in]  spi_periph: SPIx(x=0,1,2),include I2S1_ADD and I2S2_ADD
+  \param[out] none
+  \retval none
+ */
 void spi_i2s_deinit(uint32_t spi_periph)
 {
-    switch(spi_periph){
+    switch (spi_periph)
+    {
     case SPI0:
         /* reset SPI0 */
         rcu_periph_reset_enable(RCU_SPI0RST);
@@ -72,17 +73,17 @@ void spi_i2s_deinit(uint32_t spi_periph)
         rcu_periph_reset_enable(RCU_SPI2RST);
         rcu_periph_reset_disable(RCU_SPI2RST);
         break;
-    default :
+    default:
         break;
     }
 }
 
 /*!
-    \brief      initialize the parameters of SPI struct with default values
-    \param[in]  none
-    \param[out] spi_parameter_struct: the initialized struct spi_parameter_struct pointer
-    \retval     none
-*/
+  \brief initialize the parameters of SPI struct with default values
+  \param[in]  none
+  \param[out] spi_parameter_struct: the initialized struct spi_parameter_struct pointer
+  \retval none
+ */
 void spi_struct_para_init(spi_parameter_struct *spi_struct)
 {
     /* configure the structure with default value */
@@ -96,9 +97,9 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct)
 }
 
 /*!
-    \brief      initialize SPI parameter
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  spi_struct: SPI parameter initialization stuct members of the structure 
+  \brief initialize SPI parameter
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  spi_struct: SPI parameter initialization stuct members of the structure
                             and the member values are shown as below:
                   device_mode: SPI_MASTER, SPI_SLAVE
                   trans_mode: SPI_TRANSMODE_FULLDUPLEX, SPI_TRANSMODE_RECEIVEONLY,
@@ -109,13 +110,13 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct)
                   clock_polarity_phase: SPI_CK_PL_LOW_PH_1EDGE, SPI_CK_PL_HIGH_PH_1EDGE
                                         SPI_CK_PL_LOW_PH_2EDGE, SPI_CK_PL_HIGH_PH_2EDGE
                   prescale: SPI_PSC_n (n=2,4,8,16,32,64,128,256)
-    \param[out] none
-    \retval     none
-*/
-void spi_init(uint32_t spi_periph, spi_parameter_struct* spi_struct)
-{   
+  \param[out] none
+  \retval none
+ */
+void spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
+{
     uint32_t reg = 0U;
-    reg = SPI_CTL0(spi_periph);
+    reg          = SPI_CTL0(spi_periph);
     reg &= SPI_INIT_MASK;
 
     /* select SPI as master or slave */
@@ -140,58 +141,61 @@ void spi_init(uint32_t spi_periph, spi_parameter_struct* spi_struct)
 }
 
 /*!
-    \brief      enable SPI
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_enable(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_SPIEN;
 }
 
 /*!
-    \brief      disable SPI 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_disable(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_SPIEN);
 }
 
 /*!
-    \brief      initialize I2S parameter 
-    \param[in]  spi_periph: SPIx(x=1,2)
-    \param[in]  i2s_mode: I2S operation mode
+  \brief initialize I2S parameter
+  \param[in]  spi_periph: SPIx(x=1,2)
+  \param[in]  i2s_mode: I2S operation mode
                 only one parameter can be selected which is shown as below:
-      \arg        I2S_MODE_SLAVETX: I2S slave transmit mode
-      \arg        I2S_MODE_SLAVERX: I2S slave receive mode
-      \arg        I2S_MODE_MASTERTX: I2S master transmit mode
-      \arg        I2S_MODE_MASTERRX: I2S master receive mode
-    \param[in]  i2s_standard: I2S standard
+  \arg I2S_MODE_SLAVETX: I2S slave transmit mode
+  \arg I2S_MODE_SLAVERX: I2S slave receive mode
+  \arg I2S_MODE_MASTERTX: I2S master transmit mode
+  \arg I2S_MODE_MASTERRX: I2S master receive mode
+  \param[in]  i2s_standard: I2S standard
                 only one parameter can be selected which is shown as below:
-      \arg        I2S_STD_PHILIPS: I2S philips standard
-      \arg        I2S_STD_MSB: I2S MSB standard
-      \arg        I2S_STD_LSB: I2S LSB standard
-      \arg        I2S_STD_PCMSHORT: I2S PCM short standard
-      \arg        I2S_STD_PCMLONG: I2S PCM long standard
-    \param[in]  i2s_ckpl: I2S idle state clock polarity
+  \arg I2S_STD_PHILIPS: I2S philips standard
+  \arg I2S_STD_MSB: I2S MSB standard
+  \arg I2S_STD_LSB: I2S LSB standard
+  \arg I2S_STD_PCMSHORT: I2S PCM short standard
+  \arg I2S_STD_PCMLONG: I2S PCM long standard
+  \param[in]  i2s_ckpl: I2S idle state clock polarity
                 only one parameter can be selected which is shown as below:
-      \arg        I2S_CKPL_LOW: I2S clock polarity low level
-      \arg        I2S_CKPL_HIGH: I2S clock polarity high level
-    \param[out] none
-    \retval     none
-*/
-void i2s_init(uint32_t spi_periph, uint32_t i2s_mode, uint32_t i2s_standard, uint32_t i2s_ckpl)
+  \arg I2S_CKPL_LOW: I2S clock polarity low level
+  \arg I2S_CKPL_HIGH: I2S clock polarity high level
+  \param[out] none
+  \retval none
+ */
+void i2s_init(uint32_t spi_periph,
+              uint32_t i2s_mode,
+              uint32_t i2s_standard,
+              uint32_t i2s_ckpl)
 {
-    uint32_t reg= 0U;
-    reg = SPI_I2SCTL(spi_periph);
+    uint32_t reg = 0U;
+    reg          = SPI_I2SCTL(spi_periph);
     reg &= I2S_INIT_MASK;
 
     /* enable I2S mode */
-    reg |= (uint32_t)SPI_I2SCTL_I2SSEL; 
+    reg |= (uint32_t)SPI_I2SCTL_I2SSEL;
     /* select I2S mode */
     reg |= (uint32_t)i2s_mode;
     /* select I2S standard */
@@ -204,77 +208,97 @@ void i2s_init(uint32_t spi_periph, uint32_t i2s_mode, uint32_t i2s_standard, uin
 }
 
 /*!
-    \brief      configure I2S prescaler 
-    \param[in]  spi_periph: SPIx(x=1,2)
-    \param[in]  i2s_audiosample: I2S audio sample rate
+  \brief configure I2S prescaler
+  \param[in]  spi_periph: SPIx(x=1,2)
+  \param[in]  i2s_audiosample: I2S audio sample rate
                 only one parameter can be selected which is shown as below:
-      \arg        I2S_AUDIOSAMPLE_8K: audio sample rate is 8KHz
-      \arg        I2S_AUDIOSAMPLE_11K: audio sample rate is 11KHz
-      \arg        I2S_AUDIOSAMPLE_16K: audio sample rate is 16KHz
-      \arg        I2S_AUDIOSAMPLE_22K: audio sample rate is 22KHz
-      \arg        I2S_AUDIOSAMPLE_32K: audio sample rate is 32KHz
-      \arg        I2S_AUDIOSAMPLE_44K: audio sample rate is 44KHz
-      \arg        I2S_AUDIOSAMPLE_48K: audio sample rate is 48KHz
-      \arg        I2S_AUDIOSAMPLE_96K: audio sample rate is 96KHz
-      \arg        I2S_AUDIOSAMPLE_192K: audio sample rate is 192KHz
-    \param[in]  i2s_frameformat: I2S data length and channel length
+  \arg I2S_AUDIOSAMPLE_8K: audio sample rate is 8KHz
+  \arg I2S_AUDIOSAMPLE_11K: audio sample rate is 11KHz
+  \arg I2S_AUDIOSAMPLE_16K: audio sample rate is 16KHz
+  \arg I2S_AUDIOSAMPLE_22K: audio sample rate is 22KHz
+  \arg I2S_AUDIOSAMPLE_32K: audio sample rate is 32KHz
+  \arg I2S_AUDIOSAMPLE_44K: audio sample rate is 44KHz
+  \arg I2S_AUDIOSAMPLE_48K: audio sample rate is 48KHz
+  \arg I2S_AUDIOSAMPLE_96K: audio sample rate is 96KHz
+  \arg I2S_AUDIOSAMPLE_192K: audio sample rate is 192KHz
+  \param[in]  i2s_frameformat: I2S data length and channel length
                 only one parameter can be selected which is shown as below:
-      \arg        I2S_FRAMEFORMAT_DT16B_CH16B: I2S data length is 16 bit and channel length is 16 bit
-      \arg        I2S_FRAMEFORMAT_DT16B_CH32B: I2S data length is 16 bit and channel length is 32 bit
-      \arg        I2S_FRAMEFORMAT_DT24B_CH32B: I2S data length is 24 bit and channel length is 32 bit
-      \arg        I2S_FRAMEFORMAT_DT32B_CH32B: I2S data length is 32 bit and channel length is 32 bit
-    \param[in]  i2s_mckout: I2S master clock output
+  \arg I2S_FRAMEFORMAT_DT16B_CH16B: I2S data length is 16 bit and channel length is 16 bit
+  \arg I2S_FRAMEFORMAT_DT16B_CH32B: I2S data length is 16 bit and channel length is 32 bit
+  \arg I2S_FRAMEFORMAT_DT24B_CH32B: I2S data length is 24 bit and channel length is 32 bit
+  \arg I2S_FRAMEFORMAT_DT32B_CH32B: I2S data length is 32 bit and channel length is 32 bit
+  \param[in]  i2s_mckout: I2S master clock output
                 only one parameter can be selected which is shown as below:
-      \arg        I2S_MCKOUT_ENABLE: I2S master clock output enable
-      \arg        I2S_MCKOUT_DISABLE: I2S master clock output disable
-    \param[out] none
-    \retval     none
-*/
-void i2s_psc_config(uint32_t spi_periph, uint32_t i2s_audiosample, uint32_t i2s_frameformat, uint32_t i2s_mckout)
+  \arg I2S_MCKOUT_ENABLE: I2S master clock output enable
+  \arg I2S_MCKOUT_DISABLE: I2S master clock output disable
+  \param[out] none
+  \retval none
+ */
+void i2s_psc_config(uint32_t spi_periph,
+                    uint32_t i2s_audiosample,
+                    uint32_t i2s_frameformat,
+                    uint32_t i2s_mckout)
 {
     uint32_t i2sdiv = 2U, i2sof = 0U;
-    uint32_t clks = 0U;
+    uint32_t clks     = 0U;
     uint32_t i2sclock = 0U;
-    
+
 #ifdef GD32E50X_CL
     uint32_t pll2mf_4 = 0U;
 #endif /* GD32E50X_CL */
-    
+
     /* deinit SPI_I2SPSC register */
     SPI_I2SPSC(spi_periph) = SPI_I2SPSC_DEFAULT_VALUE;
 
 #ifdef GD32E50X_CL
     /* get the I2S clock source */
-    if(((uint32_t)spi_periph) == SPI1){
+
+    if (((uint32_t)spi_periph) == SPI1)
+    {
         /* I2S1 clock source selection */
         clks = I2S1_CLOCK_SEL;
-    }else{
+    }
+    else
+    {
         /* I2S2 clock source selection */
         clks = I2S2_CLOCK_SEL;
     }
-    
-    if(0U != (RCU_CFG1 & clks)){
+
+    if (0U != (RCU_CFG1 & clks))
+    {
         /* get RCU PLL2 clock multiplication factor */
         clks = (uint32_t)((RCU_CFG1 & I2S_CLOCK_MUL_MASK) >> 12U);
-        
+
         pll2mf_4 = RCU_CFG1 & RCU_CFG1_PLL2MF_4;
-        
-        if( 0U == pll2mf_4){
-            if((clks > 5U) && (clks < 15U)){
+
+        if (0U == pll2mf_4)
+        {
+            if (    (clks > 5U)
+                 && (clks < 15U))
+            {
                 /* multiplier is between 8 and 16 */
                 clks += 2U;
-            }else{
-                if(15U == clks){
+            }
+            else
+            {
+                if (15U == clks)
+                {
                     /* multiplier is 20 */
                     clks = 20U;
                 }
             }
-        }else{
-            if(clks < 15U){
+        }
+        else
+        {
+            if (clks < 15U)
+            {
                 /* multiplier is between 18 and 32 */
                 clks += 18U;
-            }else{
-                if(15U == clks){
+            }
+            else
+            {
+                if (15U == clks)
+                {
                     /* multiplier is 40 */
                     clks = 40U;
                 }
@@ -284,37 +308,49 @@ void i2s_psc_config(uint32_t spi_periph, uint32_t i2s_audiosample, uint32_t i2s_
         /* get the PREDV1 value */
         i2sclock = (uint32_t)(((RCU_CFG1 & I2S_CLOCK_DIV_MASK) >> 4U) + 1U);
         /* calculate i2sclock based on PLL2 and PREDV1 */
-        i2sclock = (uint32_t)((HXTAL_VALUE / i2sclock) * clks * 2U); 
-    }else{
+        i2sclock = (uint32_t)((HXTAL_VALUE / i2sclock) * clks * 2U);
+    }
+    else
+    {
         /* get system clock */
         i2sclock = rcu_clock_freq_get(CK_SYS);
     }
 #else
     /* get system clock */
     i2sclock = rcu_clock_freq_get(CK_SYS);
-#endif /* GD32E50X_CL */ 
-    
+#endif /* GD32E50X_CL */
+
     /* config the prescaler depending on the mclk output state, the frame format and audio sample rate */
-    if(I2S_MCKOUT_ENABLE == i2s_mckout){
+
+    if (I2S_MCKOUT_ENABLE == i2s_mckout)
+    {
         clks = (uint32_t)(((i2sclock / 256U) * 10U) / i2s_audiosample);
-    }else{
-        if(I2S_FRAMEFORMAT_DT16B_CH16B == i2s_frameformat){
-            clks = (uint32_t)(((i2sclock / 32U) *10U ) / i2s_audiosample);
-        }else{
-            clks = (uint32_t)(((i2sclock / 64U) *10U ) / i2s_audiosample);
+    }
+    else
+    {
+        if (I2S_FRAMEFORMAT_DT16B_CH16B == i2s_frameformat)
+        {
+            clks = (uint32_t)(((i2sclock / 32U) * 10U) / i2s_audiosample);
+        }
+        else
+        {
+            clks = (uint32_t)(((i2sclock / 64U) * 10U) / i2s_audiosample);
         }
     }
-    
+
     /* remove the floating point */
-    clks   = (clks + 5U) / 10U;
-    i2sof  = (clks & 0x00000001U);
+    clks = (clks + 5U) / 10U;
+    i2sof = (clks & 0x00000001U);
     i2sdiv = ((clks - i2sof) / 2U);
-    i2sof  = (i2sof << 8U);
+    i2sof = (i2sof << 8U);
 
     /* set the default values */
-    if((i2sdiv < 2U) || (i2sdiv > 255U)){
+
+    if (    (i2sdiv < 2U)
+         || (i2sdiv > 255U))
+    {
         i2sdiv = 2U;
-        i2sof = 0U;
+        i2sof  = 0U;
     }
 
     /* configure SPI_I2SPSC */
@@ -327,119 +363,125 @@ void i2s_psc_config(uint32_t spi_periph, uint32_t i2s_audiosample, uint32_t i2s_
 }
 
 /*!
-    \brief      enable I2S 
-    \param[in]  spi_periph: SPIx(x=1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable I2S
+  \param[in]  spi_periph: SPIx(x=1,2)
+  \param[out] none
+  \retval none
+ */
 void i2s_enable(uint32_t spi_periph)
 {
     SPI_I2SCTL(spi_periph) |= (uint32_t)SPI_I2SCTL_I2SEN;
 }
 
 /*!
-    \brief      disable I2S 
-    \param[in]  spi_periph: SPIx(x=1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable I2S
+  \param[in]  spi_periph: SPIx(x=1,2)
+  \param[out] none
+  \retval none
+ */
 void i2s_disable(uint32_t spi_periph)
 {
     SPI_I2SCTL(spi_periph) &= (uint32_t)(~SPI_I2SCTL_I2SEN);
 }
 
 /*!
-    \brief      enable SPI NSS output 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI NSS output
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_output_enable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_NSSDRV;
 }
 
 /*!
-    \brief      disable SPI NSS output 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI NSS output
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_output_disable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_NSSDRV);
 }
 
 /*!
-    \brief      SPI NSS pin high level in software mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI NSS pin high level in software mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_internal_high(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_SWNSS;
 }
 
 /*!
-    \brief      SPI NSS pin low level in software mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI NSS pin low level in software mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nss_internal_low(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_SWNSS);
 }
 
 /*!
-    \brief      enable SPI DMA send or receive 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  dma: SPI DMA mode
+  \brief enable SPI DMA send or receive
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  dma: SPI DMA mode
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_DMA_TRANSMIT: SPI transmit data use DMA
-      \arg        SPI_DMA_RECEIVE: SPI receive data use DMA
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_DMA_TRANSMIT: SPI transmit data use DMA
+  \arg SPI_DMA_RECEIVE: SPI receive data use DMA
+  \param[out] none
+  \retval none
+ */
 void spi_dma_enable(uint32_t spi_periph, uint8_t dma)
 {
-    if(SPI_DMA_TRANSMIT == dma){
+    if (SPI_DMA_TRANSMIT == dma)
+    {
         SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_DMATEN;
-    }else{
+    }
+    else
+    {
         SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_DMAREN;
     }
 }
 
 /*!
-    \brief      disable SPI DMA send or receive 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  dma: SPI DMA mode
+  \brief disable SPI DMA send or receive
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  dma: SPI DMA mode
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_DMA_TRANSMIT: SPI transmit data use DMA
-      \arg        SPI_DMA_RECEIVE: SPI receive data use DMA
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_DMA_TRANSMIT: SPI transmit data use DMA
+  \arg SPI_DMA_RECEIVE: SPI receive data use DMA
+  \param[out] none
+  \retval none
+ */
 void spi_dma_disable(uint32_t spi_periph, uint8_t dma)
 {
-    if(SPI_DMA_TRANSMIT == dma){
+    if (SPI_DMA_TRANSMIT == dma)
+    {
         SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_DMATEN);
-    }else{
+    }
+    else
+    {
         SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_DMAREN);
     }
 }
 
 /*!
-    \brief      configure SPI/I2S data frame format
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  frame_format: SPI frame size
+  \brief configure SPI/I2S data frame format
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  frame_format: SPI frame size
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_FRAMESIZE_16BIT: SPI frame size is 16 bits
-      \arg        SPI_FRAMESIZE_8BIT: SPI frame size is 8 bits
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_FRAMESIZE_16BIT: SPI frame size is 16 bits
+  \arg SPI_FRAMESIZE_8BIT: SPI frame size is 8 bits
+  \param[out] none
+  \retval none
+ */
 void spi_i2s_data_frame_format_config(uint32_t spi_periph, uint16_t frame_format)
 {
     /* clear SPI_CTL0_FF16 bit */
@@ -449,70 +491,73 @@ void spi_i2s_data_frame_format_config(uint32_t spi_periph, uint16_t frame_format
 }
 
 /*!
-    \brief      SPI transmit data
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  data: 16-bit data
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI transmit data
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  data: 16-bit data
+  \param[out] none
+  \retval none
+ */
 void spi_i2s_data_transmit(uint32_t spi_periph, uint16_t data)
 {
     SPI_DATA(spi_periph) = (uint32_t)data;
 }
 
 /*!
-    \brief      SPI receive data
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     16-bit data
-*/
+  \brief SPI receive data
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval 16-bit data
+ */
 uint16_t spi_i2s_data_receive(uint32_t spi_periph)
 {
     return ((uint16_t)SPI_DATA(spi_periph));
 }
 
 /*!
-    \brief      configure SPI bidirectional transfer direction
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  transfer_direction: SPI transfer direction
+  \brief configure SPI bidirectional transfer direction
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  transfer_direction: SPI transfer direction
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_BIDIRECTIONAL_TRANSMIT: SPI work in transmit-only mode
-      \arg        SPI_BIDIRECTIONAL_RECEIVE: SPI work in receive-only mode
-    \retval     none
-*/
+  \arg SPI_BIDIRECTIONAL_TRANSMIT: SPI work in transmit-only mode
+  \arg SPI_BIDIRECTIONAL_RECEIVE: SPI work in receive-only mode
+  \retval none
+ */
 void spi_bidirectional_transfer_config(uint32_t spi_periph, uint32_t transfer_direction)
 {
-    if(SPI_BIDIRECTIONAL_TRANSMIT == transfer_direction){
+    if (SPI_BIDIRECTIONAL_TRANSMIT == transfer_direction)
+    {
         /* set the transmit only mode */
         SPI_CTL0(spi_periph) |= (uint32_t)SPI_BIDIRECTIONAL_TRANSMIT;
-    }else{
+    }
+    else
+    {
         /* set the receive only mode */
         SPI_CTL0(spi_periph) &= SPI_BIDIRECTIONAL_RECEIVE;
     }
 }
 
 /*!
-    \brief      clear SPI/I2S format error flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  flag: SPI/I2S frame format error flag 
-      \arg        SPI_FLAG_FERR: only for SPI work in TI mode
-      \arg        I2S_FLAG_FERR: for I2S
-    \param[out] none
-    \retval     none
-*/
+  \brief clear SPI/I2S format error flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  flag: SPI/I2S frame format error flag
+  \arg SPI_FLAG_FERR: only for SPI work in TI mode
+  \arg I2S_FLAG_FERR: for I2S
+  \param[out] none
+  \retval none
+ */
 void spi_i2s_format_error_clear(uint32_t spi_periph, uint32_t flag)
 {
     SPI_STAT(spi_periph) = (uint32_t)(~flag);
 }
 
 /*!
-    \brief      set SPI CRC polynomial 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  crc_poly: CRC polynomial value
-    \param[out] none
-    \retval     none
-*/
-void spi_crc_polynomial_set(uint32_t spi_periph,uint16_t crc_poly)
+  \brief set SPI CRC polynomial
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  crc_poly: CRC polynomial value
+  \param[out] none
+  \retval none
+ */
+void spi_crc_polynomial_set(uint32_t spi_periph, uint16_t crc_poly)
 {
     /* enable SPI CRC */
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_CRCEN;
@@ -522,165 +567,176 @@ void spi_crc_polynomial_set(uint32_t spi_periph,uint16_t crc_poly)
 }
 
 /*!
-    \brief      get SPI CRC polynomial 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     16-bit CRC polynomial
-*/
+  \brief get SPI CRC polynomial
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval 16-bit CRC polynomial
+ */
 uint16_t spi_crc_polynomial_get(uint32_t spi_periph)
 {
     return ((uint16_t)SPI_CRCPOLY(spi_periph));
 }
 
 /*!
-    \brief      turn on CRC function 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief turn on CRC function
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_on(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_CRCEN;
 }
 
 /*!
-    \brief      turn off CRC function 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief turn off CRC function
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_off(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) &= (uint32_t)(~SPI_CTL0_CRCEN);
 }
 
 /*!
-    \brief      SPI next data is CRC value
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief SPI next data is CRC value
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_next(uint32_t spi_periph)
 {
     SPI_CTL0(spi_periph) |= (uint32_t)SPI_CTL0_CRCNT;
 }
 
 /*!
-    \brief      get SPI CRC send value or receive value
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  crc: SPI crc value
+  \brief get SPI CRC send value or receive value
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  crc: SPI crc value
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_CRC_TX: get transmit crc value
-      \arg        SPI_CRC_RX: get receive crc value
-    \param[out] none
-    \retval     16-bit CRC value
-*/
-uint16_t spi_crc_get(uint32_t spi_periph,uint8_t crc)
+  \arg SPI_CRC_TX: get transmit crc value
+  \arg SPI_CRC_RX: get receive crc value
+  \param[out] none
+  \retval 16-bit CRC value
+ */
+uint16_t spi_crc_get(uint32_t spi_periph, uint8_t crc)
 {
-    if(SPI_CRC_TX == crc){
+    if (SPI_CRC_TX == crc)
+    {
         return ((uint16_t)(SPI_TCRC(spi_periph)));
-    }else{
+    }
+    else
+    {
         return ((uint16_t)(SPI_RCRC(spi_periph)));
     }
 }
 
 /*!
-    \brief      clear SPI CRC error flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief clear SPI CRC error flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_crc_error_clear(uint32_t spi_periph)
 {
     SPI_STAT(spi_periph) &= (uint32_t)(~SPI_FLAG_CRCERR);
 }
 
 /*!
-    \brief      enable SPI TI mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI TI mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_ti_mode_enable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_TMOD;
 }
 
 /*!
-    \brief      disable SPI TI mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI TI mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_ti_mode_disable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_TMOD);
 }
 
 /*!
-    \brief      enable SPI NSS pulse mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI NSS pulse mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nssp_mode_enable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)SPI_CTL1_NSSP;
 }
 
 /*!
-    \brief      disable SPI NSS pulse mode
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI NSS pulse mode
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[out] none
+  \retval none
+ */
 void spi_nssp_mode_disable(uint32_t spi_periph)
 {
     SPI_CTL1(spi_periph) &= (uint32_t)(~SPI_CTL1_NSSP);
 }
 
 /*!
-    \brief      configure i2s full duplex mode
-    \param[in]  i2s_add_periph: I2Sx_ADD(x=1,2)
-    \param[in]  i2s_mode: 
-      \arg        I2S_MODE_SLAVETX : I2S slave transmit mode
-      \arg        I2S_MODE_SLAVERX : I2S slave receive mode
-      \arg        I2S_MODE_MASTERTX : I2S master transmit mode
-      \arg        I2S_MODE_MASTERRX : I2S master receive mode
-    \param[in]  i2s_standard: 
-      \arg        I2S_STD_PHILIPS : I2S philips standard
-      \arg        I2S_STD_MSB : I2S MSB standard
-      \arg        I2S_STD_LSB : I2S LSB standard
-      \arg        I2S_STD_PCMSHORT : I2S PCM short standard
-      \arg        I2S_STD_PCMLONG : I2S PCM long standard
-    \param[in]  i2s_ckpl: 
-      \arg        I2S_CKPL_LOW : I2S clock polarity low level
-      \arg        I2S_CKPL_HIGH : I2S clock polarity high level
-    \param[in]  i2s_frameformat:
-      \arg        I2S_FRAMEFORMAT_DT16B_CH16B: I2S data length is 16 bit and channel length is 16 bit
-      \arg        I2S_FRAMEFORMAT_DT16B_CH32B: I2S data length is 16 bit and channel length is 32 bit
-      \arg        I2S_FRAMEFORMAT_DT24B_CH32B: I2S data length is 24 bit and channel length is 32 bit
-      \arg        I2S_FRAMEFORMAT_DT32B_CH32B: I2S data length is 32 bit and channel length is 32 bit
-    \param[out] none
-    \retval     none
-*/
-void i2s_full_duplex_mode_config(uint32_t i2s_add_periph, uint32_t i2s_mode, uint32_t i2s_standard,
-                                 uint32_t i2s_ckpl, uint32_t i2s_frameformat)
+  \brief configure i2s full duplex mode
+  \param[in]  i2s_add_periph: I2Sx_ADD(x=1,2)
+  \param[in]  i2s_mode:
+  \arg I2S_MODE_SLAVETX : I2S slave transmit mode
+  \arg I2S_MODE_SLAVERX : I2S slave receive mode
+  \arg I2S_MODE_MASTERTX : I2S master transmit mode
+  \arg I2S_MODE_MASTERRX : I2S master receive mode
+  \param[in]  i2s_standard:
+  \arg I2S_STD_PHILIPS : I2S philips standard
+  \arg I2S_STD_MSB : I2S MSB standard
+  \arg I2S_STD_LSB : I2S LSB standard
+  \arg I2S_STD_PCMSHORT : I2S PCM short standard
+  \arg I2S_STD_PCMLONG : I2S PCM long standard
+  \param[in]  i2s_ckpl:
+  \arg I2S_CKPL_LOW : I2S clock polarity low level
+  \arg I2S_CKPL_HIGH : I2S clock polarity high level
+  \param[in]  i2s_frameformat:
+  \arg I2S_FRAMEFORMAT_DT16B_CH16B: I2S data length is 16 bit and channel length is 16 bit
+  \arg I2S_FRAMEFORMAT_DT16B_CH32B: I2S data length is 16 bit and channel length is 32 bit
+  \arg I2S_FRAMEFORMAT_DT24B_CH32B: I2S data length is 24 bit and channel length is 32 bit
+  \arg I2S_FRAMEFORMAT_DT32B_CH32B: I2S data length is 32 bit and channel length is 32 bit
+  \param[out] none
+  \retval none
+ */
+void i2s_full_duplex_mode_config(uint32_t i2s_add_periph,
+                                 uint32_t i2s_mode,
+                                 uint32_t i2s_standard,
+                                 uint32_t i2s_ckpl,
+                                 uint32_t i2s_frameformat)
 {
     uint32_t reg = 0U, tmp = 0U;
 
     reg = I2S_ADD_I2SCTL(i2s_add_periph);
-    reg &= I2S_FULL_DUPLEX_MASK;  
+    reg &= I2S_FULL_DUPLEX_MASK;
 
     /* get the mode of the extra I2S module I2Sx_ADD */
-    if((I2S_MODE_MASTERTX == i2s_mode) || (I2S_MODE_SLAVETX == i2s_mode)){
+
+    if (    (I2S_MODE_MASTERTX == i2s_mode)
+         || (I2S_MODE_SLAVETX == i2s_mode))
+    {
         tmp = I2S_MODE_SLAVERX;
-    }else{
+    }
+    else
+    {
         tmp = I2S_MODE_SLAVETX;
     }
 
     /* enable I2S mode */
-    reg |= (uint32_t)SPI_I2SCTL_I2SSEL; 
+    reg |= (uint32_t)SPI_I2SCTL_I2SSEL;
     /* select I2S mode */
     reg |= (uint32_t)tmp;
     /* select I2S standard */
@@ -695,126 +751,127 @@ void i2s_full_duplex_mode_config(uint32_t i2s_add_periph, uint32_t i2s_mode, uin
 }
 
 /*!
-    \brief      enable SPI quad wire mode
-    \param[in]  spi_periph: SPIx(only x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI quad wire mode
+  \param[in]  spi_periph: SPIx(only x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) |= (uint32_t)SPI_QCTL_QMOD;
 }
 
 /*!
-    \brief      disable SPI quad wire mode
-    \param[in]  spi_periph: SPIx(only x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief disable SPI quad wire mode
+  \param[in]  spi_periph: SPIx(only x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_disable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) &= (uint32_t)(~SPI_QCTL_QMOD);
 }
 
 /*!
-    \brief      enable SPI quad wire mode write 
-    \param[in]  spi_periph: SPIx(only x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI quad wire mode write
+  \param[in]  spi_periph: SPIx(only x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_write_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) &= (uint32_t)(~SPI_QCTL_QRD);
 }
 
 /*!
-    \brief      enable SPI quad wire mode read 
-    \param[in]  spi_periph: SPIx(only x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI quad wire mode read
+  \param[in]  spi_periph: SPIx(only x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_read_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) |= (uint32_t)SPI_QCTL_QRD;
 }
 
 /*!
-    \brief      enable SPI quad wire mode SPI_IO2 and SPI_IO3 pin output 
-    \param[in]  spi_periph: SPIx(only x=0)
-    \param[out] none
-    \retval     none
-*/
+  \brief enable SPI quad wire mode SPI_IO2 and SPI_IO3 pin output
+  \param[in]  spi_periph: SPIx(only x=0)
+  \param[out] none
+  \retval none
+ */
 void spi_quad_io23_output_enable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) |= (uint32_t)SPI_QCTL_IO23_DRV;
 }
 
- /*!
-    \brief      disable SPI quad wire mode SPI_IO2 and SPI_IO3 pin output
-    \param[in]  spi_periph: SPIx(only x=0)
-    \param[out] none
-    \retval     none
-*/
- void spi_quad_io23_output_disable(uint32_t spi_periph)
+/*!
+  \brief disable SPI quad wire mode SPI_IO2 and SPI_IO3 pin output
+  \param[in]  spi_periph: SPIx(only x=0)
+  \param[out] none
+  \retval none
+ */
+void spi_quad_io23_output_disable(uint32_t spi_periph)
 {
     SPI_QCTL(spi_periph) &= (uint32_t)(~SPI_QCTL_IO23_DRV);
 }
 
 /*!
-    \brief      enable SPI and I2S interrupt 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  interrupt: SPI/I2S interrupt
+  \brief enable SPI and I2S interrupt
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  interrupt: SPI/I2S interrupt
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_I2S_INT_TBE: transmit buffer empty interrupt
-      \arg        SPI_I2S_INT_RBNE: receive buffer not empty interrupt
-      \arg        SPI_I2S_INT_ERR: CRC error,configuration error,reception overrun error,
-                                   transmission underrun error and format error interrupt
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_I2S_INT_TBE: transmit buffer empty interrupt
+  \arg SPI_I2S_INT_RBNE: receive buffer not empty interrupt
+  \arg SPI_I2S_INT_ERR: CRC error,configuration error,reception overrun error,
+       transmission underrun error and format error interrupt
+  \param[out] none
+  \retval none
+ */
 void spi_i2s_interrupt_enable(uint32_t spi_periph, uint8_t interrupt)
 {
     SPI_CTL1(spi_periph) |= (uint32_t)interrupt;
 }
 
 /*!
-    \brief      disable SPI and I2S interrupt 
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  interrupt: SPI/I2S interrupt
+  \brief disable SPI and I2S interrupt
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  interrupt: SPI/I2S interrupt
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_I2S_INT_TBE: transmit buffer empty interrupt
-      \arg        SPI_I2S_INT_RBNE: receive buffer not empty interrupt
-      \arg        SPI_I2S_INT_ERR: CRC error,configuration error,reception overrun error,
-                                   transmission underrun error and format error interrupt
-    \param[out] none
-    \retval     none
-*/
+  \arg SPI_I2S_INT_TBE: transmit buffer empty interrupt
+  \arg SPI_I2S_INT_RBNE: receive buffer not empty interrupt
+  \arg SPI_I2S_INT_ERR: CRC error,configuration error,reception overrun error,
+       transmission underrun error and format error interrupt
+  \param[out] none
+  \retval none
+ */
 void spi_i2s_interrupt_disable(uint32_t spi_periph, uint8_t interrupt)
 {
     SPI_CTL1(spi_periph) &= ~(uint32_t)interrupt;
 }
 
 /*!
-    \brief      get SPI and I2S interrupt flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  interrupt: SPI/I2S interrupt flag status
+  \brief get SPI and I2S interrupt flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  interrupt: SPI/I2S interrupt flag status
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_I2S_INT_FLAG_TBE: transmit buffer empty interrupt flag
-      \arg        SPI_I2S_INT_FLAG_RBNE: receive buffer not empty interrupt flag
-      \arg        SPI_I2S_INT_FLAG_RXORERR: overrun interrupt flag
-      \arg        SPI_INT_FLAG_CONFERR: config error interrupt flag
-      \arg        SPI_INT_FLAG_CRCERR: CRC error interrupt flag
-      \arg        I2S_INT_FLAG_TXURERR: underrun error interrupt flag
-      \arg        SPI_I2S_INT_FLAG_FERR: format error interrupt flag
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg SPI_I2S_INT_FLAG_TBE: transmit buffer empty interrupt flag
+  \arg SPI_I2S_INT_FLAG_RBNE: receive buffer not empty interrupt flag
+  \arg SPI_I2S_INT_FLAG_RXORERR: overrun interrupt flag
+  \arg SPI_INT_FLAG_CONFERR: config error interrupt flag
+  \arg SPI_INT_FLAG_CRCERR: CRC error interrupt flag
+  \arg I2S_INT_FLAG_TXURERR: underrun error interrupt flag
+  \arg SPI_I2S_INT_FLAG_FERR: format error interrupt flag
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus spi_i2s_interrupt_flag_get(uint32_t spi_periph, uint8_t interrupt)
 {
     uint32_t reg1 = SPI_STAT(spi_periph);
     uint32_t reg2 = SPI_CTL1(spi_periph);
 
-    switch(interrupt){
+    switch (interrupt)
+    {
     /* SPI/I2S transmit buffer empty interrupt */
     case SPI_I2S_INT_FLAG_TBE:
         reg1 = reg1 & SPI_STAT_TBE;
@@ -850,46 +907,52 @@ FlagStatus spi_i2s_interrupt_flag_get(uint32_t spi_periph, uint8_t interrupt)
         reg1 = reg1 & SPI_STAT_FERR;
         reg2 = reg2 & SPI_CTL1_ERRIE;
         break;
-    default :
+    default:
         break;
     }
-    /*get SPI/I2S interrupt flag status */
-    if(reg1 && reg2){
+    /* get SPI/I2S interrupt flag status */
+
+    if (    reg1
+         && reg2)
+    {
         return SET;
-    }else{
+    }
+    else
+    {
         return RESET;
     }
 }
 
 /*!
-    \brief      get SPI and I2S flag status
-    \param[in]  spi_periph: SPIx(x=0,1,2)
-    \param[in]  flag: SPI/I2S flag status
+  \brief get SPI and I2S flag status
+  \param[in]  spi_periph: SPIx(x=0,1,2)
+  \param[in]  flag: SPI/I2S flag status
                 only one parameter can be selected which is shown as below:
-      \arg        SPI_FLAG_TBE: transmit buffer empty flag
-      \arg        SPI_FLAG_RBNE: receive buffer not empty flag
-      \arg        SPI_FLAG_TRANS: transmit on-going flag
-      \arg        SPI_FLAG_RXORERR: receive overrun error flag
-      \arg        SPI_FLAG_CONFERR: mode config error flag
-      \arg        SPI_FLAG_CRCERR: CRC error flag
-      \arg        SPI_FLAG_FERR: format error flag
-      \arg        I2S_FLAG_TBE: transmit buffer empty flag
-      \arg        I2S_FLAG_RBNE: receive buffer not empty flag
-      \arg        I2S_FLAG_TRANS: transmit on-going flag
-      \arg        I2S_FLAG_RXORERR: overrun error flag
-      \arg        I2S_FLAG_TXURERR: underrun error flag
-      \arg        I2S_FLAG_CH: channel side flag
-      \arg        I2S_FLAG_FERR: format error flag
-    \param[out] none
-    \retval     FlagStatus: SET or RESET
-*/
+  \arg SPI_FLAG_TBE: transmit buffer empty flag
+  \arg SPI_FLAG_RBNE: receive buffer not empty flag
+  \arg SPI_FLAG_TRANS: transmit on-going flag
+  \arg SPI_FLAG_RXORERR: receive overrun error flag
+  \arg SPI_FLAG_CONFERR: mode config error flag
+  \arg SPI_FLAG_CRCERR: CRC error flag
+  \arg SPI_FLAG_FERR: format error flag
+  \arg I2S_FLAG_TBE: transmit buffer empty flag
+  \arg I2S_FLAG_RBNE: receive buffer not empty flag
+  \arg I2S_FLAG_TRANS: transmit on-going flag
+  \arg I2S_FLAG_RXORERR: overrun error flag
+  \arg I2S_FLAG_TXURERR: underrun error flag
+  \arg I2S_FLAG_CH: channel side flag
+  \arg I2S_FLAG_FERR: format error flag
+  \param[out] none
+  \retval FlagStatus: SET or RESET
+ */
 FlagStatus spi_i2s_flag_get(uint32_t spi_periph, uint32_t flag)
 {
-    if(SPI_STAT(spi_periph) & flag){
+    if (SPI_STAT(spi_periph) & flag)
+    {
         return SET;
-    }else{
+    }
+    else
+    {
         return RESET;
     }
 }
-
-

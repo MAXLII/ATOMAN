@@ -1,15 +1,15 @@
 /**
  *******************************************************************************
- * @file  hc32_ll.h
+ * @file hc32_ll.h
  * @brief This file contains HC32 Series Device Driver Library file call
  *        management.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
    2024-06-30       CDT             Update version to Rev1.0.0
    2025-11-03       CDT             Update version to Rev1.1.0
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -63,21 +63,21 @@ extern "C"
  * @defgroup Peripheral_Register_WP_Global_Macros Peripheral Register Write Protection Global Macros
  * @{
  */
-#define LL_PERIPH_EFM           (1UL << 0U)
-#define LL_PERIPH_FCG           (1UL << 1U)
-#define LL_PERIPH_GPIO          (1UL << 2U)
-#define LL_PERIPH_INTC          (1UL << 3U)
-#define LL_PERIPH_LVD           (1UL << 4U)
-#define LL_PERIPH_MPU           (1UL << 5U)
-#define LL_PERIPH_PWC_CLK_RMU   (1UL << 6U)
-#define LL_PERIPH_SRAM          (1UL << 7U)
-#define LL_PERIPH_EFM_OTP       (1UL << 8U)
-#define LL_PERIPH_DEFM          (1UL << 9U)
-#define LL_PERIPH_DEFM_OTP      (1UL << 10U)
+#define LL_PERIPH_EFM         (1UL << 0U)
+#define LL_PERIPH_FCG         (1UL << 1U)
+#define LL_PERIPH_GPIO        (1UL << 2U)
+#define LL_PERIPH_INTC        (1UL << 3U)
+#define LL_PERIPH_LVD         (1UL << 4U)
+#define LL_PERIPH_MPU         (1UL << 5U)
+#define LL_PERIPH_PWC_CLK_RMU (1UL << 6U)
+#define LL_PERIPH_SRAM        (1UL << 7U)
+#define LL_PERIPH_EFM_OTP     (1UL << 8U)
+#define LL_PERIPH_DEFM        (1UL << 9U)
+#define LL_PERIPH_DEFM_OTP    (1UL << 10U)
 
-#define LL_PERIPH_ALL           (LL_PERIPH_FCG | LL_PERIPH_GPIO | LL_PERIPH_INTC  | LL_PERIPH_LVD | LL_PERIPH_MPU | \
-                                 LL_PERIPH_SRAM | LL_PERIPH_PWC_CLK_RMU | LL_PERIPH_EFM | LL_PERIPH_EFM_OTP| LL_PERIPH_DEFM| \
-                                 LL_PERIPH_DEFM_OTP)
+#define LL_PERIPH_ALL                                                                                 \
+    (LL_PERIPH_FCG | LL_PERIPH_GPIO | LL_PERIPH_INTC | LL_PERIPH_LVD | LL_PERIPH_MPU | LL_PERIPH_SRAM \
+     | LL_PERIPH_PWC_CLK_RMU | LL_PERIPH_EFM | LL_PERIPH_EFM_OTP | LL_PERIPH_DEFM | LL_PERIPH_DEFM_OTP)
 /**
  * @}
  */
@@ -86,51 +86,51 @@ extern "C"
  * @defgroup Timer_SW_Sync_Start_Global_Macros Timer Software Sync Start Global Macros
  * @{
  */
-#define LL_SW_SYNC_START_TMR0_1_CH_A        PERIC_TMR_SYNENR_TMR0U1A
-#define LL_SW_SYNC_START_TMR0_1_CH_B        PERIC_TMR_SYNENR_TMR0U1B
-#define LL_SW_SYNC_START_TMR0_2_CH_A        PERIC_TMR_SYNENR_TMR0U2A
-#define LL_SW_SYNC_START_TMR0_2_CH_B        PERIC_TMR_SYNENR_TMR0U2B
-#define LL_SW_SYNC_START_TMR4               PERIC_TMR_SYNENR_TMR4U1
-#define LL_SW_SYNC_START_TMR6_1             PERIC_TMR_SYNENR_TMR6U1
-#define LL_SW_SYNC_START_TMR6_2             PERIC_TMR_SYNENR_TMR6U2
-#define LL_SW_SYNC_START_TMR6_3             PERIC_TMR_SYNENR_TMR6U3
-#define LL_SW_SYNC_START_TMR6_4             PERIC_TMR_SYNENR_TMR6U4
-#define LL_SW_SYNC_START_TMRA_1             PERIC_TMR_SYNENR_TMRAU1
-#define LL_SW_SYNC_START_TMRA_2             PERIC_TMR_SYNENR_TMRAU2
-#define LL_SW_SYNC_START_TMRA_3             PERIC_TMR_SYNENR_TMRAU3
-#define LL_SW_SYNC_START_TMRA_4             PERIC_TMR_SYNENR_TMRAU4
-#define LL_SW_SYNC_START_TMRA_5             PERIC_TMR_SYNENR_TMRAU5
-#define LL_SW_SYNC_START_HRPWM_1            PERIC_TMR_SYNENR_HRPWMU1
-#define LL_SW_SYNC_START_HRPWM_2            PERIC_TMR_SYNENR_HRPWMU2
-#define LL_SW_SYNC_START_HRPWM_3            PERIC_TMR_SYNENR_HRPWMU3
-#define LL_SW_SYNC_START_HRPWM_4            PERIC_TMR_SYNENR_HRPWMU4
-#define LL_SW_SYNC_START_HRPWM_5            PERIC_TMR_SYNENR_HRPWMU5
-#define LL_SW_SYNC_START_HRPWM_6            PERIC_TMR_SYNENR_HRPWMU6
-#define LL_SW_SYNC_START_TMR_ALL            (0x3F1F0F1FUL)
+#define LL_SW_SYNC_START_TMR0_1_CH_A PERIC_TMR_SYNENR_TMR0U1A
+#define LL_SW_SYNC_START_TMR0_1_CH_B PERIC_TMR_SYNENR_TMR0U1B
+#define LL_SW_SYNC_START_TMR0_2_CH_A PERIC_TMR_SYNENR_TMR0U2A
+#define LL_SW_SYNC_START_TMR0_2_CH_B PERIC_TMR_SYNENR_TMR0U2B
+#define LL_SW_SYNC_START_TMR4        PERIC_TMR_SYNENR_TMR4U1
+#define LL_SW_SYNC_START_TMR6_1      PERIC_TMR_SYNENR_TMR6U1
+#define LL_SW_SYNC_START_TMR6_2      PERIC_TMR_SYNENR_TMR6U2
+#define LL_SW_SYNC_START_TMR6_3      PERIC_TMR_SYNENR_TMR6U3
+#define LL_SW_SYNC_START_TMR6_4      PERIC_TMR_SYNENR_TMR6U4
+#define LL_SW_SYNC_START_TMRA_1      PERIC_TMR_SYNENR_TMRAU1
+#define LL_SW_SYNC_START_TMRA_2      PERIC_TMR_SYNENR_TMRAU2
+#define LL_SW_SYNC_START_TMRA_3      PERIC_TMR_SYNENR_TMRAU3
+#define LL_SW_SYNC_START_TMRA_4      PERIC_TMR_SYNENR_TMRAU4
+#define LL_SW_SYNC_START_TMRA_5      PERIC_TMR_SYNENR_TMRAU5
+#define LL_SW_SYNC_START_HRPWM_1     PERIC_TMR_SYNENR_HRPWMU1
+#define LL_SW_SYNC_START_HRPWM_2     PERIC_TMR_SYNENR_HRPWMU2
+#define LL_SW_SYNC_START_HRPWM_3     PERIC_TMR_SYNENR_HRPWMU3
+#define LL_SW_SYNC_START_HRPWM_4     PERIC_TMR_SYNENR_HRPWMU4
+#define LL_SW_SYNC_START_HRPWM_5     PERIC_TMR_SYNENR_HRPWMU5
+#define LL_SW_SYNC_START_HRPWM_6     PERIC_TMR_SYNENR_HRPWMU6
+#define LL_SW_SYNC_START_TMR_ALL     (0x3F1F0F1FUL)
 /**
  * @}
  */
 
 /* Defined use Device Driver Library */
-#if !defined (USE_DDL_DRIVER)
+#if !defined(USE_DDL_DRIVER)
 /**
  * @brief Comment the line below if you will not use the Device Driver Library.
- * In this case, the application code will be based on direct access to
- * peripherals registers.
+ *        In this case, the application code will be based on direct access to
+ *        peripherals registers.
  */
 /* #define USE_DDL_DRIVER */
 #endif /* USE_DDL_DRIVER */
 
 /**
-* @defgroup HC32_Series_DDL_Release_Version HC32 Series DDL Release Version
-* @{
-*/
-#define HC32_DDL_REV_MAIN               0x01U  /*!< [31:24] main version  */
-#define HC32_DDL_REV_SUB1               0x01U  /*!< [23:16] sub1 version  */
-#define HC32_DDL_REV_SUB2               0x00U  /*!< [15:8]  sub2 version  */
-#define HC32_DDL_REV_PATCH              0x00U  /*!< [7:0]   patch version */
-#define HC32_DDL_REV                    ((HC32_DDL_REV_MAIN << 24) | (HC32_DDL_REV_SUB1 << 16) | \
-                                         (HC32_DDL_REV_SUB2 << 8 ) | (HC32_DDL_REV_PATCH))
+ * @defgroup HC32_Series_DDL_Release_Version HC32 Series DDL Release Version
+ * @{
+ */
+#define HC32_DDL_REV_MAIN  0x01U /*!< [31:24] main version */
+#define HC32_DDL_REV_SUB1  0x01U /*!< [23:16] sub1 version */
+#define HC32_DDL_REV_SUB2  0x00U /*!< [15:8]  sub2 version */
+#define HC32_DDL_REV_PATCH 0x00U /*!< [7:0]   patch version */
+#define HC32_DDL_REV \
+    ((HC32_DDL_REV_MAIN << 24) | (HC32_DDL_REV_SUB1 << 16) | (HC32_DDL_REV_SUB2 << 8) | (HC32_DDL_REV_PATCH))
 /**
  * @}
  */
@@ -140,7 +140,7 @@ extern "C"
  */
 
 /* Use Device Driver Library */
-#if defined (USE_DDL_DRIVER)
+#if defined(USE_DDL_DRIVER)
 
 /**
  * @brief Include peripheral module's header file
@@ -287,31 +287,31 @@ extern "C"
 
 #endif /* USE_DDL_DRIVER */
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
- * Global function prototypes (definition in C source)
- ******************************************************************************/
-/**
- * @addtogroup LL_Global_Functions
- * @{
- */
-void LL_PERIPH_WE(uint32_t u32Peripheral);
-void LL_PERIPH_WP(uint32_t u32Peripheral);
-void LL_TMR_SWSyncStart(uint32_t u32Tmr);
-/**
- * @}
- */
+    /*******************************************************************************
+     * Global function prototypes (definition in C source)
+     ******************************************************************************/
+    /**
+     * @addtogroup LL_Global_Functions
+     * @{
+     */
+    void LL_PERIPH_WE(uint32_t u32Peripheral);
+    void LL_PERIPH_WP(uint32_t u32Peripheral);
+    void LL_TMR_SWSyncStart(uint32_t u32Tmr);
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }

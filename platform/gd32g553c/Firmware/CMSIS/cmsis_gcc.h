@@ -38,34 +38,34 @@
 
 /* CMSIS compiler specific defines */
 #ifndef __ASM
-#define __ASM                                  __asm
+#define __ASM __asm
 #endif
 #ifndef __INLINE
-#define __INLINE                               inline
+#define __INLINE inline
 #endif
 #ifndef __STATIC_INLINE
-#define __STATIC_INLINE                        static inline
+#define __STATIC_INLINE static inline
 #endif
 #ifndef __STATIC_FORCEINLINE
-#define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
+#define __STATIC_FORCEINLINE __attribute__((always_inline)) static inline
 #endif
 #ifndef __NO_RETURN
-#define __NO_RETURN                            __attribute__((__noreturn__))
+#define __NO_RETURN __attribute__((__noreturn__))
 #endif
 #ifndef __USED
-#define __USED                                 __attribute__((used))
+#define __USED __attribute__((used))
 #endif
 #ifndef __WEAK
-#define __WEAK                                 __attribute__((weak))
+#define __WEAK __attribute__((weak))
 #endif
 #ifndef __PACKED
-#define __PACKED                               __attribute__((packed, aligned(1)))
+#define __PACKED __attribute__((packed, aligned(1)))
 #endif
 #ifndef __PACKED_STRUCT
-#define __PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+#define __PACKED_STRUCT struct __attribute__((packed, aligned(1)))
 #endif
 #ifndef __PACKED_UNION
-#define __PACKED_UNION                         union __attribute__((packed, aligned(1)))
+#define __PACKED_UNION union __attribute__((packed, aligned(1)))
 #endif
 #ifndef __UNALIGNED_UINT32 /* deprecated */
 #pragma GCC diagnostic push
@@ -76,7 +76,7 @@ struct __attribute__((packed)) T_UINT32
     uint32_t v;
 };
 #pragma GCC diagnostic pop
-#define __UNALIGNED_UINT32(x)                  (((struct T_UINT32 *)(x))->v)
+#define __UNALIGNED_UINT32(x) (((struct T_UINT32 *)(x))->v)
 #endif
 #ifndef __UNALIGNED_UINT16_WRITE
 #pragma GCC diagnostic push
@@ -87,7 +87,7 @@ __PACKED_STRUCT T_UINT16_WRITE
     uint16_t v;
 };
 #pragma GCC diagnostic pop
-#define __UNALIGNED_UINT16_WRITE(addr, val)    (void)((((struct T_UINT16_WRITE *)(void *)(addr))->v) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val) (void)((((struct T_UINT16_WRITE *)(void *)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 #pragma GCC diagnostic push
@@ -98,7 +98,7 @@ __PACKED_STRUCT T_UINT16_READ
     uint16_t v;
 };
 #pragma GCC diagnostic pop
-#define __UNALIGNED_UINT16_READ(addr)          (((const struct T_UINT16_READ *)(const void *)(addr))->v)
+#define __UNALIGNED_UINT16_READ(addr) (((const struct T_UINT16_READ *)(const void *)(addr))->v)
 #endif
 #ifndef __UNALIGNED_UINT32_WRITE
 #pragma GCC diagnostic push
@@ -109,7 +109,7 @@ __PACKED_STRUCT T_UINT32_WRITE
     uint32_t v;
 };
 #pragma GCC diagnostic pop
-#define __UNALIGNED_UINT32_WRITE(addr, val)    (void)((((struct T_UINT32_WRITE *)(void *)(addr))->v) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val) (void)((((struct T_UINT32_WRITE *)(void *)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 #pragma GCC diagnostic push
@@ -120,16 +120,16 @@ __PACKED_STRUCT T_UINT32_READ
     uint32_t v;
 };
 #pragma GCC diagnostic pop
-#define __UNALIGNED_UINT32_READ(addr)          (((const struct T_UINT32_READ *)(const void *)(addr))->v)
+#define __UNALIGNED_UINT32_READ(addr) (((const struct T_UINT32_READ *)(const void *)(addr))->v)
 #endif
 #ifndef __ALIGNED
-#define __ALIGNED(x)                           __attribute__((aligned(x)))
+#define __ALIGNED(x) __attribute__((aligned(x)))
 #endif
 #ifndef __RESTRICT
-#define __RESTRICT                             __restrict
+#define __RESTRICT __restrict
 #endif
 #ifndef __COMPILER_BARRIER
-#define __COMPILER_BARRIER()                   __ASM volatile("":::"memory")
+#define __COMPILER_BARRIER() __ASM volatile("" :: : "memory")
 #endif
 
 /* #########################  Startup and Lowlevel Init  ######################## */
@@ -184,36 +184,36 @@ __STATIC_FORCEINLINE __NO_RETURN void __cmsis_start(void)
     _start();
 }
 
-#define __PROGRAM_START           __cmsis_start
+#define __PROGRAM_START __cmsis_start
 #endif
 
 #ifndef __INITIAL_SP
-#define __INITIAL_SP              __StackTop
+#define __INITIAL_SP __StackTop
 #endif
 
 #ifndef __STACK_LIMIT
-#define __STACK_LIMIT             __StackLimit
+#define __STACK_LIMIT __StackLimit
 #endif
 
 #ifndef __VECTOR_TABLE
-#define __VECTOR_TABLE            __Vectors
+#define __VECTOR_TABLE __Vectors
 #endif
 
 #ifndef __VECTOR_TABLE_ATTRIBUTE
-#define __VECTOR_TABLE_ATTRIBUTE  __attribute__((used, section(".vectors")))
+#define __VECTOR_TABLE_ATTRIBUTE __attribute__((used, section(".vectors")))
 #endif
 
 #if defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
 #ifndef __STACK_SEAL
-#define __STACK_SEAL              __StackSeal
+#define __STACK_SEAL __StackSeal
 #endif
 
 #ifndef __TZ_STACK_SEAL_SIZE
-#define __TZ_STACK_SEAL_SIZE      8U
+#define __TZ_STACK_SEAL_SIZE 8U
 #endif
 
 #ifndef __TZ_STACK_SEAL_VALUE
-#define __TZ_STACK_SEAL_VALUE     0xFEF5EDA5FEF5EDA5ULL
+#define __TZ_STACK_SEAL_VALUE 0xFEF5EDA5FEF5EDA5ULL
 #endif
 
 __STATIC_FORCEINLINE void __TZ_set_STACKSEAL_S(uint32_t *stackTop)
@@ -232,39 +232,39 @@ __STATIC_FORCEINLINE void __TZ_set_STACKSEAL_S(uint32_t *stackTop)
  * For thumb1, use low register (r0-r7), specified by constraint "l"
  * Otherwise, use general registers, specified by constraint "r" */
 #if defined(__thumb__) && !defined(__thumb2__)
-#define __CMSIS_GCC_OUT_REG(r) "=l" (r)
-#define __CMSIS_GCC_RW_REG(r) "+l" (r)
-#define __CMSIS_GCC_USE_REG(r) "l" (r)
+#define __CMSIS_GCC_OUT_REG(r) "=l"(r)
+#define __CMSIS_GCC_RW_REG(r)  "+l"(r)
+#define __CMSIS_GCC_USE_REG(r) "l"(r)
 #else
-#define __CMSIS_GCC_OUT_REG(r) "=r" (r)
-#define __CMSIS_GCC_RW_REG(r) "+r" (r)
-#define __CMSIS_GCC_USE_REG(r) "r" (r)
+#define __CMSIS_GCC_OUT_REG(r) "=r"(r)
+#define __CMSIS_GCC_RW_REG(r)  "+r"(r)
+#define __CMSIS_GCC_USE_REG(r) "r"(r)
 #endif
 
 /**
   \brief No Operation
   \details No Operation does nothing. This instruction can be used for code alignment purposes.
  */
-#define __NOP()                             __ASM volatile ("nop")
+#define __NOP() __ASM volatile("nop")
 
 /**
   \brief Wait For Interrupt
   \details Wait For Interrupt is a hint instruction that suspends execution until one of a number of events occurs.
  */
-#define __WFI()                             __ASM volatile ("wfi":::"memory")
+#define __WFI() __ASM volatile("wfi" :: : "memory")
 
 /**
   \brief Wait For Event
   \details Wait For Event is a hint instruction that permits the processor to enter
            a low-power state until one of a number of events occurs.
  */
-#define __WFE()                             __ASM volatile ("wfe":::"memory")
+#define __WFE() __ASM volatile("wfe" :: : "memory")
 
 /**
   \brief Send Event
   \details Send Event is a hint instruction. It causes an event to be signaled to the CPU.
  */
-#define __SEV()                             __ASM volatile ("sev")
+#define __SEV() __ASM volatile("sev")
 
 /**
   \brief Instruction Synchronization Barrier
@@ -558,13 +558,12 @@ __STATIC_FORCEINLINE void __CLREX(void)
   \param [in]  ARG2  Bit position to saturate to (1..32)
   \return Saturated value
  */
-#define __SSAT(ARG1, ARG2) \
-__extension__ \
-({                          \
-  int32_t __RES, __ARG1 = (ARG1); \
-  __ASM volatile ("ssat %0, %1, %2" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) : "cc" ); \
-  __RES; \
- })
+#define __SSAT(ARG1, ARG2)                                                               \
+    __extension__({                                                                      \
+        int32_t __RES, __ARG1 = (ARG1);                                                  \
+        __ASM volatile("ssat %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc"); \
+        __RES;                                                                           \
+    })
 
 /**
   \brief Unsigned Saturate
@@ -573,13 +572,12 @@ __extension__ \
   \param [in]  ARG2  Bit position to saturate to (0..31)
   \return Saturated value
  */
-#define __USAT(ARG1, ARG2) \
-__extension__ \
-({                          \
-  uint32_t __RES, __ARG1 = (ARG1); \
-  __ASM volatile ("usat %0, %1, %2" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) : "cc" ); \
-  __RES; \
- })
+#define __USAT(ARG1, ARG2)                                                               \
+    __extension__({                                                                      \
+        uint32_t __RES, __ARG1 = (ARG1);                                                 \
+        __ASM volatile("usat %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc"); \
+        __RES;                                                                           \
+    })
 
 /**
   \brief Rotate Right with Extend (32 bit)
@@ -1879,21 +1877,19 @@ __STATIC_FORCEINLINE uint32_t __USADA8(uint32_t op1, uint32_t op2, uint32_t op3)
     return (result);
 }
 
-#define __SSAT16(ARG1, ARG2) \
-__extension__ \
-({                          \
-  int32_t __RES, __ARG1 = (ARG1); \
-  __ASM volatile ("ssat16 %0, %1, %2" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) : "cc" ); \
-  __RES; \
- })
+#define __SSAT16(ARG1, ARG2)                                                               \
+    __extension__({                                                                        \
+        int32_t __RES, __ARG1 = (ARG1);                                                    \
+        __ASM volatile("ssat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc"); \
+        __RES;                                                                             \
+    })
 
-#define __USAT16(ARG1, ARG2) \
-__extension__ \
-({                          \
-  uint32_t __RES, __ARG1 = (ARG1); \
-  __ASM volatile ("usat16 %0, %1, %2" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) : "cc" ); \
-  __RES; \
- })
+#define __USAT16(ARG1, ARG2)                                                               \
+    __extension__({                                                                        \
+        uint32_t __RES, __ARG1 = (ARG1);                                                   \
+        __ASM volatile("usat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc"); \
+        __RES;                                                                             \
+    })
 
 __STATIC_FORCEINLINE uint32_t __UXTB16(uint32_t op1)
 {
@@ -2155,24 +2151,22 @@ __STATIC_FORCEINLINE int32_t __QSUB(int32_t op1, int32_t op2)
     return (result);
 }
 
-#define __PKHBT(ARG1, ARG2, ARG3) \
-__extension__ \
-({                          \
-  uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2); \
-  __ASM ("pkhbt %0, %1, %2, lsl %3" : "=r" (__RES) :  "r" (__ARG1), "r" (__ARG2), "I" (ARG3)  ); \
-  __RES; \
- })
+#define __PKHBT(ARG1, ARG2, ARG3)                                                              \
+    __extension__({                                                                            \
+        uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2);                                      \
+        __ASM("pkhbt %0, %1, %2, lsl %3" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2), "I"(ARG3)); \
+        __RES;                                                                                 \
+    })
 
-#define __PKHTB(ARG1, ARG2, ARG3) \
-__extension__ \
-({                          \
-  uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2); \
-  if (ARG3 == 0) \
-    __ASM ("pkhtb %0, %1, %2" : "=r" (__RES) :  "r" (__ARG1), "r" (__ARG2)  ); \
-  else \
-    __ASM ("pkhtb %0, %1, %2, asr %3" : "=r" (__RES) :  "r" (__ARG1), "r" (__ARG2), "I" (ARG3)  ); \
-  __RES; \
- })
+#define __PKHTB(ARG1, ARG2, ARG3)                                                                  \
+    __extension__({                                                                                \
+        uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2);                                          \
+        if (ARG3 == 0)                                                                             \
+            __ASM("pkhtb %0, %1, %2" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2));                    \
+        else                                                                                       \
+            __ASM("pkhtb %0, %1, %2, asr %3" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2), "I"(ARG3)); \
+        __RES;                                                                                     \
+    })
 
 __STATIC_FORCEINLINE int32_t __SMMLA(int32_t op1, int32_t op2, int32_t op3)
 {

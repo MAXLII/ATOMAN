@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_dbgmcu.h
+ * @file apm32f402_403_dbgmcu.h
  *
- * @brief       This file contains all the functions prototypes for the DBUGMCU firmware library
+ * @brief This file contains all the functions prototypes for the DBUGMCU firmware library
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -31,57 +31,57 @@
 #include "apm32f402_403.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/** @addtogroup APM32F402_403_StdPeriphDriver
-  @{
-*/
+    /** @addtogroup APM32F402_403_StdPeriphDriver
+      @{
+     */
 
-/** @addtogroup DBGMCU_Driver DBGMCU Driver
-  @{
-*/
+    /** @addtogroup DBGMCU_Driver DBGMCU Driver
+      @{
+     */
 
-/** @defgroup DBGMCU_Enumerations Enumerations
-  @{
-*/
+    /** @defgroup DBGMCU_Enumerations Enumerations
+      @{
+     */
 
-/**
- * @brief DBGMCU_STOP description
- */
-enum
-{
-    DBGMCU_SLEEP                = ((uint32_t)0x00000001),
-    DBGMCU_STOP                 = ((uint32_t)0x00000002),
-    DBGMCU_STANDBY              = ((uint32_t)0x00000004),
-    DBGMCU_IWDT_STOP            = ((uint32_t)0x00000100),
-    DBGMCU_WWDT_STOP            = ((uint32_t)0x00000200),
-    DBGMCU_TMR1_STOP            = ((uint32_t)0x00000400),
-    DBGMCU_TMR2_STOP            = ((uint32_t)0x00000800),
-    DBGMCU_TMR3_STOP            = ((uint32_t)0x00001000),
-    DBGMCU_TMR4_STOP            = ((uint32_t)0x00002000),
-    DBGMCU_CAN1_STOP            = ((uint32_t)0x00004000),
-    DBGMCU_I2C1_SMBUS_TIMEOUT   = ((uint32_t)0x00008000),
-    DBGMCU_TMR5_STOP            = ((uint32_t)0x00020000),
-    DBGMCU_TMR8_STOP            = ((uint32_t)0x00100000),
-    DBGMCU_CAN2_STOP            = ((uint32_t)0x00200000),
-};
+    /**
+     * @brief DBGMCU_STOP description
+     */
+    enum
+    {
+        DBGMCU_SLEEP              = ((uint32_t)0x00000001),
+        DBGMCU_STOP               = ((uint32_t)0x00000002),
+        DBGMCU_STANDBY            = ((uint32_t)0x00000004),
+        DBGMCU_IWDT_STOP          = ((uint32_t)0x00000100),
+        DBGMCU_WWDT_STOP          = ((uint32_t)0x00000200),
+        DBGMCU_TMR1_STOP          = ((uint32_t)0x00000400),
+        DBGMCU_TMR2_STOP          = ((uint32_t)0x00000800),
+        DBGMCU_TMR3_STOP          = ((uint32_t)0x00001000),
+        DBGMCU_TMR4_STOP          = ((uint32_t)0x00002000),
+        DBGMCU_CAN1_STOP          = ((uint32_t)0x00004000),
+        DBGMCU_I2C1_SMBUS_TIMEOUT = ((uint32_t)0x00008000),
+        DBGMCU_TMR5_STOP          = ((uint32_t)0x00020000),
+        DBGMCU_TMR8_STOP          = ((uint32_t)0x00100000),
+        DBGMCU_CAN2_STOP          = ((uint32_t)0x00200000),
+    };
 
-/**@} end of group DBGMCU_Enumerations*/
+    /** @} end of group DBGMCU_Enumerations */
 
+    /** @defgroup DBGMCU_Functions Functions
+      @{
+     */
 
-/** @defgroup DBGMCU_Functions Functions
-  @{
-*/
+    uint32_t DBGMCU_ReadDEVID(void);
+    uint32_t DBGMCU_ReadREVID(void);
+    void DBGMCU_Enable(uint32_t periph);
+    void DBGMCU_Disable(uint32_t periph);
 
-uint32_t DBGMCU_ReadDEVID(void);
-uint32_t DBGMCU_ReadREVID(void);
-void DBGMCU_Enable(uint32_t periph);
-void DBGMCU_Disable(uint32_t periph);
-
-/**@} end of group DBGMCU_Functions*/
-/**@} end of group DBGMCU_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+    /** @} end of group DBGMCU_Functions */
+    /** @} end of group DBGMCU_Driver */
+    /** @} end of group APM32F402_403_StdPeriphDriver */
 
 #ifdef __cplusplus
 }

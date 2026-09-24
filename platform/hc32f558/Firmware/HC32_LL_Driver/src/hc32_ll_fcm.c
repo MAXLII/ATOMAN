@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_fcm.c
+ * @file hc32_ll_fcm.c
  * @brief This file provides firmware functions to manage the Frequency Clock
  *        Measurement (FCM).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -51,12 +51,12 @@
  */
 
 /* FCM Registers RESET Value */
-#define FCM_REG_RST_VALUE       (0x00000000UL)
+#define FCM_REG_RST_VALUE (0x00000000UL)
 
 /* FCM interrupt mask */
-#define FCM_INT_MASK            (FCM_INT_OVF | FCM_INT_END | FCM_INT_ERR)
+#define FCM_INT_MASK (FCM_INT_OVF | FCM_INT_END | FCM_INT_ERR)
 /* FCM status flag mask */
-#define FCM_FLAG_MASK           (FCM_COM_SR_ERRF1 | FCM_COM_SR_MENDF1 | FCM_COM_SR_OVF1)
+#define FCM_FLAG_MASK (FCM_COM_SR_ERRF1 | FCM_COM_SR_MENDF1 | FCM_COM_SR_OVF1)
 
 /**
  * @defgroup FCM_Check_Parameters_Validity FCM Check Parameters Validity
@@ -64,84 +64,50 @@
  */
 
 /* Parameters validity check for FCM Unit */
-#define IS_FCM_UNIT(x)                                                       \
-(   ((x) == CM_FCM1)                      ||                                 \
-    ((x) == CM_FCM2)                      ||                                 \
-    ((x) == CM_FCM3)                      ||                                 \
-    ((x) == CM_FCM4))
+#define IS_FCM_UNIT(x) (((x) == CM_FCM1) || ((x) == CM_FCM2) || ((x) == CM_FCM3) || ((x) == CM_FCM4))
 
 /* Parameter validity check for FCM target and reference clock source. */
-#define IS_FCM_TARGET_SRC(x)                                                 \
-(   ((x) == FCM_TARGET_CLK_XTAL)          ||                                 \
-    ((x) == FCM_TARGET_CLK_HCLK)          ||                                 \
-    ((x) == FCM_TARGET_CLK_HRC)           ||                                 \
-    ((x) == FCM_TARGET_CLK_LRC)           ||                                 \
-    ((x) == FCM_TARGET_CLK_SWDTCLK)       ||                                 \
-    ((x) == FCM_TARGET_CLK_PCLK1)         ||                                 \
-    ((x) == FCM_TARGET_CLK_PCLK3)         ||                                 \
-    ((x) == FCM_TARGET_CLK_MRC)           ||                                 \
-    ((x) == FCM_TARGET_CLK_PLLHP)         ||                                 \
-    ((x) == FCM_TARGET_CLK_FHRC))
+#define IS_FCM_TARGET_SRC(x)                                                                         \
+    (((x) == FCM_TARGET_CLK_XTAL) || ((x) == FCM_TARGET_CLK_HCLK) || ((x) == FCM_TARGET_CLK_HRC)     \
+  || ((x) == FCM_TARGET_CLK_LRC) || ((x) == FCM_TARGET_CLK_SWDTCLK) || ((x) == FCM_TARGET_CLK_PCLK1) \
+  || ((x) == FCM_TARGET_CLK_PCLK3) || ((x) == FCM_TARGET_CLK_MRC) || ((x) == FCM_TARGET_CLK_PLLHP)   \
+  || ((x) == FCM_TARGET_CLK_FHRC))
 
-#define IS_FCM_REF_SRC(x)                                                    \
-(   ((x) == FCM_REF_CLK_EXTCLK)           ||                                 \
-    ((x) == FCM_REF_CLK_XTAL)             ||                                 \
-    ((x) == FCM_REF_CLK_HCLK)             ||                                 \
-    ((x) == FCM_REF_CLK_HRC)              ||                                 \
-    ((x) == FCM_REF_CLK_LRC)              ||                                 \
-    ((x) == FCM_REF_CLK_SWDTCLK)          ||                                 \
-    ((x) == FCM_REF_CLK_PCLK1)            ||                                 \
-    ((x) == FCM_REF_CLK_PCLK3)            ||                                 \
-    ((x) == FCM_REF_CLK_MRC)              ||                                 \
-    ((x) == FCM_REF_CLK_PLLHP)            ||                                 \
-    ((x) == FCM_REF_CLK_FHRC))
+#define IS_FCM_REF_SRC(x)                                                                                              \
+    (((x) == FCM_REF_CLK_EXTCLK) || ((x) == FCM_REF_CLK_XTAL) || ((x) == FCM_REF_CLK_HCLK) || ((x) == FCM_REF_CLK_HRC) \
+  || ((x) == FCM_REF_CLK_LRC) || ((x) == FCM_REF_CLK_SWDTCLK) || ((x) == FCM_REF_CLK_PCLK1)                            \
+  || ((x) == FCM_REF_CLK_PCLK3) || ((x) == FCM_REF_CLK_MRC) || ((x) == FCM_REF_CLK_PLLHP)                              \
+  || ((x) == FCM_REF_CLK_FHRC))
 
 /* Parameter validity check for FCM target clock division. */
-#define IS_FCM_TARGET_DIV(x)                                                 \
-(   ((x) == FCM_TARGET_CLK_DIV1)          ||                                 \
-    ((x) == FCM_TARGET_CLK_DIV4)          ||                                 \
-    ((x) == FCM_TARGET_CLK_DIV8)          ||                                 \
-    ((x) == FCM_TARGET_CLK_DIV32))
+#define IS_FCM_TARGET_DIV(x)                                                                      \
+    (((x) == FCM_TARGET_CLK_DIV1) || ((x) == FCM_TARGET_CLK_DIV4) || ((x) == FCM_TARGET_CLK_DIV8) \
+  || ((x) == FCM_TARGET_CLK_DIV32))
 
 /* Parameter validity check for FCM external reference input function. */
-#define IS_FCM_EXT_REF_FUNC(x)                                               \
-(   ((x) == FCM_EXT_REF_OFF)              ||                                 \
-    ((x) == FCM_EXT_REF_ON))
+#define IS_FCM_EXT_REF_FUNC(x) (((x) == FCM_EXT_REF_OFF) || ((x) == FCM_EXT_REF_ON))
 
 /* Parameter validity check for FCM reference clock edge. */
-#define IS_FCM_REF_EDGE(x)                                                   \
-(   ((x) == FCM_REF_CLK_RISING)           ||                                 \
-    ((x) == FCM_REF_CLK_FALLING)          ||                                 \
-    ((x) == FCM_REF_CLK_BOTH))
+#define IS_FCM_REF_EDGE(x) (((x) == FCM_REF_CLK_RISING) || ((x) == FCM_REF_CLK_FALLING) || ((x) == FCM_REF_CLK_BOTH))
 
 /* Parameter validity check for FCM digital filter function. */
-#define IS_FCM_DIG_FILTER(x)                                                 \
-(   ((x) == FCM_DIG_FILTER_OFF)           ||                                 \
-    ((x) == FCM_DIG_FILTER_DIV1)          ||                                 \
-    ((x) == FCM_DIG_FILTER_DIV4)          ||                                 \
-    ((x) == FCM_DIG_FILTER_DIV16))
+#define IS_FCM_DIG_FILTER(x)                                                                     \
+    (((x) == FCM_DIG_FILTER_OFF) || ((x) == FCM_DIG_FILTER_DIV1) || ((x) == FCM_DIG_FILTER_DIV4) \
+  || ((x) == FCM_DIG_FILTER_DIV16))
 
 /* Parameter validity check for FCM reference clock division. */
-#define IS_FCM_REF_DIV(x)                                                    \
-(   ((x) == FCM_REF_CLK_DIV32)            ||                                 \
-    ((x) == FCM_REF_CLK_DIV128)           ||                                 \
-    ((x) == FCM_REF_CLK_DIV1024)          ||                                 \
-    ((x) == FCM_REF_CLK_DIV8192))
+#define IS_FCM_REF_DIV(x)                                                                      \
+    (((x) == FCM_REF_CLK_DIV32) || ((x) == FCM_REF_CLK_DIV128) || ((x) == FCM_REF_CLK_DIV1024) \
+  || ((x) == FCM_REF_CLK_DIV8192))
 
 /* Parameter validity check for FCM exception type function. */
-#define IS_FCM_EXP_TYPE(x)                                                   \
-(   ((x) == FCM_EXP_TYPE_INT)             ||                                 \
-    ((x) == FCM_EXP_TYPE_RST))
+#define IS_FCM_EXP_TYPE(x) (((x) == FCM_EXP_TYPE_INT) || ((x) == FCM_EXP_TYPE_RST))
 
 /* Parameter validity check for FCM interrupt. */
-#define IS_FCM_INT(x)                                                        \
-(   ((x) != 0x00UL)                       &&                                 \
-    (((x) | FCM_INT_MASK) == FCM_INT_MASK))
+#define IS_FCM_INT(x) (((x) != 0x00UL) && (((x) | FCM_INT_MASK) == FCM_INT_MASK))
 
 /* Parameter validity check for FCM flag state. */
-#define IS_FCM_FLAG(x)                                                       \
-(   ((x) != 0x00UL)                       &&                                 \
-    (((x) | FCM_FLAG_MASK) == FCM_FLAG_MASK))
+#define IS_FCM_FLAG(x) (((x) != 0x00UL) && (((x) | FCM_FLAG_MASK) == FCM_FLAG_MASK))
 
 /**
  * @}
@@ -172,14 +138,14 @@
  */
 
 /**
- * @brief  Initialize FCM.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] pstcFcmInit         Pointer to a @ref stc_fcm_init_t structure
- *                                  that contains configuration information.
+ * @brief Initialize FCM.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] pstcFcmInit         Pointer to a @ref stc_fcm_init_t structure
+ *        that contains configuration information.
  * @retval int32_t:
- *       - LL_OK:                   FCM initialize successful
- *       - LL_ERR_INVD_PARAM:       Invalid parameter
+ *         - LL_OK:                   FCM initialize successful
+ *         - LL_ERR_INVD_PARAM:       Invalid parameter
  */
 int32_t FCM_Init(CM_FCM_TypeDef *FCMx, const stc_fcm_init_t *pstcFcmInit)
 {
@@ -187,9 +153,13 @@ int32_t FCM_Init(CM_FCM_TypeDef *FCMx, const stc_fcm_init_t *pstcFcmInit)
 
     DDL_ASSERT(IS_FCM_UNIT(FCMx));
     /* Check if pointer is NULL */
-    if (NULL == pstcFcmInit) {
+
+    if (NULL == pstcFcmInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Parameter validity checking */
         DDL_ASSERT(IS_FCM_TARGET_SRC(pstcFcmInit->u32TargetClock));
         DDL_ASSERT(IS_FCM_TARGET_DIV(pstcFcmInit->u32TargetClockDiv));
@@ -203,51 +173,55 @@ int32_t FCM_Init(CM_FCM_TypeDef *FCMx, const stc_fcm_init_t *pstcFcmInit)
         WRITE_REG32(FCMx->LVR, pstcFcmInit->u16LowerLimit);
         WRITE_REG32(FCMx->UVR, pstcFcmInit->u16UpperLimit);
         WRITE_REG32(FCMx->MCCR, (pstcFcmInit->u32TargetClock | pstcFcmInit->u32TargetClockDiv));
-        WRITE_REG32(FCMx->RCCR, (pstcFcmInit->u32ExtRefClockEnable | pstcFcmInit->u32RefClockEdge |
-                                 pstcFcmInit->u32DigitalFilter | pstcFcmInit->u32RefClock |
-                                 pstcFcmInit->u32RefClockDiv));
+        WRITE_REG32(FCMx->RCCR,
+                    (pstcFcmInit->u32ExtRefClockEnable | pstcFcmInit->u32RefClockEdge | pstcFcmInit->u32DigitalFilter
+                     | pstcFcmInit->u32RefClock | pstcFcmInit->u32RefClockDiv));
         MODIFY_REG32(FCMx->RIER, FCM_RIER_ERRINTRS, pstcFcmInit->u32ExceptionType);
     }
     return i32Ret;
 }
 
 /**
- * @brief  Initialize FCM structure. Fill each pstcFcmInit with default value.
- * @param  [in] pstcFcmInit         Pointer to a @ref stc_fcm_init_t structure
- *                                  that contains configuration information.
+ * @brief Initialize FCM structure. Fill each pstcFcmInit with default value.
+ * @param [in] pstcFcmInit         Pointer to a @ref stc_fcm_init_t structure
+ *        that contains configuration information.
  * @retval int32_t:
- *       - LL_OK:                   FCM structure initialize successful
- *       - LL_ERR_INVD_PARAM:       Invalid parameter
+ *         - LL_OK:                   FCM structure initialize successful
+ *         - LL_ERR_INVD_PARAM:       Invalid parameter
  */
 int32_t FCM_StructInit(stc_fcm_init_t *pstcFcmInit)
 {
     int32_t i32Ret = LL_OK;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcFcmInit) {
+
+    if (NULL == pstcFcmInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* RESET FCM init structure parameters values */
-        pstcFcmInit->u16LowerLimit = 0U;
-        pstcFcmInit->u16UpperLimit = 0U;
-        pstcFcmInit->u32TargetClock = FCM_TARGET_CLK_XTAL;
-        pstcFcmInit->u32TargetClockDiv = FCM_TARGET_CLK_DIV1;
+        pstcFcmInit->u16LowerLimit        = 0U;
+        pstcFcmInit->u16UpperLimit        = 0U;
+        pstcFcmInit->u32TargetClock       = FCM_TARGET_CLK_XTAL;
+        pstcFcmInit->u32TargetClockDiv    = FCM_TARGET_CLK_DIV1;
         pstcFcmInit->u32ExtRefClockEnable = FCM_EXT_REF_OFF;
-        pstcFcmInit->u32RefClockEdge = FCM_REF_CLK_RISING;
-        pstcFcmInit->u32DigitalFilter = FCM_DIG_FILTER_OFF;
-        pstcFcmInit->u32RefClock = FCM_REF_CLK_XTAL;
-        pstcFcmInit->u32RefClockDiv = FCM_REF_CLK_DIV32;
-        pstcFcmInit->u32ExceptionType = FCM_EXP_TYPE_INT;
+        pstcFcmInit->u32RefClockEdge      = FCM_REF_CLK_RISING;
+        pstcFcmInit->u32DigitalFilter     = FCM_DIG_FILTER_OFF;
+        pstcFcmInit->u32RefClock          = FCM_REF_CLK_XTAL;
+        pstcFcmInit->u32RefClockDiv       = FCM_REF_CLK_DIV32;
+        pstcFcmInit->u32ExceptionType     = FCM_EXP_TYPE_INT;
     }
     return i32Ret;
 }
 
 /**
- * @brief  De-Initialize FCM.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
+ * @brief De-Initialize FCM.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
  * @retval int32_t:
- *           - LL_OK:                   De-Initialize success.
+ *         - LL_OK:                   De-Initialize success.
  */
 int32_t FCM_DeInit(CM_FCM_TypeDef *FCMx)
 {
@@ -255,8 +229,11 @@ int32_t FCM_DeInit(CM_FCM_TypeDef *FCMx)
     uint32_t i;
 
     DDL_ASSERT(IS_FCM_UNIT(FCMx));
-    for (i = 0UL; i < ARRAY_SZ(au32FCMUnit); i++) {
-        if ((uint32_t)FCMx == au32FCMUnit[i]) {
+
+    for (i = 0UL; i < ARRAY_SZ(au32FCMUnit); i++)
+    {
+        if ((uint32_t)FCMx == au32FCMUnit[i])
+        {
             CLR_REG32_BIT(CM_FCM_COM->STR, FCM_COM_STR_START1 << i);
             break;
         }
@@ -271,14 +248,14 @@ int32_t FCM_DeInit(CM_FCM_TypeDef *FCMx)
 }
 
 /**
- * @brief  Get FCM state, get FCM overflow, complete, error flag.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] u32Flag         FCM flags.This parameter can be one or any
- *                              combination of the following values: @ref FCM_Flag_Sel
- *   @arg  FCM_FLAG_ERR:        FCM error.
- *   @arg  FCM_FLAG_END:        FCM measure end.
- *   @arg  FCM_FLAG_OVF:        FCM overflow.
+ * @brief Get FCM state, get FCM overflow, complete, error flag.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] u32Flag         FCM flags.This parameter can be one or any
+ *        combination of the following values: @ref FCM_Flag_Sel
+ * @arg FCM_FLAG_ERR:        FCM error.
+ * @arg FCM_FLAG_END:        FCM measure end.
+ * @arg FCM_FLAG_OVF:        FCM overflow.
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t FCM_GetStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag)
@@ -288,8 +265,11 @@ en_flag_status_t FCM_GetStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag)
 
     DDL_ASSERT(IS_FCM_UNIT(FCMx));
     DDL_ASSERT(IS_FCM_FLAG(u32Flag));
-    for (i = 0UL; i < ARRAY_SZ(au32FCMUnit); i++) {
-        if ((uint32_t)FCMx == au32FCMUnit[i]) {
+
+    for (i = 0UL; i < ARRAY_SZ(au32FCMUnit); i++)
+    {
+        if ((uint32_t)FCMx == au32FCMUnit[i])
+        {
             u32Flag <<= i;
             break;
         }
@@ -298,14 +278,14 @@ en_flag_status_t FCM_GetStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag)
 }
 
 /**
- * @brief  Clear FCM state, Clear FCM overflow, complete, error flag.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] u32Flag     FCM flags.This parameter can be one or any
- *                          combination of the following values: @ref FCM_Flag_Sel
- *   @arg  FCM_FLAG_ERR:    FCM error.
- *   @arg  FCM_FLAG_END:    FCM measure end.
- *   @arg  FCM_FLAG_OVF:    FCM overflow.
+ * @brief Clear FCM state, Clear FCM overflow, complete, error flag.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] u32Flag     FCM flags.This parameter can be one or any
+ *        combination of the following values: @ref FCM_Flag_Sel
+ * @arg FCM_FLAG_ERR:    FCM error.
+ * @arg FCM_FLAG_END:    FCM measure end.
+ * @arg FCM_FLAG_OVF:    FCM overflow.
  * @retval None.
  */
 void FCM_ClearStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag)
@@ -317,9 +297,9 @@ void FCM_ClearStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag)
 }
 
 /**
- * @brief  Get FCM counter value.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
+ * @brief Get FCM counter value.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
  * @retval FCM counter value.
  */
 uint16_t FCM_GetCountValue(CM_FCM_TypeDef *FCMx)
@@ -329,15 +309,15 @@ uint16_t FCM_GetCountValue(CM_FCM_TypeDef *FCMx)
 }
 
 /**
- * @brief  FCM target clock type and division config.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] u32ClockSrc Target clock type. @ref FCM_Target_Clock_Src
- * @param  [in] u32Div Target clock division. @ref FCM_Target_Clock_Div
- *   @arg  FCM_TARGET_CLK_DIV1
- *   @arg  FCM_TARGET_CLK_DIV4
- *   @arg  FCM_TARGET_CLK_DIV8
- *   @arg  FCM_TARGET_CLK_DIV32
+ * @brief FCM target clock type and division config.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] u32ClockSrc Target clock type. @ref FCM_Target_Clock_Src
+ * @param [in] u32Div Target clock division. @ref FCM_Target_Clock_Div
+ * @arg FCM_TARGET_CLK_DIV1
+ * @arg FCM_TARGET_CLK_DIV4
+ * @arg FCM_TARGET_CLK_DIV8
+ * @arg FCM_TARGET_CLK_DIV32
  * @retval None.
  */
 void FCM_SetTargetClock(CM_FCM_TypeDef *FCMx, uint32_t u32ClockSrc, uint32_t u32Div)
@@ -349,15 +329,15 @@ void FCM_SetTargetClock(CM_FCM_TypeDef *FCMx, uint32_t u32ClockSrc, uint32_t u32
 }
 
 /**
- * @brief  FCM reference clock type and division config.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] u32ClockSrc Reference clock type. @ref FCM_Ref_Clock_Src
- * @param  [in] u32Div Reference clock division. @ref FCM_Ref_Clock_Div
- *   @arg  FCM_REF_CLK_DIV32
- *   @arg  FCM_REF_CLK_DIV128
- *   @arg  FCM_REF_CLK_DIV1024
- *   @arg  FCM_REF_CLK_DIV8192
+ * @brief FCM reference clock type and division config.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] u32ClockSrc Reference clock type. @ref FCM_Ref_Clock_Src
+ * @param [in] u32Div Reference clock division. @ref FCM_Ref_Clock_Div
+ * @arg FCM_REF_CLK_DIV32
+ * @arg FCM_REF_CLK_DIV128
+ * @arg FCM_REF_CLK_DIV1024
+ * @arg FCM_REF_CLK_DIV8192
  * @retval None.
  */
 void FCM_SetRefClock(CM_FCM_TypeDef *FCMx, uint32_t u32ClockSrc, uint32_t u32Div)
@@ -369,10 +349,10 @@ void FCM_SetRefClock(CM_FCM_TypeDef *FCMx, uint32_t u32ClockSrc, uint32_t u32Div
 }
 
 /**
- * @brief  Enable or disable the FCM frequency abnormal reset
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] enNewState      An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the FCM frequency abnormal reset
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] enNewState      An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void FCM_ResetCmd(CM_FCM_TypeDef *FCMx, en_functional_state_t enNewState)
@@ -380,23 +360,26 @@ void FCM_ResetCmd(CM_FCM_TypeDef *FCMx, en_functional_state_t enNewState)
     DDL_ASSERT(IS_FCM_UNIT(FCMx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(FCMx->RIER, FCM_RIER_ERRRE);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(FCMx->RIER, FCM_RIER_ERRRE);
     }
 }
 
 /**
- * @brief  Enable or disable the FCM interrupt
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] u32IntType      The FCM interrupt type. This parameter can be
- *                              one or any combination @ref FCM_Int_Type
- *    @arg FCM_INT_OVF:         FCM overflow interrupt
- *    @arg FCM_INT_END:         FCM calculate end interrupt
- *    @arg FCM_INT_ERR:         FCM frequency abnormal interrupt
- * @param  [in] enNewState      An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the FCM interrupt
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] u32IntType      The FCM interrupt type. This parameter can be
+ *        one or any combination @ref FCM_Int_Type
+ * @arg FCM_INT_OVF:         FCM overflow interrupt
+ * @arg FCM_INT_END:         FCM calculate end interrupt
+ * @arg FCM_INT_ERR:         FCM frequency abnormal interrupt
+ * @param [in] enNewState      An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void FCM_IntCmd(CM_FCM_TypeDef *FCMx, uint32_t u32IntType, en_functional_state_t enNewState)
@@ -405,18 +388,21 @@ void FCM_IntCmd(CM_FCM_TypeDef *FCMx, uint32_t u32IntType, en_functional_state_t
     DDL_ASSERT(IS_FCM_INT(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(FCMx->RIER, u32IntType);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(FCMx->RIER, u32IntType);
     }
 }
 
 /**
- * @brief  FCM function config.
- * @param  [in] FCMx FCM unit instance.
- *   @arg  CM_FCMx or CM_FCM
- * @param  [in] enNewState      An @ref en_functional_state_t enumeration value.
+ * @brief FCM function config.
+ * @param [in] FCMx FCM unit instance.
+ * @arg CM_FCMx or CM_FCM
+ * @param [in] enNewState      An @ref en_functional_state_t enumeration value.
  * @retval None.
  */
 void FCM_Cmd(CM_FCM_TypeDef *FCMx, en_functional_state_t enNewState)
@@ -425,11 +411,17 @@ void FCM_Cmd(CM_FCM_TypeDef *FCMx, en_functional_state_t enNewState)
     uint32_t i;
     DDL_ASSERT(IS_FCM_UNIT(FCMx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
-    for (i = 0UL; i < ARRAY_SZ(au32FCMUnit); i++) {
-        if ((uint32_t)FCMx == au32FCMUnit[i]) {
-            if (ENABLE == enNewState) {
+
+    for (i = 0UL; i < ARRAY_SZ(au32FCMUnit); i++)
+    {
+        if ((uint32_t)FCMx == au32FCMUnit[i])
+        {
+            if (ENABLE == enNewState)
+            {
                 SET_REG32_BIT(CM_FCM_COM->STR, FCM_COM_STR_START1 << i);
-            } else {
+            }
+            else
+            {
                 CLR_REG32_BIT(CM_FCM_COM->STR, FCM_COM_STR_START1 << i);
             }
             break;

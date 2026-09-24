@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_dbgc.c
+ * @file hc32_ll_dbgc.c
  * @brief This file provides firmware functions to manage the DBGC.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -55,11 +55,9 @@
  * @{
  */
 /* Parameter valid check for debug trace mode */
-#define IS_DBGC_TRACE_MD(x)                                                    \
-(   ((x) == DBGC_TRACE_ASYNC)                       ||                         \
-    ((x) == DBGC_TRACE_SYNC_1BIT)                   ||                         \
-    ((x) == DBGC_TRACE_SYNC_2BIT)                   ||                         \
-    ((x) == DBGC_TRACE_SYNC_4BIT))
+#define IS_DBGC_TRACE_MD(x)                                                                      \
+    (((x) == DBGC_TRACE_ASYNC) || ((x) == DBGC_TRACE_SYNC_1BIT) || ((x) == DBGC_TRACE_SYNC_2BIT) \
+  || ((x) == DBGC_TRACE_SYNC_4BIT))
 /**
  * @}
  */
@@ -89,41 +87,47 @@
  */
 
 /**
- * @brief  Whether to stop the peripheral while mcu core stop.
- * @param  [in] u32Periph Specifies the peripheral. @ref DBGC_Periph_Sel
- * @param  [in] enNewState An @ref en_functional_state_t enumeration value.
+ * @brief Whether to stop the peripheral while mcu core stop.
+ * @param [in] u32Periph Specifies the peripheral. @ref DBGC_Periph_Sel
+ * @param [in] enNewState An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void DBGC_PeriphCmd(uint32_t u32Periph, en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         CLR_REG32_BIT(CM_DBGC->MCUSTPCTL, u32Periph);
-    } else {
+    }
+    else
+    {
         SET_REG32_BIT(CM_DBGC->MCUSTPCTL, u32Periph);
     }
 }
 
 /**
- * @brief  Enable or disable the trace pin output.
- * @param  [in] enNewState An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the trace pin output.
+ * @param [in] enNewState An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void DBGC_TraceIoCmd(en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_DBGC->MCUTRACECTL, DBGC_MCUTRACECTL_TRACEIOEN);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_DBGC->MCUTRACECTL, DBGC_MCUTRACECTL_TRACEIOEN);
     }
 }
 
 /**
- * @brief  Config trace mode.
- * @param  [in] u32TraceMode Specifies the trace mode. @ref DBGC_Trace_Mode
+ * @brief Config trace mode.
+ * @param [in] u32TraceMode Specifies the trace mode. @ref DBGC_Trace_Mode
  * @retval None
  */
 void DBGC_TraceModeConfig(uint32_t u32TraceMode)

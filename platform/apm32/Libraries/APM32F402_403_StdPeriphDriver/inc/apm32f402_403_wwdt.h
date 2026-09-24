@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_wwdt.h
+ * @file apm32f402_403_wwdt.h
  *
- * @brief       This file contains all the functions prototypes for the WWDT firmware library
+ * @brief This file contains all the functions prototypes for the WWDT firmware library
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -31,61 +31,62 @@
 #include "apm32f402_403.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/** @addtogroup APM32F402_403_StdPeriphDriver
-  @{
-*/
+    /** @addtogroup APM32F402_403_StdPeriphDriver
+      @{
+     */
 
-/** @addtogroup WWDT_Driver WWDT Driver
-  @{
-*/
+    /** @addtogroup WWDT_Driver WWDT Driver
+      @{
+     */
 
-/** @defgroup  WWDT_Enumerations Enumerations
-  @{
-*/
+    /** @defgroup WWDT_Enumerations Enumerations
+      @{
+     */
 
-/**
- * @brief    WWDT Timebase(Prescaler) definition
- */
-typedef enum
-{
-    WWDT_TIME_BASE_1 = 0x00000000,
-    WWDT_TIME_BASE_2 = 0x00000080,
-    WWDT_TIME_BASE_4 = 0x00000100,
-    WWDT_TIME_BASE_8 = 0x00000180
-} WWDT_TIME_BASE_T;
+    /**
+     * @brief WWDT Timebase(Prescaler) definition
+     */
+    typedef enum
+    {
+        WWDT_TIME_BASE_1 = 0x00000000,
+        WWDT_TIME_BASE_2 = 0x00000080,
+        WWDT_TIME_BASE_4 = 0x00000100,
+        WWDT_TIME_BASE_8 = 0x00000180
+    } WWDT_TIME_BASE_T;
 
-/**@} end of group WWDT_Enumerations */
+    /** @} end of group WWDT_Enumerations */
 
-/** @defgroup  WWDT_Functions Functions
-  @{
-*/
+    /** @defgroup WWDT_Functions Functions
+      @{
+     */
 
-/* WWDT reset */
-void WWDT_Reset(void);
+    /* WWDT reset */
+    void WWDT_Reset(void);
 
-/* Configure WWDT Timebase */
-void WWDT_ConfigTimebase(WWDT_TIME_BASE_T timeBase);
+    /* Configure WWDT Timebase */
+    void WWDT_ConfigTimebase(WWDT_TIME_BASE_T timeBase);
 
-/* Configure Window Data */
-void WWDT_ConfigWindowData(uint8_t windowData);
+    /* Configure Window Data */
+    void WWDT_ConfigWindowData(uint8_t windowData);
 
-/* Configure Couter */
-void WWDT_ConfigCounter(uint8_t counter);
+    /* Configure Couter */
+    void WWDT_ConfigCounter(uint8_t counter);
 
-/* Enable WWDT and Early Wakeup interrupt */
-void WWDT_EnableEWI(void);
-void WWDT_Enable(uint8_t count);
+    /* Enable WWDT and Early Wakeup interrupt */
+    void WWDT_EnableEWI(void);
+    void WWDT_Enable(uint8_t count);
 
-/* Read Flag and Clear Flag */
-uint8_t WWDT_ReadFlag(void);
-void WWDT_ClearFlag(void);
+    /* Read Flag and Clear Flag */
+    uint8_t WWDT_ReadFlag(void);
+    void WWDT_ClearFlag(void);
 
-/**@} end of group WWDT_Functions */
-/**@} end of group WWDT_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+    /** @} end of group WWDT_Functions */
+    /** @} end of group WWDT_Driver */
+    /** @} end of group APM32F402_403_StdPeriphDriver */
 
 #ifdef __cplusplus
 }

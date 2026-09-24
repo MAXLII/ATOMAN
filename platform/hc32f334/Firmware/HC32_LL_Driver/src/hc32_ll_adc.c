@@ -1,9 +1,9 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_adc.c
+ * @file hc32_ll_adc.c
  * @brief This file provides firmware functions to manage the Analog-to-Digital
  *        Converter(ADC).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
@@ -13,7 +13,7 @@
    2025-06-06       CDT             Changed API name from ADC_SetSeqAResumeMode to ADC_SetSeqResumeMode for adapting to new products.
                                     Changed parameter type of API ADC_TriggerConfig.
    2025-11-03       CDT             API optimized: ADC_AWD_Config(),ADC_AWD_SetThreshold()
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -56,14 +56,14 @@
  * @{
  */
 
-#define ADC_RMU_TIMEOUT                 (100U)
+#define ADC_RMU_TIMEOUT (100U)
 
 /**
  * @defgroup ADC_AWD_DR_CHSR ADC AWD DR CHSR
  * @{
  */
-#define ADC_AWDx_DR(awd, reg_base)      (*(__IO uint16_t *)((uint32_t)(reg_base) + ((uint32_t)(awd) * 8U)))
-#define ADC_AWDx_CHSR(awd, reg_base)    (*(__IO uint8_t *)((uint32_t)(reg_base) + ((uint32_t)(awd) * 8U)))
+#define ADC_AWDx_DR(awd, reg_base)   (*(__IO uint16_t *)((uint32_t)(reg_base) + ((uint32_t)(awd) * 8U)))
+#define ADC_AWDx_CHSR(awd, reg_base) (*(__IO uint8_t *)((uint32_t)(reg_base) + ((uint32_t)(awd) * 8U)))
 /**
  * @}
  */
@@ -72,15 +72,15 @@
  * @defgroup ADC_Channel_Max ADC Channel Max
  * @{
  */
-#define ADC1_CH_MAX                     (ADC_CH15)
-#define ADC2_CH_MAX                     (ADC_CH15)
-#define ADC3_CH_MAX                     (ADC_CH11)
-#define ADC1_REMAP_CH_MAX               (ADC_CH15)
-#define ADC2_REMAP_CH_MAX               (ADC_CH15)
-#define ADC3_REMAP_CH_MAX               (ADC_CH11)
-#define ADC1_REMAP_PIN_MAX              (ADC1_PIN_PC5)
-#define ADC2_REMAP_PIN_MAX              (ADC2_PIN_PC5)
-#define ADC3_REMAP_PIN_MAX              (ADC3_PIN_PB10)
+#define ADC1_CH_MAX        (ADC_CH15)
+#define ADC2_CH_MAX        (ADC_CH15)
+#define ADC3_CH_MAX        (ADC_CH11)
+#define ADC1_REMAP_CH_MAX  (ADC_CH15)
+#define ADC2_REMAP_CH_MAX  (ADC_CH15)
+#define ADC3_REMAP_CH_MAX  (ADC_CH11)
+#define ADC1_REMAP_PIN_MAX (ADC1_PIN_PC5)
+#define ADC2_REMAP_PIN_MAX (ADC2_PIN_PC5)
+#define ADC3_REMAP_PIN_MAX (ADC3_PIN_PB10)
 /**
  * @}
  */
@@ -89,10 +89,10 @@
  * @defgroup ADC_Reg_Access_Width ADC Register Access Width
  * @{
  */
-#define ADC_CHSEL_TYPE                   uint32_t
-#define ADC_CHSEL_WRITE                  WRITE_REG32
-#define ADC_CHSEL_SETBIT                 SET_REG32_BIT
-#define ADC_CHSEL_CLRBIT                 CLR_REG32_BIT
+#define ADC_CHSEL_TYPE   uint32_t
+#define ADC_CHSEL_WRITE  WRITE_REG32
+#define ADC_CHSEL_SETBIT SET_REG32_BIT
+#define ADC_CHSEL_CLRBIT CLR_REG32_BIT
 /**
  * @}
  */
@@ -101,120 +101,90 @@
  * @defgroup ADC_Check_Parameters_Validity ADC check parameters validity
  * @{
  */
-#define IS_ADC_1BIT_MASK(x)             (((x) != 0U) && (((x) & ((x) - 1U)) == 0U))
-#define IS_ADC_BIT_MASK(x, mask)        (((x) != 0U) && (((x) | (mask)) == (mask)))
+#define IS_ADC_1BIT_MASK(x)      (((x) != 0U) && (((x) & ((x) - 1U)) == 0U))
+#define IS_ADC_BIT_MASK(x, mask) (((x) != 0U) && (((x) | (mask)) == (mask)))
 
 /* ADC unit check */
-#define IS_ADC_UNIT(x)                                                         \
-(   ((x) == CM_ADC1)                        ||                                 \
-    ((x) == CM_ADC2)                        ||                                 \
-    ((x) == CM_ADC3))
+#define IS_ADC_UNIT(x) (((x) == CM_ADC1) || ((x) == CM_ADC2) || ((x) == CM_ADC3))
 
 /* ADC sequence check */
-#define IS_ADC_SEQ(x)                   (((x) == ADC_SEQ_A) || ((x) == ADC_SEQ_B))
+#define IS_ADC_SEQ(x) (((x) == ADC_SEQ_A) || ((x) == ADC_SEQ_B))
 
 /* ADC channel check */
-#define IS_ADC_CH(adc, ch)                                                     \
-(   (((adc) == CM_ADC1) && ((ch) <= ADC1_CH_MAX))   ||                         \
-    (((adc) == CM_ADC2) && ((ch) <= ADC2_CH_MAX))   ||                         \
-    (((adc) == CM_ADC3) && ((ch) <= ADC3_CH_MAX)))
+#define IS_ADC_CH(adc, ch)                                                                          \
+    ((((adc) == CM_ADC1) && ((ch) <= ADC1_CH_MAX)) || (((adc) == CM_ADC2) && ((ch) <= ADC2_CH_MAX)) \
+  || (((adc) == CM_ADC3) && ((ch) <= ADC3_CH_MAX)))
 
 /* ADC MX channel check */
-#define IS_ADC_MX_CH(adc, ch)                                                  \
-(   (((adc) == CM_ADC1) && IS_ADC_BIT_MASK(ch, ADC1_MX_CH_ALL))   ||           \
-    (((adc) == CM_ADC2) && IS_ADC_BIT_MASK(ch, ADC2_MX_CH_ALL))   ||           \
-    (((adc) == CM_ADC3) && IS_ADC_BIT_MASK(ch, ADC3_MX_CH_ALL)))
+#define IS_ADC_MX_CH(adc, ch)                                    \
+    ((((adc) == CM_ADC1) && IS_ADC_BIT_MASK(ch, ADC1_MX_CH_ALL)) \
+  || (((adc) == CM_ADC2) && IS_ADC_BIT_MASK(ch, ADC2_MX_CH_ALL)) \
+  || (((adc) == CM_ADC3) && IS_ADC_BIT_MASK(ch, ADC3_MX_CH_ALL)))
 
-#define IS_ADC_SCAN_MD(x)                                                      \
-(   ((x) == ADC_MD_SEQA_SINGLESHOT)             ||                             \
-    ((x) == ADC_MD_SEQA_CONT)                   ||                             \
-    ((x) == ADC_MD_SEQA_SEQB_SINGLESHOT)        ||                             \
-    ((x) == ADC_MD_SEQA_CONT_SEQB_SINGLESHOT)   ||                             \
-    ((x) == ADC_MD_SEQA_BUF)                    ||                             \
-    ((x) == ADC_MD_SEQA_BUF_SEQB_SINGLESHOT))
+#define IS_ADC_SCAN_MD(x)                                                                                 \
+    (((x) == ADC_MD_SEQA_SINGLESHOT) || ((x) == ADC_MD_SEQA_CONT) || ((x) == ADC_MD_SEQA_SEQB_SINGLESHOT) \
+  || ((x) == ADC_MD_SEQA_CONT_SEQB_SINGLESHOT) || ((x) == ADC_MD_SEQA_BUF)                                \
+  || ((x) == ADC_MD_SEQA_BUF_SEQB_SINGLESHOT))
 
-#define IS_ADC_RESOLUTION(x)                                                   \
-(   ((x) == ADC_RESOLUTION_8BIT)            ||                                 \
-    ((x) == ADC_RESOLUTION_10BIT)           ||                                 \
-    ((x) == ADC_RESOLUTION_12BIT))
+#define IS_ADC_RESOLUTION(x) \
+    (((x) == ADC_RESOLUTION_8BIT) || ((x) == ADC_RESOLUTION_10BIT) || ((x) == ADC_RESOLUTION_12BIT))
 
-#define IS_ADC_HARDTRIG(x)                                                     \
-(   ((x) == ADC_HARDTRIG_ADTRG_PIN)         ||                                 \
-    ((x) == ADC_HARDTRIG_EVT0)              ||                                 \
-    ((x) == ADC_HARDTRIG_EVT1)              ||                                 \
-    ((x) == ADC_HARDTRIG_EVT0_EVT1))
+#define IS_ADC_HARDTRIG(x)                                                                       \
+    (((x) == ADC_HARDTRIG_ADTRG_PIN) || ((x) == ADC_HARDTRIG_EVT0) || ((x) == ADC_HARDTRIG_EVT1) \
+  || ((x) == ADC_HARDTRIG_EVT0_EVT1))
 
-#define IS_ADC_DATAALIGN(x)                                                    \
-(   ((x) == ADC_DATAALIGN_RIGHT)            ||                                 \
-    ((x) == ADC_DATAALIGN_LEFT))
+#define IS_ADC_DATAALIGN(x) (((x) == ADC_DATAALIGN_RIGHT) || ((x) == ADC_DATAALIGN_LEFT))
 
-#define IS_ADC_SEQ_RESUME_MD(x)                                                \
-(   ((x) == ADC_RESUME_SCAN_CONT)           ||                                 \
-    ((x) == ADC_RESUME_SCAN_RESTART))
+#define IS_ADC_SEQ_RESUME_MD(x) (((x) == ADC_RESUME_SCAN_CONT) || ((x) == ADC_RESUME_SCAN_RESTART))
 
-#define IS_ADC_SAMPLE_TIME(x)           ((x) >= 5U)
+#define IS_ADC_SAMPLE_TIME(x) ((x) >= 5U)
 
-#define IS_ADC_SAMPLE_MD(x)                                                    \
-(   ((x) == ADC_SAMPLE_MD_NORMAL)           ||                                 \
-    ((x) == ADC_SAMPLE_MD_OVER))
+#define IS_ADC_SAMPLE_MD(x) (((x) == ADC_SAMPLE_MD_NORMAL) || ((x) == ADC_SAMPLE_MD_OVER))
 
-#define IS_ADC_OVER_SAMPLE_SHIFT(x)     (((x) >> ADC_CR2_OVSS_POS) <= 8U)
+#define IS_ADC_OVER_SAMPLE_SHIFT(x) (((x) >> ADC_CR2_OVSS_POS) <= 8U)
 
-#define IS_ADC_INT(x)                   IS_ADC_BIT_MASK(x, ADC_INT_ALL)
-#define IS_ADC_FLAG(x)                  IS_ADC_BIT_MASK(x, ADC_FLAG_ALL)
+#define IS_ADC_INT(x)  IS_ADC_BIT_MASK(x, ADC_INT_ALL)
+#define IS_ADC_FLAG(x) IS_ADC_BIT_MASK(x, ADC_FLAG_ALL)
 
 /* Scan-average. */
-#define IS_ADC_AVG_CNT(x)               (((x) >> ADC_CR0_AVCNT_POS) <= 7U)
+#define IS_ADC_AVG_CNT(x) (((x) >> ADC_CR0_AVCNT_POS) <= 7U)
 
 /* Extended channel. */
-#define IS_ADC_EXTCH_SRC(x)                                                    \
-(   ((x) == ADC_EXTCH_EXTERN_ANALOG_PIN)    ||                                 \
-    ((x) == ADC_EXTCH_INTERN_ANALOG_SRC))
+#define IS_ADC_EXTCH_SRC(x) (((x) == ADC_EXTCH_EXTERN_ANALOG_PIN) || ((x) == ADC_EXTCH_INTERN_ANALOG_SRC))
 
-#define IS_ADC_REMAP_PIN(adc, pin)                                             \
-(   (((adc) == CM_ADC1) && ((pin) <= ADC1_REMAP_PIN_MAX))    ||                \
-    (((adc) == CM_ADC2) && ((pin) >= ADC2_PIN_PA4) && ((pin) <= ADC2_REMAP_PIN_MAX)) || \
-    (((adc) == CM_ADC3) && (((pin) <= ADC3_PIN_PB15) || (((pin) >= ADC3_PIN_PA6) && ((pin) <= ADC3_REMAP_PIN_MAX)))))
+#define IS_ADC_REMAP_PIN(adc, pin)                                                    \
+    ((((adc) == CM_ADC1) && ((pin) <= ADC1_REMAP_PIN_MAX))                            \
+  || (((adc) == CM_ADC2) && ((pin) >= ADC2_PIN_PA4) && ((pin) <= ADC2_REMAP_PIN_MAX)) \
+  || (((adc) == CM_ADC3) && (((pin) <= ADC3_PIN_PB15) || (((pin) >= ADC3_PIN_PA6) && ((pin) <= ADC3_REMAP_PIN_MAX)))))
 
-#define IS_ADC_REMAP_CH(adc, ch)                                               \
-(   (((adc) == CM_ADC1) && ((ch) <= ADC1_REMAP_CH_MAX))      ||                \
-    (((adc) == CM_ADC2) && ((ch) <= ADC2_REMAP_CH_MAX))      ||                \
-    (((adc) == CM_ADC3) && ((ch) <= ADC3_REMAP_CH_MAX)))
+#define IS_ADC_REMAP_CH(adc, ch)                                                                                \
+    ((((adc) == CM_ADC1) && ((ch) <= ADC1_REMAP_CH_MAX)) || (((adc) == CM_ADC2) && ((ch) <= ADC2_REMAP_CH_MAX)) \
+  || (((adc) == CM_ADC3) && ((ch) <= ADC3_REMAP_CH_MAX)))
 
 /* Sync mode. */
-#define IS_ADC_SYNC_MD(x)                                                      \
-(   ((x) == ADC_SYNC_SINGLE_DELAY_TRIG)     ||                                 \
-    ((x) == ADC_SYNC_SINGLE_PARALLEL_TRIG)  ||                                 \
-    ((x) == ADC_SYNC_CYCLIC_DELAY_TRIG)     ||                                 \
-    ((x) == ADC_SYNC_CYCLIC_PARALLEL_TRIG))
+#define IS_ADC_SYNC_MD(x)                                                          \
+    (((x) == ADC_SYNC_SINGLE_DELAY_TRIG) || ((x) == ADC_SYNC_SINGLE_PARALLEL_TRIG) \
+  || ((x) == ADC_SYNC_CYCLIC_DELAY_TRIG) || ((x) == ADC_SYNC_CYCLIC_PARALLEL_TRIG))
 
-#define IS_ADC_SYNC(x)                                                         \
-(   ((x) == ADC_SYNC_ADC1_ADC2)             ||                                 \
-    ((x) == ADC_SYNC_ADC1_ADC2_ADC3))
+#define IS_ADC_SYNC(x) (((x) == ADC_SYNC_ADC1_ADC2) || ((x) == ADC_SYNC_ADC1_ADC2_ADC3))
 
 /* Analog watchdog. */
-#define IS_ADC_AWD_MD(x)                                                       \
-(   ((x) == ADC_AWD_MD_CMP_OUT)             ||                                 \
-    ((x) == ADC_AWD_MD_CMP_IN))
+#define IS_ADC_AWD_MD(x) (((x) == ADC_AWD_MD_CMP_OUT) || ((x) == ADC_AWD_MD_CMP_IN))
 
-#define IS_ADC_AWD(x)                   ((x) <= ADC_AWD1)
+#define IS_ADC_AWD(x) ((x) <= ADC_AWD1)
 
 /* AWD flag check */
-#define IS_ADC_AWD_FLAG(x)              IS_ADC_BIT_MASK(x, ADC_AWD_FLAG_ALL)
+#define IS_ADC_AWD_FLAG(x) IS_ADC_BIT_MASK(x, ADC_AWD_FLAG_ALL)
 
-#define IS_ADC_AWD_THRESHOLD(res, th)                                          \
-(   (((res) == ADC_RESOLUTION_12BIT) && ((th) < 4096U))     ||                 \
-    (((res) == ADC_RESOLUTION_10BIT) && ((th) < 1024U))     ||                 \
-    (((res) == ADC_RESOLUTION_8BIT) && ((th) < 256U)))
+#define IS_ADC_AWD_THRESHOLD(res, th)                                                                           \
+    ((((res) == ADC_RESOLUTION_12BIT) && ((th) < 4096U)) || (((res) == ADC_RESOLUTION_10BIT) && ((th) < 1024U)) \
+  || (((res) == ADC_RESOLUTION_8BIT) && ((th) < 256U)))
 
 /* Two AWD units */
-#define IS_ADC_AWD_COMB_MD(x)                                                  \
-(   ((x) == ADC_AWD_COMB_INVD)              ||                                 \
-    ((x) == ADC_AWD_COMB_OR)                ||                                 \
-    ((x) == ADC_AWD_COMB_AND)               ||                                 \
-    ((x) == ADC_AWD_COMB_XOR))
+#define IS_ADC_AWD_COMB_MD(x) \
+    (((x) == ADC_AWD_COMB_INVD) || ((x) == ADC_AWD_COMB_OR) || ((x) == ADC_AWD_COMB_AND) || ((x) == ADC_AWD_COMB_XOR))
 
-#define IS_ADC_AWD_INT(x)               IS_ADC_BIT_MASK(x, ADC_AWD_INT_ALL)
+#define IS_ADC_AWD_INT(x) IS_ADC_BIT_MASK(x, ADC_AWD_INT_ALL)
 
 /**
  * @}
@@ -245,16 +215,16 @@
  */
 
 /**
- * @brief  Initializes the specified ADC peripheral according to the specified parameters
- *         in the structure pstcAdcInit.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  pstcAdcInit            Pointer to a @ref stc_adc_init_t structure that contains the
- *                                      configuration information for the specified ADC.
+ * @brief Initializes the specified ADC peripheral according to the specified parameters
+ *        in the structure pstcAdcInit.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  pstcAdcInit            Pointer to a @ref stc_adc_init_t structure that contains the
+ *        configuration information for the specified ADC.
  * @retval int32_t:
- *           - LL_OK:                   No errors occurred.
- *           - LL_ERR_INVD_PARAM:       pstcAdcInit == NULL.
+ *         - LL_OK:                   No errors occurred.
+ *         - LL_ERR_INVD_PARAM:       pstcAdcInit == NULL.
  */
 int32_t ADC_Init(CM_ADC_TypeDef *ADCx, const stc_adc_init_t *pstcAdcInit)
 {
@@ -262,7 +232,8 @@ int32_t ADC_Init(CM_ADC_TypeDef *ADCx, const stc_adc_init_t *pstcAdcInit)
 
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
 
-    if (pstcAdcInit != NULL) {
+    if (pstcAdcInit != NULL)
+    {
         DDL_ASSERT(IS_ADC_SCAN_MD(pstcAdcInit->u16ScanMode));
         DDL_ASSERT(IS_ADC_RESOLUTION(pstcAdcInit->u16Resolution));
         DDL_ASSERT(IS_ADC_DATAALIGN(pstcAdcInit->u16DataAlign));
@@ -275,13 +246,13 @@ int32_t ADC_Init(CM_ADC_TypeDef *ADCx, const stc_adc_init_t *pstcAdcInit)
 }
 
 /**
- * @brief  Deinitialize the specified ADC peripheral registers to their default reset values.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @brief Deinitialize the specified ADC peripheral registers to their default reset values.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
  * @retval int32_t:
- *           - LL_OK:                   De-Initialize success.
- *           - LL_ERR_TIMEOUT:          Timeout.
+ *         - LL_OK:                   De-Initialize success.
+ *         - LL_ERR_TIMEOUT:          Timeout.
  */
 int32_t ADC_DeInit(CM_ADC_TypeDef *ADCx)
 {
@@ -299,9 +270,13 @@ int32_t ADC_DeInit(CM_ADC_TypeDef *ADCx)
     u32UnitShift = (u32UnitBase - CM_ADC1_BASE) / (CM_ADC2_BASE - CM_ADC1_BASE);
     CLR_REG32_BIT(CM_RMU->FRST3, RMU_FRST3_ADC1 << u32UnitShift);
     /* Ensure reset procedure is completed */
-    while (0UL == READ_REG32_BIT(CM_RMU->FRST3, RMU_FRST3_ADC1 << u32UnitShift)) {
+
+    while (0UL == READ_REG32_BIT(CM_RMU->FRST3, RMU_FRST3_ADC1 << u32UnitShift))
+    {
         u8TimeOut++;
-        if (u8TimeOut > ADC_RMU_TIMEOUT) {
+
+        if (u8TimeOut > ADC_RMU_TIMEOUT)
+        {
             i32Ret = LL_ERR_TIMEOUT;
             break;
         }
@@ -310,46 +285,50 @@ int32_t ADC_DeInit(CM_ADC_TypeDef *ADCx)
 }
 
 /**
- * @brief  Set each @ref stc_adc_init_t field to default value.
- * @param  [in]  pstcAdcInit            Pointer to a @ref stc_adc_init_t structure
- *                                      whose fields will be set to default values.
+ * @brief Set each @ref stc_adc_init_t field to default value.
+ * @param [in]  pstcAdcInit            Pointer to a @ref stc_adc_init_t structure
+ *        whose fields will be set to default values.
  * @retval int32_t:
- *           - LL_OK:                   No errors occurred.
- *           - LL_ERR_INVD_PARAM:       pstcAdcInit == NULL.
+ *         - LL_OK:                   No errors occurred.
+ *         - LL_ERR_INVD_PARAM:       pstcAdcInit == NULL.
  */
 int32_t ADC_StructInit(stc_adc_init_t *pstcAdcInit)
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
-    if (pstcAdcInit != NULL) {
+    if (pstcAdcInit != NULL)
+    {
         pstcAdcInit->u16ScanMode   = ADC_MD_SEQA_SINGLESHOT;
         pstcAdcInit->u16Resolution = ADC_RESOLUTION_12BIT;
         pstcAdcInit->u16DataAlign  = ADC_DATAALIGN_RIGHT;
-        i32Ret = LL_OK;
+        i32Ret                     = LL_OK;
     }
 
     return i32Ret;
 }
 
 /**
- * @brief  Enable or disable the specified ADC channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Seq                  The sequence whose channel specified by 'u8Ch' will be enabled or disabled.
- *                                      This parameter can be a value of @ref ADC_Sequence
- *   @arg  ADC_SEQ_A:                   ADC sequence A.
- *   @arg  ADC_SEQ_B:                   ADC sequence B.
- * @param  [in]  u8Ch                   The ADC channel.
- *                                      This parameter can be values of @ref ADC_Channel
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
- * @note   Sequence A and Sequence B CAN NOT include the same channel!
- * @note   Sequence A can always started by software(by calling @ref ADC_Start()),
- *         regardless of whether the hardware trigger source is valid or not.
- * @note   Sequence B must be specified a valid hard trigger by calling functions @ref ADC_TriggerConfig()
- *         and @ref ADC_TriggerCmd().
+ * @brief Enable or disable the specified ADC channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Seq                  The sequence whose channel specified by 'u8Ch' will be enabled or disabled.
+ *        This parameter can be a value of @ref ADC_Sequence
+ * @arg ADC_SEQ_A:                   ADC sequence A.
+ * @arg ADC_SEQ_B:                   ADC sequence B.
+ * @param [in]  u8Ch                   The ADC channel.
+ *        This parameter can be values of @ref ADC_Channel
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @note Sequence A and Sequence B CAN NOT include the same channel!
+ * @note Sequence A can always started by software(by calling @ref ADC_Start()),
+ *       regardless of whether the hardware trigger source is valid or not.
+ * @note Sequence B must be specified a valid hard trigger by calling functions @ref ADC_TriggerConfig()
+ *       and @ref ADC_TriggerCmd().
  */
-void ADC_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8Ch, en_functional_state_t enNewState)
+void ADC_ChCmd(CM_ADC_TypeDef *ADCx,
+               uint8_t u8Seq,
+               uint8_t u8Ch,
+               en_functional_state_t enNewState)
 {
     __IO ADC_CHSEL_TYPE *CHSELRx;
 
@@ -358,34 +337,41 @@ void ADC_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8Ch, en_functional_
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     CHSELRx = (__IO ADC_CHSEL_TYPE *)((uint32_t)(&ADCx->CHSELRA) + (u8Seq * 4UL));
-    if (enNewState == ENABLE) {
+
+    if (enNewState == ENABLE)
+    {
         /* Enable the specified channel. */
         ADC_CHSEL_SETBIT(*CHSELRx, 1UL << u8Ch);
-    } else {
+    }
+    else
+    {
         /* Disable the specified channel. */
         ADC_CHSEL_CLRBIT(*CHSELRx, 1UL << u8Ch);
     }
 }
 
 /**
- * @brief  Enable or disable the specified ADC channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Seq                  The sequence whose channel specified by 'u32MxCh' will be enabled or disabled.
- *                                      This parameter can be a value of @ref ADC_Sequence
- *   @arg  ADC_SEQ_A:                   ADC sequence A.
- *   @arg  ADC_SEQ_B:                   ADC sequence B.
- * @param  [in]  u32MxCh                The ADC channel.
- *                                      This parameter can be any component of @ref ADC_Mx_Channel
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
- * @note   Sequence A and Sequence B CAN NOT include the same channel!
- * @note   Sequence A can always started by software(by calling @ref ADC_Start()),
- *         regardless of whether the hardware trigger source is valid or not.
- * @note   Sequence B must be specified a valid hard trigger by calling functions @ref ADC_TriggerConfig()
- *         and @ref ADC_TriggerCmd().
+ * @brief Enable or disable the specified ADC channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Seq                  The sequence whose channel specified by 'u32MxCh' will be enabled or disabled.
+ *        This parameter can be a value of @ref ADC_Sequence
+ * @arg ADC_SEQ_A:                   ADC sequence A.
+ * @arg ADC_SEQ_B:                   ADC sequence B.
+ * @param [in]  u32MxCh                The ADC channel.
+ *        This parameter can be any component of @ref ADC_Mx_Channel
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @note Sequence A and Sequence B CAN NOT include the same channel!
+ * @note Sequence A can always started by software(by calling @ref ADC_Start()),
+ *       regardless of whether the hardware trigger source is valid or not.
+ * @note Sequence B must be specified a valid hard trigger by calling functions @ref ADC_TriggerConfig()
+ *       and @ref ADC_TriggerCmd().
  */
-void ADC_MxChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint32_t u32MxCh, en_functional_state_t enNewState)
+void ADC_MxChCmd(CM_ADC_TypeDef *ADCx,
+                 uint8_t u8Seq,
+                 uint32_t u32MxCh,
+                 en_functional_state_t enNewState)
 {
     __IO ADC_CHSEL_TYPE *CHSELRx;
 
@@ -394,23 +380,27 @@ void ADC_MxChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint32_t u32MxCh, en_funct
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     CHSELRx = (__IO ADC_CHSEL_TYPE *)((uint32_t)(&ADCx->CHSELRA) + (u8Seq * 4UL));
-    if (enNewState == ENABLE) {
+
+    if (enNewState == ENABLE)
+    {
         /* Enable the specified channel. */
         ADC_CHSEL_SETBIT(*CHSELRx, u32MxCh);
-    } else {
+    }
+    else
+    {
         /* Disable the specified channel. */
         ADC_CHSEL_CLRBIT(*CHSELRx, u32MxCh);
     }
 }
 
 /**
- * @brief  Set sampling time for the specified channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Ch                   The channel to be set sampling time.
- *                                      This parameter can be values of @ref ADC_Channel
- * @param  [in]  u8SampleTime           Sampling time for the channel that specified by 'u8Ch'.
+ * @brief Set sampling time for the specified channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Ch                   The channel to be set sampling time.
+ *        This parameter can be values of @ref ADC_Channel
+ * @param [in]  u8SampleTime           Sampling time for the channel that specified by 'u8Ch'.
  * @retval None
  */
 void ADC_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8SampleTime)
@@ -425,20 +415,20 @@ void ADC_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8SampleTime)
 }
 
 /**
- * @brief  Set scan-average count.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u16AverageCount        Scan-average count.
- *                                      This parameter can be a value of @ref ADC_Average_Count
- *   @arg  ADC_AVG_CNT2:                2 consecutive average conversions.
- *   @arg  ADC_AVG_CNT4:                4 consecutive average conversions.
- *   @arg  ADC_AVG_CNT8:                8 consecutive average conversions.
- *   @arg  ADC_AVG_CNT16:               16 consecutive average conversions.
- *   @arg  ADC_AVG_CNT32:               32 consecutive average conversions.
- *   @arg  ADC_AVG_CNT64:               64 consecutive average conversions.
- *   @arg  ADC_AVG_CNT128:              128 consecutive average conversions.
- *   @arg  ADC_AVG_CNT256:              256 consecutive average conversions.
+ * @brief Set scan-average count.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u16AverageCount        Scan-average count.
+ *        This parameter can be a value of @ref ADC_Average_Count
+ * @arg ADC_AVG_CNT2:                2 consecutive average conversions.
+ * @arg ADC_AVG_CNT4:                4 consecutive average conversions.
+ * @arg ADC_AVG_CNT8:                8 consecutive average conversions.
+ * @arg ADC_AVG_CNT16:               16 consecutive average conversions.
+ * @arg ADC_AVG_CNT32:               32 consecutive average conversions.
+ * @arg ADC_AVG_CNT64:               64 consecutive average conversions.
+ * @arg ADC_AVG_CNT128:              128 consecutive average conversions.
+ * @arg ADC_AVG_CNT256:              256 consecutive average conversions.
  * @retval None
  */
 void ADC_ConvDataAverageConfig(CM_ADC_TypeDef *ADCx, uint16_t u16AverageCount)
@@ -449,13 +439,13 @@ void ADC_ConvDataAverageConfig(CM_ADC_TypeDef *ADCx, uint16_t u16AverageCount)
 }
 
 /**
- * @brief  Enable or disable conversion data average calculation channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Ch                   The ADC channel.
- *                                      This parameter can be values of @ref ADC_Channel
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable conversion data average calculation channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Ch                   The ADC channel.
+ *        This parameter can be values of @ref ADC_Channel
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_ConvDataAverageChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, en_functional_state_t enNewState)
@@ -463,21 +453,24 @@ void ADC_ConvDataAverageChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, en_functional_
     DDL_ASSERT(IS_ADC_CH(ADCx, u8Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (enNewState == ENABLE) {
+    if (enNewState == ENABLE)
+    {
         SET_REG32_BIT(ADCx->AVCHSELR, 1UL << u8Ch);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(ADCx->AVCHSELR, 1UL << u8Ch);
     }
 }
 
 /**
- * @brief  Enable or disable conversion data average calculation channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u32MxCh                The ADC channel.
- *                                      This parameter can be any component of @ref ADC_Mx_Channel
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable conversion data average calculation channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u32MxCh                The ADC channel.
+ *        This parameter can be any component of @ref ADC_Mx_Channel
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_ConvDataAverageMxChCmd(CM_ADC_TypeDef *ADCx, uint32_t u32MxCh, en_functional_state_t enNewState)
@@ -485,20 +478,23 @@ void ADC_ConvDataAverageMxChCmd(CM_ADC_TypeDef *ADCx, uint32_t u32MxCh, en_funct
     DDL_ASSERT(IS_ADC_MX_CH(ADCx, u32MxCh));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (enNewState == ENABLE) {
+    if (enNewState == ENABLE)
+    {
         SET_REG32_BIT(ADCx->AVCHSELR, u32MxCh);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(ADCx->AVCHSELR, u32MxCh);
     }
 }
 
 /**
- * @brief  Specifies the analog input source of extended channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8ExtChSrc             The analog input source of extended channel.
- *                                      This parameter can be a value of @ref ADC_Ext_Ch_Analog_Src
+ * @brief Specifies the analog input source of extended channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8ExtChSrc             The analog input source of extended channel.
+ *        This parameter can be a value of @ref ADC_Ext_Ch_Analog_Src
  * @retval None
  */
 void ADC_SetExtChSrc(CM_ADC_TypeDef *ADCx, uint8_t u8ExtChSrc)
@@ -509,12 +505,12 @@ void ADC_SetExtChSrc(CM_ADC_TypeDef *ADCx, uint8_t u8ExtChSrc)
 }
 
 /**
- * @brief  Specifies the sample mode.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u16Mode                The sample mode.
- *                                      This parameter can be a value of @ref ADC_Sample_Mode
+ * @brief Specifies the sample mode.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u16Mode                The sample mode.
+ *        This parameter can be a value of @ref ADC_Sample_Mode
  * @retval None
  */
 void ADC_SetSampleMode(CM_ADC_TypeDef *ADCx, uint16_t u16Mode)
@@ -522,20 +518,23 @@ void ADC_SetSampleMode(CM_ADC_TypeDef *ADCx, uint16_t u16Mode)
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_SAMPLE_MD(u16Mode));
 
-    if (ADC_SAMPLE_MD_NORMAL == u16Mode) {
+    if (ADC_SAMPLE_MD_NORMAL == u16Mode)
+    {
         CLR_REG16_BIT(ADCx->CR2, ADC_SAMPLE_MD_OVER);
-    } else {
+    }
+    else
+    {
         SET_REG16_BIT(ADCx->CR2, ADC_SAMPLE_MD_OVER);
     }
 }
 
 /**
- * @brief  Specifies the over sample shift value.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u16ShiftValue          The shift value.
- *                                      This parameter can be a value of @ref ADC_Over_Sample_Shift
+ * @brief Specifies the over sample shift value.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u16ShiftValue          The shift value.
+ *        This parameter can be a value of @ref ADC_Over_Sample_Shift
  * @retval None
  */
 void ADC_SetOverSampleShift(CM_ADC_TypeDef *ADCx, uint16_t u16ShiftValue)
@@ -547,19 +546,19 @@ void ADC_SetOverSampleShift(CM_ADC_TypeDef *ADCx, uint16_t u16ShiftValue)
 }
 
 /**
- * @brief  Specifies the hard trigger for the specified ADC sequence.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADCx or CM_ADC
- * @param  [in]  u8Seq                  The sequence to be configured.
- *                                      This parameter can be a value of @ref ADC_Sequence
- *   @arg  ADC_SEQ_A:                   Sequence A.
- *   @arg  ADC_SEQ_B:                   Sequence B.
- * @param  [in]  u8TriggerSel           Hard trigger selection.
- *                                      This parameter can be a value of @ref ADC_Hard_Trigger_Sel
+ * @brief Specifies the hard trigger for the specified ADC sequence.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADCx or CM_ADC
+ * @param [in]  u8Seq                  The sequence to be configured.
+ *        This parameter can be a value of @ref ADC_Sequence
+ * @arg ADC_SEQ_A:                   Sequence A.
+ * @arg ADC_SEQ_B:                   Sequence B.
+ * @param [in]  u8TriggerSel           Hard trigger selection.
+ *        This parameter can be a value of @ref ADC_Hard_Trigger_Sel
  * @retval None
- * @note   ADC must be stopped while calling this function.
- * @note   The trigger source CANNOT be an event that generated by the sequence itself.
+ * @note ADC must be stopped while calling this function.
+ * @note The trigger source CANNOT be an event that generated by the sequence itself.
  */
 void ADC_TriggerConfig(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8TriggerSel)
 {
@@ -572,40 +571,44 @@ void ADC_TriggerConfig(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8TriggerSel
 }
 
 /**
- * @brief  Enable or disable the hard trigger of the specified ADC sequence.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADCx or CM_ADC
- * @param  [in]  u8Seq                  The sequence to be configured.
- *                                      This parameter can be a value of @ref ADC_Sequence
- *   @arg  ADC_SEQ_A:                   Sequence A.
- *   @arg  ADC_SEQ_B:                   Sequence B.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the hard trigger of the specified ADC sequence.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADCx or CM_ADC
+ * @param [in]  u8Seq                  The sequence to be configured.
+ *        This parameter can be a value of @ref ADC_Sequence
+ * @arg ADC_SEQ_A:                   Sequence A.
+ * @arg ADC_SEQ_B:                   Sequence B.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
- * @note   ADC must be stopped while calling this function.
+ * @note ADC must be stopped while calling this function.
  */
 void ADC_TriggerCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_SEQ(u8Seq));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
-    if (enNewState == ENABLE) {
+
+    if (enNewState == ENABLE)
+    {
         SET_REG16_BIT(ADCx->TRGSR, (uint32_t)ADC_TRGSR_TRGENA << (u8Seq * ADC_TRGSR_TRGSELB_POS));
-    } else {
+    }
+    else
+    {
         CLR_REG16_BIT(ADCx->TRGSR, (uint32_t)ADC_TRGSR_TRGENA << (u8Seq * ADC_TRGSR_TRGSELB_POS));
     }
 }
 
 /**
- * @brief  Enable or disable ADC interrupts.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8IntType              ADC interrupt.
- *                                      This parameter can be values of @ref ADC_Int_Type
- *   @arg  ADC_INT_EOCA:                Interrupt of the end of conversion of sequence A.
- *   @arg  ADC_INT_EOCB:                Interrupt of the end of conversion of sequence B.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable ADC interrupts.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8IntType              ADC interrupt.
+ *        This parameter can be values of @ref ADC_Int_Type
+ * @arg ADC_INT_EOCA:                Interrupt of the end of conversion of sequence A.
+ * @arg ADC_INT_EOCB:                Interrupt of the end of conversion of sequence B.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_IntCmd(CM_ADC_TypeDef *ADCx, uint8_t u8IntType, en_functional_state_t enNewState)
@@ -614,21 +617,24 @@ void ADC_IntCmd(CM_ADC_TypeDef *ADCx, uint8_t u8IntType, en_functional_state_t e
     DDL_ASSERT(IS_ADC_INT(u8IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (enNewState == ENABLE) {
+    if (enNewState == ENABLE)
+    {
         SET_REG8_BIT(ADCx->ICR, u8IntType);
-    } else {
+    }
+    else
+    {
         CLR_REG8_BIT(ADCx->ICR, u8IntType);
     }
 }
 
 /**
- * @brief  Start sequence A conversion.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @brief Start sequence A conversion.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
  * @retval int32_t
- *           - LL_OK:                   Start success.
- *           - LL_ERR_BUSY:             ADC is busy.
+ *         - LL_OK:                   Start success.
+ *         - LL_ERR_BUSY:             ADC is busy.
  */
 int32_t ADC_Start(CM_ADC_TypeDef *ADCx)
 {
@@ -636,9 +642,12 @@ int32_t ADC_Start(CM_ADC_TypeDef *ADCx)
 
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
 
-    if (1U == READ_REG8(ADCx->STR)) {
+    if (1U == READ_REG8(ADCx->STR))
+    {
         i32Ret = LL_ERR_BUSY;
-    } else {
+    }
+    else
+    {
         WRITE_REG8(ADCx->STR, ADC_STR_STRT);
     }
 
@@ -646,10 +655,10 @@ int32_t ADC_Start(CM_ADC_TypeDef *ADCx)
 }
 
 /**
- * @brief  Stop ADC conversion, both sequence A and sequence B.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @brief Stop ADC conversion, both sequence A and sequence B.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
  * @retval None
  */
 void ADC_Stop(CM_ADC_TypeDef *ADCx)
@@ -659,12 +668,12 @@ void ADC_Stop(CM_ADC_TypeDef *ADCx)
 }
 
 /**
- * @brief  Get the ADC value of the specified channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Ch                   The ADC channel.
- *                                      This parameter can be values of @ref ADC_Channel
+ * @brief Get the ADC value of the specified channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Ch                   The ADC channel.
+ *        This parameter can be values of @ref ADC_Channel
  * @retval An uint16_t type value of ADC value.
  */
 uint16_t ADC_GetValue(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch)
@@ -675,10 +684,10 @@ uint16_t ADC_GetValue(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch)
 }
 
 /**
- * @brief  Get the ADC resolution.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @brief Get the ADC resolution.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
  * @retval An uint16_t type value of ADC resolution. @ref ADC_Resolution
  */
 uint16_t ADC_GetResolution(const CM_ADC_TypeDef *ADCx)
@@ -689,12 +698,12 @@ uint16_t ADC_GetResolution(const CM_ADC_TypeDef *ADCx)
 }
 
 /**
- * @brief  Get the status of the specified ADC flag.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Flag                 ADC status flag.
- *                                      This parameter can be a value of @ref ADC_Status_Flag
+ * @brief Get the status of the specified ADC flag.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Flag                 ADC status flag.
+ *        This parameter can be a value of @ref ADC_Status_Flag
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t ADC_GetStatus(const CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
@@ -704,7 +713,8 @@ en_flag_status_t ADC_GetStatus(const CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_FLAG(u8Flag));
 
-    if (READ_REG8_BIT(ADCx->ISR, u8Flag) != 0U) {
+    if (READ_REG8_BIT(ADCx->ISR, u8Flag) != 0U)
+    {
         enStatus = SET;
     }
 
@@ -712,12 +722,12 @@ en_flag_status_t ADC_GetStatus(const CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
 }
 
 /**
- * @brief  Clear the status of the specified ADC flag.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Flag                 ADC status flag.
- *                                      This parameter can be values of @ref ADC_Status_Flag
+ * @brief Clear the status of the specified ADC flag.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Flag                 ADC status flag.
+ *        This parameter can be values of @ref ADC_Status_Flag
  * @retval None
  */
 void ADC_ClearStatus(CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
@@ -729,12 +739,12 @@ void ADC_ClearStatus(CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
 }
 
 /**
- * @brief  Remap the correspondence between ADC channel and analog input pins.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Ch                   This parameter can be values of @ref ADC_Channel
- * @param  [in]  u8AdcPin               This parameter can be a value of @ref ADC_Remap_Pin
+ * @brief Remap the correspondence between ADC channel and analog input pins.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Ch                   This parameter can be values of @ref ADC_Channel
+ * @param [in]  u8AdcPin               This parameter can be a value of @ref ADC_Remap_Pin
  * @retval None
  */
 void ADC_ChRemap(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8AdcPin)
@@ -745,18 +755,18 @@ void ADC_ChRemap(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8AdcPin)
     DDL_ASSERT(IS_ADC_REMAP_CH(ADCx, u8Ch));
     DDL_ASSERT(IS_ADC_REMAP_PIN(ADCx, u8AdcPin));
 
-    CHMUXRx    = (__IO uint16_t *)(((uint32_t)&ADCx->CHMUXR0) + (u8Ch / 4UL) * 2UL);
+    CHMUXRx = (__IO uint16_t *)(((uint32_t)&ADCx->CHMUXR0) + (u8Ch / 4UL) * 2UL);
     u8FieldOfs = (u8Ch % 4U) * 4U;
     MODIFY_REG16(*CHMUXRx, ((uint32_t)ADC_CHMUXR0_CH00MUX << u8FieldOfs), ((uint32_t)u8AdcPin << u8FieldOfs));
 }
 
 /**
- * @brief  Get the ADC pin corresponding to the specified ADC channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8Ch                   ADC channel.
- *                                      This parameter can be one of the following values of @ref ADC_Channel
+ * @brief Get the ADC pin corresponding to the specified ADC channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8Ch                   ADC channel.
+ *        This parameter can be one of the following values of @ref ADC_Channel
  * @retval An uint8_t type value of ADC pin. @ref ADC_Remap_Pin
  */
 uint8_t ADC_GetChPin(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch)
@@ -767,18 +777,18 @@ uint8_t ADC_GetChPin(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch)
 
     DDL_ASSERT(IS_ADC_REMAP_CH(ADCx, u8Ch));
 
-    CHMUXRx    = (__IO uint16_t *)(((uint32_t)&ADCx->CHMUXR0) + (u8Ch / 4UL) * 2UL);
+    CHMUXRx = (__IO uint16_t *)(((uint32_t)&ADCx->CHMUXR0) + (u8Ch / 4UL) * 2UL);
     u8FieldOfs = (u8Ch % 4U) * 4U;
-    u8RetPin   = ((uint8_t)(*CHMUXRx >> u8FieldOfs)) & 0xFU;
+    u8RetPin = ((uint8_t)(*CHMUXRx >> u8FieldOfs)) & 0xFU;
 
     return u8RetPin;
 }
 
 /**
- * @brief  Reset channel-pin mapping.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @brief Reset channel-pin mapping.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
  * @retval None
  */
 void ADC_ResetChMapping(CM_ADC_TypeDef *ADCx)
@@ -788,35 +798,41 @@ void ADC_ResetChMapping(CM_ADC_TypeDef *ADCx)
     /* CHMUXRx */
     WRITE_REG16(ADCx->CHMUXR0, 0x3210U);
     WRITE_REG16(ADCx->CHMUXR1, 0x7654U);
-    if (ADCx == CM_ADC2) {
+
+    if (ADCx == CM_ADC2)
+    {
         WRITE_REG16(ADCx->CHMUXR2, 0xBA98U);
-    } else if (ADCx == CM_ADC1) {
+    }
+    else if (ADCx == CM_ADC1)
+    {
         WRITE_REG16(ADCx->CHMUXR2, 0xBA98U);
         WRITE_REG16(ADCx->CHMUXR3, 0xFEDCU);
-    } else {
+    }
+    else
+    {
         /* rsvd */
     }
 }
 
 /**
- * @brief  Configures synchronous mode.
- * @param  [in]  u16SyncUnit            Specify the ADC units which work synchronously.
- *                                      This parameter can be a value of @ref ADC_Sync_Unit
- * @param  [in]  u16SyncMode            Synchronous mode.
- *                                      This parameter can be a value of @ref ADC_Sync_Mode
- *   @arg  ADC_SYNC_SINGLE_DELAY_TRIG:  Single shot delayed trigger mode.
- *                                      When the trigger condition occurs, ADC1 starts first, then ADC2, last ADC3(if has).
- *                                      All ADCs scan once.
- *   @arg  ADC_SYNC_SINGLE_PARALLEL_TRIG: Single shot parallel trigger mode.
- *                                        When the trigger condition occurs, all ADCs start at the same time.
- *                                        All ADCs scan once.
- *   @arg  ADC_SYNC_CYCLIC_DELAY_TRIG:  Cyclic delayed trigger mode.
- *                                      When the trigger condition occurs, ADC1 starts first, then ADC2, last ADC3(if has).
- *                                      All ADCs scan cyclically(keep scanning till you stop them).
- *   @arg  ADC_SYNC_CYCLIC_PARALLEL_TRIG: Single shot parallel trigger mode.
- *                                        When the trigger condition occurs, all ADCs start at the same time.
- *                                        All ADCs scan cyclically(keep scanning till you stop them).
- * @param  [in]  u8TriggerDelay         Trigger delay time(ADCLK cycle), range is [1, 255].
+ * @brief Configures synchronous mode.
+ * @param [in]  u16SyncUnit            Specify the ADC units which work synchronously.
+ *        This parameter can be a value of @ref ADC_Sync_Unit
+ * @param [in]  u16SyncMode            Synchronous mode.
+ *        This parameter can be a value of @ref ADC_Sync_Mode
+ * @arg ADC_SYNC_SINGLE_DELAY_TRIG:  Single shot delayed trigger mode.
+ *      When the trigger condition occurs, ADC1 starts first, then ADC2, last ADC3(if has).
+ *      All ADCs scan once.
+ * @arg ADC_SYNC_SINGLE_PARALLEL_TRIG: Single shot parallel trigger mode.
+ *      When the trigger condition occurs, all ADCs start at the same time.
+ *      All ADCs scan once.
+ * @arg ADC_SYNC_CYCLIC_DELAY_TRIG:  Cyclic delayed trigger mode.
+ *      When the trigger condition occurs, ADC1 starts first, then ADC2, last ADC3(if has).
+ *      All ADCs scan cyclically(keep scanning till you stop them).
+ * @arg ADC_SYNC_CYCLIC_PARALLEL_TRIG: Single shot parallel trigger mode.
+ *      When the trigger condition occurs, all ADCs start at the same time.
+ *      All ADCs scan cyclically(keep scanning till you stop them).
+ * @param [in]  u8TriggerDelay         Trigger delay time(ADCLK cycle), range is [1, 255].
  * @retval None
  */
 void ADC_SyncModeConfig(uint16_t u16SyncUnit, uint16_t u16SyncMode, uint8_t u8TriggerDelay)
@@ -829,8 +845,8 @@ void ADC_SyncModeConfig(uint16_t u16SyncUnit, uint16_t u16SyncMode, uint8_t u8Tr
 }
 
 /**
- * @brief  Enable or disable synchronous mode.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable synchronous mode.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_SyncModeCmd(en_functional_state_t enNewState)
@@ -840,22 +856,25 @@ void ADC_SyncModeCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Configures analog watchdog.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8AwdUnit              AWD unit that is going to be configured.
- *                                      This parameter can be a value of @ref ADC_AWD_Unit
- * @param  [in]  u8Ch                   The channel that to be used as an analog watchdog channel.
- *                                      This parameter can be a value of @ref ADC_Channel
- * @param  [in]  pstcAwd                Pointer to a @ref stc_adc_awd_config_t structure value that
- *                                      contains the configuration information of the AWD.
+ * @brief Configures analog watchdog.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8AwdUnit              AWD unit that is going to be configured.
+ *        This parameter can be a value of @ref ADC_AWD_Unit
+ * @param [in]  u8Ch                   The channel that to be used as an analog watchdog channel.
+ *        This parameter can be a value of @ref ADC_Channel
+ * @param [in]  pstcAwd                Pointer to a @ref stc_adc_awd_config_t structure value that
+ *        contains the configuration information of the AWD.
  * @retval int32_t:
- *           - LL_OK:                   No errors occurred.
- *           - LL_ERR_INVD_PARAM:       pstcAwd == NULL.
- * @note  Call this function after ADC_Init().
+ *         - LL_OK:                   No errors occurred.
+ *         - LL_ERR_INVD_PARAM:       pstcAwd == NULL.
+ * @note Call this function after ADC_Init().
  */
-int32_t ADC_AWD_Config(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint8_t u8Ch, const stc_adc_awd_config_t *pstcAwd)
+int32_t ADC_AWD_Config(CM_ADC_TypeDef *ADCx,
+                       uint8_t u8AwdUnit,
+                       uint8_t u8Ch,
+                       const stc_adc_awd_config_t *pstcAwd)
 {
     uint8_t u8Pos;
     uint32_t u32AwdDr0;
@@ -866,25 +885,28 @@ int32_t ADC_AWD_Config(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint8_t u8Ch, co
     uint16_t u16HighThreshold;
     uint16_t u16Res;
     const uint8_t au8Lshift[] = {4U, 6U, 8U, 0U};
-    int32_t i32Ret = LL_ERR_INVD_PARAM;
+    int32_t i32Ret            = LL_ERR_INVD_PARAM;
 
     DDL_ASSERT(IS_ADC_CH(ADCx, u8Ch));
     DDL_ASSERT(IS_ADC_AWD(u8AwdUnit));
 
-    if (pstcAwd != NULL) {
+    if (pstcAwd != NULL)
+    {
         DDL_ASSERT(IS_ADC_AWD_MD(pstcAwd->u16WatchdogMode));
         u16LowThreshold  = pstcAwd->u16LowThreshold;
         u16HighThreshold = pstcAwd->u16HighThreshold;
-        u16Res = READ_REG16_BIT(ADCx->CR0, ADC_CR0_ACCSEL);
+        u16Res           = READ_REG16_BIT(ADCx->CR0, ADC_CR0_ACCSEL);
         DDL_ASSERT(IS_ADC_AWD_THRESHOLD(u16Res, u16LowThreshold));
         DDL_ASSERT(IS_ADC_AWD_THRESHOLD(u16Res, u16HighThreshold));
-        if (READ_REG16_BIT(ADCx->CR0, ADC_CR0_DFMT) == ADC_DATAALIGN_LEFT) {
+
+        if (READ_REG16_BIT(ADCx->CR0, ADC_CR0_DFMT) == ADC_DATAALIGN_LEFT)
+        {
             u16Res >>= ADC_CR0_ACCSEL_POS;
-            u16LowThreshold  <<= au8Lshift[u16Res];
+            u16LowThreshold <<= au8Lshift[u16Res];
             u16HighThreshold <<= au8Lshift[u16Res];
         }
 
-        u8Pos      = (u8AwdUnit * 4U) + ADC_AWDCR_AWD0MD_POS;
+        u8Pos = (u8AwdUnit * 4U) + ADC_AWDCR_AWD0MD_POS;
         u32Addr    = (uint32_t)&ADCx->AWDCR;
         u32AwdDr0  = (uint32_t)&ADCx->AWD0DR0;
         u32AwdDr1  = (uint32_t)&ADCx->AWD0DR1;
@@ -901,16 +923,16 @@ int32_t ADC_AWD_Config(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint8_t u8Ch, co
 }
 
 /**
- * @brief  Specifies combination mode of analog watchdog.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u16CombMode            Combination mode of analog watchdog.
- *                                      This parameter can be a value of @ref ADC_AWD_Comb_Mode
- *   @arg  ADC_AWD_COMB_INVD            Combination mode is invalid.
- *   @arg  ADC_AWD_COMB_OR:             The status of AWD0 is set or the status of AWD1 is set, the status of combination mode is set.
- *   @arg  ADC_AWD_COMB_AND:            The status of AWD0 is set and the status of AWD1 is set, the status of combination mode is set.
- *   @arg  ADC_AWD_COMB_XOR:            Only one of the status of AWD0 and AWD1 is set, the status of combination mode is set.
+ * @brief Specifies combination mode of analog watchdog.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u16CombMode            Combination mode of analog watchdog.
+ *        This parameter can be a value of @ref ADC_AWD_Comb_Mode
+ * @arg ADC_AWD_COMB_INVD            Combination mode is invalid.
+ * @arg ADC_AWD_COMB_OR:             The status of AWD0 is set or the status of AWD1 is set, the status of combination mode is set.
+ * @arg ADC_AWD_COMB_AND:            The status of AWD0 is set and the status of AWD1 is set, the status of combination mode is set.
+ * @arg ADC_AWD_COMB_XOR:            Only one of the status of AWD0 and AWD1 is set, the status of combination mode is set.
  * @retval None
  */
 void ADC_AWD_SetCombMode(CM_ADC_TypeDef *ADCx, uint16_t u16CombMode)
@@ -921,16 +943,16 @@ void ADC_AWD_SetCombMode(CM_ADC_TypeDef *ADCx, uint16_t u16CombMode)
 }
 
 /**
- * @brief  Specifies the compare mode of analog watchdog.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8AwdUnit              AWD unit that is going to be configured.
- *                                      This parameter can be a value of @ref ADC_AWD_Unit
- * @param  [in]  u16WatchdogMode        Analog watchdog compare mode.
- *                                      This parameter can be a value of @ref ADC_AWD_Mode
- *   @arg  ADC_AWD_MD_CMP_OUT:          ADCValue > HighThreshold or ADCValue < LowThreshold
- *   @arg  ADC_AWD_MD_CMP_IN:           LowThreshold < ADCValue < HighThreshold
+ * @brief Specifies the compare mode of analog watchdog.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8AwdUnit              AWD unit that is going to be configured.
+ *        This parameter can be a value of @ref ADC_AWD_Unit
+ * @param [in]  u16WatchdogMode        Analog watchdog compare mode.
+ *        This parameter can be a value of @ref ADC_AWD_Mode
+ * @arg ADC_AWD_MD_CMP_OUT:          ADCValue > HighThreshold or ADCValue < LowThreshold
+ * @arg ADC_AWD_MD_CMP_IN:           LowThreshold < ADCValue < HighThreshold
  * @retval None
  */
 void ADC_AWD_SetMode(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint16_t u16WatchdogMode)
@@ -942,18 +964,18 @@ void ADC_AWD_SetMode(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint16_t u16Watchd
     DDL_ASSERT(IS_ADC_AWD(u8AwdUnit));
     DDL_ASSERT(IS_ADC_AWD_MD(u16WatchdogMode));
 
-    u8Pos   = (u8AwdUnit * 4U) + ADC_AWDCR_AWD0MD_POS;
+    u8Pos = (u8AwdUnit * 4U) + ADC_AWDCR_AWD0MD_POS;
     u32Addr = (uint32_t)&ADCx->AWDCR;
     WRITE_REG32(PERIPH_BIT_BAND(u32Addr, u8Pos), u16WatchdogMode);
 }
 
 /**
- * @brief  Get the compare mode of analog watchdog.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8AwdUnit              AWD unit that is going to be configured.
- *                                      This parameter can be a value of @ref ADC_AWD_Unit
+ * @brief Get the compare mode of analog watchdog.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8AwdUnit              AWD unit that is going to be configured.
+ *        This parameter can be a value of @ref ADC_AWD_Unit
  * @retval Analog watchdog compare mode. A value of @ref ADC_AWD_Mode
  *         - ADC_AWD_MD_CMP_OUT:        ADCValue > HighThreshold or ADCValue < LowThreshold
  *         - ADC_AWD_MD_CMP_IN:         LowThreshold < ADCValue < HighThreshold
@@ -968,26 +990,29 @@ uint16_t ADC_AWD_GetMode(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit)
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_AWD(u8AwdUnit));
 
-    u8Pos   = (u8AwdUnit * 4U) + ADC_AWDCR_AWD0MD_POS;
-    u32Addr = (uint32_t)&ADCx->AWDCR;
+    u8Pos = (u8AwdUnit * 4U) + ADC_AWDCR_AWD0MD_POS;
+    u32Addr    = (uint32_t)&ADCx->AWDCR;
     u16RetMode = (uint16_t)PERIPH_BIT_BAND(u32Addr, u8Pos);
 
     return u16RetMode;
 }
 
 /**
- * @brief  Specifies the low threshold and high threshold of analog watchdog.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8AwdUnit              AWD unit that is going to be configured.
- *                                      This parameter can be a value of @ref ADC_AWD_Unit
- * @param  [in]  u16LowThreshold        Low threshold of analog watchdog.
- * @param  [in]  u16HighThreshold       High threshold of analog watchdog.
+ * @brief Specifies the low threshold and high threshold of analog watchdog.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8AwdUnit              AWD unit that is going to be configured.
+ *        This parameter can be a value of @ref ADC_AWD_Unit
+ * @param [in]  u16LowThreshold        Low threshold of analog watchdog.
+ * @param [in]  u16HighThreshold       High threshold of analog watchdog.
  * @retval None
- * @note  Call this function after ADC_Init().
+ * @note Call this function after ADC_Init().
  */
-void ADC_AWD_SetThreshold(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint16_t u16LowThreshold, uint16_t u16HighThreshold)
+void ADC_AWD_SetThreshold(CM_ADC_TypeDef *ADCx,
+                          uint8_t u8AwdUnit,
+                          uint16_t u16LowThreshold,
+                          uint16_t u16HighThreshold)
 {
     uint32_t u32AwdDr0;
     uint32_t u32AwdDr1;
@@ -997,9 +1022,11 @@ void ADC_AWD_SetThreshold(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint16_t u16L
     u16Res = READ_REG16_BIT(ADCx->CR0, ADC_CR0_ACCSEL);
     DDL_ASSERT(IS_ADC_AWD_THRESHOLD(u16Res, u16LowThreshold));
     DDL_ASSERT(IS_ADC_AWD_THRESHOLD(u16Res, u16HighThreshold));
-    if (READ_REG16_BIT(ADCx->CR0, ADC_CR0_DFMT) == ADC_DATAALIGN_LEFT) {
+
+    if (READ_REG16_BIT(ADCx->CR0, ADC_CR0_DFMT) == ADC_DATAALIGN_LEFT)
+    {
         u16Res >>= ADC_CR0_ACCSEL_POS;
-        u16LowThreshold  <<= au8Lshift[u16Res];
+        u16LowThreshold <<= au8Lshift[u16Res];
         u16HighThreshold <<= au8Lshift[u16Res];
     }
 
@@ -1010,14 +1037,14 @@ void ADC_AWD_SetThreshold(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint16_t u16L
 }
 
 /**
- * @brief  Select the specified ADC channel as an analog watchdog channel.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8AwdUnit              AWD unit that is going to be configured.
- *                                      This parameter can be a value of @ref ADC_AWD_Unit
- * @param  [in]  u8Ch                   The channel that to be used as an analog watchdog channel.
- *                                      This parameter can be a value of @ref ADC_Channel
+ * @brief Select the specified ADC channel as an analog watchdog channel.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8AwdUnit              AWD unit that is going to be configured.
+ *        This parameter can be a value of @ref ADC_AWD_Unit
+ * @param [in]  u8Ch                   The channel that to be used as an analog watchdog channel.
+ *        This parameter can be a value of @ref ADC_Channel
  * @retval None
  */
 void ADC_AWD_SelectCh(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint8_t u8Ch)
@@ -1031,13 +1058,13 @@ void ADC_AWD_SelectCh(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, uint8_t u8Ch)
 }
 
 /**
- * @brief  Enable or disable the specified analog watchdog.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u8AwdUnit              AWD unit that is going to be enabled or disabled.
- *                                      This parameter can be a value of @ref ADC_AWD_Unit
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the specified analog watchdog.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u8AwdUnit              AWD unit that is going to be enabled or disabled.
+ *        This parameter can be a value of @ref ADC_AWD_Unit
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_AWD_Cmd(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, en_functional_state_t enNewState)
@@ -1054,13 +1081,13 @@ void ADC_AWD_Cmd(CM_ADC_TypeDef *ADCx, uint8_t u8AwdUnit, en_functional_state_t 
 }
 
 /**
- * @brief  Enable or disable the specified analog watchdog interrupts.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u16IntType             Interrupt of AWD.
- *                                      This parameter can be a value of @ref ADC_AWD_Int_Type
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the specified analog watchdog interrupts.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u16IntType             Interrupt of AWD.
+ *        This parameter can be a value of @ref ADC_AWD_Int_Type
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_AWD_IntCmd(CM_ADC_TypeDef *ADCx, uint16_t u16IntType, en_functional_state_t enNewState)
@@ -1069,20 +1096,23 @@ void ADC_AWD_IntCmd(CM_ADC_TypeDef *ADCx, uint16_t u16IntType, en_functional_sta
     DDL_ASSERT(IS_ADC_AWD_INT(u16IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (enNewState == ENABLE) {
+    if (enNewState == ENABLE)
+    {
         SET_REG16_BIT(ADCx->AWDCR, u16IntType);
-    } else {
+    }
+    else
+    {
         CLR_REG16_BIT(ADCx->AWDCR, u16IntType);
     }
 }
 
 /**
- * @brief  Get the status of the specified analog watchdog flag.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u32Flag                AWD status flag.
- *                                      This parameter can be values of @ref ADC_AWD_Status_Flag
+ * @brief Get the status of the specified analog watchdog flag.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u32Flag                AWD status flag.
+ *        This parameter can be values of @ref ADC_AWD_Status_Flag
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t ADC_AWD_GetStatus(const CM_ADC_TypeDef *ADCx, uint32_t u32Flag)
@@ -1091,7 +1121,9 @@ en_flag_status_t ADC_AWD_GetStatus(const CM_ADC_TypeDef *ADCx, uint32_t u32Flag)
 
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_AWD_FLAG(u32Flag));
-    if (READ_REG8_BIT(ADCx->AWDSR, u32Flag) != 0U) {
+
+    if (READ_REG8_BIT(ADCx->AWDSR, u32Flag) != 0U)
+    {
         enStatus = SET;
     }
 
@@ -1099,12 +1131,12 @@ en_flag_status_t ADC_AWD_GetStatus(const CM_ADC_TypeDef *ADCx, uint32_t u32Flag)
 }
 
 /**
- * @brief  Clear the status of the specified analog watchdog flag.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u32Flag                AWD status flag.
- *                                      This parameter can be values of @ref ADC_AWD_Status_Flag
+ * @brief Clear the status of the specified analog watchdog flag.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u32Flag                AWD status flag.
+ *        This parameter can be values of @ref ADC_AWD_Status_Flag
  * @retval None
  */
 void ADC_AWD_ClearStatus(CM_ADC_TypeDef *ADCx, uint32_t u32Flag)
@@ -1115,12 +1147,12 @@ void ADC_AWD_ClearStatus(CM_ADC_TypeDef *ADCx, uint32_t u32Flag)
 }
 
 /**
- * @brief  Enable or disable automatically clear data register.
- *         The automatic clearing function is mainly used to detect whether the data register is updated.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable automatically clear data register.
+ *        The automatic clearing function is mainly used to detect whether the data register is updated.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  enNewState             An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void ADC_DataRegAutoClearCmd(CM_ADC_TypeDef *ADCx, en_functional_state_t enNewState)
@@ -1128,22 +1160,25 @@ void ADC_DataRegAutoClearCmd(CM_ADC_TypeDef *ADCx, en_functional_state_t enNewSt
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (enNewState == ENABLE) {
+    if (enNewState == ENABLE)
+    {
         SET_REG16_BIT(ADCx->CR0, ADC_CR0_CLREN);
-    } else {
+    }
+    else
+    {
         CLR_REG16_BIT(ADCx->CR0, ADC_CR0_CLREN);
     }
 }
 
 /**
- * @brief  The low priority sequence restart channel selection.
- * @param  [in]  ADCx                   Pointer to ADC instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @param  [in]  u16SeqResumeMode       Sequence resume mode.
- *                                      This parameter can be a value of @ref ADC_Seq_Resume_Mode
- *   @arg  ADC_RESUME_SCAN_CONT:        Scanning will continue from the interrupted channel.
- *   @arg  ADC_RESUME_SCAN_RESTART:     Scanning will start from the first channel.
+ * @brief The low priority sequence restart channel selection.
+ * @param [in]  ADCx                   Pointer to ADC instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param [in]  u16SeqResumeMode       Sequence resume mode.
+ *        This parameter can be a value of @ref ADC_Seq_Resume_Mode
+ * @arg ADC_RESUME_SCAN_CONT:        Scanning will continue from the interrupted channel.
+ * @arg ADC_RESUME_SCAN_RESTART:     Scanning will start from the first channel.
  * @retval None
  */
 void ADC_SetSeqResumeMode(CM_ADC_TypeDef *ADCx, uint16_t u16SeqResumeMode)

@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_pla.c
+ * @file hc32_ll_pla.c
  * @brief This file provides firmware functions to manage the Programmable Logic
  *        Array(PLA).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -51,15 +51,15 @@
  */
 
 /* PLA maximum channel */
-#define PLA_UNIT_MAX                    (16UL)
+#define PLA_UNIT_MAX (16UL)
 
 /**
  * @defgroup PLA_Calculate_Register_Address PLA Calculate Register Address
  * @{
  */
-#define PLA_MUXS_ADDR(__PLA__, __UNIT__)       (__IO uint32_t*)((uint32_t)(&((__PLA__)->MUXS0)) + ((__UNIT__) * 0xCUL))
-#define PLA_LUTCTL_ADDR(__PLA__, __UNIT__)     (__IO uint32_t*)((uint32_t)(&((__PLA__)->LUTCTL0)) + ((__UNIT__) * 0xCUL))
-#define PLA_CTL_ADDR(__PLA__, __UNIT__)        (__IO uint32_t*)((uint32_t)(&((__PLA__)->CTL0)) + ((__UNIT__) * 0xCUL))
+#define PLA_MUXS_ADDR(__PLA__, __UNIT__)   (__IO uint32_t *)((uint32_t)(&((__PLA__)->MUXS0)) + ((__UNIT__) * 0xCUL))
+#define PLA_LUTCTL_ADDR(__PLA__, __UNIT__) (__IO uint32_t *)((uint32_t)(&((__PLA__)->LUTCTL0)) + ((__UNIT__) * 0xCUL))
+#define PLA_CTL_ADDR(__PLA__, __UNIT__)    (__IO uint32_t *)((uint32_t)(&((__PLA__)->CTL0)) + ((__UNIT__) * 0xCUL))
 /**
  * @}
  */
@@ -68,31 +68,25 @@
  * @defgroup PLA_Check_Parameters_Validity PLA Check Parameters Validity
  * @{
  */
-#define IS_PLA_PERIPH(x)                        ((x) == CM_PLA)
+#define IS_PLA_PERIPH(x) ((x) == CM_PLA)
 
-#define IS_PLA_UNIT(x)                                                         \
-(   ((x) != 0UL)                                &&                             \
-    (((x) | PLA_UNIT_ALL) == PLA_UNIT_ALL))
+#define IS_PLA_UNIT(x) (((x) != 0UL) && (((x) | PLA_UNIT_ALL) == PLA_UNIT_ALL))
 
-#define IS_PLA_MUX_CH(x)                                                       \
-(   ((x) == PLA_MUX_CH0)                        ||                             \
-    ((x) == PLA_MUX_CH1))
+#define IS_PLA_MUX_CH(x) (((x) == PLA_MUX_CH0) || ((x) == PLA_MUX_CH1))
 
-#define IS_PLA_MUX_SRC(x)                       ((x) <= PLA_MUX_SRC_SIGNAL31)
+#define IS_PLA_MUX_SRC(x) ((x) <= PLA_MUX_SRC_SIGNAL31)
 
-#define IS_PLA_COMB_LOGIC(x)                    ((x) <= 0xFFUL)
+#define IS_PLA_COMB_LOGIC(x) ((x) <= 0xFFUL)
 
-#define IS_PLA_OUTPUT_SRC(x)                                                   \
-(   ((x) == PLA_OUTPUT_SRC_LUT)                 ||                             \
-    ((x) == PLA_OUTPUT_SRC_LUT_TRIG)            ||                             \
-    ((x) == PLA_OUTPUT_SRC_LUT_FILTER))
+#define IS_PLA_OUTPUT_SRC(x) \
+    (((x) == PLA_OUTPUT_SRC_LUT) || ((x) == PLA_OUTPUT_SRC_LUT_TRIG) || ((x) == PLA_OUTPUT_SRC_LUT_FILTER))
 
-#define IS_PLA_TRIG_CLK_SRC(x)                  (((x) >> PLA_CTL_CSEL_POS) <= PLA_TRIG_OUTPUT_SRC_HCLK)
+#define IS_PLA_TRIG_CLK_SRC(x) (((x) >> PLA_CTL_CSEL_POS) <= PLA_TRIG_OUTPUT_SRC_HCLK)
 
-#define IS_PLA_PWC_UNLOCKED()           ((CM_PWC->FPRC & PWC_FPRC_FPRCB1) == PWC_FPRC_FPRCB1)
+#define IS_PLA_PWC_UNLOCKED() ((CM_PWC->FPRC & PWC_FPRC_FPRCB1) == PWC_FPRC_FPRCB1)
 
 /* PLA reset timeout */
-#define PLA_RMU_TIMEOUT                 (100UL)
+#define PLA_RMU_TIMEOUT (100UL)
 
 /**
  * @}
@@ -123,17 +117,17 @@
  */
 
 /**
- * @brief  De-Initialize PLA unit base function.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @brief De-Initialize PLA unit base function.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
  * @retval int32_t:
- *           - LL_OK:                   No error occurred.
- *           - LL_ERR_TIMEOUT:          Works timeout.
+ *         - LL_OK:                   No error occurred.
+ *         - LL_ERR_TIMEOUT:          Works timeout.
  */
 int32_t PLA_DeInit(CM_PLA_TypeDef *PLAx)
 {
-    int32_t i32Ret = LL_OK;
+    int32_t i32Ret           = LL_OK;
     __IO uint32_t u32TimeOut = 0U;
 
     /* Check parameters */
@@ -141,9 +135,13 @@ int32_t PLA_DeInit(CM_PLA_TypeDef *PLAx)
 
     CLR_REG32_BIT(CM_RMU->FRST0, RMU_FRST0_PLA);
     /* Ensure reset procedure is completed */
-    while (RMU_FRST0_PLA != READ_REG32_BIT(CM_RMU->FRST0, RMU_FRST0_PLA)) {
+
+    while (RMU_FRST0_PLA != READ_REG32_BIT(CM_RMU->FRST0, RMU_FRST0_PLA))
+    {
         u32TimeOut++;
-        if (u32TimeOut > PLA_RMU_TIMEOUT) {
+
+        if (u32TimeOut > PLA_RMU_TIMEOUT)
+        {
             i32Ret = LL_ERR_TIMEOUT;
             break;
         }
@@ -153,17 +151,17 @@ int32_t PLA_DeInit(CM_PLA_TypeDef *PLAx)
 }
 
 /**
- * @brief  Initialize PLA base function.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] pstcPlaInit            Pointer to a @ref stc_pla_init_t structure.
+ * @brief Initialize PLA base function.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] pstcPlaInit            Pointer to a @ref stc_pla_init_t structure.
  * @retval int32_t:
- *           - LL_OK: Initialize success
- *           - LL_ERR_INVD_PARAM: pstcPlaInit is NULL
+ *         - LL_OK: Initialize success
+ *         - LL_ERR_INVD_PARAM: pstcPlaInit is NULL
  */
 int32_t PLA_Init(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, const stc_pla_init_t *pstcPlaInit)
 {
@@ -174,9 +172,12 @@ int32_t PLA_Init(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, const stc_pla_init_t *p
     uint32_t u32UnitPos = 0UL;
     uint32_t u32Temp;
 
-    if (NULL == pstcPlaInit) {
+    if (NULL == pstcPlaInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_PLA_PERIPH(PLAx));
         DDL_ASSERT(IS_PLA_UNIT(u32Unit));
@@ -187,14 +188,21 @@ int32_t PLA_Init(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, const stc_pla_init_t *p
         DDL_ASSERT(IS_PLA_TRIG_CLK_SRC(pstcPlaInit->u32TrigClockSrc));
 
         u32Temp = u32Unit;
-        while (0UL != u32Temp) {
-            if (0UL != (u32Temp & 0x1UL)) {
-                MUXS = PLA_MUXS_ADDR(PLAx, u32UnitPos);
+
+        while (0UL != u32Temp)
+        {
+            if (0UL != (u32Temp & 0x1UL))
+            {
+                MUXS   = PLA_MUXS_ADDR(PLAx, u32UnitPos);
                 LUTCTL = PLA_LUTCTL_ADDR(PLAx, u32UnitPos);
-                CTL = PLA_CTL_ADDR(PLAx, u32UnitPos);
-                WRITE_REG32(*MUXS, ((pstcPlaInit->u32Mux1Src & PLA_MUXS_MUX1) | ((pstcPlaInit->u32Mux0Src & PLA_MUXS_MUX1) << PLA_MUXS_MUX0_POS)));
+                CTL    = PLA_CTL_ADDR(PLAx, u32UnitPos);
+                WRITE_REG32(*MUXS,
+                            ((pstcPlaInit->u32Mux1Src & PLA_MUXS_MUX1)
+                             | ((pstcPlaInit->u32Mux0Src & PLA_MUXS_MUX1) << PLA_MUXS_MUX0_POS)));
                 WRITE_REG32(*LUTCTL, pstcPlaInit->u32CombLogic);
-                MODIFY_REG32(*CTL, (PLA_CTL_OSEL | PLA_CTL_CSEL), (pstcPlaInit->u32OutputSrc | pstcPlaInit->u32TrigClockSrc));
+                MODIFY_REG32(*CTL,
+                             (PLA_CTL_OSEL | PLA_CTL_CSEL),
+                             (pstcPlaInit->u32OutputSrc | pstcPlaInit->u32TrigClockSrc));
             }
             u32Temp >>= 1UL;
             u32UnitPos++;
@@ -205,40 +213,43 @@ int32_t PLA_Init(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, const stc_pla_init_t *p
 }
 
 /**
- * @brief  Set the fields of structure stc_pla_init_t to default values.
- * @param  [out] pstcPlaInit            Pointer to a @ref stc_pla_init_t structure.
+ * @brief Set the fields of structure stc_pla_init_t to default values.
+ * @param [out] pstcPlaInit            Pointer to a @ref stc_pla_init_t structure.
  * @retval int32_t:
- *           - LL_OK: Initialize success
- *           - LL_ERR_INVD_PARAM: pstcPlaInit is NULL
+ *         - LL_OK: Initialize success
+ *         - LL_ERR_INVD_PARAM: pstcPlaInit is NULL
  */
 int32_t PLA_StructInit(stc_pla_init_t *pstcPlaInit)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcPlaInit) {
+    if (NULL == pstcPlaInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
-        pstcPlaInit->u32Mux0Src         = PLA_MUX_SRC_SIGNAL0;
-        pstcPlaInit->u32Mux1Src         = PLA_MUX_SRC_SIGNAL0;
-        pstcPlaInit->u32CombLogic       = 0UL;
-        pstcPlaInit->u32OutputSrc       = PLA_OUTPUT_SRC_LUT;
-        pstcPlaInit->u32TrigClockSrc    = PLA_TRIG_OUTPUT_SRC_HCLK;
+    }
+    else
+    {
+        pstcPlaInit->u32Mux0Src      = PLA_MUX_SRC_SIGNAL0;
+        pstcPlaInit->u32Mux1Src      = PLA_MUX_SRC_SIGNAL0;
+        pstcPlaInit->u32CombLogic    = 0UL;
+        pstcPlaInit->u32OutputSrc    = PLA_OUTPUT_SRC_LUT;
+        pstcPlaInit->u32TrigClockSrc = PLA_TRIG_OUTPUT_SRC_HCLK;
     }
 
     return i32Ret;
 }
 
 /**
- * @brief  Get output level of the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
+ * @brief Get output level of the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
  * @retval An @ref en_functional_state_t enumeration value.
- *           - ENABLE: The PLA output high level
- *           - DISABLE: The PLA output low level
+ *         - ENABLE: The PLA output high level
+ *         - DISABLE: The PLA output low level
  */
 en_functional_state_t PLA_GetOutputLevel(CM_PLA_TypeDef *PLAx, uint32_t u32Unit)
 {
@@ -248,7 +259,8 @@ en_functional_state_t PLA_GetOutputLevel(CM_PLA_TypeDef *PLAx, uint32_t u32Unit)
     DDL_ASSERT(IS_PLA_PERIPH(PLAx));
     DDL_ASSERT(IS_PLA_UNIT(u32Unit));
 
-    if (0UL != (READ_REG32_BIT(PLAx->STAT, u32Unit))) {
+    if (0UL != (READ_REG32_BIT(PLAx->STAT, u32Unit)))
+    {
         enState = ENABLE;
     }
 
@@ -256,22 +268,25 @@ en_functional_state_t PLA_GetOutputLevel(CM_PLA_TypeDef *PLAx, uint32_t u32Unit)
 }
 
 /**
- * @brief  Set the MUX source of the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] u32Ch                   PLA MUX channel
- *         This parameter can be one of the following values:
- *           @arg @ref PLA_MUX_Channel
- * @param  [in] u32Src                  Select the MUX source.
- *         This parameter can be one of the following values:
- *           @arg @ref PLA_MUX_Source
+ * @brief Set the MUX source of the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] u32Ch                   PLA MUX channel
+ *        This parameter can be one of the following values:
+ * @arg @ref PLA_MUX_Channel
+ * @param [in] u32Src                  Select the MUX source.
+ *        This parameter can be one of the following values:
+ * @arg @ref PLA_MUX_Source
  * @retval None
  */
-void PLA_SetMuxSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Ch, uint32_t u32Src)
+void PLA_SetMuxSrc(CM_PLA_TypeDef *PLAx,
+                   uint32_t u32Unit,
+                   uint32_t u32Ch,
+                   uint32_t u32Src)
 {
     __IO uint32_t *MUXS;
     uint32_t u32UnitPos = 0UL;
@@ -284,10 +299,14 @@ void PLA_SetMuxSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Ch, uint3
     DDL_ASSERT(IS_PLA_MUX_SRC(u32Src));
 
     u32Temp = u32Unit;
-    while (0UL != u32Temp) {
-        if (0UL != (u32Temp & 0x1UL)) {
+
+    while (0UL != u32Temp)
+    {
+        if (0UL != (u32Temp & 0x1UL))
+        {
             MUXS = PLA_MUXS_ADDR(PLAx, u32UnitPos);
-            MODIFY_REG32(*MUXS, (PLA_MUXS_MUX1 << (u32Ch * PLA_MUXS_MUX0_POS)),
+            MODIFY_REG32(*MUXS,
+                         (PLA_MUXS_MUX1 << (u32Ch * PLA_MUXS_MUX0_POS)),
                          ((u32Src & PLA_MUXS_MUX1) << (u32Ch * PLA_MUXS_MUX0_POS)));
         }
         u32Temp >>= 1UL;
@@ -296,15 +315,15 @@ void PLA_SetMuxSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Ch, uint3
 }
 
 /**
- * @brief  Set the combinatorial logic of the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] u32Value                Combinatorial logic value.
- *         This parameter can be a number between 0UL and 0xFFUL.
+ * @brief Set the combinatorial logic of the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] u32Value                Combinatorial logic value.
+ *        This parameter can be a number between 0UL and 0xFFUL.
  * @retval None
  */
 void PLA_SetCombLogic(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Value)
@@ -322,8 +341,11 @@ void PLA_SetCombLogic(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Value)
     u32GctlVal = READ_REG32(PLAx->GCTL);
     WRITE_REG32(PLAx->GCTL, 0UL);
     u32Temp = u32Unit;
-    while (0UL != u32Temp) {
-        if (0UL != (u32Temp & 0x1UL)) {
+
+    while (0UL != u32Temp)
+    {
+        if (0UL != (u32Temp & 0x1UL))
+        {
             LUTCTL = PLA_LUTCTL_ADDR(PLAx, u32UnitPos);
             WRITE_REG32(*LUTCTL, u32Value);
         }
@@ -334,14 +356,14 @@ void PLA_SetCombLogic(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Value)
 }
 
 /**
- * @brief  Enable or disable output of the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable output of the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void PLA_OutputCmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_state_t enNewState)
@@ -356,12 +378,19 @@ void PLA_OutputCmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_state_t
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     u32Temp = u32Unit;
-    while (0UL != u32Temp) {
-        if (0UL != (u32Temp & 0x1UL)) {
+
+    while (0UL != u32Temp)
+    {
+        if (0UL != (u32Temp & 0x1UL))
+        {
             CTL = PLA_CTL_ADDR(PLAx, u32UnitPos);
-            if (DISABLE != enNewState) {
+
+            if (DISABLE != enNewState)
+            {
                 SET_REG32_BIT(*CTL, PLA_CTL_OEN);
-            } else {
+            }
+            else
+            {
                 CLR_REG32_BIT(*CTL, PLA_CTL_OEN);
             }
         }
@@ -371,14 +400,14 @@ void PLA_OutputCmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_state_t
 }
 
 /**
- * @brief  Enable or disable the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void PLA_Cmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_state_t enNewState)
@@ -388,24 +417,27 @@ void PLA_Cmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_state_t enNew
     DDL_ASSERT(IS_PLA_UNIT(u32Unit));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (DISABLE != enNewState) {
+    if (DISABLE != enNewState)
+    {
         SET_REG32_BIT(PLAx->GCTL, u32Unit);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(PLAx->GCTL, u32Unit);
     }
 }
 
 /**
- * @brief  Set the MUX source of the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] u32OutSrc               Select the out source of PLA.
- *         This parameter can be one of the following values:
- *           @arg @ref PLA_Output_Source
+ * @brief Set the MUX source of the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] u32OutSrc               Select the out source of PLA.
+ *        This parameter can be one of the following values:
+ * @arg @ref PLA_Output_Source
  * @retval None
  */
 void PLA_SetOutSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32OutSrc)
@@ -420,8 +452,11 @@ void PLA_SetOutSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32OutSrc)
     DDL_ASSERT(IS_PLA_OUTPUT_SRC(u32OutSrc));
 
     u32Temp = u32Unit;
-    while (0UL != u32Temp) {
-        if (0UL != (u32Temp & 0x1UL)) {
+
+    while (0UL != u32Temp)
+    {
+        if (0UL != (u32Temp & 0x1UL))
+        {
             CTL = PLA_CTL_ADDR(PLAx, u32UnitPos);
             MODIFY_REG32(*CTL, PLA_CTL_OSEL, u32OutSrc);
         }
@@ -431,16 +466,16 @@ void PLA_SetOutSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32OutSrc)
 }
 
 /**
- * @brief  Set the MUX source of the PLA unit.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] u32TrigSrc              Select the trig out clock source.
- *         This parameter can be one of the following values:
- *           @arg @ref PLA_Trig_Clock_Source
+ * @brief Set the MUX source of the PLA unit.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] u32TrigSrc              Select the trig out clock source.
+ *        This parameter can be one of the following values:
+ * @arg @ref PLA_Trig_Clock_Source
  * @retval None
  */
 void PLA_SetTrigClockSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32TrigSrc)
@@ -455,8 +490,11 @@ void PLA_SetTrigClockSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Tri
     DDL_ASSERT(IS_PLA_TRIG_CLK_SRC(u32TrigSrc));
 
     u32Temp = u32Unit;
-    while (0UL != u32Temp) {
-        if (0UL != (u32Temp & 0x1UL)) {
+
+    while (0UL != u32Temp)
+    {
+        if (0UL != (u32Temp & 0x1UL))
+        {
             CTL = PLA_CTL_ADDR(PLAx, u32UnitPos);
             MODIFY_REG32(*CTL, PLA_CTL_CSEL, u32TrigSrc);
         }
@@ -466,14 +504,14 @@ void PLA_SetTrigClockSrc(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, uint32_t u32Tri
 }
 
 /**
- * @brief  Reset out of Trigger.
- * @param  [in] PLAx                    Pointer to PLA unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_PLA or CM_PLAx: PLA unit instance
- * @param  [in] u32Unit                 The PLA unit.
- *         This parameter can be one or any combination of the following values:
- *           @arg @ref PLA_Unit
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Reset out of Trigger.
+ * @param [in] PLAx                    Pointer to PLA unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_PLA or CM_PLAx: PLA unit instance
+ * @param [in] u32Unit                 The PLA unit.
+ *        This parameter can be one or any combination of the following values:
+ * @arg @ref PLA_Unit
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void PLA_ResetTrigCmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_state_t enNewState)
@@ -488,12 +526,19 @@ void PLA_ResetTrigCmd(CM_PLA_TypeDef *PLAx, uint32_t u32Unit, en_functional_stat
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     u32Temp = u32Unit;
-    while (0UL != u32Temp) {
-        if (0UL != (u32Temp & 0x1UL)) {
+
+    while (0UL != u32Temp)
+    {
+        if (0UL != (u32Temp & 0x1UL))
+        {
             CTL = PLA_CTL_ADDR(PLAx, u32UnitPos);
-            if (DISABLE != enNewState) {
+
+            if (DISABLE != enNewState)
+            {
                 SET_REG32_BIT(*CTL, PLA_CTL_FFRST);
-            } else {
+            }
+            else
+            {
                 CLR_REG32_BIT(*CTL, PLA_CTL_FFRST);
             }
         }

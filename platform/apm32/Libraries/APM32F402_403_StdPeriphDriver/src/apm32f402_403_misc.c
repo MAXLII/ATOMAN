@@ -1,12 +1,12 @@
 /*!
- * @file       apm32f402_403_misc.c
+ * @file apm32f402_403_misc.c
  *
- * @brief      This file provides all the miscellaneous firmware functions.
- *             Include NVIC,SystemTick and Power management.
+ * @brief This file provides all the miscellaneous firmware functions.
+ *        Include NVIC,SystemTick and Power management.
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -28,134 +28,134 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup MISC_Driver
-  * @brief MISC driver modules
+ * @brief MISC driver modules
   @{
-*/
+ */
 
 /** @defgroup MISC_Macros Macros
   @{
-*/
+ */
 
-#define AIRCR_VECTKEY_MASK    ((uint32_t)0x05FA0000)
+#define AIRCR_VECTKEY_MASK ((uint32_t)0x05FA0000)
 
-/**@} end of group MISC_Macros */
-
+/** @} end of group MISC_Macros */
 
 /** @defgroup MISC_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Configures the priority grouping: pre-emption priority and subpriority.
+ * @brief Configures the priority grouping: pre-emption priority and subpriority.
  *
- * @param     priorityGroup : specifies the priority grouping bits length.
- *                            This parameter can be one of the following values:
- *                            @arg NVIC_PRIORITY_GROUP_0
- *                            @arg NVIC_PRIORITY_GROUP_1
- *                            @arg NVIC_PRIORITY_GROUP_2
- *                            @arg NVIC_PRIORITY_GROUP_3
- *                            @arg NVIC_PRIORITY_GROUP_4
+ * @param priorityGroup : specifies the priority grouping bits length.
+ *        This parameter can be one of the following values:
+ * @arg NVIC_PRIORITY_GROUP_0
+ * @arg NVIC_PRIORITY_GROUP_1
+ * @arg NVIC_PRIORITY_GROUP_2
+ * @arg NVIC_PRIORITY_GROUP_3
+ * @arg NVIC_PRIORITY_GROUP_4
  *
- * @retval    None
+ * @retval None
  */
 void NVIC_ConfigPriorityGroup(NVIC_PRIORITY_GROUP_T priorityGroup)
 {
-   SCB->AIRCR = AIRCR_VECTKEY_MASK | priorityGroup;
+    SCB->AIRCR = AIRCR_VECTKEY_MASK | priorityGroup;
 }
 
 /*!
- * @brief     Enable NVIC request
+ * @brief Enable NVIC request
  *
- * @param     irq: the NVIC interrupt request, detailed in IRQn_Type
- *            For the complete APM32 Devices IRQ Channels list,please refer to apm32f402_403.h file
+ * @param irq: the NVIC interrupt request, detailed in IRQn_Type
+ *        For the complete APM32 Devices IRQ Channels list,please refer to apm32f402_403.h file
  *
- * @param     preemptionPriority: the pre-emption priority needed to set
+ * @param preemptionPriority: the pre-emption priority needed to set
  *
- * @param     subPriority: the subpriority needed to set
+ * @param subPriority: the subpriority needed to set
  *
- * @retval    None
+ * @retval None
  */
 void NVIC_EnableIRQRequest(IRQn_Type irq, uint8_t preemptionPriority, uint8_t subPriority)
 {
-   uint32_t tempPriority, tempPrePri, tempSubPri;
-   uint32_t priorityGrp;
+    uint32_t tempPriority, tempPrePri, tempSubPri;
+    uint32_t priorityGrp;
 
-   /** Get priority group */
-   priorityGrp = (SCB->AIRCR) & (uint32_t)0x700U;
+    /** Get priority group */
+    priorityGrp = (SCB->AIRCR) & (uint32_t)0x700U;
 
-   /** get pre-emption priority and subpriority */
-   switch(priorityGrp)
-   {
-      case NVIC_PRIORITY_GROUP_0:
-         tempPrePri = 0;
-         tempSubPri = 4;
-         break;
+    /** get pre-emption priority and subpriority */
 
-      case NVIC_PRIORITY_GROUP_1:
-         tempPrePri = 1;
-         tempSubPri = 3;
-         break;
+    switch (priorityGrp)
+    {
+    case NVIC_PRIORITY_GROUP_0:
+        tempPrePri = 0;
+        tempSubPri = 4;
+        break;
 
-      case NVIC_PRIORITY_GROUP_2:
-         tempPrePri = 2;
-         tempSubPri = 2;
-         break;
+    case NVIC_PRIORITY_GROUP_1:
+        tempPrePri = 1;
+        tempSubPri = 3;
+        break;
 
-      case NVIC_PRIORITY_GROUP_3:
-         tempPrePri = 3;
-         tempSubPri = 1;
-         break;
+    case NVIC_PRIORITY_GROUP_2:
+        tempPrePri = 2;
+        tempSubPri = 2;
+        break;
 
-      case NVIC_PRIORITY_GROUP_4:
-         tempPrePri = 4;
-         tempSubPri = 0;
-         break;
+    case NVIC_PRIORITY_GROUP_3:
+        tempPrePri = 3;
+        tempSubPri = 1;
+        break;
 
-      default:
-         NVIC_ConfigPriorityGroup(NVIC_PRIORITY_GROUP_0);
-         tempPrePri = 0;
-         tempSubPri = 4;
-         break;
-   }
+    case NVIC_PRIORITY_GROUP_4:
+        tempPrePri = 4;
+        tempSubPri = 0;
+        break;
 
-   tempPrePri = 4 - tempPrePri;
-   tempSubPri = 4 - tempSubPri;
-   tempPriority = preemptionPriority << tempPrePri;
-   tempPriority |= subPriority & (0x0f >> tempSubPri);
-   tempPriority <<= 4;
-   NVIC->IP[irq] = (uint8_t)tempPriority;
+    default:
+        NVIC_ConfigPriorityGroup(NVIC_PRIORITY_GROUP_0);
+        tempPrePri = 0;
+        tempSubPri = 4;
+        break;
+    }
+
+    tempPrePri   = 4 - tempPrePri;
+    tempSubPri   = 4 - tempSubPri;
+    tempPriority = preemptionPriority << tempPrePri;
+    tempPriority |= subPriority & (0x0f >> tempSubPri);
+    tempPriority <<= 4;
+    NVIC->IP[irq] = (uint8_t)tempPriority;
 
     /* enable the selected IRQ */
     NVIC->ISER[irq >> 0x05U] = (uint32_t)0x01U << (irq & (uint8_t)0x1FU);
 }
 
 /*!
- * @brief     Disable NVIC request
+ * @brief Disable NVIC request
  *
- * @param     irq: the NVIC interrupt request, detailed in IRQn_Type
+ * @param irq: the NVIC interrupt request, detailed in IRQn_Type
  *
- * @retval    None
+ * @retval None
  */
 void NVIC_DisableIRQRequest(IRQn_Type irq)
 {
-    /* disable the selected IRQ.*/
+    /* disable the selected IRQ. */
     NVIC->ICER[irq >> 0x05U] = (uint32_t)0x01U << (irq & (uint8_t)0x1FU);
 }
 
 /*!
- * @brief     Configs the vector table location and Offset.
+ * @brief Configs the vector table location and Offset.
  *
- * @param     vectTab: specifies if the vector table is in RAM or FLASH memory
- *                     This parameter can be one of the following values:
- *                     @arg NVIC_VECT_TAB_RAM
- *                     @arg NVIC_VECT_TAB_FLASH
+ * @param vectTab: specifies if the vector table is in RAM or FLASH memory
+ *        This parameter can be one of the following values:
+ * @arg NVIC_VECT_TAB_RAM
+ * @arg NVIC_VECT_TAB_FLASH
  *
- * @param     Offset   Vector Table base offset field. This value must be a multiple of 0x200
+ * @param Offset   Vector Table base offset field. This value must be a multiple of 0x200
  *
- * @retval    None
+ * @retval None
  */
 void NVIC_ConfigVectorTable(NVIC_VECT_TAB_T vectTab, uint32_t offset)
 {
@@ -163,60 +163,59 @@ void NVIC_ConfigVectorTable(NVIC_VECT_TAB_T vectTab, uint32_t offset)
 }
 
 /*!
- * @brief     set the state of the low power mode
+ * @brief set the state of the low power mode
  *
- * @param     lowPowerMode: the low power mode state
- *                          This parameter can be one of the following values:
- *                          @arg NVIC_LOWPOWER_SEVONPEND
- *                          @arg NVIC_LOWPOWER_SLEEPDEEP
- *                          @arg NVIC_LOWPOWER_SLEEPONEXIT
+ * @param lowPowerMode: the low power mode state
+ *        This parameter can be one of the following values:
+ * @arg NVIC_LOWPOWER_SEVONPEND
+ * @arg NVIC_LOWPOWER_SLEEPDEEP
+ * @arg NVIC_LOWPOWER_SLEEPONEXIT
  *
- * @retval    None
+ * @retval None
  */
 void NVIC_SetSystemLowPower(NVIC_LOWPOWER_T lowPowerMode)
 {
-   SCB->SCR |= lowPowerMode;
+    SCB->SCR |= lowPowerMode;
 }
 
-
 /*!
- * @brief     reset the state of the low power mode
+ * @brief reset the state of the low power mode
  *
- * @param     lowPowerMode: the low power mode state
- *                          This parameter can be one of the following values:
- *                          @arg NVIC_LOWPOWER_SEVONPEND
- *                          @arg NVIC_LOWPOWER_SLEEPDEEP
- *                          @arg NVIC_LOWPOWER_SLEEPONEXIT
+ * @param lowPowerMode: the low power mode state
+ *        This parameter can be one of the following values:
+ * @arg NVIC_LOWPOWER_SEVONPEND
+ * @arg NVIC_LOWPOWER_SLEEPDEEP
+ * @arg NVIC_LOWPOWER_SLEEPONEXIT
  *
- * @retval    None
+ * @retval None
  */
 void NVIC_ResetystemLowPower(NVIC_LOWPOWER_T lowPowerMode)
 {
-   SCB->SCR &= (uint32_t)(~(uint32_t)lowPowerMode);
+    SCB->SCR &= (uint32_t)(~(uint32_t)lowPowerMode);
 }
 
 /*!
- * @brief     Configures the SysTick clock source
+ * @brief Configures the SysTick clock source
  *
- * @param     clkSource: specifies the SysTick clock source
- *                       This parameter can be one of the following values:
- *                       @arg SYSTICK_CLK_SOURCE_HCLK_DIV8: AHB clock divided by 8 selected as SysTick clock source.
- *                       @arg SYSTICK_CLK_SOURCE_HCLK: AHB clock selected as SysTick clock source.
+ * @param clkSource: specifies the SysTick clock source
+ *        This parameter can be one of the following values:
+ * @arg SYSTICK_CLK_SOURCE_HCLK_DIV8: AHB clock divided by 8 selected as SysTick clock source.
+ * @arg SYSTICK_CLK_SOURCE_HCLK: AHB clock selected as SysTick clock source.
  *
- * @retval    None
+ * @retval None
  */
 void SysTick_ConfigCLKSource(SYSTICK_CLK_SOURCE_T clkSource)
 {
-   if (clkSource == SYSTICK_CLK_SOURCE_HCLK)
-   {
-      SysTick->CTRL |= (uint32_t)BIT2;
-   }
-   else
-   {
-      SysTick->CTRL &= (uint32_t)(~BIT2);
-   }
+    if (clkSource == SYSTICK_CLK_SOURCE_HCLK)
+    {
+        SysTick->CTRL |= (uint32_t)BIT2;
+    }
+    else
+    {
+        SysTick->CTRL &= (uint32_t)(~BIT2);
+    }
 }
 
-/**@} end of group MISC_Functions */
-/**@} end of group MISC_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group MISC_Functions */
+/** @} end of group MISC_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

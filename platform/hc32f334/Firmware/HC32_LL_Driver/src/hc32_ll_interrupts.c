@@ -1,9 +1,9 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_interrupts.c
+ * @file hc32_ll_interrupts.c
  * @brief This file provides firmware functions to manage the Interrupt Controller
  *        (INTC).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
@@ -11,7 +11,7 @@
                                     Modify API NMI_ClearNmiStatus(),EXTINT_ClearExtIntStatus() Clear status by write instruction
                                     clear EFEN bit in EXTINT_Init()
    2025-01-20       CDT             Add INTC_IrqInstallHandle()
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -54,90 +54,66 @@
  * @{
  */
 /**
- * @brief   Maximum IRQ handler number
+ * @brief Maximum IRQ handler number
  */
-#define IRQ_NUM_MAX             (16U)
-#define IRQn_MIN                (INT000_IRQn)
-#define IRQn_MAX                (INT015_IRQn)
-#define IRQn_OFFSET             (0U)
-#define EXTINT_CH_NUM_MAX       (16U)
-#define EIRQCFR_REG             (CM_INTC->EIFCR)
-#define EIRQFR_REG              (CM_INTC->EIFR)
-#define NMIENR_REG              (CM_INTC->NMIER)
-#define NMICFR_REG              (CM_INTC->NMIFCR)
-#define INTSEL_REG              (uint32_t)(&CM_INTC->INTSEL0)
-#define INTWKEN_REG             (CM_INTC->WKEN)
-#define INTSEL_RST_VALUE        (0x1FFUL)
-#define INTEN_REG_MOD           (32U)
+#define IRQ_NUM_MAX       (16U)
+#define IRQn_MIN          (INT000_IRQn)
+#define IRQn_MAX          (INT015_IRQn)
+#define IRQn_OFFSET       (0U)
+#define EXTINT_CH_NUM_MAX (16U)
+#define EIRQCFR_REG       (CM_INTC->EIFCR)
+#define EIRQFR_REG        (CM_INTC->EIFR)
+#define NMIENR_REG        (CM_INTC->NMIER)
+#define NMICFR_REG        (CM_INTC->NMIFCR)
+#define INTSEL_REG        (uint32_t)(&CM_INTC->INTSEL0)
+#define INTWKEN_REG       (CM_INTC->WKEN)
+#define INTSEL_RST_VALUE  (0x1FFUL)
+#define INTEN_REG_MOD     (32U)
 
 /**
  * @defgroup INTC_Check_Parameters_Validity INTC Check Parameters Validity
  * @{
  */
 /*! Parameter validity check for wakeup source from stop mode. */
-#define IS_INTC_WKUP_SRC(src)                                                   \
-(   ((src) != 0x00UL)                           &&                              \
-    (((src) | INTC_WUPEN_ALL) == INTC_WUPEN_ALL))
+#define IS_INTC_WKUP_SRC(src) (((src) != 0x00UL) && (((src) | INTC_WUPEN_ALL) == INTC_WUPEN_ALL))
 
 /*! Parameter validity check for event index. */
-#define IS_INTC_EVT(event)                                                      \
-(   ((event) != 0x00UL)                         &&                              \
-    (((event) | INTC_EVT_ALL) == INTC_EVT_ALL))
+#define IS_INTC_EVT(event) (((event) != 0x00UL) && (((event) | INTC_EVT_ALL) == INTC_EVT_ALL))
 
 /*! Parameter validity check for interrupt index. */
-#define IS_INTC_INT(it)                                                         \
-(   ((it) != 0x00UL)                            &&                              \
-    (((it) | INTC_INT_ALL) == INTC_INT_ALL))
+#define IS_INTC_INT(it) (((it) != 0x00UL) && (((it) | INTC_INT_ALL) == INTC_INT_ALL))
 
 /*! Parameter validity check for software interrupt index. */
-#define IS_INTC_SWI(swi)                                                        \
-(   ((swi) != 0x00UL)                           &&                              \
-    (((swi) | SWINT_ALL) == SWINT_ALL))
+#define IS_INTC_SWI(swi) (((swi) != 0x00UL) && (((swi) | SWINT_ALL) == SWINT_ALL))
 
 /*! Parameter validity check for NMI trigger source. */
-#define IS_NMI_SRC(src)                                                         \
-(   ((src) != 0x00UL)                           &&                              \
-    (((src) | NMI_SRC_ALL) == NMI_SRC_ALL))
+#define IS_NMI_SRC(src) (((src) != 0x00UL) && (((src) | NMI_SRC_ALL) == NMI_SRC_ALL))
 
 /*! Parameter validity check for EXTINT filter A function. */
-#define IS_EXTINT_FAE(fae)                                                      \
-(   ((fae) == EXTINT_FILTER_OFF)                ||                              \
-    ((fae) == EXTINT_FILTER_ON))
+#define IS_EXTINT_FAE(fae) (((fae) == EXTINT_FILTER_OFF) || ((fae) == EXTINT_FILTER_ON))
 
 /*! Parameter validity check for EXTINT filter A clock division. */
-#define IS_EXTINT_FACLK(faclk)                                                  \
-(   ((faclk) == EXTINT_FCLK_DIV1)               ||                              \
-    ((faclk) == EXTINT_FCLK_DIV8)               ||                              \
-    ((faclk) == EXTINT_FCLK_DIV32)              ||                              \
-    ((faclk) == EXTINT_FCLK_DIV64))
+#define IS_EXTINT_FACLK(faclk)                                                                        \
+    (((faclk) == EXTINT_FCLK_DIV1) || ((faclk) == EXTINT_FCLK_DIV8) || ((faclk) == EXTINT_FCLK_DIV32) \
+  || ((faclk) == EXTINT_FCLK_DIV64))
 
 /*! Parameter validity check for EXTINT filter B function. */
-#define IS_EXTINT_FBE(fbe)                                                      \
-(   ((fbe) == EXTINT_FILTER_B_OFF)              ||                              \
-    ((fbe) == EXTINT_FILTER_B_ON))
+#define IS_EXTINT_FBE(fbe) (((fbe) == EXTINT_FILTER_B_OFF) || ((fbe) == EXTINT_FILTER_B_ON))
 /*! Parameter validity check for EXTINT filter B time. */
-#define IS_EXTINT_FBTIME(fbtime)                                                \
-(   ((fbtime) == EXTINT_FILTER_B_LVL1)          ||                              \
-    ((fbtime) == EXTINT_FILTER_B_LVL2)          ||                              \
-    ((fbtime) == EXTINT_FILTER_B_LVL3)          ||                              \
-    ((fbtime) == EXTINT_FILTER_B_LVL4))
+#define IS_EXTINT_FBTIME(fbtime)                                                                                    \
+    (((fbtime) == EXTINT_FILTER_B_LVL1) || ((fbtime) == EXTINT_FILTER_B_LVL2) || ((fbtime) == EXTINT_FILTER_B_LVL3) \
+  || ((fbtime) == EXTINT_FILTER_B_LVL4))
 
 /*! Parameter validity check for EXTINT trigger edge. */
-#define IS_EXTINT_TRIG(trigger)                                                 \
-(   ((trigger) == EXTINT_TRIG_LOW)              ||                              \
-    ((trigger) == EXTINT_TRIG_RISING)           ||                              \
-    ((trigger) == EXTINT_TRIG_FALLING)          ||                              \
-    ((trigger) == EXTINT_TRIG_BOTH))
+#define IS_EXTINT_TRIG(trigger)                                                                                \
+    (((trigger) == EXTINT_TRIG_LOW) || ((trigger) == EXTINT_TRIG_RISING) || ((trigger) == EXTINT_TRIG_FALLING) \
+  || ((trigger) == EXTINT_TRIG_BOTH))
 
 /*! Parameter validity check for EXTINT channel. */
-#define IS_EXTINT_CH(ch)                                                        \
-(   ((ch) != 0x00UL)                            &&                              \
-    (((ch) | EXTINT_CH_ALL) == EXTINT_CH_ALL))
+#define IS_EXTINT_CH(ch) (((ch) != 0x00UL) && (((ch) | EXTINT_CH_ALL) == EXTINT_CH_ALL))
 
-/*  Parameter validity check for FPU interrupt. */
-#define IS_INTC_FPU_INT(x)                                                     \
-(   ((x) != 0x00UL)                            &&                              \
-    (((x) | INTC_FPU_ALL) == INTC_FPU_ALL))
+/* Parameter validity check for FPU interrupt. */
+#define IS_INTC_FPU_INT(x) (((x) != 0x00UL) && (((x) | INTC_FPU_ALL) == INTC_FPU_ALL))
 
 /**
  * @}
@@ -175,15 +151,15 @@ static func_ptr_t m_apfnIrqHandler[IRQ_NUM_MAX] = {NULL};
  * @{
  */
 /**
- * @brief  IRQ sign in function
- * @param  [in] pstcIrqSignConfig: pointer of IRQ registration structure
- *   @arg  enIntSrc: can be any value @ref en_int_src_t
- *   @arg  enIRQn: can be any value from IRQn_MIN ~ IRQn_MAX for different product
- *   @arg  pfnCallback: Callback function
+ * @brief IRQ sign in function
+ * @param [in] pstcIrqSignConfig: pointer of IRQ registration structure
+ * @arg enIntSrc: can be any value @ref en_int_src_t
+ * @arg enIRQn: can be any value from IRQn_MIN ~ IRQn_MAX for different product
+ * @arg pfnCallback: Callback function
  * @retval int32_t:
- *           - LL_OK: IRQ register successfully
- *           - LL_ERR_INVD_PARAM: IRQ No. and Peripheral Int source are not match; NULL pointer.
- *           - LL_ERR_UNINIT: Specified IRQ entry was signed before.
+ *         - LL_OK: IRQ register successfully
+ *         - LL_ERR_INVD_PARAM: IRQ No. and Peripheral Int source are not match; NULL pointer.
+ *         - LL_ERR_UNINIT: Specified IRQ entry was signed before.
  */
 int32_t INTC_IrqSignIn(const stc_irq_signin_config_t *pstcIrqSignConfig)
 {
@@ -191,23 +167,36 @@ int32_t INTC_IrqSignIn(const stc_irq_signin_config_t *pstcIrqSignConfig)
     int32_t i32Ret = LL_OK;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcIrqSignConfig) {
+
+    if (NULL == pstcIrqSignConfig)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         DDL_ASSERT(pstcIrqSignConfig->enIntSrc <= INT_SRC_MAX);
-        if (pstcIrqSignConfig->enIRQn > INT015_IRQn) {
+
+        if (pstcIrqSignConfig->enIRQn > INT015_IRQn)
+        {
             i32Ret = LL_ERR_INVD_PARAM;
         }
 
-        else {
+        else
+        {
             INTC_SELx = (__IO uint32_t *)(INTSEL_REG + (4U * (uint32_t)(pstcIrqSignConfig->enIRQn)));
             /* for MISRAC2004-12.4 */
-            if (INTSEL_RST_VALUE == ((*INTC_SELx) & INTSEL_RST_VALUE)) {
+
+            if (INTSEL_RST_VALUE == ((*INTC_SELx) & INTSEL_RST_VALUE))
+            {
                 WRITE_REG32(*INTC_SELx, pstcIrqSignConfig->enIntSrc);
                 m_apfnIrqHandler[pstcIrqSignConfig->enIRQn] = pstcIrqSignConfig->pfnCallback;
-            } else if ((uint32_t)(pstcIrqSignConfig->enIntSrc) == ((*INTC_SELx) & INTSEL_RST_VALUE)) {
+            }
+            else if ((uint32_t)(pstcIrqSignConfig->enIntSrc) == ((*INTC_SELx) & INTSEL_RST_VALUE))
+            {
                 m_apfnIrqHandler[pstcIrqSignConfig->enIRQn] = pstcIrqSignConfig->pfnCallback;
-            } else {
+            }
+            else
+            {
                 i32Ret = LL_ERR_UNINIT;
             }
         }
@@ -216,20 +205,24 @@ int32_t INTC_IrqSignIn(const stc_irq_signin_config_t *pstcIrqSignConfig)
 }
 
 /**
- * @brief  IRQ sign out function
- * @param  [in] enIRQn: can be any value from IRQn_MIN ~ IRQn_MAX for different product
+ * @brief IRQ sign out function
+ * @param [in] enIRQn: can be any value from IRQn_MIN ~ IRQn_MAX for different product
  * @retval int32_t:
- *           - LL_OK: IRQ sign out successfully
- *           - LL_ERR_INVD_PARAM: IRQ No. is out of range
+ *         - LL_OK: IRQ sign out successfully
+ *         - LL_ERR_INVD_PARAM: IRQ No. is out of range
  */
 int32_t INTC_IrqSignOut(IRQn_Type enIRQn)
 {
     __IO uint32_t *INTC_SELx;
     int32_t i32Ret = LL_OK;
 
-    if ((enIRQn < IRQn_MIN) || (enIRQn > IRQn_MAX)) {
+    if (    (enIRQn < IRQn_MIN)
+         || (enIRQn > IRQn_MAX))
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         INTC_SELx = (__IO uint32_t *)(INTSEL_REG + (4UL * (uint32_t)enIRQn));
         WRITE_REG32(*INTC_SELx, INTSEL_RST_VALUE);
         m_apfnIrqHandler[(uint8_t)enIRQn - IRQn_OFFSET] = NULL;
@@ -238,30 +231,36 @@ int32_t INTC_IrqSignOut(IRQn_Type enIRQn)
 }
 
 /**
- * @brief  Enable IRQ handle
- * @param  [in] enIRQn: can be any value @ref IRQn_Type
- * @param  [in] enIntSrc: can be any value @ref en_int_src_t
- * @param  [in] u16Prio: can be any value of DDL_IRQ_PRIO_00 ~ DDL_IRQ_PRIO_DEFAULT
- * @param  [in] pfnCallback: Callback function
+ * @brief Enable IRQ handle
+ * @param [in] enIRQn: can be any value @ref IRQn_Type
+ * @param [in] enIntSrc: can be any value @ref en_int_src_t
+ * @param [in] u16Prio: can be any value of DDL_IRQ_PRIO_00 ~ DDL_IRQ_PRIO_DEFAULT
+ * @param [in] pfnCallback: Callback function
  * @retval int32_t:
- *           - LL_OK: IRQ register successfully
- *           - LL_ERR_INVD_PARAM: IRQ No. and Peripheral Int source are not match; NULL pointer.
- *           - LL_ERR_UNINIT: Specified IRQ entry was signed before.
+ *         - LL_OK: IRQ register successfully
+ *         - LL_ERR_INVD_PARAM: IRQ No. and Peripheral Int source are not match; NULL pointer.
+ *         - LL_ERR_UNINIT: Specified IRQ entry was signed before.
  * @note if enIRQn > IRQn_MAX, enIntSrc should be INT_SRC_MAX, pfnCallback should be null
  */
-int32_t INTC_IrqInstallHandle(IRQn_Type enIRQn, en_int_src_t enIntSrc, uint16_t u16Prio, func_ptr_t pfnCallback)
+int32_t INTC_IrqInstallHandle(IRQn_Type enIRQn,
+                              en_int_src_t enIntSrc,
+                              uint16_t u16Prio,
+                              func_ptr_t pfnCallback)
 {
     stc_irq_signin_config_t stcIrqSignConfig;
     int32_t i32Ret = LL_OK;
 
-    if (INT_SRC_MAX != enIntSrc) {
+    if (INT_SRC_MAX != enIntSrc)
+    {
         /* register handle */
-        stcIrqSignConfig.enIntSrc = enIntSrc;
-        stcIrqSignConfig.enIRQn = enIRQn;
+        stcIrqSignConfig.enIntSrc    = enIntSrc;
+        stcIrqSignConfig.enIRQn      = enIRQn;
         stcIrqSignConfig.pfnCallback = pfnCallback;
-        i32Ret = INTC_IrqSignIn(&stcIrqSignConfig);
+        i32Ret                       = INTC_IrqSignIn(&stcIrqSignConfig);
     }
-    if (LL_OK == i32Ret) {
+
+    if (LL_OK == i32Ret)
+    {
         NVIC_ClearPendingIRQ(enIRQn);
         NVIC_SetPriority(enIRQn, u16Prio);
         NVIC_EnableIRQ(enIRQn);
@@ -271,9 +270,9 @@ int32_t INTC_IrqInstallHandle(IRQn_Type enIRQn, en_int_src_t enIntSrc, uint16_t 
 }
 
 /**
- * @brief  Stop mode wake-up source configure
- * @param  [in] u32WakeupSrc: Wake-up source, @ref INTC_Stop_Wakeup_Source_Sel for details
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief Stop mode wake-up source configure
+ * @param [in] u32WakeupSrc: Wake-up source, @ref INTC_Stop_Wakeup_Source_Sel for details
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void INTC_WakeupSrcCmd(uint32_t u32WakeupSrc, en_functional_state_t enNewState)
@@ -282,17 +281,20 @@ void INTC_WakeupSrcCmd(uint32_t u32WakeupSrc, en_functional_state_t enNewState)
     DDL_ASSERT(IS_INTC_WKUP_SRC(u32WakeupSrc));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(INTWKEN_REG, u32WakeupSrc);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(INTWKEN_REG, u32WakeupSrc);
     }
 }
 
 /**
- * @brief  Event or Interrupt output configure
- * @param  [in] u32Event: Event index, @ref INTC_Event_Channel_Sel for details
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief Event or Interrupt output configure
+ * @param [in] u32Event: Event index, @ref INTC_Event_Channel_Sel for details
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void INTC_EventCmd(uint32_t u32Event, en_functional_state_t enNewState)
@@ -301,17 +303,20 @@ void INTC_EventCmd(uint32_t u32Event, en_functional_state_t enNewState)
     DDL_ASSERT(IS_INTC_EVT(u32Event));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_INTC->EVTER, u32Event);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_INTC->EVTER, u32Event);
     }
 }
 
 /**
- * @brief  Interrupt function configure
- * @param  [in] u32Int: Interrupt index, @ref INT_Channel_Sel for details
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief Interrupt function configure
+ * @param [in] u32Int: Interrupt index, @ref INT_Channel_Sel for details
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void INTC_IntCmd(uint32_t u32Int, en_functional_state_t enNewState)
@@ -320,18 +325,21 @@ void INTC_IntCmd(uint32_t u32Int, en_functional_state_t enNewState)
     DDL_ASSERT(IS_INTC_INT(u32Int));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_INTC->IER, u32Int);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_INTC->IER, u32Int);
     }
 }
 
 /**
- * @brief  Software Interrupt initialize function
- * @param  [in] u32Ch: Software Interrupt channel, @ref SWINT_Channel_Sel for details
- * @param  [in] pfnCallback: Callback function
- * @param  [in] u32Priority: Software interrupt priority
+ * @brief Software Interrupt initialize function
+ * @param [in] u32Ch: Software Interrupt channel, @ref SWINT_Channel_Sel for details
+ * @param [in] pfnCallback: Callback function
+ * @param [in] u32Priority: Software interrupt priority
  * @retval None
  */
 void INTC_SWIntInit(uint32_t u32Ch, const func_ptr_t pfnCallback, uint32_t u32Priority)
@@ -347,9 +355,9 @@ void INTC_SWIntInit(uint32_t u32Ch, const func_ptr_t pfnCallback, uint32_t u32Pr
 }
 
 /**
- * @brief  Software Interrupt function configure
- * @param  [in] u32SWInt: Software Interrupt channel, @ref SWINT_Channel_Sel for details
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief Software Interrupt function configure
+ * @param [in] u32SWInt: Software Interrupt channel, @ref SWINT_Channel_Sel for details
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void INTC_SWIntCmd(uint32_t u32SWInt, en_functional_state_t enNewState)
@@ -358,29 +366,36 @@ void INTC_SWIntCmd(uint32_t u32SWInt, en_functional_state_t enNewState)
     DDL_ASSERT(IS_INTC_SWI(u32SWInt));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_INTC->SWIER, u32SWInt);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_INTC->SWIER, u32SWInt);
     }
 }
 
 /**
- * @brief  Initialize NMI. Fill each pstcNmiInit with default value
- * @param  [in] pstcNmiInit: Pointer to a stc_nmi_init_t structure that
- *                             contains configuration information.
+ * @brief Initialize NMI. Fill each pstcNmiInit with default value
+ * @param [in] pstcNmiInit: Pointer to a stc_nmi_init_t structure that
+ *        contains configuration information.
  * @retval int32_t:
- *           - LL_OK: NMI structure initialize successful
- *           - LL_ERR_INVD_PARAM: NULL pointer
+ *         - LL_OK: NMI structure initialize successful
+ *         - LL_ERR_INVD_PARAM: NULL pointer
  */
 int32_t NMI_StructInit(stc_nmi_init_t *pstcNmiInit)
 {
     int32_t i32Ret = LL_OK;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcNmiInit) {
+
+    if (NULL == pstcNmiInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Configure to default value */
         pstcNmiInit->u32Src = 0UL;
     }
@@ -388,21 +403,25 @@ int32_t NMI_StructInit(stc_nmi_init_t *pstcNmiInit)
 }
 
 /**
- * @brief  Initialize NMI.
- * @param  [in] pstcNmiInit: Pointer to a pstcNmiInit structure that
- *                             contains configuration information.
+ * @brief Initialize NMI.
+ * @param [in] pstcNmiInit: Pointer to a pstcNmiInit structure that
+ *        contains configuration information.
  * @retval int32_t:
- *           - LL_OK: NMI initialize successful
- *           - LL_ERR_INVD_PARAM: NULL pointer
+ *         - LL_OK: NMI initialize successful
+ *         - LL_ERR_INVD_PARAM: NULL pointer
  */
 int32_t NMI_Init(const stc_nmi_init_t *pstcNmiInit)
 {
     int32_t i32Ret = LL_OK;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcNmiInit) {
+
+    if (NULL == pstcNmiInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Parameter validity checking */
         DDL_ASSERT(IS_NMI_SRC(pstcNmiInit->u32Src));
         /* Clear all NMI trigger source before set */
@@ -410,14 +429,13 @@ int32_t NMI_Init(const stc_nmi_init_t *pstcNmiInit)
 
         /* NMI trigger source configure */
         WRITE_REG32(NMIENR_REG, pstcNmiInit->u32Src);
-
     }
     return i32Ret;
 }
 
 /**
- * @brief  Get NMI trigger source
- * @param  [in] u32Src: NMI trigger source, @ref NMI_TriggerSrc_Sel for details
+ * @brief Get NMI trigger source
+ * @param [in] u32Src: NMI trigger source, @ref NMI_TriggerSrc_Sel for details
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t NMI_GetNmiStatus(uint32_t u32Src)
@@ -429,9 +447,9 @@ en_flag_status_t NMI_GetNmiStatus(uint32_t u32Src)
 }
 
 /**
- * @brief  Set NMI trigger source
- * @param  [in] u32Src: NMI trigger source, @ref NMI_TriggerSrc_Sel for details
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief Set NMI trigger source
+ * @param [in] u32Src: NMI trigger source, @ref NMI_TriggerSrc_Sel for details
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void NMI_NmiSrcCmd(uint32_t u32Src, en_functional_state_t enNewState)
@@ -440,16 +458,19 @@ void NMI_NmiSrcCmd(uint32_t u32Src, en_functional_state_t enNewState)
     DDL_ASSERT(IS_NMI_SRC(u32Src));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(NMIENR_REG, u32Src);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(NMIENR_REG, u32Src);
     }
 }
 
 /**
- * @brief  Clear specified NMI trigger source
- * @param  [in] u32Src: NMI trigger source, @ref NMI_TriggerSrc_Sel for diff. MCU in details
+ * @brief Clear specified NMI trigger source
+ * @param [in] u32Src: NMI trigger source, @ref NMI_TriggerSrc_Sel for diff. MCU in details
  * @retval None
  */
 void NMI_ClearNmiStatus(uint32_t u32Src)
@@ -461,13 +482,13 @@ void NMI_ClearNmiStatus(uint32_t u32Src)
 }
 
 /**
- * @brief  Initialize External interrupt.
- * @param  [in] u32Ch: ExtInt channel.
- * @param  [in] pstcExtIntInit: Pointer to a stc_extint_init_t structure that
- *                             contains configuration information.
+ * @brief Initialize External interrupt.
+ * @param [in] u32Ch: ExtInt channel.
+ * @param [in] pstcExtIntInit: Pointer to a stc_extint_init_t structure that
+ *        contains configuration information.
  * @retval int32_t:
- *           - LL_OK:  EXTINT initialize successful
- *           - LL_ERR_INVD_PARAM: NULL pointer
+ *         - LL_OK:  EXTINT initialize successful
+ *         - LL_ERR_INVD_PARAM: NULL pointer
  */
 int32_t EXTINT_Init(uint32_t u32Ch, const stc_extint_init_t *pstcExtIntInit)
 {
@@ -477,9 +498,13 @@ int32_t EXTINT_Init(uint32_t u32Ch, const stc_extint_init_t *pstcExtIntInit)
     __IO uint32_t *EIRQCRx;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcExtIntInit) {
+
+    if (NULL == pstcExtIntInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Parameter validity checking */
         DDL_ASSERT(IS_EXTINT_CH(u32Ch));
         DDL_ASSERT(IS_EXTINT_FAE(pstcExtIntInit->u32Filter));
@@ -487,11 +512,13 @@ int32_t EXTINT_Init(uint32_t u32Ch, const stc_extint_init_t *pstcExtIntInit)
         DDL_ASSERT(IS_EXTINT_TRIG(pstcExtIntInit->u32Edge));
         DDL_ASSERT(IS_EXTINT_FBE(pstcExtIntInit->u32FilterB));
         DDL_ASSERT(IS_EXTINT_FBTIME(pstcExtIntInit->u32FilterBClock));
-        for (u8ExtIntPos = 0U; u8ExtIntPos < EXTINT_CH_NUM_MAX; u8ExtIntPos++) {
-            if (0UL != (u32Ch & (1UL << u8ExtIntPos))) {
+
+        for (u8ExtIntPos = 0U; u8ExtIntPos < EXTINT_CH_NUM_MAX; u8ExtIntPos++)
+        {
+            if (0UL != (u32Ch & (1UL << u8ExtIntPos)))
+            {
                 EIRQCRx = (__IO uint32_t *)((uint32_t)&CM_INTC->EIRQCR0 + 4UL * u8ExtIntPos);
-                EIRQCRVal = pstcExtIntInit->u32Filter | pstcExtIntInit->u32FilterClock  |   \
-                            pstcExtIntInit->u32Edge;
+                EIRQCRVal = pstcExtIntInit->u32Filter | pstcExtIntInit->u32FilterClock | pstcExtIntInit->u32Edge;
                 EIRQCRVal |= (pstcExtIntInit->u32FilterB | pstcExtIntInit->u32FilterBClock);
                 CLR_REG32_BIT(*EIRQCRx, INTC_EIRQCR_NOCEN);
                 CLR_REG32_BIT(*EIRQCRx, INTC_EIRQCR_EFEN);
@@ -503,25 +530,29 @@ int32_t EXTINT_Init(uint32_t u32Ch, const stc_extint_init_t *pstcExtIntInit)
 }
 
 /**
- * @brief  Initialize ExtInt. Fill each pstcExtIntInit with default value
- * @param  [in] pstcExtIntInit: Pointer to a stc_extint_init_t structure
- *                              that contains configuration information.
+ * @brief Initialize ExtInt. Fill each pstcExtIntInit with default value
+ * @param [in] pstcExtIntInit: Pointer to a stc_extint_init_t structure
+ *        that contains configuration information.
  * @retval int32_t:
- *           - LL_OK: EXTINT structure initialize successful
- *           - LL_ERR_INVD_PARAM: NULL pointer
+ *         - LL_OK: EXTINT structure initialize successful
+ *         - LL_ERR_INVD_PARAM: NULL pointer
  */
 int32_t EXTINT_StructInit(stc_extint_init_t *pstcExtIntInit)
 {
     int32_t i32Ret = LL_OK;
 
     /* Check if pointer is NULL */
-    if (NULL == pstcExtIntInit) {
+
+    if (NULL == pstcExtIntInit)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Configure to default value */
-        pstcExtIntInit->u32Filter      = EXTINT_FILTER_OFF;
-        pstcExtIntInit->u32FilterClock = EXTINT_FCLK_DIV1;
-        pstcExtIntInit->u32Edge        = EXTINT_TRIG_FALLING;
+        pstcExtIntInit->u32Filter       = EXTINT_FILTER_OFF;
+        pstcExtIntInit->u32FilterClock  = EXTINT_FCLK_DIV1;
+        pstcExtIntInit->u32Edge         = EXTINT_TRIG_FALLING;
         pstcExtIntInit->u32FilterB      = EXTINT_FILTER_B_OFF;
         pstcExtIntInit->u32FilterBClock = EXTINT_FILTER_B_LVL1;
     }
@@ -529,8 +560,8 @@ int32_t EXTINT_StructInit(stc_extint_init_t *pstcExtIntInit)
 }
 
 /**
- * @brief  Clear specified External interrupt trigger source
- * @param  [in] u32ExtIntCh: External interrupt channel, @ref EXTINT_Channel_Sel for details
+ * @brief Clear specified External interrupt trigger source
+ * @param [in] u32ExtIntCh: External interrupt channel, @ref EXTINT_Channel_Sel for details
  * @retval None
  */
 void EXTINT_ClearExtIntStatus(uint32_t u32ExtIntCh)
@@ -542,8 +573,8 @@ void EXTINT_ClearExtIntStatus(uint32_t u32ExtIntCh)
 }
 
 /**
- * @brief  Get specified External interrupt trigger source
- * @param  [in] u32ExtIntCh: External interrupt channel, @ref EXTINT_Channel_Sel for details
+ * @brief Get specified External interrupt trigger source
+ * @param [in] u32ExtIntCh: External interrupt channel, @ref EXTINT_Channel_Sel for details
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t EXTINT_GetExtIntStatus(uint32_t u32ExtIntCh)
@@ -555,9 +586,9 @@ en_flag_status_t EXTINT_GetExtIntStatus(uint32_t u32ExtIntCh)
 }
 
 /**
- * @brief  Interrupt source interrupt function configure
- * @param  [in] enIntSrc: Interrupt source, can be any value @ref en_int_src_t
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief Interrupt source interrupt function configure
+ * @param [in] enIntSrc: Interrupt source, can be any value @ref en_int_src_t
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void INTC_IntSrcCmd(en_int_src_t enIntSrc, en_functional_state_t enNewState)
@@ -570,16 +601,19 @@ void INTC_IntSrcCmd(en_int_src_t enIntSrc, en_functional_state_t enNewState)
 
     INTENx = (__IO uint32_t *)((uint32_t)&CM_INTC->INTEN0 + 4UL * ((uint32_t)enIntSrc / INTEN_REG_MOD));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(*INTENx, 1UL << ((uint32_t)enIntSrc & 0x1FU));
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(*INTENx, 1UL << ((uint32_t)enIntSrc & 0x1FU));
     }
 }
 
 /**
- * @brief  Get interrupt source interrupt status
- * @param  [in] enIntSrc: Interrupt source, can be any value @ref en_int_src_t
+ * @brief Get interrupt source interrupt status
+ * @param [in] enIntSrc: Interrupt source, can be any value @ref en_int_src_t
  * @retval An @ref en_functional_state_t enumeration type value.
  */
 en_functional_state_t INTC_GetIntSrcState(en_int_src_t enIntSrc)
@@ -595,9 +629,9 @@ en_functional_state_t INTC_GetIntSrcState(en_int_src_t enIntSrc)
 }
 
 /**
- * @brief  FPU interrupt function configure
- * @param  [in] u32FpuInt: FPU Interrupt, can be any value @ref INTC_FPU_Interrupt_Selection
- * @param  [in] enNewState: An @ref en_functional_state_t enumeration value.
+ * @brief FPU interrupt function configure
+ * @param [in] u32FpuInt: FPU Interrupt, can be any value @ref INTC_FPU_Interrupt_Selection
+ * @param [in] enNewState: An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void INTC_FPU_IntCmd(uint32_t u32FpuInt, en_functional_state_t enNewState)
@@ -605,16 +639,19 @@ void INTC_FPU_IntCmd(uint32_t u32FpuInt, en_functional_state_t enNewState)
     DDL_ASSERT(IS_INTC_FPU_INT(u32FpuInt));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(CM_INTC->FPUIER, u32FpuInt);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(CM_INTC->FPUIER, u32FpuInt);
     }
 }
 
 /**
- * @brief  Interrupt No.000 IRQ handler
- * @param  None
+ * @brief Interrupt No.000 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ000_Handler(void)
@@ -625,8 +662,8 @@ void IRQ000_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.001 IRQ handler
- * @param  None
+ * @brief Interrupt No.001 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ001_Handler(void)
@@ -637,8 +674,8 @@ void IRQ001_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.002 IRQ handler
- * @param  None
+ * @brief Interrupt No.002 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ002_Handler(void)
@@ -649,8 +686,8 @@ void IRQ002_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.003 IRQ handler
- * @param  None
+ * @brief Interrupt No.003 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ003_Handler(void)
@@ -661,8 +698,8 @@ void IRQ003_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.004 IRQ handler
- * @param  None
+ * @brief Interrupt No.004 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ004_Handler(void)
@@ -673,8 +710,8 @@ void IRQ004_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.005 IRQ handler
- * @param  None
+ * @brief Interrupt No.005 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ005_Handler(void)
@@ -685,8 +722,8 @@ void IRQ005_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.006 IRQ handler
- * @param  None
+ * @brief Interrupt No.006 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ006_Handler(void)
@@ -697,8 +734,8 @@ void IRQ006_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.007 IRQ handler
- * @param  None
+ * @brief Interrupt No.007 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ007_Handler(void)
@@ -709,8 +746,8 @@ void IRQ007_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.008 IRQ handler
- * @param  None
+ * @brief Interrupt No.008 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ008_Handler(void)
@@ -721,8 +758,8 @@ void IRQ008_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.009 IRQ handler
- * @param  None
+ * @brief Interrupt No.009 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ009_Handler(void)
@@ -733,8 +770,8 @@ void IRQ009_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.010 IRQ handler
- * @param  None
+ * @brief Interrupt No.010 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ010_Handler(void)
@@ -745,8 +782,8 @@ void IRQ010_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.011 IRQ handler
- * @param  None
+ * @brief Interrupt No.011 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ011_Handler(void)
@@ -757,8 +794,8 @@ void IRQ011_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.012 IRQ handler
- * @param  None
+ * @brief Interrupt No.012 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ012_Handler(void)
@@ -769,8 +806,8 @@ void IRQ012_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.013 IRQ handler
- * @param  None
+ * @brief Interrupt No.013 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ013_Handler(void)
@@ -781,8 +818,8 @@ void IRQ013_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.014 IRQ handler
- * @param  None
+ * @brief Interrupt No.014 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ014_Handler(void)
@@ -793,8 +830,8 @@ void IRQ014_Handler(void)
 }
 
 /**
- * @brief  Interrupt No.015 IRQ handler
- * @param  None
+ * @brief Interrupt No.015 IRQ handler
+ * @param None
  * @retval None
  */
 void IRQ015_Handler(void)

@@ -1,8 +1,8 @@
 /*!
-    \file  system_gd32e50x.h
-    \brief CMSIS Cortex-M33 Device Peripheral Access Layer Header File for
-           GD32E50x Device Series
-*/
+  \file system_gd32e50x.h
+  \brief CMSIS Cortex-M33 Device Peripheral Access Layer Header File for
+         GD32E50x Device Series
+ */
 
 /*
  * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
@@ -29,7 +29,8 @@
 #define SYSTEM_GD32E50X_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <stdint.h>
@@ -37,17 +38,17 @@ extern "C" {
 /* firmware version can be aquired by uncommenting the macro */
 #define __FIRMWARE_VERSION_DEFINE
 
-/* system clock frequency (core clock) */
-extern uint32_t SystemCoreClock;
+    /* system clock frequency (core clock) */
+    extern uint32_t SystemCoreClock;
 
-/* function declarations */
-/* initialize the system and update the SystemCoreClock variable */
-extern void SystemInit (void);
-/* update the SystemCoreClock with current core clock retrieved from CPU registers */
-extern void SystemCoreClockUpdate (void);
+    /* function declarations */
+    /* initialize the system and update the SystemCoreClock variable */
+    extern void SystemInit(void);
+    /* update the SystemCoreClock with current core clock retrieved from CPU registers */
+    extern void SystemCoreClockUpdate(void);
 #ifdef __FIRMWARE_VERSION_DEFINE
-/* get firmware version */
-extern uint32_t gd32e50x_firmware_version_get(void);
+    /* get firmware version */
+    extern uint32_t gd32e50x_firmware_version_get(void);
 #endif /* __FIRMWARE_VERSION_DEFINE */
 #ifdef __cplusplus
 }

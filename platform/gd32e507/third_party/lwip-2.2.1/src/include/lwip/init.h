@@ -64,7 +64,7 @@ extern "C"
 /** LWIP_VERSION_RC is set to LWIP_RC_RELEASE for official releases */
 #define LWIP_RC_RELEASE         255
 /** LWIP_VERSION_RC is set to LWIP_RC_DEVELOPMENT for Git versions */
-#define LWIP_RC_DEVELOPMENT     0
+#define LWIP_RC_DEVELOPMENT 0
 
 #define LWIP_VERSION_IS_RELEASE     (LWIP_VERSION_RC == LWIP_RC_RELEASE)
 #define LWIP_VERSION_IS_DEVELOPMENT (LWIP_VERSION_RC == LWIP_RC_DEVELOPMENT)
@@ -82,8 +82,8 @@ extern "C"
 #endif
 
 /** Provides the version of the stack */
-#define LWIP_VERSION   ((LWIP_VERSION_MAJOR) << 24   | (LWIP_VERSION_MINOR) << 16 | \
-                        (LWIP_VERSION_REVISION) << 8 | (LWIP_VERSION_RC))
+#define LWIP_VERSION \
+    ((LWIP_VERSION_MAJOR) << 24 | (LWIP_VERSION_MINOR) << 16 | (LWIP_VERSION_REVISION) << 8 | (LWIP_VERSION_RC))
 /** Provides the version of the stack as string */
 #define LWIP_VERSION_STRING     LWIP_VERSTR(LWIP_VERSION_MAJOR) "." LWIP_VERSTR(LWIP_VERSION_MINOR) "." LWIP_VERSTR(LWIP_VERSION_REVISION) LWIP_VERSION_STRING_SUFFIX
 

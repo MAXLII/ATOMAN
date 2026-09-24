@@ -1,11 +1,11 @@
 /*!
- * @file        system_apm32f402_403.c
+ * @file system_apm32f402_403.c
  *
- * @brief       CMSIS Cortex-M4 Device Peripheral Access Layer System Source File
+ * @brief CMSIS Cortex-M4 Device Peripheral Access Layer System Source File
  *
- * @version     V1.0.1
+ * @version V1.0.1
  *
- * @date        2025-02-14
+ * @date 2025-02-14
  *
  * @attention
  *
@@ -27,15 +27,15 @@
 
 /** @addtogroup CMSIS
   @{
-*/
+ */
 
 /** @addtogroup APM32F402_403_System
   @{
-*/
+ */
 
 /** @defgroup System_Macros
   @{
-*/
+ */
 
 /* #define VECT_TAB_SRAM */
 
@@ -47,37 +47,37 @@
 #define VECT_TAB_OFFSET 0x0000
 #endif
 
-/**@} end of group System_Macros */
+/** @} end of group System_Macros */
 
 /** @defgroup System_Variables
   @{
-*/
+ */
 
 uint32_t SystemCoreClock = 16000000;
 
-/**@} end of group System_Variables */
+/** @} end of group System_Variables */
 
 /** @defgroup System_Functions
   @{
-*/
+ */
 
 static void SystemClockConfig(void);
 
 /*!
- * @brief       Setup the microcontroller system
+ * @brief Setup the microcontroller system
  *
- * @param       None
+ * @param None
  *
- * @retval      None
+ * @retval None
  *
  * @note
  */
-void SystemInit (void)
+void SystemInit(void)
 {
-    /* FPU settings */
-    #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3UL << 10 * 2)|(3UL << 11 * 2));  //!< set CP10 and CP11 Full Access
-    #endif
+/* FPU settings */
+#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
+    SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2)); //!< set CP10 and CP11 Full Access
+#endif
     /** Set HSIEN bit */
     RCM->CTRL_B.HSIEN = BIT_SET;
     /** Reset SCLKSEL, AHBPSC, APB1PSC, APB2PSC, ADCPSC and MCOSEL bits */
@@ -101,59 +101,61 @@ void SystemInit (void)
 }
 
 /*!
- * @brief       Update SystemCoreClock variable according to Clock Register Values
- *              The SystemCoreClock variable contains the core clock (HCLK)
+ * @brief Update SystemCoreClock variable according to Clock Register Values
+ *        The SystemCoreClock variable contains the core clock (HCLK)
  *
- * @param       None
+ * @param None
  *
- * @retval      None
+ * @retval None
  *
  * @note
  */
-void SystemCoreClockUpdate (void)
+void SystemCoreClockUpdate(void)
 {
     uint32_t sysClock, pllMull, pllSource, Prescaler;
     uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
     sysClock = RCM->CFG_B.SCLKSELSTS;
 
-    switch(sysClock)
+    switch (sysClock)
     {
-        /** sys clock is HSI */
-        case 0:
-            SystemCoreClock = HSI_VALUE;
+    /** sys clock is HSI */
+    case 0:
+        SystemCoreClock = HSI_VALUE;
         break;
 
-        /** sys clock is HSE */
-        case 1:
-            SystemCoreClock = HSE_VALUE;
+    /** sys clock is HSE */
+    case 1:
+        SystemCoreClock = HSE_VALUE;
         break;
 
-        /** sys clock is PLL */
-        case 2:
-            pllMull = RCM->CFG_B.PLLMULCFG + 2;
-            pllSource = RCM->CFG_B.PLLSRCSEL;
+    /** sys clock is PLL */
+    case 2:
+        pllMull   = RCM->CFG_B.PLLMULCFG + 2;
+        pllSource = RCM->CFG_B.PLLSRCSEL;
 
-            /** PLL entry clock source is HSE */
-            if(pllSource == BIT_SET)
+        /** PLL entry clock source is HSE */
+
+        if (pllSource == BIT_SET)
+        {
+            SystemCoreClock = HSE_VALUE * pllMull;
+
+            /** HSE clock divided by 2 */
+
+            if (pllSource == RCM->CFG_B.PLLHSEPSC)
             {
-                SystemCoreClock = HSE_VALUE * pllMull;
-
-                /** HSE clock divided by 2 */
-                if(pllSource == RCM->CFG_B.PLLHSEPSC)
-                {
-                    SystemCoreClock >>= 1;
-                }
+                SystemCoreClock >>= 1;
             }
-            /** PLL entry clock source is HSI/2 */
-            else
-            {
-                SystemCoreClock = (HSI_VALUE >> 1) * pllMull;
-            }
-            break;
+        }
+        /** PLL entry clock source is HSI/2 */
+        else
+        {
+            SystemCoreClock = (HSI_VALUE >> 1) * pllMull;
+        }
+        break;
 
-        default:
-            SystemCoreClock = HSI_VALUE;
+    default:
+        SystemCoreClock = HSI_VALUE;
         break;
     }
 
@@ -162,11 +164,11 @@ void SystemCoreClockUpdate (void)
 }
 
 /*!
- * @brief       Configures the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers
+ * @brief Configures the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers
  *
- * @param       None
+ * @param None
  *
- * @retval      None
+ * @retval None
  *
  * @note
  */
@@ -210,17 +212,21 @@ static void SystemClockConfig(void)
         /** Enable PLL */
         RCM->CTRL_B.PLLEN = 1;
         /** Wait PLL Ready */
-        while(RCM->CTRL_B.PLLRDYFLG == BIT_RESET);
+
+        while (RCM->CTRL_B.PLLRDYFLG == BIT_RESET)
+            ;
 
         /* Select PLL as system clock source */
         RCM->CFG_B.SCLKSEL = 2;
         /* Wait till PLL is used as system clock source */
-        while(RCM->CFG_B.SCLKSELSTS != 0x02);
+
+        while (RCM->CFG_B.SCLKSELSTS != 0x02)
+            ;
 
         SystemCoreClockUpdate();
     }
 }
 
-/**@} end of group System_Functions */
-/**@} end of group APM32F402_403_System */
-/**@} end of group CMSIS */
+/** @} end of group System_Functions */
+/** @} end of group APM32F402_403_System */
+/** @} end of group CMSIS */

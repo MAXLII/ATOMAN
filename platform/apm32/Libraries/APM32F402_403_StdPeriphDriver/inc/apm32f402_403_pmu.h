@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_pmu.h
+ * @file apm32f402_403_pmu.h
  *
- * @brief       This file contains all the functions prototypes for the PMU firmware library.
+ * @brief This file contains all the functions prototypes for the PMU firmware library.
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -31,102 +31,102 @@
 #include "apm32f402_403.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/** @addtogroup APM32F402_403_StdPeriphDriver
-  @{
-*/
+    /** @addtogroup APM32F402_403_StdPeriphDriver
+      @{
+     */
 
-/** @addtogroup PMU_Driver
-  @{
-*/
+    /** @addtogroup PMU_Driver
+      @{
+     */
 
-/** @defgroup PMU_Enumerations Enumerations
-  @{
-*/
+    /** @defgroup PMU_Enumerations Enumerations
+      @{
+     */
 
-/**
- * @brief PMU PVD detection level
- */
-typedef enum
-{
-    PMU_PVD_LEVEL_2V2    = 0x00,    /*!< PVD detection level set to 2.2V */
-    PMU_PVD_LEVEL_2V3    = 0x01,    /*!< PVD detection level set to 2.3V */
-    PMU_PVD_LEVEL_2V4    = 0x02,    /*!< PVD detection level set to 2.4V */
-    PMU_PVD_LEVEL_2V5    = 0x03,    /*!< PVD detection level set to 2.5V */
-    PMU_PVD_LEVEL_2V6    = 0x04,    /*!< PVD detection level set to 2.6V */
-    PMU_PVD_LEVEL_2V7    = 0x05,    /*!< PVD detection level set to 2.7V */
-    PMU_PVD_LEVEL_2V8    = 0x06,    /*!< PVD detection level set to 2.8V */
-    PMU_PVD_LEVEL_2V9    = 0x07,    /*!< PVD detection level set to 2.9V */
-} PMU_PVD_LEVEL_T;
+    /**
+     * @brief PMU PVD detection level
+     */
+    typedef enum
+    {
+        PMU_PVD_LEVEL_2V2 = 0x00, /*!< PVD detection level set to 2.2V */
+        PMU_PVD_LEVEL_2V3 = 0x01, /*!< PVD detection level set to 2.3V */
+        PMU_PVD_LEVEL_2V4 = 0x02, /*!< PVD detection level set to 2.4V */
+        PMU_PVD_LEVEL_2V5 = 0x03, /*!< PVD detection level set to 2.5V */
+        PMU_PVD_LEVEL_2V6 = 0x04, /*!< PVD detection level set to 2.6V */
+        PMU_PVD_LEVEL_2V7 = 0x05, /*!< PVD detection level set to 2.7V */
+        PMU_PVD_LEVEL_2V8 = 0x06, /*!< PVD detection level set to 2.8V */
+        PMU_PVD_LEVEL_2V9 = 0x07, /*!< PVD detection level set to 2.9V */
+    } PMU_PVD_LEVEL_T;
 
-/**
- * @brief PMU Regulator state in STOP mode
- */
-typedef enum
-{
-    PMU_REGULATOR_ON       = 0x00,
-    PMU_REGULATOR_LOWPOWER = 0x01
-} PMU_REGULATOR_T;
+    /**
+     * @brief PMU Regulator state in STOP mode
+     */
+    typedef enum
+    {
+        PMU_REGULATOR_ON       = 0x00,
+        PMU_REGULATOR_LOWPOWER = 0x01
+    } PMU_REGULATOR_T;
 
-/**
- * @brief PMU Stop mode entry
- */
-typedef enum
-{
-    PMU_STOP_ENTRY_WFI     = 0x01,
-    PMU_STOP_ENTRY_WFE     = 0x02
-} PMU_STOP_ENTRY_T;
+    /**
+     * @brief PMU Stop mode entry
+     */
+    typedef enum
+    {
+        PMU_STOP_ENTRY_WFI = 0x01,
+        PMU_STOP_ENTRY_WFE = 0x02
+    } PMU_STOP_ENTRY_T;
 
-/**
- * @brief PMU Sleep mode entry
- */
-typedef enum
-{
-    PMU_SLEEPENTRY_WFI    = 0x01,
-    PMU_SLEEPENTRY_WFE    = 0x02
-} PMU_SLEEPENTRY_T;
+    /**
+     * @brief PMU Sleep mode entry
+     */
+    typedef enum
+    {
+        PMU_SLEEPENTRY_WFI = 0x01,
+        PMU_SLEEPENTRY_WFE = 0x02
+    } PMU_SLEEPENTRY_T;
 
-/**
- * @brief PMU Flag
- */
-typedef enum
-{
-    PMU_FLAG_WUE,
-    PMU_FLAG_SB,
-    PMU_FLAG_PVDO
-} PMU_FLAG_T;
+    /**
+     * @brief PMU Flag
+     */
+    typedef enum
+    {
+        PMU_FLAG_WUE,
+        PMU_FLAG_SB,
+        PMU_FLAG_PVDO
+    } PMU_FLAG_T;
 
-/**@} end of group PMU_Enumerations */
+    /** @} end of group PMU_Enumerations */
 
+    /** @addtogroup PMU_Functions Functions
+      @{
+     */
 
-/** @addtogroup PMU_Functions Functions
-  @{
-*/
+    /* PMU Reset */
+    void PMU_Reset(void);
 
-/* PMU Reset */
-void PMU_Reset(void);
+    /* Configuration and Operation modes */
+    void PMU_EnableBackupAccess(void);
+    void PMU_DisableBackupAccess(void);
+    void PMU_EnablePVD(void);
+    void PMU_DisablePVD(void);
+    void PMU_ConfigPVDLevel(PMU_PVD_LEVEL_T level);
+    void PMU_EnableWakeUpPin(void);
+    void PMU_DisableWakeUpPin(void);
+    void PMU_EnterSleepMode(PMU_SLEEPENTRY_T entry);
+    void PMU_EnterSTOPMode(PMU_REGULATOR_T regulator, PMU_STOP_ENTRY_T entry);
+    void PMU_EnterSTANDBYMode(void);
 
-/* Configuration and Operation modes */
-void PMU_EnableBackupAccess(void);
-void PMU_DisableBackupAccess(void);
-void PMU_EnablePVD(void);
-void PMU_DisablePVD(void);
-void PMU_ConfigPVDLevel(PMU_PVD_LEVEL_T level);
-void PMU_EnableWakeUpPin(void);
-void PMU_DisableWakeUpPin(void);
-void PMU_EnterSleepMode(PMU_SLEEPENTRY_T entry);
-void PMU_EnterSTOPMode(PMU_REGULATOR_T regulator, PMU_STOP_ENTRY_T entry);
-void PMU_EnterSTANDBYMode(void);
+    /* flags */
+    uint8_t PMU_ReadStatusFlag(PMU_FLAG_T flag);
+    void PMU_ClearStatusFlag(PMU_FLAG_T flag);
 
-/* flags */
-uint8_t PMU_ReadStatusFlag(PMU_FLAG_T flag);
-void PMU_ClearStatusFlag(PMU_FLAG_T flag);
-
-/**@} end of group PMU_Functions */
-/**@} end of group PMU_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver*/
+    /** @} end of group PMU_Functions */
+    /** @} end of group PMU_Driver */
+    /** @} end of group APM32F402_403_StdPeriphDriver */
 
 #ifdef __cplusplus
 }

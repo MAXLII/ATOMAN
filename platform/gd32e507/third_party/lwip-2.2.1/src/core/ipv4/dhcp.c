@@ -2315,9 +2315,8 @@ static struct pbuf *dhcp_create_msg(struct netif *netif,
     if (    (message_type == DHCP_INFORM)
          || (message_type == DHCP_DECLINE)
          || (message_type == DHCP_RELEASE)
-         || (    (message_type == DHCP_REQUEST)
-              && /* DHCP_STATE_BOUND not used for sending! */
-                 (    (dhcp->state == DHCP_STATE_RENEWING)
+         || (    (message_type == DHCP_REQUEST) /* DHCP_STATE_BOUND not used for sending! */
+              && (    (dhcp->state == DHCP_STATE_RENEWING)
                    || dhcp->state == DHCP_STATE_REBINDING)))
     {
         ip4_addr_copy(msg_out->ciaddr, *netif_ip4_addr(netif));

@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll.h
+ * @file hc32_ll.h
  * @brief This file contains HC32 Series Device Driver Library file call
  *        management.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -54,50 +54,50 @@ extern "C"
  */
 
 /**
-* @defgroup HC32_Series_Hal_Lock_Status_Define HC32 Series HAL lock status definition
-* @{
-*/
-#define HAL_UNLOCKED               (0x00U)
-#define HAL_LOCKED                 (0x01U)
+ * @defgroup HC32_Series_Hal_Lock_Status_Define HC32 Series HAL lock status definition
+ * @{
+ */
+#define HAL_UNLOCKED (0x00U)
+#define HAL_LOCKED   (0x01U)
 /**
  * @}
  */
 
 /**
-* @defgroup HC32_Series_Hal_Status_Define HC32 Series HAL status definition
-* @{
-*/
-#define HAL_OK                      (0x00)
-#define HAL_ERR                     (0x01)
-#define HAL_BUSY                    (0x02)
-#define HAL_TIMEOUT                 (0x03)
-/**
- * @}
+ * @defgroup HC32_Series_Hal_Status_Define HC32 Series HAL status definition
+ * @{
  */
+#define HAL_OK      (0x00)
+#define HAL_ERR     (0x01)
+#define HAL_BUSY    (0x02)
+#define HAL_TIMEOUT (0x03)
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
 
-/*******************************************************************************
- * Global function prototypes (definition in C source)
- ******************************************************************************/
+    /*******************************************************************************
+     * Global function prototypes (definition in C source)
+     ******************************************************************************/
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }

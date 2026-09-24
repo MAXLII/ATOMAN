@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_tmr0.c
+ * @file hc32_ll_tmr0.c
  * @brief This file provides firmware functions to manage the TMR0
  *        (TMR0).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -50,74 +50,50 @@
  * @{
  */
 /* Max channel number */
-#define TMR0_CH_MAX                     (2UL)
+#define TMR0_CH_MAX (2UL)
 
-#define TMR0_CLK_SRC_MASK               (TMR0_BCONR_SYNSA | TMR0_BCONR_SYNCLKA)
-#define TMR0_BCONR_CLR_MASK             (TMR0_BCONR_CAPMDA | TMR0_BCONR_CKDIVA | TMR0_BCONR_HICPA | TMR0_CLK_SRC_MASK)
+#define TMR0_CLK_SRC_MASK   (TMR0_BCONR_SYNSA | TMR0_BCONR_SYNCLKA)
+#define TMR0_BCONR_CLR_MASK (TMR0_BCONR_CAPMDA | TMR0_BCONR_CKDIVA | TMR0_BCONR_HICPA | TMR0_CLK_SRC_MASK)
 
 /**
  * @defgroup TMR0_Register_Address TMR0 Register Address
  * @{
  */
-#define TMR0_CNTR_ADDR(__UNIT__, __CH__)    (__IO uint32_t*)((uint32_t)(&((__UNIT__)->CNTAR)) + ((__CH__) << 2UL))
-#define TMR0_CMPR_ADDR(__UNIT__, __CH__)    (__IO uint32_t*)((uint32_t)(&((__UNIT__)->CMPAR)) + ((__CH__) << 2UL))
+#define TMR0_CNTR_ADDR(__UNIT__, __CH__) (__IO uint32_t *)((uint32_t)(&((__UNIT__)->CNTAR)) + ((__CH__) << 2UL))
+#define TMR0_CMPR_ADDR(__UNIT__, __CH__) (__IO uint32_t *)((uint32_t)(&((__UNIT__)->CMPAR)) + ((__CH__) << 2UL))
 /**
  * @}
  */
-#define TMR0_CH_OFFSET(__CH__)          ((__CH__) << 4U)
+#define TMR0_CH_OFFSET(__CH__) ((__CH__) << 4U)
 
 /**
  * @defgroup TMR0_Check_Parameters_Validity TMR0 Check Parameters Validity
  * @{
  */
-#define IS_TMR0_UNIT(x)                                                        \
-(   ((x) == CM_TMR0_1)                              ||                         \
-    ((x) == CM_TMR0_2))
+#define IS_TMR0_UNIT(x) (((x) == CM_TMR0_1) || ((x) == CM_TMR0_2))
 
-#define IS_TMR0_CH(x)                                                          \
-(   ((x) == TMR0_CH_A)                              ||                         \
-    ((x) == TMR0_CH_B))
+#define IS_TMR0_CH(x) (((x) == TMR0_CH_A) || ((x) == TMR0_CH_B))
 
-#define IS_TMR0_CLK_SRC(x)                                                     \
-(   ((x) == TMR0_CLK_SRC_INTERN_CLK)                ||                         \
-    ((x) == TMR0_CLK_SRC_SPEC_EVT)                  ||                         \
-    ((x) == TMR0_CLK_SRC_LRC))
+#define IS_TMR0_CLK_SRC(x) \
+    (((x) == TMR0_CLK_SRC_INTERN_CLK) || ((x) == TMR0_CLK_SRC_SPEC_EVT) || ((x) == TMR0_CLK_SRC_LRC))
 
-#define IS_TMR0_CLK_DIV(x)                                                     \
-(   ((x) == TMR0_CLK_DIV1)                          ||                         \
-    ((x) == TMR0_CLK_DIV2)                          ||                         \
-    ((x) == TMR0_CLK_DIV4)                          ||                         \
-    ((x) == TMR0_CLK_DIV8)                          ||                         \
-    ((x) == TMR0_CLK_DIV16)                         ||                         \
-    ((x) == TMR0_CLK_DIV32)                         ||                         \
-    ((x) == TMR0_CLK_DIV64)                         ||                         \
-    ((x) == TMR0_CLK_DIV128)                        ||                         \
-    ((x) == TMR0_CLK_DIV256)                        ||                         \
-    ((x) == TMR0_CLK_DIV512)                        ||                         \
-    ((x) == TMR0_CLK_DIV1024))
+#define IS_TMR0_CLK_DIV(x)                                                                                     \
+    (((x) == TMR0_CLK_DIV1) || ((x) == TMR0_CLK_DIV2) || ((x) == TMR0_CLK_DIV4) || ((x) == TMR0_CLK_DIV8)      \
+  || ((x) == TMR0_CLK_DIV16) || ((x) == TMR0_CLK_DIV32) || ((x) == TMR0_CLK_DIV64) || ((x) == TMR0_CLK_DIV128) \
+  || ((x) == TMR0_CLK_DIV256) || ((x) == TMR0_CLK_DIV512) || ((x) == TMR0_CLK_DIV1024))
 
-#define IS_TMR0_FUNC(x)                                                        \
-(   ((x) == TMR0_FUNC_CMP)                          ||                         \
-    ((x) == TMR0_FUNC_CAPT))
+#define IS_TMR0_FUNC(x) (((x) == TMR0_FUNC_CMP) || ((x) == TMR0_FUNC_CAPT))
 
-#define IS_TMR0_INT(x)                                                         \
-(   ((x) != 0U)                                     &&                         \
-    (((x) | TMR0_INT_ALL) == TMR0_INT_ALL))
+#define IS_TMR0_INT(x) (((x) != 0U) && (((x) | TMR0_INT_ALL) == TMR0_INT_ALL))
 
-#define IS_TMR0_FLAG(x)                                                        \
-(   ((x) != 0U)                                     &&                         \
-    (((x) | TMR0_FLAG_ALL) == TMR0_FLAG_ALL))
-#define IS_TMR0_CMP(x, v)                                                      \
-(   (((x) == CM_TMR0_1) && ((v) <= 0xFFFFUL))       ||                         \
-    ((x) == CM_TMR0_2))
-#define IS_TMR0_CNT(x, v)                                                      \
-(   (((x) == CM_TMR0_1) && ((v) <= 0xFFFFUL))       ||                         \
-    ((x) == CM_TMR0_2))
+#define IS_TMR0_FLAG(x)   (((x) != 0U) && (((x) | TMR0_FLAG_ALL) == TMR0_FLAG_ALL))
+#define IS_TMR0_CMP(x, v) ((((x) == CM_TMR0_1) && ((v) <= 0xFFFFUL)) || ((x) == CM_TMR0_2))
+#define IS_TMR0_CNT(x, v) ((((x) == CM_TMR0_1) && ((v) <= 0xFFFFUL)) || ((x) == CM_TMR0_2))
 /**
  * @}
  */
 
-#define TMR0_RMU_TIMEOUT                (100U)
+#define TMR0_RMU_TIMEOUT (100U)
 /**
  * @}
  */
@@ -142,21 +118,21 @@
  * @{
  */
 /**
- * @brief  Get the sync completion status of the specified TMR0 channel when asynchronous counting mode used.
- * @param  [in]  TMR0x                  Pointer to TMR0 instance register base.
- *                                      This parameter can be a value of the following:
- *   @arg  CM_TMR0_x or CM_TMR0
- * @param  [in]  u32Ch                  TMR0 channel.
- *                                      This parameter can be a value @ref TMR0_Channel
+ * @brief Get the sync completion status of the specified TMR0 channel when asynchronous counting mode used.
+ * @param [in]  TMR0x                  Pointer to TMR0 instance register base.
+ *        This parameter can be a value of the following:
+ * @arg CM_TMR0_x or CM_TMR0
+ * @param [in]  u32Ch                  TMR0 channel.
+ *        This parameter can be a value @ref TMR0_Channel
  * @retval An @ref en_flag_status_t enumeration type value.
- *           - RESET:                   The synchronization caused by the previous write operation has not been completed yet
- *                                      and cannot continue writing these registers:
- *                                      u32Ch == TMR0_CH_A: CNTAR, CMPAR, BCONR.CSTA, STFLR.CMFA, STFLR.OVFA, STFLR.ICPA
- *                                      u32Ch == TMR0_CH_B: CNTBR, CMPBR, BCONR.CSTB, STFLR.CMFB, STFLR.OVFB, STFLR.ICPB
- *           - SET:                     The synchronization caused by the previous write operation has been completed and can
- *                                      continue writing these registers:
- *                                      u32Ch == TMR0_CH_A: CNTAR, CMPAR, BCONR.CSTA, STFLR.CMFA, STFLR.OVFA, STFLR.ICPA
- *                                      u32Ch == TMR0_CH_B: CNTBR, CMPBR, BCONR.CSTB, STFLR.CMFB, STFLR.OVFB, STFLR.ICPB
+ *         - RESET:                   The synchronization caused by the previous write operation has not been completed yet
+ *         and cannot continue writing these registers:
+ *         u32Ch == TMR0_CH_A: CNTAR, CMPAR, BCONR.CSTA, STFLR.CMFA, STFLR.OVFA, STFLR.ICPA
+ *         u32Ch == TMR0_CH_B: CNTBR, CMPBR, BCONR.CSTB, STFLR.CMFB, STFLR.OVFB, STFLR.ICPB
+ *         - SET:                     The synchronization caused by the previous write operation has been completed and can
+ *         continue writing these registers:
+ *         u32Ch == TMR0_CH_A: CNTAR, CMPAR, BCONR.CSTA, STFLR.CMFA, STFLR.OVFA, STFLR.ICPA
+ *         u32Ch == TMR0_CH_B: CNTBR, CMPBR, BCONR.CSTB, STFLR.CMFB, STFLR.OVFB, STFLR.ICPB
  */
 en_flag_status_t TMR0_GetSyncStatus(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
 {
@@ -165,7 +141,8 @@ en_flag_status_t TMR0_GetSyncStatus(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch
     DDL_ASSERT(IS_TMR0_UNIT(TMR0x));
     DDL_ASSERT(IS_TMR0_CH(u32Ch));
 
-    if (READ_REG32_BIT(TMR0x->STFLR, TMR0_STFLR_SYDA << TMR0_CH_OFFSET(u32Ch)) != 0U) {
+    if (READ_REG32_BIT(TMR0x->STFLR, TMR0_STFLR_SYDA << TMR0_CH_OFFSET(u32Ch)) != 0U)
+    {
         enRet = SET;
     }
 
@@ -173,42 +150,47 @@ en_flag_status_t TMR0_GetSyncStatus(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch
 }
 
 /**
- * @brief  De-Initialize TMR0 function
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @brief De-Initialize TMR0 function
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
  * @retval int32_t:
- *           - LL_OK:           Reset success.
+ *         - LL_OK:           Reset success.
  */
 int32_t TMR0_DeInit(CM_TMR0_TypeDef *TMR0x)
 {
     int32_t i32Ret = LL_OK;
 
-    __IO uint8_t u8TimeOut = 0U;
+    __IO uint8_t u8TimeOut            = 0U;
     __IO uint32_t *bCM_RMU_FRST_TMR0x = NULL;
     /* Check parameters */
     DDL_ASSERT(IS_TMR0_UNIT(TMR0x));
     /* Check FRST register protect */
     DDL_ASSERT((CM_PWC->FPRC & PWC_FPRC_FPRCB1) == PWC_FPRC_FPRCB1);
 
-    switch ((uint32_t)TMR0x) {
-        case CM_TMR0_1_BASE:
-            bCM_RMU_FRST_TMR0x = (__IO uint32_t *)((uint32_t)&bCM_RMU->FRST2_b.TMR0_1);
-            break;
-        case CM_TMR0_2_BASE:
-            bCM_RMU_FRST_TMR0x = (__IO uint32_t *)((uint32_t)&bCM_RMU->FRST2_b.TMR0_2);
-            break;
-        default:
-            break;
+    switch ((uint32_t)TMR0x)
+    {
+    case CM_TMR0_1_BASE:
+        bCM_RMU_FRST_TMR0x = (__IO uint32_t *)((uint32_t)&bCM_RMU->FRST2_b.TMR0_1);
+        break;
+    case CM_TMR0_2_BASE:
+        bCM_RMU_FRST_TMR0x = (__IO uint32_t *)((uint32_t)&bCM_RMU->FRST2_b.TMR0_2);
+        break;
+    default:
+        break;
     }
     /* Reset TMR0 */
     WRITE_REG32(*bCM_RMU_FRST_TMR0x, 0UL);
     __NOP();
     __NOP();
     /* Ensure reset procedure is completed */
-    while (0UL == READ_REG32(*bCM_RMU_FRST_TMR0x)) {
+
+    while (0UL == READ_REG32(*bCM_RMU_FRST_TMR0x))
+    {
         u8TimeOut++;
-        if (u8TimeOut > TMR0_RMU_TIMEOUT) {
+
+        if (u8TimeOut > TMR0_RMU_TIMEOUT)
+        {
             i32Ret = LL_ERR_TIMEOUT;
             break;
         }
@@ -217,17 +199,17 @@ int32_t TMR0_DeInit(CM_TMR0_TypeDef *TMR0x)
 }
 
 /**
- * @brief  Initialize TMR0 function.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] pstcTmr0Init            Pointer to a @ref stc_tmr0_init_t.
+ * @brief Initialize TMR0 function.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] pstcTmr0Init            Pointer to a @ref stc_tmr0_init_t.
  * @retval int32_t:
- *           - LL_OK: Initialize success
- *           - LL_ERR_INVD_PARAM: pstcTmr0Init is NULL
+ *         - LL_OK: Initialize success
+ *         - LL_ERR_INVD_PARAM: pstcTmr0Init is NULL
  */
 int32_t TMR0_Init(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, const stc_tmr0_init_t *pstcTmr0Init)
 {
@@ -235,9 +217,12 @@ int32_t TMR0_Init(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, const stc_tmr0_init_t 
     __IO uint32_t *CMPR;
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcTmr0Init) {
+    if (NULL == pstcTmr0Init)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
+    }
+    else
+    {
         /* Check parameters */
         DDL_ASSERT(IS_TMR0_UNIT(TMR0x));
         DDL_ASSERT(IS_TMR0_CH(u32Ch));
@@ -250,44 +235,48 @@ int32_t TMR0_Init(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, const stc_tmr0_init_t 
         WRITE_REG32(*CNTR, 0UL);
         CMPR = TMR0_CMPR_ADDR(TMR0x, u32Ch);
         WRITE_REG32(*CMPR, pstcTmr0Init->u32CompareValue);
-        MODIFY_REG32(TMR0x->BCONR, (TMR0_BCONR_CLR_MASK << TMR0_CH_OFFSET(u32Ch)),
-                     ((pstcTmr0Init->u32ClockSrc | pstcTmr0Init->u32ClockDiv |
-                       pstcTmr0Init->u32Func) << TMR0_CH_OFFSET(u32Ch)));
+        MODIFY_REG32(
+            TMR0x->BCONR,
+            (TMR0_BCONR_CLR_MASK << TMR0_CH_OFFSET(u32Ch)),
+            ((pstcTmr0Init->u32ClockSrc | pstcTmr0Init->u32ClockDiv | pstcTmr0Init->u32Func) << TMR0_CH_OFFSET(u32Ch)));
     }
 
     return i32Ret;
 }
 
 /**
- * @brief  Set the fields of structure stc_tmr0_init_t to default values.
- * @param  [out] pstcTmr0Init           Pointer to a @ref stc_tmr0_init_t structure.
+ * @brief Set the fields of structure stc_tmr0_init_t to default values.
+ * @param [out] pstcTmr0Init           Pointer to a @ref stc_tmr0_init_t structure.
  * @retval int32_t:
- *           - LL_OK: Initialize success
- *           - LL_ERR_INVD_PARAM: pstcTmr0Init is NULL
+ *         - LL_OK: Initialize success
+ *         - LL_ERR_INVD_PARAM: pstcTmr0Init is NULL
  */
 int32_t TMR0_StructInit(stc_tmr0_init_t *pstcTmr0Init)
 {
     int32_t i32Ret = LL_OK;
 
-    if (NULL == pstcTmr0Init) {
+    if (NULL == pstcTmr0Init)
+    {
         i32Ret = LL_ERR_INVD_PARAM;
-    } else {
-        pstcTmr0Init->u32ClockSrc       = TMR0_CLK_SRC_INTERN_CLK;
-        pstcTmr0Init->u32ClockDiv       = TMR0_CLK_DIV1;
-        pstcTmr0Init->u32Func           = TMR0_FUNC_CMP;
-        pstcTmr0Init->u32CompareValue   = 0xFFFFUL;
+    }
+    else
+    {
+        pstcTmr0Init->u32ClockSrc     = TMR0_CLK_SRC_INTERN_CLK;
+        pstcTmr0Init->u32ClockDiv     = TMR0_CLK_DIV1;
+        pstcTmr0Init->u32Func         = TMR0_FUNC_CMP;
+        pstcTmr0Init->u32CompareValue = 0xFFFFUL;
     }
     return i32Ret;
 }
 
 /**
- * @brief  Start TMR0.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
+ * @brief Start TMR0.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
  * @retval None
  */
 void TMR0_Start(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
@@ -300,13 +289,13 @@ void TMR0_Start(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
 }
 
 /**
- * @brief  Stop TMR0.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
+ * @brief Stop TMR0.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
  * @retval None
  */
 void TMR0_Stop(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
@@ -319,16 +308,16 @@ void TMR0_Stop(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
 }
 
 /**
- * @brief  Set Tmr0 counter value.
- * @note   Setting the count requires stop tmr0.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] u32Value                The data to write to the counter register
- *         This parameter maximum value refer the bit width of TMR0_CNTmR.CNT(m:channel)
+ * @brief Set Tmr0 counter value.
+ * @note Setting the count requires stop tmr0.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] u32Value                The data to write to the counter register
+ *        This parameter maximum value refer the bit width of TMR0_CNTmR.CNT(m:channel)
  * @retval None
  */
 void TMR0_SetCountValue(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Value)
@@ -345,13 +334,13 @@ void TMR0_SetCountValue(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Valu
 }
 
 /**
- * @brief  Get Tmr0 counter value.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
+ * @brief Get Tmr0 counter value.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
  * @retval uint32_t                     The counter register data
  *         - This parameter maximum value refer the bit width of TMR0_CNTmR.CNT(m:channel)
  */
@@ -368,15 +357,15 @@ uint32_t TMR0_GetCountValue(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
 }
 
 /**
- * @brief  Set Tmr0 compare value.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] u32Value                The data to write to the compare register
- *         This parameter maximum value refer the bit width of TMR0_CMPmR.CMP(m:channel)
+ * @brief Set Tmr0 compare value.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] u32Value                The data to write to the compare register
+ *        This parameter maximum value refer the bit width of TMR0_CMPmR.CMP(m:channel)
  * @retval None
  */
 void TMR0_SetCompareValue(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Value)
@@ -393,13 +382,13 @@ void TMR0_SetCompareValue(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Va
 }
 
 /**
- * @brief  Get Tmr0 compare value.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
+ * @brief Get Tmr0 compare value.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
  * @retval The compare register data
  *         - This maximum value refer the bit width of TMR0_CMPmR.CMP(m:channel)
  */
@@ -416,16 +405,16 @@ uint32_t TMR0_GetCompareValue(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch)
 }
 
 /**
- * @brief  Set clock source.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] u32Src                  Specifies the clock source
- *         This parameter can be a value of the following:
- *           @arg @ref TMR0_Clock_Source
+ * @brief Set clock source.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] u32Src                  Specifies the clock source
+ *        This parameter can be a value of the following:
+ * @arg @ref TMR0_Clock_Source
  * @retval None
  */
 void TMR0_SetClockSrc(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Src)
@@ -439,26 +428,26 @@ void TMR0_SetClockSrc(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Src)
 }
 
 /**
- * @brief  Set the division of clock.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] u32Div                  Specifies the clock source division
- *         This parameter can be a value of the following:
- *           @arg TMR0_CLK_DIV1:        Clock source / 1
- *           @arg TMR0_CLK_DIV2:        Clock source / 2
- *           @arg TMR0_CLK_DIV4:        Clock source / 4
- *           @arg TMR0_CLK_DIV8:        Clock source / 8
- *           @arg TMR0_CLK_DIV16:       Clock source / 16
- *           @arg TMR0_CLK_DIV32:       Clock source / 32
- *           @arg TMR0_CLK_DIV64:       Clock source / 64
- *           @arg TMR0_CLK_DIV128:      Clock source / 128
- *           @arg TMR0_CLK_DIV256:      Clock source / 256
- *           @arg TMR0_CLK_DIV512:      Clock source / 512
- *           @arg TMR0_CLK_DIV1024:     Clock source / 1024
+ * @brief Set the division of clock.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] u32Div                  Specifies the clock source division
+ *        This parameter can be a value of the following:
+ * @arg TMR0_CLK_DIV1:        Clock source / 1
+ * @arg TMR0_CLK_DIV2:        Clock source / 2
+ * @arg TMR0_CLK_DIV4:        Clock source / 4
+ * @arg TMR0_CLK_DIV8:        Clock source / 8
+ * @arg TMR0_CLK_DIV16:       Clock source / 16
+ * @arg TMR0_CLK_DIV32:       Clock source / 32
+ * @arg TMR0_CLK_DIV64:       Clock source / 64
+ * @arg TMR0_CLK_DIV128:      Clock source / 128
+ * @arg TMR0_CLK_DIV256:      Clock source / 256
+ * @arg TMR0_CLK_DIV512:      Clock source / 512
+ * @arg TMR0_CLK_DIV1024:     Clock source / 1024
  * @retval None.
  */
 void TMR0_SetClockDiv(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Div)
@@ -472,17 +461,17 @@ void TMR0_SetClockDiv(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Div)
 }
 
 /**
- * @brief  Set Tmr0 Function.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] u32Func                 Select TMR0 function
- *         This parameter can be a value of the following:
- *           @arg TMR0_FUNC_CMP:        Select the Compare function
- *           @arg TMR0_FUNC_CAPT:       Select the Capture function
+ * @brief Set Tmr0 Function.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] u32Func                 Select TMR0 function
+ *        This parameter can be a value of the following:
+ * @arg TMR0_FUNC_CMP:        Select the Compare function
+ * @arg TMR0_FUNC_CAPT:       Select the Capture function
  * @retval None
  */
 void TMR0_SetFunc(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Func)
@@ -492,19 +481,20 @@ void TMR0_SetFunc(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Func)
     DDL_ASSERT(IS_TMR0_CH(u32Ch));
     DDL_ASSERT(IS_TMR0_FUNC(u32Func));
 
-    MODIFY_REG32(TMR0x->BCONR, ((TMR0_BCONR_CAPMDA | TMR0_BCONR_HICPA) << TMR0_CH_OFFSET(u32Ch)),
+    MODIFY_REG32(TMR0x->BCONR,
+                 ((TMR0_BCONR_CAPMDA | TMR0_BCONR_HICPA) << TMR0_CH_OFFSET(u32Ch)),
                  (u32Func << TMR0_CH_OFFSET(u32Ch)));
 }
 
 /**
- * @brief  Enable or disable hardware trigger capture function.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable hardware trigger capture function.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void TMR0_HWCaptureCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_state_t enNewState)
@@ -514,22 +504,25 @@ void TMR0_HWCaptureCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional
     DDL_ASSERT(IS_TMR0_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HICPA << TMR0_CH_OFFSET(u32Ch)));
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HICPA << TMR0_CH_OFFSET(u32Ch)));
     }
 }
 
 /**
- * @brief  Enable or disable hardware trigger start function.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable hardware trigger start function.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void TMR0_HWStartCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_state_t enNewState)
@@ -539,22 +532,25 @@ void TMR0_HWStartCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_s
     DDL_ASSERT(IS_TMR0_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HSTAA << TMR0_CH_OFFSET(u32Ch)));
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HSTAA << TMR0_CH_OFFSET(u32Ch)));
     }
 }
 
 /**
- * @brief  Enable or disable hardware trigger stop function.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable hardware trigger stop function.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void TMR0_HWStopCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_state_t enNewState)
@@ -564,22 +560,25 @@ void TMR0_HWStopCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_st
     DDL_ASSERT(IS_TMR0_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HSTPA << TMR0_CH_OFFSET(u32Ch)));
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HSTPA << TMR0_CH_OFFSET(u32Ch)));
     }
 }
 
 /**
- * @brief  Enable or disable hardware trigger clear function.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Ch                   TMR0 channel
- *         This parameter can be one of the following values:
- *           @arg @ref TMR0_Channel
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable hardware trigger clear function.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Ch                   TMR0 channel
+ *        This parameter can be one of the following values:
+ * @arg @ref TMR0_Channel
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void TMR0_HWClearCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_state_t enNewState)
@@ -589,22 +588,25 @@ void TMR0_HWClearCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_s
     DDL_ASSERT(IS_TMR0_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HCLEA << TMR0_CH_OFFSET(u32Ch)));
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(TMR0x->BCONR, (TMR0_BCONR_HCLEA << TMR0_CH_OFFSET(u32Ch)));
     }
 }
 
 /**
- * @brief  Enable or disable specified Tmr0 interrupt.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32IntType              TMR0 interrupt type
- *         This parameter can be any combination value of the following values:
- *           @arg @ref TMR0_Interrupt.
- * @param  [in] enNewState              An @ref en_functional_state_t enumeration value.
+ * @brief Enable or disable specified Tmr0 interrupt.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32IntType              TMR0 interrupt type
+ *        This parameter can be any combination value of the following values:
+ * @arg @ref TMR0_Interrupt.
+ * @param [in] enNewState              An @ref en_functional_state_t enumeration value.
  * @retval None
  */
 void TMR0_IntCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32IntType, en_functional_state_t enNewState)
@@ -614,21 +616,24 @@ void TMR0_IntCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32IntType, en_functional_stat
     DDL_ASSERT(IS_TMR0_INT(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (ENABLE == enNewState) {
+    if (ENABLE == enNewState)
+    {
         SET_REG32_BIT(TMR0x->BCONR, u32IntType);
-    } else {
+    }
+    else
+    {
         CLR_REG32_BIT(TMR0x->BCONR, u32IntType);
     }
 }
 
 /**
- * @brief  Get the state of the specified TMR0 interrupt.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32IntType              TMR0 interrupt type
- *         This parameter can be any combination value of the following values:
- *           @arg @ref TMR0_Interrupt.
+ * @brief Get the state of the specified TMR0 interrupt.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32IntType              TMR0 interrupt type
+ *        This parameter can be any combination value of the following values:
+ * @arg @ref TMR0_Interrupt.
  * @retval An @ref en_functional_state_t enumeration value.
  */
 en_functional_state_t TMR0_GetIntState(CM_TMR0_TypeDef *TMR0x, uint32_t u32IntType)
@@ -641,13 +646,13 @@ en_functional_state_t TMR0_GetIntState(CM_TMR0_TypeDef *TMR0x, uint32_t u32IntTy
 }
 
 /**
- * @brief  Get Tmr0 status.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Flag                 TMR0 flag type
- *         This parameter can be any combination value of the following values:
- *           @arg @ref TMR0_FLAG
+ * @brief Get Tmr0 status.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Flag                 TMR0 flag type
+ *        This parameter can be any combination value of the following values:
+ * @arg @ref TMR0_FLAG
  * @retval An @ref en_flag_status_t enumeration type value.
  */
 en_flag_status_t TMR0_GetStatus(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Flag)
@@ -658,7 +663,8 @@ en_flag_status_t TMR0_GetStatus(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Flag)
     DDL_ASSERT(IS_TMR0_UNIT(TMR0x));
     DDL_ASSERT(IS_TMR0_FLAG(u32Flag));
 
-    if (0UL != (READ_REG32_BIT(TMR0x->STFLR, u32Flag))) {
+    if (0UL != (READ_REG32_BIT(TMR0x->STFLR, u32Flag)))
+    {
         enFlagSta = SET;
     }
 
@@ -666,13 +672,13 @@ en_flag_status_t TMR0_GetStatus(const CM_TMR0_TypeDef *TMR0x, uint32_t u32Flag)
 }
 
 /**
- * @brief  Clear Tmr0 status.
- * @param  [in] TMR0x                   Pointer to TMR0 unit instance
- *         This parameter can be one of the following values:
- *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @param  [in] u32Flag                 TMR0 flag type
- *         This parameter can be any combination value of the following values:
- *           @arg @ref TMR0_FLAG
+ * @brief Clear Tmr0 status.
+ * @param [in] TMR0x                   Pointer to TMR0 unit instance
+ *        This parameter can be one of the following values:
+ * @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
+ * @param [in] u32Flag                 TMR0 flag type
+ *        This parameter can be any combination value of the following values:
+ * @arg @ref TMR0_FLAG
  * @retval None
  */
 void TMR0_ClearStatus(CM_TMR0_TypeDef *TMR0x, uint32_t u32Flag)

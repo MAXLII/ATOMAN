@@ -1,13 +1,13 @@
 /**
  *******************************************************************************
- * @file  hc32_ll.c
+ * @file hc32_ll.c
  * @brief This file provides firmware functions to low-level drivers (LL).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
    2025-11-03       CDT             Add OTP in LL_PERIPH_WE/LL_PERIPH_WP
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -65,47 +65,63 @@
 void LL_PERIPH_WE(uint32_t u32Peripheral)
 {
 #if (LL_EFM_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_EFM) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_EFM) != 0UL)
+    {
         /* Unlock all EFM registers */
         EFM_REG_Unlock();
     }
-    if ((u32Peripheral & LL_PERIPH_EFM_OTP) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_EFM_OTP) != 0UL)
+    {
         /* Unlock otp registers */
         EFM_OTP_REG_Unlock();
     }
 #endif
 #if (LL_FCG_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_FCG) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_FCG) != 0UL)
+    {
         /* Unlock FCG register */
         PWC_FCG0_REG_Unlock();
     }
 #endif
 #if (LL_GPIO_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_GPIO) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_GPIO) != 0UL)
+    {
         /* Unlock GPIO register: PSPCR, PCCR, PINAER, PCRxy, PFSRxy */
         GPIO_REG_Unlock();
     }
 #endif
 #if (LL_MPU_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_MPU) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_MPU) != 0UL)
+    {
         /* Unlock all MPU registers */
         MPU_REG_Unlock();
     }
 #endif
 #if (LL_PWC_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_LVD) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_LVD) != 0UL)
+    {
         /* Unlock LVD registers, @ref PWC_REG_Write_Unlock_Code for details */
         PWC_REG_Unlock(PWC_UNLOCK_CODE2);
     }
 #endif
 #if (LL_PWC_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_PWC_CLK_RMU) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_PWC_CLK_RMU) != 0UL)
+    {
         /* Unlock PWC, CLK, RMU registers, @ref PWC_REG_Write_Unlock_Code for details */
         PWC_REG_Unlock(PWC_UNLOCK_CODE0 | PWC_UNLOCK_CODE1);
     }
 #endif
 #if (LL_SRAM_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_SRAM) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_SRAM) != 0UL)
+    {
         /* Unlock SRAM register: WTCR, CKCR */
         SRAM_REG_Unlock();
     }
@@ -115,47 +131,63 @@ void LL_PERIPH_WE(uint32_t u32Peripheral)
 void LL_PERIPH_WP(uint32_t u32Peripheral)
 {
 #if (LL_EFM_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_EFM) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_EFM) != 0UL)
+    {
         /* Lock all EFM registers */
         EFM_REG_Lock();
     }
-    if ((u32Peripheral & LL_PERIPH_EFM_OTP) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_EFM_OTP) != 0UL)
+    {
         /* Unlock otp registers */
         EFM_OTP_REG_Lock();
     }
 #endif
 #if (LL_FCG_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_FCG) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_FCG) != 0UL)
+    {
         /* Lock FCG register */
         PWC_FCG0_REG_Lock();
     }
 #endif
 #if (LL_GPIO_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_GPIO) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_GPIO) != 0UL)
+    {
         /* Unlock GPIO register: PSPCR, PCCR, PINAER, PCRxy, PFSRxy */
         GPIO_REG_Lock();
     }
 #endif
 #if (LL_MPU_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_MPU) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_MPU) != 0UL)
+    {
         /* Lock all MPU registers */
         MPU_REG_Lock();
     }
 #endif
 #if (LL_PWC_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_LVD) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_LVD) != 0UL)
+    {
         /* Lock LVD registers, @ref PWC_REG_Write_Unlock_Code for details */
         PWC_REG_Lock(PWC_UNLOCK_CODE2);
     }
 #endif
 #if (LL_PWC_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_PWC_CLK_RMU) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_PWC_CLK_RMU) != 0UL)
+    {
         /* Lock PWC, CLK, RMU registers, @ref PWC_REG_Write_Unlock_Code for details */
         PWC_REG_Lock(PWC_UNLOCK_CODE0 | PWC_UNLOCK_CODE1);
     }
 #endif
 #if (LL_SRAM_ENABLE == DDL_ON)
-    if ((u32Peripheral & LL_PERIPH_SRAM) != 0UL) {
+
+    if ((u32Peripheral & LL_PERIPH_SRAM) != 0UL)
+    {
         /* Lock SRAM register: WTCR, CKCR */
         SRAM_REG_Lock();
     }
@@ -163,14 +195,15 @@ void LL_PERIPH_WP(uint32_t u32Peripheral)
 }
 
 /**
- * @brief  Software sync start timer
- * @param  [in] u32Tmr                  Timer of software sync start
- *         This parameter can be one or any combination of the macros group @ref Timer_SW_Sync_Start_Global_Macros
+ * @brief Software sync start timer
+ * @param [in] u32Tmr                  Timer of software sync start
+ *        This parameter can be one or any combination of the macros group @ref Timer_SW_Sync_Start_Global_Macros
  * @retval None
  */
 void LL_TMR_SWSyncStart(uint32_t u32Tmr)
 {
-    if ((LL_SW_SYNC_START_TMR_ALL & u32Tmr) != 0UL) {
+    if ((LL_SW_SYNC_START_TMR_ALL & u32Tmr) != 0UL)
+    {
         WRITE_REG32(CM_PERIC->TMR_SYNENR, (LL_SW_SYNC_START_TMR_ALL & u32Tmr));
     }
 }

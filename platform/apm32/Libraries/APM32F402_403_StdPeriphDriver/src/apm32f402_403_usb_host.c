@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_usb_host.c
+ * @file apm32f402_403_usb_host.c
  *
- * @brief       USB host function handle
+ * @brief USB host function handle
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -28,28 +28,28 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup USB_Host_Driver USB Host Driver
   @{
-*/
+ */
 
 /** @defgroup USB_Host_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     USB host configure data PID
+ * @brief USB host configure data PID
  *
- * @param     usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @param     channelNum: channel number
+ * @param channelNum: channel number
  *
- * @param     dataPid: data PID
+ * @param dataPid: data PID
  *
- * @retval    None
+ * @retval None
  */
-void USBH_ConfigDataPid(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t dataPid)
+void USBH_ConfigDataPid(USBH_HANDLE_T *usbhh, uint8_t channelNum, uint8_t dataPid)
 {
     if (usbhh->xferPipe[channelNum].epDir == EP_DIR_IN)
     {
@@ -62,25 +62,26 @@ void USBH_ConfigDataPid(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t dataPi
 }
 
 /*!
- * @brief       Handle Disconnect detected interrupt
+ * @brief Handle Disconnect detected interrupt
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-static void USBH_DisconnectIsrHandler(USBH_HANDLE_T* usbhh)
+static void USBH_DisconnectIsrHandler(USBH_HANDLE_T *usbhh)
 {
     /* Clear interrupt */
     USB_OTG_ClearGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_DEDIS);
 
     /* Host port is disconnected */
+
     if (USB_OTG_H_PortIsConnect(usbhh->usbHost) == RESET)
     {
-        /* Clear USB FIFO*/
+        /* Clear USB FIFO */
         USB_OTG_FlushTxFIFO(usbhh->usbGlobal, 0x10);
         USB_OTG_FlushRxFIFO(usbhh->usbGlobal);
 
-        /* Reset FS clock*/
+        /* Reset FS clock */
         USB_OTG_H_ConfigHostClk(usbhh->usbHost, PHYCLK_48_MHZ);
         USB_OTG_H_SetFrameInterval(usbhh->usbHost, 48000);
 
@@ -90,13 +91,13 @@ static void USBH_DisconnectIsrHandler(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief       Handle RxFIFO no empty interrupt
+ * @brief Handle RxFIFO no empty interrupt
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-static void USBH_RxFifoNoEmptyIsrHandler(USBH_HANDLE_T* usbhh)
+static void USBH_RxFifoNoEmptyIsrHandler(USBH_HANDLE_T *usbhh)
 {
     USBH_FIFO_STA_T fifoStatus;
     uint16_t channelNum;
@@ -108,53 +109,53 @@ static void USBH_RxFifoNoEmptyIsrHandler(USBH_HANDLE_T* usbhh)
 
     /* Read and pop the RxFIFO status data */
     fifoStatus.FIFO_STATUS = USB_OTG_PopRxFifoStatus(usbhh->usbGlobal);
-    channelNum = fifoStatus.FIFO_STATUS_B.chNum;
-    packetStatus = fifoStatus.FIFO_STATUS_B.packetStatus;
-    packetCnt = fifoStatus.FIFO_STATUS_B.byteCount;
+    channelNum             = fifoStatus.FIFO_STATUS_B.chNum;
+    packetStatus           = fifoStatus.FIFO_STATUS_B.packetStatus;
+    packetCnt              = fifoStatus.FIFO_STATUS_B.byteCount;
 
     switch (packetStatus)
     {
-        case USBH_PKTSTS_IN:
-            /* Read the data into the host buffer */
-            if ((packetCnt > 0) && (usbhh->xferPipe[channelNum].buffer != NULL))
+    case USBH_PKTSTS_IN:
+        /* Read the data into the host buffer */
+
+        if (    (packetCnt > 0)
+             && (usbhh->xferPipe[channelNum].buffer != NULL))
+        {
+            if ((usbhh->xferPipe[channelNum].bufCount + packetCnt) > usbhh->xferPipe[channelNum].bufLen)
             {
-                if ((usbhh->xferPipe[channelNum].bufCount + packetCnt) > \
-                        usbhh->xferPipe[channelNum].bufLen)
+                usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
+            }
+            else
+            {
+                USB_OTG_FIFO_ReadRxFifoPacket(usbhh->usbFifo, usbhh->xferPipe[channelNum].buffer, packetCnt);
+
+                /* manage multiple Xfer */
+                usbhh->xferPipe[channelNum].buffer += packetCnt;
+                usbhh->xferPipe[channelNum].bufCount += packetCnt;
+
+                if (    (USB_OTG_H_ReadPacketCount(usbhh->usbHost, channelNum) > 0)
+                     && (usbhh->xferPipe[channelNum].maxPackSize == packetCnt))
                 {
-                    usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
-                }
-                else
-                {
-                    USB_OTG_FIFO_ReadRxFifoPacket(usbhh->usbFifo, usbhh->xferPipe[channelNum].buffer \
-                                                  , packetCnt);
+                    /* re-activate the channel when more packets are expected */
+                    USB_OTG_H_EnableChannel(usbhh->usbHost, channelNum);
 
-                    /*manage multiple Xfer */
-                    usbhh->xferPipe[channelNum].buffer     += packetCnt;
-                    usbhh->xferPipe[channelNum].bufCount   += packetCnt;
-
-                    if ((USB_OTG_H_ReadPacketCount(usbhh->usbHost, channelNum) > 0) && \
-                            (usbhh->xferPipe[channelNum].maxPackSize == packetCnt))
-                    {
-                        /* re-activate the channel when more packets are expected */
-                        USB_OTG_H_EnableChannel(usbhh->usbHost, channelNum);
-
-                        usbhh->xferPipe[channelNum].pidToggleIn ^= 1;
-                    }
+                    usbhh->xferPipe[channelNum].pidToggleIn ^= 1;
                 }
             }
-            break;
+        }
+        break;
 
-        case USBH_PKTSTS_IN_XFER_COMPLETE:
-            break;
+    case USBH_PKTSTS_IN_XFER_COMPLETE:
+        break;
 
-        case USBH_PKTSTS_DATA_ISO_ERR:
-            break;
+    case USBH_PKTSTS_DATA_ISO_ERR:
+        break;
 
-        case USBH_PKTSTS_CHANNEL_HALT:
-            break;
+    case USBH_PKTSTS_CHANNEL_HALT:
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     /* Enable RxFIFO no empty Interrupt */
@@ -162,68 +163,45 @@ static void USBH_RxFifoNoEmptyIsrHandler(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief     Halt usb host channel
+ * @brief Halt usb host channel
  *
- * @param     usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @param     chNum: host channel number
+ * @param chNum: host channel number
  *
- * @retval    None
+ * @retval None
  */
-void USB_OTG_H_HaltChannel(USBH_HANDLE_T* usbhh, uint8_t chNum)
+void USB_OTG_H_HaltChannel(USBH_HANDLE_T *usbhh, uint8_t chNum)
 {
     __IO uint32_t timeout = 0;
     uint8_t epTypte;
     uint8_t chEnableSta;
     uint8_t dmaEnableSta;
 
-    epTypte = USB_OTG_H_ReadEpType(usbhh->usbHost, chNum);
-    chEnableSta = USB_OTG_H_ReadChannelStatus(usbhh->usbHost, chNum);
+    epTypte      = USB_OTG_H_ReadEpType(usbhh->usbHost, chNum);
+    chEnableSta  = USB_OTG_H_ReadChannelStatus(usbhh->usbHost, chNum);
     dmaEnableSta = USB_OTG_ReadDMAStatus(usbhh->usbGlobal);
 
     /* HS DMA enable status */
-    if ((dmaEnableSta == ENABLE) && (chEnableSta == DISABLE))
+
+    if (    (dmaEnableSta == ENABLE)
+         && (chEnableSta == DISABLE))
     {
         return;
     }
 
     /* Read Remain space to issue the halt event */
+
     switch (epTypte)
     {
-        case EP_TYPE_CONTROL:
-        case EP_TYPE_BULK:
-            /* stop channel */
-            usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHINT = BIT_SET;
+    case EP_TYPE_CONTROL:
+    case EP_TYPE_BULK:
+        /* stop channel */
+        usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHINT = BIT_SET;
 
-            if (dmaEnableSta == DISABLE)
-            {
-                if (usbhh->usbGlobal->GNPTXFQSTS_B.NPTXRSA == 0)
-                {
-                    usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_RESET;
-                    usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_SET;
-
-                    while (usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN)
-                    {
-                        timeout++;
-
-                        if (timeout >= 0x400)
-                        {
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_SET;
-                }
-            }
-            break;
-
-        default:
-            /* stop channel */
-            usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHINT = BIT_SET;
-
-            if (USB_OTG_H_ReadTxQueueRemainSpace(usbhh->usbHost) == 0)
+        if (dmaEnableSta == DISABLE)
+        {
+            if (usbhh->usbGlobal->GNPTXFQSTS_B.NPTXRSA == 0)
             {
                 usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_RESET;
                 usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_SET;
@@ -242,22 +220,49 @@ void USB_OTG_H_HaltChannel(USBH_HANDLE_T* usbhh, uint8_t chNum)
             {
                 usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_SET;
             }
-            break;
+        }
+        break;
+
+    default:
+        /* stop channel */
+        usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHINT = BIT_SET;
+
+        if (USB_OTG_H_ReadTxQueueRemainSpace(usbhh->usbHost) == 0)
+        {
+            usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_RESET;
+            usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_SET;
+
+            while (usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN)
+            {
+                timeout++;
+
+                if (timeout >= 0x400)
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            usbhh->usbHost->REGS_HCH[chNum].HCH_B.CHEN = BIT_SET;
+        }
+        break;
     }
 }
 
 /*!
- * @brief     Handle Host port in interrupt
+ * @brief Handle Host port in interrupt
  *
- * @param     usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @param     channelNum : Select channel.
+ * @param channelNum : Select channel.
  *
- * @retval    None
+ * @retval None
  */
-static void USBH_IN_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channelNum)
+static void USBH_IN_HostChannelIsrHandler(USBH_HANDLE_T *usbhh, uint8_t channelNum)
 {
-    /* AHB Error only in HS mode*/
+    /* AHB Error only in HS mode */
+
     if (USB_OTG_H_ReadChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_AHBERR))
     {
         USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_AHBERR);
@@ -313,38 +318,37 @@ static void USBH_IN_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channelN
     {
         if (usbhh->usbCfg.dmaStatus != DISABLE)
         {
-            usbhh->xferPipe[channelNum].bufCount = usbhh->xferPipe[channelNum].bufSize - \
-                                                   USB_OTG_H_ReadTransferSize(usbhh->usbHost, channelNum);
+            usbhh->xferPipe[channelNum].bufCount =
+                usbhh->xferPipe[channelNum].bufSize - USB_OTG_H_ReadTransferSize(usbhh->usbHost, channelNum);
         }
 
         usbhh->xferPipe[channelNum].pipeState = PIPE_XFRC;
-        usbhh->xferPipe[channelNum].errorCnt = 0;
+        usbhh->xferPipe[channelNum].errorCnt  = 0;
 
         switch (usbhh->xferPipe[channelNum].epType)
         {
-            case EP_TYPE_CONTROL:
-            case EP_TYPE_BULK:
-                USB_OTG_H_HaltChannel(usbhh, channelNum);
-                USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNAK);
-                break;
+        case EP_TYPE_CONTROL:
+        case EP_TYPE_BULK:
+            USB_OTG_H_HaltChannel(usbhh, channelNum);
+            USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNAK);
+            break;
 
-            case EP_TYPE_INTERRUPT:
-            case EP_TYPE_ISO:
-                USB_OTG_H_TxUseOddFrame(usbhh->usbHost, channelNum);
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_OK;
+        case EP_TYPE_INTERRUPT:
+        case EP_TYPE_ISO:
+            USB_OTG_H_TxUseOddFrame(usbhh->usbHost, channelNum);
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_OK;
 
-                /* USB update URB status callback */
-                USBH_UpdateUrbCallback(usbhh);
-                break;
+            /* USB update URB status callback */
+            USBH_UpdateUrbCallback(usbhh);
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
 
         if (usbhh->usbCfg.dmaStatus == ENABLE)
         {
-            if (((usbhh->xferPipe[channelNum].bufSize / \
-                    usbhh->xferPipe[channelNum].maxPackSize) & 0x01) != 0)
+            if (((usbhh->xferPipe[channelNum].bufSize / usbhh->xferPipe[channelNum].maxPackSize) & 0x01) != 0)
             {
                 usbhh->xferPipe[channelNum].pidToggleIn ^= 1;
             }
@@ -361,47 +365,48 @@ static void USBH_IN_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channelN
     {
         switch (usbhh->xferPipe[channelNum].pipeState)
         {
-            case PIPE_XFRC:
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_OK;
-                break;
+        case PIPE_XFRC:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_OK;
+            break;
 
-            case PIPE_STALL:
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_STALL;
-                break;
+        case PIPE_STALL:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_STALL;
+            break;
 
-            case PIPE_XACTERR:
-            case PIPE_DATATGLERR:
-                usbhh->xferPipe[channelNum].errorCnt++;
-                if (usbhh->xferPipe[channelNum].errorCnt >= 3)
-                {
-                    usbhh->xferPipe[channelNum].errorCnt = 0;
-                    usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
-                }
-                else
-                {
-                    usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
+        case PIPE_XACTERR:
+        case PIPE_DATATGLERR:
+            usbhh->xferPipe[channelNum].errorCnt++;
 
-                    /* reactivate the host channel */
-                    usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHINT = BIT_RESET;
-                    usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHEN = BIT_SET;
-                }
-                break;
-
-            case PIPE_NAK:
+            if (usbhh->xferPipe[channelNum].errorCnt >= 3)
+            {
+                usbhh->xferPipe[channelNum].errorCnt  = 0;
+                usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
+            }
+            else
+            {
                 usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
 
                 /* reactivate the host channel */
                 usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHINT = BIT_RESET;
-                usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHEN = BIT_SET;
-                break;
+                usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHEN  = BIT_SET;
+            }
+            break;
 
-            case PIPE_BBLERR:
-                usbhh->xferPipe[channelNum].errorCnt++;
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
-                break;
+        case PIPE_NAK:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
 
-            default:
-                break;
+            /* reactivate the host channel */
+            usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHINT = BIT_RESET;
+            usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHEN  = BIT_SET;
+            break;
+
+        case PIPE_BBLERR:
+            usbhh->xferPipe[channelNum].errorCnt++;
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
+            break;
+
+        default:
+            break;
         }
 
         USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_TSFCMPAN);
@@ -414,46 +419,46 @@ static void USBH_IN_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channelN
     {
         switch (usbhh->xferPipe[channelNum].epType)
         {
-            case EP_TYPE_CONTROL:
-            case EP_TYPE_BULK:
-                usbhh->xferPipe[channelNum].errorCnt = 0;
+        case EP_TYPE_CONTROL:
+        case EP_TYPE_BULK:
+            usbhh->xferPipe[channelNum].errorCnt = 0;
 
-                if (usbhh->usbCfg.dmaStatus == DISABLE)
-                {
-                    usbhh->xferPipe[channelNum].pipeState = PIPE_NAK;
-                    USB_OTG_H_HaltChannel(usbhh, channelNum);
-                }
-                break;
-
-            case EP_TYPE_INTERRUPT:
-                usbhh->xferPipe[channelNum].errorCnt = 0;
+            if (usbhh->usbCfg.dmaStatus == DISABLE)
+            {
+                usbhh->xferPipe[channelNum].pipeState = PIPE_NAK;
                 USB_OTG_H_HaltChannel(usbhh, channelNum);
-                break;
+            }
+            break;
 
-            default:
-                break;
+        case EP_TYPE_INTERRUPT:
+            usbhh->xferPipe[channelNum].errorCnt = 0;
+            USB_OTG_H_HaltChannel(usbhh, channelNum);
+            break;
+
+        default:
+            break;
         }
 
         USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNAK);
     }
     else
     {
-
     }
 }
 
 /*!
- * @brief       Handle Host port out interrupt
+ * @brief Handle Host port out interrupt
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @param       channelNum : Select channel.
+ * @param channelNum : Select channel.
  *
- * @retval      None
+ * @retval None
  */
-static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channelNum)
+static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T *usbhh, uint8_t channelNum)
 {
-    /* AHB Error only in HS mode*/
+    /* AHB Error only in HS mode */
+
     if (USB_OTG_H_ReadChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_AHBERR))
     {
         USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_AHBERR);
@@ -469,7 +474,7 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
         if (usbhh->xferPipe[channelNum].pingStatus == ENABLE)
         {
             usbhh->xferPipe[channelNum].pingStatus = DISABLE;
-            usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
+            usbhh->xferPipe[channelNum].urbStatus  = USB_URB_NOREADY;
             USB_OTG_H_HaltChannel(usbhh, channelNum);
         }
     }
@@ -485,6 +490,7 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
         usbhh->xferPipe[channelNum].errorCnt = 0;
 
         /* Update ping status */
+
         if (USB_OTG_H_ReadChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNYET))
         {
             usbhh->xferPipe[channelNum].pingStatus = ENABLE;
@@ -499,8 +505,8 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
     else if (USB_OTG_H_ReadChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNYET))
     {
         usbhh->xferPipe[channelNum].pingStatus = ENABLE;
-        usbhh->xferPipe[channelNum].errorCnt = 0;
-        usbhh->xferPipe[channelNum].pipeState = PIPE_NYET;
+        usbhh->xferPipe[channelNum].errorCnt   = 0;
+        usbhh->xferPipe[channelNum].pipeState  = PIPE_NYET;
         USB_OTG_H_HaltChannel(usbhh, channelNum);
         USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNYET);
     }
@@ -515,7 +521,7 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
     /* NAK Response Received */
     else if (USB_OTG_H_ReadChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_RXNAK))
     {
-        usbhh->xferPipe[channelNum].errorCnt = 0;
+        usbhh->xferPipe[channelNum].errorCnt  = 0;
         usbhh->xferPipe[channelNum].pipeState = PIPE_NAK;
 
         if (usbhh->xferPipe[channelNum].pingStatus == DISABLE)
@@ -540,9 +546,10 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
         else
         {
             usbhh->xferPipe[channelNum].errorCnt++;
+
             if (usbhh->xferPipe[channelNum].errorCnt >= 2)
             {
-                usbhh->xferPipe[channelNum].errorCnt = 0;
+                usbhh->xferPipe[channelNum].errorCnt  = 0;
                 usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
 
                 /* USB update URB status callback */
@@ -568,60 +575,60 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
     {
         switch (usbhh->xferPipe[channelNum].pipeState)
         {
-            case PIPE_XFRC:
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_OK;
-                if ((usbhh->xferPipe[channelNum].epType == EP_TYPE_BULK) || \
-                        (usbhh->xferPipe[channelNum].epType == EP_TYPE_INTERRUPT))
+        case PIPE_XFRC:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_OK;
+
+            if (    (usbhh->xferPipe[channelNum].epType == EP_TYPE_BULK)
+                 || (usbhh->xferPipe[channelNum].epType == EP_TYPE_INTERRUPT))
+            {
+                if (usbhh->usbCfg.dmaStatus == DISABLE)
                 {
-                    if (usbhh->usbCfg.dmaStatus == DISABLE)
+                    usbhh->xferPipe[channelNum].pidToggleOut ^= 1;
+                }
+
+                if (    (usbhh->usbCfg.dmaStatus == ENABLE)
+                     && (usbhh->xferPipe[channelNum].bufLen > 0))
+                {
+                    if ((((usbhh->xferPipe[channelNum].bufLen + usbhh->xferPipe[channelNum].maxPackSize - 1) / usbhh->xferPipe[channelNum].maxPackSize) & 0x01) != 0)
                     {
                         usbhh->xferPipe[channelNum].pidToggleOut ^= 1;
                     }
-
-                    if ((usbhh->usbCfg.dmaStatus == ENABLE) && \
-                            (usbhh->xferPipe[channelNum].bufLen > 0))
-                    {
-                        if ((((usbhh->xferPipe[channelNum].bufLen + \
-                                usbhh->xferPipe[channelNum].maxPackSize - 1) /
-                                usbhh->xferPipe[channelNum].maxPackSize) & 0x01) != 0)
-                        {
-                            usbhh->xferPipe[channelNum].pidToggleOut ^= 1;
-                        }
-                    }
                 }
-                break;
+            }
+            break;
 
-            case PIPE_NYET:
+        case PIPE_NYET:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
+            break;
+
+        case PIPE_STALL:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_STALL;
+            break;
+
+        case PIPE_XACTERR:
+        case PIPE_DATATGLERR:
+            usbhh->xferPipe[channelNum].errorCnt++;
+
+            if (usbhh->xferPipe[channelNum].errorCnt >= 3)
+            {
+                usbhh->xferPipe[channelNum].errorCnt  = 0;
+                usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
+            }
+            else
+            {
                 usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
-                break;
+                /* reactivate the host channel */
+                usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHINT = BIT_RESET;
+                usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHEN  = BIT_SET;
+            }
+            break;
 
-            case PIPE_STALL:
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_STALL;
-                break;
+        case PIPE_NAK:
+            usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
+            break;
 
-            case PIPE_XACTERR:
-            case PIPE_DATATGLERR:
-                usbhh->xferPipe[channelNum].errorCnt++;
-                if (usbhh->xferPipe[channelNum].errorCnt >= 3)
-                {
-                    usbhh->xferPipe[channelNum].errorCnt = 0;
-                    usbhh->xferPipe[channelNum].urbStatus = USB_URB_ERROR;
-                }
-                else
-                {
-                    usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
-                    /* reactivate the host channel */
-                    usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHINT = BIT_RESET;
-                    usbhh->usbHost->REGS_HCH[channelNum].HCH_B.CHEN = BIT_SET;
-                }
-                break;
-
-            case PIPE_NAK:
-                usbhh->xferPipe[channelNum].urbStatus = USB_URB_NOREADY;
-                break;
-
-            default:
-                break;
+        default:
+            break;
         }
 
         USB_OTG_H_ClearChannelIntFlag(usbhh->usbHost, channelNum, CHANNEL_INT_TSFCMPAN);
@@ -631,18 +638,17 @@ static void USBH_OUT_HostChannelIsrHandler(USBH_HANDLE_T* usbhh, uint8_t channel
     }
     else
     {
-
     }
 }
 
 /*!
- * @brief       Handle Host channels interrupt
+ * @brief Handle Host channels interrupt
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-static void USBH_HostChannelsIsrHandler(USBH_HANDLE_T* usbhh)
+static void USBH_HostChannelsIsrHandler(USBH_HANDLE_T *usbhh)
 {
     uint32_t i = 0;
 
@@ -666,21 +672,22 @@ static void USBH_HostChannelsIsrHandler(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief       Handle Host port interrupt
+ * @brief Handle Host port interrupt
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-static void USBH_HostPortIsrHandler(USBH_HANDLE_T* usbhh)
+static void USBH_HostPortIsrHandler(USBH_HANDLE_T *usbhh)
 {
     __IO uint32_t temp;
 
-    /* Store port status*/
+    /* Store port status */
     temp = usbhh->usbHost->HPORTCSTS;
     temp &= ~(BIT1 | BIT2 | BIT3 | BIT5);
 
     /* Read Port Connect Flag */
+
     if (USB_OTG_H_ReadPortConnectIntTriFlag(usbhh->usbHost) == SET)
     {
         if (USB_OTG_H_PortIsConnect(usbhh->usbHost) == SET)
@@ -694,17 +701,19 @@ static void USBH_HostPortIsrHandler(USBH_HANDLE_T* usbhh)
     }
 
     /* Port Enable is Changed */
+
     if (USB_OTG_H_PenBitIsChange(usbhh->usbHost) == SET)
     {
         /* PENCHG */
         temp |= BIT3;
 
         /* Port is Enable */
+
         if (USB_OTG_H_PortIsEnable(usbhh->usbHost) == SET)
         {
             if (usbhh->usbCfg.phyType == USB_OTG_PHY_EMB)
             {
-                if(usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
+                if (usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
                 {
                     if (USB_OTG_H_ReadPortSpeedType(usbhh->usbHost) == USBH_PORT_SPEED_LS)
                     {
@@ -754,6 +763,7 @@ static void USBH_HostPortIsrHandler(USBH_HANDLE_T* usbhh)
     }
 
     /* Port overcurrent is Changed */
+
     if (USB_OTG_H_PovcBitIsChange(usbhh->usbHost) == SET)
     {
         /* POVCCHG */
@@ -764,23 +774,25 @@ static void USBH_HostPortIsrHandler(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief     Handle USB host global interrupt
+ * @brief Handle USB host global interrupt
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
+void USBH_OTG_IsrHandler(USBH_HANDLE_T *usbhh)
 {
     if (USB_OTG_ReadMode(usbhh->usbGlobal) == USB_OTG_MODE_HOST)
     {
         /* Avoid spurious interrupt */
+
         if (USB_OTG_ReadInterrupts(usbhh->usbGlobal) == 0U)
         {
             return;
         }
 
         /* Nonperiodic TXFIFO Empty Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_NPTXFEM))
         {
             /* Clear interrupt */
@@ -788,6 +800,7 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
         }
 
         /* Incomplete Periodic Transfer Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_IP_OUTTX))
         {
             /* Clear interrupt */
@@ -795,6 +808,7 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
         }
 
         /* Incomplete Isochronous IN Transfer Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_IIINTX))
         {
             /* Clear interrupt */
@@ -802,6 +816,7 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
         }
 
         /* Periodic TXFIFO Empty Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_PTXFE))
         {
             /* Clear interrupt */
@@ -809,6 +824,7 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
         }
 
         /* Mode Mismatch Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_MMIS))
         {
             /* Clear interrupt */
@@ -816,18 +832,21 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
         }
 
         /* Handle Disconnect detected interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_DEDIS))
         {
             USBH_DisconnectIsrHandler(usbhh);
         }
 
         /* Handle Host Port Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_HPORT))
         {
             USBH_HostPortIsrHandler(usbhh);
         }
 
         /* Start of Frame Interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_SOF))
         {
             USBH_SOFCallback(usbhh);
@@ -836,12 +855,14 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
         }
 
         /* Handle RxFIFO no empty interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_RXFNONE))
         {
             USBH_RxFifoNoEmptyIsrHandler(usbhh);
         }
 
         /* Handle Host channels interrupt */
+
         if (USB_OTG_ReadGlobalIntFlag(usbhh->usbGlobal, USB_INT_G_HCHAN))
         {
             USBH_HostChannelsIsrHandler(usbhh);
@@ -850,13 +871,13 @@ void USBH_OTG_IsrHandler(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief     USB host start
+ * @brief USB host start
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_StartHost(USBH_HANDLE_T* usbhh)
+void USBH_OTG_StartHost(USBH_HANDLE_T *usbhh)
 {
     /* Enable USB OTG port power */
     USB_OTG_H_DriverVbus(usbhh->usbHost, USBH_PORT_PWR_ON);
@@ -866,60 +887,60 @@ void USBH_OTG_StartHost(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief     USB OTG host reset
+ * @brief USB OTG host reset
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_ResetHost(USBH_HANDLE_T* usbhh)
+void USBH_OTG_ResetHost(USBH_HANDLE_T *usbhh)
 {
     usbhh->usbHost->HPORTCSTS_B.PRST = BIT_SET;
 
     /* This bit need to keep more than 10 ms */
-    USBH_UserDelayCallback(usbhh,100);
+    USBH_UserDelayCallback(usbhh, 100);
     usbhh->usbHost->HPORTCSTS_B.PRST = BIT_RESET;
-    USBH_UserDelayCallback(usbhh,10);
+    USBH_UserDelayCallback(usbhh, 10);
 }
 
 /*!
- * @brief     USB OTG host read speed
+ * @brief USB OTG host read speed
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @retval    speed
+ * @retval speed
  */
-uint8_t USBH_OTG_ReadSpeed(USBH_HANDLE_T* usbhh)
+uint8_t USBH_OTG_ReadSpeed(USBH_HANDLE_T *usbhh)
 {
     return (usbhh->usbHost->HPORTCSTS_B.PSPDSEL);
 }
 
 /*!
- * @brief     USB OTG host read URB status
+ * @brief USB OTG host read URB status
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @param     channelNum: channel number
+ * @param channelNum: channel number
  *
- * @retval    URB status
+ * @retval URB status
  */
-USB_OTG_URB_STA_T USBH_OTG_ReadUrbStatus(USBH_HANDLE_T* usbhh, uint8_t channelNum)
+USB_OTG_URB_STA_T USBH_OTG_ReadUrbStatus(USBH_HANDLE_T *usbhh, uint8_t channelNum)
 {
     return usbhh->xferPipe[channelNum].urbStatus;
 }
 
 /*!
- * @brief     USB OTG stop host port
+ * @brief USB OTG stop host port
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_StopHost(USBH_HANDLE_T* usbhh)
+void USBH_OTG_StopHost(USBH_HANDLE_T *usbhh)
 {
     uint8_t i;
     uint32_t timeout = 0;
-    uint8_t regNum = 0;
+    uint8_t regNum   = 0;
 
     USB_OTG_DisableAllGlobalInterrupt(usbhh->usbGlobal);
 
@@ -927,7 +948,7 @@ void USBH_OTG_StopHost(USBH_HANDLE_T* usbhh)
     USB_OTG_FlushTxFIFO(usbhh->usbGlobal, 0x10);
     USB_OTG_FlushRxFIFO(usbhh->usbGlobal);
 
-    if(usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
+    if (usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
     {
         regNum = 8;
     }
@@ -937,19 +958,21 @@ void USBH_OTG_StopHost(USBH_HANDLE_T* usbhh)
     }
 
     /* Flush out any leftover queued requests */
+
     for (i = 0; i < regNum; i++)
     {
-        usbhh->usbHost->REGS_HCH[i].HCH_B.CHINT     = BIT_SET;
-        usbhh->usbHost->REGS_HCH[i].HCH_B.CHEN      = BIT_RESET;
-        usbhh->usbHost->REGS_HCH[i].HCH_B.EDPDRT    = BIT_RESET;
+        usbhh->usbHost->REGS_HCH[i].HCH_B.CHINT  = BIT_SET;
+        usbhh->usbHost->REGS_HCH[i].HCH_B.CHEN   = BIT_RESET;
+        usbhh->usbHost->REGS_HCH[i].HCH_B.EDPDRT = BIT_RESET;
     }
 
     /* Halt all channels and put them into a known state */
+
     for (i = 0; i < regNum; i++)
     {
-        usbhh->usbHost->REGS_HCH[i].HCH_B.CHINT     = BIT_SET;
-        usbhh->usbHost->REGS_HCH[i].HCH_B.CHEN      = BIT_SET;
-        usbhh->usbHost->REGS_HCH[i].HCH_B.EDPDRT    = BIT_RESET;
+        usbhh->usbHost->REGS_HCH[i].HCH_B.CHINT  = BIT_SET;
+        usbhh->usbHost->REGS_HCH[i].HCH_B.CHEN   = BIT_SET;
+        usbhh->usbHost->REGS_HCH[i].HCH_B.EDPDRT = BIT_RESET;
 
         while (usbhh->usbHost->REGS_HCH[i].HCH_B.CHEN)
         {
@@ -968,27 +991,27 @@ void USBH_OTG_StopHost(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief     USB host close the channel
+ * @brief USB host close the channel
  *
- * @param     usbhh : usb host handler
+ * @param usbhh : usb host handler
  *
- * @param     channelNum : channel numer
+ * @param channelNum : channel numer
  *
- * @retval    None
+ * @retval None
  */
-void USBH_CloseChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum)
+void USBH_CloseChannel(USBH_HANDLE_T *usbhh, uint8_t channelNum)
 {
     USB_OTG_H_HaltChannel(usbhh, channelNum);
 }
 
 /*!
- * @brief     USB host reset
+ * @brief USB host reset
  *
- * @param     usbhh : usb host handler
+ * @param usbhh : usb host handler
  *
- * @retval    None
+ * @retval None
  */
-void USBH_Reset(USBH_HANDLE_T* usbhh)
+void USBH_Reset(USBH_HANDLE_T *usbhh)
 {
     USBH_HardwareResetCallback(usbhh);
 
@@ -996,27 +1019,31 @@ void USBH_Reset(USBH_HANDLE_T* usbhh)
 }
 
 /*!
- * @brief     USB host open the channel to transfer
+ * @brief USB host open the channel to transfer
  *
- * @param     usbhh : usb host handler
+ * @param usbhh : usb host handler
  *
- * @param     channelNum : channel numer
+ * @param channelNum : channel numer
  *
- * @param     endPointNum : end point number
+ * @param endPointNum : end point number
  *
- * @param     devAddr : USB device address
+ * @param devAddr : USB device address
  *
- * @param     devSpeed : USB device speed
+ * @param devSpeed : USB device speed
  *
- * @param     epType : end point type
+ * @param epType : end point type
  *
- * @param     packetMaxSize : max size of packet
+ * @param packetMaxSize : max size of packet
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
-                          uint8_t endPointNum, uint8_t devAddr, \
-                          uint8_t devSpeed, uint8_t epType, uint16_t packetMaxSize)
+void USBH_OTG_OpenChannel(USBH_HANDLE_T *usbhh,
+                          uint8_t channelNum,
+                          uint8_t endPointNum,
+                          uint8_t devAddr,
+                          uint8_t devSpeed,
+                          uint8_t epType,
+                          uint16_t packetMaxSize)
 {
     /* Store usb host handler */
     usbhh->xferPipe[channelNum].pingStatus  = DISABLE;
@@ -1027,7 +1054,8 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     usbhh->xferPipe[channelNum].epNum       = endPointNum & 0x7F;
     usbhh->xferPipe[channelNum].speed       = devSpeed;
 
-    /* End point direction is IN*/
+    /* End point direction is IN */
+
     if ((endPointNum & 0x80) == 0x80)
     {
         usbhh->xferPipe[channelNum].epDir = EP_DIR_IN;
@@ -1042,16 +1070,15 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     usbhh->usbHost->REGS_HCH[channelNum].HCHINT = 0xFFFFFFFF;
 
     /* Enable channel interrupt */
-    if ((epType == EP_TYPE_CONTROL) || (epType == EP_TYPE_BULK))
+
+    if (    (epType == EP_TYPE_CONTROL)
+         || (epType == EP_TYPE_BULK))
     {
-        usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK = (CHANNEL_INT_TSFCMPN |
-                CHANNEL_INT_AHBERR  |
-                CHANNEL_INT_RXSTALL |
-                CHANNEL_INT_TERR    |
-                CHANNEL_INT_RXNAK   |
-                CHANNEL_INT_DTOG);
+        usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK = (CHANNEL_INT_TSFCMPN | CHANNEL_INT_AHBERR | CHANNEL_INT_RXSTALL
+                                                         | CHANNEL_INT_TERR | CHANNEL_INT_RXNAK | CHANNEL_INT_DTOG);
 
         /* EP dir IN */
+
         if ((endPointNum & 0x80) == 0x80)
         {
             usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK |= CHANNEL_INT_BABBLE;
@@ -1063,15 +1090,12 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     }
     else if (epType == EP_TYPE_INTERRUPT)
     {
-        usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK = (CHANNEL_INT_TSFCMPN |
-                CHANNEL_INT_AHBERR  |
-                CHANNEL_INT_RXSTALL |
-                CHANNEL_INT_TERR    |
-                CHANNEL_INT_RXNAK   |
-                CHANNEL_INT_FOVR    |
-                CHANNEL_INT_DTOG);
+        usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK =
+            (CHANNEL_INT_TSFCMPN | CHANNEL_INT_AHBERR | CHANNEL_INT_RXSTALL | CHANNEL_INT_TERR | CHANNEL_INT_RXNAK
+             | CHANNEL_INT_FOVR | CHANNEL_INT_DTOG);
 
         /* EP dir IN */
+
         if ((endPointNum & 0x80) == 0x80)
         {
             usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK |= CHANNEL_INT_BABBLE;
@@ -1079,12 +1103,11 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     }
     else if (epType == EP_TYPE_ISO)
     {
-        usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK = (CHANNEL_INT_TSFCMPN |
-                CHANNEL_INT_AHBERR  |
-                CHANNEL_INT_RXTXACK |
-                CHANNEL_INT_FOVR);
+        usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK =
+            (CHANNEL_INT_TSFCMPN | CHANNEL_INT_AHBERR | CHANNEL_INT_RXTXACK | CHANNEL_INT_FOVR);
 
         /* EP dir IN */
+
         if ((endPointNum & 0x80) == 0x80)
         {
             usbhh->usbHost->REGS_HCH[channelNum].HCHIMASK |= (CHANNEL_INT_BABBLE | CHANNEL_INT_TERR);
@@ -1092,7 +1115,6 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     }
     else
     {
-
     }
 
     /* Enable host channel halt interrupt */
@@ -1107,6 +1129,7 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     /* Configure host channle feature */
 
     /* End point direction */
+
     if ((endPointNum & 0x80) == 0x80)
     {
         usbhh->usbHost->REGS_HCH[channelNum].HCH_B.EDPDRT = BIT_SET;
@@ -1117,8 +1140,9 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     }
 
     /* USB LS device plugged to host */
-    if ((devSpeed == USBH_DEV_SPEED_LOW) && \
-            (usbhh->usbHost->HPORTCSTS_B.PSPDSEL != USBH_DEV_SPEED_LOW))
+
+    if (    (devSpeed == USBH_DEV_SPEED_LOW)
+         && (usbhh->usbHost->HPORTCSTS_B.PSPDSEL != USBH_DEV_SPEED_LOW))
     {
         USB_OTG_H_EnableLowSpeedDevice(usbhh->usbHost, channelNum);
     }
@@ -1140,36 +1164,39 @@ void USBH_OTG_OpenChannel(USBH_HANDLE_T* usbhh, uint8_t channelNum, \
     USB_OTG_H_ConfigEpMaxPSize(usbhh->usbHost, channelNum, packetMaxSize);
 
     /* Interrupt or ISO type */
-    if ((epType == EP_TYPE_INTERRUPT) || (epType == EP_TYPE_ISO))
+
+    if (    (epType == EP_TYPE_INTERRUPT)
+         || (epType == EP_TYPE_ISO))
     {
         USB_OTG_H_TxUseOddFrame(usbhh->usbHost, channelNum);
     }
 }
 
 /*!
- * @brief     USB host channel start transfer
+ * @brief USB host channel start transfer
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @param     xferPipe: transfer channel
+ * @param xferPipe: transfer channel
  *
- * @retval    None
+ * @retval None
  */
-void USB_OTG_ChannelStartXfer(USBH_HANDLE_T* usbhh, USBH_XFER_PIPE_T* xferPipe)
+void USB_OTG_ChannelStartXfer(USBH_HANDLE_T *usbhh, USBH_XFER_PIPE_T *xferPipe)
 {
     uint16_t packetNum;
     uint16_t transferWordLen = 0;
-    uint8_t frameParity = 0;
+    uint8_t frameParity      = 0;
     uint32_t temp;
 
-    /*  Get the number of packets to transfer */
+    /* Get the number of packets to transfer */
+
     if (xferPipe->bufLen > 0)
     {
         packetNum = (uint16_t)((xferPipe->bufLen + xferPipe->maxPackSize - 1) / xferPipe->maxPackSize);
 
         if (packetNum > 256)
         {
-            packetNum = 256;
+            packetNum         = 256;
             xferPipe->bufSize = (uint32_t)packetNum * xferPipe->maxPackSize;
         }
     }
@@ -1189,13 +1216,12 @@ void USB_OTG_ChannelStartXfer(USBH_HANDLE_T* usbhh, USBH_XFER_PIPE_T* xferPipe)
     }
 
     /* Config the HCHTSIZE register */
-    usbhh->usbHost->REGS_HCH[xferPipe->chNum].HCHTSIZE = (xferPipe->bufSize) |
-            (((uint32_t)packetNum << 19)) |
-            (((uint32_t)xferPipe->pid << 29));
+    usbhh->usbHost->REGS_HCH[xferPipe->chNum].HCHTSIZE =
+        (xferPipe->bufSize) | (((uint32_t)packetNum << 19)) | (((uint32_t)xferPipe->pid << 29));
 
     if (usbhh->usbCfg.dmaStatus == ENABLE)
     {
-        USB_OTG_H_ConfigDMAAddr(usbhh->usbHost, xferPipe->chNum, (uint32_t) xferPipe->buffer);
+        USB_OTG_H_ConfigDMAAddr(usbhh->usbHost, xferPipe->chNum, (uint32_t)xferPipe->buffer);
     }
 
     frameParity = (((uint32_t)usbhh->usbHost->HFIFM & 0x01) != 0) ? 0 : 1;
@@ -1224,26 +1250,29 @@ void USB_OTG_ChannelStartXfer(USBH_HANDLE_T* usbhh, USBH_XFER_PIPE_T* xferPipe)
         return;
     }
 
-    if ((xferPipe->bufLen > 0) && (xferPipe->epDir == EP_DIR_OUT))
+    if (    (xferPipe->bufLen > 0)
+         && (xferPipe->epDir == EP_DIR_OUT))
     {
-        if ((xferPipe->epType == EP_TYPE_CONTROL) || \
-                (xferPipe->epType == EP_TYPE_BULK))
+        if (    (xferPipe->epType == EP_TYPE_CONTROL)
+             || (xferPipe->epType == EP_TYPE_BULK))
         {
             transferWordLen = (uint16_t)((xferPipe->bufLen + 3) / 4);
 
             /* check FIFO space */
+
             if (transferWordLen > usbhh->usbGlobal->GNPTXFQSTS_B.NPTXFSA)
             {
                 /* enable Non-periodic TxFIFO empty interrupt */
                 USB_OTG_EnableGlobalInterrupt(usbhh->usbGlobal, USB_INT_G_NPTXFEM);
             }
         }
-        else if ((xferPipe->epType == EP_TYPE_INTERRUPT) || \
-                 (xferPipe->epType == EP_TYPE_ISO))
+        else if (    (xferPipe->epType == EP_TYPE_INTERRUPT)
+                  || (xferPipe->epType == EP_TYPE_ISO))
         {
             transferWordLen = (uint16_t)((xferPipe->bufLen + 3) / 4);
 
             /* check FIFO space */
+
             if (transferWordLen > usbhh->usbHost->HPTXSTS_B.FSPACE)
             {
                 /* enable Non-periodic TxFIFO empty interrupt */
@@ -1255,43 +1284,50 @@ void USB_OTG_ChannelStartXfer(USBH_HANDLE_T* usbhh, USBH_XFER_PIPE_T* xferPipe)
         }
 
         /* Write packet into FIFO */
-        USB_OTG_FIFO_WriteFifoPacket(usbhh->usbFifo, xferPipe->chNum, \
-                                     xferPipe->buffer, (uint16_t)xferPipe->bufLen, \
+        USB_OTG_FIFO_WriteFifoPacket(usbhh->usbFifo,
+                                     xferPipe->chNum,
+                                     xferPipe->buffer,
+                                     (uint16_t)xferPipe->bufLen,
                                      usbhh->usbCfg.dmaStatus);
     }
 }
 
 /*!
- * @brief     USB host channel submit request handler
+ * @brief USB host channel submit request handler
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @param     channelNum : channel number
+ * @param channelNum : channel number
  *
- * @param     dir : channel direction
+ * @param dir : channel direction
  *
- * @param     epType : endpoint type
+ * @param epType : endpoint type
  *
- * @param     tokenType : tokenType
+ * @param tokenType : tokenType
  *
- * @param     buffer : URB data
+ * @param buffer : URB data
  *
- * @param     length : length of URB data
+ * @param length : length of URB data
  *
- * @param     pingStatus : ping status
+ * @param pingStatus : ping status
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_ChannelSubReq(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t dir, \
-                            uint8_t epType, uint8_t tokenType, uint8_t* buffer, \
-                            uint16_t length, uint8_t pingStatus)
+void USBH_OTG_ChannelSubReq(USBH_HANDLE_T *usbhh,
+                            uint8_t channelNum,
+                            uint8_t dir,
+                            uint8_t epType,
+                            uint8_t tokenType,
+                            uint8_t *buffer,
+                            uint16_t length,
+                            uint8_t pingStatus)
 {
-    usbhh->xferPipe[channelNum].epDir   = (USB_EP_DIR_T)dir;
-    usbhh->xferPipe[channelNum].epType  = epType;
+    usbhh->xferPipe[channelNum].epDir  = (USB_EP_DIR_T)dir;
+    usbhh->xferPipe[channelNum].epType = epType;
 
     if (tokenType == USBH_PID_SETUP)
     {
-        usbhh->xferPipe[channelNum].pid = USB_OTG_PID_SETUP;
+        usbhh->xferPipe[channelNum].pid        = USB_OTG_PID_SETUP;
         usbhh->xferPipe[channelNum].pingStatus = pingStatus;
     }
     /* token type = USBH_PID_DATA */
@@ -1301,82 +1337,86 @@ void USBH_OTG_ChannelSubReq(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t di
     }
 
     /* data toggle */
+
     switch (epType)
     {
-        case EP_TYPE_CONTROL:
-            if ((tokenType == USBH_PID_DATA) && (dir == EP_DIR_OUT))
-            {
-                if (length == 0)
-                {
-                    usbhh->xferPipe[channelNum].pidToggleOut = 1;
-                }
+    case EP_TYPE_CONTROL:
 
-                if (usbhh->xferPipe[channelNum].pidToggleOut)
-                {
-                    usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA1;
-                }
-                else
-                {
-                    usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
-                }
+        if (    (tokenType == USBH_PID_DATA)
+             && (dir == EP_DIR_OUT))
+        {
+            if (length == 0)
+            {
+                usbhh->xferPipe[channelNum].pidToggleOut = 1;
             }
-            break;
 
-        case EP_TYPE_BULK:
-        case EP_TYPE_INTERRUPT:
-            if (dir == EP_DIR_OUT)
+            if (usbhh->xferPipe[channelNum].pidToggleOut)
             {
-                if (usbhh->xferPipe[channelNum].pidToggleOut)
-                {
-                    usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA1;
-                }
-                else
-                {
-                    usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
-                }
+                usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA1;
             }
             else
             {
-                if (usbhh->xferPipe[channelNum].pidToggleIn)
-                {
-                    usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA1;
-                }
-                else
-                {
-                    usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
-                }
+                usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
             }
-            break;
+        }
+        break;
 
-        case EP_TYPE_ISO:
-            usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
-            break;
+    case EP_TYPE_BULK:
+    case EP_TYPE_INTERRUPT:
 
-        default:
-            break;
+        if (dir == EP_DIR_OUT)
+        {
+            if (usbhh->xferPipe[channelNum].pidToggleOut)
+            {
+                usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA1;
+            }
+            else
+            {
+                usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
+            }
+        }
+        else
+        {
+            if (usbhh->xferPipe[channelNum].pidToggleIn)
+            {
+                usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA1;
+            }
+            else
+            {
+                usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
+            }
+        }
+        break;
+
+    case EP_TYPE_ISO:
+        usbhh->xferPipe[channelNum].pid = USB_OTG_PID_DATA0;
+        break;
+
+    default:
+        break;
     }
 
-    usbhh->xferPipe[channelNum].buffer      = buffer;
-    usbhh->xferPipe[channelNum].bufLen      = length;
-    usbhh->xferPipe[channelNum].urbStatus   = USB_URB_IDLE;
-    usbhh->xferPipe[channelNum].bufCount    = 0;
-    usbhh->xferPipe[channelNum].chNum       = channelNum;
-    usbhh->xferPipe[channelNum].pipeState   = PIPE_IDLE;
+    usbhh->xferPipe[channelNum].buffer    = buffer;
+    usbhh->xferPipe[channelNum].bufLen    = length;
+    usbhh->xferPipe[channelNum].urbStatus = USB_URB_IDLE;
+    usbhh->xferPipe[channelNum].bufCount  = 0;
+    usbhh->xferPipe[channelNum].chNum     = channelNum;
+    usbhh->xferPipe[channelNum].pipeState = PIPE_IDLE;
 
     /* Start transfer */
     USB_OTG_ChannelStartXfer(usbhh, &usbhh->xferPipe[channelNum]);
 }
 
 /*!
- * @brief     USB OTG host read size of last xfer
+ * @brief USB OTG host read size of last xfer
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @param     channelNum: channel number
+ * @param channelNum: channel number
  *
- * @retval    xfer size
+ * @retval xfer size
  */
-uint32_t USBH_OTG_ReadXferSize(USBH_HANDLE_T* usbhh, uint8_t channelNum)
+uint32_t USBH_OTG_ReadXferSize(USBH_HANDLE_T *usbhh, uint8_t channelNum)
 {
     uint32_t xferSize;
 
@@ -1386,15 +1426,15 @@ uint32_t USBH_OTG_ReadXferSize(USBH_HANDLE_T* usbhh, uint8_t channelNum)
 }
 
 /*!
- * @brief     USB OTG host read toggle of channel
+ * @brief USB OTG host read toggle of channel
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @param     channelNum: channel number
+ * @param channelNum: channel number
  *
- * @retval    xfer size
+ * @retval xfer size
  */
-uint8_t USBH_OTG_ReadToggle(USBH_HANDLE_T* usbhh, uint8_t channelNum)
+uint8_t USBH_OTG_ReadToggle(USBH_HANDLE_T *usbhh, uint8_t channelNum)
 {
     uint8_t toggle;
 
@@ -1411,17 +1451,17 @@ uint8_t USBH_OTG_ReadToggle(USBH_HANDLE_T* usbhh, uint8_t channelNum)
 }
 
 /*!
- * @brief     USB OTG host configure toggle of channel
+ * @brief USB OTG host configure toggle of channel
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @param     channelNum: channel number
+ * @param channelNum: channel number
  *
- * @param     toggle: toggle
+ * @param toggle: toggle
  *
- * @retval    None
+ * @retval None
  */
-void USBH_OTG_ConfigToggle(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t toggle)
+void USBH_OTG_ConfigToggle(USBH_HANDLE_T *usbhh, uint8_t channelNum, uint8_t toggle)
 {
     if (usbhh->xferPipe[channelNum].epDir)
     {
@@ -1434,37 +1474,40 @@ void USBH_OTG_ConfigToggle(USBH_HANDLE_T* usbhh, uint8_t channelNum, uint8_t tog
 }
 
 /*!
- * @brief     Config the USB host peripheral according to the specified parameters
+ * @brief Config the USB host peripheral according to the specified parameters
  *
- * @param     usbhh: USB host handler
+ * @param usbhh: USB host handler
  *
- * @retval    None
+ * @retval None
  */
-void USBH_Config(USBH_HANDLE_T* usbhh)
+void USBH_Config(USBH_HANDLE_T *usbhh)
 {
     uint8_t i;
 
     /* Embedded PHY */
+
     if (usbhh->usbCfg.phyType == USB_OTG_PHY_EMB)
     {
         /* Embedded FS PHY */
-        if(usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
+
+        if (usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
         {
             USB_OTG_ConfigPHY(usbhh->usbGlobal, USB_OTG_PHY_SP_FS);
 
             /* Reset core */
             USB_OTG_CoreReset(usbhh->usbGlobal);
-            USBH_UserDelayCallback(usbhh,50);
+            USBH_UserDelayCallback(usbhh, 50);
 
             /* battery status */
+
             if (usbhh->usbCfg.batteryStatus == ENABLE)
             {
-                /* Activate the power down*/
+                /* Activate the power down */
                 USB_OTG_EnablePowerDown(usbhh->usbGlobal);
             }
             else
             {
-                /* Deactivate the power down*/
+                /* Deactivate the power down */
                 USB_OTG_DisablePowerDown(usbhh->usbGlobal);
             }
         }
@@ -1472,16 +1515,16 @@ void USBH_Config(USBH_HANDLE_T* usbhh)
     /* External PHY */
     else
     {
-        /* Activate the power down*/
+        /* Activate the power down */
         USB_OTG_EnablePowerDown(usbhh->usbGlobal);
 
         USB_OTG_ConfigPHY(usbhh->usbGlobal, USB_OTG_PHY_SP_HS);
 
-        usbhh->usbGlobal->GUSBCFG_B.DPSEL       = BIT_RESET;
-        usbhh->usbGlobal->GUSBCFG_B.ULPISEL     = BIT_RESET;
+        usbhh->usbGlobal->GUSBCFG_B.DPSEL   = BIT_RESET;
+        usbhh->usbGlobal->GUSBCFG_B.ULPISEL = BIT_RESET;
 
-        usbhh->usbGlobal->GUSBCFG_B.ULPIEVDSEL  = BIT_RESET;
-        usbhh->usbGlobal->GUSBCFG_B.ULPIEVC     = BIT_RESET;
+        usbhh->usbGlobal->GUSBCFG_B.ULPIEVDSEL = BIT_RESET;
+        usbhh->usbGlobal->GUSBCFG_B.ULPIEVC    = BIT_RESET;
 
         if (usbhh->usbCfg.extVbusStatus == ENABLE)
         {
@@ -1490,7 +1533,7 @@ void USBH_Config(USBH_HANDLE_T* usbhh)
 
         /* Reset core */
         USB_OTG_CoreReset(usbhh->usbGlobal);
-        USBH_UserDelayCallback(usbhh,50);
+        USBH_UserDelayCallback(usbhh, 50);
     }
 
     if (usbhh->usbCfg.dmaStatus == ENABLE)
@@ -1502,12 +1545,12 @@ void USBH_Config(USBH_HANDLE_T* usbhh)
 
     /* Device mode or host mode */
     USB_OTG_ConfigMode(usbhh->usbGlobal, usbhh->usbCfg.mode);
-    
+
     /* PHY Clock restart */
     usbhh->usbPower->PCGCTRL = 0;
 
     /* VBUS Sensing Disable */
-    usbhh->usbGlobal->GGCCFG_B.VBSDIS = BIT_SET;
+    usbhh->usbGlobal->GGCCFG_B.VBSDIS  = BIT_SET;
     usbhh->usbGlobal->GGCCFG_B.ADVBSEN = BIT_RESET;
     usbhh->usbGlobal->GGCCFG_B.BDVBSEN = BIT_RESET;
 
@@ -1519,6 +1562,7 @@ void USBH_Config(USBH_HANDLE_T* usbhh)
     USB_OTG_FlushRxFIFO(usbhh->usbGlobal);
 
     /* Clear all Channel Interrupts */
+
     for (i = 0; i < usbhh->usbCfg.hostChannelNum; i++)
     {
         USB_OTG_H_ClearAllChannelIntFlag(usbhh->usbHost, i);
@@ -1529,21 +1573,22 @@ void USBH_Config(USBH_HANDLE_T* usbhh)
     USB_OTG_ClearGlobalIntFlag(usbhh->usbGlobal, 0xFFFFFFFF);
 
     /* Configure RX FIFO */
+
     if (usbhh->usbCfg.speed == USB_OTG_SPEED_FSLS)
     {
         USB_OTG_ConfigRxFifoSize(usbhh->usbGlobal, USBH_FS_RX_FIFO_SIZE);
-        usbhh->usbGlobal->GTXFCFG_H_B.NPTXSA       = USBH_FS_RX_FIFO_SIZE;
-        usbhh->usbGlobal->GTXFCFG_H_B.NPTXFDEP     = USBH_FS_HNP_TXH_FIFO_SIZE;
-        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFSA    = USBH_FS_HP_TXH_FIFO_SA;
-        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFDEP   = USBH_FS_HP_TXH_FIFO_SIZE;
+        usbhh->usbGlobal->GTXFCFG_H_B.NPTXSA     = USBH_FS_RX_FIFO_SIZE;
+        usbhh->usbGlobal->GTXFCFG_H_B.NPTXFDEP   = USBH_FS_HNP_TXH_FIFO_SIZE;
+        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFSA  = USBH_FS_HP_TXH_FIFO_SA;
+        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFDEP = USBH_FS_HP_TXH_FIFO_SIZE;
     }
     else
     {
         USB_OTG_ConfigRxFifoSize(usbhh->usbGlobal, USBH_HS_RX_FIFO_SIZE);
-        usbhh->usbGlobal->GTXFCFG_H_B.NPTXSA       = USBH_HS_RX_FIFO_SIZE;
-        usbhh->usbGlobal->GTXFCFG_H_B.NPTXFDEP     = USBH_HS_HNP_TXH_FIFO_SIZE;
-        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFSA    = USBH_HS_HP_TXH_FIFO_SA;
-        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFDEP   = USBH_HS_HP_TXH_FIFO_SIZE;
+        usbhh->usbGlobal->GTXFCFG_H_B.NPTXSA     = USBH_HS_RX_FIFO_SIZE;
+        usbhh->usbGlobal->GTXFCFG_H_B.NPTXFDEP   = USBH_HS_HNP_TXH_FIFO_SIZE;
+        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFSA  = USBH_HS_HP_TXH_FIFO_SA;
+        usbhh->usbGlobal->GHPTXFSIZE_B.HPDTXFDEP = USBH_HS_HP_TXH_FIFO_SIZE;
     }
 
     if (usbhh->usbCfg.dmaStatus == DISABLE)
@@ -1552,120 +1597,116 @@ void USBH_Config(USBH_HANDLE_T* usbhh)
     }
 
     /* Enable the common interrupts */
-    usbhh->usbGlobal->GINTMASK |= (USB_INT_G_HPORT     |
-                                   USB_INT_G_HCHAN     |
-                                   USB_INT_G_SOF       |
-                                   USB_INT_G_DEDIS     |
-                                   USB_INT_G_IP_OUTTX  |
-                                   USB_INT_G_RWAKE);
+    usbhh->usbGlobal->GINTMASK |=
+        (USB_INT_G_HPORT | USB_INT_G_HCHAN | USB_INT_G_SOF | USB_INT_G_DEDIS | USB_INT_G_IP_OUTTX | USB_INT_G_RWAKE);
 }
 
 /*!
- * @brief       USB host URB status update event callback function
+ * @brief USB host URB status update event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_UpdateUrbCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_UpdateUrbCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host connect event callback function
+ * @brief USB host connect event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_ConnectCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_ConnectCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host disconnect event callback function
+ * @brief USB host disconnect event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_DisconnectCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_DisconnectCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host port enable event callback function
+ * @brief USB host port enable event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_PortEnableCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_PortEnableCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host port disable event callback function
+ * @brief USB host port disable event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_PortDisableCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_PortDisableCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host SOF event callback function
+ * @brief USB host SOF event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_SOFCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_SOFCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host hardware reset event callback function
+ * @brief USB host hardware reset event callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_HardwareResetCallback(USBH_HANDLE_T* usbhh)
+__weak void USBH_HardwareResetCallback(USBH_HANDLE_T *usbhh)
 {
     UNUSED(usbhh);
     /* callback interface */
 }
 
 /*!
- * @brief       USB host delay callback function
+ * @brief USB host delay callback function
  *
- * @param       usbhh: USB host handler.
+ * @param usbhh: USB host handler.
  *
- * @param       nms: number of milliseconds to delay
+ * @param nms: number of milliseconds to delay
  *
- * @retval      None
+ * @retval None
  */
-__weak void USBH_UserDelayCallback(USBH_HANDLE_T* usbhh, uint32_t nms)
+__weak void USBH_UserDelayCallback(USBH_HANDLE_T *usbhh, uint32_t nms)
 {
     UNUSED(usbhh);
     UNUSED(nms);
     /* callback interface */
 }
-/**@} end of group USB_Host_Functions*/
-/**@} end of group USB_Host_Driver*/
-/**@} end of group APM32F402_403_StdPeriphDriver*/
+/** @} end of group USB_Host_Functions */
+/** @} end of group USB_Host_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

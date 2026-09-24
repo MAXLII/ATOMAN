@@ -1,9 +1,9 @@
 /*!
-    \file    gd32e50x_crc.c
-    \brief   CRC driver
-
-    \version 2026-02-09, V1.7.0, firmware for GD32E50x
-*/
+  \file gd32e50x_crc.c
+  \brief CRC driver
+ 
+  \version 2026-02-09, V1.7.0, firmware for GD32E50x
+ */
 
 /*
     Copyright (c) 2025, GigaDevice Semiconductor Inc.
@@ -30,16 +30,16 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
-*/
+ */
 
 #include "gd32e50x_crc.h"
 
 /*!
-    \brief      deinitialize CRC calculation unit
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief deinitialize CRC calculation unit
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void crc_deinit(void)
 {
     CRC_IDATA = (uint32_t)0xFFFFFFFFU;
@@ -50,50 +50,50 @@ void crc_deinit(void)
 }
 
 /*!
-    \brief      reset data register to the value of initializaiton data register
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief reset data register to the value of initializaiton data register
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void crc_data_register_reset(void)
 {
     CRC_CTL |= (uint32_t)CRC_CTL_RST;
 }
 
 /*!
-    \brief      enable the reverse operation of output data
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief enable the reverse operation of output data
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void crc_reverse_output_data_enable(void)
 {
-    CRC_CTL &= (uint32_t)(~ CRC_CTL_REV_O);
+    CRC_CTL &= (uint32_t)(~CRC_CTL_REV_O);
     CRC_CTL |= (uint32_t)CRC_CTL_REV_O;
 }
 
 /*!
-    \brief      disable the reverse operation of output data
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
+  \brief disable the reverse operation of output data
+  \param[in]  none
+  \param[out] none
+  \retval none
+ */
 void crc_reverse_output_data_disable(void)
 {
-    CRC_CTL &= (uint32_t)(~ CRC_CTL_REV_O);
+    CRC_CTL &= (uint32_t)(~CRC_CTL_REV_O);
 }
 
 /*!
-    \brief      configure the CRC input data function
-    \param[in]  data_reverse: specify input data reverse function
+  \brief configure the CRC input data function
+  \param[in]  data_reverse: specify input data reverse function
                 only one parameter can be selected which is shown as below:
-      \arg        CRC_INPUT_DATA_NOT: input data is not reversed
-      \arg        CRC_INPUT_DATA_BYTE: input data is reversed on 8 bits
-      \arg        CRC_INPUT_DATA_HALFWORD: input data is reversed on 16 bits
-      \arg        CRC_INPUT_DATA_WORD: input data is reversed on 32 bits
-    \param[out] none
-    \retval     none
-*/
+  \arg CRC_INPUT_DATA_NOT: input data is not reversed
+  \arg CRC_INPUT_DATA_BYTE: input data is reversed on 8 bits
+  \arg CRC_INPUT_DATA_HALFWORD: input data is reversed on 16 bits
+  \arg CRC_INPUT_DATA_WORD: input data is reversed on 32 bits
+  \param[out] none
+  \retval none
+ */
 void crc_input_data_reverse_config(uint32_t data_reverse)
 {
     CRC_CTL &= (uint32_t)(~CRC_CTL_REV_I);
@@ -101,11 +101,11 @@ void crc_input_data_reverse_config(uint32_t data_reverse)
 }
 
 /*!
-    \brief      read the data register
-    \param[in]  none
-    \param[out] none
-    \retval     32-bit value of the data register
-*/
+  \brief read the data register
+  \param[in]  none
+  \param[out] none
+  \retval 32-bit value of the data register
+ */
 uint32_t crc_data_register_read(void)
 {
     uint32_t data;
@@ -114,11 +114,11 @@ uint32_t crc_data_register_read(void)
 }
 
 /*!
-    \brief      read the free data register
-    \param[in]  none
-    \param[out] none
-    \retval     8-bit value of the free data register
-*/
+  \brief read the free data register
+  \param[in]  none
+  \param[out] none
+  \retval 8-bit value of the free data register
+ */
 uint8_t crc_free_data_register_read(void)
 {
     uint8_t fdata;
@@ -127,38 +127,38 @@ uint8_t crc_free_data_register_read(void)
 }
 
 /*!
-    \brief      write the free data register
-    \param[in]  free_data: specify 8-bit data
-    \param[out] none
-    \retval     none
-*/
+  \brief write the free data register
+  \param[in]  free_data: specify 8-bit data
+  \param[out] none
+  \retval none
+ */
 void crc_free_data_register_write(uint8_t free_data)
 {
     CRC_FDATA = (uint32_t)free_data;
 }
 
 /*!
-    \brief      write the initializaiton data register
-    \param[in]  init_data: specify 32-bit data
-    \param[out] none
-    \retval     none
-*/
+  \brief write the initializaiton data register
+  \param[in]  init_data: specify 32-bit data
+  \param[out] none
+  \retval none
+ */
 void crc_init_data_register_write(uint32_t init_data)
 {
     CRC_IDATA = (uint32_t)init_data;
 }
 
 /*!
-    \brief      configure the CRC size of polynomial function
-    \param[in]  poly_size: size of polynomial
+  \brief configure the CRC size of polynomial function
+  \param[in]  poly_size: size of polynomial
                 only one parameter can be selected which is shown as below:
-      \arg        CRC_CTL_PS_32: 32-bit polynomial for CRC calculation
-      \arg        CRC_CTL_PS_16: 16-bit polynomial for CRC calculation
-      \arg        CRC_CTL_PS_8: 8-bit polynomial for CRC calculation
-      \arg        CRC_CTL_PS_7: 7-bit polynomial for CRC calculation
-    \param[out] none
-    \retval     none
-*/
+  \arg CRC_CTL_PS_32: 32-bit polynomial for CRC calculation
+  \arg CRC_CTL_PS_16: 16-bit polynomial for CRC calculation
+  \arg CRC_CTL_PS_8: 8-bit polynomial for CRC calculation
+  \arg CRC_CTL_PS_7: 7-bit polynomial for CRC calculation
+  \param[out] none
+  \retval none
+ */
 void crc_polynomial_size_set(uint32_t poly_size)
 {
     CRC_CTL &= (uint32_t)(~(CRC_CTL_PS));
@@ -166,11 +166,11 @@ void crc_polynomial_size_set(uint32_t poly_size)
 }
 
 /*!
-    \brief      configure the CRC polynomial value function
-    \param[in]  poly: configurable polynomial value
-    \param[out] none
-    \retval     none
-*/
+  \brief configure the CRC polynomial value function
+  \param[in]  poly: configurable polynomial value
+  \param[out] none
+  \retval none
+ */
 void crc_polynomial_set(uint32_t poly)
 {
     CRC_POLY &= (uint32_t)(~CRC_POLY_POLY);
@@ -178,58 +178,71 @@ void crc_polynomial_set(uint32_t poly)
 }
 
 /*!
-    \brief      CRC calculate single data
-    \param[in]  sdata: specify input data data
-    \param[in]  data_format: input data format
+  \brief CRC calculate single data
+  \param[in]  sdata: specify input data data
+  \param[in]  data_format: input data format
                 only one parameter can be selected which is shown as below:
-      \arg        INPUT_FORMAT_WORD: input data in word format
-      \arg        INPUT_FORMAT_HALFWORD: input data in half-word format
-      \arg        INPUT_FORMAT_BYTE: input data in byte format
-    \param[out] none
-    \retval     CRC calculate value
-*/
+  \arg INPUT_FORMAT_WORD: input data in word format
+  \arg INPUT_FORMAT_HALFWORD: input data in half-word format
+  \arg INPUT_FORMAT_BYTE: input data in byte format
+  \param[out] none
+  \retval CRC calculate value
+ */
 uint32_t crc_single_data_calculate(uint32_t sdata, uint8_t data_format)
 {
-    if(INPUT_FORMAT_WORD == data_format){
+    if (INPUT_FORMAT_WORD == data_format)
+    {
         REG32(CRC) = sdata;
-    }else if(INPUT_FORMAT_HALFWORD == data_format){
+    }
+    else if (INPUT_FORMAT_HALFWORD == data_format)
+    {
         REG16(CRC) = (uint16_t)sdata;
-    }else{
+    }
+    else
+    {
         REG8(CRC) = (uint8_t)sdata;
     }
 
-    return(CRC_DATA);
+    return (CRC_DATA);
 }
 
 /*!
-    \brief      CRC calculate a data array
-    \param[in]  array: pointer to the input data array
-    \param[in]  size: size of the array
-    \param[in]  data_format: input data format
+  \brief CRC calculate a data array
+  \param[in]  array: pointer to the input data array
+  \param[in]  size: size of the array
+  \param[in]  data_format: input data format
                 only one parameter can be selected which is shown as below:
-      \arg        INPUT_FORMAT_WORD: input data in word format
-      \arg        INPUT_FORMAT_HALFWORD: input data in half-word format
-      \arg        INPUT_FORMAT_BYTE: input data in byte format
-    \param[out] none
-    \retval     CRC calculate value
-*/
+  \arg INPUT_FORMAT_WORD: input data in word format
+  \arg INPUT_FORMAT_HALFWORD: input data in half-word format
+  \arg INPUT_FORMAT_BYTE: input data in byte format
+  \param[out] none
+  \retval CRC calculate value
+ */
 uint32_t crc_block_data_calculate(void *array, uint32_t size, uint8_t data_format)
 {
     uint32_t index;
     uint32_t data = (uint32_t)array;
 
-    if(INPUT_FORMAT_WORD == data_format) {
-        for(index = 0U; index < size; index++) {
+    if (INPUT_FORMAT_WORD == data_format)
+    {
+        for (index = 0U; index < size; index++)
+        {
             REG32(CRC) = *(uint32_t *)data;
             data += 4U;
         }
-    } else if(INPUT_FORMAT_HALFWORD == data_format) {
-        for(index = 0U; index < size; index++) {
+    }
+    else if (INPUT_FORMAT_HALFWORD == data_format)
+    {
+        for (index = 0U; index < size; index++)
+        {
             REG16(CRC) = *(uint16_t *)data;
             data += 2U;
         }
-    } else {
-        for(index = 0U; index < size; index++) {
+    }
+    else
+    {
+        for (index = 0U; index < size; index++)
+        {
             REG8(CRC) = *(uint8_t *)data;
             data += 1U;
         }

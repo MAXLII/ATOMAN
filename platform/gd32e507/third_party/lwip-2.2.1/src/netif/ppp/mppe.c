@@ -239,11 +239,9 @@ err_t mppe_compress(ppp_pcb *pcb,
     pl[0] = state->ccount >> 8;
     pl[1] = state->ccount;
 
-    if (    !state->stateful
-         || /* stateless mode */
-            ((state->ccount & 0xff) == 0xff)
-         || /* "flag" packet */
-            (state->bits & MPPE_BIT_FLUSHED))
+    if (    !state->stateful /* stateless mode */
+         || ((state->ccount & 0xff) == 0xff) /* "flag" packet */
+         || (state->bits & MPPE_BIT_FLUSHED))
     { /* CCP Reset-Request */
         /* We must rekey */
 

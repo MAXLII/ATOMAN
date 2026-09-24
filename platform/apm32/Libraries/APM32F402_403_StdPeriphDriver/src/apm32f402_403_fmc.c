@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_fmc.c
+ * @file apm32f402_403_fmc.c
  *
- * @brief       This file provides all the FMC firmware functions
+ * @brief This file provides all the FMC firmware functions
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -27,23 +27,23 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup FMC_Driver
-  * @brief FMC driver modules
+ * @brief FMC driver modules
   @{
-*/
+ */
 
 /** @defgroup FMC_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Configs the code latency value.
+ * @brief Configs the code latency value.
  *
- * @param     latency: the FMC Latency value.
+ * @param latency: the FMC Latency value.
  *
- * @retval    None
+ * @retval None
  */
 void FMC_ConfigLatency(FMC_LATENCY_T latency)
 {
@@ -52,11 +52,11 @@ void FMC_ConfigLatency(FMC_LATENCY_T latency)
 }
 
 /*!
- * @brief     Enables the Half cycle flash access.
+ * @brief Enables the Half cycle flash access.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_EnableHalfCycleAccess(void)
 {
@@ -64,11 +64,11 @@ void FMC_EnableHalfCycleAccess(void)
 }
 
 /*!
- * @brief     Disable the Half cycle flash access.
+ * @brief Disable the Half cycle flash access.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_DisableHalfCycleAccess(void)
 {
@@ -76,11 +76,11 @@ void FMC_DisableHalfCycleAccess(void)
 }
 
 /*!
- * @brief     Enables the Prefetch Buffer.
+ * @brief Enables the Prefetch Buffer.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_EnablePrefetchBuffer(void)
 {
@@ -88,11 +88,11 @@ void FMC_EnablePrefetchBuffer(void)
 }
 
 /*!
- * @brief     Disables the Prefetch Buffer.
+ * @brief Disables the Prefetch Buffer.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_DisablePrefetchBuffer(void)
 {
@@ -100,11 +100,11 @@ void FMC_DisablePrefetchBuffer(void)
 }
 
 /*!
- * @brief     Enables the Instruction Cache.
+ * @brief Enables the Instruction Cache.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_EnableInstructionCache(void)
 {
@@ -112,11 +112,11 @@ void FMC_EnableInstructionCache(void)
 }
 
 /*!
- * @brief     Disables the Instruction Cache.
+ * @brief Disables the Instruction Cache.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_DisableInstructionCache(void)
 {
@@ -124,11 +124,11 @@ void FMC_DisableInstructionCache(void)
 }
 
 /*!
- * @brief     Enables the Data Cache.
+ * @brief Enables the Data Cache.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_EnableDataCache(void)
 {
@@ -136,11 +136,11 @@ void FMC_EnableDataCache(void)
 }
 
 /*!
- * @brief     Disables the Data Cache.
+ * @brief Disables the Data Cache.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_DisableDataCache(void)
 {
@@ -148,11 +148,11 @@ void FMC_DisableDataCache(void)
 }
 
 /*!
- * @brief     Resets the Instruction Cache.
+ * @brief Resets the Instruction Cache.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_ResetInstructionCache(void)
 {
@@ -160,11 +160,11 @@ void FMC_ResetInstructionCache(void)
 }
 
 /*!
- * @brief     Resets the Data Cache.
+ * @brief Resets the Data Cache.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_ResetDataCache(void)
 {
@@ -172,11 +172,11 @@ void FMC_ResetDataCache(void)
 }
 
 /*!
- * @brief     Enables the Prefetch.
+ * @brief Enables the Prefetch.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_EnablePrefetch(void)
 {
@@ -184,11 +184,11 @@ void FMC_EnablePrefetch(void)
 }
 
 /*!
- * @brief     Disables the Prefetch.
+ * @brief Disables the Prefetch.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_DisablePrefetch(void)
 {
@@ -196,11 +196,11 @@ void FMC_DisablePrefetch(void)
 }
 
 /*!
- * @brief     Unlocks the FMC Program Erase Controller
+ * @brief Unlocks the FMC Program Erase Controller
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_Unlock(void)
 {
@@ -209,11 +209,11 @@ void FMC_Unlock(void)
 }
 
 /*!
- * @brief     Locks the FMC Program Erase Controller.
+ * @brief Locks the FMC Program Erase Controller.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void FMC_Lock(void)
 {
@@ -221,83 +221,86 @@ void FMC_Lock(void)
 }
 
 /*!
- * @brief     Erases a specified FMC page.
+ * @brief Erases a specified FMC page.
  *
- * @param     pageAddr: The page address to be erased.
+ * @param pageAddr: The page address to be erased.
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_BUSY
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_BUSY
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_ErasePage(uint32_t pageAddr)
 {
     FMC_STATUS_T status = FMC_STATUS_COMPLETE;
 
     status = FMC_WaitForLastOperation(0x000B0000);
-    if(status == FMC_STATUS_COMPLETE)
+
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->CTRL2_B.PAGEERA = BIT_SET;
-        FMC->ADDR = pageAddr;
-        FMC->CTRL2_B.STA = BIT_SET;
+        FMC->ADDR            = pageAddr;
+        FMC->CTRL2_B.STA     = BIT_SET;
 
-        status = FMC_WaitForLastOperation(0x000B0000);
+        status               = FMC_WaitForLastOperation(0x000B0000);
         FMC->CTRL2_B.PAGEERA = BIT_RESET;
     }
     return status;
 }
 
 /*!
- * @brief     Erases all FMC pages.
+ * @brief Erases all FMC pages.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_EraseAllPage(void)
 {
     FMC_STATUS_T status = FMC_STATUS_COMPLETE;
 
     status = FMC_WaitForLastOperation(0x000B0000);
-    if(status == FMC_STATUS_COMPLETE)
+
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->CTRL2_B.MASSERA = BIT_SET;
-        FMC->CTRL2_B.STA = BIT_SET;
+        FMC->CTRL2_B.STA     = BIT_SET;
 
-        status = FMC_WaitForLastOperation(0x000B0000);
+        status               = FMC_WaitForLastOperation(0x000B0000);
         FMC->CTRL2_B.MASSERA = BIT_RESET;
     }
     return status;
 }
 
 /*!
- * @brief     Erases the FMC option bytes.
+ * @brief Erases the FMC option bytes.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_EraseOptionBytes(void)
 {
-    uint16_t rdtemp = 0x00A5;
+    uint16_t rdtemp     = 0x00A5;
     FMC_STATUS_T status = FMC_STATUS_COMPLETE;
 
-    if(FMC_GetReadProtectionStatus() != RESET)
+    if (FMC_GetReadProtectionStatus() != RESET)
     {
         rdtemp = 0x00;
     }
     status = FMC_WaitForLastOperation(0x000B0000);
-    if(status == FMC_STATUS_COMPLETE)
+
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->OBKEY = 0x45670123;
         FMC->OBKEY = 0xCDEF89AB;
@@ -307,18 +310,19 @@ FMC_STATUS_T FMC_EraseOptionBytes(void)
 
         status = FMC_WaitForLastOperation(0x000B0000);
 
-        if(status == FMC_STATUS_COMPLETE)
+        if (status == FMC_STATUS_COMPLETE)
         {
             FMC->CTRL2_B.OBE = BIT_RESET;
             FMC->CTRL2_B.OBP = BIT_SET;
-            OB->RDP = rdtemp;
-            status = FMC_WaitForLastOperation(0x000B0000);
-            if(status != FMC_STATUS_TIMEOUT)
+            OB->RDP          = rdtemp;
+            status           = FMC_WaitForLastOperation(0x000B0000);
+
+            if (status != FMC_STATUS_TIMEOUT)
             {
                 FMC->CTRL2_B.OBP = BIT_RESET;
             }
         }
-        else if(status != FMC_STATUS_TIMEOUT)
+        else if (status != FMC_STATUS_TIMEOUT)
         {
             FMC->CTRL2_B.OBP = BIT_RESET;
         }
@@ -327,17 +331,17 @@ FMC_STATUS_T FMC_EraseOptionBytes(void)
 }
 
 /*!
- * @brief     Programs a word at a specified address.
+ * @brief Programs a word at a specified address.
  *
- * @param     address:the address to be programmed.
+ * @param address:the address to be programmed.
  *
- * @param     data: the data to be programmed.
+ * @param data: the data to be programmed.
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_ProgramWord(uint32_t address, uint32_t data)
 {
@@ -348,7 +352,7 @@ FMC_STATUS_T FMC_ProgramWord(uint32_t address, uint32_t data)
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->CTRL2_B.PG = BIT_SET;
 
@@ -356,13 +360,13 @@ FMC_STATUS_T FMC_ProgramWord(uint32_t address, uint32_t data)
 
         status = FMC_WaitForLastOperation(0x000B0000);
 
-        if(status == FMC_STATUS_COMPLETE)
+        if (status == FMC_STATUS_COMPLETE)
         {
             temp = address + 2;
 
-            *(__IOM uint16_t*) temp = data >> 16;
+            *(__IOM uint16_t *)temp = data >> 16;
 
-            status = FMC_WaitForLastOperation(0x000B0000);
+            status          = FMC_WaitForLastOperation(0x000B0000);
             FMC->CTRL2_B.PG = BIT_RESET;
         }
         else
@@ -377,17 +381,17 @@ FMC_STATUS_T FMC_ProgramWord(uint32_t address, uint32_t data)
 }
 
 /*!
- * @brief     Programs a half word at a specified address.
+ * @brief Programs a half word at a specified address.
  *
- * @param     address:the address to be programmed.
+ * @param address:the address to be programmed.
  *
- * @param     data: the data to be programmed.
+ * @param data: the data to be programmed.
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_ProgramHalfWord(uint32_t address, uint16_t data)
 {
@@ -397,12 +401,12 @@ FMC_STATUS_T FMC_ProgramHalfWord(uint32_t address, uint16_t data)
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
-        FMC->CTRL2_B.PG = BIT_SET;
+        FMC->CTRL2_B.PG            = BIT_SET;
         *(__IOM uint16_t *)address = data;
-        status = FMC_WaitForLastOperation(0x000B0000);
-        FMC->CTRL2_B.PG = BIT_RESET;
+        status                     = FMC_WaitForLastOperation(0x000B0000);
+        FMC->CTRL2_B.PG            = BIT_RESET;
     }
 
     __set_PRIMASK(0);
@@ -411,17 +415,17 @@ FMC_STATUS_T FMC_ProgramHalfWord(uint32_t address, uint16_t data)
 }
 
 /*!
- * @brief     Programs a half word at a specified Option Byte Data address.
+ * @brief Programs a half word at a specified Option Byte Data address.
  *
- * @param     address:the address to be programmed.
+ * @param address:the address to be programmed.
  *
- * @param     data: the data to be programmed.
+ * @param data: the data to be programmed.
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_ProgramOptionByteData(uint32_t address, uint8_t data)
 {
@@ -429,15 +433,16 @@ FMC_STATUS_T FMC_ProgramOptionByteData(uint32_t address, uint8_t data)
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->OBKEY = 0x45670123;
         FMC->OBKEY = 0xCDEF89AB;
 
-        FMC->CTRL2_B.OBP = BIT_SET;
+        FMC->CTRL2_B.OBP           = BIT_SET;
         *(__IOM uint16_t *)address = data;
-        status = FMC_WaitForLastOperation(0x000B0000);
-        if(status == FMC_STATUS_TIMEOUT)
+        status                     = FMC_WaitForLastOperation(0x000B0000);
+
+        if (status == FMC_STATUS_TIMEOUT)
         {
             FMC->CTRL2_B.OBP = BIT_RESET;
         }
@@ -446,24 +451,24 @@ FMC_STATUS_T FMC_ProgramOptionByteData(uint32_t address, uint8_t data)
 }
 
 /*!
- * @brief     Write protects the desired pages
+ * @brief Write protects the desired pages
  *
- * @param     page:the address of the pages to be write protection
- *                This parameter can be any combination of the following values:
- *                 @arg FLASH_WRP_PAGE_0_3 ... FLASH_WRP_PAGE_124_127
+ * @param page:the address of the pages to be write protection
+ *        This parameter can be any combination of the following values:
+ * @arg FLASH_WRP_PAGE_0_3 ... FLASH_WRP_PAGE_124_127
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_EnableWriteProtection(uint32_t page)
 {
     uint16_t WPP0_Data = 0xFFFF, WPP1_Data = 0xFFFF, WPP2_Data = 0xFFFF, WPP3_Data = 0xFFFF;
     FMC_STATUS_T status = FMC_STATUS_COMPLETE;
 
-    page = ~page;
+    page      = ~page;
     WPP0_Data = (page & 0x000000FF);
     WPP1_Data = (page & 0x0000FF00) >> 8;
     WPP2_Data = (page & 0x00FF0000) >> 16;
@@ -471,34 +476,40 @@ FMC_STATUS_T FMC_EnableWriteProtection(uint32_t page)
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
-        FMC->OBKEY = 0x45670123;
-        FMC->OBKEY = 0xCDEF89AB;
+        FMC->OBKEY       = 0x45670123;
+        FMC->OBKEY       = 0xCDEF89AB;
         FMC->CTRL2_B.OBP = BIT_SET;
 
-        if(WPP0_Data != 0xFF)
+        if (WPP0_Data != 0xFF)
         {
             OB->WRP0 = WPP0_Data;
-            status = FMC_WaitForLastOperation(0x000B0000);
-        }
-        if((status == FMC_STATUS_COMPLETE) && (WPP1_Data != 0xFF))
-        {
-            OB->WRP1 = WPP1_Data;
-            status = FMC_WaitForLastOperation(0x000B0000);
-        }
-        if((status == FMC_STATUS_COMPLETE) && (WPP2_Data != 0xFF))
-        {
-            OB->WRP2 = WPP2_Data;
-            status = FMC_WaitForLastOperation(0x000B0000);
-        }
-        if((status == FMC_STATUS_COMPLETE) && (WPP3_Data != 0xFF))
-        {
-            OB->WRP3 = WPP3_Data;
-            status = FMC_WaitForLastOperation(0x000B0000);
+            status   = FMC_WaitForLastOperation(0x000B0000);
         }
 
-        if(status != FMC_STATUS_TIMEOUT)
+        if (    (status == FMC_STATUS_COMPLETE)
+             && (WPP1_Data != 0xFF))
+        {
+            OB->WRP1 = WPP1_Data;
+            status   = FMC_WaitForLastOperation(0x000B0000);
+        }
+
+        if (    (status == FMC_STATUS_COMPLETE)
+             && (WPP2_Data != 0xFF))
+        {
+            OB->WRP2 = WPP2_Data;
+            status   = FMC_WaitForLastOperation(0x000B0000);
+        }
+
+        if (    (status == FMC_STATUS_COMPLETE)
+             && (WPP3_Data != 0xFF))
+        {
+            OB->WRP3 = WPP3_Data;
+            status   = FMC_WaitForLastOperation(0x000B0000);
+        }
+
+        if (status != FMC_STATUS_TIMEOUT)
         {
             FMC->CTRL2_B.OBP = BIT_RESET;
         }
@@ -507,15 +518,15 @@ FMC_STATUS_T FMC_EnableWriteProtection(uint32_t page)
 }
 
 /*!
- * @brief     Enables the read out protection.
+ * @brief Enables the read out protection.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_EnableReadOutProtection(void)
 {
@@ -523,7 +534,7 @@ FMC_STATUS_T FMC_EnableReadOutProtection(void)
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->OBKEY = 0x45670123;
         FMC->OBKEY = 0xCDEF89AB;
@@ -533,20 +544,20 @@ FMC_STATUS_T FMC_EnableReadOutProtection(void)
 
         status = FMC_WaitForLastOperation(0x000B0000);
 
-        if(status == FMC_STATUS_COMPLETE)
+        if (status == FMC_STATUS_COMPLETE)
         {
             FMC->CTRL2_B.OBE = BIT_RESET;
             FMC->CTRL2_B.OBP = BIT_SET;
-            OB->RDP = 0x00;
+            OB->RDP          = 0x00;
 
             status = FMC_WaitForLastOperation(0x000B0000);
 
-            if(status != FMC_STATUS_TIMEOUT)
+            if (status != FMC_STATUS_TIMEOUT)
             {
                 FMC->CTRL2_B.OBP = BIT_RESET;
             }
         }
-        else if(status != FMC_STATUS_TIMEOUT)
+        else if (status != FMC_STATUS_TIMEOUT)
         {
             FMC->CTRL2_B.OBE = BIT_RESET;
         }
@@ -555,15 +566,15 @@ FMC_STATUS_T FMC_EnableReadOutProtection(void)
 }
 
 /*!
- * @brief     Disables the read out protection.
+ * @brief Disables the read out protection.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_DisableReadOutProtection(void)
 {
@@ -571,29 +582,29 @@ FMC_STATUS_T FMC_DisableReadOutProtection(void)
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
-        FMC->OBKEY = 0x45670123;
-        FMC->OBKEY = 0xCDEF89AB;
+        FMC->OBKEY       = 0x45670123;
+        FMC->OBKEY       = 0xCDEF89AB;
         FMC->CTRL2_B.OBE = BIT_SET;
         FMC->CTRL2_B.STA = BIT_SET;
 
         status = FMC_WaitForLastOperation(0x000B0000);
 
-        if(status == FMC_STATUS_COMPLETE)
+        if (status == FMC_STATUS_COMPLETE)
         {
             FMC->CTRL2_B.OBE = BIT_RESET;
             FMC->CTRL2_B.OBP = BIT_SET;
-            OB->RDP = 0x00A5;
+            OB->RDP          = 0x00A5;
 
             status = FMC_WaitForLastOperation(0x000B0000);
 
-            if(status != FMC_STATUS_TIMEOUT)
+            if (status != FMC_STATUS_TIMEOUT)
             {
                 FMC->CTRL2_B.OBP = BIT_RESET;
             }
         }
-        else if(status != FMC_STATUS_TIMEOUT)
+        else if (status != FMC_STATUS_TIMEOUT)
         {
             FMC->CTRL2_B.OBE = BIT_RESET;
         }
@@ -602,34 +613,33 @@ FMC_STATUS_T FMC_DisableReadOutProtection(void)
 }
 
 /*!
- * @brief     Programs the FMC User Option Byte.
+ * @brief Programs the FMC User Option Byte.
  *
- * @param     userConfig: Point to a FMC_UserConfig_T structure.
+ * @param userConfig: Point to a FMC_UserConfig_T structure.
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
-FMC_STATUS_T FMC_ConfigUserOptionByte(FMC_UserConfig_T* userConfig)
+FMC_STATUS_T FMC_ConfigUserOptionByte(FMC_UserConfig_T *userConfig)
 {
     FMC_STATUS_T status = FMC_STATUS_COMPLETE;
 
     status = FMC_WaitForLastOperation(0x000B0000);
 
-    if(status == FMC_STATUS_COMPLETE)
+    if (status == FMC_STATUS_COMPLETE)
     {
         FMC->OBKEY = 0x45670123;
         FMC->OBKEY = 0xCDEF89AB;
 
         FMC->CTRL2_B.OBP = BIT_SET;
-        OB->USER = (uint32_t)userConfig->iwdtSet | \
-                   (uint32_t)userConfig->stopSet | \
-                   (uint32_t)userConfig->stdbySet | \
-                    (uint32_t)userConfig->nromselSet |0xE8;
+        OB->USER = (uint32_t)userConfig->iwdtSet | (uint32_t)userConfig->stopSet | (uint32_t)userConfig->stdbySet
+                 | (uint32_t)userConfig->nromselSet | 0xE8;
         status = FMC_WaitForLastOperation(0x000B0000);
-        if(status == FMC_STATUS_TIMEOUT)
+
+        if (status == FMC_STATUS_TIMEOUT)
         {
             FMC->CTRL2_B.OBP = BIT_RESET;
         }
@@ -638,11 +648,11 @@ FMC_STATUS_T FMC_ConfigUserOptionByte(FMC_UserConfig_T* userConfig)
 }
 
 /*!
- * @brief     Read the FMC User Option Bytes values.
+ * @brief Read the FMC User Option Bytes values.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns User Option Bytes values
+ * @retval Returns User Option Bytes values
  */
 uint32_t FMC_ReadUserOptionByte(void)
 {
@@ -650,11 +660,11 @@ uint32_t FMC_ReadUserOptionByte(void)
 }
 
 /*!
- * @brief     Read the FMC Write Protection Option Bytes Register value.
+ * @brief Read the FMC Write Protection Option Bytes Register value.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns the value of Option Bytes Write Protection Register.
+ * @retval Returns the value of Option Bytes Write Protection Register.
  */
 uint32_t FMC_ReadOptionByteWriteProtection(void)
 {
@@ -662,17 +672,17 @@ uint32_t FMC_ReadOptionByteWriteProtection(void)
 }
 
 /*!
- * @brief     Get the FMC Read Out Protection Status is set or not.
+ * @brief Get the FMC Read Out Protection Status is set or not.
  *
- * @param     None
+ * @param None
  *
- * @retval    status : set or reset.
+ * @retval status : set or reset.
  */
 uint8_t FMC_GetReadProtectionStatus(void)
 {
     uint8_t flagstatus = RESET;
 
-    if(FMC->OBCS_B.READPROT != RESET)
+    if (FMC->OBCS_B.READPROT != RESET)
     {
         flagstatus = SET;
     }
@@ -684,11 +694,11 @@ uint8_t FMC_GetReadProtectionStatus(void)
 }
 
 /*!
- * @brief     FMC Prefetch Buffer status is set or not.
+ * @brief FMC Prefetch Buffer status is set or not.
  *
- * @param     None
+ * @param None
  *
- * @retval    status : set or reset.
+ * @retval status : set or reset.
  */
 uint8_t FMC_ReadPrefetchBufferStatus(void)
 {
@@ -696,18 +706,18 @@ uint8_t FMC_ReadPrefetchBufferStatus(void)
 }
 
 /*!
- * @brief     Enables the specified FMC interrupts.
+ * @brief Enables the specified FMC interrupts.
  *
- * @param     interrupt: Select the FMC interrupt sources
- *                       This parameter can be one of the following values:
- *                       @arg FMC_INT_ERR :  Error Interrupt
- *                       @arg FMC_INT_OC  :  Operation Complete Interrupt
+ * @param interrupt: Select the FMC interrupt sources
+ *        This parameter can be one of the following values:
+ * @arg FMC_INT_ERR :  Error Interrupt
+ * @arg FMC_INT_OC  :  Operation Complete Interrupt
  *
- * @retval    None
+ * @retval None
  */
 void FMC_EnableInterrupt(FMC_INT_T interrupt)
 {
-    if(interrupt == FMC_INT_ERR)
+    if (interrupt == FMC_INT_ERR)
     {
         FMC->CTRL2_B.ERRIE = ENABLE;
     }
@@ -718,18 +728,18 @@ void FMC_EnableInterrupt(FMC_INT_T interrupt)
 }
 
 /*!
- * @brief     Disable the specified FMC interrupts.
+ * @brief Disable the specified FMC interrupts.
  *
- * @param     interrupt: Select the FMC interrupt sources
- *                       This parameter can be one of the following values:
- *                       @arg FMC_INT_ERR :  Error Interrupt
- *                       @arg FMC_INT_OC  :  Operation Complete Interrupt
+ * @param interrupt: Select the FMC interrupt sources
+ *        This parameter can be one of the following values:
+ * @arg FMC_INT_ERR :  Error Interrupt
+ * @arg FMC_INT_OC  :  Operation Complete Interrupt
  *
- * @retval    None
+ * @retval None
  */
 void FMC_DisableInterrupt(FMC_INT_T interrupt)
 {
-    if(interrupt == FMC_INT_ERR)
+    if (interrupt == FMC_INT_ERR)
     {
         FMC->CTRL2_B.ERRIE = DISABLE;
     }
@@ -740,25 +750,25 @@ void FMC_DisableInterrupt(FMC_INT_T interrupt)
 }
 
 /*!
- * @brief     Read FMC flag is set or not
+ * @brief Read FMC flag is set or not
  *
- * @param     flag: status flag of FMC
- *                  This parameter can be one of the following values:
- *                  @arg FMC_FLAG_BUSY : FMC Busy flag
- *                  @arg FMC_FLAG_OC   : FMC Operation Complete flag
- *                  @arg FMC_FLAG_PE   : FMC Program error flag
- *                  @arg FMC_FLAG_WPE  : FMC Write protected error flag
- *                  @arg FMC_FLAG_OBE  : FMC Option Byte error flag
+ * @param flag: status flag of FMC
+ *        This parameter can be one of the following values:
+ * @arg FMC_FLAG_BUSY : FMC Busy flag
+ * @arg FMC_FLAG_OC   : FMC Operation Complete flag
+ * @arg FMC_FLAG_PE   : FMC Program error flag
+ * @arg FMC_FLAG_WPE  : FMC Write protected error flag
+ * @arg FMC_FLAG_OBE  : FMC Option Byte error flag
  *
- * @retval    flag status : set or reset
+ * @retval flag status : set or reset
  */
 uint8_t FMC_ReadStatusFlag(FMC_FLAG_T flag)
 {
-    if(flag == FMC_FLAG_OBE)
+    if (flag == FMC_FLAG_OBE)
     {
         return FMC->OBCS_B.OBE;
     }
-    else if((FMC->STS & flag ) != RESET)
+    else if ((FMC->STS & flag) != RESET)
     {
         return SET;
     }
@@ -766,15 +776,15 @@ uint8_t FMC_ReadStatusFlag(FMC_FLAG_T flag)
 }
 
 /*!
- * @brief     Clears the FMC's flag.
+ * @brief Clears the FMC's flag.
  *
- * @param     flag: status flag of FMC
- *                  This parameter can be any combination of the following values:
- *                  @arg FMC_FLAG_OC   : FMC Operation Complete flag
- *                  @arg FMC_FLAG_PE   : FMC Program error flag
- *                  @arg FMC_FLAG_WPE  : FMC Write protected error flag
+ * @param flag: status flag of FMC
+ *        This parameter can be any combination of the following values:
+ * @arg FMC_FLAG_OC   : FMC Operation Complete flag
+ * @arg FMC_FLAG_PE   : FMC Program error flag
+ * @arg FMC_FLAG_WPE  : FMC Write protected error flag
  *
- * @retval    None
+ * @retval None
  *
  */
 void FMC_ClearStatusFlag(uint32_t flag)
@@ -783,29 +793,29 @@ void FMC_ClearStatusFlag(uint32_t flag)
 }
 
 /*!
- * @brief     Read the FMC Status.
+ * @brief Read the FMC Status.
  *
- * @param     None
+ * @param None
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_BUSY
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_BUSY
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
  */
-FMC_STATUS_T  FMC_ReadStatus(void)
+FMC_STATUS_T FMC_ReadStatus(void)
 {
     FMC_STATUS_T status = FMC_STATUS_COMPLETE;
 
-    if(FMC->STS_B.BUSYF == BIT_SET)
+    if (FMC->STS_B.BUSYF == BIT_SET)
     {
         status = FMC_STATUS_BUSY;
     }
-    else if(FMC->STS_B.PEF == BIT_SET)
+    else if (FMC->STS_B.PEF == BIT_SET)
     {
         status = FMC_STATUS_ERROR_PG;
     }
-    else if(FMC->STS_B.WPEF == BIT_SET)
+    else if (FMC->STS_B.WPEF == BIT_SET)
     {
         status = FMC_STATUS_ERROR_WRP;
     }
@@ -817,15 +827,15 @@ FMC_STATUS_T  FMC_ReadStatus(void)
 }
 
 /*!
- * @brief     Waits for a Flash operation to complete or a TIMEOUT to occur.
+ * @brief Waits for a Flash operation to complete or a TIMEOUT to occur.
  *
- * @param     timeOut:FMC programming timeout value.
+ * @param timeOut:FMC programming timeout value.
  *
- * @retval    Returns the flash state.It can be one of value:
- *                 @arg FMC_STATUS_ERROR_PG
- *                 @arg FMC_STATUS_ERROR_WRP
- *                 @arg FMC_STATUS_COMPLETE
- *                 @arg FMC_STATUS_TIMEOUT
+ * @retval Returns the flash state.It can be one of value:
+ * @arg FMC_STATUS_ERROR_PG
+ * @arg FMC_STATUS_ERROR_WRP
+ * @arg FMC_STATUS_COMPLETE
+ * @arg FMC_STATUS_TIMEOUT
  */
 FMC_STATUS_T FMC_WaitForLastOperation(uint32_t timeOut)
 {
@@ -835,18 +845,21 @@ FMC_STATUS_T FMC_WaitForLastOperation(uint32_t timeOut)
     status = FMC_ReadStatus();
 
     /** Wait for a Flash operation to complete or a TIMEOUT to occur */
-    while((status == FMC_STATUS_BUSY) && (timeOut !=0))
+
+    while (    (status == FMC_STATUS_BUSY)
+            && (timeOut != 0))
     {
         status = FMC_ReadStatus();
         timeOut--;
     }
-    if(timeOut == 0x00)
+
+    if (timeOut == 0x00)
     {
         status = FMC_STATUS_TIMEOUT;
     }
     return status;
 }
 
-/**@} end of group FMC_Functions */
-/**@} end of group FMC_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group FMC_Functions */
+/** @} end of group FMC_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

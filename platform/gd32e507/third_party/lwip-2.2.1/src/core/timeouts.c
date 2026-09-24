@@ -67,10 +67,10 @@
 #define HANDLER(x) x
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
-#define LWIP_MAX_TIMEOUT  0x7fffffff
+#define LWIP_MAX_TIMEOUT 0x7fffffff
 
 /* Check if timer's expiry time is greater than time and care about u32_t wraparounds */
-#define TIME_LESS_THAN(t, compare_to) ( (((u32_t)((t)-(compare_to))) > LWIP_MAX_TIMEOUT) ? 1 : 0 )
+#define TIME_LESS_THAN(t, compare_to) ((((u32_t)((t) - (compare_to))) > LWIP_MAX_TIMEOUT) ? 1 : 0)
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */

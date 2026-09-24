@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_gpio.c
+ * @file apm32f402_403_gpio.c
  *
- * @brief       This file provides all the GPIO firmware functions
+ * @brief This file provides all the GPIO firmware functions
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -29,25 +29,25 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup GPIO_Driver GPIO Driver
   @{
-*/
+ */
 
 /** @defgroup GPIO_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Reset GPIO peripheral registers to their default reset values
+ * @brief Reset GPIO peripheral registers to their default reset values
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_Reset(GPIO_T* port)
+void GPIO_Reset(GPIO_T *port)
 {
     RCM_APB2_PERIPH_T APB2Periph = RCM_APB2_PERIPH_GPIOA;
 
@@ -73,11 +73,11 @@ void GPIO_Reset(GPIO_T* port)
 }
 
 /*!
- * @brief     Reset Alternate Functions registers to their default reset values
+ * @brief Reset Alternate Functions registers to their default reset values
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void GPIO_AFIOReset(void)
 {
@@ -86,16 +86,16 @@ void GPIO_AFIOReset(void)
 }
 
 /*!
- * @brief     Config the GPIO peripheral according to the specified parameters in the gpioConfig
+ * @brief Config the GPIO peripheral according to the specified parameters in the gpioConfig
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     gpioConfig: pointer to a GPIO_Config_T structure
+ * @param gpioConfig: pointer to a GPIO_Config_T structure
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_Config(GPIO_T* port, GPIO_Config_T* gpioConfig)
+void GPIO_Config(GPIO_T *port, GPIO_Config_T *gpioConfig)
 {
     uint8_t i;
     uint32_t mode;
@@ -164,64 +164,64 @@ void GPIO_Config(GPIO_T* port, GPIO_Config_T* gpioConfig)
 }
 
 /*!
- * @brief     Fills each gpioConfig member with its default value.
+ * @brief Fills each gpioConfig member with its default value.
  *
- * @param     gpioConfig : pointer to a GPIO_Config_T structure which will be initialized.
+ * @param gpioConfig : pointer to a GPIO_Config_T structure which will be initialized.
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_ConfigStructInit(GPIO_Config_T* gpioConfig)
+void GPIO_ConfigStructInit(GPIO_Config_T *gpioConfig)
 {
-    gpioConfig->pin  = GPIO_PIN_ALL;
+    gpioConfig->pin   = GPIO_PIN_ALL;
     gpioConfig->speed = GPIO_SPEED_2MHz;
-    gpioConfig->mode = GPIO_MODE_IN_FLOATING;
+    gpioConfig->mode  = GPIO_MODE_IN_FLOATING;
 }
 
 /*!
- * @brief     Reads the specified input port pin
+ * @brief Reads the specified input port pin
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     pin : specifies pin to read.
- *                  This parameter can be one of GPIO_PIN_x( x can be from 0 to 15).
+ * @param pin : specifies pin to read.
+ *        This parameter can be one of GPIO_PIN_x( x can be from 0 to 15).
  *
- * @retval    The input port pin value
+ * @retval The input port pin value
  */
-uint8_t GPIO_ReadInputBit(GPIO_T* port, uint16_t pin)
+uint8_t GPIO_ReadInputBit(GPIO_T *port, uint16_t pin)
 {
     uint8_t ret;
 
-    ret = (port->IDATA & pin) ?  BIT_SET : BIT_RESET;
+    ret = (port->IDATA & pin) ? BIT_SET : BIT_RESET;
 
     return ret;
 }
 
 /*!
- * @brief     Reads the specified GPIO input data port
+ * @brief Reads the specified GPIO input data port
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @retval    GPIO input data port value
+ * @retval GPIO input data port value
  */
-uint16_t GPIO_ReadInputPort(GPIO_T* port)
+uint16_t GPIO_ReadInputPort(GPIO_T *port)
 {
     return ((uint16_t)port->IDATA);
 }
 
 /*!
- * @brief     Reads the specified output data port bit
+ * @brief Reads the specified output data port bit
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     pin : specifies pin to read.
- *                  This parameter can be one of GPIO_PIN_x( x can be from 0 to 15).
+ * @param pin : specifies pin to read.
+ *        This parameter can be one of GPIO_PIN_x( x can be from 0 to 15).
  *
- * @retval    The output port pin value
+ * @retval The output port pin value
  */
-uint8_t GPIO_ReadOutputBit(GPIO_T* port, uint16_t pin)
+uint8_t GPIO_ReadOutputBit(GPIO_T *port, uint16_t pin)
 {
 
     uint8_t ret;
@@ -232,68 +232,68 @@ uint8_t GPIO_ReadOutputBit(GPIO_T* port, uint16_t pin)
 }
 
 /*!
- * @brief     Reads the specified GPIO output data port
+ * @brief Reads the specified GPIO output data port
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @retval    output data port value
+ * @retval output data port value
  */
-uint16_t GPIO_ReadOutputPort(GPIO_T* port)
+uint16_t GPIO_ReadOutputPort(GPIO_T *port)
 {
     return ((uint16_t)port->ODATA);
 }
 
 /*!
- * @brief     Sets the selected data port bits
+ * @brief Sets the selected data port bits
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     pin : specifies pin to be written.
- *                  This parameter can be any combination of GPIO_PIN_x( x can be from 0 to 15).
+ * @param pin : specifies pin to be written.
+ *        This parameter can be any combination of GPIO_PIN_x( x can be from 0 to 15).
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_SetBit(GPIO_T* port, uint16_t pin)
+void GPIO_SetBit(GPIO_T *port, uint16_t pin)
 {
     port->BSC = (uint32_t)pin;
 }
 
 /*!
- * @brief     Clears the selected data port bits
+ * @brief Clears the selected data port bits
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     pin : specifies pin to be cleared.
- *                  This parameter can be any combination of GPIO_PIN_x( x can be from 0 to 15).
+ * @param pin : specifies pin to be cleared.
+ *        This parameter can be any combination of GPIO_PIN_x( x can be from 0 to 15).
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_ResetBit(GPIO_T* port, uint16_t pin)
+void GPIO_ResetBit(GPIO_T *port, uint16_t pin)
 {
     port->BC = (uint32_t)pin;
 }
 
 /*!
- * @brief     Writes data to the specified GPIO data port bit
+ * @brief Writes data to the specified GPIO data port bit
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     pin : Select specifies pin.
- *                  This parameter can be one of GPIO_PIN_x( x can be from 0 to 15).
+ * @param pin : Select specifies pin.
+ *        This parameter can be one of GPIO_PIN_x( x can be from 0 to 15).
  *
  *
- * @param     bitVal : specifies the value to be written to the port output data register
- *                     This parameter can be one of the following values:
- *                       @arg BIT_RESET: Reset the port pin
- *                       @arg BIT_SET  : Set the port pin
+ * @param bitVal : specifies the value to be written to the port output data register
+ *        This parameter can be one of the following values:
+ * @arg BIT_RESET: Reset the port pin
+ * @arg BIT_SET  : Set the port pin
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_WriteBitValue(GPIO_T* port, uint16_t pin, uint8_t bitVal)
+void GPIO_WriteBitValue(GPIO_T *port, uint16_t pin, uint8_t bitVal)
 {
     if (bitVal != BIT_RESET)
     {
@@ -301,76 +301,76 @@ void GPIO_WriteBitValue(GPIO_T* port, uint16_t pin, uint8_t bitVal)
     }
     else
     {
-        port->BC = pin ;
+        port->BC = pin;
     }
 }
 
 /*!
- * @brief     Writes data to the specified GPIO data port
+ * @brief Writes data to the specified GPIO data port
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     portValue : specifies the value to be written to the port output data register.
+ * @param portValue : specifies the value to be written to the port output data register.
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_WriteOutputPort(GPIO_T* port, uint16_t portValue)
+void GPIO_WriteOutputPort(GPIO_T *port, uint16_t portValue)
 {
     port->ODATA = (uint32_t)portValue;
 }
 
 /*!
- * @brief     Locks GPIO Pins configuration registers
+ * @brief Locks GPIO Pins configuration registers
  *
- * @param     port: Select the GPIO port.
- *                  This parameter can be one of GPIOx( x can be from A to D).
+ * @param port: Select the GPIO port.
+ *        This parameter can be one of GPIOx( x can be from A to D).
  *
- * @param     pin : Select specifies pin.
- *                  This parameter can be any combination of GPIO_PIN_x( x can be from 0 to 15).
+ * @param pin : Select specifies pin.
+ *        This parameter can be any combination of GPIO_PIN_x( x can be from 0 to 15).
  *
- * @retval    None
+ * @retval None
  */
-void GPIO_ConfigPinLock(GPIO_T* port, uint16_t pin)
+void GPIO_ConfigPinLock(GPIO_T *port, uint16_t pin)
 {
     uint32_t val = 0x00010000;
 
-    val  |= pin;
-    /* Set LCKK bit */
-    port->LOCK = val ;
-    /* Reset LCKK bit */
-    port->LOCK =  pin;
+    val |= pin;
     /* Set LCKK bit */
     port->LOCK = val;
-    /* Read LCKK bit*/
+    /* Reset LCKK bit */
+    port->LOCK = pin;
+    /* Set LCKK bit */
+    port->LOCK = val;
+    /* Read LCKK bit */
     val = port->LOCK;
-    /* Read LCKK bit*/
+    /* Read LCKK bit */
     val = port->LOCK;
 }
 
 /*!
- * @brief     Selects the GPIO pin used as Event output
+ * @brief Selects the GPIO pin used as Event output
  *
- * @param     portSource : selects the GPIO port to be used as source for Event output.
- *                         This parameter can be one of GPIO_PORT_SOURCE_x( x can be from A to D).
+ * @param portSource : selects the GPIO port to be used as source for Event output.
+ *        This parameter can be one of GPIO_PORT_SOURCE_x( x can be from A to D).
  *
- * @param     pinSource   specifies the pin for the Event output
- *                  This parameter can be GPIO_PIN_SOURCE_x( x can be from 0 to 15).
+ * @param pinSource   specifies the pin for the Event output
+ *        This parameter can be GPIO_PIN_SOURCE_x( x can be from 0 to 15).
  *
- * @retval    None
+ * @retval None
  */
 void GPIO_ConfigEventOutput(GPIO_PORT_SOURCE_T portSource, GPIO_PIN_SOURCE_T pinSource)
 {
-    AFIO->EVCTRL_B.PORTSEL =  portSource;
-    AFIO->EVCTRL_B.PINSEL = pinSource;
+    AFIO->EVCTRL_B.PORTSEL = portSource;
+    AFIO->EVCTRL_B.PINSEL  = pinSource;
 }
 
 /*!
- * @brief     Enables the Event Output
+ * @brief Enables the Event Output
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void GPIO_EnableEventOutput(void)
 {
@@ -378,11 +378,11 @@ void GPIO_EnableEventOutput(void)
 }
 
 /*!
- * @brief     Disable the Event Output
+ * @brief Disable the Event Output
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void GPIO_DisableEventOutput(void)
 {
@@ -390,56 +390,56 @@ void GPIO_DisableEventOutput(void)
 }
 
 /*!
- * @brief     Changes the mapping of the specified pin
+ * @brief Changes the mapping of the specified pin
  *
- * @param     remap : selects the pin to remap
- *                    This parameter can be one of the following values:
- *                    @arg GPIO_NO_REMAP_SPI1         : No SPI1 Alternate Function mapping
- *                    @arg GPIO_REMAP_SPI1            : SPI1 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_I2C1         : No I2C1 Alternate Function mapping
- *                    @arg GPIO_REMAP_I2C1            : I2C1 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_USART1       : No USART1 Alternate Function mapping
- *                    @arg GPIO_REMAP_USART1          : USART1 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_USART2       : No USART2 Alternate Function mapping
- *                    @arg GPIO_REMAP_USART2          : USART2 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_USART3       : No USART3 Partial Alternate Function mapping
- *                    @arg GPIO_PARTIAL_REMAP_USART3  : USART3 Partial Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_TMR1         : No TIM1 Partial Alternate Function mapping
- *                    @arg GPIO_PARTIAL_REMAP_TMR1    : TIM1 Partial Alternate Function mapping
- *                    @arg GPIO_NO_REMAP1_TMR2        : No TIM2 Partial1 Alternate Function mapping
- *                    @arg GPIO_PARTIAL_REMAP1_TMR2   : TIM2 Partial1 Alternate Function mapping
- *                    @arg GPIO_PARTIAL_REMAP2_TMR2   : TIM2 Partial2 Alternate Function mapping
- *                    @arg GPIO_FULL_REMAP_TMR2       : TIM2 Full Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_TMR3         : No TIM3 Partial Alternate Function mapping
- *                    @arg GPIO_PARTIAL_REMAP_TMR3    : TIM3 Partial Alternate Function mapping
- *                    @arg GPIO_FULL_REMAP_TMR3       : TIM3 Full Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_TMR4         : No TIM4 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_CAN1         : No CAN1 Alternate Function mapping
- *                    @arg GPIO_REMAP1_CAN1           : CAN1 Alternate Function mapping
- *                    @arg GPIO_REMAP2_CAN1           : CAN1 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_PD01         : No PD01 Alternate Function mapping
- *                    @arg GPIO_REMAP_PD01            : PD01 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_TMR5CH4_LSI  : No LSI connected to TIM5 Channel4 input capture for calibration
- *                    @arg GPIO_REMAP_TMR5CH4_LSI     : LSI connected to TIM5 Channel4 input capture for calibration
- *                    @arg GPIO_NO_REMAP_ADC1_ETRGINJ : No ADC1 External Trigger Injected Conversion remapping
- *                    @arg GPIO_REMAP_ADC1_ETRGINJ    : ADC1 External Trigger Injected Conversion remapping
- *                    @arg GPIO_NO_REMAP_ADC1_ETRGREG : No ADC1 External Trigger Regular Conversion remapping
- *                    @arg GPIO_REMAP_ADC1_ETRGREG    : ADC1 External Trigger Regular Conversion remapping
- *                    @arg GPIO_NO_REMAP_ADC2_ETRGINJ : No ADC2 External Trigger Injected Conversion remapping
- *                    @arg GPIO_REMAP_ADC2_ETRGINJ    : ADC2 External Trigger Injected Conversion remapping
- *                    @arg GPIO_NO_REMAP_ADC2_ETRGREG : No ADC2 External Trigger Regular Conversion remapping
- *                    @arg GPIO_REMAP_ADC2_ETRGREG    : ADC2 External Trigger Regular Conversion remapping
- *                    @arg GPIO_NO_REMAP_CAN2         : No CAN2 Alternate Function mapping
- *                    @arg GPIO_REMAP_CAN2            : CAN2 Alternate Function mapping
- *                    @arg GPIO_NO_REMAP_SWJ          : Full SWJ Enabled (JTAG-DP + SW-DP)
- *                    @arg GPIO_REMAP_SWJ_NOJTRST     : Full SWJ Enabled (JTAG-DP + SW-DP) but without JTRST
- *                    @arg GPIO_REMAP_SWJ_JTAGDISABLE : JTAG-DP Disabled and SW-DP Enabled
- *                    @arg GPIO_REMAP_SWJ_DISABLE     : Full SWJ Disabled (JTAG-DP + SW-DP)
+ * @param remap : selects the pin to remap
+ *        This parameter can be one of the following values:
+ * @arg GPIO_NO_REMAP_SPI1         : No SPI1 Alternate Function mapping
+ * @arg GPIO_REMAP_SPI1            : SPI1 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_I2C1         : No I2C1 Alternate Function mapping
+ * @arg GPIO_REMAP_I2C1            : I2C1 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_USART1       : No USART1 Alternate Function mapping
+ * @arg GPIO_REMAP_USART1          : USART1 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_USART2       : No USART2 Alternate Function mapping
+ * @arg GPIO_REMAP_USART2          : USART2 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_USART3       : No USART3 Partial Alternate Function mapping
+ * @arg GPIO_PARTIAL_REMAP_USART3  : USART3 Partial Alternate Function mapping
+ * @arg GPIO_NO_REMAP_TMR1         : No TIM1 Partial Alternate Function mapping
+ * @arg GPIO_PARTIAL_REMAP_TMR1    : TIM1 Partial Alternate Function mapping
+ * @arg GPIO_NO_REMAP1_TMR2        : No TIM2 Partial1 Alternate Function mapping
+ * @arg GPIO_PARTIAL_REMAP1_TMR2   : TIM2 Partial1 Alternate Function mapping
+ * @arg GPIO_PARTIAL_REMAP2_TMR2   : TIM2 Partial2 Alternate Function mapping
+ * @arg GPIO_FULL_REMAP_TMR2       : TIM2 Full Alternate Function mapping
+ * @arg GPIO_NO_REMAP_TMR3         : No TIM3 Partial Alternate Function mapping
+ * @arg GPIO_PARTIAL_REMAP_TMR3    : TIM3 Partial Alternate Function mapping
+ * @arg GPIO_FULL_REMAP_TMR3       : TIM3 Full Alternate Function mapping
+ * @arg GPIO_NO_REMAP_TMR4         : No TIM4 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_CAN1         : No CAN1 Alternate Function mapping
+ * @arg GPIO_REMAP1_CAN1           : CAN1 Alternate Function mapping
+ * @arg GPIO_REMAP2_CAN1           : CAN1 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_PD01         : No PD01 Alternate Function mapping
+ * @arg GPIO_REMAP_PD01            : PD01 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_TMR5CH4_LSI  : No LSI connected to TIM5 Channel4 input capture for calibration
+ * @arg GPIO_REMAP_TMR5CH4_LSI     : LSI connected to TIM5 Channel4 input capture for calibration
+ * @arg GPIO_NO_REMAP_ADC1_ETRGINJ : No ADC1 External Trigger Injected Conversion remapping
+ * @arg GPIO_REMAP_ADC1_ETRGINJ    : ADC1 External Trigger Injected Conversion remapping
+ * @arg GPIO_NO_REMAP_ADC1_ETRGREG : No ADC1 External Trigger Regular Conversion remapping
+ * @arg GPIO_REMAP_ADC1_ETRGREG    : ADC1 External Trigger Regular Conversion remapping
+ * @arg GPIO_NO_REMAP_ADC2_ETRGINJ : No ADC2 External Trigger Injected Conversion remapping
+ * @arg GPIO_REMAP_ADC2_ETRGINJ    : ADC2 External Trigger Injected Conversion remapping
+ * @arg GPIO_NO_REMAP_ADC2_ETRGREG : No ADC2 External Trigger Regular Conversion remapping
+ * @arg GPIO_REMAP_ADC2_ETRGREG    : ADC2 External Trigger Regular Conversion remapping
+ * @arg GPIO_NO_REMAP_CAN2         : No CAN2 Alternate Function mapping
+ * @arg GPIO_REMAP_CAN2            : CAN2 Alternate Function mapping
+ * @arg GPIO_NO_REMAP_SWJ          : Full SWJ Enabled (JTAG-DP + SW-DP)
+ * @arg GPIO_REMAP_SWJ_NOJTRST     : Full SWJ Enabled (JTAG-DP + SW-DP) but without JTRST
+ * @arg GPIO_REMAP_SWJ_JTAGDISABLE : JTAG-DP Disabled and SW-DP Enabled
+ * @arg GPIO_REMAP_SWJ_DISABLE     : Full SWJ Disabled (JTAG-DP + SW-DP)
  *
- * @retval    When you use GPIO_REMAP_CAN2, you must put this function last of all other ConfigPinRemap Function.
- * 
- * @note      If the GPIO is related to the SWJ pins(PB3, PB4, PA13, PA14, PA15), the SWJCFG bit field must be configured first to change the 
- *            IO to a normal GPIO before remapping.
+ * @retval When you use GPIO_REMAP_CAN2, you must put this function last of all other ConfigPinRemap Function.
+ *
+ * @note If the GPIO is related to the SWJ pins(PB3, PB4, PA13, PA14, PA15), the SWJCFG bit field must be configured first to change the
+ *       IO to a normal GPIO before remapping.
  */
 void GPIO_ConfigPinRemap(GPIO_REMAP_T remap)
 {
@@ -449,7 +449,7 @@ void GPIO_ConfigPinRemap(GPIO_REMAP_T remap)
     val = remap & 0x0f;
     mask = (remap >> 4) & 0x0f;
     bitOffset = (remap >> 8) & 0xff;
- 
+
     regVal = AFIO->REMAP1;
 
     if (remap >> 8 == 0x18)
@@ -471,15 +471,15 @@ void GPIO_ConfigPinRemap(GPIO_REMAP_T remap)
 }
 
 /*!
- * @brief     Selects the GPIO pin used as EINT Line
+ * @brief Selects the GPIO pin used as EINT Line
  *
- * @param     portSource : selects the GPIO port to be used as source for EINT line.
- *                         This parameter can be one of GPIO_PORT_SOURCE_x( x can be from A to D).
+ * @param portSource : selects the GPIO port to be used as source for EINT line.
+ *        This parameter can be one of GPIO_PORT_SOURCE_x( x can be from A to D).
  *
- * @param     pinSource : Specifies the EINT line to be configured.
- *                        This parameter can be GPIO_PIN_SOURCE_x( x can be from 0 to 15).
+ * @param pinSource : Specifies the EINT line to be configured.
+ *        This parameter can be GPIO_PIN_SOURCE_x( x can be from 0 to 15).
  *
- * @retval    None
+ * @retval None
  */
 void GPIO_ConfigEINTLine(GPIO_PORT_SOURCE_T portSource, GPIO_PIN_SOURCE_T pinSource)
 {
@@ -489,31 +489,31 @@ void GPIO_ConfigEINTLine(GPIO_PORT_SOURCE_T portSource, GPIO_PIN_SOURCE_T pinSou
     {
         shift = pinSource << 2;
         AFIO->EINTSEL1 &= (uint32_t)~(0x0f << shift);
-        AFIO->EINTSEL1 |=  portSource << shift;
+        AFIO->EINTSEL1 |= portSource << shift;
     }
 
     else if (pinSource <= GPIO_PIN_SOURCE_7)
     {
         shift = (pinSource - GPIO_PIN_SOURCE_4) << 2;
         AFIO->EINTSEL2 &= (uint32_t)~(0x0f << shift);
-        AFIO->EINTSEL2 |=  portSource << shift;
+        AFIO->EINTSEL2 |= portSource << shift;
     }
 
     else if (pinSource <= GPIO_PIN_SOURCE_11)
     {
         shift = (pinSource - GPIO_PIN_SOURCE_8) << 2;
         AFIO->EINTSEL3 &= (uint32_t)~(0x0f << shift);
-        AFIO->EINTSEL3 |=  portSource << shift;
+        AFIO->EINTSEL3 |= portSource << shift;
     }
 
     else if (pinSource <= GPIO_PIN_SOURCE_15)
     {
         shift = (pinSource - GPIO_PIN_SOURCE_12) << 2;
         AFIO->EINTSEL4 &= (uint32_t)~(0x0f << shift);
-        AFIO->EINTSEL4 |=  portSource << shift;
+        AFIO->EINTSEL4 |= portSource << shift;
     }
 }
 
-/**@} end of group GPIO_Functions*/
-/**@} end of group GPIO_Driver*/
-/**@} end of group APM32F402_403_StdPeriphDriver*/
+/** @} end of group GPIO_Functions */
+/** @} end of group GPIO_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

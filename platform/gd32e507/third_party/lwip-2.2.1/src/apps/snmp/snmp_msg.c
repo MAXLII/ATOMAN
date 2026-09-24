@@ -55,13 +55,13 @@
 
 #include <string.h>
 
-#define SNMP_V3_AUTH_FLAG      0x01
-#define SNMP_V3_PRIV_FLAG      0x02
+#define SNMP_V3_AUTH_FLAG 0x01
+#define SNMP_V3_PRIV_FLAG 0x02
 
 /* Security levels */
-#define SNMP_V3_NOAUTHNOPRIV   0x00
-#define SNMP_V3_AUTHNOPRIV     SNMP_V3_AUTH_FLAG
-#define SNMP_V3_AUTHPRIV       (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)
+#define SNMP_V3_NOAUTHNOPRIV 0x00
+#define SNMP_V3_AUTHNOPRIV   SNMP_V3_AUTH_FLAG
+#define SNMP_V3_AUTHPRIV     (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)
 
 /* public (non-static) constants */
 /** SNMP community string */
@@ -920,12 +920,13 @@ static err_t snmp_process_set_request(struct snmp_request *request)
     return ERR_OK;
 }
 
-#define PARSE_EXEC(code, retValue) \
-  if ((code) != ERR_OK) { \
-    LWIP_DEBUGF(SNMP_DEBUG, ("Malformed ASN.1 detected.\n")); \
-    snmp_stats.inasnparseerrs++; \
-    return retValue; \
-  }
+#define PARSE_EXEC(code, retValue)                                \
+    if ((code) != ERR_OK)                                         \
+    {                                                             \
+        LWIP_DEBUGF(SNMP_DEBUG, ("Malformed ASN.1 detected.\n")); \
+        snmp_stats.inasnparseerrs++;                              \
+        return retValue;                                          \
+    }
 
 #define PARSE_ASSERT(cond, retValue) \
   if (!(cond)) { \
@@ -942,7 +943,7 @@ static err_t snmp_process_set_request(struct snmp_request *request)
     return retValue; \
   }
 
-#define IF_PARSE_EXEC(code)   PARSE_EXEC(code, ERR_ARG)
+#define IF_PARSE_EXEC(code) PARSE_EXEC(code, ERR_ARG)
 #define IF_PARSE_ASSERT(code) PARSE_ASSERT(code, ERR_ARG)
 
 /**
@@ -2234,7 +2235,7 @@ void snmp_vb_enumerator_init(struct snmp_varbind_enumerator *enumerator,
     enumerator->varbind_count = 0;
 }
 
-#define VB_PARSE_EXEC(code)   PARSE_EXEC(code, SNMP_VB_ENUMERATOR_ERR_ASN1ERROR)
+#define VB_PARSE_EXEC(code) PARSE_EXEC(code, SNMP_VB_ENUMERATOR_ERR_ASN1ERROR)
 #define VB_PARSE_ASSERT(code) PARSE_ASSERT(code, SNMP_VB_ENUMERATOR_ERR_ASN1ERROR)
 
 snmp_vb_enumerator_err_t snmp_vb_enumerator_get_next(struct snmp_varbind_enumerator *enumerator,

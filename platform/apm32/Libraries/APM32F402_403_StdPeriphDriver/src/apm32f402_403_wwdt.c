@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_wwdt.c
+ * @file apm32f402_403_wwdt.c
  *
- * @brief       This file contains all the functions for the WWDT peripheral
+ * @brief This file contains all the functions for the WWDT peripheral
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -28,23 +28,23 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @defgroup WWDT_Driver WWDT Driver
-  * @brief WWDT driver modules
+ * @brief WWDT driver modules
   @{
-*/
+ */
 
-/** @defgroup  WWDT_Functions Functions
+/** @defgroup WWDT_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Reset the WWDT peripheral registers
+ * @brief Reset the WWDT peripheral registers
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void WWDT_Reset(void)
 {
@@ -53,16 +53,16 @@ void WWDT_Reset(void)
 }
 
 /*!
- * @brief     Configures the WWDT Timebase
+ * @brief Configures the WWDT Timebase
  *
- * @param     timebase: WWDT Prescaler
- *            The parameter can be one of following values:
- *            @arg WWDT_TIME_BASE_1:  WWDT counter clock = (PCLK1/4096)/1
- *            @arg WWDT_TIME_BASE_2:  WWDT counter clock = (PCLK1/4096)/2
- *            @arg WWDT_TIME_BASE_4:  WWDT counter clock = (PCLK1/4096)/4
- *            @arg WWDT_TIME_BASE_8:  WWDT counter clock = (PCLK1/4096)/8
+ * @param timebase: WWDT Prescaler
+ *        The parameter can be one of following values:
+ * @arg WWDT_TIME_BASE_1:  WWDT counter clock = (PCLK1/4096)/1
+ * @arg WWDT_TIME_BASE_2:  WWDT counter clock = (PCLK1/4096)/2
+ * @arg WWDT_TIME_BASE_4:  WWDT counter clock = (PCLK1/4096)/4
+ * @arg WWDT_TIME_BASE_8:  WWDT counter clock = (PCLK1/4096)/8
  *
- * @retval    None
+ * @retval None
  */
 void WWDT_ConfigTimebase(WWDT_TIME_BASE_T timeBase)
 {
@@ -74,13 +74,13 @@ void WWDT_ConfigTimebase(WWDT_TIME_BASE_T timeBase)
 }
 
 /*!
- * @brief     Configures the WWDT Window data
+ * @brief Configures the WWDT Window data
  *
- * @param     windowdata: window data which compare with the downcounter
+ * @param windowdata: window data which compare with the downcounter
  *
- * @retval    None
+ * @retval None
  *
- * @note      The windowdata must be lower than 0x80
+ * @note The windowdata must be lower than 0x80
  */
 void WWDT_ConfigWindowData(uint8_t windowData)
 {
@@ -92,13 +92,13 @@ void WWDT_ConfigWindowData(uint8_t windowData)
 }
 
 /*!
- * @brief       Configures the WWDT counter value
+ * @brief Configures the WWDT counter value
  *
- * @param       counter: Specifies the watchdog counter value
+ * @param counter: Specifies the watchdog counter value
  *
- * @retval      None
+ * @retval None
  *
- * @note        The counter between 0x40 and 0x7F
+ * @note The counter between 0x40 and 0x7F
  */
 void WWDT_ConfigCounter(uint8_t counter)
 {
@@ -106,11 +106,11 @@ void WWDT_ConfigCounter(uint8_t counter)
 }
 
 /*!
- * @brief     Enable the WWDT Early Wakeup interrupt
+ * @brief Enable the WWDT Early Wakeup interrupt
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void WWDT_EnableEWI(void)
 {
@@ -118,25 +118,25 @@ void WWDT_EnableEWI(void)
 }
 
 /*!
- * @brief     Enable WWDT and set the counter value
+ * @brief Enable WWDT and set the counter value
  *
- * @param     counter: the window watchdog counter value
+ * @param counter: the window watchdog counter value
  *
- * @retval    None
+ * @retval None
  *
- * @note      The counter between 0x40 and 0x7F
+ * @note The counter between 0x40 and 0x7F
  */
 void WWDT_Enable(uint8_t counter)
 {
-    WWDT->CTRL =  counter | 0x00000080;
+    WWDT->CTRL = counter | 0x00000080;
 }
 
 /*!
- * @brief     Read the Early Wakeup interrupt flag
+ * @brief Read the Early Wakeup interrupt flag
  *
- * @param     None
+ * @param None
  *
- * @retval    the state of the Early Wakeup interrupt flagte
+ * @retval the state of the Early Wakeup interrupt flagte
  */
 uint8_t WWDT_ReadFlag(void)
 {
@@ -144,17 +144,17 @@ uint8_t WWDT_ReadFlag(void)
 }
 
 /*!
- * @brief     Clear the Early Wakeup interrupt flag
+ * @brief Clear the Early Wakeup interrupt flag
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void WWDT_ClearFlag(void)
 {
     WWDT->STS_B.EWIFLG = RESET;
 }
 
-/**@} end of group WWDT_Functions */
-/**@} end of group WWDT_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group WWDT_Functions */
+/** @} end of group WWDT_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

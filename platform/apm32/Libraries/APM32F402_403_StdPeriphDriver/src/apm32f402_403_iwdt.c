@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_iwdt.c
+ * @file apm32f402_403_iwdt.c
  *
- * @brief       This file provides all the IWDT firmware functions
+ * @brief This file provides all the IWDT firmware functions
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -28,22 +28,22 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup IWDT_Driver IWDT Driver
   @{
-*/
+ */
 
 /** @defgroup IWDT_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief        Enable IWDT
+ * @brief Enable IWDT
  *
- * @param        None
+ * @param None
  *
- * @retval       None
+ * @retval None
  */
 void IWDT_Enable(void)
 {
@@ -51,11 +51,11 @@ void IWDT_Enable(void)
 }
 
 /*!
- * @brief        Reload the IWDT counter with value
+ * @brief Reload the IWDT counter with value
  *
- * @param        None
+ * @param None
  *
- * @retval       None
+ * @retval None
  */
 void IWDT_Refresh(void)
 {
@@ -63,11 +63,11 @@ void IWDT_Refresh(void)
 }
 
 /*!
- * @brief        Set IWDT count reload values
+ * @brief Set IWDT count reload values
  *
- * @param        reload: IWDT count reload values
+ * @param reload: IWDT count reload values
  *
- * @retval       None
+ * @retval None
  */
 void IWDT_ConfigReload(uint16_t reload)
 {
@@ -75,11 +75,11 @@ void IWDT_ConfigReload(uint16_t reload)
 }
 
 /*!
- * @brief        Enable the IWDT write access
+ * @brief Enable the IWDT write access
  *
- * @param        None
+ * @param None
  *
- * @retval       None
+ * @retval None
  */
 void IWDT_EnableWriteAccess(void)
 {
@@ -87,11 +87,11 @@ void IWDT_EnableWriteAccess(void)
 }
 
 /*!
- * @brief        Disable the IWDT write access
+ * @brief Disable the IWDT write access
  *
- * @param        None
+ * @param None
  *
- * @retval       None
+ * @retval None
  */
 void IWDT_DisableWriteAccess(void)
 {
@@ -99,19 +99,19 @@ void IWDT_DisableWriteAccess(void)
 }
 
 /*!
- * @brief        Set IWDT frequency divider values
+ * @brief Set IWDT frequency divider values
  *
- * @param        div: IWDT frequency divider values
- *                    This parameter can be one of the following values:
- *                    @arg IWDT_DIVIDER_4  : prescaler divider equal to 4
- *                    @arg IWDT_DIVIDER_8  : prescaler divider equal to 8
- *                    @arg IWDT_DIVIDER_16 : prescaler divider equal to 16
- *                    @arg IWDT_DIVIDER_32 : prescaler divider equal to 32
- *                    @arg IWDT_DIVIDER_64 : prescaler divider equal to 64
- *                    @arg IWDT_DIVIDER_128: prescaler divider equal to 128
- *                    @arg IWDT_DIVIDER_256: prescaler divider equal to 256
+ * @param div: IWDT frequency divider values
+ *        This parameter can be one of the following values:
+ * @arg IWDT_DIVIDER_4  : prescaler divider equal to 4
+ * @arg IWDT_DIVIDER_8  : prescaler divider equal to 8
+ * @arg IWDT_DIVIDER_16 : prescaler divider equal to 16
+ * @arg IWDT_DIVIDER_32 : prescaler divider equal to 32
+ * @arg IWDT_DIVIDER_64 : prescaler divider equal to 64
+ * @arg IWDT_DIVIDER_128: prescaler divider equal to 128
+ * @arg IWDT_DIVIDER_256: prescaler divider equal to 256
  *
- * @retval       None
+ * @retval None
  */
 void IWDT_ConfigDivider(uint8_t div)
 {
@@ -119,14 +119,14 @@ void IWDT_ConfigDivider(uint8_t div)
 }
 
 /*!
- * @brief        Read the specified IWDT flag
+ * @brief Read the specified IWDT flag
  *
- * @param        flag: specifies the flag to read
- *                     This parameter can be one of the following values:
- *                     @arg IWDT_FLAG_PSCU : Watchdog Prescaler Factor Update flag
- *                     @arg IWDT_FLAG_CNTU : Watchdog Counter Reload Value Update flag
+ * @param flag: specifies the flag to read
+ *        This parameter can be one of the following values:
+ * @arg IWDT_FLAG_PSCU : Watchdog Prescaler Factor Update flag
+ * @arg IWDT_FLAG_CNTU : Watchdog Counter Reload Value Update flag
  *
- * @retval       status of IWDT_FLAG (SET or RESET)
+ * @retval status of IWDT_FLAG (SET or RESET)
  *
  */
 uint8_t IWDT_ReadStatusFlag(uint16_t flag)
@@ -144,6 +144,6 @@ uint8_t IWDT_ReadStatusFlag(uint16_t flag)
     return bitStatus;
 }
 
-/**@} end of group IWDT_Functions*/
-/**@} end of group IWDT_Driver */
-/**@} end of group APM32F402_403_StdPeriphDriver*/
+/** @} end of group IWDT_Functions */
+/** @} end of group IWDT_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

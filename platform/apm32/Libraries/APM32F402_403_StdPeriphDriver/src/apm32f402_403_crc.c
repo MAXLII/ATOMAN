@@ -1,11 +1,11 @@
 /*!
- * @file        apm32f402_403_crc.c
+ * @file apm32f402_403_crc.c
  *
- * @brief       This file provides all the CRC firmware functions
+ * @brief This file provides all the CRC firmware functions
  *
- * @version     V1.0.0
+ * @version V1.0.0
  *
- * @date        2024-12-01
+ * @date 2024-12-01
  *
  * @attention
  *
@@ -27,23 +27,23 @@
 
 /** @addtogroup APM32F402_403_StdPeriphDriver
   @{
-*/
+ */
 
 /** @addtogroup CRC_Driver CRC Driver
-  * @brief CRC driver modules
+ * @brief CRC driver modules
   @{
-*/
+ */
 
 /** @defgroup CRC_Functions Functions
   @{
-*/
+ */
 
 /*!
- * @brief     Reset CRC data register.
+ * @brief Reset CRC data register.
  *
- * @param     None
+ * @param None
  *
- * @retval    None
+ * @retval None
  */
 void CRC_ResetDATA(void)
 {
@@ -51,12 +51,12 @@ void CRC_ResetDATA(void)
 }
 
 /*!
- * @brief     Calculate CRC of a 32bit data word.
+ * @brief Calculate CRC of a 32bit data word.
  *
- * @param     data: a data word to compute its CRC.
- *                  This parameter can be a 32bit value:
+ * @param data: a data word to compute its CRC.
+ *        This parameter can be a 32bit value:
  *
- * @retval    A 32-bit CRC value
+ * @retval A 32-bit CRC value
  */
 uint32_t CRC_CalculateCRC(uint32_t data)
 {
@@ -66,15 +66,15 @@ uint32_t CRC_CalculateCRC(uint32_t data)
 }
 
 /*!
- * @brief     Computes the 32-bit CRC of a given buffer of data word(32-bit).
+ * @brief Computes the 32-bit CRC of a given buffer of data word(32-bit).
  *
- * @param     buf: Pointer to the buffer containing the data to be computed.
+ * @param buf: Pointer to the buffer containing the data to be computed.
  *
- * @param     bufLen: The length of buffer which is computed.
+ * @param bufLen: The length of buffer which is computed.
  *
- * @retval    A 32-bit CRC value
+ * @retval A 32-bit CRC value
  */
-uint32_t CRC_CalculateBlockCRC(uint32_t* buf, uint32_t bufLen)
+uint32_t CRC_CalculateBlockCRC(uint32_t *buf, uint32_t bufLen)
 {
     while (bufLen--)
     {
@@ -85,11 +85,11 @@ uint32_t CRC_CalculateBlockCRC(uint32_t* buf, uint32_t bufLen)
 }
 
 /*!
- * @brief     Returns the current CRC value.
+ * @brief Returns the current CRC value.
  *
- * @param     None
+ * @param None
  *
- * @retval    A 32-bit CRC value
+ * @retval A 32-bit CRC value
  */
 uint32_t CRC_ReadCRC(void)
 {
@@ -97,11 +97,11 @@ uint32_t CRC_ReadCRC(void)
 }
 
 /*!
- * @brief     Saves a 8bit data in the Independent Data register(INDATA).
+ * @brief Saves a 8bit data in the Independent Data register(INDATA).
  *
- * @param     inData: a 8-bit value to be stored in the ID register
+ * @param inData: a 8-bit value to be stored in the ID register
  *
- * @retval    None
+ * @retval None
  */
 void CRC_WriteIDRegister(uint8_t inData)
 {
@@ -109,17 +109,17 @@ void CRC_WriteIDRegister(uint8_t inData)
 }
 
 /*!
- * @brief      Reads a 8-bit data saved in the Independent Data register(INDATA).
+ * @brief Reads a 8-bit data saved in the Independent Data register(INDATA).
  *
- * @param      None
+ * @param None
  *
- * @retval     a 8-bit value from the INDATA register
+ * @retval a 8-bit value from the INDATA register
  */
 uint8_t CRC_ReadIDRegister(void)
 {
     return (CRC->INDATA);
 }
 
-/**@} end of group CRC_Functions*/
-/**@} end of group CRC_Driver*/
-/**@} end of group APM32F402_403_StdPeriphDriver */
+/** @} end of group CRC_Functions */
+/** @} end of group CRC_Driver */
+/** @} end of group APM32F402_403_StdPeriphDriver */

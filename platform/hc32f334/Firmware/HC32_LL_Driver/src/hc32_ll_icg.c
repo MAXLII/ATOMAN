@@ -1,15 +1,15 @@
 /**
  *******************************************************************************
- * @file  hc32_ll_icg.c
+ * @file hc32_ll_icg.c
  * @brief This file provides firmware functions to manage the Initial
  *        Configuration(ICG).
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2024-01-15       CDT             First version
    2024-06-30       CDT             Delete ICG2 function
    2024-08-31       CDT             Add __USED for optimize
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -54,8 +54,8 @@
 /**
  * @brief ICG Start Address
  */
-#define ICG_START_ADDR                  0x400
-#define ICG_START_ADDR_AC6              ".ARM.__at_0x400"
+#define ICG_START_ADDR     0x400
+#define ICG_START_ADDR_AC6 ".ARM.__at_0x400"
 
 /**
  * @}
@@ -78,52 +78,52 @@
  * @brief ICG parameters configuration
  */
 
-#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
 __USED const uint32_t u32ICGValue[] __attribute__((section(ICG_START_ADDR_AC6))) =
-#elif defined (__GNUC__) && !defined (__CC_ARM)
+#elif defined(__GNUC__) && !defined(__CC_ARM)
 __USED const uint32_t u32ICGValue[] __attribute__((section(".icg_sec"))) =
-#elif defined (__CC_ARM)
+#elif defined(__CC_ARM)
 __USED const uint32_t u32ICGValue[] __attribute__((at(ICG_START_ADDR))) =
-#elif defined (__ICCARM__)
+#elif defined(__ICCARM__)
 #pragma location = ICG_START_ADDR
 __USED __root static const uint32_t u32ICGValue[] =
 #else
 #error "unsupported compiler!!"
 #endif
-{
-    /* ICG 0~1 */
-    ICG_REG_CFG0_CONST,
-    ICG_REG_CFG1_CONST,
-    /* Reserved */
-    ICG_REG_RESV_CONST,
-    /* ICG 3 */
-    ICG_REG_CFG3_CONST,
-    /* Reserved */
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    /* Reserved */
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    /* Reserved */
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    /* Reserved */
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    /* Reserved */
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-    ICG_REG_RESV_CONST,
-};
+    {
+        /* ICG 0~1 */
+        ICG_REG_CFG0_CONST,
+        ICG_REG_CFG1_CONST,
+        /* Reserved */
+        ICG_REG_RESV_CONST,
+        /* ICG 3 */
+        ICG_REG_CFG3_CONST,
+        /* Reserved */
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        /* Reserved */
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        /* Reserved */
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        /* Reserved */
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        /* Reserved */
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+        ICG_REG_RESV_CONST,
+    };
 
 /**
  * @}

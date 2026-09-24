@@ -1,12 +1,12 @@
 /**
  *******************************************************************************
- * @file  system_hc32f558.h
+ * @file system_hc32f558.h
  * @brief This file contains all the functions prototypes of the HC32 System.
- @verbatim
+  @verbatim
    Change Logs:
    Date             Author          Notes
    2026-04-16       CDT             First version
- @endverbatim
+  @endverbatim
  *******************************************************************************
  * Copyright (C) 2022-2026, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
@@ -55,71 +55,71 @@ extern "C"
  * @addtogroup HC32F558_System_Clock_Source
  * @{
  */
-#if !defined (MRC_VALUE)
-#define MRC_VALUE                       (8000000UL)     /*!< Internal middle speed RC freq. */
+#if !defined(MRC_VALUE)
+#define MRC_VALUE (8000000UL) /*!< Internal middle speed RC freq. */
 #endif
 
-#if !defined (LRC_VALUE)
-#define LRC_VALUE                       (32768UL)       /*!< Internal low speed RC freq. */
+#if !defined(LRC_VALUE)
+#define LRC_VALUE (32768UL) /*!< Internal low speed RC freq. */
 #endif
 
-#if !defined (SWDTLRC_VALUE)
-#define SWDTLRC_VALUE                   (10000UL)       /*!< Internal SWDT low speed RC freq. */
+#if !defined(SWDTLRC_VALUE)
+#define SWDTLRC_VALUE (10000UL) /*!< Internal SWDT low speed RC freq. */
 #endif
 
-#if !defined (XTAL_VALUE)
-#define XTAL_VALUE                      (8000000UL)     /*!< External high speed OSC freq. */
+#if !defined(XTAL_VALUE)
+#define XTAL_VALUE (8000000UL) /*!< External high speed OSC freq. */
 #endif
 
-#if !defined (HCLK_VALUE)
-#define HCLK_VALUE                      (SystemCoreClock >> ((CM_CMU->SCFGR & CMU_SCFGR_HCLKS) >> CMU_SCFGR_HCLKS_POS))
+#if !defined(HCLK_VALUE)
+#define HCLK_VALUE (SystemCoreClock >> ((CM_CMU->SCFGR & CMU_SCFGR_HCLKS) >> CMU_SCFGR_HCLKS_POS))
 #endif
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/*******************************************************************************
- * Global variable definitions ('extern')
- ******************************************************************************/
-/**
- * @addtogroup HC32F558_System_Exported_Variable
- * @{
- */
+    /*******************************************************************************
+     * Global variable definitions ('extern')
+     ******************************************************************************/
+    /**
+     * @addtogroup HC32F558_System_Exported_Variable
+     * @{
+     */
 
-extern uint32_t SystemCoreClock;        /*!< System clock frequency */
-extern uint32_t HRC_VALUE;              /*!< HRC frequency */
+    extern uint32_t SystemCoreClock; /*!< System clock frequency */
+    extern uint32_t HRC_VALUE;       /*!< HRC frequency */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/*******************************************************************************
- * Global function prototypes (definition in C source)
- ******************************************************************************/
-/**
- * @addtogroup HC32F558_System_Global_Functions
- * @{
- */
+    /*******************************************************************************
+     * Global function prototypes (definition in C source)
+     ******************************************************************************/
+    /**
+     * @addtogroup HC32F558_System_Global_Functions
+     * @{
+     */
 
-extern void SystemInit(void);             /*!< Initialize the system */
-extern void SystemCoreClockUpdate(void);  /*!< Update SystemCoreClock variable */
+    extern void SystemInit(void);            /*!< Initialize the system */
+    extern void SystemCoreClockUpdate(void); /*!< Update SystemCoreClock variable */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
-/**
- * @}
- */
+    /**
+     * @}
+     */
 
 #ifdef __cplusplus
 }
