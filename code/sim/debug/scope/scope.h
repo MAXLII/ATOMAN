@@ -53,12 +53,12 @@ void scope_trigger(scope_t *p_scope);
 void scope_reset(scope_t *p_scope);
 
 #if (SCOPE_ENABLE == 1u)
-#define SCOPE_RUN(name) scope_run(&scope_##name)
-#define SCOPE_TRIGGER(name) scope_trigger(&scope_##name)
-#define SCOPE_GET_BUFFER(name) (scope_##name.buffer)
+#define SCOPE_RUN(name)             scope_run(&scope_##name)
+#define SCOPE_TRIGGER(name)         scope_trigger(&scope_##name)
+#define SCOPE_GET_BUFFER(name)      (scope_##name.buffer)
 #define SCOPE_GET_BUFFER_SIZE(name) (scope_##name.buffer_size)
-#define SCOPE_GET_VAR_NUM(name) (scope_##name.var_count)
-#define SCOPE_GET_VAR_PTRS(name) (scope_##name.var_ptrs)
+#define SCOPE_GET_VAR_NUM(name)     (scope_##name.var_count)
+#define SCOPE_GET_VAR_PTRS(name)    (scope_##name.var_ptrs)
 
 #define SCOPE_DEFINE(name, buf_size, trig_post_cnt, sample_us, ...)        \
     SCOPE_CORE_DEFINE(name, buf_size, trig_post_cnt, __VA_ARGS__);         \
@@ -77,12 +77,12 @@ void scope_reset(scope_t *p_scope);
     SCOPE_DEFINE(name, buf_size, trig_post_cnt, (_sample_period_us), __VA_ARGS__); \
     REG_SECTION_FUNC(SECTION_SCOPE, scope_registration_##name)
 #else
-#define SCOPE_RUN(name) ((void)0)
-#define SCOPE_TRIGGER(name) ((void)0)
-#define SCOPE_GET_BUFFER(name) NULL
+#define SCOPE_RUN(name)             ((void)0)
+#define SCOPE_TRIGGER(name)         ((void)0)
+#define SCOPE_GET_BUFFER(name)      NULL
 #define SCOPE_GET_BUFFER_SIZE(name) 0u
-#define SCOPE_GET_VAR_NUM(name) 0u
-#define SCOPE_GET_VAR_PTRS(name) NULL
+#define SCOPE_GET_VAR_NUM(name)     0u
+#define SCOPE_GET_VAR_PTRS(name)    NULL
 #define REG_SCOPE(name, buf_size, trig_post_cnt, ...) float __VA_ARGS__;
 #define REG_SCOPE_EX(name, buf_size, trig_post_cnt, _sample_period_us, ...) float __VA_ARGS__;
 #endif

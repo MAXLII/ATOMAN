@@ -90,16 +90,15 @@ typedef struct
     void *p_str;           /* Address of the registered object. */
 } reg_section_t;
 
-#define REG_SECTION_INIT(_section_type, _item) \
-    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
+#define REG_SECTION_INIT(_section_type, _item) {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
 
-#define REG_SECTION_FUNC(_section_type, _obj)                    \
-    section_item_t section_item_##_obj = {                       \
-        .p_obj = (void *)&(_obj),                                \
-        .p_next = NULL,                                          \
-    };                                                           \
-    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj \
-        SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, section_item_##_obj);
+#define REG_SECTION_FUNC(_section_type, _obj)                                                \
+    section_item_t section_item_##_obj = {                                                   \
+        .p_obj  = (void *)&(_obj),                                                           \
+        .p_next = NULL,                                                                      \
+    };                                                                                       \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj SECTION_REG_ATTR_SUFFIX = \
+        REG_SECTION_INIT(_section_type, section_item_##_obj);
 
 typedef struct
 {
@@ -117,7 +116,7 @@ typedef struct
 #include "perf.h"
 
 #if (PERF_TASK_ENABLE == 1u)
-#define SECTION_TASK_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_TASK_PERF_FIELD      section_perf_record_t *p_perf_record;
 #define SECTION_TASK_PERF_INIT(name) , .p_perf_record = TASK_RECORD_PERF(name)
 #else
 #define SECTION_TASK_PERF_FIELD
@@ -125,7 +124,7 @@ typedef struct
 #endif
 
 #if (PERF_INTERRUPT_ENABLE == 1u)
-#define SECTION_INTERRUPT_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_INTERRUPT_PERF_FIELD      section_perf_record_t *p_perf_record;
 #define SECTION_INTERRUPT_PERF_INIT(name) , .p_perf_record = INTERRUPT_RECORD_PERF(name)
 #else
 #define SECTION_INTERRUPT_PERF_FIELD
@@ -231,16 +230,16 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define SECTION_TASK_QUEUE_INTERNAL_CRITICAL 0u
 #endif
 
-#define SECTION_TASK_CONTEXT_POOL_FAULT 0u
+#define SECTION_TASK_CONTEXT_POOL_FAULT        0u
 #define SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING 1u
 
-#define SECTION_TASK_FAULT_NONE 0u
-#define SECTION_TASK_FAULT_CONTEXT_POOL_FULL 1u
-#define SECTION_TASK_FAULT_PSP_OVERFLOW 2u
+#define SECTION_TASK_FAULT_NONE                     0u
+#define SECTION_TASK_FAULT_CONTEXT_POOL_FULL        1u
+#define SECTION_TASK_FAULT_PSP_OVERFLOW             2u
 #define SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW 3u
-#define SECTION_TASK_FAULT_CONTEXT_RELEASE_ORDER 4u
-#define SECTION_TASK_FAULT_RUNTIME_STACK_TOO_SMALL 5u
-#define SECTION_TASK_FAULT_CONTEXT_POOL_CORRUPT 6u
+#define SECTION_TASK_FAULT_CONTEXT_RELEASE_ORDER    4u
+#define SECTION_TASK_FAULT_RUNTIME_STACK_TOO_SMALL  5u
+#define SECTION_TASK_FAULT_CONTEXT_POOL_CORRUPT     6u
 
 #ifndef SECTION_TASK_CONTEXT_POOL_FULL_POLICY
 #define SECTION_TASK_CONTEXT_POOL_FULL_POLICY SECTION_TASK_CONTEXT_POOL_FAULT
@@ -254,12 +253,9 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
     uint32_t snapshot_capacity_words; \
     uint8_t state;
 
-#define SECTION_TASK_RUNTIME_INIT     \
-    , .p_sp = NULL, .p_stack = NULL,  \
-      .p_snapshot = NULL,             \
-      .snapshot_words = 0u,           \
-      .snapshot_capacity_words = 0u,  \
-      .state = 0u
+#define SECTION_TASK_RUNTIME_INIT                                                                             \
+    , .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, \
+        .state = 0u
 
 #ifndef PERF_START
 #define PERF_START(name)
@@ -293,8 +289,7 @@ typedef struct reg_init
     void (*p_func)(void);
 } reg_init_t;
 
-#define REG_INIT_RECORD(prio, func) \
-    {.priority = (int8_t)(prio), .p_func = (func)}
+#define REG_INIT_RECORD(prio, func) {.priority = (int8_t)(prio), .p_func = (func)}
 
 #define REG_INIT(prio, func)                                  \
     reg_init_t reg_init_##func = REG_INIT_RECORD(prio, func); \
@@ -427,7 +422,7 @@ typedef struct reg_interrupt
 } reg_interrupt_t;
 
 #define REG_INTERRUPT_RECORD(priority_num, func) \
-    {.priority = (uint8_t)(priority_num), .p_func = (func) SECTION_INTERRUPT_PERF_INIT(func)}
+    {.priority = (uint8_t)(priority_num), .p_func = (func)SECTION_INTERRUPT_PERF_INIT(func)}
 
 #define REG_INTERRUPT(priority_num, func)                                            \
     REG_INTERRUPT_PERF_RECORD(func)                                                  \
@@ -481,7 +476,7 @@ typedef struct
     }                                                                                              \
     REG_TASK_MS(1, fsm_##name##_run)
 
-#define FSM_GET_STATE(name) (reg_fsm_##name.fsm_sta)
+#define FSM_GET_STATE(name)  (reg_fsm_##name.fsm_sta)
 #define FSM_EXTERN_VAR(name) extern reg_fsm_t reg_fsm_##name;
 
 void section_fsm_func(reg_fsm_t *str);
@@ -511,14 +506,14 @@ extern section_item_t *p_link_first;
 #define REG_LINK(link, print, _rx_get_byte, _handler_arr, _handler_num) \
     section_link_t section_link_##link = {                              \
         .rx_get_byte = (_rx_get_byte),                                  \
-        .my_printf = &(print),                                          \
+        .my_printf   = &(print),                                        \
         .handler_arr = (_handler_arr),                                  \
         .handler_num = (uint32_t)(_handler_num),                        \
-        .link_id = (uint8_t)(link),                                     \
+        .link_id     = (uint8_t)(link),                                 \
     };                                                                  \
     REG_SECTION_FUNC(SECTION_LINK, section_link_##link)
 
-#define EXT_LINK(link) extern section_link_t section_link_##link
+#define EXT_LINK(link)    extern section_link_t section_link_##link
 #define LINK_PRINTF(link) section_link_##link.my_printf
 
 #endif /* __SECTION_H__ */

@@ -36,13 +36,10 @@ bool resonant_init(resonant_t *p_resonant,
                    float omega_radps,
                    float ts)
 {
-    if (    (p_resonant == NULL)
-         || /* Controller instance must be valid. */
-            (gain < 0.0f)
-         || /* Gain cannot be negative. */
-            (order <= 0.0f)
-         || /* Harmonic order must be positive. */
-            (ts <= 0.0f)) /* Sample time must be positive. */
+    if (    (p_resonant == NULL) /* Controller instance must be valid. */
+         || (gain < 0.0f)        /* Gain cannot be negative. */
+         || (order <= 0.0f)      /* Harmonic order must be positive. */
+         || (ts <= 0.0f))        /* Sample time must be positive. */
     {
         return false;
     }
@@ -59,15 +56,11 @@ bool resonant_update_frequency(resonant_t *p_resonant, float omega_radps)
     float omega_n = 0.0f; /**< Target resonant angular frequency. */
     float d0      = 0.0f; /**< Bilinear-transform denominator. */
 
-    if (    (p_resonant == NULL)
-         || /* Controller instance must be valid. */
-            (p_resonant->gain < 0.0f)
-         || /* Gain cannot be negative. */
-            (p_resonant->order <= 0.0f)
-         || /* Harmonic order must be positive. */
-            (p_resonant->ts <= 0.0f)
-         || /* Sample time must be configured. */
-            (omega_radps <= 0.0f)) /* Fundamental frequency must be positive. */
+    if (    (p_resonant == NULL)        /* Controller instance must be valid. */
+         || (p_resonant->gain < 0.0f)   /* Gain cannot be negative. */
+         || (p_resonant->order <= 0.0f) /* Harmonic order must be positive. */
+         || (p_resonant->ts <= 0.0f)    /* Sample time must be configured. */
+         || (omega_radps <= 0.0f))      /* Fundamental frequency must be positive. */
     {
         return false;
     }

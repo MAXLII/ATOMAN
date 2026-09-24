@@ -119,9 +119,8 @@ static bool FUNC_RAM calculate_sector(const float *p_phase,
             }
         }
 
-        if (    (midpoint_slope != 0.0f)
-             && /* A zero slope means no current authority within this mapping. */
-                (upper > lower)) /* A collapsed interval cannot move the common-mode offset. */
+        if (    (midpoint_slope != 0.0f) /* A zero slope means no current authority within this mapping. */
+             && (upper > lower))         /* A collapsed interval cannot move the common-mode offset. */
         {
             offset += (midpoint_ref - midpoint_center) / midpoint_slope;
             offset = fmaxf(lower, fminf(upper, offset));
@@ -372,9 +371,8 @@ void FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
         {
             candidate_error = fabsf(candidate.midpoint_current - midpoint_ref);
 
-            if (    (found == false)
-                 || /* Accept the first feasible mapping. */
-                    (candidate_error + current_roundoff < best_error)) /* Prefer materially better balance authority. */
+            if (    (found == false) /* Accept the first feasible mapping. */
+                 || (candidate_error + current_roundoff < best_error)) /* Prefer materially better balance authority. */
             {
                 p_svpwm->output = candidate;
                 best_error      = candidate_error;

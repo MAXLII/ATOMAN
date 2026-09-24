@@ -552,9 +552,8 @@ void comm_run_buffer(const uint8_t *p_data,
     comm_ctx_t *p_ctx = (comm_ctx_t *)p_context; /* Parser context owned by the active communication link. */
     uint32_t offset   = 0u; /* Next byte in the supplied transport block. */
 
-    if (    (p_data == NULL)
-         || /* The transport did not provide a readable block. */
-            (p_ctx == NULL)) /* The link has no parser state or payload storage. */
+    if (    (p_data == NULL) /* The transport did not provide a readable block. */
+         || (p_ctx == NULL)) /* The link has no parser state or payload storage. */
     {
         return;
     }
@@ -574,9 +573,8 @@ void comm_run_buffer(const uint8_t *p_data,
             offset = (uint32_t)(p_sop - p_data);
         }
 
-        if (    (p_ctx->status == SECTION_PACKFORM_STA_DATA)
-             && /* A validated payload is being received. */
-                (p_ctx->len > 0u)) /* At least one payload byte remains. */
+        if (    (p_ctx->status == SECTION_PACKFORM_STA_DATA) /* A validated payload is being received. */
+             && (p_ctx->len > 0u)) /* At least one payload byte remains. */
         {
             uint32_t available_length = length - offset; /* Bytes remaining in the transport block. */
             uint32_t copy_length = (available_length < p_ctx->len) ? available_length : p_ctx->len;

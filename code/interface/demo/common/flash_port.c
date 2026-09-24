@@ -73,9 +73,8 @@ FLASH_PORT_RESULT_E flash_port_erase(uint8_t device, uint32_t address, uint32_t 
 
 uint8_t flash_port_geometry_get(uint8_t device, flash_port_geometry_t *p_geometry)
 {
-    if (    (device >= FLASH_PORT_COUNT)
-         || /* Reject unknown physical selector. */
-            (p_geometry == NULL)) /* Require caller-owned destination. */
+    if (    (device >= FLASH_PORT_COUNT) /* Reject unknown physical selector. */
+         || (p_geometry == NULL))        /* Require caller-owned destination. */
     {
         return 0u;
     }

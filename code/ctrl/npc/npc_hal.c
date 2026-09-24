@@ -69,38 +69,29 @@ uint8_t npc_hal_is_ready(void)
 {
     for (uint32_t phase = 0u; phase < 3u; ++phase) /* Required phase source index. */
     {
-        if (    (ctrl_hal.p_v_out[phase] == NULL)
-             || /* Voltage feedback must be bound. */
-                (ctrl_hal.p_i_l[phase] == NULL)) /* Current feedback must be bound. */
+        if (    (ctrl_hal.p_v_out[phase] == NULL) /* Voltage feedback must be bound. */
+             || (ctrl_hal.p_i_l[phase] == NULL))  /* Current feedback must be bound. */
         {
             return 0u;
         }
     }
 
-    return (    (ctrl_hal.p_v_dc_p != NULL)
-             && /* Positive half-bus source. */
-                (ctrl_hal.p_v_dc_n != NULL)
-             && /* Negative half-bus source. */
-                (ctrl_hal.p_theta != NULL)
-             && /* Present-sample electrical angle. */
-                (ctrl_hal.p_vd_pos_ref != NULL)
-             && /* External amplitude target. */
-                (ctrl_hal.p_set_pwm_func != NULL)
-             && /* Voltage-command output path. */
-                (ctrl_hal.p_pwm_disable != NULL)
-             && /* Immediate shutdown path. */
-                (fsm_hal.p_enter_run_func != NULL)
-             && /* Run-entry action. */
-                (fsm_hal.p_exit_run_func != NULL)) /* Run-exit action. */
+    return (    (ctrl_hal.p_v_dc_p != NULL)        /* Positive half-bus source. */
+             && (ctrl_hal.p_v_dc_n != NULL)        /* Negative half-bus source. */
+             && (ctrl_hal.p_theta != NULL)         /* Present-sample electrical angle. */
+             && (ctrl_hal.p_vd_pos_ref != NULL)    /* External amplitude target. */
+             && (ctrl_hal.p_set_pwm_func != NULL)  /* Voltage-command output path. */
+             && (ctrl_hal.p_pwm_disable != NULL)   /* Immediate shutdown path. */
+             && (fsm_hal.p_enter_run_func != NULL) /* Run-entry action. */
+             && (fsm_hal.p_exit_run_func != NULL)) /* Run-exit action. */
              ? 1u
              : 0u;
 }
 
 void npc_hal_set_v_out_ptr(uint32_t phase, float *p_value)
 {
-    if (    (binding_locked == 0u)
-         && /* Rebinding is allowed only while stopped. */
-            (phase < 3u)) /* Keep the phase index within the source array. */
+    if (    (binding_locked == 0u) /* Rebinding is allowed only while stopped. */
+         && (phase < 3u))          /* Keep the phase index within the source array. */
     {
         ctrl_hal.p_v_out[phase] = p_value;
     }
@@ -108,9 +99,8 @@ void npc_hal_set_v_out_ptr(uint32_t phase, float *p_value)
 
 void npc_hal_set_i_l_ptr(uint32_t phase, float *p_value)
 {
-    if (    (binding_locked == 0u)
-         && /* Rebinding is allowed only while stopped. */
-            (phase < 3u)) /* Keep the phase index within the source array. */
+    if (    (binding_locked == 0u) /* Rebinding is allowed only while stopped. */
+         && (phase < 3u))          /* Keep the phase index within the source array. */
     {
         ctrl_hal.p_i_l[phase] = p_value;
     }
@@ -187,11 +177,9 @@ void npc_hal_hard_protect_trip(uint32_t fault, uint32_t phase)
 
     ctrl_hal.p_pwm_disable(); /* INIT has validated this callback; inhibit PWM before latching the fault. */
 
-    if (    (fault != 0u)
-         && /* Zero denotes an empty latch and cannot identify a fault. */
-            (fault <= 255u)
-         && /* The low byte carries the diagnostic code. */
-            (phase < 3u)) /* The upper byte carries a valid phase index. */
+    if (    (fault != 0u)   /* Zero denotes an empty latch and cannot identify a fault. */
+         && (fault <= 255u) /* The low byte carries the diagnostic code. */
+         && (phase < 3u))   /* The upper byte carries a valid phase index. */
     {
         (void)atomic_compare_exchange_strong(&fault_word, &expected, (unsigned int)((phase << 8u) | fault)); /* Preserve the first latched cause. */
     }

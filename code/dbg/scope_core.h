@@ -61,26 +61,25 @@ typedef struct scope_t
     scope_state_e state;
 } scope_t;
 
-#define SCOPE_ADDR(x) (&x)
+#define SCOPE_ADDR(x)     (&x)
 #define SCOPE_EXPAND(...) __VA_ARGS__
 
-#define SCOPE_FOR_EACH_1(m, a) m(a)
-#define SCOPE_FOR_EACH_2(m, a, ...) m(a), SCOPE_FOR_EACH_1(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_3(m, a, ...) m(a), SCOPE_FOR_EACH_2(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_4(m, a, ...) m(a), SCOPE_FOR_EACH_3(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_5(m, a, ...) m(a), SCOPE_FOR_EACH_4(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_6(m, a, ...) m(a), SCOPE_FOR_EACH_5(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_7(m, a, ...) m(a), SCOPE_FOR_EACH_6(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_8(m, a, ...) m(a), SCOPE_FOR_EACH_7(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_9(m, a, ...) m(a), SCOPE_FOR_EACH_8(m, __VA_ARGS__)
-#define SCOPE_FOR_EACH_10(m, a, ...) m(a), SCOPE_FOR_EACH_9(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_1(m, a)                                            m(a)
+#define SCOPE_FOR_EACH_2(m, a, ...)                                       m(a), SCOPE_FOR_EACH_1(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_3(m, a, ...)                                       m(a), SCOPE_FOR_EACH_2(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_4(m, a, ...)                                       m(a), SCOPE_FOR_EACH_3(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_5(m, a, ...)                                       m(a), SCOPE_FOR_EACH_4(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_6(m, a, ...)                                       m(a), SCOPE_FOR_EACH_5(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_7(m, a, ...)                                       m(a), SCOPE_FOR_EACH_6(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_8(m, a, ...)                                       m(a), SCOPE_FOR_EACH_7(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_9(m, a, ...)                                       m(a), SCOPE_FOR_EACH_8(m, __VA_ARGS__)
+#define SCOPE_FOR_EACH_10(m, a, ...)                                      m(a), SCOPE_FOR_EACH_9(m, __VA_ARGS__)
 #define SCOPE_FOR_EACH_N(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) SCOPE_FOR_EACH_##N
 #define SCOPE_FOR_EACH(m, ...) \
     SCOPE_EXPAND(SCOPE_FOR_EACH_N(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)(m, __VA_ARGS__))
 
 #define SCOPE_COUNT_ARGS_N(_, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) N
-#define SCOPE_COUNT_ARGS(...) \
-    SCOPE_EXPAND(SCOPE_COUNT_ARGS_N(_, __VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+#define SCOPE_COUNT_ARGS(...)                                                  SCOPE_EXPAND(SCOPE_COUNT_ARGS_N(_, __VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
 
 #define SCOPE_STR(x) #x
 

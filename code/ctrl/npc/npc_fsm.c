@@ -87,9 +87,8 @@ static void npc_fsm_init_in(void)
 /** @brief 等待 HAL 绑定与运行配置同时就绪。 */
 static void npc_fsm_init_exe(void)
 {
-    if (    (npc_hal_is_ready() == 1u)
-         && /* 所有采样指针及回调均已挂载。 */
-            (npc_cfg_is_ready() == 1u)) /* 频率与控制周期处于有效范围。 */
+    if (    (npc_hal_is_ready() == 1u)  /* 所有采样指针及回调均已挂载。 */
+         && (npc_cfg_is_ready() == 1u)) /* 频率与控制周期处于有效范围。 */
     {
         npc_hal_lock_binding(); /* 检查通过即锁定，后续状态沿用本次检查结果。 */
         fsm_ev = NPC_FSM_EV_TO_IDLE;
@@ -123,11 +122,9 @@ static void npc_fsm_idle_exe(void)
 {
     npc_fsm_publish_building(0u); /* 同步待机期间修改的运行参数。 */
 
-    if (    (npc_cfg_get_run_request() == 1u)
-         && /* 应用已请求开机。 */
-            (npc_cfg_is_ready() == 1u)
-         && /* 配置满足算法数值范围。 */
-            (npc_hal_hard_protect_is_latched() == 0u)) /* 尚无保护闭锁。 */
+    if (    (npc_cfg_get_run_request() == 1u) /* 应用已请求开机。 */
+         && (npc_cfg_is_ready() == 1u)        /* 配置满足算法数值范围。 */
+         && (npc_hal_hard_protect_is_latched() == 0u)) /* 尚无保护闭锁。 */
     {
         fsm_ev = NPC_FSM_EV_TO_RUN;
     }
@@ -158,11 +155,9 @@ static void npc_fsm_run_in(void)
 /** @brief 检查停机条件，继续运行时发布完整参数与许可。 */
 static void npc_fsm_run_exe(void)
 {
-    if (    (npc_cfg_get_run_request() == 0u)
-         || /* 应用请求停机。 */
-            (npc_hal_hard_protect_is_latched() == 1u)
-         || /* 保护已经闭锁。 */
-            (npc_cfg_is_ready() == 0u)) /* 运行配置不再有效。 */
+    if (    (npc_cfg_get_run_request() == 0u)         /* 应用请求停机。 */
+         || (npc_hal_hard_protect_is_latched() == 1u) /* 保护已经闭锁。 */
+         || (npc_cfg_is_ready() == 0u)) /* 运行配置不再有效。 */
     {
         npc_fsm_publish_building(0u); /* 先撤销许可，再请求状态切换。 */
         fsm_ev = NPC_FSM_EV_TO_IDLE;  /* 下一次事件检查进入待机。 */

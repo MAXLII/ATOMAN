@@ -135,9 +135,8 @@ static void bb_fsm_idle_exe(void)
 {
     if (bb_fsm_get_cmd() == bb_fsm_cmd_start)
     {
-        if (    (bb_hal_is_ready() == 0U)
-             || /* 启动前必须完成全部硬件绑定。 */
-                (bb_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
+        if (    (bb_hal_is_ready() == 0U)  /* 启动前必须完成全部硬件绑定。 */
+             || (bb_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
         {
             PLECS_LOG("bb_fsm start rejected by hal binding invalid\n");
             return;

@@ -106,9 +106,8 @@ static void idle_exe(void)
 {
     if (get_cmd() == llc_fsm_cmd_start)
     {
-        if (    (llc_hal_is_ready() == 0U)
-             || /* 启动前必须完成全部硬件绑定。 */
-                (llc_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
+        if (    (llc_hal_is_ready() == 0U)  /* 启动前必须完成全部硬件绑定。 */
+             || (llc_cfg_is_ready() == 0U)) /* 启动前必须具备完整配置和有效时基。 */
         {
             return;
         }

@@ -54,9 +54,8 @@ static uint8_t init_wait_logged            = 0u; /* Prevent repeated dependency-
 
 void cllc_fsm_set_cmd(CLLC_FSM_CMD_E command)
 {
-    if (    (command >= CLLC_FSM_CMD_NULL)
-         && /* Reject negative enum values from external casts. */
-            (command <= CLLC_FSM_CMD_RESET)) /* Accept only public command values. */
+    if (    (command >= CLLC_FSM_CMD_NULL)   /* Reject negative enum values from external casts. */
+         && (command <= CLLC_FSM_CMD_RESET)) /* Accept only public command values. */
     {
         fsm_command = command;
 
@@ -112,9 +111,8 @@ static void init_execute(void)
     cllc_fsm_hal_t *p_hal = CLLC_FSM_HAL; /* FSM HAL binding object. */
 
     if (    (p_hal != NULL)
-         && (p_hal->p_enter_run != NULL)
-         && /* Run preparation and direction-aware PWM enable are available. */
-            (p_hal->p_exit_run != NULL)) /* A safe stop callback is available. */
+         && (p_hal->p_enter_run != NULL) /* Run preparation and direction-aware PWM enable are available. */
+         && (p_hal->p_exit_run != NULL)) /* A safe stop callback is available. */
     {
         PLECS_LOG("cllc_fsm init ready, goto idle\n");
         fsm_event = CLLC_FSM_EVENT_IDLE;
@@ -180,11 +178,9 @@ static void idle_execute(void)
     }
     p_setpoint = cllc_cfg_get_p_building();
 
-    if (    (p_setpoint == NULL)
-         || /* Start requires a complete staged configuration. */
-            (p_setpoint->direction < CLLC_DIRECTION_FORWARD)
-         || /* Reject negative enum values. */
-            (p_setpoint->direction >= CLLC_DIRECTION_MAX)) /* Start requires one defined direction. */
+    if (    (p_setpoint == NULL) /* Start requires a complete staged configuration. */
+         || (p_setpoint->direction < CLLC_DIRECTION_FORWARD) /* Reject negative enum values. */
+         || (p_setpoint->direction >= CLLC_DIRECTION_MAX))   /* Start requires one defined direction. */
     {
         PLECS_LOG("cllc_fsm start rejected: direction is invalid\n");
         return;

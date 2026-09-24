@@ -48,25 +48,22 @@ static void FUNC_RAM npc_protect_run(void)
 
     for (uint32_t phase = 0u; phase < 3u; ++phase) /* 按 A、B、C 相保留首次故障。 */
     {
-        if (    (fabsf(p_sample->i_l[phase]) > current_trip)
-             && /* 当前相超过应用过流门限。 */
-                (fault == 0u)) /* 仅记录本拍首个过流相。 */
+        if (    (fabsf(p_sample->i_l[phase]) > current_trip) /* 当前相超过应用过流门限。 */
+             && (fault == 0u)) /* 仅记录本拍首个过流相。 */
         {
             fault       = NPC_PROTECT_OVERCURRENT;
             phase_fault = phase;
         }
     }
 
-    if (    (fault != 0u)
-         && /* 本拍出现过流。 */
-            (npc_cfg_get_run_request() == 1u)) /* 仅在应用请求运行时触发闭锁。 */
+    if (    (fault != 0u) /* 本拍出现过流。 */
+         && (npc_cfg_get_run_request() == 1u)) /* 仅在应用请求运行时触发闭锁。 */
     {
         npc_hal_hard_protect_trip(fault, phase_fault);
     }
 
-    if (    (fault == 0u)
-         && /* 本拍没有检测到过流。 */
-            (npc_cfg_get_run_request() == 0u)) /* 明确停机后才确认恢复。 */
+    if (    (fault == 0u) /* 本拍没有检测到过流。 */
+         && (npc_cfg_get_run_request() == 0u)) /* 明确停机后才确认恢复。 */
     {
         npc_hal_hard_protect_clear();
     }
@@ -77,16 +74,14 @@ static void FUNC_RAM npc_protect_run(void)
         return;
     }
 
-    if (    (setpoint.run_allowed == 0u)
-         || /* 状态机尚未允许运行。 */
-            (npc_cfg_get_run_request() == 0u)) /* 停机由控制层正常处理，不报告母线故障。 */
+    if (    (setpoint.run_allowed == 0u)       /* 状态机尚未允许运行。 */
+         || (npc_cfg_get_run_request() == 0u)) /* 停机由控制层正常处理，不报告母线故障。 */
     {
         return;
     }
 
-    if (    (p_sample->v_dc_p < setpoint.v_dc_half_min)
-         || /* 正侧母线低于运行门限。 */
-            (p_sample->v_dc_n < setpoint.v_dc_half_min)) /* 负侧母线低于运行门限。 */
+    if (    (p_sample->v_dc_p < setpoint.v_dc_half_min)  /* 正侧母线低于运行门限。 */
+         || (p_sample->v_dc_n < setpoint.v_dc_half_min)) /* 负侧母线低于运行门限。 */
     {
         npc_ctrl_stop();
     }

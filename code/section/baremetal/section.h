@@ -97,16 +97,15 @@ typedef struct
     void *p_str;           /* Address of the registered object. */
 } reg_section_t;
 
-#define REG_SECTION_INIT(_section_type, _item) \
-    {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
+#define REG_SECTION_INIT(_section_type, _item) {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
 
-#define REG_SECTION_FUNC(_section_type, _obj)                    \
-    section_item_t section_item_##_obj = {                       \
-        .p_obj = (void *)&(_obj),                                \
-        .p_next = NULL,                                          \
-    };                                                           \
-    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj \
-        SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT(_section_type, section_item_##_obj);
+#define REG_SECTION_FUNC(_section_type, _obj)                                                \
+    section_item_t section_item_##_obj = {                                                   \
+        .p_obj  = (void *)&(_obj),                                                           \
+        .p_next = NULL,                                                                      \
+    };                                                                                       \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj SECTION_REG_ATTR_SUFFIX = \
+        REG_SECTION_INIT(_section_type, section_item_##_obj);
 
 typedef struct
 {
@@ -114,17 +113,17 @@ typedef struct
     section_item_t *const *pp_head;
 } section_list_registration_t;
 
-#define REG_DBG_LIST(name, list_head)                         \
-    section_list_registration_t dbg_list_##name = {           \
-        .p_name = #name,                                      \
-        .pp_head = &(list_head),                              \
-    };                                                        \
+#define REG_DBG_LIST(name, list_head)               \
+    section_list_registration_t dbg_list_##name = { \
+        .p_name = #name,                            \
+        .pp_head = &(list_head),                    \
+    };                                              \
     REG_SECTION_FUNC(SECTION_DBG_LIST, dbg_list_##name)
 
 #include "perf.h"
 
 #if (PERF_TASK_ENABLE == 1u)
-#define SECTION_TASK_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_TASK_PERF_FIELD      section_perf_record_t *p_perf_record;
 #define SECTION_TASK_PERF_INIT(name) , .p_perf_record = TASK_RECORD_PERF(name)
 #else
 #define SECTION_TASK_PERF_FIELD
@@ -132,46 +131,12 @@ typedef struct
 #endif
 
 #if (PERF_INTERRUPT_ENABLE == 1u)
-#define SECTION_INTERRUPT_PERF_FIELD section_perf_record_t *p_perf_record;
+#define SECTION_INTERRUPT_PERF_FIELD      section_perf_record_t *p_perf_record;
 #define SECTION_INTERRUPT_PERF_INIT(name) , .p_perf_record = INTERRUPT_RECORD_PERF(name)
 #else
 #define SECTION_INTERRUPT_PERF_FIELD
 #define SECTION_INTERRUPT_PERF_INIT(name)
 #endif
-
-typedef struct
-{
-    uint32_t cfsr;
-    uint32_t hfsr;
-    uint32_t bfar;
-    uint32_t mmfar;
-    uint32_t exc_return;
-    uint32_t msp;
-    uint32_t psp;
-    uint32_t stacked_lr;
-    uint32_t stacked_pc;
-    uint32_t stacked_xpsr;
-    uint32_t task_sp;
-    uint32_t task_pc;
-    uint32_t task_xpsr;
-    uint32_t task_stack_base;
-    uint32_t task_stack_words;
-    uint32_t task_frame_valid;
-    uint32_t task_name;
-    uint32_t task_stack_free_words;
-    uint32_t task_context_pool_words;
-    uint32_t task_context_pool_used;
-    uint32_t task_context_pool_head;
-    uint32_t task_context_pool_tail;
-    uint32_t task_context_save_fail_count;
-    uint32_t task_context_release_fail_count;
-    uint32_t task_fault_reason;
-    uint32_t task_fault_policy;
-    uint32_t task_context_required_words;
-    uint32_t task_runtime_stack_used_words;
-} section_fault_debug_t;
-
-extern volatile section_fault_debug_t g_section_fault_debug;
 
 typedef struct
 {
@@ -230,8 +195,7 @@ typedef struct reg_init
     void (*p_func)(void);
 } reg_init_t;
 
-#define REG_INIT_RECORD(prio, func) \
-    {.priority = (int8_t)(prio), .p_func = (func)}
+#define REG_INIT_RECORD(prio, func) {.priority = (int8_t)(prio), .p_func = (func)}
 
 #define REG_INIT(prio, func)                                  \
     reg_init_t reg_init_##func = REG_INIT_RECORD(prio, func); \
@@ -271,14 +235,13 @@ typedef struct reg_task_t
 #define REG_TASK_PERF_RECORD(name)
 #endif
 
-#define REG_TASK_RECORD(period, func)         \
-    {                                         \
-        .t_period = (uint32_t)(period),       \
-        .time_last = 0u,                      \
-        .p_func = (func),                     \
+#define REG_TASK_RECORD(period, func)                 \
+    {                                                 \
+        .t_period = (uint32_t)(period),               \
+        .time_last = 0u,                              \
+        .p_func = (func),                             \
         .p_name = #func SECTION_TASK_PERF_INIT(func), \
-        .is_ready = 0u                        \
-    }
+        .is_ready = 0u}
 
 #define REG_TASK(period, func)                                  \
     REG_TASK_PERF_RECORD(func)                                  \
@@ -317,7 +280,7 @@ typedef struct reg_interrupt
 } reg_interrupt_t;
 
 #define REG_INTERRUPT_RECORD(priority_num, func) \
-    {.priority = (uint8_t)(priority_num), .p_func = (func) SECTION_INTERRUPT_PERF_INIT(func)}
+    {.priority = (uint8_t)(priority_num), .p_func = (func)SECTION_INTERRUPT_PERF_INIT(func)}
 
 #define REG_INTERRUPT(priority_num, func)                                            \
     REG_INTERRUPT_PERF_RECORD(func)                                                  \
@@ -371,7 +334,7 @@ typedef struct
     }                                                                                              \
     REG_TASK_MS(1, fsm_##name##_run)
 
-#define FSM_GET_STATE(name) (reg_fsm_##name.fsm_sta)
+#define FSM_GET_STATE(name)  (reg_fsm_##name.fsm_sta)
 #define FSM_EXTERN_VAR(name) extern reg_fsm_t reg_fsm_##name;
 
 void section_fsm_func(reg_fsm_t *str);
@@ -401,14 +364,14 @@ extern section_item_t *p_link_first;
 #define REG_LINK(link, print, _rx_get_byte, _handler_arr, _handler_num) \
     section_link_t section_link_##link = {                              \
         .rx_get_byte = (_rx_get_byte),                                  \
-        .my_printf = &(print),                                          \
+        .my_printf   = &(print),                                        \
         .handler_arr = (_handler_arr),                                  \
         .handler_num = (uint32_t)(_handler_num),                        \
-        .link_id = (uint8_t)(link),                                     \
+        .link_id     = (uint8_t)(link),                                 \
     };                                                                  \
     REG_SECTION_FUNC(SECTION_LINK, section_link_##link)
 
-#define EXT_LINK(link) extern section_link_t section_link_##link
+#define EXT_LINK(link)    extern section_link_t section_link_##link
 #define LINK_PRINTF(link) section_link_##link.my_printf
 
 #endif /* __SECTION_H__ */

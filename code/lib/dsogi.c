@@ -25,23 +25,15 @@ static inline bool config_valid(const dsogi_cfg_t *p_cfg)
     {
         return false;
     }
-    return (p_cfg->ts >= 1.0e-6f)
-        && /* Bound coefficient products. */
-           (p_cfg->ts <= 0.01f)
-        && /* Bound coefficient products. */
-           (p_cfg->k >= 0.1f)
-        && /* Positive damping. */
-           (p_cfg->k <= 4.0f)
-        && /* Supported damping range. */
-           (p_cfg->omega_min >= 1.0f)
-        && /* Positive center frequency. */
-           (p_cfg->omega_max <= 100000.0f)
-        && /* Bound coefficient products. */
-           (p_cfg->omega_max >= p_cfg->omega_min)
-        && /* Ordered interval. */
-           (p_cfg->omega_min * p_cfg->ts >= 0.001f)
-        && /* Avoid float pole cancellation. */
-           (p_cfg->omega_max * p_cfg->ts <= 1.0f); /* Sampling margin below Nyquist. */
+    return (p_cfg->ts >= 1.0e-6f)     /* Bound coefficient products. */
+        && (p_cfg->ts <= 0.01f)       /* Bound coefficient products. */
+        && (p_cfg->k >= 0.1f)         /* Positive damping. */
+        && (p_cfg->k <= 4.0f)         /* Supported damping range. */
+        && (p_cfg->omega_min >= 1.0f) /* Positive center frequency. */
+        && (p_cfg->omega_max <= 100000.0f)          /* Bound coefficient products. */
+        && (p_cfg->omega_max >= p_cfg->omega_min)   /* Ordered interval. */
+        && (p_cfg->omega_min * p_cfg->ts >= 0.001f) /* Avoid float pole cancellation. */
+        && (p_cfg->omega_max * p_cfg->ts <= 1.0f);  /* Sampling margin below Nyquist. */
 }
 
 void dsogi_reset(dsogi_t *p_dsogi)
@@ -82,20 +74,16 @@ bool dsogi_init(dsogi_t *p_dsogi,
     }
     (void)memset(p_dsogi, 0, sizeof(*p_dsogi));
 
-    if (    (config_valid(&cfg) == false)
-         || /* Reject invalid parameters, including NaN. */
-            (p_alpha == NULL)
-         || /* Require all bound sources. */
-            (p_beta == NULL)
-         || /* Require all bound sources. */
-            (p_omega == NULL)) /* Require the external frequency source. */
+    if (    (config_valid(&cfg) == false) /* Reject invalid parameters, including NaN. */
+         || (p_alpha == NULL)             /* Require all bound sources. */
+         || (p_beta == NULL)   /* Require all bound sources. */
+         || (p_omega == NULL)) /* Require the external frequency source. */
     {
         return false;
     }
 
-    if (    ((*p_omega >= cfg.omega_min) == false)
-         || /* Reject NaN and values below range. */
-            ((*p_omega <= cfg.omega_max) == false)) /* Reject infinity and values above range. */
+    if (    ((*p_omega >= cfg.omega_min) == false)  /* Reject NaN and values below range. */
+         || ((*p_omega <= cfg.omega_max) == false)) /* Reject infinity and values above range. */
     {
         return false;
     }
@@ -115,26 +103,20 @@ bool dsogi_cal(dsogi_t *p_dsogi)
         return false;
     }
 
-    if (    (p_dsogi->inter.initialized == false)
-         || /* Initialization is mandatory. */
-            (p_dsogi->input.p_alpha == NULL)
-         || /* Bindings must remain valid. */
-            (p_dsogi->input.p_beta == NULL)
-         || /* Bindings must remain valid. */
-            (p_dsogi->input.p_omega == NULL)) /* Bindings must remain valid. */
+    if (    (p_dsogi->inter.initialized == false) /* Initialization is mandatory. */
+         || (p_dsogi->input.p_alpha == NULL)      /* Bindings must remain valid. */
+         || (p_dsogi->input.p_beta == NULL)       /* Bindings must remain valid. */
+         || (p_dsogi->input.p_omega == NULL))     /* Bindings must remain valid. */
     {
         dsogi_reset(p_dsogi);
         return false;
     }
     omega = *p_dsogi->input.p_omega;
 
-    if (    (isfinite(*p_dsogi->input.p_alpha) == 0)
-         || /* Invalid voltage must not poison history. */
-            (isfinite(*p_dsogi->input.p_beta) == 0)
-         || /* Invalid voltage must not poison history. */
-            ((omega >= p_dsogi->cfg.omega_min) == false)
-         || /* Reject NaN and frequency below range. */
-            ((omega <= p_dsogi->cfg.omega_max) == false)) /* Reject infinity and frequency above range. */
+    if (    (isfinite(*p_dsogi->input.p_alpha) == 0)      /* Invalid voltage must not poison history. */
+         || (isfinite(*p_dsogi->input.p_beta) == 0)       /* Invalid voltage must not poison history. */
+         || ((omega >= p_dsogi->cfg.omega_min) == false)  /* Reject NaN and frequency below range. */
+         || ((omega <= p_dsogi->cfg.omega_max) == false)) /* Reject infinity and frequency above range. */
     {
         dsogi_reset(p_dsogi);
         return false;
@@ -152,13 +134,10 @@ bool dsogi_cal(dsogi_t *p_dsogi)
     p_dsogi->output.alpha_neg = 0.5f * p_dsogi->inter.alpha.osg_u[0] + 0.5f * p_dsogi->inter.beta.osg_qu[0];
     p_dsogi->output.beta_neg = 0.5f * p_dsogi->inter.beta.osg_u[0] - 0.5f * p_dsogi->inter.alpha.osg_qu[0];
 
-    if (    (isfinite(p_dsogi->output.alpha_pos) == 0)
-         || /* Catch arithmetic overflow. */
-            (isfinite(p_dsogi->output.beta_pos) == 0)
-         || /* Catch arithmetic overflow. */
-            (isfinite(p_dsogi->output.alpha_neg) == 0)
-         || /* Catch arithmetic overflow. */
-            (isfinite(p_dsogi->output.beta_neg) == 0)) /* Catch arithmetic overflow. */
+    if (    (isfinite(p_dsogi->output.alpha_pos) == 0) /* Catch arithmetic overflow. */
+         || (isfinite(p_dsogi->output.beta_pos) == 0)  /* Catch arithmetic overflow. */
+         || (isfinite(p_dsogi->output.alpha_neg) == 0) /* Catch arithmetic overflow. */
+         || (isfinite(p_dsogi->output.beta_neg) == 0)) /* Catch arithmetic overflow. */
     {
         dsogi_reset(p_dsogi);
         return false;

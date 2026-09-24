@@ -44,7 +44,6 @@ REG_DBG_LIST(task, p_task_first)
 REG_DBG_LIST(interrupt, p_interrupt_first)
 REG_DBG_LIST(link, p_link_first)
 static volatile uint8_t task_scheduler_ready = 0u;
-volatile section_fault_debug_t g_section_fault_debug;
 volatile section_critical_race_debug_t g_section_critical_race_debug;
 
 #if (PERF_ENABLE)
@@ -209,7 +208,8 @@ SECTION_WEAK uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_
     return 0u;
 }
 
-SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt)
+SECTION_WEAK void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record,
+                                                      uint32_t start_cnt)
 {
     (void)record;
     (void)start_cnt;
@@ -439,9 +439,8 @@ void section_runtime_reset(void)
 {
     task_scheduler_ready = 0u;
     (void)memset((void *)&g_section_critical_race_debug, 0, sizeof(g_section_critical_race_debug));
-    p_task_first = NULL;
-    p_task_tail  = NULL;
-    (void)memset((void *)&g_section_fault_debug, 0, sizeof(g_section_fault_debug));
+    p_task_first      = NULL;
+    p_task_tail       = NULL;
     p_interrupt_first = NULL;
     p_link_first      = NULL;
     p_link_tail       = NULL;
@@ -560,11 +559,9 @@ static void link_process(section_link_t *p_link)
     uint32_t processed_byte_count = 0u; /* Bytes consumed from this Link during the current round. */
     uint32_t handler_index        = 0u; /* Handler receiving the current byte. */
 
-    if (    (p_link == NULL)
-         || /* No Link descriptor is available. */
-            (p_link->rx_get_byte == NULL)
-         || /* The Link cannot provide received bytes. */
-            (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
+    if (    (p_link == NULL) /* No Link descriptor is available. */
+         || (p_link->rx_get_byte == NULL)  /* The Link cannot provide received bytes. */
+         || (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
     {
         return;
     }

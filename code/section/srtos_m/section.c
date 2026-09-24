@@ -887,9 +887,8 @@ uint32_t section_task_slice_elapsed(void)
 
 void section_task_irq_exit_request(void)
 {
-    if (    (section_task_scheduler_started() != 0u)
-         && /* The shared-stack scheduler owns task context. */
-            (section_task_slice_elapsed() != 0u)) /* The running task has consumed its current time slice. */
+    if (    (section_task_scheduler_started() != 0u) /* The shared-stack scheduler owns task context. */
+         && (section_task_slice_elapsed() != 0u))    /* The running task has consumed its current time slice. */
     {
         SECTION_PORT_CONTEXT_SWITCH_REQUEST(); /* Defer the PendSV switch until exception return. */
     }
@@ -1515,11 +1514,9 @@ static void link_process(section_link_t *p_link)
     uint32_t processed_byte_count = 0u; /* Bytes consumed from this Link during the current round. */
     uint32_t handler_index        = 0u; /* Handler receiving the current byte. */
 
-    if (    (p_link == NULL)
-         || /* No Link descriptor is available. */
-            (p_link->rx_get_byte == NULL)
-         || /* The Link cannot provide received bytes. */
-            (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
+    if (    (p_link == NULL) /* No Link descriptor is available. */
+         || (p_link->rx_get_byte == NULL)  /* The Link cannot provide received bytes. */
+         || (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
     {
         return;
     }

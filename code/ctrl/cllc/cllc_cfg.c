@@ -162,13 +162,10 @@ void cllc_cfg_set_direction(CLLC_DIRECTION_E direction)
 {
     cllc_ctrl_setpoint_t *p_setpoint = g_cllc_cfg_setpoint_mgr.building.p_data; /* Staged setpoint target. */
 
-    if (    (direction_locked == 0u)
-         && /* Direction changes are accepted only while the FSM is idle. */
-            (p_setpoint != NULL)
-         && /* A valid staging buffer is bound. */
-            (direction >= CLLC_DIRECTION_FORWARD)
-         && /* Reject negative enum values from external casts. */
-            (direction < CLLC_DIRECTION_MAX)) /* Only defined power-flow directions may be staged. */
+    if (    (direction_locked == 0u) /* Direction changes are accepted only while the FSM is idle. */
+         && (p_setpoint != NULL)     /* A valid staging buffer is bound. */
+         && (direction >= CLLC_DIRECTION_FORWARD) /* Reject negative enum values from external casts. */
+         && (direction < CLLC_DIRECTION_MAX))     /* Only defined power-flow directions may be staged. */
     {
         p_setpoint->direction = direction;
     }

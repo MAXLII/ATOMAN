@@ -106,15 +106,15 @@ void section_perf_interrupt_end(section_perf_record_t *p_record, uint32_t start_
     };                                                      \
     REG_SECTION_FUNC(SECTION_PERF, section_perf_registration_##name)
 
-#define REG_PERF_BASE_CNT(timer_cnt, period_s)              \
-    section_perf_base_t section_perf_base_timer = {         \
-        .p_cnt = (volatile uint32_t *)(timer_cnt),          \
-        .cnt_period_s = (period_s),                         \
-    };                                                      \
-    section_perf_t section_perf_base_registration = {       \
-        .perf_type = (uint32_t)SECTION_PERF_BASE,           \
-        .p_perf = &section_perf_base_timer,                  \
-    };                                                      \
+#define REG_PERF_BASE_CNT(timer_cnt, period_s)            \
+    section_perf_base_t section_perf_base_timer = {       \
+        .p_cnt        = (volatile uint32_t *)(timer_cnt), \
+        .cnt_period_s = (period_s),                       \
+    };                                                    \
+    section_perf_t section_perf_base_registration = {     \
+        .perf_type = (uint32_t)SECTION_PERF_BASE,         \
+        .p_perf    = &section_perf_base_timer,            \
+    };                                                    \
     REG_SECTION_FUNC(SECTION_PERF, section_perf_base_registration)
 #else
 #define P_RECORD_PERF(name) NULL
@@ -123,21 +123,19 @@ void section_perf_interrupt_end(section_perf_record_t *p_record, uint32_t start_
 #endif
 
 #if (PERF_CODE_ENABLE == 1u)
-#define PERF_START(name)                                                           \
-    do                                                                             \
-    {                                                                              \
-        if ((section_perf_record_##name.p_cnt != NULL) &&                          \
-            (*section_perf_record_##name.p_cnt != NULL))                           \
-        {                                                                          \
-            section_perf_record_##name.start = **section_perf_record_##name.p_cnt; \
-        }                                                                          \
+#define PERF_START(name)                                                                               \
+    do                                                                                                 \
+    {                                                                                                  \
+        if ((section_perf_record_##name.p_cnt != NULL) && (*section_perf_record_##name.p_cnt != NULL)) \
+        {                                                                                              \
+            section_perf_record_##name.start = **section_perf_record_##name.p_cnt;                     \
+        }                                                                                              \
     } while (0)
 
 #define PERF_END(name)                                                                                  \
     do                                                                                                  \
     {                                                                                                   \
-        if ((section_perf_record_##name.p_cnt != NULL) &&                                               \
-            (*section_perf_record_##name.p_cnt != NULL))                                                \
+        if ((section_perf_record_##name.p_cnt != NULL) && (*section_perf_record_##name.p_cnt != NULL))  \
         {                                                                                               \
             uint32_t perf_delta = 0u;                                                                   \
             section_perf_record_##name.end = **section_perf_record_##name.p_cnt;                        \
@@ -154,7 +152,7 @@ void section_perf_interrupt_end(section_perf_record_t *p_record, uint32_t start_
 #define REG_PERF_RECORD(name) PERF_RECORD_DEFINE_EX(name, SECTION_PERF_RECORD_CODE)
 #else
 #define PERF_START(name) ((void)0)
-#define PERF_END(name) ((void)0)
+#define PERF_END(name)   ((void)0)
 #define REG_PERF_RECORD(name)
 #endif
 

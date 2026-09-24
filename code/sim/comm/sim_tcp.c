@@ -139,9 +139,8 @@ static void connect_poll(uint32_t index, uint32_t now)
         if (select(0, NULL, &writable, &errors, &timeout) > 0)
         {
             if (    (getsockopt(p_link->socket, SOL_SOCKET, SO_ERROR, (char *)&error, &length) == 0)
-                 && (error == 0)
-                 && /* Only successful connection completion may publish online. */
-                    (FD_ISSET(p_link->socket, &writable) != 0))
+                 && (error == 0) /* Only successful connection completion may publish online. */
+                 && (FD_ISSET(p_link->socket, &writable) != 0))
             {
                 connected(index);
             }
@@ -239,9 +238,8 @@ static void transfer_poll(uint32_t index)
 
         if (result > 0)
             p_link->rx_count += (uint32_t)result;
-        else if (    (result == 0)
-                  || /* FIN terminates the current byte stream. */
-                     (WSAGetLastError() != WSAEWOULDBLOCK)) /* Would-block is normal for this polling BSP. */
+        else if (    (result == 0) /* FIN terminates the current byte stream. */
+                  || (WSAGetLastError() != WSAEWOULDBLOCK)) /* Would-block is normal for this polling BSP. */
         {
             disconnect_link(index);
             return;

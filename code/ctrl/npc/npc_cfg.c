@@ -71,9 +71,8 @@ REG_INIT(0, npc_cfg_init)
 
 uint8_t npc_cfg_set_ctrl_ts(float ctrl_ts)
 {
-    if (!(    (ctrl_ts >= 1.0e-6f)
-           && /* 排除过小周期及 NaN。 */
-              (ctrl_ts <= 0.01f))) /* 排除过大周期及无穷大。 */
+    if (!(    (ctrl_ts >= 1.0e-6f) /* 排除过小周期及 NaN。 */
+           && (ctrl_ts <= 0.01f))) /* 排除过大周期及无穷大。 */
     {
         return 0u;
     }
@@ -91,18 +90,16 @@ uint8_t npc_cfg_is_ready(void)
 {
     float step = M_2PI * config.freq_hz * sample_period; /* 每拍电角度步进，rad。 */
 
-    return (    (step >= 0.001f)
-             && /* 满足 DSOGI 数值步进下限。 */
-                (step <= 1.0f)) /* 满足 DSOGI 数值步进上限。 */
+    return (    (step >= 0.001f) /* 满足 DSOGI 数值步进下限。 */
+             && (step <= 1.0f))  /* 满足 DSOGI 数值步进上限。 */
              ? 1u
              : 0u;
 }
 
 uint8_t npc_cfg_set_vd_pos_slew_vps(float value)
 {
-    if (!(    (value >= 0.001f)
-           && /* 斜率必须为正且不能为 NaN。 */
-              (value <= 1.0e6f))) /* 约束每拍幅值更新的计算范围。 */
+    if (!(    (value >= 0.001f)   /* 斜率必须为正且不能为 NaN。 */
+           && (value <= 1.0e6f))) /* 约束每拍幅值更新的计算范围。 */
     {
         return 0u;
     }
@@ -115,11 +112,9 @@ uint8_t npc_cfg_set_freq_hz(float value)
 {
     float step = M_2PI * value * sample_period; /* 每拍电角度，rad。 */
 
-    if (!(    (value >= 1.0f)
-           && /* 频率请求至少为 1 Hz。 */
-              (step >= 0.001f)
-           && /* 满足 DSOGI 数值步进下限。 */
-              (step <= 1.0f))) /* 同时排除过快步进及无穷大。 */
+    if (!(    (value >= 1.0f)  /* 频率请求至少为 1 Hz。 */
+           && (step >= 0.001f) /* 满足 DSOGI 数值步进下限。 */
+           && (step <= 1.0f))) /* 同时排除过快步进及无穷大。 */
     {
         return 0u;
     }
@@ -130,9 +125,8 @@ uint8_t npc_cfg_set_freq_hz(float value)
 
 uint8_t npc_cfg_set_v_dc_half_min(float value)
 {
-    if (!(    (value >= 0.001f)
-           && /* 单侧母线门限必须为正有限数。 */
-              (value <= 1.0e6f))) /* 保持控制器支持的电压计算范围。 */
+    if (!(    (value >= 0.001f)   /* 单侧母线门限必须为正有限数。 */
+           && (value <= 1.0e6f))) /* 保持控制器支持的电压计算范围。 */
     {
         return 0u;
     }

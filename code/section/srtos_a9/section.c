@@ -349,9 +349,8 @@ static uint32_t task_runtime_stack_used_words_get(uint32_t *p_sp)
     const uintptr_t stack_pointer = (uintptr_t)p_sp; /* Stack pointer being measured. */
     uint32_t used_words           = 0u;
 
-    if (    (stack_pointer >= stack_low)
-         && /* Stack pointer is not below the shared stack. */
-            (stack_pointer <= stack_top)) /* Stack pointer is not above the aligned stack top. */
+    if (    (stack_pointer >= stack_low)  /* Stack pointer is not below the shared stack. */
+         && (stack_pointer <= stack_top)) /* Stack pointer is not above the aligned stack top. */
     {
         used_words = (uint32_t)((stack_top - stack_pointer) / sizeof(uint32_t));
     }
@@ -504,22 +503,18 @@ static void task_context_release(reg_task_t *p_task)
     uintptr_t snapshot_address = 0u; /* Integer form used to validate a potentially damaged snapshot pointer. */
     uint32_t offset            = 0u; /* Snapshot offset from the context-pool base, in words. */
 
-    if (    (p_task == NULL)
-         || /* No task owns a snapshot. */
-            (p_task->p_snapshot == NULL)
-         || /* The task has no allocated context image. */
-            (p_task->snapshot_capacity_words == 0u)) /* A zero-capacity allocation cannot be released. */
+    if (    (p_task == NULL)             /* No task owns a snapshot. */
+         || (p_task->p_snapshot == NULL) /* The task has no allocated context image. */
+         || (p_task->snapshot_capacity_words == 0u)) /* A zero-capacity allocation cannot be released. */
     {
         return;
     }
 
     snapshot_address = (uintptr_t)p_task->p_snapshot;
 
-    if (    (snapshot_address < pool_start)
-         || /* Snapshot begins below the context pool. */
-            (snapshot_address >= pool_end)
-         || /* Snapshot begins at or above the pool end. */
-            (((snapshot_address - pool_start) % sizeof(uint32_t)) != 0u)) /* Snapshot is not word aligned. */
+    if (    (snapshot_address < pool_start) /* Snapshot begins below the context pool. */
+         || (snapshot_address >= pool_end)  /* Snapshot begins at or above the pool end. */
+         || (((snapshot_address - pool_start) % sizeof(uint32_t)) != 0u)) /* Snapshot is not word aligned. */
     {
         g_section_fault_debug.task_context_release_fail_count++;
         g_section_scheduler_debug.invariant_fail_count++;
@@ -671,18 +666,15 @@ static uint32_t task_stack_save(reg_task_t *p_task, uint32_t *p_sp)
     const uintptr_t stack_pointer = (uintptr_t)p_sp;        /* Context stack pointer supplied by the A9 port. */
     uint32_t used_words           = 0u; /* Context image size copied into the pool. */
 
-    if (    (p_task == NULL)
-         || /* No task owns the supplied context. */
-            (p_sp == NULL)) /* The architecture port did not supply a stack pointer. */
+    if (    (p_task == NULL) /* No task owns the supplied context. */
+         || (p_sp == NULL))  /* The architecture port did not supply a stack pointer. */
     {
         return 0u;
     }
 
-    if (    (stack_pointer < stack_low)
-         || /* Context begins below the shared stack. */
-            (stack_pointer > stack_top)
-         || /* Context begins above the shared stack. */
-            (((stack_top - stack_pointer) % sizeof(uint32_t)) != 0u)) /* Context is not word aligned. */
+    if (    (stack_pointer < stack_low) /* Context begins below the shared stack. */
+         || (stack_pointer > stack_top) /* Context begins above the shared stack. */
+         || (((stack_top - stack_pointer) % sizeof(uint32_t)) != 0u)) /* Context is not word aligned. */
     {
         task_fault_set(SECTION_TASK_FAULT_PSP_OVERFLOW, p_task, p_sp, 0u);
         return 0u;
@@ -690,9 +682,8 @@ static uint32_t task_stack_save(reg_task_t *p_task, uint32_t *p_sp)
 
     used_words = (uint32_t)((stack_top - stack_pointer) / sizeof(uint32_t));
 
-    if (    (used_words == 0u)
-         || /* A valid saved A9 context always contains the fixed exception frame. */
-            (task_context_alloc(p_task, used_words) == 0u)) /* The shared context pool cannot hold the snapshot. */
+    if (    (used_words == 0u) /* A valid saved A9 context always contains the fixed exception frame. */
+         || (task_context_alloc(p_task, used_words) == 0u)) /* The shared context pool cannot hold the snapshot. */
     {
         g_section_fault_debug.task_context_save_fail_count++;
         g_section_fault_debug.task_context_required_words = used_words;
@@ -730,11 +721,9 @@ static uint32_t *task_stack_restore(reg_task_t *p_task)
         return p_task->p_sp;
     }
 
-    if (    (p_task->p_snapshot == NULL)
-         || /* A suspended task must own a pool snapshot. */
-            (p_task->snapshot_words == 0u)
-         || /* A valid A9 context cannot have zero words. */
-            (p_task->snapshot_words > SECTION_TASK_RUNTIME_STACK_WORDS)) /* Snapshot must fit the shared stack. */
+    if (    (p_task->p_snapshot == NULL)   /* A suspended task must own a pool snapshot. */
+         || (p_task->snapshot_words == 0u) /* A valid A9 context cannot have zero words. */
+         || (p_task->snapshot_words > SECTION_TASK_RUNTIME_STACK_WORDS)) /* Snapshot must fit the shared stack. */
     {
         task_fault_set(SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW, p_task, p_task->p_sp, p_task->snapshot_words);
         return NULL;
@@ -742,9 +731,8 @@ static uint32_t *task_stack_restore(reg_task_t *p_task)
 
     p_sp = p_stack_top - p_task->snapshot_words;
 
-    if (    (p_sp < p_stack_low)
-         || /* Restored context would begin below the shared stack. */
-            (p_sp > p_stack_top)) /* Restored context would begin above the shared stack. */
+    if (    (p_sp < p_stack_low)  /* Restored context would begin below the shared stack. */
+         || (p_sp > p_stack_top)) /* Restored context would begin above the shared stack. */
     {
         task_fault_set(SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW, p_task, p_sp, p_task->snapshot_words);
         return NULL;
@@ -770,9 +758,8 @@ static uint32_t task_stack_frame_valid(const reg_task_t *p_task)
         const uint32_t pc   = p_frame[TASK_FRAME_PC_INDEX];     /* Exception return program counter. */
         const uint32_t cpsr = p_frame[TASK_FRAME_STATUS_INDEX]; /* Exception return processor status. */
 
-        if (    (pc != 0u)
-             && /* Return target is not the null address. */
-                ((cpsr & 0x1Fu) == TASK_INITIAL_STATUS)) /* Task returns to the expected A9 System mode. */
+        if (    (pc != 0u) /* Return target is not the null address. */
+             && ((cpsr & 0x1Fu) == TASK_INITIAL_STATUS)) /* Task returns to the expected A9 System mode. */
         {
             valid = 1u;
         }
@@ -794,15 +781,13 @@ static const uint32_t *task_hw_frame_get(const reg_task_t *p_task)
         return NULL;
     }
 
-    if (    (p_task->p_snapshot != NULL)
-         && /* Suspended task context currently resides in the pool. */
-            (p_task->snapshot_words >= TASK_A9_CONTEXT_WORDS)) /* Snapshot contains the fixed A9 return frame. */
+    if (    (p_task->p_snapshot != NULL) /* Suspended task context currently resides in the pool. */
+         && (p_task->snapshot_words >= TASK_A9_CONTEXT_WORDS)) /* Snapshot contains the fixed A9 return frame. */
     {
         context_address = (uintptr_t)p_task->p_snapshot;
 
-        if (    (context_address >= pool_start)
-             && /* Snapshot begins within the context pool. */
-                (context_address <= (pool_end - (TASK_A9_CONTEXT_WORDS * sizeof(uint32_t)))))
+        if (    (context_address >= pool_start) /* Snapshot begins within the context pool. */
+             && (context_address <= (pool_end - (TASK_A9_CONTEXT_WORDS * sizeof(uint32_t)))))
         {
             return &p_task->p_snapshot[TASK_A9_RETURN_PC_INDEX];
         }
@@ -815,9 +800,8 @@ static const uint32_t *task_hw_frame_get(const reg_task_t *p_task)
 
     context_address = (uintptr_t)p_task->p_sp;
 
-    if (    (context_address < stack_low)
-         || /* Context begins below the shared stack. */
-            (context_address > (stack_top - (TASK_A9_CONTEXT_WORDS * sizeof(uint32_t)))))
+    if (    (context_address < stack_low) /* Context begins below the shared stack. */
+         || (context_address > (stack_top - (TASK_A9_CONTEXT_WORDS * sizeof(uint32_t)))))
     {
         return NULL;
     }
@@ -868,9 +852,8 @@ static uint32_t task_stack_free_words_get(const reg_task_t *p_task)
         return 0u;
     }
 
-    if (    (p_task->p_snapshot != NULL)
-         && /* A suspended task has an exact copied context size. */
-            (p_task->snapshot_words <= SECTION_TASK_RUNTIME_STACK_WORDS)) /* Snapshot size is safe to subtract. */
+    if (    (p_task->p_snapshot != NULL) /* A suspended task has an exact copied context size. */
+         && (p_task->snapshot_words <= SECTION_TASK_RUNTIME_STACK_WORDS)) /* Snapshot size is safe to subtract. */
     {
         return SECTION_TASK_RUNTIME_STACK_WORDS - p_task->snapshot_words;
     }
@@ -882,9 +865,8 @@ static uint32_t task_stack_free_words_get(const reg_task_t *p_task)
 
     stack_pointer = (uintptr_t)p_task->p_sp;
 
-    if (    (stack_pointer < stack_low)
-         || /* Captured stack pointer is below the shared stack. */
-            (stack_pointer > stack_top)) /* Captured stack pointer is above the shared stack. */
+    if (    (stack_pointer < stack_low)  /* Captured stack pointer is below the shared stack. */
+         || (stack_pointer > stack_top)) /* Captured stack pointer is above the shared stack. */
     {
         return 0u;
     }
@@ -1052,9 +1034,8 @@ uint32_t section_task_slice_elapsed(void)
 
 void section_task_irq_exit_request(void)
 {
-    if (    (section_task_scheduler_started() != 0u)
-         && /* The A9 shared-stack scheduler owns task context. */
-            (section_task_slice_elapsed() != 0u)) /* The running task has consumed its current time slice. */
+    if (    (section_task_scheduler_started() != 0u) /* The A9 shared-stack scheduler owns task context. */
+         && (section_task_slice_elapsed() != 0u))    /* The running task has consumed its current time slice. */
     {
         a9_section_port_switch_request(); /* Defer the switch until registered IRQ callbacks have completed. */
     }
@@ -1168,9 +1149,8 @@ uint32_t *section_task_switch_sp(uint32_t *p_sp)
             const uintptr_t stack_low     = (uintptr_t)task_runtime_stack_low_get(); /* Inclusive stack lower address. */
             const uintptr_t stack_top     = (uintptr_t)task_runtime_stack_top_get(); /* Exclusive stack upper address. */
 
-            if (    (stack_pointer < stack_low)
-                 || /* Context begins below the shared stack. */
-                    (stack_pointer > stack_top)) /* Context begins above the shared stack. */
+            if (    (stack_pointer < stack_low)  /* Context begins below the shared stack. */
+                 || (stack_pointer > stack_top)) /* Context begins above the shared stack. */
             {
                 task_fault_set(SECTION_TASK_FAULT_PSP_OVERFLOW, p_task_current, p_sp, 0u);
                 return p_sp;
@@ -1631,11 +1611,9 @@ static void link_process(section_link_t *p_link)
     uint32_t processed_byte_count = 0u; /* Bytes consumed from this Link during the current round. */
     uint32_t handler_index        = 0u; /* Handler receiving the current byte. */
 
-    if (    (p_link == NULL)
-         || /* No Link descriptor is available. */
-            (p_link->rx_get_byte == NULL)
-         || /* The Link cannot provide received bytes. */
-            (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
+    if (    (p_link == NULL) /* No Link descriptor is available. */
+         || (p_link->rx_get_byte == NULL)  /* The Link cannot provide received bytes. */
+         || (p_link->handler_arr == NULL)) /* The Link has no byte consumers. */
     {
         return;
     }

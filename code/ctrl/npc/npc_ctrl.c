@@ -80,9 +80,8 @@ static bool npc_ctrl_init_states(const npc_ctrl_cfg_t *p_cfg)
     damping_filter_coeff = -expm1f(-M_2PI * cfg.voltage_damping_cutoff_hz * cfg.ts);
     observer_cfg = (dsogi_cfg_t){.ts = cfg.ts, .k = cfg.sogi_k, .omega_min = cfg.omega, .omega_max = cfg.omega};
 
-    if (    (dsogi_init(&voltage_observer, &observer_cfg, &v_ab[0], &v_ab[1], &ctrl_cfg.omega) == false)
-         || /* 绑定电压观测器输入。 */
-            (dsogi_init(&current_observer, &observer_cfg, &i_ab[0], &i_ab[1], &ctrl_cfg.omega) == false)) /* 绑定电流观测器输入。 */
+    if (    (dsogi_init(&voltage_observer, &observer_cfg, &v_ab[0], &v_ab[1], &ctrl_cfg.omega) == false)  /* 绑定电压观测器输入。 */
+         || (dsogi_init(&current_observer, &observer_cfg, &i_ab[0], &i_ab[1], &ctrl_cfg.omega) == false)) /* 绑定电流观测器输入。 */
     {
         npc_ctrl_reset_states(); /* 初始化失败时保持禁止计算。 */
         return false;
@@ -181,9 +180,8 @@ static void FUNC_RAM npc_ctrl_run(void)
     }
     control_allowed = false; /* 消耗本拍许可，重复调用不能重复更新积分或发波。 */
 
-    if (    (active_setpoint.run_allowed == 0u)
-         || /* 状态机未授予运行许可。 */
-            (npc_cfg_get_run_request() == 0u)) /* 停机请求本拍生效。 */
+    if (    (active_setpoint.run_allowed == 0u) /* 状态机未授予运行许可。 */
+         || (npc_cfg_get_run_request() == 0u))  /* 停机请求本拍生效。 */
     {
         npc_ctrl_stop();
         return;
@@ -191,9 +189,8 @@ static void FUNC_RAM npc_ctrl_run(void)
 
     omega = M_2PI * active_setpoint.freq_hz; /* 将已发布频率换算为角频率。 */
 
-    if (    (initialized == false)
-         || /* 尚未完成有效初始化。 */
-            (ctrl_cfg.omega != omega)) /* 中心频率改变时重置观测器及软启动。 */
+    if (    (initialized == false)     /* 尚未完成有效初始化。 */
+         || (ctrl_cfg.omega != omega)) /* 中心频率改变时重置观测器及软启动。 */
     {
         npc_ctrl_prepare_run();
     }
@@ -206,9 +203,8 @@ static void FUNC_RAM npc_ctrl_run(void)
     clarke(p_sample->v_out[0], p_sample->v_out[1], p_sample->v_out[2], &v_ab[0], &v_ab[1]); /* 电压采样变换。 */
     clarke(p_sample->i_l[0], p_sample->i_l[1], p_sample->i_l[2], &i_ab[0], &i_ab[1]);       /* 电流采样变换。 */
 
-    if (    (dsogi_cal(&voltage_observer) == false)
-         || /* 提取电压正负序分量。 */
-            (dsogi_cal(&current_observer) == false)) /* 提取电流正负序分量。 */
+    if (    (dsogi_cal(&voltage_observer) == false)  /* 提取电压正负序分量。 */
+         || (dsogi_cal(&current_observer) == false)) /* 提取电流正负序分量。 */
     {
         npc_ctrl_stop();
         return;
@@ -305,11 +301,9 @@ static void npc_ctrl_task(void)
 {
     float ramp_step = active_setpoint.vd_pos_slew_vps * 0.001f; /* V/s 换算成每 1 ms 的幅值步长，V。 */
 
-    if (    (ramp_allowed == false)
-         || /* 尚未成功运行或已经停波。 */
-            (active_setpoint.run_allowed == 0u)
-         || /* 状态机已撤销运行许可。 */
-            (npc_cfg_get_run_request() == 0u)) /* 应用请求停机时不再推进幅值。 */
+    if (    (ramp_allowed == false)             /* 尚未成功运行或已经停波。 */
+         || (active_setpoint.run_allowed == 0u) /* 状态机已撤销运行许可。 */
+         || (npc_cfg_get_run_request() == 0u))  /* 应用请求停机时不再推进幅值。 */
     {
         return;
     }

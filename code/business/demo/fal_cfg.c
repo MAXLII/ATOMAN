@@ -77,13 +77,10 @@ static fal_result_t flash_init(void *p_context)
         return FAL_RESULT_CONFIG_ERROR;
     }
 
-    if (    (geometry.capacity != p_device->capacity)
-         || /* 防止布局超出实际容量。 */
-            (geometry.page_size != p_device->program_page_size)
-         || /* 保持编程分页一致。 */
-            (geometry.block_size != p_device->erase_block_size)
-         || /* 保持擦除对齐一致。 */
-            (geometry.program_unit != p_device->program_unit_size)) /* 遵守芯片最小写入单位。 */
+    if (    (geometry.capacity != p_device->capacity)           /* 防止布局超出实际容量。 */
+         || (geometry.page_size != p_device->program_page_size) /* 保持编程分页一致。 */
+         || (geometry.block_size != p_device->erase_block_size) /* 保持擦除对齐一致。 */
+         || (geometry.program_unit != p_device->program_unit_size)) /* 遵守芯片最小写入单位。 */
     {
         return FAL_RESULT_CONFIG_ERROR;
     }

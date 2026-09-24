@@ -92,36 +92,24 @@ static fal_result_t device_validate(const fal_cfg_t *p_cfg, uint16_t device_inde
     const fal_device_cfg_t *p_device = &p_cfg->p_devices[device_index]; /* Device under validation. */
     uint16_t compare_index           = 0u; /* Earlier device checked for duplicate identifiers. */
 
-    if (    (p_device->capacity == 0u)
-         || /* A physical device must expose storage. */
-            (p_device->program_page_size == 0u)
-         || /* Programs require a finite page boundary. */
-            (p_device->erase_block_size == 0u)
-         || /* Erases require a finite block boundary. */
-            (p_device->program_page_size > p_device->capacity)
-         || /* A page must fit in the device. */
-            (p_device->erase_block_size > p_device->capacity)
-         || /* A block must fit in the device. */
-            (p_device->p_zones == NULL)
-         || /* Every managed Flash has a zone table. */
-            (p_device->zone_count == 0u)
-         || /* Empty device zone tables are invalid. */
-            (p_device->ops.p_init == NULL)
-         || /* Device initialization is mandatory. */
-            (p_device->ops.p_get_state == NULL)
-         || /* Async completion observation is mandatory. */
-            (p_device->ops.p_read == NULL)
-         || /* Reads are part of the common FAL contract. */
-            (p_device->ops.p_program == NULL)
-         || /* Programs are part of the common FAL contract. */
-            (p_device->ops.p_erase == NULL)) /* Erases are part of the common FAL contract. */
+    if (    (p_device->capacity == 0u)          /* A physical device must expose storage. */
+         || (p_device->program_page_size == 0u) /* Programs require a finite page boundary. */
+         || (p_device->erase_block_size == 0u)  /* Erases require a finite block boundary. */
+         || (p_device->program_page_size > p_device->capacity) /* A page must fit in the device. */
+         || (p_device->erase_block_size > p_device->capacity)  /* A block must fit in the device. */
+         || (p_device->p_zones == NULL)         /* Every managed Flash has a zone table. */
+         || (p_device->zone_count == 0u)        /* Empty device zone tables are invalid. */
+         || (p_device->ops.p_init == NULL)      /* Device initialization is mandatory. */
+         || (p_device->ops.p_get_state == NULL) /* Async completion observation is mandatory. */
+         || (p_device->ops.p_read == NULL)      /* Reads are part of the common FAL contract. */
+         || (p_device->ops.p_program == NULL)   /* Programs are part of the common FAL contract. */
+         || (p_device->ops.p_erase == NULL))    /* Erases are part of the common FAL contract. */
     {
         return FAL_RESULT_CONFIG_ERROR;
     }
 
-    if (    (p_device->program_unit_size != 0u)
-         && /* Zero retains the byte-write contract. */
-            (    ((p_device->program_page_size % p_device->program_unit_size) != 0u)
+    if (    (p_device->program_unit_size != 0u) /* Zero retains the byte-write contract. */
+         && (    ((p_device->program_page_size % p_device->program_unit_size) != 0u)
               || ((p_device->erase_block_size % p_device->program_unit_size) != 0u)))
     {
         return FAL_RESULT_CONFIG_ERROR;
@@ -158,17 +146,12 @@ static fal_result_t zone_validate(const fal_cfg_t *p_cfg,
         device_offset += preceding_size;
     }
 
-    if (    (p_zone->size == 0u)
-         || /* Empty logical partitions are invalid. */
-            ((p_zone->permissions & (uint8_t)(~FAL_ZONE_PERMISSION_ALL)) != 0u)
-         || /* Reject unknown rights. */
-            (p_zone->permissions == 0u)
-         || /* A zone must expose at least one operation. */
-            (p_zone->size > (p_device->capacity - device_offset))
-         || /* Cumulative end must remain in bounds. */
-            ((device_offset % p_device->erase_block_size) != 0u)
-         || /* Accumulated start is erase aligned. */
-            ((p_zone->size % p_device->erase_block_size) != 0u)) /* Zones contain whole blocks. */
+    if (    (p_zone->size == 0u) /* Empty logical partitions are invalid. */
+         || ((p_zone->permissions & (uint8_t)(~FAL_ZONE_PERMISSION_ALL)) != 0u) /* Reject unknown rights. */
+         || (p_zone->permissions == 0u) /* A zone must expose at least one operation. */
+         || (p_zone->size > (p_device->capacity - device_offset)) /* Cumulative end must remain in bounds. */
+         || ((device_offset % p_device->erase_block_size) != 0u)  /* Accumulated start is erase aligned. */
+         || ((p_zone->size % p_device->erase_block_size) != 0u))  /* Zones contain whole blocks. */
     {
         return FAL_RESULT_CONFIG_ERROR;
     }
@@ -258,9 +241,8 @@ static fal_result_t request_validate(fal_t *p_fal,
         return FAL_RESULT_PERMISSION_DENIED;
     }
 
-    if (    (offset > p_zone->size)
-         || /* Offset may equal size only for an empty request. */
-            (length > (p_zone->size - offset))) /* Request end must remain inside the zone. */
+    if (    (offset > p_zone->size)             /* Offset may equal size only for an empty request. */
+         || (length > (p_zone->size - offset))) /* Request end must remain inside the zone. */
     {
         return FAL_RESULT_OUT_OF_RANGE;
     }
@@ -632,9 +614,8 @@ fal_result_t fal_write(fal_t *p_fal,
         return FAL_RESULT_SUCCESS;
     }
 
-    if (    (p_device->program_unit_size != 0u)
-         && /* NAND adapters require complete program units. */
-            (    (((device_offset + offset) % p_device->program_unit_size) != 0u)
+    if (    (p_device->program_unit_size != 0u) /* NAND adapters require complete program units. */
+         && (    (((device_offset + offset) % p_device->program_unit_size) != 0u)
               || ((length % p_device->program_unit_size) != 0u)))
     {
         return FAL_RESULT_INVALID_ARGUMENT;
@@ -755,11 +736,9 @@ static uint8_t runtime_valid(const fal_runtime_t *p_runtime)
         return 0u;
     }
 
-    if (    (p_runtime->p_instances == NULL)
-         || /* Require writable runtime storage. */
-            (p_runtime->p_configs == NULL)
-         || /* Require a configuration for every instance. */
-            (p_runtime->instance_count == 0u)) /* Reject an empty scheduling group. */
+    if (    (p_runtime->p_instances == NULL)   /* Require writable runtime storage. */
+         || (p_runtime->p_configs == NULL)     /* Require a configuration for every instance. */
+         || (p_runtime->instance_count == 0u)) /* Reject an empty scheduling group. */
     {
         return 0u;
     }
@@ -806,9 +785,8 @@ fal_result_t fal_runtime_init(const fal_runtime_t *p_runtime)
     {
         fal_result_t result = fal_runtime_mount(p_runtime, index); /* Mount each independent device group. */
 
-        if (    (first_error == FAL_RESULT_SUCCESS)
-             && /* Preserve the earliest failure. */
-                (result != FAL_RESULT_SUCCESS)) /* Record only a failed mount. */
+        if (    (first_error == FAL_RESULT_SUCCESS) /* Preserve the earliest failure. */
+             && (result != FAL_RESULT_SUCCESS))     /* Record only a failed mount. */
         {
             first_error = result;
         }

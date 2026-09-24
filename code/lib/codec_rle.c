@@ -83,9 +83,8 @@ int8_t codec_rle_encode(uint16_t input_len,
     {
         uint16_t run = 1u;
 
-        while (    ((index + run) < input_len)
-                && /* The next byte still belongs to the same run. */
-                   (p_input[index + run] == p_input[index])
+        while (    ((index + run) < input_len) /* The next byte still belongs to the same run. */
+                && (p_input[index + run] == p_input[index])
                 && (run < CODEC_RLE_REPEAT_MAX)) /* One token cannot express a longer run. */
         {
             run++;

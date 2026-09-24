@@ -175,11 +175,9 @@ static void initialize_control_sets(void)
                                 &bus_voltage_ref_v,
                                 &bus_voltage_fbk_v);
 
-    controller_ready = (    (forward_ok == true)
-                         && /* Forward PI competition is valid. */
-                            (forward_pr_ok == true)
-                         && /* Forward 100 Hz PR is valid. */
-                            (reverse_ok == true)) /* Reverse PI is valid. */
+    controller_ready = (    (forward_ok == true)    /* Forward PI competition is valid. */
+                         && (forward_pr_ok == true) /* Forward 100 Hz PR is valid. */
+                         && (reverse_ok == true))   /* Reverse PI is valid. */
                          ? 1u
                          : 0u;
 }
@@ -192,9 +190,8 @@ void cllc_ctrl_prepare_run(CLLC_DIRECTION_E direction)
     cllc_cfg_sync_building_to_active();
     p_configured_setpoint = cllc_cfg_get_p_active();
     p_active_setpoint = (p_configured_setpoint != NULL) ? p_configured_setpoint : &safe_setpoint;
-    active_direction = (    (direction >= CLLC_DIRECTION_FORWARD)
-                         && /* Reject negative enum values. */
-                            (direction < CLLC_DIRECTION_MAX)) /* Accept only defined directions. */
+    active_direction = (    (direction >= CLLC_DIRECTION_FORWARD) /* Reject negative enum values. */
+                         && (direction < CLLC_DIRECTION_MAX))     /* Accept only defined directions. */
                          ? direction
                          : CLLC_DIRECTION_FORWARD;
     normalized_output  = 0.0f;
@@ -339,9 +336,8 @@ void cllc_ctrl_get_debug(cllc_ctrl_debug_t *p_debug)
     p_debug->pr_output         = forward_pr_output;
     p_debug->voltage_candidate = forward_compete.output.val_a;
     p_debug->current_candidate = forward_compete.output.val_b;
-    p_debug->current_limit_active = (    (active_direction == CLLC_DIRECTION_FORWARD)
-                                      && /* Only forward mode owns the competing current loop. */
-                                         (forward_compete.inter.active_ch == PI_DUAL_CH_B)) /* Channel B is the configured current-limit loop. */
+    p_debug->current_limit_active = (    (active_direction == CLLC_DIRECTION_FORWARD)       /* Only forward mode owns the competing current loop. */
+                                      && (forward_compete.inter.active_ch == PI_DUAL_CH_B)) /* Channel B is the configured current-limit loop. */
                                       ? 1u
                                       : 0u;
     p_debug->direction_mismatch = direction_mismatch;
