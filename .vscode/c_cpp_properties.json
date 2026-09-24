@@ -22,7 +22,7 @@
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
-                "IS_TESTBENCH"
+                "PLATFORM_TESTBENCH"
             ],
             "browse": {
                 "path": [
@@ -47,7 +47,7 @@
                 "${workspaceFolder}/code/section"
             ],
             "defines": [
-                "IS_TESTBENCH"
+                "PLATFORM_TESTBENCH"
             ],
             "browse": {
                 "path": [
@@ -72,16 +72,16 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/business/demo",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/ac",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/interface",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/data_source/comm",
                 "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm",
                 "${workspaceFolder}/platform/gd32g553c/inc",
                 "${workspaceFolder}/platform/gd32g553c/bsp/inc",
                 "${workspaceFolder}/platform/gd32g553c/Firmware/CMSIS",
@@ -90,7 +90,7 @@
             ],
             "defines": [
                 "GD32G5X3",
-                "IS_GD32G553",
+                "PLATFORM_GD32G553C",
                 "TOOLCHAIN_GCC",
                 "FIRMWARE_TYPE_ISP",
                 "APP_START_ADDR=0x08000000"
@@ -116,16 +116,16 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
-                "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/business/demo",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/ac",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/data_source/comm",
                 "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm",
                 "${workspaceFolder}/platform/gd32e507/Firmware/CMSIS",
                 "${workspaceFolder}/platform/gd32e507/Firmware/CMSIS/GD/GD32E50x/Include",
                 "${workspaceFolder}/platform/gd32e507/Firmware/GD32E50x_standard_peripheral/Include",
@@ -134,14 +134,17 @@
                 "${workspaceFolder}/platform/gd32e507/enet/inc",
                 "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/src/include",
                 "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/port/GD32E50x",
-                "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/port/GD32E50x/Basic"
+                "${workspaceFolder}/platform/gd32e507/third_party/lwip-2.2.1/port/GD32E50x/Basic",
+                "${workspaceFolder}/code/lib/fal"
             ],
             "defines": [
                 "GD32E50X",
                 "GD32E50X_CL",
                 "USE_STDPERIPH_DRIVER",
-                "IS_GD32E507",
-                "TOOLCHAIN_GCC"
+                "PLATFORM_GD32E507",
+                "TOOLCHAIN_GCC",
+                "ENET_RXBUF_NUM=12",
+                "ENET_TXBUF_NUM=4"
             ],
             "browse": {
                 "path": [
@@ -168,29 +171,31 @@
                 "${workspaceFolder}/platform/hc32f334/src",
                 "${workspaceFolder}/platform/hc32f334/bsp",
                 "${workspaceFolder}/platform/hc32f334/inc",
-                "${workspaceFolder}/platform/hc32f334/src",
                 "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/Include",
                 "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
                 "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
-                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/business/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm"
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo",
+                "${workspaceFolder}/code/app/bootloader/iap",
+                "${workspaceFolder}/code/app/bootloader/protocol",
+                "${workspaceFolder}/code/app/bootloader/common"
             ],
             "defines": [
                 "HC32F334",
+                "PLATFORM_HC32F334",
                 "USE_DDL_DRIVER",
-                "IS_HC32F334",
                 "FIRMWARE_TYPE_ISP",
-                "APP_START_ADDR=0x00000000",
-                "VECT_TAB_OFFSET=0x00000000",
                 "TOOLCHAIN_MDK",
-                "IS_AC"
+                "IS_AC",
+                "CTRL_PWM_TIMER_FREQ_HZ=120000000UL"
             ],
             "browse": {
                 "path": [
@@ -216,30 +221,31 @@
                 "${workspaceFolder}/platform/hc32f334/src",
                 "${workspaceFolder}/platform/hc32f334/bsp",
                 "${workspaceFolder}/platform/hc32f334/inc",
-                "${workspaceFolder}/platform/hc32f334/src",
                 "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/Include",
                 "${workspaceFolder}/platform/hc32f334/Firmware/CMSIS/HDSC/hc32f3xx/Include",
                 "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
-                "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/business/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/section/srtos_m",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm"
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo",
+                "${workspaceFolder}/code/app/bootloader/iap",
+                "${workspaceFolder}/code/app/bootloader/protocol",
+                "${workspaceFolder}/code/app/bootloader/common"
             ],
             "defines": [
                 "HC32F334",
+                "PLATFORM_HC32F334",
                 "USE_DDL_DRIVER",
-                "IS_HC32F334",
                 "FIRMWARE_TYPE_ISP",
-                "APP_START_ADDR=0x00000000",
-                "VECT_TAB_OFFSET=0x00000000",
                 "TOOLCHAIN_GCC",
-                "IS_AC"
+                "IS_AC",
+                "CTRL_PWM_TIMER_FREQ_HZ=120000000UL"
             ],
             "browse": {
                 "path": [
@@ -272,18 +278,19 @@
                 "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
                 "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/data_source/comm",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/fal",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/lib/fal",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/app/bootloader/core",
                 "${workspaceFolder}/code/app/bootloader/protocol",
                 "${workspaceFolder}/code/app/bootloader/common",
-                "${workspaceFolder}/code/app/bootloader/iap"
+                "${workspaceFolder}/code/app/bootloader/iap",
+                "${workspaceFolder}/code/data_source/demo"
             ],
             "defines": [
                 "HC32F334",
-                "IS_HC32F334",
+                "PLATFORM_HC32F334",
                 "USE_DDL_DRIVER",
                 "FIRMWARE_TYPE_BOOTLOADER",
                 "BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE",
@@ -320,23 +327,25 @@
                 "${workspaceFolder}/platform/hc32f334/Firmware/HC32_LL_Driver/inc",
                 "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm",
+                "${workspaceFolder}/code/data_source/comm",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/fal",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/lib/fal",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/app/bootloader/core",
                 "${workspaceFolder}/code/app/bootloader/protocol",
                 "${workspaceFolder}/code/app/bootloader/common",
-                "${workspaceFolder}/code/app/bootloader/iap"
+                "${workspaceFolder}/code/app/bootloader/iap",
+                "${workspaceFolder}/code/data_source/demo"
             ],
             "defines": [
                 "HC32F334",
-                "IS_HC32F334",
+                "PLATFORM_HC32F334",
                 "USE_DDL_DRIVER",
                 "FIRMWARE_TYPE_BOOTLOADER",
                 "BOOTLOADER_PROTOCOL_FRAME_SERVICE_ENABLE",
                 "HC32F334_IAP_BASE=0x00004000UL",
-                "TOOLCHAIN_GCC"
+                "TOOLCHAIN_GCC",
+                "HC32_BOOTLOADER_DEFAULT_MODE=BOOTLOADER_UPGRADE_MODE_DIRECT_E"
             ],
             "browse": {
                 "path": [
@@ -362,28 +371,25 @@
                 "${workspaceFolder}/platform/hc32f558/src",
                 "${workspaceFolder}/platform/hc32f558/bsp",
                 "${workspaceFolder}/platform/hc32f558/inc",
-                "${workspaceFolder}/platform/hc32f558/src",
                 "${workspaceFolder}/platform/hc32f558/Firmware/CMSIS/HDSC/hc32f5xx/Include",
                 "${workspaceFolder}/platform/hc32f558/Firmware/CMSIS/Include",
                 "${workspaceFolder}/platform/hc32f558/Firmware/HC32_LL_Driver/inc",
-                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/business/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/interface",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm"
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo"
             ],
             "defines": [
                 "HC32F558",
-                "USE_DDL_DRIVER",
-                "IS_HC32F558",
+                "PLATFORM_HC32F558",
                 "TOOLCHAIN_MDK",
-                "HOST_ADDR=LLC_ADDR",
-                "COMM_LINK_ENABLE_ISO=0",
-                "COMM_LINK_ENABLE_CAN=0"
+                "USE_DDL_DRIVER"
             ],
             "browse": {
                 "path": [
@@ -406,25 +412,25 @@
                 "-mfloat-abi=hard"
             ],
             "includePath": [
+                "${workspaceFolder}/code/business/demo",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/interface/demo/common",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
                 "${workspaceFolder}/platform/apm32/src",
                 "${workspaceFolder}/platform/apm32/bsp/inc",
                 "${workspaceFolder}/platform/apm32/Libraries/CMSIS/Include",
                 "${workspaceFolder}/platform/apm32/Libraries/Device/Geehy/APM32F4xx/Include",
-                "${workspaceFolder}/platform/apm32/Libraries/APM32F402_403_StdPeriphDriver/inc",
-                "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/demo",
-                "${workspaceFolder}/code/lib",
-                "${workspaceFolder}/code/dbg",
-                "${workspaceFolder}/code/interface/ac",
-                "${workspaceFolder}/code/interface",
-                "${workspaceFolder}/code/interface/common",
-                "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm"
+                "${workspaceFolder}/platform/apm32/Libraries/APM32F402_403_StdPeriphDriver/inc"
             ],
             "defines": [
                 "APM32F402xx",
-                "IS_APM32F402",
+                "PLATFORM_APM32F402",
                 "TOOLCHAIN_GCC",
                 "FIRMWARE_TYPE_ISP"
             ],
@@ -454,17 +460,25 @@
                 "${workspaceFolder}/platform/zynq7020/ps/build/bsp/ps7_cortexa9_0/include",
                 "${workspaceFolder}/platform/zynq7020/ps/build_srtos/bsp/ps7_cortexa9_0/include",
                 "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/demo",
+                "${workspaceFolder}/code/business/demo",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/interface/ac",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/interface/demo/common",
                 "${workspaceFolder}/code/section/srtos_a9",
                 "${workspaceFolder}/code/section",
-                "${workspaceFolder}/code/comm"
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/data_pool/demo",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/app/bootloader/core",
+                "${workspaceFolder}/code/app/bootloader/protocol",
+                "${workspaceFolder}/code/app/bootloader/common",
+                "${workspaceFolder}/code/app/bootloader/iap"
             ],
             "defines": [
-                "IS_ZYNQ7020",
+                "PLATFORM_ZYNQ7020",
+                "IS_IAP",
                 "TOOLCHAIN_GCC"
             ],
             "browse": {
@@ -486,8 +500,6 @@
                 "${workspaceFolder}/platform/plecs/npc/app",
                 "${workspaceFolder}/platform/plecs/npc/bsp",
                 "${workspaceFolder}/platform/plecs/common",
-                "${workspaceFolder}/platform/plecs/common/comm",
-                "${workspaceFolder}/platform/plecs/common/dbg/shell",
                 "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/data_source/comm",
                 "${workspaceFolder}/code/data_source/demo",
@@ -495,7 +507,12 @@
                 "${workspaceFolder}/code/interface/npc/common",
                 "${workspaceFolder}/code/ctrl/npc",
                 "${workspaceFolder}/code/lib",
-                "${workspaceFolder}/code/section"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/sim/protocol",
+                "${workspaceFolder}/code/sim/comm",
+                "${workspaceFolder}/code/sim/debug/shell",
+                "${workspaceFolder}/code/app/npc",
+                "${workspaceFolder}/code/interface/npc/sim"
             ],
             "defines": [
                 "PLATFORM_PLECS"
@@ -517,7 +534,7 @@
         },
         {
             "name": "plecs_buck",
-            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-gcc-x64",
@@ -526,18 +543,21 @@
                 "${workspaceFolder}/platform/plecs/buck/app",
                 "${workspaceFolder}/platform/plecs/buck/bsp",
                 "${workspaceFolder}/platform/plecs/common",
-                "${workspaceFolder}/platform/plecs/common/comm",
-                "${workspaceFolder}/platform/plecs/common/dbg/shell",
-                "${workspaceFolder}/code/comm",
-                "${workspaceFolder}/code/interface/common",
+                "${workspaceFolder}/code/data_source/comm",
                 "${workspaceFolder}/code/section/baremetal",
                 "${workspaceFolder}/code/section",
                 "${workspaceFolder}/code/dbg",
                 "${workspaceFolder}/code/lib",
                 "${workspaceFolder}/code/ctrl",
-                "${workspaceFolder}/code/ctrl/buck"
+                "${workspaceFolder}/code/ctrl/buck",
+                "${workspaceFolder}/code/sim/protocol",
+                "${workspaceFolder}/code/sim/comm",
+                "${workspaceFolder}/code/sim/debug/shell",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/interface/buck/sim"
             ],
             "defines": [
+                "PLATFORM_PLECS",
                 "IS_PLECS",
                 "IS_BUCK",
                 "TOOLCHAIN_GCC",
@@ -547,8 +567,8 @@
                 "path": [
                     "${workspaceFolder}/platform/plecs/buck",
                     "${workspaceFolder}/platform/plecs/common",
-                    "${workspaceFolder}/code/comm",
-                    "${workspaceFolder}/code/interface/common",
+                    "${workspaceFolder}/code/data_source/comm",
+                    "${workspaceFolder}/code/interface/demo/common",
                     "${workspaceFolder}/code/section",
                     "${workspaceFolder}/code/dbg",
                     "${workspaceFolder}/code/lib",
@@ -559,27 +579,25 @@
         },
         {
             "name": "plecs_ac",
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64",
+            "intelliSenseMode": "windows-gcc-x64",
             "includePath": [
                 "${workspaceFolder}/platform/plecs/common",
                 "${workspaceFolder}/platform/plecs/ac",
                 "${workspaceFolder}/platform/plecs/ac/app",
                 "${workspaceFolder}/platform/plecs/ac/bsp",
                 "${workspaceFolder}/code/lib",
-                "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/ac",
-                "${workspaceFolder}/code/comm",
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/pfc",
                 "${workspaceFolder}/code/ctrl/inv",
-                "${workspaceFolder}/code/interface/ac",
                 "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg"
             ],
             "defines": [
+                "PLATFORM_PLECS",
                 "IS_PLECS",
                 "TOOLCHAIN_GCC",
                 "IS_AC"
@@ -587,10 +605,10 @@
         },
         {
             "name": "plecs_pfc",
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64",
+            "intelliSenseMode": "windows-gcc-x64",
             "includePath": [
                 "${workspaceFolder}/platform/plecs/common",
                 "${workspaceFolder}/platform/plecs/pfc",
@@ -600,9 +618,11 @@
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/pfc",
                 "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg"
             ],
             "defines": [
+                "PLATFORM_PLECS",
                 "IS_PLECS",
                 "IS_PFC",
                 "TOOLCHAIN_GCC",
@@ -611,7 +631,7 @@
         },
         {
             "name": "plecs_inv",
-            "compilerPath": "C:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-gcc-x64",
@@ -624,9 +644,11 @@
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/inv",
                 "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg"
             ],
             "defines": [
+                "PLATFORM_PLECS",
                 "IS_PLECS",
                 "IS_INV",
                 "TOOLCHAIN_GCC",
@@ -647,39 +669,11 @@
             }
         },
         {
-            "name": "plecs_dc",
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64",
-            "includePath": [
-                "${workspaceFolder}/platform/plecs/common",
-                "${workspaceFolder}/platform/plecs/dc",
-                "${workspaceFolder}/platform/plecs/dc/app",
-                "${workspaceFolder}/platform/plecs/dc/bsp",
-                "${workspaceFolder}/code/lib",
-                "${workspaceFolder}/code/app",
-                "${workspaceFolder}/code/app/ac",
-                "${workspaceFolder}/code/comm",
-                "${workspaceFolder}/code/ctrl",
-                "${workspaceFolder}/code/ctrl/pfc",
-                "${workspaceFolder}/code/ctrl/inv",
-                "${workspaceFolder}/code/interface/ac",
-                "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section"
-            ],
-            "defines": [
-                "IS_PLECS",
-                "TOOLCHAIN_GCC",
-                "IS_DC"
-            ]
-        },
-        {
             "name": "plecs_llc",
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64",
+            "intelliSenseMode": "windows-gcc-x64",
             "includePath": [
                 "${workspaceFolder}/platform/plecs/common",
                 "${workspaceFolder}/platform/plecs/llc",
@@ -689,9 +683,11 @@
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/llc",
                 "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg"
             ],
             "defines": [
+                "PLATFORM_PLECS",
                 "IS_PLECS",
                 "TOOLCHAIN_GCC",
                 "IS_LLC"
@@ -714,11 +710,123 @@
                 "${workspaceFolder}/code/ctrl",
                 "${workspaceFolder}/code/ctrl/cllc",
                 "${workspaceFolder}/code/section/baremetal",
-                "${workspaceFolder}/code/section"
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/interface/cllc/common"
             ],
             "defines": [
+                "PLATFORM_PLECS",
                 "IS_PLECS",
                 "IS_CLLC",
+                "TOOLCHAIN_GCC",
+                "__RAM_FUNC="
+            ]
+        },
+        {
+            "name": "plecs_boost",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/boost",
+                "${workspaceFolder}/platform/plecs/boost/app",
+                "${workspaceFolder}/platform/plecs/boost/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/code/interface",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/boost"
+            ],
+            "defines": [
+                "PLATFORM_PLECS",
+                "IS_PLECS",
+                "IS_BOOST",
+                "TOOLCHAIN_GCC",
+                "__RAM_FUNC="
+            ]
+        },
+        {
+            "name": "plecs_inv_dq",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/inv_dq",
+                "${workspaceFolder}/platform/plecs/inv_dq/app",
+                "${workspaceFolder}/platform/plecs/inv_dq/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/code/sim/protocol",
+                "${workspaceFolder}/code/sim/comm",
+                "${workspaceFolder}/code/sim/debug/shell",
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/inv_dq"
+            ],
+            "defines": [
+                "PLATFORM_PLECS",
+                "IS_PLECS",
+                "IS_INV_DQ",
+                "TOOLCHAIN_GCC",
+                "__RAM_FUNC="
+            ]
+        },
+        {
+            "name": "plecs_inv_i32",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/inv_i32",
+                "${workspaceFolder}/platform/plecs/inv_i32/app",
+                "${workspaceFolder}/platform/plecs/inv_i32/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/inv_i32"
+            ],
+            "defines": [
+                "PLATFORM_PLECS",
+                "IS_PLECS",
+                "IS_INV_I32",
+                "TOOLCHAIN_GCC",
+                "__RAM_FUNC="
+            ]
+        },
+        {
+            "name": "plecs_pfc_i32",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/pfc_i32",
+                "${workspaceFolder}/platform/plecs/pfc_i32/app",
+                "${workspaceFolder}/platform/plecs/pfc_i32/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/lib",
+                "${workspaceFolder}/code/ctrl",
+                "${workspaceFolder}/code/ctrl/pfc_i32"
+            ],
+            "defines": [
+                "PLATFORM_PLECS",
+                "IS_PLECS",
+                "IS_PFC_I32",
                 "TOOLCHAIN_GCC",
                 "__RAM_FUNC="
             ]
@@ -743,6 +851,7 @@
                 "${MATLAB_ROOT}/simulink/include"
             ],
             "defines": [
+                "PLATFORM_MATLAB",
                 "IS_MATLAB",
                 "IS_INV",
                 "TOOLCHAIN_MSVC",
@@ -777,6 +886,7 @@
                 "${MATLAB_R2022B_ROOT}/simulink/include"
             ],
             "defines": [
+                "PLATFORM_MATLAB",
                 "IS_MATLAB",
                 "IS_PLL",
                 "TOOLCHAIN_MSVC",
