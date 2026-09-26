@@ -81,22 +81,22 @@ bool pi_tustin_cal(pi_tustin_t *p_str)
     p_str->inter.e[0] = *p_str->input.p_ref - *p_str->input.p_act;
     p_str->inter.u[1] = p_str->inter.u[0];
 
-    p_str->inter.u[0] =
-        p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.b1 * p_str->inter.e[1] - p_str->inter.a1 * p_str->inter.u[1];
+    p_str->inter.u[0] = p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.b1 * p_str->inter.e[1]
+                      - p_str->inter.a1 * p_str->inter.u[1];
 
     if (p_str->inter.u[0] > p_str->inter.up_lmt)
     {
         p_str->inter.u[0] = p_str->inter.up_lmt;
-        p_str->inter.e[1] =
-            (p_str->inter.u[0] - p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.a1 * p_str->inter.u[1])
-            * p_str->inter.b1_inv;
+        p_str->inter.e[1] = (p_str->inter.u[0] - p_str->inter.b0 * p_str->inter.e[0]
+                             + p_str->inter.a1 * p_str->inter.u[1])
+                          * p_str->inter.b1_inv;
     }
     else if (p_str->inter.u[0] < p_str->inter.dn_lmt)
     {
         p_str->inter.u[0] = p_str->inter.dn_lmt;
-        p_str->inter.e[1] =
-            (p_str->inter.u[0] - p_str->inter.b0 * p_str->inter.e[0] + p_str->inter.a1 * p_str->inter.u[1])
-            * p_str->inter.b1_inv;
+        p_str->inter.e[1] = (p_str->inter.u[0] - p_str->inter.b0 * p_str->inter.e[0]
+                             + p_str->inter.a1 * p_str->inter.u[1])
+                          * p_str->inter.b1_inv;
     }
     else
     {

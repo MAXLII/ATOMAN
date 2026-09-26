@@ -184,8 +184,9 @@ void boost_cfg_set_pwr_lmt(float pwr_lmt)
         return;
     }
 
-    boost_cfg_setpoint_mgr.building.p_data->pwr_lmt =
-        float_to_code(pwr_lmt, BOOST_CTRL_IN_PWR_LMT_MAX_W, BOOST_CTRL_IN_PWR_LMT_CODE_MAX);
+    boost_cfg_setpoint_mgr.building.p_data->pwr_lmt = float_to_code(pwr_lmt,
+                                                                    BOOST_CTRL_IN_PWR_LMT_MAX_W,
+                                                                    BOOST_CTRL_IN_PWR_LMT_CODE_MAX);
 }
 
 void boost_cfg_set_out_volt_ref(float out_volt_ref)
@@ -195,8 +196,9 @@ void boost_cfg_set_out_volt_ref(float out_volt_ref)
         return;
     }
 
-    boost_cfg_setpoint_mgr.building.p_data->out_volt_ref =
-        float_to_code(out_volt_ref, BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V, BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
+    boost_cfg_setpoint_mgr.building.p_data->out_volt_ref = float_to_code(out_volt_ref,
+                                                                         BOOST_CTRL_OUT_VOLT_LOOP_REF_MAX_V,
+                                                                         BOOST_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
 }
 
 void boost_cfg_set_in_volt_lmt(float in_volt_lmt)
@@ -206,8 +208,9 @@ void boost_cfg_set_in_volt_lmt(float in_volt_lmt)
         return;
     }
 
-    boost_cfg_setpoint_mgr.building.p_data->in_volt_lmt =
-        float_to_code(in_volt_lmt, BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V, BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX);
+    boost_cfg_setpoint_mgr.building.p_data->in_volt_lmt = float_to_code(in_volt_lmt,
+                                                                        BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_MAX_V,
+                                                                        BOOST_CTRL_IN_VOLT_LMT_LOOP_REF_CODE_MAX);
 }
 
 void boost_cfg_set_in_curr_lmt(float in_curr_lmt)
@@ -217,8 +220,9 @@ void boost_cfg_set_in_curr_lmt(float in_curr_lmt)
         return;
     }
 
-    boost_cfg_setpoint_mgr.building.p_data->in_curr_lmt =
-        float_to_bipolar_code(in_curr_lmt, BOOST_CTRL_IN_CURR_LMT_MAX_A, BOOST_CTRL_IN_CURR_LMT_CODE_MAX);
+    boost_cfg_setpoint_mgr.building.p_data->in_curr_lmt = float_to_bipolar_code(in_curr_lmt,
+                                                                                BOOST_CTRL_IN_CURR_LMT_MAX_A,
+                                                                                BOOST_CTRL_IN_CURR_LMT_CODE_MAX);
 }
 
 void boost_cfg_set_out_curr_lmt(float out_curr_lmt)
@@ -228,8 +232,9 @@ void boost_cfg_set_out_curr_lmt(float out_curr_lmt)
         return;
     }
 
-    boost_cfg_setpoint_mgr.building.p_data->out_curr_lmt =
-        float_to_bipolar_code(out_curr_lmt, BOOST_CTRL_OUT_CURR_LMT_MAX_A, BOOST_CTRL_OUT_CURR_LMT_CODE_MAX);
+    boost_cfg_setpoint_mgr.building.p_data->out_curr_lmt = float_to_bipolar_code(out_curr_lmt,
+                                                                                 BOOST_CTRL_OUT_CURR_LMT_MAX_A,
+                                                                                 BOOST_CTRL_OUT_CURR_LMT_CODE_MAX);
 }
 
 void boost_cfg_publish_building(void)

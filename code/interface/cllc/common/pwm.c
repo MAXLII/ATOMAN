@@ -60,8 +60,8 @@ static void calculate_forward(float command, float *p_duty, float *p_frequency_h
     {
         float ratio = (command - transition) / (1.0f - transition); /* PFM progression to resonance. */
 
-        *p_frequency_hz =
-            CLLC_HW_FORWARD_MAX_FREQ_HZ - ((CLLC_HW_FORWARD_MAX_FREQ_HZ - CLLC_HW_PRIMARY_RESONANT_FREQ_HZ) * ratio);
+        *p_frequency_hz = CLLC_HW_FORWARD_MAX_FREQ_HZ
+                        - ((CLLC_HW_FORWARD_MAX_FREQ_HZ - CLLC_HW_PRIMARY_RESONANT_FREQ_HZ) * ratio);
         *p_duty = CLLC_HW_MAX_PHASE_SHIFT_DUTY;
     }
 }

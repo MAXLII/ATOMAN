@@ -204,22 +204,50 @@ static void inv_ctrl_reinit_states(void)
     p_ctrl_active_setpoint = p_active_setpoint;
     inv_ctrl_update_feedback(p_hal);
 
-    if (pi_tustin_init(&volt_loop_d, INV_CTRL_VOLT_LOOP_KP, INV_CTRL_VOLT_LOOP_KI, ctrl_ts, INV_CTRL_VOLT_LOOP_OUT_MAX_A, INV_CTRL_VOLT_LOOP_OUT_MIN_A, &v_d_ref, &v_d_act) == false)
+    if (pi_tustin_init(&volt_loop_d,
+                       INV_CTRL_VOLT_LOOP_KP,
+                       INV_CTRL_VOLT_LOOP_KI,
+                       ctrl_ts,
+                       INV_CTRL_VOLT_LOOP_OUT_MAX_A,
+                       INV_CTRL_VOLT_LOOP_OUT_MIN_A,
+                       &v_d_ref,
+                       &v_d_act) == false)
     {
         init_ok = false;
     }
 
-    if (pi_tustin_init(&volt_loop_q, INV_CTRL_VOLT_LOOP_KP, INV_CTRL_VOLT_LOOP_KI, ctrl_ts, INV_CTRL_VOLT_LOOP_OUT_MAX_A, INV_CTRL_VOLT_LOOP_OUT_MIN_A, &v_q_ref, &v_q_act) == false)
+    if (pi_tustin_init(&volt_loop_q,
+                       INV_CTRL_VOLT_LOOP_KP,
+                       INV_CTRL_VOLT_LOOP_KI,
+                       ctrl_ts,
+                       INV_CTRL_VOLT_LOOP_OUT_MAX_A,
+                       INV_CTRL_VOLT_LOOP_OUT_MIN_A,
+                       &v_q_ref,
+                       &v_q_act) == false)
     {
         init_ok = false;
     }
 
-    if (pi_tustin_init(&inductor_loop_d, INV_CTRL_INDUCTOR_LOOP_KP, INV_CTRL_INDUCTOR_LOOP_KI, ctrl_ts, INV_CTRL_INDUCTOR_LOOP_OUT_MAX_A, INV_CTRL_INDUCTOR_LOOP_OUT_MIN_A, &i_l_d_ref, &i_l_d_act) == false)
+    if (pi_tustin_init(&inductor_loop_d,
+                       INV_CTRL_INDUCTOR_LOOP_KP,
+                       INV_CTRL_INDUCTOR_LOOP_KI,
+                       ctrl_ts,
+                       INV_CTRL_INDUCTOR_LOOP_OUT_MAX_A,
+                       INV_CTRL_INDUCTOR_LOOP_OUT_MIN_A,
+                       &i_l_d_ref,
+                       &i_l_d_act) == false)
     {
         init_ok = false;
     }
 
-    if (pi_tustin_init(&inductor_loop_q, INV_CTRL_INDUCTOR_LOOP_KP, INV_CTRL_INDUCTOR_LOOP_KI, ctrl_ts, INV_CTRL_INDUCTOR_LOOP_OUT_MAX_A, INV_CTRL_INDUCTOR_LOOP_OUT_MIN_A, &i_l_q_ref, &i_l_q_act) == false)
+    if (pi_tustin_init(&inductor_loop_q,
+                       INV_CTRL_INDUCTOR_LOOP_KP,
+                       INV_CTRL_INDUCTOR_LOOP_KI,
+                       ctrl_ts,
+                       INV_CTRL_INDUCTOR_LOOP_OUT_MAX_A,
+                       INV_CTRL_INDUCTOR_LOOP_OUT_MIN_A,
+                       &i_l_q_ref,
+                       &i_l_q_act) == false)
     {
         init_ok = false;
     }
@@ -399,8 +427,8 @@ static void inv_ctrl_isr(void)
     i_cap_q_ref = i_cap_q_act + inductor_loop_q.output.val;
     i_cap_ref = (costheta * i_cap_d_ref) - (sintheta * i_cap_q_ref);
 
-    harmonic_comp =
-        resonant_cal(&harmonic_3, v_cap_fb) + resonant_cal(&harmonic_5, v_cap_fb) + resonant_cal(&harmonic_7, v_cap_fb);
+    harmonic_comp = resonant_cal(&harmonic_3, v_cap_fb) + resonant_cal(&harmonic_5, v_cap_fb)
+                  + resonant_cal(&harmonic_7, v_cap_fb);
     UP_DN_LMT(harmonic_comp, INV_CTRL_HARMONIC_OUT_MAX_A, INV_CTRL_HARMONIC_OUT_MIN_A);
 
     i_cap_inner_out = INV_CTRL_INNER_LOOP_K * (i_cap_ref - i_cap_act - harmonic_comp);

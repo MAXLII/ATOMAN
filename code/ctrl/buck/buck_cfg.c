@@ -102,8 +102,9 @@ uint8_t buck_cfg_set_out_volt_ref(float out_volt_ref)
         return 0U;
     }
 
-    code =
-        buck_cfg_float_to_code(out_volt_ref, BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V, BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
+    code                           = buck_cfg_float_to_code(out_volt_ref,
+                                  BUCK_CTRL_OUT_VOLT_LOOP_REF_MAX_V,
+                                  BUCK_CTRL_OUT_VOLT_LOOP_REF_CODE_MAX);
     buck_cfg.out_volt_ref          = out_volt_ref;
     setpoint_building.out_volt_ref = code;
     return 1U;

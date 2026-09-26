@@ -283,11 +283,12 @@ static void FUNC_RAM npc_ctrl_run(void)
     {
         u_dq[axis] = voltage_ref_raw[axis] * scale_u;
         /* 使用限幅前后差值回算抗饱和，保持先输出、后积分的离散实现。 */
-        integral_v[axis] +=
-            ctrl_cfg.ts
-            * (ctrl_cfg.ki_v * voltage_error[axis] + ctrl_cfg.kaw_v * (i_ref[axis] - current_ref_raw[axis]));
-        integral_i[axis] +=
-            ctrl_cfg.ts * (ctrl_cfg.ki_i * current_error[axis] + ctrl_cfg.kaw_i * (u_dq[axis] - voltage_ref_raw[axis]));
+        integral_v[axis] += ctrl_cfg.ts
+                          * (ctrl_cfg.ki_v * voltage_error[axis]
+                             + ctrl_cfg.kaw_v * (i_ref[axis] - current_ref_raw[axis]));
+        integral_i[axis] += ctrl_cfg.ts
+                          * (ctrl_cfg.ki_i * current_error[axis]
+                             + ctrl_cfg.kaw_i * (u_dq[axis] - voltage_ref_raw[axis]));
     }
 
     p_hal->p_set_pwm_func(v_alpha, v_beta, p_sample->v_dc_p, p_sample->v_dc_n, i_fundamental); /* 同拍电压指令和基波电流直接交给调制。 */

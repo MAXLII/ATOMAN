@@ -147,8 +147,8 @@ static bool FUNC_RAM calculate_sector(const float *p_phase,
     p_output->phase_b              = result[1];
     p_output->phase_c              = result[2];
     p_output->midpoint_current_ref = midpoint_ref;
-    p_output->midpoint_current =
-        result[0].duty_o * p_current[0] + result[1].duty_o * p_current[1] + result[2].duty_o * p_current[2];
+    p_output->midpoint_current = result[0].duty_o * p_current[0] + result[1].duty_o * p_current[1]
+                               + result[2].duty_o * p_current[2];
     p_output->common_mode_v = offset; /* Caller converts the normalized value to volts. */
     return true;
 }
@@ -310,9 +310,9 @@ void FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
     {
         midpoint_ref = -p_svpwm->cfg.midpoint_kp * (p_svpwm->input.v_dc_p - p_svpwm->input.v_dc_n);
     }
-    current_roundoff =
-        SVPWM_3LEVEL_CURRENT_ROUNDOFF
-        * (fabsf(phase_current[0]) + fabsf(phase_current[1]) + fabsf(phase_current[2]) + fabsf(midpoint_ref));
+    current_roundoff = SVPWM_3LEVEL_CURRENT_ROUNDOFF
+                     * (fabsf(phase_current[0]) + fabsf(phase_current[1]) + fabsf(phase_current[2])
+                        + fabsf(midpoint_ref));
 
     limit_reference(&p_svpwm->input, scale, phase); /* Saturate before either modulation path. */
 
@@ -342,7 +342,14 @@ void FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
         return;
     }
 
-    if (calculate_sector(phase, positive_bus, negative_bus, preferred_mask, phase_current, midpoint_ref, balance_enabled, &p_svpwm->output) == true)
+    if (calculate_sector(phase,
+                         positive_bus,
+                         negative_bus,
+                         preferred_mask,
+                         phase_current,
+                         midpoint_ref,
+                         balance_enabled,
+                         &p_svpwm->output) == true)
     {
         found      = true;
         best_error = fabsf(p_svpwm->output.midpoint_current - midpoint_ref);
@@ -367,7 +374,14 @@ void FUNC_RAM svpwm_3level_cal(svpwm_3level_t *p_svpwm)
             continue;
         }
 
-        if (calculate_sector(phase, positive_bus, negative_bus, sector_masks[index], phase_current, midpoint_ref, balance_enabled, &candidate) == true)
+        if (calculate_sector(phase,
+                             positive_bus,
+                             negative_bus,
+                             sector_masks[index],
+                             phase_current,
+                             midpoint_ref,
+                             balance_enabled,
+                             &candidate) == true)
         {
             candidate_error = fabsf(candidate.midpoint_current - midpoint_ref);
 

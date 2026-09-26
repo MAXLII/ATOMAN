@@ -187,8 +187,9 @@ void cllc_cfg_set_battery_voltage_ref(float voltage_v)
 
     if (p_setpoint != NULL)
     {
-        p_setpoint->battery_voltage_ref_v =
-            clamp_float(voltage_v, CLLC_HW_BATTERY_VOLTAGE_MIN_V, CLLC_HW_BATTERY_VOLTAGE_MAX_V);
+        p_setpoint->battery_voltage_ref_v = clamp_float(voltage_v,
+                                                        CLLC_HW_BATTERY_VOLTAGE_MIN_V,
+                                                        CLLC_HW_BATTERY_VOLTAGE_MAX_V);
     }
 }
 

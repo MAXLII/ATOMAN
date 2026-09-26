@@ -54,14 +54,14 @@
  * @param rly_off           Hardware relay OFF callback
  */
 void rly_on_init(rly_on_t *p_str,
-                 uint8_t *p_rly_on_trig,
-                 uint8_t *p_rly_off_trig,
-                 uint8_t *p_is_equal,
-                 float *p_freq,
-                 float ctrl_freq,
-                 float rly_on_time_def,
-                 void (*rly_on)(void),
-                 void (*rly_off)(void))
+                 uint8_t  *p_rly_on_trig,
+                 uint8_t  *p_rly_off_trig,
+                 uint8_t  *p_is_equal,
+                 float    *p_freq,
+                 float     ctrl_freq,
+                 float     rly_on_time_def,
+                 void      (*rly_on)(void),
+                 void      (*rly_off)(void))
 {
     if (p_str == NULL)
     {
@@ -221,7 +221,8 @@ void rly_on_func(rly_on_t *p_str)
             }
 
             p_str->inter.dly = (uint32_t)(p_str->cfg.ctrl_freq * dly_s + 0.5f);
-            p_str->inter.on_confirm = (uint32_t)(p_str->cfg.ctrl_freq * p_str->cfg.rly_on_time_def + 0.5f);
+            p_str->inter.on_confirm = (uint32_t)(p_str->cfg.ctrl_freq * p_str->cfg.rly_on_time_def
+                                                 + 0.5f);
             p_str->inter.dly_cnt    = 0U;
             p_str->inter.on_cnt     = 0U;
             p_str->output.is_closed = 0U;

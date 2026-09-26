@@ -91,8 +91,8 @@ int8_t codec_zero_encode(uint16_t input_len,
 
         for (nibble_index = 0u; nibble_index < 2u; ++nibble_index)
         {
-            const uint8_t nibble =
-                (nibble_index == 0u) ? (uint8_t)(p_input[index] >> 4u) : (uint8_t)(p_input[index] & 0x0Fu);
+            const uint8_t nibble = (nibble_index == 0u) ? (uint8_t)(p_input[index] >> 4u)
+                                                        : (uint8_t)(p_input[index] & 0x0Fu);
             const uint8_t segment = (uint8_t)(nibble >> CODEC_ZERO_SEGMENT_BITS);
             const uint8_t offset = (uint8_t)(nibble & CODEC_ZERO_SEGMENT_MAX);
             uint8_t bit_index    = 0u;

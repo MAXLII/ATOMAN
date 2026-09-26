@@ -192,7 +192,9 @@ int8_t codec_dict_encode(uint16_t input_len,
                 continue;
             }
 
-            if (memcmp(&p_input[index], &s_codec_dict_entry_data[s_codec_dict_entries[entry_index].offset], entry_len) != 0)
+            if (memcmp(&p_input[index],
+                       &s_codec_dict_entry_data[s_codec_dict_entries[entry_index].offset],
+                       entry_len) != 0)
             {
                 continue;
             }
