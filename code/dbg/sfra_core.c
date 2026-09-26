@@ -93,8 +93,8 @@ static void sfra_update_freq_step(sfra_t *sfra)
     }
     else
     {
-        sfra->cfg.freq_step_mul =
-            powf(sfra->cfg.freq_end_hz / sfra->cfg.freq_start_hz, 1.0f / (float)(sfra->cfg.freq_length - 1U));
+        sfra->cfg.freq_step_mul = powf(sfra->cfg.freq_end_hz / sfra->cfg.freq_start_hz,
+                                       1.0f / (float)(sfra->cfg.freq_length - 1U));
     }
 }
 
@@ -215,11 +215,12 @@ static void sfra_prepare_current_freq(sfra_t *sfra)
     sfra->isr.current_freq_hz = freq_hz;
     sfra->isr.phase_rad       = 0.0f;
     sfra->isr.phase_step_rad = SFRA_TWO_PI * freq_hz * sfra->cfg.sample_period_s;
-    sfra->isr.injection_now      = 0.0f;
-    sfra->isr.injection_delay[0] = 0.0f;
-    sfra->isr.injection_delay[1] = 0.0f;
-    sfra->isr.settle_sample_size =
-        sfra_calc_sample_size(sfra->cfg.settle_cycle_count, freq_hz, sfra->cfg.sample_period_s);
+    sfra->isr.injection_now       = 0.0f;
+    sfra->isr.injection_delay[0]  = 0.0f;
+    sfra->isr.injection_delay[1]  = 0.0f;
+    sfra->isr.settle_sample_size  = sfra_calc_sample_size(sfra->cfg.settle_cycle_count,
+                                                         freq_hz,
+                                                         sfra->cfg.sample_period_s);
     sfra->isr.settle_sample_count = 0U;
     sfra->isr.point_ready         = 0U;
     sfra->isr.dft.dft_start       = 0U;

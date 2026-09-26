@@ -143,8 +143,9 @@ static const section_list_registration_t *section_list_service_registration_get(
         if (p_section->section_type == (uint32_t)SECTION_DBG_LIST)
         {
             const section_item_t *p_item = (const section_item_t *)p_section->p_str;
-            const section_list_registration_t *p_registration =
-                (p_item == NULL) ? NULL : (const section_list_registration_t *)p_item->p_obj;
+            const section_list_registration_t *p_registration = (p_item == NULL)
+                                                                  ? NULL
+                                                                  : (const section_list_registration_t *)p_item->p_obj;
 
             if (section_list_service_registration_is_valid(p_registration) != 0u)
             {

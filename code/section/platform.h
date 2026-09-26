@@ -52,7 +52,10 @@
 #error "Define exactly one supported TOOLCHAIN_* identity macro."
 #endif
 
-#if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + defined(PLATFORM_GD32G553C) + defined(PLATFORM_GD32E507) + defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558) + defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + defined(PLATFORM_TMS320F28P55) + defined(PLATFORM_TMS320F280049C)) != 1
+#if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + defined(PLATFORM_GD32G553C) \
+     + defined(PLATFORM_GD32E507) + defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558)                         \
+     + defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + defined(PLATFORM_TMS320F28P55)                    \
+     + defined(PLATFORM_TMS320F280049C)) != 1
 #error "Define exactly one PLATFORM_* identity macro."
 #endif
 

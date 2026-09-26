@@ -99,13 +99,14 @@ typedef struct
 
 #define REG_SECTION_INIT(_section_type, _item) {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
 
-#define REG_SECTION_FUNC(_section_type, _obj)                                                \
-    section_item_t section_item_##_obj = {                                                   \
-        .p_obj  = (void *)&(_obj),                                                           \
-        .p_next = NULL,                                                                      \
-    };                                                                                       \
-    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj SECTION_REG_ATTR_SUFFIX = \
-        REG_SECTION_INIT(_section_type, section_item_##_obj);
+#define REG_SECTION_FUNC(_section_type, _obj)                                                                  \
+    section_item_t section_item_##_obj = {                                                                     \
+        .p_obj  = (void *)&(_obj),                                                                             \
+        .p_next = NULL,                                                                                        \
+    };                                                                                                         \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT( \
+        _section_type,                                                                                         \
+        section_item_##_obj);
 
 typedef struct
 {

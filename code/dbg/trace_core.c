@@ -69,8 +69,8 @@ void dbg_trace_core_record(uint32_t line)
     write_index = g_dbg_trace_ctx.write_count & (DBG_TRACE_BUFFER_SIZE - 1u);
     p_item       = &g_dbg_trace_buffer[write_index];
     p_item->line = line;
-    p_item->time =
-        (g_dbg_trace_ctx.p_time_get != NULL) ? g_dbg_trace_ctx.p_time_get() : *(g_dbg_trace_ctx.p_system_time);
+    p_item->time = (g_dbg_trace_ctx.p_time_get != NULL) ? g_dbg_trace_ctx.p_time_get()
+                                                        : *(g_dbg_trace_ctx.p_system_time);
 
     g_dbg_trace_ctx.write_count++;
 
