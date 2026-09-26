@@ -92,3 +92,10 @@ docs/reference
 /docs/级联H桥*.md
 !/docs/级联H桥整流器_测试报告.md
 /docs/附件5_级联H桥整流器的控制策略研究.pdf
+
+# CHB historical and auxiliary test outputs (current report assets remain tracked)
+/docs/assets/chb_pf_20260926/
+/docs/assets/chb_tests_20260926/
+/docs/assets/chb_power_pf_20260926/power_v2_*
+/docs/assets/chb_power_pf_20260926/power_v3_acceptance_pf_bound.json
+/docs/assets/chb_power_pf_20260926/power_v3_overview.png
