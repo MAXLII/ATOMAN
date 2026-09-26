@@ -124,8 +124,14 @@
 
 /* Host testbench */
 #if defined(PLATFORM_TESTBENCH)
+#if defined(SECTION_TESTBENCH_DYNAMIC_TICK)
+extern uint32_t section_testbench_time_100us;
+#define SECTION_SYS_TICK         section_testbench_time_100us
+#define SECTION_SYS_TICK_UNIT_US 100u
+#else
 #define SECTION_SYS_TICK         0u
 #define SECTION_SYS_TICK_UNIT_US 1u
+#endif
 extern size_t __start_section;
 extern size_t __stop_section;
 #define SECTION_START __start_section
