@@ -90,8 +90,8 @@ static uint16_t metadata_crc16(const uint8_t *p_data, uint32_t length)
 
         for (bit = 0u; bit < 8u; bit++)
         {
-            crc =
-                ((crc & 0x8000u) != 0u) ? (uint16_t)(((uint32_t)crc << 1u) ^ 0x1021u) : (uint16_t)((uint32_t)crc << 1u);
+            crc = ((crc & 0x8000u) != 0u) ? (uint16_t)(((uint32_t)crc << 1u) ^ 0x1021u)
+                                          : (uint16_t)((uint32_t)crc << 1u);
         }
     }
     return crc;

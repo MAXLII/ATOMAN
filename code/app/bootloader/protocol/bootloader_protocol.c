@@ -137,8 +137,8 @@ static bootloader_result_t data_handle(bootloader_protocol_t *p_protocol,
      || (data_length > BOOTLOADER_PACKET_DATA_SIZE)
      || (packet_crc != p_protocol->p_crc16(p_payload, (uint32_t)offsetof(bootloader_protocol_data_request_t, packet_crc))))
     {
-        p_ack[offsetof(bootloader_protocol_data_ack_payload_t, data_is_ok)] =
-            (uint8_t)BOOTLOADER_PROTOCOL_DATA_INVALID_E;
+        p_ack[offsetof(bootloader_protocol_data_ack_payload_t, data_is_ok)] = (uint8_t)
+            BOOTLOADER_PROTOCOL_DATA_INVALID_E;
         *p_ack_length = BOOTLOADER_PROTOCOL_DATA_ACK_LENGTH;
         return BOOTLOADER_RESULT_PROTOCOL_ERROR_E;
     }

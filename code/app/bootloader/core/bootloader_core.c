@@ -213,11 +213,11 @@ static void metadata_startup_evaluate(bootloader_t *p_bootloader)
 {
     bootloader_metadata_t metadata = {0};
     bootloader_flash_zone_t source = BOOTLOADER_FLASH_ZONE_META_A_E;
-    const bootloader_result_t result =
-        bootloader_metadata_select(p_bootloader->config.p_copy_buffer,
-                                   &p_bootloader->config.p_copy_buffer[BOOTLOADER_METADATA_ENCODED_SIZE],
-                                   &metadata,
-                                   &source);
+    const bootloader_result_t result = bootloader_metadata_select(
+        p_bootloader->config.p_copy_buffer,
+        &p_bootloader->config.p_copy_buffer[BOOTLOADER_METADATA_ENCODED_SIZE],
+        &metadata,
+        &source);
 
     if (result == BOOTLOADER_RESULT_SUCCESS_E)
     {
@@ -421,8 +421,9 @@ static void copy_read_submit(bootloader_t *p_bootloader)
     bootloader_result_t result = BOOTLOADER_RESULT_SUCCESS_E; /* Staging read submission result. */
     uint32_t remaining         = p_bootloader->upgrade_info.file_size - p_bootloader->copy_offset; /* Bytes left. */
 
-    p_bootloader->copy_chunk_length =
-        (remaining < p_bootloader->config.copy_buffer_size) ? remaining : p_bootloader->config.copy_buffer_size;
+    p_bootloader->copy_chunk_length = (remaining < p_bootloader->config.copy_buffer_size)
+                                        ? remaining
+                                        : p_bootloader->config.copy_buffer_size;
     result = p_bootloader->flash_ops.p_read(BOOTLOADER_FLASH_ZONE_STAGING_E,
                                             p_bootloader->copy_offset,
                                             p_bootloader->copy_chunk_length,
@@ -460,8 +461,8 @@ static void copy_verify_read_submit(bootloader_t *p_bootloader)
 static void verify_read_submit(bootloader_t *p_bootloader)
 {
     const uint32_t remaining = p_bootloader->upgrade_info.file_size - p_bootloader->verify_offset; /* Target bytes left. */
-    const uint32_t chunk =
-        (remaining < p_bootloader->config.copy_buffer_size) ? remaining : p_bootloader->config.copy_buffer_size; /* Next target read length. */
+    const uint32_t chunk = (remaining < p_bootloader->config.copy_buffer_size) ? remaining
+                                                                               : p_bootloader->config.copy_buffer_size; /* Next target read length. */
     const bootloader_result_t result = p_bootloader->flash_ops.p_read(BOOTLOADER_FLASH_ZONE_IAP_E,
                                                                       p_bootloader->verify_offset,
                                                                       chunk,
@@ -541,7 +542,9 @@ static void storage_wait_handle(bootloader_t *p_bootloader)
         break;
     case BOOTLOADER_STATE_COPY_VERIFY_READ_WAIT_E:
 
-        if (p_bootloader->config.p_crc16_update(p_bootloader->config.p_copy_buffer, p_bootloader->copy_chunk_length, p_bootloader->config.p_crc16_init()) != p_bootloader->copy_chunk_crc)
+        if (p_bootloader->config.p_crc16_update(p_bootloader->config.p_copy_buffer,
+                                                p_bootloader->copy_chunk_length,
+                                                p_bootloader->config.p_crc16_init()) != p_bootloader->copy_chunk_crc)
         {
             resident_failure(p_bootloader, BOOTLOADER_RESULT_IMAGE_INVALID_E);
             break;
@@ -664,10 +667,11 @@ bootloader_result_t bootloader_init(bootloader_t *p_bootloader,
     reason                    = p_bootloader->platform_ops.p_boot_reason_get(p_bootloader->platform_ops.p_context);
     p_bootloader->boot_reason = reason;
 
-    if (
-        (reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E)
-     && (p_bootloader->platform_ops.p_upgrade_info_get != NULL)
-     && (p_bootloader->platform_ops.p_upgrade_info_get(p_bootloader->platform_ops.p_context, &p_bootloader->startup_upgrade_info) == BOOTLOADER_RESULT_SUCCESS_E))
+    if (    (reason == BOOTLOADER_BOOT_REASON_IAP_REQUEST_E)
+         && (p_bootloader->platform_ops.p_upgrade_info_get != NULL)
+         && (p_bootloader->platform_ops.p_upgrade_info_get(
+                 p_bootloader->platform_ops.p_context,
+                 &p_bootloader->startup_upgrade_info) == BOOTLOADER_RESULT_SUCCESS_E))
     {
         p_bootloader->startup_upgrade_info_valid = 1u;
     }
@@ -775,8 +779,9 @@ void bootloader_process(bootloader_t *p_bootloader)
         final_read_submit(p_bootloader);
         break;
     case BOOTLOADER_STATE_METADATA_ERASE_E:
-        result =
-            p_bootloader->flash_ops.p_erase(p_bootloader->metadata_target_zone, 0u, BOOTLOADER_METADATA_ENCODED_SIZE);
+        result = p_bootloader->flash_ops.p_erase(p_bootloader->metadata_target_zone,
+                                                 0u,
+                                                 BOOTLOADER_METADATA_ENCODED_SIZE);
 
         if (    (result == BOOTLOADER_RESULT_SUCCESS_E)
              || (result == BOOTLOADER_RESULT_IN_PROGRESS_E))
@@ -875,8 +880,8 @@ bootloader_result_t bootloader_upgrade_begin(bootloader_t *p_bootloader,
 
     p_bootloader->upgrade_info = *p_info;
     p_bootloader->mode         = mode;
-    p_bootloader->download_zone =
-        (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E) ? BOOTLOADER_FLASH_ZONE_STAGING_E : BOOTLOADER_FLASH_ZONE_IAP_E;
+    p_bootloader->download_zone = (mode == BOOTLOADER_UPGRADE_MODE_STAGED_E) ? BOOTLOADER_FLASH_ZONE_STAGING_E
+                                                                             : BOOTLOADER_FLASH_ZONE_IAP_E;
     p_bootloader->received_length       = 0u;
     p_bootloader->pending_packet_offset = 0u;
     p_bootloader->pending_packet_length = 0u;
