@@ -30,6 +30,7 @@ output_*/
 tests/host/**/*.exe
 platform/testbench/fal_demo/*.exe
 platform/testbench/fal_core/*.exe
+platform/testbench/chb/*.exe
 platform/gd32e507/tests/__pycache__/
 
 # Local test code
@@ -79,3 +80,15 @@ verilog/*/sim/*.jou
 xsim.dir/
 xvlog.pb
 docs/reference
+
+# CHB local scripts and generated analysis products
+/platform/plecs/chb/*.py
+/platform/plecs/chb/*.bat
+/platform/plecs/chb/__pycache__/
+/platform/matlab/chb/*.m
+/platform/matlab/chb/*.png
+
+# CHB design documents stay local; track the current test report
+/docs/级联H桥*.md
+!/docs/级联H桥整流器_测试报告.md
+/docs/附件5_级联H桥整流器的控制策略研究.pdf
