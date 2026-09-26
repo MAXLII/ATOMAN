@@ -99,3 +99,7 @@ docs/reference
 /docs/assets/chb_power_pf_20260926/power_v2_*
 /docs/assets/chb_power_pf_20260926/power_v3_acceptance_pf_bound.json
 /docs/assets/chb_power_pf_20260926/power_v3_overview.png
+
+# CHB report data stays local; publish only the report and its figures
+/docs/assets/chb_power_pf_20260926/*.json
+/docs/assets/chb_power_pf_20260926/*.csv

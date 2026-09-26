@@ -192,9 +192,11 @@ Scope PF 与原始轨迹独立计算，15 阶段的最大绝对差为 0.000029�
 
 ## 7. 本轮数据文件
 
-- [结果 CSV](assets/chb_power_pf_20260926/power_v3_acceptance.csv)
-- [逐阶段及逐窗口分析](assets/chb_power_pf_20260926/power_v3_acceptance_analysis.json)
-- [模型、DLL、源码指纹与在线诊断](assets/chb_power_pf_20260926/power_v3_acceptance_manifest.json)
+以下数据仅保存在本地 `docs/assets/chb_power_pf_20260926/`，不纳入版本库；报告所需结果已汇总在正文和图片中。
+
+- 结果 CSV：`power_v3_acceptance.csv`
+- 逐阶段及逐窗口分析：`power_v3_acceptance_analysis.json`
+- 模型、DLL、源码指纹与在线诊断：`power_v3_acceptance_manifest.json`
 
 原始轨迹和日志在 `platform/plecs/chb/build/`，标签为 `power_v3_acceptance`。测试配置与被测版本以清单中的 SHA-256 为准。报告整理时，下列工作区文件与本轮被测版本指纹不同：platform\plecs\chb\chb.plecs、code\ctrl\chb\chb_ctrl.c。本文只证明清单所标识的模型与 DLL，不作为这些后续修改的验证。
 
