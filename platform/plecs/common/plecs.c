@@ -14,10 +14,14 @@
 #if defined(_WIN32)
 #include "wchar.h"
 #include "windows.h"
+#ifndef PLECS_LOG_FILE_NAME
 #define PLECS_LOG_FILE_NAME     L"plecs_log.txt"
+#endif
 #define PLECS_LOG_PATH_CAPACITY 1024U
 #else
+#ifndef PLECS_LOG_FILE_NAME
 #define PLECS_LOG_FILE_NAME "plecs_log.txt"
+#endif
 #endif
 
 static FILE *fp_plecs               = NULL; /* 当前 PLECS DLL 实例使用的日志文件句柄。 */
@@ -171,6 +175,10 @@ DLLEXPORT void plecsOutput(struct SimulationState *aState)
 {
     plecs_astate = aState;
     const uint32_t tick = (uint32_t)(plecs_astate->time * 10000.0 + 1.0e-6);
+
+#if defined(PLECS_FAST_OUTPUT_HOOK)
+    PLECS_FAST_OUTPUT_HOOK(plecs_astate->time);
+#endif
 
     if (tick > output_tick_last)
     {

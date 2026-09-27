@@ -22,6 +22,12 @@
 void bsp_tcp_dbg_printf(const char *p_format, ...);
 void bsp_tcp_dbg_tx(char *p_data, int len);
 uint8_t bsp_tcp_dbg_rx_get_byte(uint8_t *p_data);
+/** @param p_format Format string sent to the grid peer. */
+void bsp_tcp_peer_printf(const char *p_format, ...);
+/** @param p_data Outgoing bytes. @param len Byte count. */
+void bsp_tcp_peer_tx(char *p_data, int len);
+/** @param p_data Next incoming byte. @return Nonzero when a byte is available. */
+uint8_t bsp_tcp_peer_rx_get_byte(uint8_t *p_data);
 void sim_comm_stop(void);
 
 #endif /* CHB_BSP_TCP_H */
