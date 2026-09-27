@@ -26,6 +26,12 @@ typedef struct chb_hal_sample
     float i_beta_a;    /* 同拍正交基波电流，A；由外部观测器产生。 */
     float bus_v[CHB_CELL_COUNT];    /* 各桥直流母线电压，V。 */
     float load_i_a[CHB_CELL_COUNT]; /* 各桥负载净电流，流向负载为正，不含电容电流，A。 */
+    float grid_harmonic_alpha_v[CHB_HARMONIC_COUNT]; /* 实测电网各次谐波同相分量，V。 */
+    float grid_harmonic_beta_v[CHB_HARMONIC_COUNT];  /* 对应滞后 90 度的谐波分量，V。 */
+    float current_harmonic_alpha_a[CHB_HARMONIC_COUNT]; /* 平均采样时刻的电流谐波，A。 */
+    float current_harmonic_beta_a[CHB_HARMONIC_COUNT];  /* 对应滞后 90 度分量，A。 */
+    float harmonic_feedback_weight; /* 稳频观测可信度，0..1；变频暂态退出窄带反馈。 */
+    float grid_fundamental_beta_v; /* 电网基波正交观测，供瞬时电压前馈使用。 */
 } chb_hal_sample_t;
 
 typedef struct chb_pwm_command
@@ -41,6 +47,10 @@ typedef struct chb_pwm_command
     float i_comp_beta_ref_a; /* 电流参考正交分量，用于补偿采样和发波延迟，A。 */
     float id_ref_a;          /* 本拍有功电流幅值给定，用于应用层诊断记录，A 峰值。 */
     float theta_rad;         /* 本拍电网相角，PWM 接口据此预测各桥实际作用时刻。 */
+    float harmonic_alpha_v[CHB_HARMONIC_COUNT]; /* 总桥谐波补偿同相分量，V。 */
+    float harmonic_beta_v[CHB_HARMONIC_COUNT];  /* 总桥谐波补偿正交分量，V。 */
+    float harmonic_share[CHB_CELL_COUNT]; /* 各桥谐波分配比例，总和为 1。 */
+    float grid_hz; /* 本拍观测频率，用于基波与各次谐波的作用时刻预测。 */
 } chb_pwm_command_t;
 
 typedef struct chb_ctrl_hal
@@ -60,6 +70,12 @@ typedef struct chb_ctrl_hal
     void         (*p_soft_start_relay_open)(void);  /* 断开母线软起继电器。 */
     void         (*p_main_relay_close)(void);       /* 闭合主继电器。 */
     void         (*p_main_relay_open)(void);        /* 断开主继电器。 */
+    const float *p_grid_harmonic_alpha_v; /* 3、5、7、9 次同相观测数组。 */
+    const float *p_grid_harmonic_beta_v;  /* 对应正交观测数组。 */
+    const float *p_current_harmonic_alpha_a; /* 3、5、7、9 次电流同相观测数组。 */
+    const float *p_current_harmonic_beta_a;  /* 对应电流正交观测数组。 */
+    const float *p_harmonic_feedback_weight; /* 观测器提供的连续反馈权重，0..1。 */
+    const float *p_grid_fundamental_beta_v; /* 电压 MSOGI 的基波正交输出。 */
 } chb_ctrl_hal_t;
 
 typedef struct chb_fsm_hal

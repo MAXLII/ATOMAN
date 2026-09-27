@@ -28,6 +28,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define CHB_VOLTAGE_PHASE_POINTS 256u /* 覆盖九次谐波陡变，网格间误差由二阶导数上界覆盖。 */
+
 typedef struct chb_ctrl_inter
 {
     float    bus_notch_input_v[CHB_CELL_COUNT];   /* 陷波器使用的本拍母线电压副本，V。 */
@@ -48,11 +50,21 @@ typedef struct chb_ctrl_inter
     float    current_integral_q_v; /* q 轴内环积分输出，V。 */
     float    bus_filter_weight;    /* 每控制拍的一阶低通离散权重。 */
     float    bus_ref_ramped_v;     /* 每级母线正在执行的电压给定，V。 */
+    float    harmonic_reserve_pu; /* 各桥按母线比例预留的谐波峰值预算。 */
+    float    harmonic_scale;      /* 谐波前馈在物理容量内的统一缩放。 */
+    float    harmonic_feedback_scale; /* 基波与电网前馈优先后的电流谐波反馈比例。 */
+    float    grid_omega;          /* 本拍观测的电网基波角频率，rad/s。 */
+    float    harmonic_wave_pu[CHB_VOLTAGE_PHASE_POINTS]; /* 每伏母线对应的完整谐波波形。 */
+    float    harmonic_curvature_pu; /* 谐波对电角度的二阶导数幅值上界。 */
 } chb_ctrl_inter_t;
 
 static chb_ctrl_cfg_t   cfg            = {0};   /* INIT 后只读的控制系数副本。 */
 static chb_ctrl_inter_t inter          = {0};   /* 控制阶段唯一写入的积分与滤波动态。 */
 static bool             sample_allowed = false; /* 本拍采样已完成且未被应用保护禁止。 */
+static float phase_cosine[CHB_VOLTAGE_PHASE_POINTS]; /* INIT 生成的基波约束节点。 */
+static float phase_sine[CHB_VOLTAGE_PHASE_POINTS];
+static float harmonic_cosine[CHB_HARMONIC_COUNT][CHB_VOLTAGE_PHASE_POINTS];
+static float harmonic_sine[CHB_HARMONIC_COUNT][CHB_VOLTAGE_PHASE_POINTS];
 
 #if defined(PLATFORM_PLECS)
 typedef struct chb_ctrl_diag
@@ -116,6 +128,9 @@ REG_SHELL_VAR(CHB_P_LIM_2, diag.power_limited[1], SHELL_UINT8, 1u, 0u, NULL, SHE
 REG_SHELL_VAR(CHB_P_LIM_3, diag.power_limited[2], SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CHB_TOTAL_LIM, diag.total_limited, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CHB_CELL_LIM, diag.cell_limited, SHELL_UINT8, 1u, 0u, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(CHB_HARM_RESERVE_PU, inter.harmonic_reserve_pu, SHELL_FP32, 1.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(CHB_HARM_SCALE, inter.harmonic_scale, SHELL_FP32, 1.0f, 0.0f, NULL, SHELL_STA_NULL)
+REG_SHELL_VAR(CHB_HARM_FB_SCALE, inter.harmonic_feedback_scale, SHELL_FP32, 1.0f, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CHB_FAULT_I_A, fault_i_a, SHELL_FP32, FLT_MAX, -FLT_MAX, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CHB_FAULT_BUS_1_V, fault_bus_v[0], SHELL_FP32, FLT_MAX, 0.0f, NULL, SHELL_STA_NULL)
 REG_SHELL_VAR(CHB_FAULT_BUS_2_V, fault_bus_v[1], SHELL_FP32, FLT_MAX, 0.0f, NULL, SHELL_STA_NULL)
@@ -147,6 +162,18 @@ static void chb_ctrl_init(void)
 {
     cfg = *chb_cfg_get_ctrl_cfg();
     reset_states();
+    for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+    {
+        const float angle = M_2PI * (float)point / (float)CHB_VOLTAGE_PHASE_POINTS;
+        phase_cosine[point] = cosf(angle);
+        phase_sine[point] = sinf(angle);
+        for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+        {
+            const float order = (float)(2u * harmonic + 3u);
+            harmonic_cosine[harmonic][point] = cosf(order * angle);
+            harmonic_sine[harmonic][point] = sinf(order * angle);
+        }
+    }
 #if defined(PLATFORM_PLECS)
     fault_i_a = 0.0f;
     (void)memset(fault_bus_v, 0, sizeof(fault_bus_v));
@@ -243,8 +270,111 @@ static void FUNC_RAM chb_ctrl_sample(void)
 }
 REG_INTERRUPT(1, chb_ctrl_sample)
 
+/** @brief 将同拍谐波旋转到电网角度坐标，并生成每伏母线的周期约束。 */
+static void FUNC_RAM voltage_wave_prepare(const chb_pwm_command_t *p_command, float theta, float bus_sum)
+{
+    (void)memset(inter.harmonic_wave_pu, 0, sizeof(inter.harmonic_wave_pu));
+    inter.harmonic_curvature_pu = 0.0f;
+    for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+    {
+        const float order = (float)(2u * harmonic + 3u);
+        const float cosine = cosf(order * theta);
+        const float sine = sinf(order * theta);
+        const float alpha = p_command->harmonic_alpha_v[harmonic] / bus_sum;
+        const float beta = p_command->harmonic_beta_v[harmonic] / bus_sum;
+        const float d = alpha * cosine + beta * sine;
+        const float q = -alpha * sine + beta * cosine;
+        inter.harmonic_curvature_pu += order * order * hypotf(d, q);
+        for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+        {
+            inter.harmonic_wave_pu[point] += d * harmonic_cosine[harmonic][point]
+                                           - q * harmonic_sine[harmonic][point];
+        }
+    }
+}
+
+/** @brief 线性插值误差 <= max|v''|*步长平方/8，覆盖节点间可能漏掉的波峰。 */
+static float FUNC_RAM voltage_wave_guard(float bus_v)
+{
+    const float step = M_2PI / (float)CHB_VOLTAGE_PHASE_POINTS;
+    return (3.0f * cfg.modulation_limit + inter.harmonic_curvature_pu) * bus_v * step * step * 0.125f;
+}
+
+/** @brief 含相位电网前馈的周期峰值上界，用于确定选频电流反馈剩余容量。 */
+static float FUNC_RAM grid_feedforward_peak(const chb_hal_sample_t *p_sample)
+{
+    float d[CHB_HARMONIC_COUNT] = {0};
+    float q[CHB_HARMONIC_COUNT] = {0};
+    const float fundamental = M_SQRT2 * p_sample->grid_rms_v;
+    float curvature = fundamental;
+    float peak = 0.0f;
+    const float step = M_2PI / (float)CHB_VOLTAGE_PHASE_POINTS;
+    for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+    {
+        const float order = (float)(2u * harmonic + 3u);
+        const float cosine = cosf(order * p_sample->theta_rad);
+        const float sine = sinf(order * p_sample->theta_rad);
+        const float alpha = p_sample->harmonic_feedback_weight * p_sample->grid_harmonic_alpha_v[harmonic];
+        const float beta = p_sample->harmonic_feedback_weight * p_sample->grid_harmonic_beta_v[harmonic];
+        d[harmonic] = alpha * cosine + beta * sine;
+        q[harmonic] = -alpha * sine + beta * cosine;
+        curvature += order * order * hypotf(alpha, beta);
+    }
+    for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+    {
+        float voltage = fundamental * phase_cosine[point];
+        for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+        {
+            voltage += d[harmonic] * harmonic_cosine[harmonic][point]
+                       - q[harmonic] * harmonic_sine[harmonic][point];
+        }
+        peak = fmaxf(peak, fabsf(voltage));
+    }
+    return peak + curvature * step * step * 0.125f;
+}
+
+/** @brief 固定有功投影后，求完整波形允许的正交电压区间，保持各桥正交分量同向。 */
+static bool FUNC_RAM voltage_orth_range(float parallel, float unit_d, float unit_q,
+                                        float bus_v, float reserve, float total_orthogonal,
+                                        float *p_lower, float *p_upper)
+{
+    const float bound = 2.0f * cfg.modulation_limit * bus_v;
+    const float limit = cfg.modulation_limit * bus_v - reserve - voltage_wave_guard(bus_v);
+    *p_lower = (total_orthogonal >= 0.0f) ? 0.0f : -bound;
+    *p_upper = (total_orthogonal >= 0.0f) ? bound : 0.0f;
+    if (fabsf(parallel) > bound)
+    {
+        return false;
+    }
+    for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+    {
+        const float along = unit_d * phase_cosine[point] - unit_q * phase_sine[point];
+        const float across = -unit_q * phase_cosine[point] - unit_d * phase_sine[point];
+        const float offset = parallel * along + bus_v * inter.harmonic_wave_pu[point];
+        if (fabsf(across) < 1.0e-6f)
+        {
+            if (fabsf(offset) > limit)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            const float first = (-limit - offset) / across;
+            const float second = (limit - offset) / across;
+            *p_lower = fmaxf(*p_lower, fminf(first, second));
+            *p_upper = fminf(*p_upper, fmaxf(first, second));
+            if (*p_lower > *p_upper)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 /**
- * @brief 检查负 q 候选电流下，各桥的功率投影和正交电压容量。
+ * @brief 检查负 q 候选电流下，各桥的功率投影和完整周期电压容量。
  * @param id_ref 有功参考，A 峰值。
  * @param q_abs 无功参考绝对值，A 峰值；实际采用负 q。
  * @param grid_peak 电网电压峰值，V。
@@ -259,24 +389,25 @@ static bool FUNC_RAM pf_candidate_feasible(float        id_ref,
     float magnitude = hypotf(id_ref, q_abs);     /* 候选电流峰值，A。 */
     float divisor   = fmaxf(magnitude, 1.0e-6f); /* 零电流点只用于可行性判断。 */
     float parallel_sum = grid_peak * id_ref / divisor - cfg.r_grid_ohm * magnitude;
-    float orthogonal_sum = grid_peak * q_abs / divisor - M_2PI * cfg.grid_hz * cfg.l_grid_h * magnitude;
-    float capacity_sum = 0.0f; /* 各桥可用正交容量之和，V。 */
+    float orthogonal_sum = grid_peak * q_abs / divisor - inter.grid_omega * cfg.l_grid_h * magnitude;
+    float lower_sum = 0.0f;
+    float upper_sum = 0.0f;
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         float parallel = parallel_sum / (float)CHB_CELL_COUNT + 2.0f * p_delta_power[cell] / divisor;
-        float limit = fmaxf(0.0f,
-                            cfg.modulation_limit * inter.bus_filtered_v[cell]
-                                - CHB_PF_VOLTAGE_RESERVE_V);
-        float remaining = limit * limit - parallel * parallel; /* 正交电压允许幅值的平方。 */
-
-        if (remaining < 0.0f)
+        float lower = 0.0f;
+        float upper = 0.0f;
+        if (!voltage_orth_range(parallel, id_ref / divisor, -q_abs / divisor,
+                                inter.bus_filtered_v[cell], CHB_PF_VOLTAGE_RESERVE_V,
+                                orthogonal_sum, &lower, &upper))
         {
             return false;
         }
-        capacity_sum += sqrtf(remaining);
+        lower_sum += lower;
+        upper_sum += upper;
     }
-    return fabsf(orthogonal_sum) <= capacity_sum;
+    return (lower_sum <= orthogonal_sum) && (orthogonal_sum <= upper_sum);
 }
 
 /** @brief 总外环、PF 可行域规划、dq 内环和各桥直接电压分配。 */
@@ -298,8 +429,6 @@ static void FUNC_RAM chb_ctrl_run(void)
     float sine                              = 0.0f;  /* 电网相角正弦。 */
     float v_bridge_d                        = 0.0f;  /* 级联桥 d 轴总端口电压，V。 */
     float v_bridge_q                        = 0.0f;  /* 级联桥 q 轴总端口电压，V。 */
-    float magnitude                         = 0.0f;  /* 级联桥总基波矢量幅值，V。 */
-    float magnitude_budget                  = 0.0f;  /* 三路可用调制电压总幅值，V。 */
     float power_request[CHB_CELL_COUNT]     = {0};   /* 各桥选择器输出，W。 */
     float energy_error[CHB_CELL_COUNT]      = {0};   /* 电容能量误差，J。 */
     float voltage_power[CHB_CELL_COUNT]     = {0};   /* 未限幅的能量环功率，W。 */
@@ -311,7 +440,8 @@ static void FUNC_RAM chb_ctrl_run(void)
     float base_parallel[CHB_CELL_COUNT]     = {0};   /* 暂态限幅的可行锚点，沿电流投影，V。 */
     float base_orthogonal[CHB_CELL_COUNT]   = {0};   /* 可行锚点的正交投影，V。 */
     float power_voltage[CHB_CELL_COUNT]     = {0};   /* 功率校正对应的平行电压，V。 */
-    float orth_capacity[CHB_CELL_COUNT]     = {0};   /* 有功分配后各桥可用的正交电压幅值，V。 */
+    float orth_lower[CHB_CELL_COUNT]        = {0};   /* 完整波形允许的正交分量下界。 */
+    float orth_upper[CHB_CELL_COUNT]        = {0};   /* 完整波形允许的正交分量上界。 */
     float balance_utilization               = 0.0f;  /* 本拍分配容量利用率。 */
     float current_magnitude                 = 0.0f;  /* 参考电流矢量模长，A。 */
     float current_unit_d                    = 0.0f;  /* 沿电流方向的 d 轴单位分量。 */
@@ -336,10 +466,15 @@ static void FUNC_RAM chb_ctrl_run(void)
 
     cosine = cosf(p_sample->theta_rad);
     sine   = sinf(p_sample->theta_rad);
+    inter.grid_omega = M_2PI * p_sample->grid_hz;
+    inter.current_phase_cos = cosf(inter.grid_omega * cfg.current_sample_delay_s);
+    inter.current_phase_sin = sinf(inter.grid_omega * cfg.current_sample_delay_s);
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         inter.bus_notch_input_v[cell] = p_sample->bus_v[cell];
+        notch_update_freq(&inter.bus_notch[cell], 2.0f * inter.grid_omega);
+        notch_update_freq(&inter.power_notch[cell], 2.0f * inter.grid_omega);
         notch_cal(&inter.bus_notch[cell]);
         inter.bus_filtered_v[cell] += inter.bus_filter_weight
                                     * (inter.bus_notch[cell].output.val - inter.bus_filtered_v[cell]);
@@ -348,6 +483,67 @@ static void FUNC_RAM chb_ctrl_run(void)
         inter.load_power_w[cell] += inter.bus_filter_weight
                                   * (inter.power_notch[cell].output.val - inter.load_power_w[cell]);
         bus_sum += p_sample->bus_v[cell];
+    }
+    {
+        float harmonic_peak_pu = 0.0f; /* 含相位的谐波合成峰值上界，每伏母线。 */
+        const float phase_step = M_2PI / (float)CHB_VOLTAGE_PHASE_POINTS;
+        const float interpolation_weight = phase_step * phase_step * 0.125f;
+        const float feedforward_peak = grid_feedforward_peak(p_sample); /* 完整电网前馈周期峰值，V。 */
+        float feedback_peak = 0.0f; /* 电流反馈附加电压预算，V。 */
+        for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+        {
+            const float angle = (float)(2u * harmonic + 3u) * inter.grid_omega
+                                * cfg.current_sample_delay_s; /* 恢复到电压采样时刻。 */
+            const float cos_delay = cosf(angle); /* 该次谐波的采样相位余弦。 */
+            const float sin_delay = sinf(angle); /* 该次谐波的采样相位正弦。 */
+            const float current_alpha = p_sample->current_harmonic_alpha_a[harmonic] * cos_delay
+                                        - p_sample->current_harmonic_beta_a[harmonic] * sin_delay;
+            const float current_beta = p_sample->current_harmonic_alpha_a[harmonic] * sin_delay
+                                       + p_sample->current_harmonic_beta_a[harmonic] * cos_delay;
+            /* 整流方向下，提高同相桥电压使对应谐波电流下降。 */
+            command.harmonic_alpha_v[harmonic] = CHB_HARMONIC_CURRENT_GAIN * current_alpha;
+            command.harmonic_beta_v[harmonic] = CHB_HARMONIC_CURRENT_GAIN * current_beta;
+            feedback_peak += hypotf(command.harmonic_alpha_v[harmonic], command.harmonic_beta_v[harmonic]);
+        }
+        /* 启机低母线时优先建立基波电压，附加反馈只能使用其余容量。 */
+        inter.harmonic_feedback_scale = p_sample->harmonic_feedback_weight;
+        if (feedback_peak > 0.0f)
+        {
+            const float available = fmaxf(0.0f, cfg.modulation_limit * bus_sum
+                                          - feedforward_peak);
+            inter.harmonic_feedback_scale = fminf(p_sample->harmonic_feedback_weight, available / feedback_peak);
+        }
+        for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+        {
+            command.harmonic_alpha_v[harmonic] = p_sample->harmonic_feedback_weight * p_sample->grid_harmonic_alpha_v[harmonic]
+                                               + inter.harmonic_feedback_scale * command.harmonic_alpha_v[harmonic];
+            command.harmonic_beta_v[harmonic] = p_sample->harmonic_feedback_weight * p_sample->grid_harmonic_beta_v[harmonic]
+                                              + inter.harmonic_feedback_scale * command.harmonic_beta_v[harmonic];
+        }
+        voltage_wave_prepare(&command, p_sample->theta_rad, bus_sum);
+        for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+        {
+            harmonic_peak_pu = fmaxf(harmonic_peak_pu, fabsf(inter.harmonic_wave_pu[point]));
+        }
+        harmonic_peak_pu += inter.harmonic_curvature_pu * interpolation_weight;
+        /* 零基波须为可行锚点；其余容量由完整波形约束分配，不按谐波幅值之和截断。 */
+        inter.harmonic_scale = 1.0f;
+        if (harmonic_peak_pu > 0.0f)
+        {
+            const float available_pu = cfg.modulation_limit * (1.0f - 3.0f * interpolation_weight);
+            inter.harmonic_scale = fminf(1.0f, available_pu / harmonic_peak_pu);
+        }
+        inter.harmonic_reserve_pu = inter.harmonic_scale * harmonic_peak_pu;
+        for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+        {
+            command.harmonic_alpha_v[harmonic] *= inter.harmonic_scale;
+            command.harmonic_beta_v[harmonic] *= inter.harmonic_scale;
+        }
+        for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+        {
+            inter.harmonic_wave_pu[point] *= inter.harmonic_scale;
+        }
+        inter.harmonic_curvature_pu *= inter.harmonic_scale;
     }
     {
         float ramp_step_v  = cfg.bus_ref_ramp_v_per_s * cfg.ts; /* 每控制拍最大给定增量。 */
@@ -447,28 +643,46 @@ static void FUNC_RAM chb_ctrl_run(void)
     }
     id_error = id_ref - id;
     iq_error = iq_ref - iq;
-    v_bridge_d = M_SQRT2 * p_sample->grid_rms_v - cfg.r_grid_ohm * id
-               + M_2PI * cfg.grid_hz * cfg.l_grid_h * iq
+    /* 原始电压减去已单独前馈的谐波，保留 MSOGI 的变频残差，避免 PLL 滞后成为电压扰动。 */
+    float grid_base_alpha = p_sample->grid_v;
+    for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+    {
+        grid_base_alpha -= p_sample->harmonic_feedback_weight * p_sample->grid_harmonic_alpha_v[harmonic];
+    }
+    const float grid_d = grid_base_alpha * cosine + p_sample->grid_fundamental_beta_v * sine;
+    const float grid_q = -grid_base_alpha * sine + p_sample->grid_fundamental_beta_v * cosine;
+    v_bridge_d = grid_d - cfg.r_grid_ohm * id
+               + inter.grid_omega * cfg.l_grid_h * iq
                - cfg.current_kp * id_error - inter.current_integral_d_v;
-    v_bridge_q = -cfg.r_grid_ohm * iq - M_2PI * cfg.grid_hz * cfg.l_grid_h * id
+    v_bridge_q = grid_q - cfg.r_grid_ohm * iq - inter.grid_omega * cfg.l_grid_h * id
                - cfg.current_kp * iq_error
                - inter.current_integral_q_v;
 
-    magnitude        = hypotf(v_bridge_d, v_bridge_q);
-    magnitude_budget = cfg.modulation_limit * bus_sum;
+    const float current_voltage_d = v_bridge_d; /* 电流环的当拍共模请求，不等同于稳态正弦幅值。 */
+    const float current_voltage_q = v_bridge_q;
 
-    if (magnitude > magnitude_budget)
     {
-        float scale = magnitude_budget / magnitude; /* 保留总矢量方向的限幅比例。 */
+        const float limit = cfg.modulation_limit * bus_sum - voltage_wave_guard(bus_sum);
+        const float magnitude = hypotf(v_bridge_d, v_bridge_q);
+        float scale = (magnitude > 0.0f) ? fminf(1.0f, 2.0f * cfg.modulation_limit * bus_sum / magnitude) : 1.0f;
+        for (uint32_t point = 0u; point < CHB_VOLTAGE_PHASE_POINTS; ++point)
+        {
+            const float fundamental = v_bridge_d * phase_cosine[point] - v_bridge_q * phase_sine[point];
+            const float harmonic = bus_sum * inter.harmonic_wave_pu[point];
+            if (fabsf(fundamental) > 1.0e-6f)
+            {
+                const float allowance = limit - ((fundamental > 0.0f) ? harmonic : -harmonic);
+                scale = fminf(scale, fmaxf(0.0f, allowance / fabsf(fundamental)));
+            }
+        }
         v_bridge_d *= scale;
         v_bridge_q *= scale;
-        magnitude     = magnitude_budget;
-        total_limited = true;
+        total_limited = scale < 0.99999f;
     }
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
-        float capacity_fraction = cfg.modulation_limit * p_sample->bus_v[cell] / magnitude_budget;
+        float capacity_fraction = p_sample->bus_v[cell] / bus_sum;
         float base_d_v = capacity_fraction * v_bridge_d; /* 母线不等时也可行的限幅锚点。 */
         float base_q_v = capacity_fraction * v_bridge_q;
 
@@ -496,19 +710,17 @@ static void FUNC_RAM chb_ctrl_run(void)
             for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
             {
                 float parallel = base_parallel[cell] + candidate * power_voltage[cell];
-                float cell_limit = cfg.modulation_limit * p_sample->bus_v[cell];
-                float remaining = cell_limit * cell_limit - parallel * parallel;
-
-                if (remaining < 0.0f)
+                float lower = 0.0f;
+                float upper = 0.0f;
+                const float total_orthogonal = -v_bridge_d * current_unit_q + v_bridge_q * current_unit_d;
+                if (!voltage_orth_range(parallel, current_unit_d, current_unit_q,
+                                        p_sample->bus_v[cell], 0.0f, total_orthogonal, &lower, &upper))
                 {
                     feasible = false;
                     break;
                 }
-                {
-                    float orth_limit = sqrtf(remaining);
-                    lower_sum += -orth_limit - base_orthogonal[cell];
-                    upper_sum += orth_limit - base_orthogonal[cell];
-                }
+                lower_sum += lower - base_orthogonal[cell];
+                upper_sum += upper - base_orthogonal[cell];
             }
 
             if (    feasible
@@ -530,38 +742,51 @@ static void FUNC_RAM chb_ctrl_run(void)
         balance_scale = scale_lower;
     }
     {
-        float capacity_sum = 0.0f;
+        float lower_sum = 0.0f;
+        float upper_sum = 0.0f;
         float total_orthogonal = -v_bridge_d * current_unit_q + v_bridge_q * current_unit_d;
         float orth_fraction = 0.0f;
 
         for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
         {
             float parallel = base_parallel[cell] + balance_scale * power_voltage[cell];
-            float cell_limit = cfg.modulation_limit * p_sample->bus_v[cell];
-            orth_capacity[cell] = sqrtf(fmaxf(0.0f,
-                                              cell_limit * cell_limit
-                                                  - parallel * parallel));
-            capacity_sum += orth_capacity[cell];
-            balance_utilization = fmaxf(balance_utilization, fabsf(parallel) / cell_limit);
+            (void)voltage_orth_range(parallel, current_unit_d, current_unit_q,
+                                     p_sample->bus_v[cell], 0.0f, total_orthogonal,
+                                     &orth_lower[cell], &orth_upper[cell]);
+            lower_sum += orth_lower[cell];
+            upper_sum += orth_upper[cell];
         }
-        /* 按剩余电压容量分配正交分量，使三桥共享同一正交容量利用率。 */
+        /* 在各桥允许区间内按同一比例分配，严格保持总正交电压。 */
 
-        if (capacity_sum > 0.0f)
+        if (upper_sum > lower_sum)
         {
-            orth_fraction = total_orthogonal / capacity_sum;
+            orth_fraction = limit_float((total_orthogonal - lower_sum) / (upper_sum - lower_sum), 0.0f, 1.0f);
         }
         balance_utilization = fmaxf(balance_utilization, fabsf(orth_fraction));
 
         for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
         {
             float parallel = base_parallel[cell] + balance_scale * power_voltage[cell];
-            float orthogonal = orth_fraction * orth_capacity[cell];
+            float orthogonal = orth_lower[cell] + orth_fraction * (orth_upper[cell] - orth_lower[cell]);
 
             command.cell_d_v[cell] = parallel * current_unit_d - orthogonal * current_unit_q;
             command.cell_q_v[cell] = parallel * current_unit_q + orthogonal * current_unit_d;
         }
     }
     cell_limited = balance_scale < 0.99999f;
+
+    /* 周期可行域约束均衡分配；剩余共模电流调节按母线容量分摊，由实际 PWM 电压限幅。 */
+    for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
+    {
+        const float share = p_sample->bus_v[cell] / bus_sum;
+        command.cell_d_v[cell] += share * (current_voltage_d - v_bridge_d);
+        command.cell_q_v[cell] += share * (current_voltage_q - v_bridge_q);
+        /* 保留差模有功请求，逐桥波形容量由发波时的三桥联合投影约束。 */
+        command.cell_d_v[cell] += (1.0f - balance_scale) * power_voltage[cell] * current_unit_d;
+        command.cell_q_v[cell] += (1.0f - balance_scale) * power_voltage[cell] * current_unit_q;
+    }
+    v_bridge_d = current_voltage_d;
+    v_bridge_q = current_voltage_q;
 
     total_v_pwm = v_bridge_d * cosine - v_bridge_q * sine;
     command.total_v_pwm_v = total_v_pwm;
@@ -571,12 +796,19 @@ static void FUNC_RAM chb_ctrl_run(void)
     command.i_comp_beta_ref_a = id_ref * sine + iq_ref * cosine;
     command.id_ref_a  = id_ref;
     command.theta_rad = p_sample->theta_rad;
+    command.grid_hz = p_sample->grid_hz;
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         command.v_pwm_v[cell] = command.cell_d_v[cell] * cosine - command.cell_q_v[cell] * sine;
+        command.harmonic_share[cell] = p_sample->bus_v[cell] / bus_sum;
+        for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+        {
+            command.v_pwm_v[cell] += command.harmonic_share[cell] * command.harmonic_alpha_v[harmonic];
+        }
         command.bus_v[cell] = p_sample->bus_v[cell];
     }
+    command.total_v_pwm_v = command.v_pwm_v[0] + command.v_pwm_v[1] + command.v_pwm_v[2];
 #if defined(PLATFORM_PLECS)
     float filtered_sum = 0.0f; /* 诊断用三桥滤波电压和，V。 */
 
@@ -598,7 +830,7 @@ static void FUNC_RAM chb_ctrl_run(void)
     diag.iq_a                = iq;
     diag.vd_pwm_v            = v_bridge_d;
     diag.vq_pwm_v            = v_bridge_q;
-    diag.vpwm_v              = total_v_pwm;
+    diag.vpwm_v              = command.total_v_pwm_v;
     diag.total_limited       = total_limited ? 1u : 0u;
     diag.cell_limited        = cell_limited ? 1u : 0u;
 

@@ -81,6 +81,12 @@ uint8_t chb_hal_is_ready(void)
          || (binding.p_theta_rad == NULL)
          || (binding.p_i_alpha_a == NULL)
          || (binding.p_i_beta_a == NULL)
+         || (binding.p_grid_harmonic_alpha_v == NULL)
+         || (binding.p_grid_harmonic_beta_v == NULL)
+         || (binding.p_current_harmonic_alpha_a == NULL)
+         || (binding.p_current_harmonic_beta_a == NULL)
+         || (binding.p_harmonic_feedback_weight == NULL)
+         || (binding.p_grid_fundamental_beta_v == NULL)
          || (binding.p_set_pwm_func == NULL)
          || (binding.p_pwm_disable == NULL)
          || (binding.p_soft_start_relay_close == NULL)
@@ -131,6 +137,16 @@ void FUNC_RAM chb_hal_sample(void)
     sample.theta_rad   = *binding.p_theta_rad;
     sample.i_alpha_a   = *binding.p_i_alpha_a;
     sample.i_beta_a    = *binding.p_i_beta_a;
+    sample.harmonic_feedback_weight = *binding.p_harmonic_feedback_weight;
+    sample.grid_fundamental_beta_v = *binding.p_grid_fundamental_beta_v;
+
+    for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
+    {
+        sample.grid_harmonic_alpha_v[harmonic] = binding.p_grid_harmonic_alpha_v[harmonic];
+        sample.grid_harmonic_beta_v[harmonic] = binding.p_grid_harmonic_beta_v[harmonic];
+        sample.current_harmonic_alpha_a[harmonic] = binding.p_current_harmonic_alpha_a[harmonic];
+        sample.current_harmonic_beta_a[harmonic] = binding.p_current_harmonic_beta_a[harmonic];
+    }
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
