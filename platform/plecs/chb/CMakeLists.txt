@@ -19,6 +19,7 @@ set(CHB_SOURCES
     ${CODE_DIR}/ctrl/chb/chb_ctrl.c
     ${CODE_DIR}/lib/rly_on.c
     ${CODE_DIR}/lib/sogi.c
+    ${CODE_DIR}/lib/msogi.c
     ${CODE_DIR}/lib/notch.c
     ${CODE_DIR}/section/baremetal/section.c
     ${CODE_DIR}/sim/protocol/comm.c
@@ -51,9 +52,33 @@ set(CHB_WARNINGS -Wall -Wextra -Werror -Wpedantic -Wconversion -Wsign-conversion
 
 add_library(plecs_chb SHARED ${CHB_SOURCES})
 target_compile_features(plecs_chb PRIVATE c_std_11)
-target_compile_definitions(plecs_chb PRIVATE PLATFORM_PLECS HOST_ADDR=0x02)
+target_compile_definitions(plecs_chb PRIVATE PLATFORM_PLECS SIM_DISCOVERY_SHARED_PROCESS HOST_ADDR=0x02)
 target_compile_options(plecs_chb PRIVATE ${CHB_WARNINGS})
 target_include_directories(plecs_chb PRIVATE ${CHB_INCLUDES})
 target_link_options(plecs_chb PRIVATE "-Wl,-Map,${CMAKE_BINARY_DIR}/plecs_chb.map")
 target_link_libraries(plecs_chb PRIVATE m ws2_32)
 set_target_properties(plecs_chb PROPERTIES PREFIX "" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_library(plecs_grid_source SHARED
+    ${COMMON_DIR}/plecs.c
+    grid_source/grid_source_comm.c
+    grid_source/grid_source.c
+    ${CODE_DIR}/section/baremetal/section.c
+    ${CODE_DIR}/sim/protocol/comm.c
+    ${CODE_DIR}/sim/protocol/sim_discovery.c
+    ${CODE_DIR}/sim/comm/sim_tcp.c
+    ${CODE_DIR}/sim/debug/shell/shell.c
+    ${CODE_DIR}/sim/debug/shell/shell_core.c
+    ${CODE_DIR}/sim/debug/shell/shell_service.c
+)
+target_compile_features(plecs_grid_source PRIVATE c_std_11)
+target_compile_definitions(plecs_grid_source PRIVATE PLATFORM_PLECS PLECS_GRID_SOURCE=1
+    SIM_DISCOVERY_SHARED_PROCESS HOST_ADDR=0x03)
+target_compile_options(plecs_grid_source PRIVATE ${CHB_WARNINGS})
+target_include_directories(plecs_grid_source PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/grid_source
+    ${CHB_INCLUDES}
+)
+target_link_options(plecs_grid_source PRIVATE "-Wl,-Map,${CMAKE_BINARY_DIR}/plecs_grid_source.map")
+target_link_libraries(plecs_grid_source PRIVATE m ws2_32)
+set_target_properties(plecs_grid_source PROPERTIES PREFIX "" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

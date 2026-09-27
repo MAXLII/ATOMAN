@@ -780,6 +780,35 @@
             ]
         },
         {
+            "name": "plecs_chb",
+            "compilerPath": "C:/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/platform/plecs/chb",
+                "${workspaceFolder}/platform/plecs/chb/app",
+                "${workspaceFolder}/platform/plecs/chb/bsp",
+                "${workspaceFolder}/platform/plecs/common",
+                "${workspaceFolder}/code/ctrl/chb",
+                "${workspaceFolder}/code/app/chb",
+                "${workspaceFolder}/code/interface/chb/common",
+                "${workspaceFolder}/code/sim/protocol",
+                "${workspaceFolder}/code/sim/comm",
+                "${workspaceFolder}/code/sim/debug/shell",
+                "${workspaceFolder}/code/data_source/comm",
+                "${workspaceFolder}/code/data_source/demo",
+                "${workspaceFolder}/code/section/baremetal",
+                "${workspaceFolder}/code/section",
+                "${workspaceFolder}/code/dbg",
+                "${workspaceFolder}/code/lib"
+            ],
+            "defines": [
+                "PLATFORM_PLECS",
+                "HOST_ADDR=0x02"
+            ]
+        },
+        {
             "name": "plecs_inv_i32",
             "compilerPath": "C:/mingw64/bin/gcc.exe",
             "cStandard": "c11",
