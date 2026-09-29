@@ -30,6 +30,29 @@
 
 #define CHB_VOLTAGE_PHASE_POINTS 256u /* 覆盖九次谐波陡变，网格间误差由二阶导数上界覆盖。 */
 
+/* 无功规划仅接收本拍求解所需的量；数组指针在同步调用期间有效。 */
+typedef struct chb_q_plan_input
+{
+    const float *p_id_ref_a;        /* 已限幅有功电流给定，A 峰值。 */
+    const float *p_grid_rms_v;      /* 实测电网基波有效值，V。 */
+    const float *p_delta_power_w;   /* 各桥相对平均值的零和有功请求，W。 */
+    const float *p_bus_filtered_v;  /* 各桥用于容量判定的母线电压，V。 */
+    const float *p_grid_omega;      /* 实测电网角频率，rad/s。 */
+} chb_q_plan_input_t;
+
+typedef struct chb_q_plan_inter
+{
+    float    magnitude_ref_a; /* 经斜坡的负 q 电流幅值，A 峰值。 */
+    float    target_a;        /* 周期可行域目标幅值，A 峰值。 */
+    uint32_t ticks;           /* 距上次完整搜索的控制拍数。 */
+    bool     zero_feasible;   /* 本次搜索中零无功的可行性。 */
+} chb_q_plan_inter_t;
+
+typedef struct chb_q_plan_output
+{
+    float ref; /* 唯一输出：带符号 q 轴电流给定，A 峰值。 */
+} chb_q_plan_output_t;
+
 typedef struct chb_ctrl_inter
 {
     float    bus_notch_input_v[CHB_CELL_COUNT];   /* 陷波器使用的本拍母线电压副本，V。 */
@@ -40,10 +63,7 @@ typedef struct chb_ctrl_inter
     float    load_power_w[CHB_CELL_COUNT];        /* 陷波及低通后的负载功率，W。 */
     float    energy_integral_w[CHB_CELL_COUNT];   /* 每桥能量环积分输出，W。 */
     float    power_integral_w[CHB_CELL_COUNT];    /* 每桥功率上限环积分输出，W。 */
-    float    q_magnitude_ref_a;    /* 经斜坡的最小无功电流幅值，取负 q 方向，A。 */
-    float    q_target_a;           /* 可行域规划所得的最小无功电流幅值，A。 */
-    uint32_t pf_plan_ticks;        /* 距上次可行域求解经过的控制拍数。 */
-    bool     pf_zero_feasible;     /* 当拍功率请求是否允许零网侧无功。 */
+    chb_q_plan_inter_t q_plan;     /* 无功规划独立的搜索与斜坡状态。 */
     float    current_phase_cos;    /* 已知采样延迟对应的工频相位余弦。 */
     float    current_phase_sin;    /* 已知采样延迟对应的工频相位正弦。 */
     float    current_integral_d_v; /* d 轴内环积分输出，V。 */
@@ -334,9 +354,14 @@ static float FUNC_RAM grid_feedforward_peak(const chb_hal_sample_t *p_sample)
 }
 
 /** @brief 固定有功投影后，求完整波形允许的正交电压区间，保持各桥正交分量同向。 */
-static bool FUNC_RAM voltage_orth_range(float parallel, float unit_d, float unit_q,
-                                        float bus_v, float reserve, float total_orthogonal,
-                                        float *p_lower, float *p_upper)
+static bool FUNC_RAM voltage_orth_range(float  parallel,
+                                        float  unit_d,
+                                        float  unit_q,
+                                        float  bus_v,
+                                        float  reserve,
+                                        float  total_orthogonal,
+                                        float *p_lower,
+                                        float *p_upper)
 {
     const float bound = 2.0f * cfg.modulation_limit * bus_v;
     const float limit = cfg.modulation_limit * bus_v - reserve - voltage_wave_guard(bus_v);
@@ -375,39 +400,103 @@ static bool FUNC_RAM voltage_orth_range(float parallel, float unit_d, float unit
 
 /**
  * @brief 检查负 q 候选电流下，各桥的功率投影和完整周期电压容量。
- * @param id_ref 有功参考，A 峰值。
+ * @param p_input 本拍无功规划输入；地址仅在同步求解期间使用。
  * @param q_abs 无功参考绝对值，A 峰值；实际采用负 q。
- * @param grid_peak 电网电压峰值，V。
- * @param p_delta_power 零和差模功率请求，W。
  * @return true：候选点在预留电压余量后的可行域内。
  */
-static bool FUNC_RAM pf_candidate_feasible(float        id_ref,
-                                           float        q_abs,
-                                           float        grid_peak,
-                                           const float *p_delta_power)
+static bool FUNC_RAM q_candidate_feasible(const chb_q_plan_input_t *p_input, float q_abs)
 {
+    const float id_ref = *p_input->p_id_ref_a; /* 有功电流峰值，A。 */
+    const float grid_peak = M_SQRT2 * *p_input->p_grid_rms_v; /* 电网基波峰值，V。 */
     float magnitude = hypotf(id_ref, q_abs);     /* 候选电流峰值，A。 */
     float divisor   = fmaxf(magnitude, 1.0e-6f); /* 零电流点只用于可行性判断。 */
     float parallel_sum = grid_peak * id_ref / divisor - cfg.r_grid_ohm * magnitude;
-    float orthogonal_sum = grid_peak * q_abs / divisor - inter.grid_omega * cfg.l_grid_h * magnitude;
-    float lower_sum = 0.0f;
-    float upper_sum = 0.0f;
+    float orthogonal_sum = grid_peak * q_abs / divisor - *p_input->p_grid_omega * cfg.l_grid_h * magnitude;
+    const float equal_orthogonal = orthogonal_sum / (float)CHB_CELL_COUNT; /* 等无功对应的每桥正交电压。 */
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
-        float parallel = parallel_sum / (float)CHB_CELL_COUNT + 2.0f * p_delta_power[cell] / divisor;
+        float parallel = parallel_sum / (float)CHB_CELL_COUNT + 2.0f * p_input->p_delta_power_w[cell] / divisor;
         float lower = 0.0f;
         float upper = 0.0f;
-        if (!voltage_orth_range(parallel, id_ref / divisor, -q_abs / divisor,
-                                inter.bus_filtered_v[cell], CHB_PF_VOLTAGE_RESERVE_V,
-                                orthogonal_sum, &lower, &upper))
+
+        if (!voltage_orth_range(parallel,
+                                id_ref / divisor,
+                                -q_abs / divisor,
+                                p_input->p_bus_filtered_v[cell],
+                                CHB_PF_VOLTAGE_RESERVE_V,
+                                orthogonal_sum,
+                                &lower,
+                                &upper))
         {
             return false;
         }
-        lower_sum += lower;
-        upper_sum += upper;
+        if ((equal_orthogonal < lower) || (equal_orthogonal > upper))
+        {
+            return false;
+        }
     }
-    return (lower_sum <= orthogonal_sum) && (orthogonal_sum <= upper_sum);
+    return true;
+}
+
+/**
+ * @brief 在电流额定圆与各级周期电压容量内求最小负 q 给定。
+ * @param p_input 本拍已完成采样、外环和谐波电压预算的必要输入。
+ * @param p_inter 仅由 100 us 控制中断写入的搜索及斜坡状态。
+ * @param p_output 本拍唯一 q 轴电流参考输出。
+ */
+static void FUNC_RAM chb_q_plan_run(const chb_q_plan_input_t *p_input,
+                                    chb_q_plan_inter_t *p_inter,
+                                    chb_q_plan_output_t *p_output)
+{
+    const float id_ref = *p_input->p_id_ref_a; /* 有功电流峰值，A。 */
+    const float q_max = sqrtf(fmaxf(0.0f,
+                                    cfg.current_limit_pk_a * cfg.current_limit_pk_a - id_ref * id_ref));
+    const float q_floor = sqrtf(fmaxf(0.0f,
+                                      CHB_BALANCE_CURRENT_MIN_PK_A * CHB_BALANCE_CURRENT_MIN_PK_A
+                                          - id_ref * id_ref));
+
+    if (p_inter->ticks == 0u)
+    {
+        p_inter->zero_feasible = q_candidate_feasible(p_input, 0.0f);
+        p_inter->target_a = q_floor;
+
+        if (!q_candidate_feasible(p_input, q_floor))
+        {
+            float lower = q_floor; /* 已知不可行的无功幅值下界，A。 */
+            p_inter->target_a = q_max;
+
+            for (uint32_t scan = 1u; scan <= CHB_PF_SCAN_STEPS; ++scan)
+            {
+                float upper = q_floor + (q_max - q_floor) * (float)scan / (float)CHB_PF_SCAN_STEPS;
+
+                if (q_candidate_feasible(p_input, upper))
+                {
+                    for (uint32_t iteration = 0u; iteration < CHB_PF_REFINE_STEPS; ++iteration)
+                    {
+                        float middle = 0.5f * (lower + upper); /* 二分候选无功幅值。 */
+
+                        if (q_candidate_feasible(p_input, middle))
+                        {
+                            upper = middle;
+                        }
+                        else
+                        {
+                            lower = middle;
+                        }
+                    }
+                    p_inter->target_a = upper;
+                    break;
+                }
+                lower = upper;
+            }
+        }
+    }
+    p_inter->ticks = (p_inter->ticks + 1u) % CHB_PF_PLAN_TICKS;
+    p_inter->magnitude_ref_a += limit_float(p_inter->target_a - p_inter->magnitude_ref_a,
+                                             -CHB_PF_Q_SLEW_A_PER_S * cfg.ts,
+                                             CHB_PF_Q_SLEW_A_PER_S * cfg.ts);
+    p_output->ref = -fminf(q_max, fmaxf(q_floor, p_inter->magnitude_ref_a));
 }
 
 /** @brief 总外环、PF 可行域规划、dq 内环和各桥直接电压分配。 */
@@ -507,9 +596,11 @@ static void FUNC_RAM chb_ctrl_run(void)
         }
         /* 启机低母线时优先建立基波电压，附加反馈只能使用其余容量。 */
         inter.harmonic_feedback_scale = p_sample->harmonic_feedback_weight;
+
         if (feedback_peak > 0.0f)
         {
-            const float available = fmaxf(0.0f, cfg.modulation_limit * bus_sum
+            const float available = fmaxf(0.0f,
+                                          cfg.modulation_limit * bus_sum
                                           - feedforward_peak);
             inter.harmonic_feedback_scale = fminf(p_sample->harmonic_feedback_weight, available / feedback_peak);
         }
@@ -582,52 +673,17 @@ static void FUNC_RAM chb_ctrl_run(void)
         delta_power[cell] = current_scale * (power_request[cell] - power_sum / (float)CHB_CELL_COUNT);
     }
     {
-        float q_max = sqrtf(fmaxf(0.0f, cfg.current_limit_pk_a * cfg.current_limit_pk_a - id_ref * id_ref));
-        float q_floor = sqrtf(fmaxf(0.0f,
-                                    CHB_BALANCE_CURRENT_MIN_PK_A * CHB_BALANCE_CURRENT_MIN_PK_A - id_ref * id_ref));
-        float grid_peak = M_SQRT2 * p_sample->grid_rms_v; /* 本拍测得的工频电压峰值。 */
+        const chb_q_plan_input_t input = { /* 每个指针均指向本拍有效且必要的规划量。 */
+            .p_id_ref_a = &id_ref,
+            .p_grid_rms_v = &p_sample->grid_rms_v,
+            .p_delta_power_w = delta_power,
+            .p_bus_filtered_v = inter.bus_filtered_v,
+            .p_grid_omega = &inter.grid_omega,
+        };
+        chb_q_plan_output_t output = {0}; /* q 轴规划的单一结果。 */
 
-        if (inter.pf_plan_ticks == 0u)
-        {
-            inter.pf_zero_feasible = pf_candidate_feasible(id_ref, 0.0f, grid_peak, delta_power);
-            inter.q_target_a       = q_floor;
-
-            if (!pf_candidate_feasible(id_ref, q_floor, grid_peak, delta_power))
-            {
-                float lower      = q_floor; /* 已知不可行的无功幅值下界，A。 */
-                inter.q_target_a = q_max;
-
-                for (uint32_t scan = 1u; scan <= CHB_PF_SCAN_STEPS; ++scan)
-                {
-                    float upper = q_floor + (q_max - q_floor) * (float)scan / (float)CHB_PF_SCAN_STEPS;
-
-                    if (pf_candidate_feasible(id_ref, upper, grid_peak, delta_power))
-                    {
-                        for (uint32_t iteration = 0u; iteration < CHB_PF_REFINE_STEPS; ++iteration)
-                        {
-                            float middle = 0.5f * (lower + upper); /* 二分候选无功幅值。 */
-
-                            if (pf_candidate_feasible(id_ref, middle, grid_peak, delta_power))
-                            {
-                                upper = middle;
-                            }
-                            else
-                            {
-                                lower = middle;
-                            }
-                        }
-                        inter.q_target_a = upper;
-                        break;
-                    }
-                    lower = upper;
-                }
-            }
-        }
-        inter.pf_plan_ticks = (inter.pf_plan_ticks + 1u) % CHB_PF_PLAN_TICKS;
-        inter.q_magnitude_ref_a += limit_float(inter.q_target_a - inter.q_magnitude_ref_a,
-                                               -CHB_PF_Q_SLEW_A_PER_S * cfg.ts,
-                                               CHB_PF_Q_SLEW_A_PER_S * cfg.ts);
-        iq_ref = -fminf(q_max, fmaxf(q_floor, inter.q_magnitude_ref_a));
+        chb_q_plan_run(&input, &inter.q_plan, &output);
+        iq_ref = output.ref;
     }
     current_ref_squared = id_ref * id_ref + iq_ref * iq_ref;
     current_magnitude = sqrtf(current_ref_squared);
@@ -713,8 +769,15 @@ static void FUNC_RAM chb_ctrl_run(void)
                 float lower = 0.0f;
                 float upper = 0.0f;
                 const float total_orthogonal = -v_bridge_d * current_unit_q + v_bridge_q * current_unit_d;
-                if (!voltage_orth_range(parallel, current_unit_d, current_unit_q,
-                                        p_sample->bus_v[cell], 0.0f, total_orthogonal, &lower, &upper))
+
+                if (!voltage_orth_range(parallel,
+                                        current_unit_d,
+                                        current_unit_q,
+                                        p_sample->bus_v[cell],
+                                        0.0f,
+                                        total_orthogonal,
+                                        &lower,
+                                        &upper))
                 {
                     feasible = false;
                     break;
@@ -745,29 +808,52 @@ static void FUNC_RAM chb_ctrl_run(void)
         float lower_sum = 0.0f;
         float upper_sum = 0.0f;
         float total_orthogonal = -v_bridge_d * current_unit_q + v_bridge_q * current_unit_d;
+        const float equal_orthogonal = total_orthogonal / (float)CHB_CELL_COUNT; /* 等无功的每桥正交电压。 */
         float orth_fraction = 0.0f;
+        bool equal_q_feasible = true; /* 完整波形约束下是否可由每桥平均承担基波无功。 */
 
         for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
         {
             float parallel = base_parallel[cell] + balance_scale * power_voltage[cell];
-            (void)voltage_orth_range(parallel, current_unit_d, current_unit_q,
-                                     p_sample->bus_v[cell], 0.0f, total_orthogonal,
-                                     &orth_lower[cell], &orth_upper[cell]);
+            if (!voltage_orth_range(parallel,
+                                    current_unit_d,
+                                    current_unit_q,
+                                    p_sample->bus_v[cell],
+                                    0.0f,
+                                    total_orthogonal,
+                                    &orth_lower[cell],
+                                    &orth_upper[cell]))
+            {
+                equal_q_feasible = false;
+            }
             lower_sum += orth_lower[cell];
             upper_sum += orth_upper[cell];
+            if ((equal_orthogonal < orth_lower[cell]) || /* 某桥所需无功低于电压可行区间。 */
+                (equal_orthogonal > orth_upper[cell]))  /* 某桥所需无功高于电压可行区间。 */
+            {
+                equal_q_feasible = false;
+            }
         }
-        /* 在各桥允许区间内按同一比例分配，严格保持总正交电压。 */
+        /* 等正交电压即等无功；受各桥电压容量限制时退回可行区间分配。 */
 
         if (upper_sum > lower_sum)
         {
             orth_fraction = limit_float((total_orthogonal - lower_sum) / (upper_sum - lower_sum), 0.0f, 1.0f);
         }
-        balance_utilization = fmaxf(balance_utilization, fabsf(orth_fraction));
-
         for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
         {
             float parallel = base_parallel[cell] + balance_scale * power_voltage[cell];
             float orthogonal = orth_lower[cell] + orth_fraction * (orth_upper[cell] - orth_lower[cell]);
+
+            if (equal_q_feasible)
+            {
+                orthogonal = equal_orthogonal;
+            }
+            if (orth_upper[cell] > orth_lower[cell])
+            {
+                balance_utilization = fmaxf(balance_utilization,
+                    fabsf((orthogonal - orth_lower[cell]) / (orth_upper[cell] - orth_lower[cell])));
+            }
 
             command.cell_d_v[cell] = parallel * current_unit_d - orthogonal * current_unit_q;
             command.cell_q_v[cell] = parallel * current_unit_q + orthogonal * current_unit_d;
@@ -779,8 +865,15 @@ static void FUNC_RAM chb_ctrl_run(void)
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         const float share = p_sample->bus_v[cell] / bus_sum;
-        command.cell_d_v[cell] += share * (current_voltage_d - v_bridge_d);
-        command.cell_q_v[cell] += share * (current_voltage_q - v_bridge_q);
+        const float delta_d = current_voltage_d - v_bridge_d;
+        const float delta_q = current_voltage_q - v_bridge_q;
+        const float delta_parallel = delta_d * current_unit_d + delta_q * current_unit_q;
+        const float delta_orthogonal = -delta_d * current_unit_q + delta_q * current_unit_d;
+        /* 电流调节余量的无功分量平均给各桥，有功分量沿母线容量分配。 */
+        command.cell_d_v[cell] += share * delta_parallel * current_unit_d
+                                  - delta_orthogonal * current_unit_q / (float)CHB_CELL_COUNT;
+        command.cell_q_v[cell] += share * delta_parallel * current_unit_q
+                                  + delta_orthogonal * current_unit_d / (float)CHB_CELL_COUNT;
         /* 保留差模有功请求，逐桥波形容量由发波时的三桥联合投影约束。 */
         command.cell_d_v[cell] += (1.0f - balance_scale) * power_voltage[cell] * current_unit_d;
         command.cell_q_v[cell] += (1.0f - balance_scale) * power_voltage[cell] * current_unit_q;
@@ -824,8 +917,8 @@ static void FUNC_RAM chb_ctrl_run(void)
     diag.iq_ref_a            = iq_ref;
     diag.balance_scale       = balance_scale;
     diag.balance_utilization = balance_utilization;
-    diag.q_min_a             = inter.q_target_a;
-    diag.pf_zero_feasible    = inter.pf_zero_feasible ? 1u : 0u;
+    diag.q_min_a             = inter.q_plan.target_a;
+    diag.pf_zero_feasible    = inter.q_plan.zero_feasible ? 1u : 0u;
     diag.id_a                = id;
     diag.iq_a                = iq;
     diag.vd_pwm_v            = v_bridge_d;

@@ -16,7 +16,7 @@
 #include "chb_hal.h"
 
 #define CHB_PWM_DEAD_TIME_S 2.0e-6f /* 两桥臂实际互补开关的死区时间，s。 */
-#define CHB_PWM_CURRENT_SMOOTH_A 1.0f /* 电流过零处的死区补偿平滑尺度，A。 */
+#define CHB_PWM_CURRENT_SMOOTH_A 0.3f /* 电流过零补偿平滑尺度，A；缩小后降低平衡负载低次谐波。 */
 #define CHB_PWM_BASE_DELAY_PERIODS 1.5f /* BSP 一拍加单次更新三角 PWM 的半周期。 */
 #define CHB_PWM_COMP_GAIN 1.0f /* 死区平均压降补偿占理想值的比例。 */
 
