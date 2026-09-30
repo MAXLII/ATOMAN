@@ -906,10 +906,10 @@ static void FUNC_RAM chb_ctrl_power_reference(chb_ctrl_step_t *p_step, const chb
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
-        float power_limit = cfg.output_power_limit_w[cell]; /* 每桥独立持续功率上限。 */
+        float power_limit = cfg.output_power_limit_w; /* 所有桥共用的单级持续功率上限。 */
         p_step->power_capacity[cell] = 0.5f * cfg.modulation_limit * inter.bus_filtered_v[cell]
                                      * cfg.current_limit_pk_a;
-        p_step->energy_error[cell] = 0.5f * cfg.bus_capacitance_f[cell]
+        p_step->energy_error[cell] = 0.5f * cfg.bus_capacitance_f
                                    * (inter.bus_ref_ramped_v * inter.bus_ref_ramped_v
                                       - inter.bus_filtered_v[cell] * inter.bus_filtered_v[cell]);
         p_step->voltage_power[cell] = inter.load_power_w[cell] + cfg.energy_kp * p_step->energy_error[cell]

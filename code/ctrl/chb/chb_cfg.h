@@ -48,8 +48,8 @@ typedef struct chb_ctrl_cfg
     float power_limit_ki;           /* 每桥负载功率限制环积分增益，1/s。 */
     float current_limit_pk_a;       /* 有功电流参考峰值上限，A。 */
     float modulation_limit;         /* 每桥线性调制裕量，0..1。 */
-    float bus_capacitance_f[CHB_CELL_COUNT];    /* 每桥直流电容，F。 */
-    float output_power_limit_w[CHB_CELL_COUNT]; /* 每桥持续输出功率上限，W。 */
+    float bus_capacitance_f;    /* 所有桥共用的单级直流电容，F。 */
+    float output_power_limit_w; /* 所有桥共用的单级持续输出功率上限，W。 */
 } chb_ctrl_cfg_t;
 
 /** @return 当前 PLECS 调试基准的独立参数副本。 */
