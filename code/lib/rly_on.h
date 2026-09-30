@@ -66,7 +66,7 @@ typedef struct
 
 typedef struct
 {
-    uint8_t is_closed;
+    uint8_t is_on;
 } rly_on_output_t;
 
 typedef struct
@@ -95,5 +95,11 @@ void rly_on_init(rly_on_t *p_str,
                  void (*rly_off)(void));
 
 void rly_on_func(rly_on_t *p_str);
+
+/**
+ * @brief Immediately turn the relay off and cancel every pending ON sequence.
+ * @param p_str Relay control instance.
+ */
+void rly_on_force_off(rly_on_t *p_str);
 
 #endif

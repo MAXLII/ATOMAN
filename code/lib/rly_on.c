@@ -30,6 +30,27 @@
 #include "my_math.h"
 #include <math.h>
 
+/** @brief Clear all timing, confirmation and output state. */
+static void rly_on_reset_runtime(rly_on_t *p_str)
+{
+    p_str->inter.dly_cnt    = 0U;
+    p_str->inter.dly        = 0U;
+    p_str->inter.on_cnt     = 0U;
+    p_str->inter.on_confirm = 0U;
+    p_str->output.is_on     = 0U;
+}
+
+/** @return 1 when the instance has every binding required to enter IDLE. */
+static uint8_t rly_on_is_ready(const rly_on_t *p_str)
+{
+    return (uint8_t)((p_str->input.p_rly_on_trig != NULL)
+                     && (p_str->input.p_rly_off_trig != NULL)
+                     && (p_str->input.p_is_equal != NULL)
+                     && (p_str->input.p_freq != NULL)
+                     && (p_str->func.rly_on != NULL)
+                     && (p_str->func.rly_off != NULL));
+}
+
 /**
  * @brief Initialize relay control module
  *
@@ -83,12 +104,34 @@ void rly_on_init(rly_on_t *p_str,
     p_str->func.rly_on  = rly_on;
 
     /* Reset runtime state */
-    p_str->inter.dly_cnt    = 0U;
-    p_str->inter.dly        = 0U;
-    p_str->inter.on_cnt     = 0U;
-    p_str->inter.on_confirm = 0U;
-    p_str->inter.sta        = RLY_ON_STA_INIT;
-    p_str->output.is_closed = 0U;
+    rly_on_reset_runtime(p_str);
+    p_str->inter.sta = (rly_on_is_ready(p_str) != 0U) ? RLY_ON_STA_IDLE : RLY_ON_STA_INIT;
+}
+
+void rly_on_force_off(rly_on_t *p_str)
+{
+    if (p_str == NULL)
+    {
+        return;
+    }
+
+    /* OFF is a direct safety action and does not depend on the current state. */
+    if (p_str->func.rly_off != NULL)
+    {
+        p_str->func.rly_off();
+    }
+
+    if (p_str->input.p_rly_on_trig != NULL)
+    {
+        *p_str->input.p_rly_on_trig = 0U;
+    }
+    if (p_str->input.p_rly_off_trig != NULL)
+    {
+        *p_str->input.p_rly_off_trig = 0U;
+    }
+
+    rly_on_reset_runtime(p_str);
+    p_str->inter.sta = (rly_on_is_ready(p_str) != 0U) ? RLY_ON_STA_IDLE : RLY_ON_STA_INIT;
 }
 
 /**
@@ -99,8 +142,8 @@ void rly_on_init(rly_on_t *p_str,
  * State transition flow:
  *
  * INIT -> IDLE -> WAIT -> DLY -> RUN
- *                         ↑
- *                        OFF trigger
+ *           ^                       |
+ *           +------ OFF trigger ----+
  *
  * Description of states:
  *
@@ -114,11 +157,11 @@ void rly_on_init(rly_on_t *p_str,
  *   Wait for synchronization condition (p_is_equal == 1).
  *
  * DLY:
- *   Calculate delay based on grid period and desired closing time.
+ *   Calculate delay based on grid period and desired relay-on time.
  *   Wait required control cycles before activating relay.
  *
  * RUN:
- *   Relay is closed. Wait for OFF trigger.
+ *   Relay is on. Wait for OFF trigger.
  */
 void rly_on_func(rly_on_t *p_str)
 {
@@ -128,6 +171,13 @@ void rly_on_func(rly_on_t *p_str)
          || (p_str->input.p_is_equal == NULL)
          || (p_str->input.p_freq == NULL))
     {
+        return;
+    }
+
+    /* An OFF request cancels WAIT/DLY/RUN immediately through one common path. */
+    if (*p_str->input.p_rly_off_trig != 0U)
+    {
+        rly_on_force_off(p_str);
         return;
     }
 
@@ -169,7 +219,7 @@ void rly_on_func(rly_on_t *p_str)
             p_str->inter.dly            = 0U;
             p_str->inter.on_cnt         = 0U;
             p_str->inter.on_confirm     = 0U;
-            p_str->output.is_closed     = 0U;
+            p_str->output.is_on         = 0U;
             p_str->inter.sta            = RLY_ON_STA_WAIT;
         }
         break;
@@ -197,10 +247,10 @@ void rly_on_func(rly_on_t *p_str)
             /*
              * Design intent:
              * - detect "equal voltage" as the timing reference;
-             * - relay mechanical close time is ton = rly_on_time_def;
+             * - relay mechanical on transition time is ton = rly_on_time_def;
              * - issue relay-on command after tdelay so that:
              *       tdelay + ton = N * grid_ts
-             *   and the contacts are expected to close near the next
+             *   and the relay is expected to turn on near the next
              *   equal-voltage instant.
              *
              * Therefore:
@@ -225,7 +275,7 @@ void rly_on_func(rly_on_t *p_str)
                                                  + 0.5f);
             p_str->inter.dly_cnt    = 0U;
             p_str->inter.on_cnt     = 0U;
-            p_str->output.is_closed = 0U;
+            p_str->output.is_on = 0U;
             p_str->inter.sta        = RLY_ON_STA_DLY;
         }
         break;
@@ -245,7 +295,7 @@ void rly_on_func(rly_on_t *p_str)
             /* Reset delay counter */
             p_str->inter.dly_cnt    = 0U;
             p_str->inter.on_cnt     = 0U;
-            p_str->output.is_closed = 0U;
+            p_str->output.is_on = 0U;
 
             /* Enter RUN state */
             p_str->inter.sta = RLY_ON_STA_RUN;
@@ -267,11 +317,11 @@ void rly_on_func(rly_on_t *p_str)
          * Wait for OFF trigger.
          */
 
-        if (p_str->output.is_closed == 0U)
+        if (p_str->output.is_on == 0U)
         {
             if (p_str->inter.on_cnt >= p_str->inter.on_confirm)
             {
-                p_str->output.is_closed = 1U;
+                p_str->output.is_on = 1U;
             }
             else
             {
@@ -279,24 +329,6 @@ void rly_on_func(rly_on_t *p_str)
             }
         }
 
-        if (*p_str->input.p_rly_off_trig == 1)
-        {
-            *p_str->input.p_rly_off_trig = 0;
-
-            /* Execute hardware relay OFF */
-            p_str->func.rly_off();
-
-            /* Return to IDLE state */
-            p_str->inter.sta        = RLY_ON_STA_IDLE;
-            p_str->inter.dly_cnt    = 0U;
-            p_str->inter.dly        = 0U;
-            p_str->inter.on_cnt     = 0U;
-            p_str->inter.on_confirm = 0U;
-            p_str->output.is_closed = 0U;
-
-            /* Clear ON trigger for safety */
-            *p_str->input.p_rly_on_trig = 0;
-        }
         break;
 
     case RLY_ON_STA_ERR:
