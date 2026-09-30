@@ -55,3 +55,18 @@ verilog/*/sim/*.jou
 xsim.dir/
 xvlog.pb
 /platform/plecs/chb/__pycache__/
+
+# Project build entry scripts are source files, including locally ignored ones.
+# Ignored build/cache directories above remain excluded with their contents.
+!platform/**/compile*.bat
+!platform/**/compile*.cmd
+!platform/**/compile*.ps1
+!platform/**/compile*.sh
+!platform/**/compile*.py
+!platform/**/compile*.m
+!platform/**/*build*.bat
+!platform/**/*build*.cmd
+!platform/**/*build*.ps1
+!platform/**/*build*.sh
+!platform/**/*build*.py
+!platform/**/*build*.m
