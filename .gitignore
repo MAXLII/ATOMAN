@@ -58,15 +58,34 @@ xvlog.pb
 
 # Project build entry scripts are source files, including locally ignored ones.
 # Ignored build/cache directories above remain excluded with their contents.
-!platform/**/compile*.bat
-!platform/**/compile*.cmd
-!platform/**/compile*.ps1
-!platform/**/compile*.sh
-!platform/**/compile*.py
-!platform/**/compile*.m
-!platform/**/*build*.bat
-!platform/**/*build*.cmd
-!platform/**/*build*.ps1
-!platform/**/*build*.sh
-!platform/**/*build*.py
-!platform/**/*build*.m
+!**/compile*.bat
+!**/compile*.cmd
+!**/compile*.ps1
+!**/compile*.sh
+!**/compile*.py
+!**/compile*.m
+!**/*build*.bat
+!**/*build*.cmd
+!**/*build*.ps1
+!**/*build*.sh
+!**/*build*.py
+!**/*build*.m
+!**/Makefile
+!**/CMakeLists.txt
+
+# Keep runnable host build inputs; other local tests and all results stay local.
+!/tests/
+/tests/*
+!/tests/host/
+/tests/host/*
+!/tests/host/bootloader_core/
+!/tests/host/demo_storage/
+!/tests/host/fal_core/
+!/tests/host/inv_i32/
+!/tests/host/lib_utility/
+!/tests/host/section_list/
+/tests/host/*/*
+!/tests/host/*/Makefile
+!/tests/host/*/*.c
+!/tests/host/*/*.h
+!/tests/host/*/test*.ps1
