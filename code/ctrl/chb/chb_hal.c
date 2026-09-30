@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file chb_hal.c
- * @brief Own CHB hardware bindings, coherent sample and immediate PWM inhibit.
- * @details Binding locks after FSM INIT; protection and control consume one sampled frame.
+ * @brief Own CHB physical-input, PWM and relay bindings.
+ * @details Binding locks after FSM INIT; chb_ctrl.c reads the bound inputs once per control tick.
  * @author Max.Li
  * @date 2026-09-25
  * @version 1.0.0
@@ -10,56 +10,11 @@
  *          Licensed under the MIT License. See LICENSE in the project root.
  */
 #include "chb_hal.h"
-#include "chb_ctrl.h"
-#include "section.h"
-
 #include <stddef.h>
 #include <stdatomic.h>
 
-static chb_ctrl_hal_t   binding        = {0}; /* 平台挂载的长寿命输入及 PWM 回调。 */
-static chb_hal_sample_t sample         = {0}; /* 保护和控制共用的同拍副本。 */
-static atomic_uchar     binding_locked = ATOMIC_VAR_INIT(0u); /* INIT 后禁止换源。 */
-static atomic_uchar     tripped        = ATOMIC_VAR_INIT(0u); /* 应用保护闭锁。 */
-
-/** @brief 在串行调度边界准备控制状态。 */
-static void enter_run(void)
-{
-    chb_ctrl_prepare_run();
-}
-
-/** @brief 退出运行时关闭全部 PWM。 */
-static void exit_run(void)
-{
-    chb_ctrl_stop();
-}
-
-static void soft_start_relay_close(void)
-{
-    binding.p_soft_start_relay_close();
-}
-
-static void soft_start_relay_open(void)
-{
-    binding.p_soft_start_relay_open();
-}
-
-static void main_relay_close(void)
-{
-    binding.p_main_relay_close();
-}
-
-static void main_relay_open(void)
-{
-    binding.p_main_relay_open();
-}
-
-static const chb_fsm_hal_t fsm_binding = { /* 生命周期动作无平台器件时序。 */
-                                          .p_enter_run_func         = enter_run,
-                                          .p_exit_run_func          = exit_run,
-                                          .p_soft_start_relay_close = soft_start_relay_close,
-                                          .p_soft_start_relay_open  = soft_start_relay_open,
-                                          .p_main_relay_close       = main_relay_close,
-                                          .p_main_relay_open        = main_relay_open};
+static chb_ctrl_hal_t binding        = {0};                 /* 平台挂载的长寿命输入及 PWM 回调。 */
+static atomic_uchar   binding_locked = ATOMIC_VAR_INIT(0u); /* INIT 后禁止换源。 */
 
 uint8_t chb_hal_bind(const chb_ctrl_hal_t *p_binding)
 {
@@ -75,24 +30,12 @@ uint8_t chb_hal_bind(const chb_ctrl_hal_t *p_binding)
 uint8_t chb_hal_is_ready(void)
 {
     if (    (binding.p_grid_v == NULL)
-         || (binding.p_input_cap_v == NULL)
-         || (binding.p_grid_rms_v == NULL)
-         || (binding.p_grid_hz == NULL)
-         || (binding.p_theta_rad == NULL)
          || (binding.p_i_alpha_a == NULL)
-         || (binding.p_i_beta_a == NULL)
-         || (binding.p_grid_harmonic_alpha_v == NULL)
-         || (binding.p_grid_harmonic_beta_v == NULL)
-         || (binding.p_current_harmonic_alpha_a == NULL)
-         || (binding.p_current_harmonic_beta_a == NULL)
-         || (binding.p_harmonic_feedback_weight == NULL)
-         || (binding.p_grid_fundamental_beta_v == NULL)
-         || (binding.p_set_pwm_func == NULL)
          || (binding.p_pwm_disable == NULL)
-         || (binding.p_soft_start_relay_close == NULL)
-         || (binding.p_soft_start_relay_open == NULL)
-         || (binding.p_main_relay_close == NULL)
-         || (binding.p_main_relay_open == NULL))
+         || (binding.p_soft_start_relay_on == NULL)
+         || (binding.p_soft_start_relay_off == NULL)
+         || (binding.p_main_relay_on == NULL)
+         || (binding.p_main_relay_off == NULL))
     {
         return 0u;
     }
@@ -100,7 +43,8 @@ uint8_t chb_hal_is_ready(void)
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         if (    (binding.p_bus_v[cell] == NULL)
-             || (binding.p_load_i_a[cell] == NULL))
+             || (binding.p_load_i_a[cell] == NULL)
+             || (binding.p_set_pwm_func[cell] == NULL))
         {
             return 0u;
         }
@@ -122,63 +66,3 @@ const chb_ctrl_hal_t *chb_hal_get_ctrl(void)
 {
     return &binding;
 }
-
-const chb_fsm_hal_t *chb_hal_get_fsm(void)
-{
-    return &fsm_binding;
-}
-
-void FUNC_RAM chb_hal_sample(void)
-{
-    sample.grid_v      = *binding.p_grid_v;
-    sample.input_cap_v = *binding.p_input_cap_v;
-    sample.grid_rms_v  = *binding.p_grid_rms_v;
-    sample.grid_hz     = *binding.p_grid_hz;
-    sample.theta_rad   = *binding.p_theta_rad;
-    sample.i_alpha_a   = *binding.p_i_alpha_a;
-    sample.i_beta_a    = *binding.p_i_beta_a;
-    sample.harmonic_feedback_weight = *binding.p_harmonic_feedback_weight;
-    sample.grid_fundamental_beta_v = *binding.p_grid_fundamental_beta_v;
-
-    for (uint32_t harmonic = 0u; harmonic < CHB_HARMONIC_COUNT; ++harmonic)
-    {
-        sample.grid_harmonic_alpha_v[harmonic] = binding.p_grid_harmonic_alpha_v[harmonic];
-        sample.grid_harmonic_beta_v[harmonic] = binding.p_grid_harmonic_beta_v[harmonic];
-        sample.current_harmonic_alpha_a[harmonic] = binding.p_current_harmonic_alpha_a[harmonic];
-        sample.current_harmonic_beta_a[harmonic] = binding.p_current_harmonic_beta_a[harmonic];
-    }
-
-    for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
-    {
-        sample.bus_v[cell]    = *binding.p_bus_v[cell];
-        sample.load_i_a[cell] = *binding.p_load_i_a[cell];
-    }
-}
-
-const chb_hal_sample_t *chb_hal_get_sample(void)
-{
-    return &sample;
-}
-
-void chb_hal_trip(void)
-{
-    binding.p_pwm_disable(); /* INIT 已验证回调；先停波再更新闭锁。 */
-    atomic_store(&tripped, 1u);
-}
-
-void chb_hal_clear_trip(void)
-{
-    atomic_store(&tripped, 0u);
-}
-
-uint8_t chb_hal_is_tripped(void)
-{
-    return atomic_load(&tripped);
-}
-
-/** @brief 初始化只清故障，不撤销平台在 section_init 前准备的绑定。 */
-static void chb_hal_init(void)
-{
-    atomic_store(&tripped, 0u);
-}
-REG_INIT(0, chb_hal_init)

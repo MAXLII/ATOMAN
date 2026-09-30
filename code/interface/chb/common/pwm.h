@@ -15,16 +15,17 @@
 
 #include "chb_hal.h"
 
-#define CHB_PWM_DEAD_TIME_S 2.0e-6f /* 两桥臂实际互补开关的死区时间，s。 */
-#define CHB_PWM_CURRENT_SMOOTH_A 0.3f /* 电流过零补偿平滑尺度，A；缩小后降低平衡负载低次谐波。 */
-#define CHB_PWM_BASE_DELAY_PERIODS 1.5f /* BSP 一拍加单次更新三角 PWM 的半周期。 */
-#define CHB_PWM_COMP_GAIN 1.0f /* 死区平均压降补偿占理想值的比例。 */
+#include <stdint.h>
 
-/** @brief Predict each bridge voltage at its PWM action time, normalize and enable.
- * @param p_command 本拍物理 dq 电压、电流参考及电网相角。
- * @param p_v_pwm_v 输出各桥时序补偿后的调制电压，V，尚未叠加死区补偿。
+/**
+ * @brief Cache one bridge duty from its final modulation voltage.
+ * @param cell Bridge index in the complete CHB frame.
+ * @param v_pwm_v Final voltage after timing prediction and joint limiting, V.
+ * @param bus_v Same-period DC bus voltage used for normalization, V.
+ * @param deadtime_flag Predicted current direction; BSP owns compensation magnitude.
  */
-void chb_pwm_update(const chb_pwm_command_t *p_command, float p_v_pwm_v[CHB_CELL_COUNT]);
+void chb_pwm_set_cell(uint32_t cell, float v_pwm_v, float bus_v,
+                      chb_pwm_deadtime_flag_t deadtime_flag);
 
 /** @brief Disable all three H-bridge PWM channels. */
 void chb_pwm_disable(void);

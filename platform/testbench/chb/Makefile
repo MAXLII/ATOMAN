@@ -14,6 +14,10 @@ SOURCES := test_chb_closed_loop.c \
            ../../../code/ctrl/chb/chb_ctrl.c \
            ../../../code/app/chb/chb_protect.c \
            ../../../code/lib/rly_on.c \
+           ../../../code/lib/sogi.c \
+           ../../../code/lib/msogi.c \
+           ../../../code/lib/pll.c \
+           ../../../code/lib/pi_tustin.c \
            ../../../code/lib/notch.c \
            ../../../code/section/baremetal/section.c
 TARGET := test_chb_closed_loop.exe

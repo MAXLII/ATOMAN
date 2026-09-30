@@ -18,6 +18,14 @@
 #define BSP_PWM_CELL_COUNT 3u /* Three cascaded H bridges. */
 
 /**
+ * @brief Apply platform dead-time compensation to a normalized modulation command.
+ * @param modulation Uncompensated normalized voltage in -1..1.
+ * @param direction Predicted current direction: -1, 0 or 1.
+ * @return Dead-time-compensated normalized voltage.
+ */
+float bsp_pwm_deadtime_compensate(float modulation, int8_t direction);
+
+/**
  * @brief Publish duties and enable delayed together by one control cycle.
  * @param p_duty Three leg-A duties in CHB1, CHB2, CHB3 order, each in 0..1.
  * @param enable 1 enables all bridges; 0 disables all bridges and resets cached duties to 0.5.

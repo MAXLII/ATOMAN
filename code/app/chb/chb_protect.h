@@ -35,4 +35,7 @@ uint8_t chb_protect_sample_healthy(void);
  */
 uint8_t chb_protect_clear_latch(void);
 
+/** @return 1：应用保护已闭锁；0：未闭锁。 */
+uint8_t chb_protect_is_tripped(void);
+
 #endif /* CHB_PROTECT_H */

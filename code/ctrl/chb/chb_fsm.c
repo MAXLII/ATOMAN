@@ -11,6 +11,7 @@
  */
 #include "chb_fsm.h"
 #include "chb_cfg.h"
+#include "chb_ctrl.h"
 #include "chb_hal.h"
 #include "chb_protect.h"
 #include "my_math.h"
@@ -20,27 +21,43 @@
 #include <math.h>
 #include <stdatomic.h>
 
-#define CHB_FSM_EVENT_NONE       0u           /* 未请求状态转换。 */
-#define CHB_FSM_EVENT_IDLE       1u           /* 转入待机。 */
-#define CHB_FSM_EVENT_SOFT_START 2u           /* 开始母线预充确认。 */
-#define CHB_FSM_EVENT_MAIN_WAIT  3u           /* 预充完成，主继电器等待。 */
-#define CHB_FSM_EVENT_RUN        4u           /* 主继电器等待完成。 */
-#define CHB_FSM_EVENT_FAULT      5u           /* 母线预充超时。 */
-#define CHB_FSM_SOFT_START_MS    500u         /* 上下计数的通过门限，1 ms/计数。 */
-#define CHB_FSM_TIMEOUT_MS       5000u        /* 一次软起最长等待时间。 */
-#define CHB_FSM_GRID_PEAK_FACTOR 1.272792206f /* 0.9 * sqrt(2)。 */
-#define CHB_RELAY_TASK_HZ        10000.0f     /* rly_on 的 100 us 调度频率。 */
+#define CHB_FSM_SOFT_START_MS    500u             /* 上下计数的通过门限，1 ms/计数。 */
+#define CHB_FSM_TIMEOUT_MS       5000u            /* 一次软起最长等待时间。 */
+#define CHB_FSM_GRID_PEAK_FACTOR (0.9f * M_SQRT2) /* 90% 电网峰值。 */
+#define CHB_RELAY_TASK_HZ        10000.0f         /* rly_on 的 100 us 调度频率。 */
 
-static uint32_t     fsm_event               = CHB_FSM_EVENT_NONE; /* Section FSM 事件存储。 */
-static uint32_t     soft_start_elapsed      = 0u;   /* 本轮软起经过的 1 ms 次数。 */
-static uint32_t     soft_start_qualified    = 0u;   /* 满足门限加一，否则减一。 */
-static uint32_t     main_relay_wait_ms      = 0u;   /* 库确认闭合后的 1 ms 等待计数。 */
-static rly_on_t     main_relay              = {0};  /* 主继电器的库状态机。 */
-static uint8_t      main_relay_on_trig      = 0u;   /* FSM 发出的闭合脉冲。 */
-static uint8_t      main_relay_off_trig     = 0u;   /* 库要求的断开触发源。 */
-static uint8_t      main_relay_equal        = 0u;   /* 继电器两端电压相等标志。 */
-static uint8_t      main_relay_task_enabled = 0u;   /* 等待及运行期间调用继电器库。 */
-static float        main_relay_grid_hz      = 0.0f; /* 100 us 任务更新的实测电网频率。 */
+/** @brief Section FSM 内部状态转换事件，仅在本文件使用。 */
+typedef enum
+{
+    CHB_FSM_EVENT_NONE = 0u,  /* 未请求状态转换。 */
+    CHB_FSM_EVENT_IDLE,       /* 转入待机。 */
+    CHB_FSM_EVENT_SOFT_START, /* 开始母线预充确认。 */
+    CHB_FSM_EVENT_MAIN_WAIT,  /* 预充完成，主继电器等待。 */
+    CHB_FSM_EVENT_RUN,        /* 主继电器等待完成。 */
+    CHB_FSM_EVENT_FAULT,      /* 母线预充超时。 */
+} chb_fsm_event_t;
+
+/** @brief Section FSM 内部状态编号，仅在本文件使用。 */
+typedef enum
+{
+    CHB_FSM_STATE_INIT = 1u,
+    CHB_FSM_STATE_IDLE,
+    CHB_FSM_STATE_SOFT_START,
+    CHB_FSM_STATE_MAIN_WAIT,
+    CHB_FSM_STATE_RUN,
+    CHB_FSM_STATE_FAULT,
+} chb_fsm_state_t;
+
+static uint32_t     fsm_event               = CHB_FSM_EVENT_NONE;  /* Section FSM 事件存储。 */
+static uint32_t     soft_start_elapsed      = 0u;                  /* 本轮软起经过的 1 ms 次数。 */
+static uint32_t     soft_start_qualified    = 0u;                  /* 满足门限加一，否则减一。 */
+static uint32_t     main_relay_wait_ms      = 0u;                  /* 库确认闭合后的 1 ms 等待计数。 */
+static rly_on_t     main_relay              = {0};                 /* 主继电器的库状态机。 */
+static uint8_t      main_relay_on_trig      = 0u;                  /* FSM 发出的闭合脉冲。 */
+static uint8_t      main_relay_off_trig     = 0u;                  /* 库要求的断开触发源。 */
+static uint8_t      main_relay_equal        = 0u;                  /* 继电器两端电压相等标志。 */
+static uint8_t      main_relay_task_enabled = 0u;                  /* 等待及运行期间调用继电器库。 */
+static float        main_relay_grid_hz      = 0.0f;                /* 100 us 任务更新的实测电网频率。 */
 static atomic_uchar run_allowed             = ATOMIC_VAR_INIT(0u); /* FSM 单发布者的许可。 */
 static atomic_uchar clear_requested         = ATOMIC_VAR_INIT(0u); /* 外部的一次故障清除请求。 */
 
@@ -51,17 +68,26 @@ static void main_relay_prepare(void)
     main_relay_off_trig     = 0u;
     main_relay_equal        = 0u;
     main_relay_task_enabled = 0u;
-    main_relay_grid_hz      = chb_hal_get_sample()->grid_hz;
+    main_relay_grid_hz      = chb_observer_get_sample()->grid_hz;
     rly_on_init(&main_relay,
                 &main_relay_on_trig,
                 &main_relay_off_trig,
                 &main_relay_equal,
                 &main_relay_grid_hz,
                 CHB_RELAY_TASK_HZ,
-                CHB_MAIN_RELAY_CLOSE_TIME_S,
-                chb_hal_get_fsm()->p_main_relay_close,
-                chb_hal_get_fsm()->p_main_relay_open);
-    rly_on_func(&main_relay); /* 库的 INIT 状态转入 IDLE。 */
+                CHB_MAIN_RELAY_ON_TIME_S,
+                chb_hal_get_ctrl()->p_main_relay_on,
+                chb_hal_get_ctrl()->p_main_relay_off);
+}
+
+/** @brief 由 rly_on 立即断开主继电器，并取消所有待执行的闭合过程。 */
+static void main_relay_force_off(void)
+{
+    main_relay_task_enabled = 0u;
+    main_relay_on_trig      = 0u;
+    main_relay_off_trig     = 0u;
+    main_relay_equal        = 0u;
+    rly_on_force_off(&main_relay);
 }
 
 /** @brief 100 us 调用继电器库；停机后禁止旧等待状态继续闭合。 */
@@ -69,8 +95,8 @@ static void main_relay_task(void)
 {
     if (main_relay_task_enabled != 0u)
     {
-        const chb_hal_sample_t *p_sample = chb_hal_get_sample();
-        float voltage_difference_v       = p_sample->grid_v - p_sample->input_cap_v;
+        const chb_observer_sample_t *p_sample = chb_observer_get_sample();
+        float voltage_difference_v            = p_sample->grid_v; /* 当前无输入电容，下游端按 0 V。 */
         float match_window_v = CHB_MAIN_RELAY_MATCH_RATIO * M_SQRT2 * p_sample->grid_rms_v;
 
         main_relay_equal = (fabsf(voltage_difference_v) <= match_window_v) ? 1u : 0u;
@@ -93,9 +119,10 @@ static void init_exe(void)
 {
     if (    (chb_hal_is_ready() != 0u)
          && (chb_cfg_is_ready() != 0u)
+         && (chb_observer_is_ready() != 0u)
          && (chb_protect_is_ready() != 0u))
     {
-        chb_hal_sample();
+        chb_ctrl_update_sample();
 
         if (chb_protect_sample_healthy() != 0u)
         {
@@ -110,24 +137,23 @@ static void init_exe(void)
 /** @param event 本拍 FSM 事件。 @return 下一状态或 0 保持不变。 */
 static uint32_t init_chk(uint32_t event)
 {
-    return (event == CHB_FSM_EVENT_IDLE) ? 2u : 0u;
+    return (event == CHB_FSM_EVENT_IDLE) ? CHB_FSM_STATE_IDLE : 0u;
 }
 
 /** @brief INIT 验证完成后先关闭桥臂。 */
 static void init_out(void)
 {
     chb_hal_get_ctrl()->p_pwm_disable();
-    chb_hal_get_fsm()->p_soft_start_relay_open();
-    chb_hal_get_fsm()->p_main_relay_open();
+    chb_hal_get_ctrl()->p_soft_start_relay_off();
+    main_relay_force_off();
 }
 
 /** @brief 待机不持有运行许可。 */
 static void idle_in(void)
 {
     atomic_store(&run_allowed, 0u);
-    main_relay_task_enabled = 0u;
-    chb_hal_get_fsm()->p_soft_start_relay_open();
-    chb_hal_get_fsm()->p_main_relay_open();
+    main_relay_force_off();
+    chb_hal_get_ctrl()->p_soft_start_relay_off();
 }
 
 /** @brief 等待应用运行请求。 */
@@ -142,7 +168,7 @@ static void idle_exe(void)
 /** @param event 本拍 FSM 事件。 @return 下一状态或 0 保持不变。 */
 static uint32_t idle_chk(uint32_t event)
 {
-    return (event == CHB_FSM_EVENT_SOFT_START) ? 3u : 0u;
+    return (event == CHB_FSM_EVENT_SOFT_START) ? CHB_FSM_STATE_SOFT_START : 0u;
 }
 
 /** @brief 待机退出无额外器件动作。 */
@@ -157,17 +183,16 @@ static void soft_start_in(void)
     soft_start_elapsed   = 0u;
     soft_start_qualified = 0u;
     atomic_store(&run_allowed, 0u);
-    main_relay_task_enabled = 0u;
+    main_relay_force_off();
     chb_hal_get_ctrl()->p_pwm_disable();
-    chb_hal_get_fsm()->p_main_relay_open();
-    chb_hal_get_fsm()->p_soft_start_relay_close();
+    chb_hal_get_ctrl()->p_soft_start_relay_on();
 }
 
 /** @brief 三路母线之和高于 90% 电网峰值时上数，否则下数。 */
 static void soft_start_exe(void)
 {
-    const chb_hal_sample_t *p_sample = chb_hal_get_sample();
-    float total_bus_v                = 0.0f;
+    const chb_observer_sample_t *p_sample = chb_observer_get_sample();
+    float total_bus_v                     = 0.0f;
 
     if (chb_cfg_get_run_request() == 0u)
     {
@@ -207,21 +232,21 @@ static uint32_t soft_start_chk(uint32_t event)
 {
     if (event == CHB_FSM_EVENT_FAULT)
     {
-        return 6u;
+        return CHB_FSM_STATE_FAULT;
     }
 
     if (event == CHB_FSM_EVENT_IDLE)
     {
-        return 2u;
+        return CHB_FSM_STATE_IDLE;
     }
-    return (event == CHB_FSM_EVENT_MAIN_WAIT) ? 4u : 0u;
+    return (event == CHB_FSM_EVENT_MAIN_WAIT) ? CHB_FSM_STATE_MAIN_WAIT : 0u;
 }
 
 static void soft_start_out(void)
 {
     if (fsm_event != CHB_FSM_EVENT_MAIN_WAIT)
     {
-        chb_hal_get_fsm()->p_soft_start_relay_open();
+        chb_hal_get_ctrl()->p_soft_start_relay_off();
     }
 }
 
@@ -247,11 +272,11 @@ static void main_wait_exe(void)
         return;
     }
 
-    if (main_relay.output.is_closed != 0u)
+    if (main_relay.output.is_on != 0u)
     {
         if (main_relay_wait_ms == 0u)
         {
-            chb_hal_get_fsm()->p_soft_start_relay_open(); /* 主支路已接通后再退出预充。 */
+            chb_hal_get_ctrl()->p_soft_start_relay_off(); /* 主支路已接通后再退出预充。 */
         }
 
         if (main_relay_wait_ms < CHB_MAIN_RELAY_WAIT_MS)
@@ -274,28 +299,16 @@ static uint32_t main_wait_chk(uint32_t event)
 {
     if (event == CHB_FSM_EVENT_IDLE)
     {
-        return 2u;
+        return CHB_FSM_STATE_IDLE;
     }
-    return (event == CHB_FSM_EVENT_RUN) ? 5u : 0u;
+    return (event == CHB_FSM_EVENT_RUN) ? CHB_FSM_STATE_RUN : 0u;
 }
 
 static void main_wait_out(void)
 {
     if (fsm_event != CHB_FSM_EVENT_RUN)
     {
-        main_relay_task_enabled = 0u;
-        main_relay_on_trig      = 0u;
-        main_relay_equal        = 0u;
-
-        if (main_relay.inter.sta == RLY_ON_STA_RUN)
-        {
-            main_relay_off_trig = 1u;
-            rly_on_func(&main_relay); /* 库调用挂载的主继电器断开回调。 */
-        }
-        else
-        {
-            chb_hal_get_fsm()->p_main_relay_open(); /* 尚未闭合时确保输出为断开。 */
-        }
+        main_relay_force_off();
     }
 }
 
@@ -303,7 +316,7 @@ static void main_wait_out(void)
 static void run_in(void)
 {
     atomic_store(&run_allowed, 0u);
-    chb_hal_get_fsm()->p_enter_run_func();
+    chb_ctrl_prepare_run();
 }
 
 /** @brief 请求撤销立即禁止发波；否则授予本轮控制许可。 */
@@ -321,17 +334,14 @@ static void run_exe(void)
 /** @param event 本拍 FSM 事件。 @return 下一状态或 0 保持不变。 */
 static uint32_t run_chk(uint32_t event)
 {
-    return (event == CHB_FSM_EVENT_IDLE) ? 2u : 0u;
+    return (event == CHB_FSM_EVENT_IDLE) ? CHB_FSM_STATE_IDLE : 0u;
 }
 
 /** @brief 退出运行先停波，再维持禁止许可。 */
 static void run_out(void)
 {
-    chb_hal_get_fsm()->p_exit_run_func();
-    main_relay_task_enabled = 0u;
-    main_relay_equal        = 0u;
-    main_relay_off_trig     = 1u;
-    rly_on_func(&main_relay); /* RUN 状态由库调用挂载的断开回调。 */
+    chb_ctrl_stop();
+    main_relay_force_off();
     atomic_store(&run_allowed, 0u);
 }
 
@@ -340,11 +350,8 @@ static void fault_in(void)
 {
     atomic_store(&run_allowed, 0u);
     chb_hal_get_ctrl()->p_pwm_disable();
-    main_relay_task_enabled = 0u;
-    main_relay_on_trig      = 0u;
-    main_relay_equal        = 0u;
-    chb_hal_get_fsm()->p_soft_start_relay_open();
-    chb_hal_get_fsm()->p_main_relay_open();
+    main_relay_force_off();
+    chb_hal_get_ctrl()->p_soft_start_relay_off();
 }
 
 static void fault_exe(void)
@@ -357,7 +364,7 @@ static void fault_exe(void)
 
 static uint32_t fault_chk(uint32_t event)
 {
-    return (event == CHB_FSM_EVENT_IDLE) ? 2u : 0u;
+    return (event == CHB_FSM_EVENT_IDLE) ? CHB_FSM_STATE_IDLE : 0u;
 }
 
 static void fault_out(void)
@@ -365,17 +372,18 @@ static void fault_out(void)
     /* 清除闭锁后由 IDLE 等待新运行请求。 */
 }
 
-REG_FSM(CHB_FSM, 1u, fsm_event, FSM_ENTRY(1u, init_in, init_exe, init_chk, init_out),
-        FSM_ENTRY(2u, idle_in, idle_exe, idle_chk, idle_out),
-        FSM_ENTRY(3u, soft_start_in, soft_start_exe, soft_start_chk, soft_start_out),
-        FSM_ENTRY(4u, main_wait_in, main_wait_exe, main_wait_chk, main_wait_out),
-        FSM_ENTRY(5u, run_in, run_exe, run_chk, run_out),
-        FSM_ENTRY(6u, fault_in, fault_exe, fault_chk, fault_out))
+REG_FSM(CHB_FSM, CHB_FSM_STATE_INIT, fsm_event,
+        FSM_ENTRY(CHB_FSM_STATE_INIT, init_in, init_exe, init_chk, init_out),
+        FSM_ENTRY(CHB_FSM_STATE_IDLE, idle_in, idle_exe, idle_chk, idle_out),
+        FSM_ENTRY(CHB_FSM_STATE_SOFT_START, soft_start_in, soft_start_exe, soft_start_chk, soft_start_out),
+        FSM_ENTRY(CHB_FSM_STATE_MAIN_WAIT, main_wait_in, main_wait_exe, main_wait_chk, main_wait_out),
+        FSM_ENTRY(CHB_FSM_STATE_RUN, run_in, run_exe, run_chk, run_out),
+        FSM_ENTRY(CHB_FSM_STATE_FAULT, fault_in, fault_exe, fault_chk, fault_out))
 
 /** @brief 重复初始化时重建 FSM 初始状态。 */
 static void chb_fsm_init(void)
 {
-    reg_fsm_CHB_FSM.fsm_sta           = 1u;
+    reg_fsm_CHB_FSM.fsm_sta           = CHB_FSM_STATE_INIT;
     reg_fsm_CHB_FSM.fsm_sta_is_change = 1u;
     fsm_event                         = CHB_FSM_EVENT_NONE;
     soft_start_elapsed                = 0u;
@@ -396,15 +404,15 @@ CHB_RUN_STATE_E chb_fsm_get_run_state(void)
 
     switch (state)
     {
-    case 1u:
+    case CHB_FSM_STATE_INIT:
         return CHB_RUN_STATE_INIT;
-    case 3u:
+    case CHB_FSM_STATE_SOFT_START:
         return CHB_RUN_STATE_BUS_SOFT_START;
-    case 4u:
+    case CHB_FSM_STATE_MAIN_WAIT:
         return CHB_RUN_STATE_MAIN_RELAY_WAIT;
-    case 5u:
+    case CHB_FSM_STATE_RUN:
         return CHB_RUN_STATE_RUN;
-    case 6u:
+    case CHB_FSM_STATE_FAULT:
         return CHB_RUN_STATE_FAULT;
     default:
         return CHB_RUN_STATE_IDLE;

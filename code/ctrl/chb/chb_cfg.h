@@ -17,7 +17,7 @@
 #define CHB_CELL_COUNT               3u     /* 三个串联 H 桥，直流母线相互独立。 */
 #define CHB_HARMONIC_COUNT           4u     /* 电网 3、5、7、9 次谐波前馈。 */
 #define CHB_HARMONIC_CURRENT_GAIN    400.0f /* 选频电流反馈等效阻尼，V/A。 */
-#define CHB_MAIN_RELAY_CLOSE_TIME_S  0.008f /* rly_on 使用的继电器机械闭合时间。 */
+#define CHB_MAIN_RELAY_ON_TIME_S     0.008f /* rly_on 使用的继电器机械闭合时间。 */
 #define CHB_MAIN_RELAY_WAIT_MS       20u    /* rly_on 确认闭合后至控制运行的等待时间。 */
 #define CHB_MAIN_RELAY_MATCH_RATIO   0.02f  /* 继电器两端压差允许值占电网峰值的比例。 */
 #define CHB_BUS_NOTCH_BANDWIDTH_HZ   20.0f  /* 母线二倍工频陷波带宽，Hz。 */

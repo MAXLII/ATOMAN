@@ -2,7 +2,7 @@
 /**
  * @file test_chb_closed_loop.c
  * @brief Exercise the production CHB FSM and closed loop against a three-cell averaged plant.
- * @details Uses the same 6 kV/12 mH/600 uF load step as the MATLAB switching study.
+ * @details Uses the production observer and the 6 kV/12 mH/600 uF averaged plant.
  * @author Max.Li
  * @date 2026-09-25
  * @version 1.0.0
@@ -24,20 +24,25 @@
 #define TEST_VPK 8485.28137423857f /* 6 kV RMS 电网基波峰值，V。 */
 
 uint32_t section_testbench_time_100us = 0u; /* Section 主机测试时钟。 */
-static float grid_rms_v = 6000.0f; /* 外部电网基波有效值，V。 */
-static float grid_hz = 50.0f; /* 外部测得的电网频率，Hz。 */
 static float grid_v = 0.0f; /* 继电器电网侧电压，V。 */
-static float input_cap_v = 0.0f; /* 无输入电容时由上层提供 0 V。 */
-static float theta_rad = 0.0f; /* 外部同步角，rad。 */
 static float i_alpha_a = 14.1421356f; /* 网侧物理电流，A。 */
-static float i_beta_a = 0.0f; /* 虚拟正交电流，A。 */
 static float bus_v[CHB_CELL_COUNT] = {3200.0f, 3200.0f, 3200.0f}; /* 预充母线，V。 */
 static float load_i_a[CHB_CELL_COUNT] = {6.25f, 6.25f, 6.25f}; /* 电阻负载支路的实际电流，A。 */
-static chb_pwm_command_t last_command = {0}; /* 同步消费的三桥控制命令。 */
+static float last_v_pwm_v[CHB_CELL_COUNT] = {0.0f}; /* 控制器输出的逐级最终发波电压，V。 */
+static float last_bus_v[CHB_CELL_COUNT] = {0.0f}; /* 与逐级发波电压同拍的母线电压，V。 */
+static chb_pwm_deadtime_flag_t last_deadtime_flag[CHB_CELL_COUNT] = {CHB_PWM_DEADTIME_OFF};
 static uint8_t pwm_enabled = 0u; /* 模拟桥臂使能状态。 */
 static uint32_t pwm_calls = 0u; /* 成功发波次数。 */
-static uint8_t soft_relay_closed = 0u; /* 模拟软起继电器。 */
-static uint8_t main_relay_closed = 0u; /* 模拟主继电器。 */
+static uint8_t soft_relay_on = 0u; /* 模拟软起继电器。 */
+static uint8_t main_relay_on = 0u; /* 模拟主继电器。 */
+
+static void apply_pwm_cell(uint32_t cell, float v_pwm_v, float bus_voltage,
+                           chb_pwm_deadtime_flag_t deadtime_flag)
+{
+    last_v_pwm_v[cell] = v_pwm_v;
+    last_bus_v[cell] = bus_voltage;
+    last_deadtime_flag[cell] = deadtime_flag;
+}
 
 /** @param condition 测试必须成立的条件。 @param p_message 失败说明。 */
 static void check(int condition, const char *p_message)
@@ -49,10 +54,19 @@ static void check(int condition, const char *p_message)
     }
 }
 
-/** @param p_command 控制器同拍输出；本回调立即复制，不保留临时指针。 */
-static void apply_pwm(const chb_pwm_command_t *p_command)
+static void apply_pwm_cell_1(float v_pwm_v, float bus_voltage, chb_pwm_deadtime_flag_t deadtime_flag)
 {
-    last_command = *p_command;
+    apply_pwm_cell(0u, v_pwm_v, bus_voltage, deadtime_flag);
+}
+
+static void apply_pwm_cell_2(float v_pwm_v, float bus_voltage, chb_pwm_deadtime_flag_t deadtime_flag)
+{
+    apply_pwm_cell(1u, v_pwm_v, bus_voltage, deadtime_flag);
+}
+
+static void apply_pwm_cell_3(float v_pwm_v, float bus_voltage, chb_pwm_deadtime_flag_t deadtime_flag)
+{
+    apply_pwm_cell(2u, v_pwm_v, bus_voltage, deadtime_flag);
     pwm_enabled = 1u;
     ++pwm_calls;
 }
@@ -63,26 +77,26 @@ static void disable_pwm(void)
     pwm_enabled = 0u;
 }
 
-static void soft_relay_close(void)
+static void soft_relay_on_func(void)
 {
-    check(main_relay_closed == 0u, "main relay open before soft relay close");
-    soft_relay_closed = 1u;
+    check(main_relay_on == 0u, "main relay off before soft relay on");
+    soft_relay_on = 1u;
 }
 
-static void soft_relay_open(void)
+static void soft_relay_off_func(void)
 {
-    soft_relay_closed = 0u;
+    soft_relay_on = 0u;
 }
 
-static void main_relay_close(void)
+static void main_relay_on_func(void)
 {
-    check(soft_relay_closed != 0u, "soft relay stays closed until main relay closure is confirmed");
-    main_relay_closed = 1u;
+    check(soft_relay_on != 0u, "soft relay stays on until main relay on is confirmed");
+    main_relay_on = 1u;
 }
 
-static void main_relay_open(void)
+static void main_relay_off_func(void)
 {
-    main_relay_closed = 0u;
+    main_relay_on = 0u;
 }
 
 /** @brief 以 1 ms 的真实 FSM 调度间隔推进静态输入测试。 */
@@ -105,28 +119,25 @@ int main(void)
     float peak_current = fabsf(i_alpha_a); /* 全程物理电流峰值，A。 */
 
     binding.p_grid_v = &grid_v;
-    binding.p_input_cap_v = &input_cap_v;
-    binding.p_grid_rms_v = &grid_rms_v;
-    binding.p_grid_hz = &grid_hz;
-    binding.p_theta_rad = &theta_rad;
     binding.p_i_alpha_a = &i_alpha_a;
-    binding.p_i_beta_a = &i_beta_a;
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         binding.p_bus_v[cell] = &bus_v[cell];
         binding.p_load_i_a[cell] = &load_i_a[cell];
     }
-    binding.p_set_pwm_func = apply_pwm;
+    binding.p_set_pwm_func[0] = apply_pwm_cell_1;
+    binding.p_set_pwm_func[1] = apply_pwm_cell_2;
+    binding.p_set_pwm_func[2] = apply_pwm_cell_3;
     binding.p_pwm_disable = disable_pwm;
-    binding.p_soft_start_relay_close = soft_relay_close;
-    binding.p_soft_start_relay_open = soft_relay_open;
-    binding.p_main_relay_close = main_relay_close;
-    binding.p_main_relay_open = main_relay_open;
+    binding.p_soft_start_relay_on = soft_relay_on_func;
+    binding.p_soft_start_relay_off = soft_relay_off_func;
+    binding.p_main_relay_on = main_relay_on_func;
+    binding.p_main_relay_off = main_relay_off_func;
 
     check(chb_hal_bind(&binding) != 0u, "HAL binding");
     check(chb_protect_configure(25.0f, 2700.0f, 3600.0f) != 0u,
           "simulation protection configuration");
-    grid_rms_v = NAN;
+    load_i_a[0] = NAN; /* 原始负载电流非法；观测器仅复制，不污染 SOGI/PLL 历史。 */
     section_init();
     check(chb_cfg_set_run_request(1u) != 0u, "run request");
     for (uint32_t warmup = 0u; warmup < 20u; ++warmup)
@@ -134,8 +145,8 @@ int main(void)
         step_fsm_ms();
     }
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_INIT,
-          "INIT rejects non-finite initial grid data");
-    grid_rms_v = 6000.0f;
+           "INIT rejects non-finite initial load-current data");
+    load_i_a[0] = 6.25f;
     bus_v[1] = 0.0f;
     for (uint32_t warmup = 0u; warmup < 20u; ++warmup)
     {
@@ -144,8 +155,8 @@ int main(void)
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_BUS_SOFT_START,
           "zero bus accepted into passive precharge monitor");
     check(pwm_calls == 0u, "soft start cannot reach PWM");
-    check(soft_relay_closed != 0u, "soft relay closes during precharge");
-    check(main_relay_closed == 0u, "main relay stays open during precharge");
+    check(soft_relay_on != 0u, "soft relay turns on during precharge");
+    check(main_relay_on == 0u, "main relay stays off during precharge");
     for (uint32_t wait = 0u; wait < 5000u; ++wait)
     {
         step_fsm_ms();
@@ -156,9 +167,9 @@ int main(void)
     }
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_FAULT, "5 s precharge timeout");
     step_fsm_ms();
-    check(chb_hal_is_tripped() == 0u, "precharge timeout does not latch application protection");
-    check((soft_relay_closed == 0u) && (main_relay_closed == 0u),
-          "fault opens both relays");
+    check(chb_protect_is_tripped() == 0u, "precharge timeout does not latch application protection");
+    check((soft_relay_on == 0u) && (main_relay_on == 0u),
+          "fault turns both relays off");
     check(chb_fsm_clear_fault() == 0u, "running request prevents fault clear");
     check(chb_cfg_set_run_request(0u) != 0u, "stop request for fault recovery");
     section_interrupt();
@@ -191,7 +202,7 @@ int main(void)
     step_fsm_ms();
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_MAIN_RELAY_WAIT,
           "soft start hands off to main relay wait");
-    check((soft_relay_closed != 0u) && (main_relay_closed == 0u),
+    check((soft_relay_on != 0u) && (main_relay_on == 0u),
           "precharge path stays connected while waiting for main relay");
     check(chb_fsm_run_allowed() == 0u, "no PWM during main relay wait");
     for (uint32_t wait = 0u; wait < 30u; ++wait)
@@ -199,8 +210,8 @@ int main(void)
         step_fsm_ms();
     }
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_MAIN_RELAY_WAIT,
-          "relay remains open while terminal voltages differ");
-    check(main_relay_closed == 0u, "rly_on waits for voltage match");
+          "relay remains off while terminal voltages differ");
+    check(main_relay_on == 0u, "rly_on waits for voltage match");
     check(chb_cfg_set_run_request(0u) != 0u, "cancel relay wait");
     step_fsm_ms();
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_IDLE,
@@ -209,7 +220,7 @@ int main(void)
     {
         step_fsm_ms();
     }
-    check(main_relay_closed == 0u, "cancelled relay request cannot close later");
+    check(main_relay_on == 0u, "cancelled relay request cannot turn on later");
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
         bus_v[cell] = 3000.0f; /* 用低于目标的预充值启动，覆盖母线给定斜坡。 */
@@ -222,17 +233,17 @@ int main(void)
     }
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_MAIN_RELAY_WAIT,
           "restart repeats bus soft start before relay wait");
-    check(main_relay_closed == 0u, "restart still waits for voltage match");
+    check(main_relay_on == 0u, "restart still waits for voltage match");
     grid_v = 0.0f;
-    uint32_t main_close_ms = 0u;
+    uint32_t main_on_ms = 0u;
     uint32_t run_ms = 0u;
     for (uint32_t wait = 1u; wait <= 100u; ++wait)
     {
         step_fsm_ms();
-        if (    (main_relay_closed != 0u)
-             && (main_close_ms == 0u))
+        if (    (main_relay_on != 0u)
+             && (main_on_ms == 0u))
         {
-            main_close_ms = wait;
+            main_on_ms = wait;
         }
         if (chb_fsm_get_run_state() == CHB_RUN_STATE_RUN)
         {
@@ -240,11 +251,11 @@ int main(void)
             break;
         }
     }
-    check(main_close_ms != 0u, "rly_on commands main relay after voltage match");
-    check(run_ms >= main_close_ms + CHB_MAIN_RELAY_WAIT_MS,
-          "control waits after main relay close command");
+    check(main_on_ms != 0u, "rly_on commands main relay on after voltage match");
+    check(run_ms >= main_on_ms + CHB_MAIN_RELAY_WAIT_MS,
+          "control waits after main relay on command");
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_RUN, "FSM entered RUN");
-    check(soft_relay_closed == 0u, "soft relay opens after main relay confirmation and before RUN");
+    check(soft_relay_on == 0u, "soft relay turns off after main relay confirmation and before RUN");
     check(chb_fsm_run_allowed() == 0u, "RUN permission waits for state entry");
     step_fsm_ms();
     check(chb_fsm_run_allowed() != 0u, "FSM granted permission");
@@ -254,13 +265,10 @@ int main(void)
     {
         float time_s = (float)tick * TEST_TS; /* 当前仿真时间，s。 */
         float cosine = cosf(TEST_OMEGA * time_s); /* 电网同步角余弦。 */
-        float sine = sinf(TEST_OMEGA * time_s); /* 电网同步角正弦。 */
         float grid_voltage = TEST_VPK * cosine; /* 电网瞬时电压，V。 */
-        float beta_voltage = 0.0f; /* 总桥虚拟正交电压，V。 */
         float old_current = i_alpha_a; /* 积分本拍前的物理电流，A。 */
         float load[CHB_CELL_COUNT] = {512.0f, 512.0f, 512.0f}; /* 各级负载，ohm。 */
 
-        theta_rad = TEST_OMEGA * time_s;
         grid_v = grid_voltage;
         uint32_t stage = tick / 40000u;
         if ((stage < 3u) && (time_s >= 0.25f))
@@ -281,30 +289,22 @@ int main(void)
         }
         section_interrupt();
         check(pwm_enabled != 0u, "all bridges enabled after control dispatch");
-        check(fabsf(last_command.cell_d_v[0] + last_command.cell_d_v[1]
-                    + last_command.cell_d_v[2] - last_command.total_d_v) < 0.01f, "d voltage sum");
-        check(fabsf(last_command.cell_q_v[0] + last_command.cell_q_v[1]
-                    + last_command.cell_q_v[2] - last_command.total_q_v) < 0.01f, "q voltage sum");
-        check(fabsf(last_command.v_pwm_v[0] + last_command.v_pwm_v[1]
-                    + last_command.v_pwm_v[2] - last_command.total_v_pwm_v) < 0.01f,
-              "series voltage sum");
+        const float total_v_pwm_v = last_v_pwm_v[0] + last_v_pwm_v[1] + last_v_pwm_v[2];
 
         for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
         {
-            check(fabsf(last_command.v_pwm_v[cell]) <= 0.981f * bus_v[cell],
+            check(fabsf(last_bus_v[cell] - bus_v[cell]) < 0.01f, "same-period bus voltage");
+            check(fabsf(last_v_pwm_v[cell]) <= 0.981f * bus_v[cell],
                   "per-cell voltage limit");
-            check(hypotf(last_command.cell_d_v[cell], last_command.cell_q_v[cell])
-                      <= 0.981f * bus_v[cell], "per-cell dq vector limit");
+            check((last_deadtime_flag[cell] >= CHB_PWM_DEADTIME_NEGATIVE)
+                      && (last_deadtime_flag[cell] <= CHB_PWM_DEADTIME_POSITIVE),
+                  "dead-time direction flag");
         }
-        beta_voltage = last_command.total_d_v * sine
-                       + last_command.total_q_v * cosine;
         i_alpha_a += TEST_TS * (grid_voltage - 0.5f * i_alpha_a
-                               - last_command.total_v_pwm_v) / 0.012f;
-        i_beta_a += TEST_TS * (TEST_VPK * sine - 0.5f * i_beta_a
-                              - beta_voltage) / 0.012f;
+                                - total_v_pwm_v) / 0.012f;
         for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
         {
-            bus_v[cell] += TEST_TS * ((last_command.v_pwm_v[cell] / bus_v[cell])
+            bus_v[cell] += TEST_TS * ((last_v_pwm_v[cell] / bus_v[cell])
                                      * old_current - bus_v[cell] / load[cell]) / 600.0e-6f;
             if ((tick % 40000u) >= 39000u)
             {
@@ -315,9 +315,6 @@ int main(void)
         peak_current = fmaxf(peak_current, fabsf(i_alpha_a));
         if ((tick % 40000u) >= 39000u)
         {
-            float iq_command = -last_command.i_comp_ref_a * sine
-                               + last_command.i_comp_beta_ref_a * cosine; /* 参考电流的 q 轴分量。 */
-            check(fabsf(iq_command) < 0.01f, "zero reactive current for feasible unequal loads");
             ++steady_count;
         }
         ++section_testbench_time_100us;
@@ -347,17 +344,17 @@ int main(void)
 
     i_alpha_a = 30.0f;
     section_interrupt();
-    check(chb_hal_is_tripped() != 0u, "overcurrent trip latched");
+    check(chb_protect_is_tripped() != 0u, "overcurrent trip latched");
     check(pwm_enabled == 0u, "same-period PWM inhibition");
     check(chb_cfg_get_run_request() == 0u, "application protection revokes run request");
     step_fsm_ms();
     check(chb_fsm_get_run_state() == CHB_RUN_STATE_IDLE, "application trip returns FSM to IDLE");
-    check((soft_relay_closed == 0u) && (main_relay_closed == 0u),
-          "application trip opens both relays");
+    check((soft_relay_on == 0u) && (main_relay_on == 0u),
+          "application trip turns both relays off");
     i_alpha_a = 0.0f;
     section_interrupt();
     check(chb_fsm_clear_fault() == 0u, "application trip is not an FSM fault");
     check(chb_protect_clear_latch() != 0u, "explicit application fault clear");
-    check(chb_hal_is_tripped() == 0u, "application latch cleared");
+    check(chb_protect_is_tripped() == 0u, "application latch cleared");
     return EXIT_SUCCESS;
 }

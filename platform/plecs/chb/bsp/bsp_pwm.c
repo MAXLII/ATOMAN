@@ -13,6 +13,10 @@
 #include "bsp_pwm.h"
 #include "plecs.h"
 
+#define BSP_PWM_PERIOD_S 1.0e-4f   /* PLECS carrier period, s. */
+#define BSP_PWM_DEAD_TIME_S 2.0e-6f /* PLECS complementary-switch dead time, s. */
+#define BSP_PWM_DEADTIME_GAIN 1.0f  /* Compensation ratio relative to the ideal average error. */
+
 _Static_assert(PLECS_OUTPUT_PWM_ENABLE == BSP_PWM_CELL_COUNT,
                "Three duty outputs must precede the PWM enable");
 
@@ -20,6 +24,12 @@ static float delayed_duty[BSP_PWM_CELL_COUNT] = {0.5f, 0.5f, 0.5f}; /* Previous 
 static uint8_t delayed_enable; /* Previous control-cycle common enable. */
 static uint32_t output_tick; /* PLECS 100 us tick of the last published frame. */
 static uint8_t output_tick_valid; /* Whether this simulation has published a PWM frame. */
+
+float bsp_pwm_deadtime_compensate(float modulation, int8_t direction)
+{
+    const float deadtime_ratio = 2.0f * BSP_PWM_DEAD_TIME_S / BSP_PWM_PERIOD_S;
+    return modulation - BSP_PWM_DEADTIME_GAIN * deadtime_ratio * (float)direction;
+}
 
 void bsp_pwm_set(const float p_duty[BSP_PWM_CELL_COUNT], uint8_t enable)
 {

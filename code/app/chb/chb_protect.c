@@ -17,18 +17,20 @@
 #include "section.h"
 
 #include <math.h>
+#include <stdatomic.h>
 
-static float trip_current_a = 0.0f; /* 应用输入的电流保护门限，A。 */
-static float minimum_bus_v  = 0.0f; /* RUN 阶段的母线欠压门限，V。 */
-static float maximum_bus_v  = 0.0f; /* 应用输入的母线过压门限，V。 */
-static uint8_t configured   = 0u;   /* 门限齐全后才允许状态机离开 INIT。 */
+static float        trip_current_a = 0.0f;                /* 应用输入的电流保护门限，A。 */
+static float        minimum_bus_v  = 0.0f;                /* RUN 阶段的母线欠压门限，V。 */
+static float        maximum_bus_v  = 0.0f;                /* 应用输入的母线过压门限，V。 */
+static uint8_t      configured     = 0u;                  /* 门限齐全后才允许状态机离开 INIT。 */
+static atomic_uchar tripped        = ATOMIC_VAR_INIT(0u); /* 应用保护故障闭锁。 */
 
 /** @return 1：所有采样在配置范围内。 */
 uint8_t chb_protect_sample_healthy(void)
 {
-    const chb_hal_sample_t *p_sample = chb_hal_get_sample(); /* INIT/保护共用的采样快照。 */
+    const chb_observer_sample_t *p_sample = chb_observer_get_sample(); /* INIT/保护共用的观测快照。 */
+
     if (    (!isfinite(p_sample->grid_v))
-         || (!isfinite(p_sample->input_cap_v))
          || (!isfinite(p_sample->grid_rms_v))
          || (p_sample->grid_rms_v <= 0.0f)
          || (!isfinite(p_sample->grid_hz))
@@ -50,6 +52,7 @@ uint8_t chb_protect_sample_healthy(void)
         {
             return 0u;
         }
+
         if (    (chb_fsm_get_run_state() == CHB_RUN_STATE_RUN)
              && (p_sample->bus_v[cell] < minimum_bus_v))
         {
@@ -86,14 +89,21 @@ uint8_t chb_protect_is_ready(void)
 uint8_t chb_protect_clear_latch(void)
 {
     CHB_RUN_STATE_E run_state = chb_fsm_get_run_state(); /* 仅在桥臂已停的状态清除应用闭锁。 */
-    if (    ((run_state != CHB_RUN_STATE_IDLE) && (run_state != CHB_RUN_STATE_FAULT))
+
+    if (    (    (run_state != CHB_RUN_STATE_IDLE)
+              && (run_state != CHB_RUN_STATE_FAULT))
          || (chb_cfg_get_run_request() != 0u)
          || (chb_protect_sample_healthy() == 0u))
     {
         return 0u;
     }
-    chb_hal_clear_trip();
+    atomic_store(&tripped, 0u);
     return 1u;
+}
+
+uint8_t chb_protect_is_tripped(void)
+{
+    return atomic_load(&tripped);
 }
 
 /** @brief 中断第二阶段检查采样；本拍故障会阻止控制阶段重新发波。 */
@@ -106,12 +116,20 @@ static void FUNC_RAM chb_protect_run(void)
 
     if (chb_protect_sample_healthy() == 0u)
     {
-        chb_hal_trip();
+        chb_hal_get_ctrl()->p_pwm_disable(); /* 先停波，再发布应用闭锁。 */
+        atomic_store(&tripped, 1u);
     }
-    if (chb_hal_is_tripped() != 0u)
+
+    if (chb_protect_is_tripped() != 0u)
     {
         (void)chb_cfg_set_run_request(0u);
         chb_ctrl_inhibit();
     }
 }
 REG_INTERRUPT(2, chb_protect_run)
+
+static void chb_protect_init(void)
+{
+    atomic_store(&tripped, 0u);
+}
+REG_INIT(0, chb_protect_init)

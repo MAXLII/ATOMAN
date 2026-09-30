@@ -34,7 +34,7 @@ typedef enum
 typedef enum
 {
     PLECS_OUTPUT_GRID_SOURCE_V = 0, /* Instantaneous grid-source voltage, V. */
-    PLECS_OUTPUT_MAX /* One voltage output. */
+    PLECS_OUTPUT_MAX                /* One voltage output. */
 } PLECS_OUTPUT_E;
 
 #else
@@ -60,12 +60,12 @@ typedef enum
     PLECS_OUTPUT_CHB_2_DUTY,       /* Second H-bridge leg A duty, 0..1. */
     PLECS_OUTPUT_CHB_3_DUTY,       /* Third H-bridge leg A duty, 0..1. */
     PLECS_OUTPUT_PWM_ENABLE,       /* Common bridge enable: 1 enables all three cells. */
-    PLECS_OUTPUT_MAIN_RELAY,       /* Main relay command: 1 closed, 0 open. */
-    PLECS_OUTPUT_SOFT_START_RELAY, /* Soft-start relay command: 1 closed, 0 open. */
+    PLECS_OUTPUT_MAIN_RELAY,       /* Main relay command: 1 = ON, 0 = OFF. */
+    PLECS_OUTPUT_SOFT_START_RELAY, /* Soft-start relay command: 1 = ON, 0 = OFF. */
     PLECS_OUTPUT_LOAD_R1,          /* First simulated load resistance, ohm. */
     PLECS_OUTPUT_LOAD_R2,          /* Second simulated load resistance, ohm. */
     PLECS_OUTPUT_LOAD_R3,          /* Third simulated load resistance, ohm. */
-    PLECS_OUTPUT_MAX /* Nine outputs; existing channel order is unchanged. */
+    PLECS_OUTPUT_MAX               /* Nine outputs; existing channel order is unchanged. */
 } PLECS_OUTPUT_E;
 
 #endif /* PLECS_GRID_SOURCE */
