@@ -273,6 +273,8 @@ def main():
                 stamp = client.read("SIM_TICK_100US") * 0.0001
                 if qualification:
                     qualification.advance(stamp, client, grid)
+                    if qualification.index == len(qualification.TIMES):
+                        break  # All FRAME assertions consumed; await solver completion without another request.
                     if time.monotonic() >= next_status:
                         print(f"PLECS qualification: {stamp:.4f}s / {stop_time}s", flush=True)
                         next_status = time.monotonic() + 15
@@ -308,11 +310,13 @@ def main():
                     if current_zero:
                         metadata["stopped_input_current"] = current
                         print("PASS: physical input current decayed to zero after stop", flush=True)
+                if phase == len(phases) and stopped and current_zero:
+                    break  # The DLL closes FRAME at simulation end, before RPC may return.
                 if time.monotonic() >= next_status:
                     print(f"PLECS running: {stamp:.4f}s / {STOP_TIME}s", flush=True)
                     next_status = time.monotonic() + 15
                 time.sleep(0.2)
-            future.result()
+            future.result(timeout=max(0.001, wall_deadline - time.monotonic()))
             text = LOG.read_text(encoding="utf-8", errors="replace")
             if qualification:
                 assert qualification.index == len(qualification.TIMES), "qualification scenario incomplete"
