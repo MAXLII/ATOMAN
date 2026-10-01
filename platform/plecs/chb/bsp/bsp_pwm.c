@@ -18,9 +18,9 @@
 #define BSP_PWM_DEADTIME_GAIN 1.0f  /* Compensation ratio relative to the ideal average error. */
 
 _Static_assert(PLECS_OUTPUT_PWM_ENABLE == BSP_PWM_CELL_COUNT,
-               "Three duty outputs must precede the PWM enable");
+               "Duty outputs must precede the PWM enable");
 
-static float delayed_duty[BSP_PWM_CELL_COUNT] = {0.5f, 0.5f, 0.5f}; /* Previous control-cycle duties. */
+static float delayed_duty[BSP_PWM_CELL_COUNT] = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f}; /* Previous control-cycle duties. */
 static uint8_t delayed_enable; /* Previous control-cycle common enable. */
 static uint32_t output_tick; /* PLECS 100 us tick of the last published frame. */
 static uint8_t output_tick_valid; /* Whether this simulation has published a PWM frame. */

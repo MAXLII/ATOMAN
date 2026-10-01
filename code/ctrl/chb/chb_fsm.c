@@ -20,6 +20,7 @@
 
 #include <math.h>
 #include <stdatomic.h>
+#include <stddef.h>
 
 #define CHB_FSM_SOFT_START_MS    500u             /* 上下计数的通过门限，1 ms/计数。 */
 #define CHB_FSM_TIMEOUT_MS       5000u            /* 一次软起最长等待时间。 */
@@ -48,6 +49,43 @@ typedef enum
     CHB_FSM_STATE_FAULT,
 } chb_fsm_state_t;
 
+/** @brief FSM 只读输入；对象由 ctrl 持有，采样阶段更新数值。 */
+static struct
+{
+    const float *p_v_grid_raw;
+    const float *p_v_grid_rms;
+    const float *p_f_grid;
+    const float *p_v_bus_raw;
+} input;
+
+/**
+ * @brief INIT 时连接预充和继电器同步所需的静态信号。
+ * @details 本函数只建立只读连线；地址在整轮运行中保持不变。
+ * @param p_v_grid 电网瞬时电压，V。
+ * @param p_v_grid_rms 电网有效值，V。
+ * @param p_f_grid 观测频率，Hz。
+ * @param p_v_bus 各桥母线电压，V，数组长度 CHB_CELL_COUNT。
+ * @return 1：INIT 连线成功；0：运行阶段或输入地址无效。
+ */
+uint8_t chb_fsm_set_input(const float *p_v_grid, const float *p_v_grid_rms,
+                          const float *p_f_grid, const float *p_v_bus)
+{
+    if (    (chb_fsm_get_run_state() != CHB_RUN_STATE_INIT)
+         || (p_v_grid == NULL)
+         || (p_v_grid_rms == NULL)
+         || (p_f_grid == NULL)
+         || (p_v_bus == NULL))
+    {
+        return 0u;
+    }
+
+    input.p_v_grid_raw             = p_v_grid;
+    input.p_v_grid_rms             = p_v_grid_rms;
+    input.p_f_grid                 = p_f_grid;
+    input.p_v_bus_raw              = p_v_bus;
+    return 1u;
+}
+
 static uint32_t     fsm_event               = CHB_FSM_EVENT_NONE;  /* Section FSM 事件存储。 */
 static uint32_t     soft_start_elapsed      = 0u;                  /* 本轮软起经过的 1 ms 次数。 */
 static uint32_t     soft_start_qualified    = 0u;                  /* 满足门限加一，否则减一。 */
@@ -57,7 +95,7 @@ static uint8_t      main_relay_on_trig      = 0u;                  /* FSM 发出
 static uint8_t      main_relay_off_trig     = 0u;                  /* 库要求的断开触发源。 */
 static uint8_t      main_relay_equal        = 0u;                  /* 继电器两端电压相等标志。 */
 static uint8_t      main_relay_task_enabled = 0u;                  /* 等待及运行期间调用继电器库。 */
-static float        main_relay_grid_hz      = 0.0f;                /* 100 us 任务更新的实测电网频率。 */
+static float        f_grid_relay      = 0.0f;                      /* 100 us 任务更新的实测电网频率。 */
 static atomic_uchar run_allowed             = ATOMIC_VAR_INIT(0u); /* FSM 单发布者的许可。 */
 static atomic_uchar clear_requested         = ATOMIC_VAR_INIT(0u); /* 外部的一次故障清除请求。 */
 
@@ -68,12 +106,12 @@ static void main_relay_prepare(void)
     main_relay_off_trig     = 0u;
     main_relay_equal        = 0u;
     main_relay_task_enabled = 0u;
-    main_relay_grid_hz      = chb_observer_get_sample()->grid_hz;
+    f_grid_relay            = *input.p_f_grid;
     rly_on_init(&main_relay,
                 &main_relay_on_trig,
                 &main_relay_off_trig,
                 &main_relay_equal,
-                &main_relay_grid_hz,
+                &f_grid_relay,
                 CHB_RELAY_TASK_HZ,
                 CHB_MAIN_RELAY_ON_TIME_S,
                 chb_hal_get_ctrl()->p_main_relay_on,
@@ -95,12 +133,11 @@ static void main_relay_task(void)
 {
     if (main_relay_task_enabled != 0u)
     {
-        const chb_observer_sample_t *p_sample = chb_observer_get_sample();
-        float voltage_difference_v            = p_sample->grid_v; /* 当前无输入电容，下游端按 0 V。 */
-        float match_window_v = CHB_MAIN_RELAY_MATCH_RATIO * M_SQRT2 * p_sample->grid_rms_v;
+        const float v_relay_difference   = *input.p_v_grid_raw; /* 当前无输入电容，下游端按 0 V。 */
+        const float v_relay_match_window = CHB_MAIN_RELAY_MATCH_RATIO * M_SQRT2 * *input.p_v_grid_rms;
 
-        main_relay_equal = (fabsf(voltage_difference_v) <= match_window_v) ? 1u : 0u;
-        main_relay_grid_hz = p_sample->grid_hz;
+        main_relay_equal = (fabsf(v_relay_difference) <= v_relay_match_window) ? 1u : 0u;
+        f_grid_relay     = *input.p_f_grid;
         rly_on_func(&main_relay);
     }
 }
@@ -119,7 +156,7 @@ static void init_exe(void)
 {
     if (    (chb_hal_is_ready() != 0u)
          && (chb_cfg_is_ready() != 0u)
-         && (chb_observer_is_ready() != 0u)
+         && (chb_ctrl_is_ready() != 0u)
          && (chb_protect_is_ready() != 0u))
     {
         chb_ctrl_update_sample();
@@ -188,11 +225,10 @@ static void soft_start_in(void)
     chb_hal_get_ctrl()->p_soft_start_relay_on();
 }
 
-/** @brief 三路母线之和高于 90% 电网峰值时上数，否则下数。 */
+/** @brief 各路母线电压之和高于 90% 电网峰值时上数，否则下数。 */
 static void soft_start_exe(void)
 {
-    const chb_observer_sample_t *p_sample = chb_observer_get_sample();
-    float total_bus_v                     = 0.0f;
+    float v_bus_total = 0.0f;
 
     if (chb_cfg_get_run_request() == 0u)
     {
@@ -202,11 +238,11 @@ static void soft_start_exe(void)
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
-        total_bus_v += p_sample->bus_v[cell];
+        v_bus_total += input.p_v_bus_raw[cell];
     }
     ++soft_start_elapsed;
 
-    if (total_bus_v > CHB_FSM_GRID_PEAK_FACTOR * p_sample->grid_rms_v)
+    if (v_bus_total > CHB_FSM_GRID_PEAK_FACTOR * *input.p_v_grid_rms)
     {
         if (soft_start_qualified < CHB_FSM_SOFT_START_MS)
         {

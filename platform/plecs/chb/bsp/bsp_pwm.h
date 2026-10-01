@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file bsp_pwm.h
- * @brief Publish three CHB duties and the common PWM enable to PLECS.
+ * @brief Publish CHB duties and the common PWM enable to PLECS.
  * @details Input duties are normalized to 0..1 by the CHB interface layer.
  *          Relay output is controlled separately by the platform FSM adapter.
  * @author Max.Li
@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 
-#define BSP_PWM_CELL_COUNT 3u /* Three cascaded H bridges. */
+#define BSP_PWM_CELL_COUNT 5u /* Number of bridge duty ports in this PLECS model. */
 
 /**
  * @brief Apply platform dead-time compensation to a normalized modulation command.
@@ -27,7 +27,7 @@ float bsp_pwm_deadtime_compensate(float modulation, int8_t direction);
 
 /**
  * @brief Publish duties and enable delayed together by one control cycle.
- * @param p_duty Three leg-A duties in CHB1, CHB2, CHB3 order, each in 0..1.
+ * @param p_duty Leg-A duties in ascending cell index order, each in 0..1.
  * @param enable 1 enables all bridges; 0 disables all bridges and resets cached duties to 0.5.
  */
 void bsp_pwm_set(const float p_duty[BSP_PWM_CELL_COUNT], uint8_t enable);

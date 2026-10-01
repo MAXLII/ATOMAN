@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file chb_hal.h
- * @brief CHB physical samples, three-bridge PWM and relay binding contract.
+ * @brief CHB physical samples, per-bridge PWM and relay binding contract.
  * @details Input pointers remain valid through RUN; PWM callbacks consume commands synchronously.
  * @author Max.Li
  * @date 2026-09-25
@@ -22,15 +22,18 @@ typedef enum
     CHB_PWM_DEADTIME_POSITIVE = 1,
 } chb_pwm_deadtime_flag_t;
 
-typedef void (*chb_set_pwm_func_t)(float v_pwm_v, float bus_v,
+typedef void (*chb_set_pwm_func_t)(float v_pwm_ref, float v_bus_raw,
                                    chb_pwm_deadtime_flag_t deadtime_flag);
 
 typedef struct chb_ctrl_hal
 {
-    const float       *p_grid_v;                   /* 电网侧 ADC 瞬时电压，V。 */
-    const float       *p_i_alpha_a;                /* ADC 网侧电流，A。 */
-    const float       *p_bus_v[CHB_CELL_COUNT];    /* 各级 ADC 母线电压，V。 */
-    const float       *p_load_i_a[CHB_CELL_COUNT]; /* 各级负载电流采样，A。 */
+    const float        *p_v_grid_raw;                   /* 电网侧 ADC 瞬时电压，V。 */
+    const float        *p_v_grid_rms;                   /* app 计算的电网基波有效值，V；完整窗口就绪前为 NAN。 */
+    const float        *p_omega_grid;                   /* app PLL 角频率，rad/s；输入为 2*pi*f，不是 Hz。 */
+    const float        *p_theta_grid;                   /* app PLL 输出相位（已推进一个控制周期），rad，范围 [0, 2*pi)。 */
+    const float        *p_i_grid_alpha_raw;             /* ADC 网侧电流，A。 */
+    const float        *p_v_bus_raw[CHB_CELL_COUNT];    /* 各级 ADC 母线电压，V。 */
+    const float        *p_i_load_raw[CHB_CELL_COUNT];   /* 各级负载电流采样，A。 */
     chb_set_pwm_func_t p_set_pwm_func[CHB_CELL_COUNT];  /* 逐级写入最终调制电压和同拍母线电压。 */
     void               (*p_pwm_disable)(void);          /* 同步关闭全部桥臂。 */
     void               (*p_soft_start_relay_on)(void);  /* 闭合母线软起继电器。 */

@@ -20,6 +20,8 @@ set(CHB_SOURCES
     ${CODE_DIR}/lib/rly_on.c
     ${CODE_DIR}/lib/sogi.c
     ${CODE_DIR}/lib/msogi.c
+    ${CODE_DIR}/lib/sliding_window.c
+    ${CODE_DIR}/lib/chk_grid.c
     ${CODE_DIR}/lib/pll.c
     ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/lib/notch.c

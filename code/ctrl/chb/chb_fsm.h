@@ -18,11 +18,23 @@ typedef enum chb_run_state
 {
     CHB_RUN_STATE_INIT = 0,        /* 等待绑定、参数和应用保护配置。 */
     CHB_RUN_STATE_IDLE,            /* 已准备，但未授予运行许可。 */
-    CHB_RUN_STATE_BUS_SOFT_START,  /* 等待三级直流母线预充完成。 */
+    CHB_RUN_STATE_BUS_SOFT_START,  /* 等待各直流母线预充完成。 */
     CHB_RUN_STATE_MAIN_RELAY_WAIT, /* 等待继电器两端电压匹配、闭合确认及控制延时。 */
     CHB_RUN_STATE_RUN,             /* 已进入运行状态。 */
     CHB_RUN_STATE_FAULT            /* 故障闭锁，等待明确清除。 */
 } CHB_RUN_STATE_E;
+
+/**
+ * @brief INIT 时连接继电器同步与母线预充判定所需的只读信号。
+ * @param p_v_grid ctrl 内部电网瞬时电压，V。
+ * @param p_v_grid_rms ctrl 内部电网有效值，V。
+ * @param p_f_grid ctrl 内部观测频率，Hz。
+ * @param p_v_bus ctrl 内部各桥母线数组，V，长度 CHB_CELL_COUNT。
+ * @note 地址保持静态寿命；由采样阶段更新，FSM 只读。
+ * @return 1：INIT 连线成功；0：运行阶段或输入地址无效。
+ */
+uint8_t chb_fsm_set_input(const float *p_v_grid, const float *p_v_grid_rms,
+                          const float *p_f_grid, const float *p_v_bus);
 
 /** @return FSM 当前状态，供采样及应用保护门控。 */
 CHB_RUN_STATE_E chb_fsm_get_run_state(void);

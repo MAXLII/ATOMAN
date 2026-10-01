@@ -116,6 +116,31 @@ float plecs_get_input(PLECS_INPUT_E num)
     }
 }
 
+bool plecs_get_parameter(uint32_t num, double *value)
+{
+#if PLECS_PARAMETER_NUM > 0
+    if (plecs_astate == NULL || plecs_astate->parameters == NULL
+        || value == NULL || num >= PLECS_PARAMETER_NUM)
+    {
+        return false;
+    }
+    *value = plecs_astate->parameters[num];
+    return true;
+#else
+    (void)num;
+    (void)value;
+    return false;
+#endif
+}
+
+void plecs_set_error_message(const char *message)
+{
+    if (plecs_astate != NULL)
+    {
+        plecs_astate->errorMessage = message;
+    }
+}
+
 void plecs_set_output(PLECS_OUTPUT_E num, float val)
 {
     if (num < PLECS_OUTPUT_MAX)
@@ -148,7 +173,7 @@ DLLEXPORT void plecsSetSizes(struct SimulationSizes *aSizes)
 {
     aSizes->numInputs     = PLECS_INPUT_NUM;
     aSizes->numOutputs    = PLECS_OUTPUT_NUM;
-    aSizes->numParameters = 0;
+    aSizes->numParameters = PLECS_PARAMETER_NUM;
     aSizes->numStates     = 0;
 }
 

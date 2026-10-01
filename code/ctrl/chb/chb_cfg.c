@@ -16,27 +16,27 @@
 #include <stddef.h>
 #include <stdatomic.h>
 
-#define CHB_DEFAULT_CFG                                             \
-    {.ts                       = 0.0001f,                           \
-     .grid_hz                  = 50.0f,                             \
-     .l_grid_h                 = 0.012f,                            \
-     .r_grid_ohm               = 0.5f,                              \
-     .current_sample_delay_s   = 0.0f,                              \
-     .grid_rms_nominal_v       = 6000.0f,                           \
-     .bus_ref_v                = 3200.0f,                           \
-     .bus_ref_ramp_v_per_s     = 5000.0f,                           \
-     .bus_filter_hz            = 20.0f,                             \
-     .energy_kp                = 40.0f,                             \
-     .energy_ki                = 400.0f,                            \
-     .current_kp               = 60.0f,                             \
-     .current_ki               = 7000.0f,                           \
-     .current_integral_limit_v = 2000.0f,                           \
-     .power_limit_kp           = 1.0f,                              \
-     .power_limit_ki           = 20.0f,                             \
-     .current_limit_pk_a       = 25.0f,                             \
-     .modulation_limit         = 0.98f,                             \
-     .bus_capacitance_f        = 600.0e-6f,                         \
-     .output_power_limit_w     = 20000.0f}
+#define CHB_DEFAULT_CFG                     \
+    {.t_ctrl_period            = 0.0001f,   \
+     .f_grid                   = 50.0f,     \
+     .l_grid                   = 0.012f,    \
+     .r_grid                   = 0.5f,      \
+     .t_current_sample_delay   = 0.0f,      \
+     .v_grid_rms_nominal       = 10000.0f,  \
+     .v_bus_ref                = 3200.0f,   \
+     .v_bus_ref_slew           = 5000.0f,   \
+     .f_bus_filter             = 20.0f,     \
+     .k_energy_p               = 40.0f,     \
+     .k_energy_i               = 400.0f,    \
+     .k_current_p              = 60.0f,     \
+     .k_current_i              = 7000.0f,   \
+     .v_current_integral_limit = 2000.0f,   \
+     .k_power_limit_p          = 1.0f,      \
+     .k_power_limit_i          = 20.0f,     \
+     .i_grid_peak_limit        = 25.0f,     \
+     .modulation_limit         = 0.98f,     \
+     .c_bus                    = 600.0e-6f, \
+     .pwr_load_limit           = 20000.0f}
 
 _Static_assert(CHB_PF_PLAN_TICKS > 0u, "PF planning interval must be positive");
 _Static_assert(CHB_PF_SCAN_STEPS > 0u, "PF search requires a nonzero scan count");
@@ -60,26 +60,26 @@ static uint8_t cfg_valid(const chb_ctrl_cfg_t *p_cfg)
         return 0u;
     }
     const float value[] = { /* 独立成员拷贝避免依赖结构体填充。 */
-                           p_cfg->ts,
-                           p_cfg->grid_hz,
-                           p_cfg->l_grid_h,
-                           p_cfg->r_grid_ohm,
-                           p_cfg->current_sample_delay_s,
-                           p_cfg->grid_rms_nominal_v,
-                           p_cfg->bus_ref_v,
-                           p_cfg->bus_ref_ramp_v_per_s,
-                           p_cfg->bus_filter_hz,
-                           p_cfg->energy_kp,
-                           p_cfg->energy_ki,
-                           p_cfg->current_kp,
-                           p_cfg->current_ki,
-                           p_cfg->current_integral_limit_v,
-                           p_cfg->power_limit_kp,
-                           p_cfg->power_limit_ki,
-                           p_cfg->current_limit_pk_a,
+                           p_cfg->t_ctrl_period,
+                           p_cfg->f_grid,
+                           p_cfg->l_grid,
+                           p_cfg->r_grid,
+                           p_cfg->t_current_sample_delay,
+                           p_cfg->v_grid_rms_nominal,
+                           p_cfg->v_bus_ref,
+                           p_cfg->v_bus_ref_slew,
+                           p_cfg->f_bus_filter,
+                           p_cfg->k_energy_p,
+                           p_cfg->k_energy_i,
+                           p_cfg->k_current_p,
+                           p_cfg->k_current_i,
+                           p_cfg->v_current_integral_limit,
+                           p_cfg->k_power_limit_p,
+                           p_cfg->k_power_limit_i,
+                           p_cfg->i_grid_peak_limit,
                            p_cfg->modulation_limit,
-                           p_cfg->bus_capacitance_f,
-                           p_cfg->output_power_limit_w,
+                           p_cfg->c_bus,
+                           p_cfg->pwr_load_limit,
                            CHB_PF_Q_SLEW_A_PER_S,
                            CHB_PF_VOLTAGE_RESERVE_V};
 
@@ -91,33 +91,33 @@ static uint8_t cfg_valid(const chb_ctrl_cfg_t *p_cfg)
         }
     }
 
-    return (    (p_cfg->ts >= 1.0e-6f)
-             && (p_cfg->ts <= 0.01f)
-             && (p_cfg->grid_hz >= 1.0f)
-             && (p_cfg->grid_hz <= 400.0f)
-             && (p_cfg->l_grid_h > 0.0f)
-             && (p_cfg->r_grid_ohm >= 0.0f)
-             && (p_cfg->current_sample_delay_s >= 0.0f)
-             && (p_cfg->current_sample_delay_s <= p_cfg->ts)
-             && (p_cfg->grid_rms_nominal_v > 0.0f)
-             && (p_cfg->bus_ref_v > 0.0f)
-             && (p_cfg->bus_ref_ramp_v_per_s > 0.0f)
-             && (p_cfg->bus_filter_hz > 0.0f)
-             && (p_cfg->energy_kp >= 0.0f)
-             && (p_cfg->energy_ki >= 0.0f)
-             && (p_cfg->current_kp >= 0.0f)
-             && (p_cfg->current_ki >= 0.0f)
-             && (p_cfg->current_integral_limit_v > 0.0f)
-             && (p_cfg->power_limit_kp >= 0.0f)
-             && (p_cfg->power_limit_ki >= 0.0f)
+    return (    (p_cfg->t_ctrl_period >= 1.0e-6f)
+             && (p_cfg->t_ctrl_period <= 0.01f)
+             && (p_cfg->f_grid >= 1.0f)
+             && (p_cfg->f_grid <= 400.0f)
+             && (p_cfg->l_grid > 0.0f)
+             && (p_cfg->r_grid >= 0.0f)
+             && (p_cfg->t_current_sample_delay >= 0.0f)
+             && (p_cfg->t_current_sample_delay <= p_cfg->t_ctrl_period)
+             && (p_cfg->v_grid_rms_nominal > 0.0f)
+             && (p_cfg->v_bus_ref > 0.0f)
+             && (p_cfg->v_bus_ref_slew > 0.0f)
+             && (p_cfg->f_bus_filter > 0.0f)
+             && (p_cfg->k_energy_p >= 0.0f)
+             && (p_cfg->k_energy_i >= 0.0f)
+             && (p_cfg->k_current_p >= 0.0f)
+             && (p_cfg->k_current_i >= 0.0f)
+             && (p_cfg->v_current_integral_limit > 0.0f)
+             && (p_cfg->k_power_limit_p >= 0.0f)
+             && (p_cfg->k_power_limit_i >= 0.0f)
              && (CHB_PF_Q_SLEW_A_PER_S > 0.0f)
              && (CHB_PF_VOLTAGE_RESERVE_V >= 0.0f)
-             && (CHB_PF_VOLTAGE_RESERVE_V < p_cfg->modulation_limit * p_cfg->bus_ref_v)
-             && (p_cfg->current_limit_pk_a > 0.0f)
-             && (p_cfg->bus_capacitance_f > 0.0f)
-             && (p_cfg->output_power_limit_w > 0.0f)
+             && (CHB_PF_VOLTAGE_RESERVE_V < p_cfg->modulation_limit * p_cfg->v_bus_ref)
+             && (p_cfg->i_grid_peak_limit > 0.0f)
+             && (p_cfg->c_bus > 0.0f)
+             && (p_cfg->pwr_load_limit > 0.0f)
              && (CHB_BALANCE_CURRENT_MIN_PK_A > 0.0f)
-             && (CHB_BALANCE_CURRENT_MIN_PK_A <= p_cfg->current_limit_pk_a)
+             && (CHB_BALANCE_CURRENT_MIN_PK_A <= p_cfg->i_grid_peak_limit)
              && (p_cfg->modulation_limit > 0.0f)
              && (p_cfg->modulation_limit <= 1.0f))
              ? 1u

@@ -13,15 +13,16 @@
  */
 #include "pwm.h"
 #include "bsp_pwm.h"
+#include "my_math.h"
 #include <math.h>
 
 _Static_assert(CHB_CELL_COUNT == BSP_PWM_CELL_COUNT, "CHB and BSP cell counts must match");
 
-static float duty[CHB_CELL_COUNT] = {0.5f, 0.5f, 0.5f};
+static float    duty[CHB_CELL_COUNT] = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
 static uint32_t updated_mask;
-static uint8_t frame_valid = 1u;
+static uint8_t  frame_valid = 1u;
 
-/** @brief PLECS 收齐三个通道后自动整体加载；硬件平台由定时器更新事件完成同样动作。 */
+/** @brief PLECS 收齐各桥通道后自动整体加载；硬件平台由定时器更新事件完成同样动作。 */
 static void pwm_publish_complete_frame(void)
 {
     const uint32_t complete_mask = ((uint32_t)1u << CHB_CELL_COUNT) - 1u;
@@ -30,11 +31,11 @@ static void pwm_publish_complete_frame(void)
     {
         bsp_pwm_set(duty, frame_valid);
         updated_mask = 0u;
-        frame_valid = 1u;
+        frame_valid  = 1u;
     }
 }
 
-void chb_pwm_set_cell(uint32_t cell, float v_pwm_v, float bus_v,
+void chb_pwm_set_cell(uint32_t cell, float v_pwm_ref, float v_bus_raw,
                       chb_pwm_deadtime_flag_t deadtime_flag)
 {
     if (cell >= CHB_CELL_COUNT)
@@ -42,20 +43,20 @@ void chb_pwm_set_cell(uint32_t cell, float v_pwm_v, float bus_v,
         return;
     }
     updated_mask |= (uint32_t)1u << cell;
-    if (    (!isfinite(v_pwm_v))
-         || (!isfinite(bus_v))
-         || (bus_v <= 0.0f)
+    if (    (!isfinite(v_pwm_ref))
+         || (!isfinite(v_bus_raw))
+         || (v_bus_raw <= 0.0f)
          || ((deadtime_flag != CHB_PWM_DEADTIME_NEGATIVE)
              && (deadtime_flag != CHB_PWM_DEADTIME_OFF)
              && (deadtime_flag != CHB_PWM_DEADTIME_POSITIVE)))
     {
-        duty[cell] = 0.5f;
+        duty[cell]  = 0.5f;
         frame_valid = 0u;
         pwm_publish_complete_frame();
         return;
     }
-    const float compensated = bsp_pwm_deadtime_compensate(v_pwm_v / bus_v, (int8_t)deadtime_flag);
-    const float modulation = fminf(1.0f, fmaxf(-1.0f, compensated));
+    float modulation = bsp_pwm_deadtime_compensate(v_pwm_ref / v_bus_raw, (int8_t)deadtime_flag);
+    UP_DN_LMT(modulation, 1.0f, -1.0f);
     duty[cell] = 0.5f * (modulation + 1.0f);
     pwm_publish_complete_frame();
 }
@@ -67,7 +68,7 @@ void chb_pwm_disable(void)
         duty[cell] = 0.5f;
     }
     updated_mask = 0u;
-    frame_valid = 1u;
+    frame_valid  = 1u;
 
     bsp_pwm_set(duty, 0u);
 }

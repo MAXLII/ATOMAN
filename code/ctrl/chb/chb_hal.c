@@ -29,8 +29,11 @@ uint8_t chb_hal_bind(const chb_ctrl_hal_t *p_binding)
 
 uint8_t chb_hal_is_ready(void)
 {
-    if (    (binding.p_grid_v == NULL)
-         || (binding.p_i_alpha_a == NULL)
+    if (    (binding.p_v_grid_raw == NULL)
+         || (binding.p_v_grid_rms == NULL)
+         || (binding.p_omega_grid == NULL)
+         || (binding.p_theta_grid == NULL)
+         || (binding.p_i_grid_alpha_raw == NULL)
          || (binding.p_pwm_disable == NULL)
          || (binding.p_soft_start_relay_on == NULL)
          || (binding.p_soft_start_relay_off == NULL)
@@ -42,8 +45,8 @@ uint8_t chb_hal_is_ready(void)
 
     for (uint32_t cell = 0u; cell < CHB_CELL_COUNT; ++cell)
     {
-        if (    (binding.p_bus_v[cell] == NULL)
-             || (binding.p_load_i_a[cell] == NULL)
+        if (    (binding.p_v_bus_raw[cell] == NULL)
+             || (binding.p_i_load_raw[cell] == NULL)
              || (binding.p_set_pwm_func[cell] == NULL))
         {
             return 0u;

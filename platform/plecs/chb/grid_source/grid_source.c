@@ -40,8 +40,18 @@ REG_SHELL_VAR(GRID_H9_PHASE_RAD, harmonic_phase_rad[3], SHELL_FP32, 3.141592654f
 
 void grid_source_reset(void)
 {
+    double model_rms_v = 0.0f;
     source_v = 0.0f;
-    rms_v = 6000.0f;
+    rms_v = 0.0f;
+    if (!plecs_get_parameter(0u, &model_rms_v)
+        || model_rms_v != model_rms_v
+        || model_rms_v <= (double)0.0f
+        || model_rms_v > (double)FLT_MAX)
+    {
+        plecs_set_error_message("CHB grid source requires a finite, positive grid RMS voltage parameter.");
+        return;
+    }
+    rms_v = (float)model_rms_v;
     frequency_ref_hz = 50.0f;
     frequency_actual_hz = 50.0f;
     frequency_ramp_hz_ms = 10.0f;

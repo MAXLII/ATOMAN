@@ -12,49 +12,48 @@
 #ifndef CHB_CTRL_H
 #define CHB_CTRL_H
 
-#include "chb_cfg.h"
-
 #include <stdint.h>
 
-/** @brief chb_ctrl.c 内部观测环节生成的同拍快照。 */
-typedef struct chb_observer_sample
-{
-    float grid_v;     /* 电网侧本拍电压，V。 */
-    float grid_rms_v; /* 电网基波有效值，V。 */
-    float grid_hz;    /* 锁相频率，Hz。 */
-    float theta_rad;  /* 本拍锁相角，rad。 */
-    float i_alpha_a;  /* 电感电流物理采样，A。 */
-    float i_beta_a;   /* 正交电流观测，A。 */
-    float bus_v[CHB_CELL_COUNT];
-    float load_i_a[CHB_CELL_COUNT];
-    float grid_harmonic_alpha_v[CHB_HARMONIC_COUNT];
-    float grid_harmonic_beta_v[CHB_HARMONIC_COUNT];
-    float current_harmonic_alpha_a[CHB_HARMONIC_COUNT];
-    float current_harmonic_beta_a[CHB_HARMONIC_COUNT];
-    float grid_harmonic_peak_v[CHB_HARMONIC_COUNT];    /* 仅供诊断。 */
-    float current_harmonic_peak_a[CHB_HARMONIC_COUNT]; /* 仅供诊断。 */
-    float harmonic_feedback_weight; /* 稳频观测可信度，0..1。 */
-    float grid_fundamental_beta_v;  /* 电网基波正交分量，V。 */
-    float grid_frequency_rate_hz_s; /* 实测频率变化率，Hz/s。 */
-    float grid_phase_error_rad;     /* PLL 相位检测误差，rad。 */
-} chb_observer_sample_t;
+/**
+ * @brief 读取采样观测器初始化状态，供 FSM INIT 使用。
+ * @return 1：观测器已初始化；0：未就绪或初始化失败。
+ * @note 初始化就绪不等同于本拍采样已经通过应用保护。
+ */
+uint8_t chb_ctrl_is_ready(void);
 
-/** @return 1：chb_ctrl 内部观测环节已初始化；0：不能运行。 */
-uint8_t chb_observer_is_ready(void);
-
-/** @return chb_ctrl 内部保存的本拍完整观测快照；调用方只读。 */
-const chb_observer_sample_t *chb_observer_get_sample(void);
-
-/** @brief 从已锁定的 HAL 输入指针取得同拍原始量并更新控制观测结果。 */
+/**
+ * @brief 从已锁定 HAL 取得原始采样及 app 的 RMS、角频率、相位，再更新控制观测。
+ * @details 所有输入各读取一次；后续保护、控制和发波共用该拍副本，PLL 在 app 计算。
+ * @note 由第一阶段采样或 FSM INIT 就绪检查调用，调用方保证绑定已就绪。
+ */
 void chb_ctrl_update_sample(void);
 
-/** @brief 在串行调度边界复位控制动态并准备新一轮运行。 */
+/**
+ * @brief 复制 PWM 日志所需的同拍相角和正交电流，不暴露内部采样对象。
+ * @param[out] p_theta_grid 电网相角，rad；调用方提供有效地址。
+ * @param[out] p_i_grid_beta 正交电流，A；调用方提供有效地址。
+ * @note 与采样串行调用；只读当前值，不参与控制反馈。
+ */
+void chb_ctrl_read_phase(float *p_theta_grid, float *p_i_grid_beta);
+
+/**
+ * @brief 在进入 RUN 前复位控制历史并准备母线参考斜坡。
+ * @details 先关闭 PWM，再清积分；滤波和斜坡从最新预充母线状态开始。
+ * @note 由 FSM 在尚未授予运行许可的串行边界调用，不与控制计算并发。
+ */
 void chb_ctrl_prepare_run(void);
 
-/** @brief 停止发波并清除本拍控制许可。 */
+/**
+ * @brief 同步停止发波，并清除动态控制状态和本拍执行资格。
+ * @details 不修改应用运行请求或 FSM 运行许可；重新运行须经过 prepare_run。
+ */
 void chb_ctrl_stop(void);
 
-/** @brief 应用保护在采样之后、控制之前禁止本拍发波。 */
+/**
+ * @brief 应用保护在采样之后、控制之前禁止本拍控制及发波。
+ * @details 撤销本拍资格；PLECS 构建保留首次故障快照。
+ * @note 保护判据与紧急停波动作属于应用保护，本函数不重复执行阈值判断。
+ */
 void chb_ctrl_inhibit(void);
 
 #endif /* CHB_CTRL_H */
