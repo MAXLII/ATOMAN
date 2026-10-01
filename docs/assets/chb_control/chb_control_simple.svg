@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1050" viewBox="0 0 1900 1050">
+<title>CHB 控制框图简图</title><desc>当前代码的主要控制模块、无功与谐波旁路、测量反馈和抗饱和反馈。省略内部算法和次要信号。</desc>
+<defs>
+<marker id="b" markerWidth="11" markerHeight="11" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10" fill="#1764a0"/></marker>
+<marker id="o" markerWidth="11" markerHeight="11" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10" fill="#b66b08"/></marker>
+<marker id="g" markerWidth="11" markerHeight="11" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10" fill="#647480"/></marker>
+</defs><style>text{font-family:"Microsoft YaHei",Arial,sans-serif;fill:#21394c} .title{font-size:42px;font-weight:700}.name{font-size:29px;font-weight:700}.body{font-size:23px;fill:#536c7c}.signal{font-size:23px}.note{font-size:23px;fill:#647480}</style><rect width="1900" height="1050" fill="white"/>
+<text x="65" y="80" class="title" text-anchor="start">CHB 控制框图 · 简图</text>
+<text x="65" y="125" class="note" text-anchor="start">只展示主要控制关系，省略模块内部计算与次要信号。</text>
+<rect x="90" y="310" width="235" height="150" stroke="#1764a0" stroke-width="2.5" fill="#f7fbfe"/>
+<text x="207.5" y="355" class="name" text-anchor="middle">母线控制</text>
+<text x="207.5" y="392" class="body" text-anchor="middle">稳定各桥母线电压</text>
+<text x="207.5" y="424" class="body" text-anchor="middle">限制负载功率</text>
+<rect x="405" y="310" width="235" height="150" stroke="#1764a0" stroke-width="2.5" fill="#f7fbfe"/>
+<text x="522.5" y="355" class="name" text-anchor="middle">功率给定</text>
+<text x="522.5" y="392" class="body" text-anchor="middle">有功电流给定</text>
+<text x="522.5" y="424" class="body" text-anchor="middle">桥间功率均衡需求</text>
+<rect x="800" y="310" width="240" height="150" stroke="#1764a0" stroke-width="2.5" fill="#f7fbfe"/>
+<text x="920.0" y="355" class="name" text-anchor="middle">电流控制</text>
+<text x="920.0" y="392" class="body" text-anchor="middle">跟踪电流给定</text>
+<text x="920.0" y="424" class="body" text-anchor="middle">产生桥电压请求</text>
+<rect x="1140" y="310" width="245" height="150" stroke="#1764a0" stroke-width="2.5" fill="#f7fbfe"/>
+<text x="1262.5" y="355" class="name" text-anchor="middle">电压分配</text>
+<text x="1262.5" y="392" class="body" text-anchor="middle">总电压限幅</text>
+<text x="1262.5" y="424" class="body" text-anchor="middle">桥间均衡与分配</text>
+<rect x="1465" y="310" width="195" height="150" stroke="#1764a0" stroke-width="2.5" fill="#f7fbfe"/>
+<text x="1562.5" y="355" class="name" text-anchor="middle">PWM</text>
+<text x="1562.5" y="392" class="body" text-anchor="middle">合成各桥电压</text>
+<text x="1562.5" y="424" class="body" text-anchor="middle">调制与死区补偿</text>
+<rect x="1735" y="310" width="125" height="150" stroke="#647480" stroke-width="2.5" fill="#f3f5f7" stroke-dasharray="9 6"/>
+<text x="1797.5" y="355" class="name" text-anchor="middle">功率级</text>
+<text x="1797.5" y="392" class="body" text-anchor="middle">电网</text>
+<text x="1797.5" y="424" class="body" text-anchor="middle">负载</text>
+<text x="95" y="261" class="signal" text-anchor="start">母线目标电压</text>
+<path d="M200,270 L200,310" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<path d="M325,380 L405,380" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="365" y="361" class="signal" text-anchor="middle">功率</text>
+<path d="M640,380 L800,380" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="720" y="358" class="signal" text-anchor="middle">有功电流给定</text>
+<path d="M1040,380 L1140,380" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="1090" y="358" class="signal" text-anchor="middle">电压请求</text>
+<path d="M1385,380 L1465,380" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="1425" y="275" class="signal" text-anchor="middle">各桥电压</text>
+<path d="M1425,284 L1425,372" fill="none" stroke="#647480" stroke-width="3"/>
+<path d="M1660,380 L1735,380" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="1696" y="358" class="signal" text-anchor="middle">驱动</text>
+<rect x="405" y="575" width="235" height="120" stroke="#1764a0" stroke-width="2.5" fill="#f7fbfe"/>
+<text x="522.5" y="620" class="name" text-anchor="middle">无功规划</text>
+<text x="522.5" y="657" class="body" text-anchor="middle">给出可行无功电流</text>
+<path d="M640,425 L710,425 L710,560 L600,560 L600,575" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="405" y="545" class="signal" text-anchor="start">有功给定、均衡需求</text>
+<path d="M640,635 L850,635 L850,460" fill="none" stroke="#1764a0" stroke-width="3" marker-end="url(#b)"/>
+<text x="720" y="661" class="signal" text-anchor="middle">无功电流给定</text>
+<rect x="1300" y="575" width="230" height="120" stroke="#b66b08" stroke-width="2.5" fill="#fffbf3"/>
+<text x="1415.0" y="620" class="name" text-anchor="middle">谐波补偿</text>
+<text x="1415.0" y="657" class="body" text-anchor="middle">电网前馈 / 谐波抑制</text>
+<path d="M1530,635 L1565,635 L1565,460" fill="none" stroke="#b66b08" stroke-width="3" marker-end="url(#o)"/>
+<text x="1580" y="560" class="signal" text-anchor="start" style="fill:#b66b08">谐波电压</text>
+<path d="M1300,605 L1260,605 L1260,460" fill="none" stroke="#b66b08" stroke-width="3" marker-end="url(#o)"/>
+<text x="1130" y="645" class="signal" text-anchor="start" style="fill:#b66b08">预留调制裕量</text>
+<rect x="1560" y="760" width="300" height="125" stroke="#647480" stroke-width="2.5" fill="#f3f5f7"/>
+<text x="1710.0" y="805" class="name" text-anchor="middle">采样与反馈</text>
+<text x="1710.0" y="842" class="body" text-anchor="middle">电压 / 电流 / 负载</text>
+<path d="M1800,460 L1800,760" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)"/>
+<path d="M1560,825 L1500,825 L1500,930 L100,930 L100,460" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)"/>
+<text x="110" y="910" class="signal" text-anchor="start" style="fill:#647480">母线电压、负载功率反馈</text>
+<circle cx="930" cy="930" r="5" fill="#647480"/>
+<path d="M930,930 L930,460" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)"/>
+<text x="945" y="730" class="signal" text-anchor="start" style="fill:#647480">电流反馈</text>
+<circle cx="530" cy="930" r="5" fill="#647480"/>
+<path d="M530,930 L530,695" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)"/>
+<text x="545" y="792" class="signal" text-anchor="start" style="fill:#647480">电网与母线反馈</text>
+<circle cx="1500" cy="825" r="5" fill="#647480"/>
+<path d="M1500,825 L1400,825 L1400,695" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)"/>
+<text x="1265" y="806" class="signal" text-anchor="start" style="fill:#647480">电网 / 电流谐波</text>
+<path d="M1165,460 L1165,505 L210,505 L210,460" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)" stroke-dasharray="8 6"/>
+<circle cx="990" cy="505" r="5" fill="#647480"/>
+<path d="M990,505 L990,460" fill="none" stroke="#647480" stroke-width="3" marker-end="url(#g)" stroke-dasharray="8 6"/>
+<text x="765" y="492" class="signal" text-anchor="middle" style="fill:#647480">限幅反馈（防止积分累积）</text>
+<text x="65" y="1010" class="note" text-anchor="start">蓝色：主控制与给定    橙色：谐波支路    灰色：测量反馈    虚线：抗饱和反馈</text>
+</svg>

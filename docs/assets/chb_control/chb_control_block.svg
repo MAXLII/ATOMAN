@@ -1,0 +1,335 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="2240" viewBox="0 0 2800 2240">
+<title>CHB 控制框图：当前 chb_ctrl.c 的信号连接</title>
+<desc>能量和功率外环、dq 电流内环、全波形容量约束、逐桥电压分配、谐波补偿、PWM 和抗饱和积分反馈。N 为配置桥数。具名信号端口相连。</desc>
+<defs>
+<marker id="b" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8" fill="#1764a0"/></marker>
+<marker id="o" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8" fill="#b96900"/></marker>
+<marker id="p" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8" fill="#8453ad"/></marker>
+<marker id="g" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8" fill="#65717e"/></marker>
+</defs><style>
+text {font-family:"Microsoft YaHei","Segoe UI",Arial,sans-serif;fill:#172e43}
+.title {font-size:42px;font-weight:700}.subtitle {font-size:23px;fill:#536777}
+.section {font-size:28px;font-weight:700}.label {font-size:23px}.formula {font-size:24px}
+.small {font-size:20px}.fn {font-size:18px;fill:#536777}.sign {font-size:27px;font-weight:700}
+</style><rect width="2800" height="2240" fill="white"/>
+<text x="60" y="67" class="title" text-anchor="start">CHB 控制框图</text>
+<text x="60" y="108" class="subtitle" text-anchor="start">依据当前 chb_ctrl.c · 实线表示信号连接，求和节点标出正负号 · j 表示任一桥，N = CHB_CELL_COUNT</text>
+<rect x="40" y="145" width="2720" height="690" fill="#fafcfe" stroke="#cedae5" stroke-width="2"/>
+<text x="65" y="190" class="section" text-anchor="start">A  母线能量环 / 负载功率限制环 → 有功电流与差模功率给定</text>
+<rect x="85" y="425" width="285" height="200" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="227.5" y="459" class="label" text-anchor="middle">测量反馈处理</text>
+<text x="227.5" y="496" class="small" text-anchor="middle">V̄j = F₂ω(Vdc,j)</text>
+<text x="227.5" y="527" class="small" text-anchor="middle">P̄L,j = F₂ω(Vdc,j Iload,j)</text>
+<text x="227.5" y="558" class="small" text-anchor="middle">VΣ = Σ Vdc,j（瞬时值）</text>
+<text x="227.5" y="589" class="small" text-anchor="middle">F₂ω：陷波 + 低通</text>
+<text x="227.5" y="611" class="fn" text-anchor="middle">chb_ctrl_feedback</text>
+<circle cx="85" cy="390" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="99" y="398" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">Vdc,j / Iload,j</text>
+<path d="M85,384 L85,365 L225,365 L225,425" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="110" cy="675" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="124" y="683" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">θ / ω / VΣ → B、C</text>
+<path d="M370,475 L415,475 L415,359 L650,359" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="430" y="347" class="label" text-anchor="start">V̄j</text>
+<path d="M370,560 L450,560 L450,700 L860,700" fill="none" stroke="#1764a0" stroke-width="2.8"/>
+<text x="465" y="686" class="label" text-anchor="start">P̄L,j</text>
+<circle cx="450" cy="560" r="4.5" fill="#1764a0"/>
+<rect x="490" y="215" width="1170" height="355" fill="none" stroke="#9aafbf" stroke-width="1.5" stroke-dasharray="8 7"/>
+<text x="505" y="242" class="fn" text-anchor="start">母线能量 PI（逐桥）</text>
+<text x="515" y="565" class="fn" text-anchor="start">chb_ctrl_bus_control：母线给定及能量环</text>
+<text x="510" y="294" class="label" text-anchor="start">Vdc*</text>
+<path d="M590,287 L650,287" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<rect x="650" y="248" width="175" height="68" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="737.5" y="282" class="label" text-anchor="middle">参考斜坡</text>
+<path d="M825,282 L865,282" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<rect x="865" y="248" width="100" height="68" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="915.0" y="282" class="label" text-anchor="middle">(·)²</text>
+<text x="846" y="277" class="small" text-anchor="middle">Vr</text>
+<rect x="650" y="325" width="100" height="68" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="700.0" y="359" class="label" text-anchor="middle">(·)²</text>
+<path d="M965,282 L1012,282" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M750,359 L1040,359 L1040,310" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="1040" cy="282" r="28" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1040" y="290" class="label" text-anchor="middle">Σ</text>
+<text x="993" y="267" class="sign" text-anchor="start">+</text>
+<text x="1054" y="329" class="sign" text-anchor="start">−</text>
+<path d="M1068,282 L1110,282" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M1110,247 L1225,282.0 L1110,317 Z" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1151.4" y="290.0" class="label" text-anchor="middle">C/2</text>
+<path d="M1225,282 L1280,282" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1250" y="266" class="small" text-anchor="middle">eE,j</text>
+<circle cx="1250" cy="282" r="4.5" fill="#1764a0"/>
+<path d="M1280,247 L1410,282.0 L1280,317 Z" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1326.8" y="290.0" class="label" text-anchor="middle">Kp,E</text>
+<path d="M1410,282 L1452,282" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="1480" cy="282" r="28" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1480" y="290" class="label" text-anchor="middle">Σ</text>
+<text x="1438" y="266" class="sign" text-anchor="start">+</text>
+<text x="1494" y="241" class="sign" text-anchor="start">+</text>
+<text x="1494" y="329" class="sign" text-anchor="start">+</text>
+<path d="M450,560 L450,205 L1480,205 L1480,254" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1370" y="237" class="small" text-anchor="start">P̄L,j</text>
+<circle cx="1480" cy="382" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1466" y="390" class="small" text-anchor="end" fill="#8453ad" style="fill:#8453ad">UE,j[k]</text>
+<path d="M1480,376 L1480,310" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<path d="M1508,282 L1780,282 L1780,393" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1600" y="267" class="label" text-anchor="start">PE,j</text>
+<circle cx="1250" cy="425" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1264" y="433" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">eE,j → 积分环</text>
+<path d="M1250,282 L1250,419" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<text x="515" y="528" class="small" text-anchor="start">eE,j = ½ C (Vr² − V̄j²)；PE,j = P̄L,j + Kp,E eE,j + UE,j[k]</text>
+<rect x="490" y="585" width="1170" height="210" fill="none" stroke="#9aafbf" stroke-width="1.5" stroke-dasharray="8 7"/>
+<text x="505" y="612" class="fn" text-anchor="start">负载功率限制 PI（逐桥）</text>
+<text x="1270" y="780" class="fn" text-anchor="start">chb_ctrl_bus_control：负载功率限制</text>
+<text x="515" y="678" class="label" text-anchor="start">Plim</text>
+<path d="M593,670 L842,670" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="870" cy="670" r="28" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="870" y="678" class="label" text-anchor="middle">Σ</text>
+<text x="827" y="654" class="sign" text-anchor="start">+</text>
+<text x="884" y="719" class="sign" text-anchor="start">−</text>
+<path d="M860,700 L870,700 L870,698" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M898,670 L960,670" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M960,635 L1095,670.0 L960,705 Z" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1008.6" y="678.0" class="label" text-anchor="middle">Kp,P</text>
+<text x="925" y="655" class="small" text-anchor="middle">eP,j</text>
+<circle cx="925" cy="670" r="4.5" fill="#1764a0"/>
+<path d="M1095,670 L1142,670" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="1170" cy="670" r="28" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1170" y="678" class="label" text-anchor="middle">Σ</text>
+<text x="1127" y="655" class="sign" text-anchor="start">+</text>
+<text x="1184" y="629" class="sign" text-anchor="start">+</text>
+<text x="1184" y="717" class="sign" text-anchor="start">+</text>
+<path d="M785,670 L785,600 L1170,600 L1170,642" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="785" cy="670" r="4.5" fill="#1764a0"/>
+<text x="930" y="619" class="small" text-anchor="start">Plim</text>
+<circle cx="1170" cy="755" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1156" y="763" class="small" text-anchor="end" fill="#8453ad" style="fill:#8453ad">UP,j[k]</text>
+<path d="M1170,749 L1170,698" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<path d="M1198,670 L1300,670" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1250" y="652" class="small" text-anchor="middle">Pc,raw</text>
+<rect x="1300" y="625" width="240" height="112" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1420.0" y="659" class="label" text-anchor="middle">容量限幅</text>
+<text x="1420.0" y="696" class="small" text-anchor="middle">sat(·, ±Pcap,j)</text>
+<text x="1420.0" y="727" class="small" text-anchor="middle">Pcap,j = ½ m V̄j Imax</text>
+<path d="M1540,670 L1815,670 L1815,557" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1585" y="655" class="label" text-anchor="start">Pc,j</text>
+<circle cx="925" cy="782" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="939" y="790" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">eP,j → 积分环</text>
+<path d="M925,670 L925,776" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<rect x="1710" y="393" width="310" height="164" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1865.0" y="427" class="label" text-anchor="middle">功率选择与容量限幅</text>
+<text x="1865.0" y="464" class="small" text-anchor="middle">Pj = sat(min(PE,j, Pc,j),</text>
+<text x="1865.0" y="495" class="small" text-anchor="middle">±Pcap,j)</text>
+<text x="1865.0" y="543" class="fn" text-anchor="middle">chb_ctrl_power_reference</text>
+<path d="M2020,473 L2100,473" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<rect x="2100" y="393" width="300" height="164" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="2250.0" y="427" class="label" text-anchor="middle">功率 / 电流换算</text>
+<text x="2250.0" y="464" class="small" text-anchor="middle">id,raw = 2 ΣPj / (√2 Vg,rms)</text>
+<text x="2250.0" y="495" class="small" text-anchor="middle">ΔPj = sI (Pj − ΣPj/N)</text>
+<text x="2250.0" y="543" class="fn" text-anchor="middle">sI：有功电流限幅缩放系数</text>
+<circle cx="2150" cy="355" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="2164" y="363" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">Vg,rms</text>
+<path d="M2250,355 L2250,393" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M2400,473 L2460,473" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<rect x="2460" y="421" width="245" height="110" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="2582.5" y="455" class="label" text-anchor="middle">电流限幅</text>
+<text x="2582.5" y="492" class="small" text-anchor="middle">id* = sat(id,raw, ±Imax)</text>
+<circle cx="2480" cy="595" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="2494" y="603" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">id* → B、C</text>
+<path d="M2585,531 L2585,575" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="2140" cy="595" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="2154" y="603" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">ΔPj → q 规划 / 均衡</text>
+<path d="M2235,557 L2235,575" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M2500,531 L2500,770 L2300,770 L2300,557" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="2340" y="749" class="small" text-anchor="start">sI = id*/id,raw（限幅时）</text>
+<circle cx="1740" cy="748" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1754" y="756" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">PE,j / Pj / Pc,j / Pcap,j → 抗饱和</text>
+<rect x="40" y="865" width="2720" height="735" fill="#fafcfe" stroke="#cedae5" stroke-width="2"/>
+<text x="65" y="910" class="section" text-anchor="start">B  dq 电流闭环 → 全波形容量约束 → 各桥电压分配与 PWM</text>
+<rect x="405" y="945" width="855" height="585" fill="none" stroke="#9aafbf" stroke-width="1.5" stroke-dasharray="8 7"/>
+<text x="420" y="972" class="fn" text-anchor="start">chb_ctrl_current_loop</text>
+<circle cx="450" cy="1025" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="464" y="1033" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">id* / iq*</text>
+<path d="M575,1025 L630,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="658" cy="1025" r="28" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="658" y="1033" class="label" text-anchor="middle">Σ</text>
+<text x="616" y="1010" class="sign" text-anchor="start">+</text>
+<text x="673" y="1074" class="sign" text-anchor="start">−</text>
+<path d="M686,1025 L765,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="722" y="1010" class="small" text-anchor="middle">ed / eq</text>
+<path d="M765,990 L895,1025.0 L765,1060 Z" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="811.8" y="1033.0" class="label" text-anchor="middle">Kp,I</text>
+<path d="M895,1025 L1052,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="1080" cy="1025" r="28" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1080" y="1033" class="label" text-anchor="middle">Σ</text>
+<text x="1036" y="1009" class="sign" text-anchor="start">−</text>
+<text x="1094" y="985" class="sign" text-anchor="start">−</text>
+<text x="1094" y="1075" class="sign" text-anchor="start">+</text>
+<circle cx="1080" cy="961" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1066" y="969" class="small" text-anchor="end" fill="#8453ad" style="fill:#8453ad">UI,dq[k]</text>
+<path d="M1080,968 L1080,997" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<path d="M1108,1025 L1320,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1210" y="1007" class="small" text-anchor="middle">vraw,dq</text>
+<circle cx="1230" cy="1025" r="4.5" fill="#1764a0"/>
+<rect x="460" y="1190" width="280" height="138" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="600.0" y="1224" class="label" text-anchor="middle">Park 电流反馈</text>
+<text x="600.0" y="1261" class="small" text-anchor="middle">[id, iq] = Park(iαβ, θ − ωτi)</text>
+<text x="600.0" y="1292" class="small" text-anchor="middle">补偿电流采样延迟</text>
+<path d="M600,1190 L600,1130 L658,1130 L658,1053" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="603" y="1115" class="small" text-anchor="start">id / iq</text>
+<circle cx="460" cy="1360" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="474" y="1368" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">iαβ / θ / ω</text>
+<path d="M580,1351 L580,1328" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<rect x="790" y="1200" width="410" height="165" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="995.0" y="1234" class="label" text-anchor="middle">电压前馈 + 阻尼 + 解耦</text>
+<text x="995.0" y="1271" class="small" text-anchor="middle">vff,d = vg,d − R id + ωL iq</text>
+<text x="995.0" y="1302" class="small" text-anchor="middle">vff,q = vg,q − R iq − ωL id</text>
+<text x="995.0" y="1333" class="small" text-anchor="middle">vg,α = vg − w Σvg,h,α</text>
+<path d="M740,1260 L790,1260" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="805" cy="1420" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="819" y="1428" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">vg / vg,β1 / vg,h,α / w / θ / ω</text>
+<path d="M950,1410 L950,1365" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M1080,1200 L1080,1053" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1095" y="1160" class="small" text-anchor="start">vff,dq</text>
+<rect x="90" y="1190" width="265" height="270" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="222.5" y="1224" class="label" text-anchor="middle">q 轴电流规划</text>
+<text x="222.5" y="1261" class="small" text-anchor="middle">min |iq*|，iq* ≤ 0</text>
+<text x="222.5" y="1292" class="small" text-anchor="middle">电流圆 + 均衡需求</text>
+<text x="222.5" y="1323" class="small" text-anchor="middle">各桥完整波形可行域</text>
+<text x="222.5" y="1354" class="small" text-anchor="middle">目标搜索 + 斜率限制</text>
+<text x="222.5" y="1385" class="small" text-anchor="middle">输出 |I*| 与单位向量 uI</text>
+<text x="222.5" y="1446" class="fn" text-anchor="middle">chb_ctrl_reactive_reference</text>
+<circle cx="90" cy="1145" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="104" y="1153" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">id* / ΔPj / V̄j / Vg,rms / ω</text>
+<path d="M220,1151 L220,1190" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<path d="M355,1240 L390,1240 L390,1025 L450,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="371" y="1170" class="small" text-anchor="start">iq*</text>
+<circle cx="125" cy="1500" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="139" y="1508" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">|I*| / uI → 均衡、分配</text>
+<rect x="1320" y="965" width="285" height="170" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1462.5" y="999" class="label" text-anchor="middle">总桥基波限幅</text>
+<text x="1462.5" y="1036" class="small" text-anchor="middle">vlim,dq = s · vraw,dq</text>
+<text x="1462.5" y="1067" class="small" text-anchor="middle">0 ≤ s ≤ 1；完整波形约束</text>
+<text x="1462.5" y="1098" class="small" text-anchor="middle">含谐波 + 插值曲率裕量</text>
+<text x="1462.5" y="1121" class="fn" text-anchor="middle">chb_ctrl_total_voltage_limit</text>
+<circle cx="1360" cy="1180" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="1374" y="1188" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">VΣ / Φh</text>
+<path d="M1465,1172 L1465,1135" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<path d="M1605,1025 L1685,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1645" y="1007" class="small" text-anchor="middle">vlim</text>
+<circle cx="1640" cy="1025" r="4.5" fill="#1764a0"/>
+<rect x="1685" y="965" width="285" height="170" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="1827.5" y="999" class="label" text-anchor="middle">差模均衡容量</text>
+<text x="1827.5" y="1036" class="small" text-anchor="middle">基底 = (Vdc,j/VΣ) vlim</text>
+<text x="1827.5" y="1067" class="small" text-anchor="middle">Δv∥,j 含 2ΔPj / |I*|</text>
+<text x="1827.5" y="1098" class="small" text-anchor="middle">搜索可行缩放 β ∈ [0,1]</text>
+<text x="1827.5" y="1121" class="fn" text-anchor="middle">chb_ctrl_balance_capacity</text>
+<circle cx="1685" cy="920" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="1699" y="928" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">ΔPj / |I*| / uI / Vdc,j / VΣ</text>
+<path d="M1815,927 L1815,965" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="1710" cy="1180" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="1724" y="1188" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">Φh</text>
+<path d="M1805,1172 L1805,1135" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<path d="M1970,1025 L2040,1025" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="2005" y="1007" class="small" text-anchor="middle">β / v∥</text>
+<rect x="2040" y="965" width="325" height="265" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="2202.5" y="999" class="label" text-anchor="middle">逐桥 dq 电压分配</text>
+<text x="2202.5" y="1036" class="small" text-anchor="middle">v∥,j = vbase,∥,j + β Δv∥,j</text>
+<text x="2202.5" y="1067" class="small" text-anchor="middle">可行时平均分配正交电压</text>
+<text x="2202.5" y="1098" class="small" text-anchor="middle">受限时按可行区间分配</text>
+<text x="2202.5" y="1129" class="small" text-anchor="middle">加入 vraw − vlim 动态余量</text>
+<text x="2202.5" y="1160" class="small" text-anchor="middle">恢复 (1−β) 差模请求</text>
+<text x="2202.5" y="1216" class="fn" text-anchor="middle">chb_ctrl_cell_voltage_allocation</text>
+<path d="M1640,1025 L1640,1270 L2095,1270 L2095,1230" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1710" y="1258" class="small" text-anchor="start">vlim,dq（独立输入）</text>
+<path d="M1230,1025 L1230,1390 L2260,1390 L2260,1230" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="1390" y="1376" class="small" text-anchor="start">vraw,dq：动态调节旁路，最终由 PWM 限幅</text>
+<circle cx="2110" cy="920" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="2124" y="928" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">uI / Vdc,j / VΣ / Φh</text>
+<path d="M2220,927 L2220,965" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<path d="M2365,1040 L2430,1040" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="2395" y="1021" class="small" text-anchor="middle">vj,dq</text>
+<circle cx="2390" cy="1040" r="4.5" fill="#1764a0"/>
+<rect x="2430" y="965" width="285" height="265" fill="white" stroke="#1764a0" stroke-width="2.5"/>
+<text x="2572.5" y="999" class="label" text-anchor="middle">合成 / 联合 PWM 投影</text>
+<text x="2572.5" y="1036" class="small" text-anchor="middle">作用时刻角度预测</text>
+<text x="2572.5" y="1067" class="small" text-anchor="middle">逆 Park + 谐波注入</text>
+<text x="2572.5" y="1098" class="small" text-anchor="middle">逐桥限幅 ±mmax Vdc,j</text>
+<text x="2572.5" y="1129" class="small" text-anchor="middle">按剩余裕量保持总电压</text>
+<text x="2572.5" y="1160" class="small" text-anchor="middle">死区方向补偿</text>
+<text x="2572.5" y="1216" class="fn" text-anchor="middle">chb_ctrl_publish_pwm</text>
+<circle cx="2440" cy="920" r="6" fill="white" stroke="#1764a0" stroke-width="2.3"/>
+<text x="2454" y="928" class="small" text-anchor="start" fill="#1764a0" style="fill:#1764a0">θ / f / Vdc,j / id* / iq*</text>
+<path d="M2550,927 L2550,965" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<circle cx="2470" cy="1300" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="2484" y="1308" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">vh,αβ</text>
+<path d="M2570,1292 L2570,1230" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<path d="M2660,1230 L2660,1535 L2670,1535 L2670,1755" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="2500" y="1507" class="small" text-anchor="start">vpwm,j / 死区方向</text>
+<path d="M1500,1135 L1500,1460 L1390,1460 L1390,1568" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<text x="1508" y="1445" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">total_limited</text>
+<path d="M2180,1230 L2180,1460 L1910,1460 L1910,1568" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<text x="1970" y="1445" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">cell_limited</text>
+<path d="M2390,1040 L2390,1495 L2010,1495 L2010,1568" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<text x="2200" y="1480" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">vj,dq</text>
+<circle cx="695" cy="1490" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="709" y="1498" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">ed / eq → C</text>
+<rect x="40" y="1630" width="2720" height="490" fill="#fafcfe" stroke="#cedae5" stroke-width="2"/>
+<text x="65" y="1675" class="section" text-anchor="start">C  谐波并行支路 / 抗饱和积分反馈 / 被控对象与采样</text>
+<rect x="90" y="1720" width="810" height="185" fill="white" stroke="#b96900" stroke-width="2.5"/>
+<text x="495.0" y="1754" class="label" text-anchor="middle">谐波前馈与电流谐波反馈</text>
+<text x="495.0" y="1791" class="small" text-anchor="middle">vh,αβ = sh [ w vg,h,αβ + sfb Kh ih,αβ（延迟校正后） ]</text>
+<text x="495.0" y="1822" class="small" text-anchor="middle">先保证电网前馈容量，再限制谐波电流反馈与总谐波幅值</text>
+<text x="495.0" y="1853" class="small" text-anchor="middle">生成 Φh（周期谐波波形 + 曲率裕量），供容量计算使用</text>
+<text x="495.0" y="1891" class="fn" text-anchor="middle">chb_ctrl_harmonic_compensation</text>
+<circle cx="100" cy="1688" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="114" y="1696" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">vg,h,αβ / ih,h,αβ / θ / ω / w / Vg,rms / VΣ</text>
+<path d="M490,1695 L490,1720" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<circle cx="95" cy="1940" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="109" y="1948" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">Φh → q 规划、总限幅、均衡、分配</text>
+<circle cx="95" cy="1980" r="6" fill="white" stroke="#b96900" stroke-width="2.3"/>
+<text x="109" y="1988" class="small" text-anchor="start" fill="#b96900" style="fill:#b96900">vh,αβ → PWM 合成（独立并行支路）</text>
+<path d="M900,1800 L940,1800 L940,1940 L680,1940" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<rect x="1040" y="1720" width="1040" height="295" fill="white" stroke="#8453ad" stroke-width="2.5"/>
+<text x="1560.0" y="1754" class="label" text-anchor="middle">积分状态 + 条件积分抗饱和</text>
+<text x="1560.0" y="1791" class="small" text-anchor="middle">UE,j[k+1] = UE,j[k] + gE,j Ki,E Ts eE,j</text>
+<text x="1560.0" y="1822" class="small" text-anchor="middle">UP,j[k+1] = UP,j[k] + gP,j Ki,P Ts eP,j</text>
+<text x="1560.0" y="1853" class="small" text-anchor="middle">UI,dq[k+1] = sat(UI,dq[k] + gI Ki,I Ts edq, ±UI,max)</text>
+<text x="1560.0" y="1884" class="small" text-anchor="middle">gE：功率选择器 + 电流/电压容量；gP：限制环选中且方向允许</text>
+<text x="1560.0" y="1915" class="small" text-anchor="middle">gI = 1（未触发 total_limited），否则保持；g = 0 时积分保持</text>
+<text x="1560.0" y="1946" class="small" text-anchor="middle">Pach,j = ½ (vj,d id* + vj,q iq*) —— 来自分配后的 dq 电压</text>
+<text x="1560.0" y="2001" class="fn" text-anchor="middle">chb_ctrl_update_integrators</text>
+<path d="M1390,1568 L1390,1720" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<path d="M1910,1568 L1910,1720" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<path d="M2010,1568 L2010,1720" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<circle cx="1090" cy="1688" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1104" y="1696" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">eE,j / eP,j / edq / PE,j / Pj / Pc,j / Pcap,j / id,raw / id* / iq*</text>
+<path d="M1560,2015 L1560,2040 L1640,2040" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<rect x="1640" y="2020" width="115" height="68" fill="white" stroke="#8453ad" stroke-width="2.5"/>
+<text x="1697.5" y="2054" class="label" text-anchor="middle">z⁻¹</text>
+<path d="M1755,2054 L1810,2054" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<circle cx="1820" cy="2054" r="6" fill="white" stroke="#8453ad" stroke-width="2.3"/>
+<text x="1834" y="2062" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">UE,j / UP,j / UI,dq → A、B</text>
+<text x="1070" y="2078" class="small" text-anchor="start" fill="#8453ad" style="fill:#8453ad">积分结果在本拍末发布，下一控制拍读取。</text>
+<rect x="2180" y="1755" width="530" height="270" fill="#f3f5f7" stroke="#65717e" stroke-width="2.5" stroke-dasharray="10 7"/>
+<text x="2445" y="1795" class="label" text-anchor="middle">PWM 接口 / 功率级 / 电网与负载</text>
+<text x="2445" y="1840" class="small" text-anchor="middle">HAL/BSP：电压、母线 → 占空比</text>
+<text x="2445" y="1878" class="small" text-anchor="middle">电网 — R/L — 串联 H 桥</text>
+<text x="2445" y="1916" class="small" text-anchor="middle">各桥直流电容与负载</text>
+<text x="2445" y="1954" class="small" text-anchor="middle">物理系统，位于 ctrl.c 控制算法之外</text>
+<path d="M2445,2025 L2445,2100 L980,2100 L980,2053 L900,2053" fill="none" stroke="#65717e" stroke-width="2.8" marker-end="url(#g)"/>
+<text x="2220" y="2085" class="small" text-anchor="start" fill="#65717e" style="fill:#65717e">vg / ig / Vdc,j / Iload,j</text>
+<rect x="90" y="2020" width="810" height="68" fill="white" stroke="#65717e" stroke-width="2.5"/>
+<text x="495.0" y="2054" class="label" text-anchor="middle">ADC 快照 → MSOGI / SOGI / PLL 采样估计</text>
+<path d="M90,2053 L22,2053 L22,390 L79,390" fill="none" stroke="#65717e" stroke-width="2.8" marker-end="url(#g)"/>
+<text x="88" y="2148" class="small" text-anchor="start" fill="#65717e" style="fill:#65717e">采样输出以具名端口送至各模块：θ、f、iαβ、Vg,rms、基波/谐波、电容电压和负载电流。</text>
+<text x="60" y="2200" class="small" text-anchor="start">图例：</text>
+<path d="M165,2194 L220,2194" fill="none" stroke="#1764a0" stroke-width="2.8" marker-end="url(#b)"/>
+<text x="235" y="2202" class="small" text-anchor="start">基波控制 / 测量</text>
+<path d="M520,2194 L575,2194" fill="none" stroke="#b96900" stroke-width="2.8" marker-end="url(#o)"/>
+<text x="590" y="2202" class="small" text-anchor="start">谐波信号 / 完整波形约束</text>
+<path d="M1080,2194 L1135,2194" fill="none" stroke="#8453ad" stroke-width="2.8" marker-end="url(#p)"/>
+<text x="1150" y="2202" class="small" text-anchor="start">抗饱和 / 积分状态</text>
+<path d="M1540,2194 L1595,2194" fill="none" stroke="#65717e" stroke-width="2.8" marker-end="url(#g)"/>
+<text x="1610" y="2202" class="small" text-anchor="start">物理对象 / 采样反馈</text>
+<text x="2070" y="2202" class="small" text-anchor="start">○ 同名端口互连；m = mmax；参数来自 cfg</text>
+</svg>
