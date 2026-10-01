@@ -75,6 +75,23 @@ typedef struct
     chk_grid_output_t output;
 } chk_grid_t;
 
+/**
+ * @brief 绑定电网幅值、频率并清空资格历史。
+ * @param p_str 调用方独占的电网检测模块。
+ * @param p_rms 长期有效的电压有效值地址。
+ * @param p_freq 长期有效的频率地址，可使用 Hz 或 rad/s；须与阈值单位一致。
+ * @param judge_time 合格计数阈值；连续 judge_time + 1 次正常输入后置位。
+ * @param abnormale_time 异常计数阈值；超过此次数后撤销资格，正常拍会逐次衰减。
+ * @param rms_normal_max 启动电压上限，包含边界。
+ * @param rms_normal_min 启动电压下限，包含边界。
+ * @param rms_abnormal_max 已合格时的电压保持上限，包含边界。
+ * @param rms_abnormal_min 已合格时的电压保持下限，包含边界。
+ * @param freq_normal_max 启动频率上限，包含边界。
+ * @param freq_normal_min 启动频率下限，包含边界。
+ * @param freq_abnormal_max 已合格时的频率保持上限，包含边界。
+ * @param freq_abnormal_min 已合格时的频率保持下限，包含边界。
+ * @note 调用方在 INIT 保证地址、有限阈值、上下限顺序及有界计数有效。
+ */
 void chk_grid_init(chk_grid_t *p_str,
                    float *p_rms,
                    float *p_freq,
@@ -89,6 +106,11 @@ void chk_grid_init(chk_grid_t *p_str,
                    float freq_abnormal_max,
                    float freq_abnormal_min);
 
+/**
+ * @brief 根据本次输入推进资格或异常计数，更新 output.is_ok。
+ * @param p_str 已初始化的独占实例；调用周期与配置计数相对应。
+ * @note NaN 及无穷不满足有限阈值区间，按异常输入处理。
+ */
 void chk_grid_func(chk_grid_t *p_str);
 
 void chk_grid_reset(chk_grid_t *p_str);

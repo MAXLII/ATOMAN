@@ -56,6 +56,7 @@ void chk_grid_init(chk_grid_t *p_str,
     p_str->cfg.freq.abnormal.min = freq_abnormal_min;
 
     p_str->inter.is_ok_cnt = 0;
+    p_str->inter.abnormal_cnt = 0;
     p_str->output.is_ok    = 0;
 }
 
@@ -63,10 +64,10 @@ void chk_grid_func(chk_grid_t *p_str)
 {
     if (p_str->output.is_ok == 0)
     {
-        if (    (*p_str->input.p_rms < p_str->cfg.rms.normal.max)
-             && (*p_str->input.p_rms > p_str->cfg.rms.normal.min)
-             && (*p_str->input.p_freq < p_str->cfg.freq.normal.max)
-             && (*p_str->input.p_freq > p_str->cfg.freq.normal.min))
+        if (    (*p_str->input.p_rms <= p_str->cfg.rms.normal.max)
+             && (*p_str->input.p_rms >= p_str->cfg.rms.normal.min)
+             && (*p_str->input.p_freq <= p_str->cfg.freq.normal.max)
+             && (*p_str->input.p_freq >= p_str->cfg.freq.normal.min))
         {
             p_str->inter.is_ok_cnt++;
         }
@@ -83,10 +84,11 @@ void chk_grid_func(chk_grid_t *p_str)
     }
     else
     {
-        if (    (*p_str->input.p_rms > p_str->cfg.rms.abnormal.max)
-             || (*p_str->input.p_rms < p_str->cfg.rms.abnormal.min)
-             || (*p_str->input.p_freq > p_str->cfg.freq.abnormal.max)
-             || (*p_str->input.p_freq < p_str->cfg.freq.abnormal.min))
+        /* 必须证明输入仍在区间内；NAN 的有序比较为假，不能保留合格状态。 */
+        if (!(    (*p_str->input.p_rms <= p_str->cfg.rms.abnormal.max)
+               && (*p_str->input.p_rms >= p_str->cfg.rms.abnormal.min)
+               && (*p_str->input.p_freq <= p_str->cfg.freq.abnormal.max)
+               && (*p_str->input.p_freq >= p_str->cfg.freq.abnormal.min)))
         {
             p_str->inter.abnormal_cnt++;
 

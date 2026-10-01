@@ -45,6 +45,21 @@ void msogi_update_frequency(msogi_t *p_observer, float omega)
     {
         return;
     }
+    for (uint32_t channel = 0u; channel < MSOGI_CHANNEL_COUNT; ++channel)
+    {
+        const float order = (float)(2u * channel + 1u);
+        p_observer->tangent[channel] = tanf(0.5f * order * omega * p_observer->ts);
+    }
+    msogi_update_frequency_with_tangent(p_observer, omega, p_observer->tangent);
+}
+
+/** @brief Apply one set of frequency tangents without sharing residuals or k-dependent gains. */
+void msogi_update_frequency_with_tangent(msogi_t *p_observer, float omega, const float *p_tangent)
+{
+    if (p_observer == NULL)
+    {
+        return;
+    }
     const float ts = p_observer->ts; /* Bound sample interval. */
     const float k = p_observer->k; /* Bound fundamental damping gain. */
     p_observer->dc_gain = 0.05f * omega * ts; /* DC pole at 0.1 times fundamental frequency. */
@@ -52,7 +67,7 @@ void msogi_update_frequency(msogi_t *p_observer, float omega)
     for (uint32_t channel = 0u; channel < MSOGI_CHANNEL_COUNT; ++channel)
     {
         const float order = (float)(2u * channel + 1u); /* Odd harmonic order. */
-        const float tangent = tanf(0.5f * order * omega * ts); /* Prewarp each resonance. */
+        const float tangent = p_tangent[channel]; /* Reuse the caller's matching prewarp. */
         const float denominator = 1.0f + tangent * tangent; /* Trapezoidal oscillator divisor. */
         p_observer->tangent[channel] = tangent;
         p_observer->decay[channel] = (1.0f - tangent * tangent) / denominator;

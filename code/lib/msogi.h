@@ -53,4 +53,16 @@ void msogi_cal(msogi_t *p_observer);
  * @param p_observer Initialized state. @param omega Fundamental angular frequency, radians/second. */
 void msogi_update_frequency(msogi_t *p_observer, float omega);
 
+/**
+ * @brief Retune with prewarped tangents already calculated for this sample interval and frequency.
+ * @details Reuses the frequency geometry; each observer retains its own k-dependent gains,
+ *          input binding and dynamic states. The ordinary retuning API calculates the tangents.
+ * @param p_observer Initialized state; its sampling interval must match the tangent source.
+ * @param omega Same valid sub-Nyquist fundamental angular frequency as the tangent source, rad/s.
+ * @param p_tangent MSOGI_CHANNEL_COUNT values tanf(0.5f * order * omega * ts), in channel order.
+ * @note The array is read synchronously and copied; no pointer is retained. It may be the
+ *       observer's own tangent array. Caller guarantees the matching interval/frequency.
+ */
+void msogi_update_frequency_with_tangent(msogi_t *p_observer, float omega, const float *p_tangent);
+
 #endif /* MSOGI_H */
