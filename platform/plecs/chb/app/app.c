@@ -303,6 +303,8 @@ static uint8_t app_grid_init(chb_app_grid_t *p_module, const chb_ctrl_cfg_t *p_c
     }
     const uint32_t window_length = (uint32_t)(window_points + 0.5f);
     const float omega_center = M_2PI * p_cfg->f_grid;
+    const float v_grid_peak = M_SQRT2 * p_cfg->v_grid_rms_nominal;
+    const float omega_pll_n = M_2PI * CHB_APP_PLL_BANDWIDTH_HZ;
 
     if (sliding_window_init(&p_module->inter.rms_window,
                             p_module->inter.v_grid_square_history, window_length,
@@ -320,10 +322,16 @@ static uint8_t app_grid_init(chb_app_grid_t *p_module, const chb_ctrl_cfg_t *p_c
                   p_cfg->t_ctrl_period, omega_center,
                   omega_center + M_2PI * CHB_APP_PLL_UP_HZ,
                   omega_center - M_2PI * CHB_APP_PLL_DOWN_HZ,
-                  M_SQRT2 * p_cfg->v_grid_rms_nominal, CHB_APP_PLL_ZETA,
-                  M_2PI * CHB_APP_PLL_BANDWIDTH_HZ,
+                  v_grid_peak, CHB_APP_PLL_ZETA, omega_pll_n,
                   M_2PI * CHB_APP_PLL_UP_HZ, -M_2PI * CHB_APP_PLL_DOWN_HZ,
                   0.0f, &p_module->inter.msogi.alpha[0], &p_module->inter.msogi.beta[0]))
+    {
+        return 0u;
+    }
+    /* 通用 PLL 初始化后，通过现有系数入口应用 cfg.h 宏；仅在 INIT 执行。 */
+    if (!pll_update_pi(&p_module->inter.pll,
+                       CHB_PLL_PI_KP_CALC(v_grid_peak, omega_pll_n, CHB_APP_PLL_ZETA),
+                       CHB_PLL_PI_KI_CALC(v_grid_peak, omega_pll_n)))
     {
         return 0u;
     }

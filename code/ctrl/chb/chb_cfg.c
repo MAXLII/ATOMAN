@@ -19,17 +19,17 @@
 #define CHB_DEFAULT_CFG                     \
     {.t_ctrl_period            = 0.0001f,   \
      .f_grid                   = 50.0f,     \
-     .l_grid                   = 0.012f,    \
+     .l_grid                   = CHB_L_GRID_DEFAULT, \
      .r_grid                   = 0.5f,      \
      .t_current_sample_delay   = 0.0f,      \
      .v_grid_rms_nominal       = 10000.0f,  \
      .v_bus_ref                = 3200.0f,   \
      .v_bus_ref_slew           = 5000.0f,   \
      .f_bus_filter             = 20.0f,     \
-     .k_energy_p               = 40.0f,     \
-     .k_energy_i               = 400.0f,    \
-     .k_current_p              = 60.0f,     \
-     .k_current_i              = 7000.0f,   \
+     .k_energy_p               = CHB_ENERGY_PI_KP_CALC(CHB_ENERGY_OMEGA_N, CHB_ENERGY_ZETA), \
+     .k_energy_i               = CHB_ENERGY_PI_KI_CALC(CHB_ENERGY_OMEGA_N), \
+     .k_current_p              = CHB_CURRENT_PI_KP_CALC(CHB_L_GRID_DEFAULT, CHB_CURRENT_OMEGA_N, CHB_CURRENT_ZETA), \
+     .k_current_i              = CHB_CURRENT_PI_KI_CALC(CHB_L_GRID_DEFAULT, CHB_CURRENT_OMEGA_N), \
      .v_current_integral_limit = 2000.0f,   \
      .k_power_limit_p          = 1.0f,      \
      .k_power_limit_i          = 20.0f,     \
