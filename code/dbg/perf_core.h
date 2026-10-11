@@ -31,9 +31,15 @@
 
 #include <stdint.h>
 
+#ifndef PERF_TASK_ENABLE
 #define PERF_TASK_ENABLE      1u
+#endif
+#ifndef PERF_INTERRUPT_ENABLE
 #define PERF_INTERRUPT_ENABLE 1u
+#endif
+#ifndef PERF_CODE_ENABLE
 #define PERF_CODE_ENABLE      1u
+#endif
 
 #if ((PERF_TASK_ENABLE != 0u) && (PERF_TASK_ENABLE != 1u))
 #error "PERF_TASK_ENABLE must be 0 or 1."
