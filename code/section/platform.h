@@ -55,7 +55,7 @@
 #if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + defined(PLATFORM_GD32G553C) \
      + defined(PLATFORM_GD32E507) + defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558)                         \
      + defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + defined(PLATFORM_TMS320F28P55)                    \
-     + defined(PLATFORM_TMS320F280049C)) != 1
+     + defined(PLATFORM_TMS320F280049C) + defined(PLATFORM_STM32F103C8T6)) != 1
 #error "Define exactly one PLATFORM_* identity macro."
 #endif
 
@@ -312,6 +312,42 @@ extern uint32_t __section_end;
     {                                            \
     } while (0)
 #endif
+#define SECTION_PORT_FAULT_HOOK(reason) \
+    do                                  \
+    {                                   \
+        (void)(reason);                 \
+        __disable_irq();                \
+        for (;;)                        \
+        {                               \
+        }                               \
+    } while (0)
+
+/* MCU: STM32F103C8T6 */
+#elif defined(PLATFORM_STM32F103C8T6)
+#include "systick.h"
+#include "stm32f10x.h"
+#define SECTION_SYS_TICK                       systick_gettime_100us()
+#define SECTION_SYS_TICK_UNIT_US               100u
+#define PLATFORM_PERF_COUNT_UNIT_US            (1.0f / 72.0f)
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 7200u
+extern uint32_t __section_start;
+extern uint32_t __section_end;
+#define SECTION_START                         __section_start
+#define SECTION_STOP                          __section_end
+#define SYSTEM_RESET                          NVIC_SystemReset()
+#define FUNC_RAM                              __attribute__((section(".func_ram"), noinline, used))
+#define SECTION_CRITICAL_USE_PRIMASK           1u
+#define SECTION_TASK_QUEUE_INTERNAL_CRITICAL 1u
+/* Keep the shared PSP stack at 2 KiB and bound saved contexts to 2 KiB on 20 KiB SRAM. */
+#define SECTION_TASK_CONTEXT_POOL_WORDS 512u
+#define SECTION_PORT_CONTEXT_SWITCH_REQUEST() \
+    do                                        \
+    {                                         \
+        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;   \
+        __DSB();                              \
+        __ISB();                              \
+    } while (0)
+#define SECTION_PORT_FPU_LAZY_STACKING_DISABLE() ((void)0)
 #define SECTION_PORT_FAULT_HOOK(reason) \
     do                                  \
     {                                   \
