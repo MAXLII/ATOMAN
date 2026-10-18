@@ -56,5 +56,5 @@ float loop_run(void)
 
 ## 6. 关联导航
 
-- 源码：[PI Tustin](../../../code/lib/pi_tustin.h) · [整数 PI Tustin](../../../code/lib/pi_tustin_i32.h) · [PID](../../../code/lib/pid.h) · [PR](../../../code/lib/pr.h) · [2P2Z](../../../code/lib/z2p2.h)
+- 源码：[PI Tustin（浮点与整数）](../../../code/lib/pi_tustin.h) · [PID](../../../code/lib/pid.h) · [PR](../../../code/lib/pr.h) · [2P2Z](../../../code/lib/z2p2.h)
 - 设计：[控制模块总设计](../../design/control/ctrl_design.md)

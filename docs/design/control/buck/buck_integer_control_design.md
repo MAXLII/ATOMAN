@@ -8,7 +8,7 @@
 
 - `code/ctrl/buck/buck_cfg.h`：码域、K 值、环路参数、限幅定义。
 - `code/ctrl/buck/buck_ctrl.c`：ISR 与 task 中的控制计算。
-- `code/lib/pi_tustin_i32.c/.h`：整型 PI 的 Tustin 离散化实现。
+- `code/lib/pi_tustin.c/.h`：浮点与整型 PI 的 Tustin 离散化实现，初始化接口分别保留。
 
 ## 0. 术语说明
 
