@@ -33,7 +33,7 @@
 #include <stddef.h>
 
 #include "apf_i32.h"
-#include "pi_tustin_i32.h"
+#include "pi_tustin.h"
 #include "resonant_i32.h"
 #include "section.h"
 #include "trig_i32.h"

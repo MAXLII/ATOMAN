@@ -15,7 +15,7 @@ set(SOURCES
     ${PLECS_PROJECT_DIR}/bsp/bsp_adc.c
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
     ${CODE_DIR}/section/baremetal/section.c
-    ${CODE_DIR}/lib/pi_tustin_i32.c
+    ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/ctrl/boost/boost_cfg.c
     ${CODE_DIR}/ctrl/boost/boost_ctrl.c
     ${CODE_DIR}/ctrl/boost/boost_fsm.c

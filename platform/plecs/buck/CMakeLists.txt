@@ -23,7 +23,7 @@ set(SOURCES
     ${CODE_DIR}/sim/debug/shell/shell_core.c
     ${CODE_DIR}/sim/debug/shell/shell_service.c
     ${CODE_DIR}/section/baremetal/section.c
-    ${CODE_DIR}/lib/pi_tustin_i32.c
+    ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/ctrl/buck/buck_cfg.c
     ${CODE_DIR}/ctrl/buck/buck_ctrl.c
     ${CODE_DIR}/ctrl/buck/buck_fsm.c

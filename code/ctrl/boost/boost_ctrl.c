@@ -28,7 +28,7 @@
  */
 #include "boost_ctrl.h"
 #include "boost_cfg.h"
-#include "pi_tustin_i32.h"
+#include "pi_tustin.h"
 #include "section.h"
 #include <stddef.h>
 

@@ -16,7 +16,7 @@ set(SOURCES
     ${PLECS_PROJECT_DIR}/bsp/bsp_pwm.c
     ${CODE_DIR}/section/baremetal/section.c
     ${CODE_DIR}/lib/apf_i32.c
-    ${CODE_DIR}/lib/pi_tustin_i32.c
+    ${CODE_DIR}/lib/pi_tustin.c
     ${CODE_DIR}/lib/resonant_i32.c
     ${CODE_DIR}/lib/trig_i32.c
     ${CODE_DIR}/ctrl/inv_i32/inv_cfg.c

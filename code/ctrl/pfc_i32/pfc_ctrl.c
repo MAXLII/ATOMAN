@@ -30,7 +30,6 @@
 #include "fll_i32.h"
 #include "pfc_cfg.h"
 #include "pi_tustin.h"
-#include "pi_tustin_i32.h"
 #include "section.h"
 #include "sogi_i32.h"
 #include <limits.h>

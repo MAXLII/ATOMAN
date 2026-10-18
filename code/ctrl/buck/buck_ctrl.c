@@ -29,7 +29,7 @@
 #include "buck_ctrl.h"
 #include "buck_cfg.h"
 #include "buck_fsm.h"
-#include "pi_tustin_i32.h"
+#include "pi_tustin.h"
 #include "section.h"
 
 #define p_hal (buck_hal_get_ctrl())

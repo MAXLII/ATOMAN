@@ -18,7 +18,6 @@ set(SOURCES
     ${CODE_DIR}/lib/cal_rms.c
     ${CODE_DIR}/lib/fll_i32.c
     ${CODE_DIR}/lib/pi_tustin.c
-    ${CODE_DIR}/lib/pi_tustin_i32.c
     ${CODE_DIR}/lib/sogi_i32.c
     ${CODE_DIR}/ctrl/pfc_i32/pfc_cfg.c
     ${CODE_DIR}/ctrl/pfc_i32/pfc_ctrl.c
