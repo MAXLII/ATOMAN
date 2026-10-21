@@ -9,16 +9,50 @@
 | `platform/esp32c5/bsp/bsp_usart.c/.h` | Type-C USB Serial/JTAG 初始化、非阻塞读取、有限等待发送 |
 | `platform/esp32c5/bsp/bsp_wifi.c/.h` | Wi-Fi 初始化、STA/AP 配置、状态查询、STA 重连 |
 | `platform/esp32c5/bsp/bsp_wifi_socket.c/.h` | 非阻塞 IPv4 TCP 服务端、UDP 收发、描述符清理 |
-| `platform/esp32c5/src/comm_link.c` | demo 的 USB/TCP Link 绑定、独立解析上下文、私有发送队列和 UDP 回环 |
-| `platform/esp32c5/src/platform_demo.c` | demo 的 Wi-Fi 启停参数、状态命令和 FRAME 二进制回环 |
-| `platform/esp32c5/src/platform_port.c` | SECTION 的 100 us 时间基准、微秒 Perf 影子计数和复位适配 |
+| `platform/esp32c5/bsp/bsp_comm.c/.h` | 公共响应队列及 UDP；通过 Wi-Fi BSP 使用控制 TCP，不依赖协议层 |
+| `platform/esp32c5/bsp/bsp_wifi_channels.c` | Wi-Fi 模块统一管理 TCP 5000/9001、连接代数、取包、部分发送及断线清理 |
+| `code/interface/demo/esp32c5/comm_link.c` | USB/TCP 的 `REG_LINK`、独立 E8/E9/Shell 上下文、帧所有权及换会话清理 |
+| `code/interface/demo/esp32c5/comm_discovery.c/.h` | FRAME 设备搜索应答和 UDP 回环；通过 BSP 接口收发，不操作 SDK 或描述符 |
+| `code/interface/demo/esp32c5/wifi_demo.c` | demo 的 Wi-Fi 启停参数、状态命令和 FRAME 二进制回环 |
+| `platform/esp32c5/bsp/bsp_system.c/.h` | SDK 单调时钟、100 us 转换、复位、临界区、静态 RAM 校验及固件标识 |
+| `code/interface/demo/esp32c5/realtime_scope_bindings.c` | 在 SECTION 初始化/任务中绑定通用示波器与 BSP 能力 |
+| `code/interface/demo/esp32c5/platform_bindings.c` | SECTION 时钟/复位回调与 Perf 注册，调用 BSP，不直接依赖 SDK |
+| `platform/esp32c5/src/app_main.c` | 唯一启动入口，按顺序初始化 BSP、Interface 和框架并运行主循环 |
 | `platform/esp32c5/main/` | ESP-IDF 组件和注册段保留 |
 | `platform/esp32c5/gcc/compile.ps1` | 使用本机 SDK 的构建/烧录入口及私有联网配置 |
 | `code/business/demo/` | 直接编译已有的 `demo_shell.c`、`demo_task.c`、`demo_perf.c` |
 
-驱动只负责联网和字节传输。协议、FRAME 参数、队列与服务端端口策略位于 demo 适配，不是 BSP 的固定组成部分。没有接入硬件 UART；文件沿用 base 的 `bsp_usart` 命名，实际硬件为 Type-C USB Serial/JTAG。
+沿用其他平台的 BSP 收发接口 → CommLink 协议绑定 → SECTION 注册关系。`bsp_comm` 维护公共响应队列及 UDP，Wi-Fi 模块统一拥有两条 TCP 连接；`bsp_wifi_socket` 提供原始非阻塞 socket 接口。BSP 不包含 E8/E9/Shell 解析、FRAME 搜索文本或 `REG_LINK`。没有接入硬件 UART；`bsp_usart` 实际硬件为 Type-C USB Serial/JTAG。数据 TCP 9001 和控制 TCP 5000 的会话及缓冲独立。
 
 ## 构建与烧录
+
+目录边界如下。`main/` 保留 ESP-IDF 默认组件和链接配置，`src/` 只保留启动入口；不把协议注册或服务适配继续堆放在 `src/`。
+
+```text
+platform/esp32c5/
+  bsp/       USB、Wi-Fi/TCP、socket、通信队列、时钟/复位、临界区及内存/标识
+  inc/       平台契约 esp32c5_platform.h、默认 Wi-Fi 配置
+  src/       app_main.c
+  main/      CMakeLists.txt、section.lf
+  gcc/       compile.ps1
+  tests/     主机故障注入与独立真机验收脚本
+  build/     忽略跟踪的构建结果及私有配置
+  CMakeLists.txt、sdkconfig.defaults、partitions.csv、compile.bat、download.bat
+
+code/interface/demo/esp32c5/
+  comm_link.c/.h、comm_discovery.c/.h、wifi_demo.c、platform_bindings.c
+  realtime_scope_bindings.c
+```
+
+组件构建按 `BASE_SOURCES`、`BSP_SOURCES`、`INTERFACE_SOURCES` 分组。示波器通用采样、EA 组包和控制服务仍在 `code/dbg`，BSP 仅承接本板的运行资源及绑定。
+
+通信绑定位于 `code/interface/demo/esp32c5/`，由本平台构建选择，不复制或混编 `demo/common/comm_link.c`。Interface 只通过 BSP 接口适配协议；Platform 保留 BSP、启动入口、时钟复位和直接依赖 ESP-IDF 的运行时适配。设备搜索接口声明放在 Interface 自己的 `comm_discovery.h`，不再由平台头文件声明。
+
+2026-10-22 分层整理后，主循环只调度 `run_task()`，通过 SDK 的 POSIX 等待让出执行时间。公共通信、设备发现及 Wi-Fi 状态刷新使用 SECTION 注册任务；示波器配置和链表管理由 `code/dbg/realtime_scope_service.c` 自身的 `REG_TASK` 处理，采样通过 `REG_INTERRUPT` 接入已有控制 ISR 的 `section_interrupt()`。BSP 在 TCP 接入和断开时更新会话代数；旧 TCP 队列随断开清空，USB 队列独立保留。项目源码没有 FreeRTOS 头文件、任务、队列或示波器专用定时器配置；ESP-IDF 的 Wi-Fi/系统运行时仍由 SDK 提供。
+
+已有控制中断的初始化代码在服务绑定后调用 `realtime_scope_service_source_set(actual_hz)`，声明该中断的实际频率，停止示波器不会停止控制中断。当前 ESP32 demo 没有另一套控制中断：移除原专用 GPTimer 后，未绑定采样源时返回 0 Hz、拒绝开始采样。历史 31.25 kHz 结果仅对应旧版已烧录固件。
+
+本次整理通过 ESP-IDF 完整编译、源码格式检查及主机故障注入测试，覆盖复制发送、部分发送、满队列、TCP 会话切换、读写错误、USB 隔离、UDP 搜索/回环/重试/断网清理。主机结果：`platform/esp32c5/build/host-drivers/result.json`。2026-10-22 已将默认 `build/` 产物通过 COM7 烧录并校验，实机确认 USB E8 参数枚举、TCP 5000 参数读取和能力应答正常，TCP 9001 可连接；设备能力中的 ELF SHA256 与本地文件一致。实机记录：`platform/esp32c5/build/section-scope-flash-smoke/result.json`；当前 ELF SHA256：`26b7dde4e0fe43c320e0e17e72da0fa1f3d105c53952d0534e8f4909c8e8aa6c`。采样源未接入，设备返回 0 Hz，本次没有进行波形采样或吞吐验收。
 
 已验证 ESP-IDF v6.1、RISC-V GCC 15.2、C11。SDK 与工具使用本机安装，不复制厂商库到仓库，也不更改全局 SDK 选择。从 base 根目录运行：
 
@@ -46,11 +80,11 @@
 - IDF main task 串行调用驱动和 baremetal SECTION；所有 BSP 公共 API 都是任务上下文接口，不允许多任务同时改配置或直接在 ISR 调用。
 - SDK 负责时钟、FreeRTOS、Wi-Fi 事件与 DHCP。应用定期调用 `bsp_wifi_poll()`；断开时至多每 5 s 提交 1 次重连，不阻塞等待联网。
 - Wi-Fi 初始化、启停和首次射频校准是 SDK 同步操作，可能耗时；不作为实时控制中断的一部分。
-- USB 单次最多 512 字节；RX 不等待，TX 最多等待 20 ms。返回实际接收/接受字节数，调用者保留未发送尾部。
+- USB 单次最多 512 字节；RX/TX 均不等待，返回实际接收/接受字节数，调用者保留未发送尾部。
 - Socket 单次最多 2048 字节，均非阻塞。TCP 的 0 表示 EOF，`-1/EAGAIN` 表示暂时没有数据/空间；UDP 接收检查 `MSG_TRUNC`，超长包返回 `EMSGSIZE`。
-- Socket 描述符属于调用者，Wi-Fi 驱动不隐式替用户关闭；demo 在失去 IP、Wi-Fi 停止、TCP EOF/错误时关闭并重建对应资源。
+- 原始 socket 描述符属于调用者；TCP 由 `bsp_wifi_channels` 在失去 IP、Wi-Fi 停止、EOF/错误时关闭并重建。数据端点拒绝上位机应用数据，有界取完整包，每轮最多发送 16 个 2048 字节块，未发送尾部保留到下轮。
 - USB 和 TCP 的 E8、E9、Shell 上下文独立。每个物理流按完整二进制帧/文本行选择解析所有者，不把二进制 payload 再交给另一个解析器。
-- demo 私有发送队列每条链路最多 16 帧、每帧 512 字节；回调先复制字节，再由主循环处理部分发送。满队列拒绝整帧；TCP 暂停接收新的请求。
+- BSP 私有发送队列每条链路最多 16 帧、每帧 512 字节；回调先复制字节，再由主循环处理部分发送。满队列拒绝整帧；TCP 暂停接收新的请求。
 - USB 专用于二进制/文本协议，不与 SDK 日志/stdio 并发输出。ROM 复位阶段输出不属于应用协议。
 - SECTION 使用 100 us 计时单位，实际协作分发约为 1 ms 或更长。Perf 是回调经过时间，包含阻塞与 SDK 抢占；不是 ESP32 全系统 CPU 占用率。
 
