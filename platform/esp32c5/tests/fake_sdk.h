@@ -29,7 +29,15 @@ typedef int32_t esp_err_t;
 #define WIFI_AUTH_OPEN             0    /* Open network. */
 #define WIFI_AUTH_WPA2_PSK         3    /* WPA2 threshold. */
 #define WIFI_INIT_CONFIG_DEFAULT() {0}  /* Deterministic test initialization. */
-#define pdMS_TO_TICKS(ms)          (ms) /* Test 1 kHz timebase. */
+#define WIFI_PS_NONE               0
+typedef struct
+{
+    uint8_t app_elf_sha256[32];
+} esp_app_desc_t;
+const esp_app_desc_t *esp_app_get_description(void);
+uint32_t esp_cpu_intr_get_enabled_mask(void);
+void esp_cpu_intr_disable(uint32_t mask);
+void esp_cpu_intr_enable(uint32_t mask);
 typedef enum
 {
     WIFI_BAND_MODE_2G_ONLY = 1,
@@ -89,16 +97,19 @@ esp_netif_t *esp_netif_create_default_wifi_sta(void);
 esp_netif_t *esp_netif_create_default_wifi_ap(void);
 void esp_netif_destroy_default_wifi(esp_netif_t *p_netif);
 esp_err_t esp_wifi_init(const wifi_init_config_t *p_config);
+esp_err_t esp_wifi_get_mac(int interface, uint8_t p_mac[6]);
 esp_err_t esp_wifi_stop(void);
 esp_err_t esp_wifi_set_storage(int storage);
 esp_err_t esp_wifi_set_mode(int mode);
 esp_err_t esp_wifi_set_config(int interface, wifi_config_t *p_config);
 esp_err_t esp_wifi_start(void);
 esp_err_t esp_wifi_set_band_mode(wifi_band_mode_t mode);
+esp_err_t esp_wifi_set_ps(int mode);
 esp_err_t esp_wifi_connect(void);
 esp_err_t esp_wifi_sta_get_ap_info(wifi_ap_record_t *p_record);
 esp_err_t esp_netif_get_ip_info(esp_netif_t *p_netif, esp_netif_ip_info_t *p_info);
 int64_t esp_timer_get_time(void);
+void esp_restart(void);
 bool usb_serial_jtag_is_driver_installed(void);
 esp_err_t usb_serial_jtag_wait_tx_done(uint32_t ticks);
 void usb_serial_jtag_vfs_use_nonblocking(void);

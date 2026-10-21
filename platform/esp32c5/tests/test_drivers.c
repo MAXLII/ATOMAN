@@ -12,6 +12,7 @@
 #include "fake_sdk.h"
 #include "bsp_wifi.h"
 #include "bsp_usart.h"
+#include "bsp_system.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +27,26 @@ static uint32_t destroyed;      /**< Number of retired netif resources. */
 static uint32_t connections;    /**< Association requests, including retries. */
 static int64_t now_us;          /**< Deterministic monotonic clock. */
 static bool associated;         /**< Fake association state. */
+static bool reset_called;       /**< SDK reset invocation observed by the host. */
+static uint32_t interrupt_mask = 0xA5u;
+static esp_app_desc_t descriptor;
+uint8_t _data_start[64], _bss_end[1];
+uint32_t esp_cpu_intr_get_enabled_mask(void)
+{
+    return interrupt_mask;
+}
+void esp_cpu_intr_disable(uint32_t mask)
+{
+    interrupt_mask &= ~mask;
+}
+void esp_cpu_intr_enable(uint32_t mask)
+{
+    interrupt_mask |= mask;
+}
+const esp_app_desc_t *esp_app_get_description(void)
+{
+    return &descriptor;
+}
 static bool installed   = true; /**< Simulate a preinstalled SDK console driver. */
 static int write_result = 3;    /**< Force a partial USB acceptance. */
 static wifi_band_mode_t band;   /**< Last selected radio band. */
@@ -111,9 +132,14 @@ bool usb_serial_jtag_is_driver_installed(void)
 {
     return installed;
 }
+esp_err_t esp_wifi_set_ps(int mode)
+{
+    assert(mode == WIFI_PS_NONE);
+    return ESP_OK;
+}
 esp_err_t usb_serial_jtag_wait_tx_done(uint32_t ticks)
 {
-    assert(ticks == 20u);
+    assert(ticks == 0u);
     return ESP_ERR_TIMEOUT;
 }
 void usb_serial_jtag_vfs_use_nonblocking(void)
@@ -142,13 +168,55 @@ int usb_serial_jtag_write_bytes(const void *p_buffer, size_t length, uint32_t ti
 {
     assert(p_buffer != NULL);
     assert(length <= BSP_USART_TRANSFER_MAX);
-    assert(ticks == 20u);
+    assert(ticks == 0u);
     return write_result;
+}
+
+/** @brief Supply the station identity through the SDK boundary. */
+esp_err_t esp_wifi_get_mac(int interface, uint8_t p_mac[6])
+{
+    assert(interface == WIFI_IF_STA);
+    memset(p_mac, 0x12, 6u);
+    return ESP_OK;
+}
+
+/** Record the SDK reset request without terminating the host test. */
+void esp_restart(void)
+{
+    reset_called = true;
 }
 
 /** @return 0 after all real-driver failure paths pass. */
 int main(void)
 {
+    now_us = INT64_C(4294967395);
+    assert(    bsp_system_time_us_get() == 99u
+            && bsp_system_tick_100us_get() == 42949673u);
+    now_us = INT64_C(429496729699);
+    assert(bsp_system_tick_100us_get() == 0u);
+    ++now_us;
+    assert(bsp_system_tick_100us_get() == 1u);
+    now_us = 0;
+    bsp_system_reset();
+    assert(reset_called);
+    uint32_t saved = bsp_system_critical_enter();
+    assert(    saved == 0xA5u
+            && interrupt_mask == 0u);
+    uint32_t nested = bsp_system_critical_enter();
+    bsp_system_critical_exit(nested);
+    assert(interrupt_mask == 0u);
+    bsp_system_critical_exit(saved);
+    assert(interrupt_mask == 0xA5u);
+    memset(descriptor.app_elf_sha256, 0x5A, 32u);
+    uint8_t hash[32];
+    bsp_system_firmware_identity(hash);
+    assert(memcmp(hash, descriptor.app_elf_sha256, 32u) == 0);
+    assert(bsp_system_sample_address(0u, 4u) == NULL);
+    puts("PASS board clock unit conversion and 32-bit rollover; reset SDK binding");
+    uint8_t mac[6] = {0};
+    assert(bsp_wifi_mac_get(NULL) == ESP_ERR_INVALID_ARG);
+    assert(    bsp_wifi_mac_get(mac) == ESP_OK
+            && mac[5] == 0x12u);
     bsp_wifi_config_t config = {.mode = BSP_WIFI_STA, .ssid = "test", .password = "12345678", .channel = 0u};
     bsp_wifi_config_t invalid  = {0}; /* Independent malformed input. */
     bsp_wifi_status_t snapshot = {0}; /* Owner-visible state after each transition. */
