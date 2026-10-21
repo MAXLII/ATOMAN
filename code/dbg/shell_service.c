@@ -293,12 +293,16 @@ static void shell_data_report_act(void)
             section_shell_t *p_shell    = (section_shell_t *)shell_report_ctx.p_item->p_obj;
 
             /* Convert the current shell entry into one compact report frame. */
-            shell_report_list_t shell_report_list;
+            shell_report_list_t shell_report_list = {0};
             shell_report_list.name_len = (uint8_t)p_shell->p_name_size;
             shell_report_list.type     = (uint8_t)p_shell->type;
-            shell_report_list.data     = *(uint32_t *)p_shell->p_var;
-            shell_report_list.data_max = *(uint32_t *)p_shell->p_max;
-            shell_report_list.data_min = *(uint32_t *)p_shell->p_min;
+            /* Commands are directory entries with no backing value or limits. */
+            if (p_shell->type != (uint32_t)SHELL_CMD)
+            {
+                shell_report_list.data     = *(uint32_t *)p_shell->p_var;
+                shell_report_list.data_max = *(uint32_t *)p_shell->p_max;
+                shell_report_list.data_min = *(uint32_t *)p_shell->p_min;
+            }
             memcpy(shell_report_list.name, p_shell->p_name, p_shell->p_name_size);
             shell_report_list.auto_report = (p_shell->status & (1u << 2)) ? 1u : 0u;
 
