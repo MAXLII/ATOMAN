@@ -1,8 +1,8 @@
 # 实时示波器真机演示
 
-2026-10-22 当前重构版本已改为 SECTION 任务和 demo 中断注册，并完成 COM7 编译烧录、写入校验及公共串口/TCP 通信检查；ELF SHA256 为 `26b7dde4e0fe43c320e0e17e72da0fa1f3d105c53952d0534e8f4909c8e8aa6c`。当前 ESP32 demo 未另配控制中断，采样源未接入时查询为 0 Hz、拒绝开始。下述波形和吞吐记录属于旧版固件，不能作为当前版本的采样验证。当前实机检查记录位于 `platform/esp32c5/build/section-scope-flash-smoke/result.json`。
+2026-10-22 当前版本采用 SECTION 中断注册，已接入板级 31250 Hz 采样源，demo 波形为 50 Hz、周期 20 ms。下方旧版验证记录保留为历史资料；当前原生链路验证见 FRAME 的 `build/scope-debug-native-final/result.json`。
 
-演示平台：ESP32-C5。波形由下位机任务写入真实 RAM，经中断采样和独立 Wi-Fi 链路上传；上位机选择“设备”。
+演示平台：ESP32-C5。波形在下位机采样中断中写入真实 RAM，随即采样并经独立 Wi-Fi 链路上传；上位机选择“设备”。
 
 ## 启动
 
@@ -14,17 +14,17 @@
 
 | 通道 | 参数 | 下位机生成值 | 建议每格 |
 | --- | --- | --- | --- |
-| CH1 | `g_scope_demo.wave.sine` | 10 Hz 正弦，-2～2 | 1 |
-| CH2 | `g_scope_demo.wave.cosine` | 10 Hz 余弦，-1～1 | 1 |
-| CH3 | `g_scope_demo.wave.triangle` | 10 Hz 三角波，-1～1 | 1 |
-| CH4 | `g_scope_demo.wave.square` | 10 Hz 方波，0/1，约 50% 占空比 | 0.5 |
+| CH1 | `g_scope_demo.wave.sine` | 50 Hz 正弦，-2～2 | 1 |
+| CH2 | `g_scope_demo.wave.cosine` | 50 Hz 余弦，-1～1 | 1 |
+| CH3 | `g_scope_demo.wave.triangle` | 50 Hz 三角波，-1～1 | 1 |
+| CH4 | `g_scope_demo.wave.square` | 50 Hz 方波，0/1，约 50% 占空比 | 0.5 |
 
-`g_scope_demo.updates` 为任务更新计数，也可选作通道。展开到普通成员后可右键“指定通道”。
+`g_scope_demo.sample_count` 每次采样中断递增 1，可用于核对相邻数据点连续性；`g_scope_demo.updates` 为中断中的波形更新计数。展开到普通成员后可右键“指定通道”。
 
 ## 体验操作
 
 - 窗口滚轮缩放时间；在侧边通道表 `/div` 单元格输入或滚轮调整量程。
-- 500 ms 窗口显示约五个周期，采用滚动模式。
+- 500 ms 窗口显示 25 个周期，采用滚动模式；60 ms 窗口显示 3 个周期。
 - 将显示时长设为 50 ms，选择普通触发、CH4、上升沿，拖动右侧 T 到电平 0.5，可观察方波边沿；单次用于捕获后停采。
 - 打开 X/Y 游标观察周期和幅值，使用冻结查看缓存。
 - 触发源和边沿直接在主页选择。右侧 T 三角游标累计顺时针旋转 90°，尖端向左、竖边贴右边框，T 字保持正向；运行及滚动时保留，拖动时显示电平横线，松开隐藏横线。顶部三角拖动设置触发位置，不再显示电平和百分比输入框。
@@ -32,13 +32,21 @@
 
 ## 实现与边界
 
-代码位于 `code/business/demo/demo_realtime_scope.c`，通过 `REG_TASK_MS(1, ...)` 注册。相位按平台经过时间计算，避免任务延迟累计改变目标频率；波形约每毫秒更新一次，因此高速采样可以看到阶梯及任务调度抖动。这是固件演示变量，并非外部 ADC 信号或精密信号发生器。
+代码位于 `code/business/demo/demo_realtime_scope.c`：`REG_INTERRUPT(254, ...)` 按实际采样源频率推进相位并查询只读波形表，`REG_INTERRUPT(255, sample_interrupt)` 随即采样。中断内没有浮点波形计算；31250 Hz 时每周期 625 点，不再受主任务调度间隔影响。这是固件演示变量，并非外部 ADC 信号或精密信号发生器。硬件 ISR 会有调度延迟，采样率和周期连续性由 CPU 时间戳及递增计数联合检查。
 
 模块不依赖 ESP32 SDK、不控制功率输出、不改示波器核心或协议。`DEMO_REALTIME_SCOPE_ENABLE` 默认关闭，仅在 ESP32 验证工程中加入源文件并显式置 1，其他平台可按需启用。每个 32 位成员独立更新，不承诺跨成员原子快照。
 
-下面记录对应的旧版固件固定 31.25 kHz，按 8 个 32 位通道验证；32 槽位仍保留，超出带宽预算则拒绝启动。上位机始终应使用实际烧录对应的 ELF，默认路径为 `platform/esp32c5/build/esp32c5_demo.elf`，MAP 可留空。当前该路径对应 0 Hz 的 SECTION 重构版本；重新编译或烧录后需要重新选择参数并同步。
+32 槽位仍保留，超出带宽预算则拒绝启动。上位机始终使用实际烧录对应的 ELF，默认路径为 `platform/esp32c5/build/esp32c5_demo.elf`，MAP 可留空。重新编译或烧录后需要“参数同步”更新地址。
 
-## 已烧录版本验证记录（31.25 kHz）
+## 当前 SECTION 版本验证记录（31.25 kHz / 50 Hz 波形）
+
+2026-10-22 当前固件 ELF SHA256：`78F520DFB4723F08DA3CBE42B4CAE5CC73771D675D3EBEEB9778518DCD52215B`。
+
+- 8 通道真实 GUI 连续 120.185 s、3754345 组数据；计数跳变、EA 缺口、重复、校验错误及设备溢出均为 0；结果和截图位于 FRAME 的 `build/scope-debug-gui-render/`。
+- 同一固件的原生解码链路连续 60 s、1874978 组数据，平均采样率约 31249.992 Hz；波形每周期 625 点，即 50 Hz。结果位于 `build/scope-debug-native-final/result.json`。
+- 调试日志分别记录设备队列/停止原因与接收缺口/校验统计。标称 32 μs 存在 ISR 调度抖动，详细边界见设计文档 15.4。
+
+## 历史已烧录版本验证记录（31.25 kHz）
 
 2026-10-22 已烧录并校验，ELF SHA256：`47E8E39AE37D9C78D1EC6AA64B1678D4F3E5E09EC6719FAECA18BBF626300822`。
 
