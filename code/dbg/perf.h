@@ -128,6 +128,7 @@ void section_perf_interrupt_end(section_perf_record_t *p_record, uint32_t start_
     {                                                                                                  \
         if ((section_perf_record_##name.p_cnt != NULL) && (*section_perf_record_##name.p_cnt != NULL)) \
         {                                                                                              \
+            PLATFORM_PERF_COUNTER_REFRESH();                                                          \
             section_perf_record_##name.start = **section_perf_record_##name.p_cnt;                     \
         }                                                                                              \
     } while (0)
@@ -138,6 +139,7 @@ void section_perf_interrupt_end(section_perf_record_t *p_record, uint32_t start_
         if ((section_perf_record_##name.p_cnt != NULL) && (*section_perf_record_##name.p_cnt != NULL))  \
         {                                                                                               \
             uint32_t perf_delta = 0u;                                                                   \
+            PLATFORM_PERF_COUNTER_REFRESH();                                                           \
             section_perf_record_##name.end = **section_perf_record_##name.p_cnt;                        \
             perf_delta = (uint32_t)(section_perf_record_##name.end - section_perf_record_##name.start); \
             section_perf_record_##name.time = perf_delta;                                               \

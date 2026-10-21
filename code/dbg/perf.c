@@ -138,6 +138,7 @@ static void perf_run(void)
 
 uint32_t perf_base_cnt_get(void)
 {
+    PLATFORM_PERF_COUNTER_REFRESH();
     return perf_core_base_cnt_get();
 }
 uint8_t perf_base_is_ready(void)
@@ -206,10 +207,12 @@ void perf_reset_peak_value(void)
 }
 uint32_t section_perf_task_begin(section_perf_record_t *p_record)
 {
+    PLATFORM_PERF_COUNTER_REFRESH();
     return perf_core_task_begin(p_record);
 }
 void section_perf_task_end(section_perf_record_t *p_record, uint32_t start_cnt)
 {
+    PLATFORM_PERF_COUNTER_REFRESH();
     perf_core_task_end(p_record, start_cnt);
 }
 void section_perf_task_period_set(section_perf_record_t *p_record, uint32_t period_us)
@@ -218,10 +221,12 @@ void section_perf_task_period_set(section_perf_record_t *p_record, uint32_t peri
 }
 uint32_t section_perf_interrupt_begin(section_perf_record_t *p_record)
 {
+    PLATFORM_PERF_COUNTER_REFRESH();
     return perf_core_interrupt_begin(p_record);
 }
 void section_perf_interrupt_end(section_perf_record_t *p_record, uint32_t start_cnt)
 {
+    PLATFORM_PERF_COUNTER_REFRESH();
     perf_core_interrupt_end(p_record, start_cnt);
 }
 

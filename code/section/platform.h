@@ -55,7 +55,7 @@
 #if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + defined(PLATFORM_GD32G553C) \
      + defined(PLATFORM_GD32E507) + defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558)                         \
      + defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + defined(PLATFORM_TMS320F28P55)                    \
-     + defined(PLATFORM_TMS320F280049C) + defined(PLATFORM_STM32F103C8T6)) != 1
+     + defined(PLATFORM_TMS320F280049C) + defined(PLATFORM_STM32F103C8T6) + defined(PLATFORM_ESP32C5)) != 1
 #error "Define exactly one PLATFORM_* identity macro."
 #endif
 
@@ -92,8 +92,12 @@
 #endif
 
 #if defined(TOOLCHAIN_GCC)
+#ifndef likely
 #define likely(condition)   __builtin_expect(!!(condition), 1)
+#endif
+#ifndef unlikely
 #define unlikely(condition) __builtin_expect(!!(condition), 0)
+#endif
 #define DBG_NOINLINE        __attribute__((noinline))
 #define DBG_FLOAT_DIAGNOSTIC_BEGIN                                                          \
     _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wdouble-promotion\"") \
@@ -125,8 +129,26 @@
 /* - SECTION_PORT_FAULT_HOOK: Cortex-M scheduler fault action */
 /* -------------------------------------------------------------------------- */
 
+/* MCU: ESP32-C5, cooperative SECTION on the ESP-IDF main task. */
+#if defined(PLATFORM_ESP32C5)
+#include "esp32c5_platform.h"
+#define SECTION_SYS_TICK platform_tick_100us_get()
+#define SECTION_SYS_TICK_UNIT_US 100u
+#define PLATFORM_PERF_COUNT_UNIT_US 1.0f
+#define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 100u
+#define PLATFORM_PERF_COUNTER_REFRESH() platform_perf_counter_refresh()
+extern uint32_t __section_start;
+extern uint32_t __section_end;
+#define SECTION_START __section_start
+#define SECTION_STOP __section_end
+#define SYSTEM_RESET platform_system_reset()
+#define FUNC_RAM
+#define __LDREXB(p_address) __atomic_load_n((p_address), __ATOMIC_RELAXED)
+#define __STREXB(value, p_address) ((void)(value), (__atomic_test_and_set((p_address), __ATOMIC_ACQUIRE) ? 1u : 0u))
+#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+
 /* Host testbench */
-#if defined(PLATFORM_TESTBENCH)
+#elif defined(PLATFORM_TESTBENCH)
 #if defined(SECTION_TESTBENCH_DYNAMIC_TICK)
 extern uint32_t section_testbench_time_100us;
 #define SECTION_SYS_TICK         section_testbench_time_100us
