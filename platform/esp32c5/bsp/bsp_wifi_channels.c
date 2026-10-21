@@ -13,6 +13,7 @@
  */
 #include "bsp_wifi.h"
 #include "bsp_wifi_socket.h"
+#include "bsp_system.h"
 #include <errno.h>
 #include <stddef.h>
 
@@ -26,6 +27,8 @@ typedef struct bsp_wifi_channel
     uint8_t tx[BSP_WIFI_SOCKET_TRANSFER_MAX];
 } bsp_wifi_channel_t;
 static bsp_wifi_channel_t channels[2] = {{.listener = -1, .peer = -1}, {.listener = -1, .peer = -1}};
+volatile bsp_wifi_debug_t g_bsp_wifi_debug[2]; /**< Task-owned timing and socket counters. */
+static uint32_t last_poll_us[2]; /**< Previous endpoint poll timestamps, wrapping in microseconds. */
 
 static bool temporary_error(void)
 {
@@ -96,7 +99,18 @@ int32_t bsp_wifi_channel_write(uint8_t channel, const uint8_t *p_data, uint32_t 
         errno = ENOTCONN;
         return -1;
     }
-    int32_t sent = bsp_wifi_tcp_write(channels[channel].peer, p_data, length);
+    uint32_t start    = bsp_system_time_us_get(); /**< SDK entry timestamp. */
+    int32_t sent      = bsp_wifi_tcp_write(channels[channel].peer, p_data, length);
+    uint32_t duration = bsp_system_time_us_get() - start; /**< Socket call elapsed microseconds. */
+
+    if (duration > g_bsp_wifi_debug[channel].max_write_us)
+        g_bsp_wifi_debug[channel].max_write_us = duration;
+
+    if (sent > 0)
+        g_bsp_wifi_debug[channel].tx_bytes += (uint32_t)sent;
+    else if (    sent < 0
+              && temporary_error())
+        ++g_bsp_wifi_debug[channel].backpressure;
 
     if (    sent == 0
          || (    sent < 0
@@ -110,6 +124,13 @@ int32_t bsp_wifi_channel_write(uint8_t channel, const uint8_t *p_data, uint32_t 
 static void poll_channel(uint8_t channel, const bsp_wifi_status_t *p_radio)
 {
     bsp_wifi_channel_t *p_channel = &channels[channel];
+    uint32_t now                  = bsp_system_time_us_get();    /**< Main-loop endpoint entry time. */
+    uint32_t elapsed              = now - last_poll_us[channel]; /**< Gap across task execution and SDK scheduling. */
+
+    if (    p_channel->status.connected
+         && elapsed > g_bsp_wifi_debug[channel].max_poll_gap_us)
+        g_bsp_wifi_debug[channel].max_poll_gap_us = elapsed;
+    last_poll_us[channel] = now;
 
     if (p_channel->port == 0u)
         return;
@@ -138,6 +159,7 @@ static void poll_channel(uint8_t channel, const bsp_wifi_status_t *p_radio)
 
         if (p_channel->peer >= 0)
         {
+            g_bsp_wifi_debug[channel] = (bsp_wifi_debug_t){0};
             ++p_channel->status.session;
             p_channel->status.connected = true;
             p_channel->status.error     = 0u;

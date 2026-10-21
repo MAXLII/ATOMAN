@@ -97,6 +97,19 @@ int32_t bsp_wifi_tcp_accept(int32_t listener)
     if (client >= 0)
     {
         client = make_nonblocking(client);
+
+        if (client >= 0)
+        {
+            int no_delay = 1; /* Do not hold periodic uploads behind a small unacknowledged tail. */
+
+            if (setsockopt(client, IPPROTO_TCP, TCP_NODELAY, &no_delay, sizeof(no_delay)) < 0)
+            {
+                int error = errno; /* Preserve setup failure across descriptor cleanup. */
+                (void)close(client);
+                errno = error;
+                return -1;
+            }
+        }
     }
     return client;
 }

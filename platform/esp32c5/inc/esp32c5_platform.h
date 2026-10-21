@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file esp32c5_platform.h
- * @brief Task-owned SECTION time, reset and transport bindings.
- * @details Part of base. The IDF main task exclusively runs the baremetal SECTION runtime.
+ * @brief SECTION time, reset and interrupt bindings.
+ * @details Part of base. The IDF main task runs SECTION tasks; the board timer dispatches interrupts.
  * @author Max.Li
  * @date 2026-10-21
  * @version 1.0.0

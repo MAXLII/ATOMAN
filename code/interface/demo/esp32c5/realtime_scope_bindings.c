@@ -5,7 +5,7 @@
  * @details Part of base. Entity: callback bindings, no sampler or transport state.
  *          Prior: BSP and SECTION initialization precede control commands.
  *          Time: initialization/task context only; sampling belongs to REG_INTERRUPT.
- *          The control application supplies its actual rate through source_set().
+ *          The binding supplies the initialized board timer rate through source_set().
  * @author Max.Li
  * @date 2026-10-22
  * @version 1.0.0
@@ -13,10 +13,17 @@
  */
 #include "realtime_scope_service.h"
 #include "bsp_system.h"
+#include "bsp_timer.h"
 #include "bsp_wifi.h"
+#include "esp_attr.h"
 #include <stddef.h>
 
 static uint32_t saved_interrupts;
+#if defined(CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY)
+EXT_RAM_BSS_ATTR static uint8_t sample_queue[4194304]; /**< About 3.6 s at 8 x 32-bit channels, tolerating bounded Wi-Fi retransmission stalls. */
+#else
+static uint8_t sample_queue[65536]; /**< Fallback resource budget for boards without external RAM. */
+#endif
 static void lock(void)
 {
     saved_interrupts = bsp_system_critical_enter();
@@ -64,7 +71,12 @@ static void bind_service(void)
                                            .p_resolve        = bsp_system_sample_address};
 
     if (bsp_wifi_channel_configure(BSP_WIFI_CHANNEL_UPLOAD, 9001u, realtime_scope_service_read))
-        bound = realtime_scope_service_bind(&binding);
+    {
+        bound = realtime_scope_service_bind(&binding, sample_queue, sizeof(sample_queue));
+
+        if (bound)
+            (void)realtime_scope_service_source_set(bsp_timer_frequency_get());
+    }
 }
-REG_INIT(0, bind_service)
+REG_INIT(2, bind_service)
 REG_TASK(1, bind_service)

@@ -11,6 +11,7 @@
  *          Licensed under the MIT License; see LICENSE in the repository root.
  */
 #include "bsp_wifi.h"
+#include "esp_heap_caps.h"
 #include "wifi_config.h"
 #include "comm.h"
 #include "shell.h"
@@ -62,6 +63,12 @@ static void wifi(DEC_MY_PRINTF)
                              (long)status.rssi_dbm,
                              (long)status.error,
                              (long)wifi_control_error);
+        my_printf->my_printf("wifi internal_heap=%lu poll_us=%lu write_us=%lu tx_bytes=%lu blocked=%lu\r\n",
+                             (unsigned long)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+                             (unsigned long)g_bsp_wifi_debug[BSP_WIFI_CHANNEL_UPLOAD].max_poll_gap_us,
+                             (unsigned long)g_bsp_wifi_debug[BSP_WIFI_CHANNEL_UPLOAD].max_write_us,
+                             (unsigned long)g_bsp_wifi_debug[BSP_WIFI_CHANNEL_UPLOAD].tx_bytes,
+                             (unsigned long)g_bsp_wifi_debug[BSP_WIFI_CHANNEL_UPLOAD].backpressure);
     }
 }
 

@@ -25,6 +25,14 @@ typedef struct bsp_wifi_channel_status
     uint32_t session;
     uint32_t error;
 } bsp_wifi_channel_status_t;
+typedef struct
+{
+    uint32_t max_poll_gap_us; /**< Longest interval between cooperative endpoint polls. */
+    uint32_t max_write_us;    /**< Longest SDK socket write call. */
+    uint32_t tx_bytes;        /**< Bytes accepted by the socket in this session. */
+    uint32_t backpressure;    /**< Writes postponed by temporary socket backpressure. */
+} bsp_wifi_debug_t;
+extern volatile bsp_wifi_debug_t g_bsp_wifi_debug[2]; /**< Endpoint diagnostics for ELF observation. */
 /** Configure a TCP endpoint once, from task/init context. A non-NULL packet source
  *  makes it upload-only; BSP copies packets and retains partial-send tails. */
 bool bsp_wifi_channel_configure(uint8_t channel, uint16_t port, bsp_wifi_packet_read_t p_read);

@@ -13,7 +13,7 @@
 #ifndef BSP_WIFI_SOCKET_H
 #define BSP_WIFI_SOCKET_H
 #include <stdint.h>
-#define BSP_WIFI_SOCKET_TRANSFER_MAX 2048u /**< Maximum buffer accepted per call. */
+#define BSP_WIFI_SOCKET_TRANSFER_MAX 8192u /**< Bound SDK calls while amortizing TCP/IP task handoffs. */
 typedef struct bsp_wifi_peer
 {
     uint32_t ipv4_be; /**< IPv4 address in network byte order. */
@@ -23,13 +23,13 @@ typedef struct bsp_wifi_peer
 int32_t bsp_wifi_tcp_listen(uint16_t port);
 /** @param listener Listening descriptor. @return Nonblocking client, or -1 with errno. */
 int32_t bsp_wifi_tcp_accept(int32_t listener);
-/** @param socket Client descriptor. @param p_data Destination. @param capacity 1..2048.
+/** @param socket Client descriptor. @param p_data Destination. @param capacity 1..8192.
  * @return Received bytes, 0 for orderly EOF, or -1 with errno (including EAGAIN).
  */
 int32_t bsp_wifi_tcp_read(int32_t socket, uint8_t *p_data, uint32_t capacity);
 /** @param socket Client descriptor. @return 1 if data waits, 0 on EOF, -1 with errno when empty/error. */
 int32_t bsp_wifi_tcp_probe(int32_t socket);
-/** @param socket Client descriptor. @param p_data Source. @param length 1..2048.
+/** @param socket Client descriptor. @param p_data Source. @param length 1..8192.
  * @return Bytes accepted (possibly partial), or -1 with errno. Caller retries unsent tail.
  */
 int32_t bsp_wifi_tcp_write(int32_t socket, const uint8_t *p_data, uint32_t length);

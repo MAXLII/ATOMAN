@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file app_main.c
- * @brief Start the base demo over USB and optional Wi-Fi, with no other board peripherals.
+ * @brief Start the base demo over USB, optional Wi-Fi and the board periodic interrupt.
  * @details Part of base. SDK starts the runtime; application work is registered
  *          with SECTION and socket I/O remains nonblocking.
  * @author Max.Li

@@ -2,7 +2,7 @@
 /**
  * @file platform_bindings.c
  * @brief SECTION and Perf bindings for the ESP32-C5 demo.
- * @details Part of base. All framework activity stays on the IDF main task.
+ * @details Part of base. Tasks stay on the IDF main task; the board timer dispatches SECTION interrupts.
  *          Perf measures elapsed callback time including SDK scheduling delays.
  * @author Max.Li
  * @date 2026-10-21
@@ -12,10 +12,17 @@
  */
 #include "esp32c5_platform.h"
 #include "bsp_system.h"
+#include "bsp_timer.h"
 #include "perf.h"
 #include "section.h"
 
 static volatile uint32_t perf_counter_us; /**< Task-owned 1 MHz shadow, wraps after about 71 min. */
+
+static void control_interrupt_init(void)
+{
+    bsp_timer_init(section_interrupt); /* Dispatch the board ISR through the registered interrupt chain. */
+}
+REG_INIT(1, control_interrupt_init)
 
 uint32_t platform_tick_100us_get(void)
 {
