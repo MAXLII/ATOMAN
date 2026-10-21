@@ -9,7 +9,7 @@ ATOMAN 是面向数字电源的嵌入式公共工程，本地通常称为 `base`
 | 一级目录 | 有些什么 |
 |---|---|
 | `code/` | 应用与业务、功率控制、公共算法、通信数据源、数据池、硬件接口、注册调度和调试服务；另保留少量历史参考实现 |
-| `platform/` | APM32、GD32、HC32、TI C2000、Zynq 工程，以及 MATLAB 分析、PLECS 仿真和 GCC Testbench |
+| `platform/` | APM32、ESP32-C5、GD32、HC32、TI C2000、Zynq 工程，以及 MATLAB 分析、PLECS 仿真和 GCC Testbench |
 | `verilog/` | IIR、UART DMA、OLED DMA 等 FPGA IP 及配套仿真 |
 | `tests/` | 独立主机测试、黄金数据和硬件验证资源，部分内容仅在本地维护 |
 | `docs/` | 设计、接入、构建、测试、教材和辅助文档 |
@@ -30,6 +30,7 @@ ATOMAN 是面向数字电源的嵌入式公共工程，本地通常称为 `base`
 | 调试与观测 | 参数、波形、频响、性能、运行轨迹和故障现场 | [调试系统](docs/design/debug/debug_system_design.md) |
 | 存储与升级 | Flash 分区与访问、Bootloader、IAP、镜像校验和恢复 | [FAL](docs/design/storage/fal_design.md) · [Bootloader](docs/design/bootloader/bootloader_design.md) |
 | 接口与平台 | 项目接口、BSP、平台入口及构建适配 | [工程设计](docs/engineering_design.md) · [MCU 移植](docs/application/porting/mcu_platform_porting.md) · [Zynq](docs/design/platform/zynq7020/zynq7020_platform.md) |
+| ESP32-C5 通信 demo | Type-C USB 虚拟串口、Wi-Fi STA/AP、TCP/UDP 和双 FRAME 验证 | [ESP32-C5 接入与验证](docs/design/platform/esp32c5/esp32c5_platform.md) |
 | 分析与验证 | MATLAB、PLECS、主机测试和 FPGA 仿真 | [应用文档](docs/application/APPLICATION_INDEX.md) |
 | FPGA IP | 可复用逻辑模块、接口和验证资源 | [FPGA 设计入口](docs/design/DESIGN_INDEX.md#fpga-ip) |
 
