@@ -13,13 +13,22 @@
 #include "realtime_scope.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 static realtime_scope_t scope;
+static uint8_t storage[65538];
 int main(int argc, char **p_argv)
 {
     uint32_t first = UINT32_C(0x1234EBEA);
     int16_t last   = -123;
     realtime_scope_frame_t frame;
-    realtime_scope_init(&scope);
+    uint32_t queue_bytes = argc == 3 ? (uint32_t)strtoul(p_argv[2], NULL, 10) : 65536u;
+    assert(queue_bytes <= sizeof(storage) - 2u);
+    assert(!realtime_scope_init(NULL, storage, queue_bytes));
+    assert(!realtime_scope_init(&scope, NULL, queue_bytes));
+    assert(!realtime_scope_init(&scope, storage, REALTIME_SCOPE_FRAME_MAX - 1u));
+    storage[0]                = 0xA5u;
+    storage[queue_bytes + 1u] = 0x5Au;
+    assert(realtime_scope_init(&scope, &storage[1], queue_bytes));
     realtime_scope_bank_t *p_a = scope.p_active, *p_b = scope.p_config;
     assert(!realtime_scope_set(&scope, 0u, &first, RS_U32));
     assert(!realtime_scope_set(&scope, 33u, &first, RS_U32));
@@ -67,13 +76,15 @@ int main(int argc, char **p_argv)
         }
     }
 
-    const uint32_t capacity = REALTIME_SCOPE_QUEUE_BYTES / 11u;
+    const uint32_t capacity = queue_bytes / 11u;
 
     for (uint32_t i = 0u; i <= capacity; ++i)
         realtime_scope_sample(&scope);
     assert(    !scope.running
             && scope.overflows == 1u
             && scope.count == capacity);
+    assert(    storage[0] == 0xA5u
+            && storage[queue_bytes + 1u] == 0x5Au);
     assert(!realtime_scope_swap(&scope));
 
     while (realtime_scope_pop(&scope, &frame))

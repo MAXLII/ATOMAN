@@ -13,6 +13,7 @@
 #include "bsp_comm.h"
 #include "bsp_usart.h"
 #include "bsp_wifi.h"
+#include "bsp_system.h"
 #include "comm_discovery.h"
 #include <assert.h>
 #include <errno.h>
@@ -39,6 +40,11 @@ static int32_t udp_write_error;       /**< Injected UDP send error. */
 static int32_t upload_peer = -1, upload_probe = -1;
 static uint32_t packet_pulls;
 static bool packet_pending, packet_invalid;
+uint32_t bsp_system_time_us_get(void)
+{
+    static uint32_t clock_us; /**< Deterministic elapsed time for transport diagnostics. */
+    return ++clock_us;
+}
 static uint32_t packet_read(uint8_t *p_data, uint32_t capacity)
 {
     ++packet_pulls;

@@ -20,6 +20,7 @@ extern reg_task_t reg_task_manage;
 extern reg_interrupt_t reg_interrupt_sample_interrupt;
 static uint32_t observed = 123u, locks, sent, generation = 1u;
 static bool connected = true;
+static uint8_t sample_queue[8192];
 static section_packform_t reply;
 static uint8_t reply_data[REALTIME_SCOPE_CONTROL_BYTES];
 static void enter(void)
@@ -115,7 +116,7 @@ int main(void)
     enqueue(1u, NULL, 0u);
     assert(    sent == 1u
             && reply_data[3] == 7u);
-    assert(!realtime_scope_service_bind(NULL));
+    assert(!realtime_scope_service_bind(NULL, sample_queue, sizeof(sample_queue)));
     const realtime_scope_port_t binding = {.byte_budget      = 1000000u,
                                            .p_lock           = enter,
                                            .p_unlock         = leave,
@@ -124,11 +125,18 @@ int main(void)
                                            .p_data_session   = session,
                                            .p_identity       = identity,
                                            .p_resolve        = resolve};
-    assert(realtime_scope_service_bind(&binding));
-    assert(!realtime_scope_service_bind(&binding));
+    assert(!realtime_scope_service_bind(&binding, NULL, sizeof(sample_queue)));
+    assert(realtime_scope_service_bind(&binding, sample_queue, sizeof(sample_queue)));
+    assert(!realtime_scope_service_bind(&binding, sample_queue, sizeof(sample_queue)));
     assert(    request(1u, NULL, 0u) == 0u
             && read_le(&reply_data[6]) == 0u);
     assert(request(6u, NULL, 0u) == 5u);
+    const uint8_t zero_rate_channel[] = {1u, RS_U32, 16u, 0u, 0u, 0u};
+    assert(request(4u, zero_rate_channel, sizeof(zero_rate_channel)) == 0u);
+    assert(    reply.len == 8u
+            && read_le(&reply_data[4]) == 0u);
+    assert(    request(3u, NULL, 0u) == 0u
+            && read_le(&reply_data[4]) == 0u);
     assert(realtime_scope_service_source_set(30000u));
     assert(    request(1u, NULL, 0u) == 0u
             && reply.len == 50u
@@ -138,7 +146,11 @@ int main(void)
     assert(request(4u, channel, 5u) == 1u);
     assert(request(5u, NULL, 0u) == 3u);
     assert(request(4u, channel, sizeof(channel)) == 0u);
+    assert(    reply.len == 8u
+            && read_le(&reply_data[4]) == 30000u);
     assert(request(5u, NULL, 0u) == 0u);
+    assert(    reply.len == 10u
+            && read_le(&reply_data[6]) == 30000u);
     assert(request(6u, NULL, 0u) == 0u);
     assert(!realtime_scope_service_source_set(100u));
     assert(request(3u, NULL, 0u) == 0u);
@@ -150,6 +162,11 @@ int main(void)
     uint8_t packet[18];
     assert(realtime_scope_service_read(packet, 8u) == 0u);
     assert(realtime_scope_service_read(packet, sizeof(packet)) == 9u);
+    assert(realtime_scope_service_source_frequency_get() == 30000u);
+    assert(    request(7u, NULL, 0u) == 0u
+            && reply.len == 34u);
+    assert(    read_le(&reply_data[26]) == 1u
+            && read_le(&reply_data[30]) == 1u);
     assert(    packet[0] == 0xEAu
             && packet[1] == 0u
             && packet[2] == 123u
