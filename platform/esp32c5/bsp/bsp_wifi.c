@@ -27,6 +27,15 @@ static bool initialized;         /**< Driver resources have been acquired. */
 static bsp_wifi_status_t status; /**< Only the owner task writes this snapshot. */
 static int64_t last_connect_us;  /**< Last association request in monotonic microseconds. */
 
+int32_t bsp_wifi_mac_get(uint8_t p_mac[6])
+{
+    if (p_mac == NULL)
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+    return esp_wifi_get_mac(WIFI_IF_STA, p_mac);
+}
+
 /** @param p_text Fixed-size character buffer. @param capacity Buffer capacity.
  * @return First NUL offset, or capacity when unterminated.
  */
@@ -205,6 +214,10 @@ int32_t bsp_wifi_start(const bsp_wifi_config_t *p_config)
     {
         result = esp_wifi_set_band_mode(band); /* ESP-IDF requires a started interface. */
     }
+
+    if (    result == ESP_OK
+         && p_config->mode == BSP_WIFI_STA)
+        result = esp_wifi_set_ps(WIFI_PS_NONE); /* Continuous uploads must not wait for power-save windows. */
 
     if (    (result == ESP_OK) /* Do not associate after a setup failure. */
          && (p_config->mode == BSP_WIFI_STA)) /* AP accepts peers instead of connecting. */

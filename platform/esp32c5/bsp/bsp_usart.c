@@ -17,7 +17,6 @@
 #include <time.h>
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
-#include "freertos/FreeRTOS.h"
 
 static bool initialized; /**< Initialization is serialized by the owner task. */
 
@@ -36,7 +35,7 @@ int32_t bsp_usart_init(void)
 
     if (usb_serial_jtag_is_driver_installed() == true)
     {
-        result = usb_serial_jtag_wait_tx_done(pdMS_TO_TICKS(20u));
+        result = usb_serial_jtag_wait_tx_done(0u);
 
         if (    (result != ESP_OK)           /* Propagate actual driver failure. */
              && (result != ESP_ERR_TIMEOUT)) /* A disconnected PC may leave boot output pending. */
@@ -82,7 +81,7 @@ int32_t bsp_usart_write(const uint8_t *p_data, uint32_t length)
     {
         return -1;
     }
-    return usb_serial_jtag_write_bytes(p_data, length, pdMS_TO_TICKS(20u));
+    return usb_serial_jtag_write_bytes(p_data, length, 0u);
 }
 
 uint8_t bsp_usart_dbg_rx_get_byte(uint8_t *p_data)

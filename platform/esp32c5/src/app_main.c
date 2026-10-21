@@ -2,8 +2,8 @@
 /**
  * @file app_main.c
  * @brief Start the base demo over USB and optional Wi-Fi, with no other board peripherals.
- * @details Part of base. IDF initializes clocks/FreeRTOS; this single owner task
- *          runs SECTION cooperatively and yields at least 1 tick per iteration.
+ * @details Part of base. SDK starts the runtime; application work is registered
+ *          with SECTION and socket I/O remains nonblocking.
  * @author Max.Li
  * @date 2026-10-21
  * @version 1.0.0
@@ -11,13 +11,14 @@
  *          Licensed under the MIT License; see LICENSE in the repository root.
  */
 #include "esp32c5_platform.h"
+#include "comm_discovery.h"
 #include "bsp_usart.h"
 #include "bsp_wifi.h"
 #include "wifi_config.h"
 #include "section.h"
 #include "esp_err.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "esp_app_desc.h"
+#include <sys/select.h>
 
 void app_main(void)
 {
@@ -34,12 +35,13 @@ void app_main(void)
     {
         ESP_ERROR_CHECK(bsp_wifi_start(&config)); /* Start asynchronous STA association. */
     }
+    comm_discovery_init(esp_app_get_description()->version);
     section_init(); /* Use the current base initialization/demo registrations. */
 
     for (;;)
     {
-        esp32c5_link_poll(); /* Move queued bytes and maintain TCP/UDP sessions. */
-        run_task();          /* Dispatch demo tasks and registered Link parsers serially. */
-        vTaskDelay(1u);      /* Allow SDK Wi-Fi, idle and watchdog tasks to run. */
+        run_task(); /* SECTION owns services, transports and Link dispatch. */
+        struct timeval idle = {.tv_sec = 0, .tv_usec = 1000};
+        (void)select(0, NULL, NULL, NULL, &idle); /* SDK wait, with no busy sub-tick delay. */
     }
 }

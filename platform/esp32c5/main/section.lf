@@ -11,3 +11,4 @@ archive: libmain.a
 entries:
     * (base_registry);
         base_registry -> flash_rodata KEEP() ALIGN(4) SURROUND(_section)
+    realtime_scope (noflash)

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 /**
- * @file platform_demo.c
+ * @file wifi_demo.c
  * @brief Demo-only Wi-Fi control/status and the FRAME binary loopback command.
- * @details Part of base. Application policy stays outside BSP. Commands and
+ * @details Part of base. Demo Interface adapts Shell/COMM commands to BSP. Commands and
  *          transport callbacks execute on the same SECTION/main task.
  * @author Max.Li
  * @date 2026-10-21

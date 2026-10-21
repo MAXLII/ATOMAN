@@ -14,6 +14,26 @@
 #ifndef BSP_WIFI_H
 #define BSP_WIFI_H
 #include <stdint.h>
+#include <stdbool.h>
+
+#define BSP_WIFI_CHANNEL_CONTROL 0u
+#define BSP_WIFI_CHANNEL_UPLOAD  1u
+typedef uint32_t (*bsp_wifi_packet_read_t)(uint8_t *p_data, uint32_t capacity);
+typedef struct bsp_wifi_channel_status
+{
+    bool connected;
+    uint32_t session;
+    uint32_t error;
+} bsp_wifi_channel_status_t;
+/** Configure a TCP endpoint once, from task/init context. A non-NULL packet source
+ *  makes it upload-only; BSP copies packets and retains partial-send tails. */
+bool bsp_wifi_channel_configure(uint8_t channel, uint16_t port, bsp_wifi_packet_read_t p_read);
+/** Bounded, nonblocking progress for both TCP endpoints. One SECTION task owns calls. */
+void bsp_wifi_channel_poll(void);
+void bsp_wifi_channel_reset(uint8_t channel);
+void bsp_wifi_channel_status_get(uint8_t channel, bsp_wifi_channel_status_t *p_status);
+int32_t bsp_wifi_channel_read(uint8_t channel, uint8_t *p_data, uint32_t capacity);
+int32_t bsp_wifi_channel_write(uint8_t channel, const uint8_t *p_data, uint32_t length);
 
 typedef enum
 {
@@ -41,6 +61,8 @@ typedef struct bsp_wifi_status
 
 /** @return ESP_OK or ESP-IDF error. Call before other Wi-Fi functions. */
 int32_t bsp_wifi_init(void);
+/** @param p_mac Destination for six station MAC bytes. @return ESP_OK or SDK error. */
+int32_t bsp_wifi_mac_get(uint8_t p_mac[6]);
 /** @param p_config Runtime credentials/mode, copied by SDK before return.
  * @return ESP_OK after starting association/AP, or ESP-IDF error.
  * @details Validates before stopping an existing connection. Startup/calibration

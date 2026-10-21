@@ -18,8 +18,6 @@ uint32_t platform_tick_100us_get(void);
 void platform_perf_counter_refresh(void);
 /** @brief Reset through ESP-IDF. */
 void platform_system_reset(void);
-/** @brief Drain bounded TX queues and service TCP session ownership in the main task. */
-void esp32c5_link_poll(void);
 /** @brief ESP-IDF firmware entry, called on the SDK main task. */
 void app_main(void);
 #endif /* ESP32C5_PLATFORM_H */
