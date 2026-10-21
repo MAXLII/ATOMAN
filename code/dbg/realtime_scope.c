@@ -22,11 +22,19 @@ uint8_t realtime_scope_type_size(realtime_scope_type_e type)
     return ((unsigned)type < sizeof(sizes)) ? sizes[(unsigned)type] : 0u;
 }
 
-void realtime_scope_init(realtime_scope_t *p_scope)
+bool realtime_scope_init(realtime_scope_t *p_scope, uint8_t *p_queue, uint32_t capacity)
 {
+    if (    p_scope == NULL
+         || p_queue == NULL
+         || capacity < REALTIME_SCOPE_FRAME_MAX
+         || capacity > UINT32_MAX / 2u)
+        return false;
     memset(p_scope, 0, sizeof(*p_scope));
-    p_scope->p_active = &p_scope->banks[0];
-    p_scope->p_config = &p_scope->banks[1];
+    p_scope->p_queue        = p_queue;
+    p_scope->queue_capacity = capacity;
+    p_scope->p_active       = &p_scope->banks[0];
+    p_scope->p_config       = &p_scope->banks[1];
+    return true;
 }
 
 void realtime_scope_clear(realtime_scope_t *p_scope)
@@ -90,10 +98,12 @@ bool realtime_scope_start(realtime_scope_t *p_scope)
          || (p_scope->count != 0u)
          || (p_scope->p_active->enabled == 0u))
         return false;
-    p_scope->index     = 0u;
-    p_scope->samples   = 0u;
-    p_scope->overflows = 0u;
-    p_scope->running   = true;
+    p_scope->index            = 0u;
+    p_scope->samples          = 0u;
+    p_scope->overflows        = 0u;
+    p_scope->queue_high_water = 0u;
+    p_scope->dequeued         = 0u;
+    p_scope->running          = true;
     return true;
 }
 
@@ -109,7 +119,7 @@ void realtime_scope_sample(realtime_scope_t *p_scope)
 
     uint32_t frame_size = (uint32_t)p_scope->p_active->payload_size + 5u;
 
-    if (p_scope->count >= REALTIME_SCOPE_QUEUE_BYTES / frame_size)
+    if (p_scope->count >= p_scope->queue_capacity / frame_size)
     {
         ++p_scope->overflows;
         p_scope->running = false;
@@ -135,14 +145,17 @@ void realtime_scope_sample(realtime_scope_t *p_scope)
         sum = (uint8_t)(sum + p_frame->data[i]);
     p_frame->data[pos++] = sum;
     p_frame->size        = pos;
-    uint32_t tail = (p_scope->head + p_scope->count * frame_size) % REALTIME_SCOPE_QUEUE_BYTES;
-    uint32_t first = REALTIME_SCOPE_QUEUE_BYTES - tail;
+    uint32_t tail = (p_scope->head + p_scope->count * frame_size) % p_scope->queue_capacity;
+    uint32_t first = p_scope->queue_capacity - tail;
 
     if (first > frame_size)
         first = frame_size;
-    memcpy(&p_scope->queue[tail], p_frame->data, first);
-    memcpy(p_scope->queue, &p_frame->data[first], frame_size - first);
+    memcpy(&p_scope->p_queue[tail], p_frame->data, first);
+    memcpy(p_scope->p_queue, &p_frame->data[first], frame_size - first);
     ++p_scope->count;
+
+    if (p_scope->count > p_scope->queue_high_water)
+        p_scope->queue_high_water = p_scope->count;
     ++p_scope->samples;
 }
 
@@ -151,14 +164,15 @@ bool realtime_scope_pop(realtime_scope_t *p_scope, realtime_scope_frame_t *p_fra
     if (p_scope->count == 0u)
         return false;
     uint32_t frame_size = (uint32_t)p_scope->p_active->payload_size + 5u;
-    uint32_t first      = REALTIME_SCOPE_QUEUE_BYTES - p_scope->head;
+    uint32_t first      = p_scope->queue_capacity - p_scope->head;
 
     if (first > frame_size)
         first = frame_size;
-    memcpy(p_frame->data, &p_scope->queue[p_scope->head], first);
-    memcpy(&p_frame->data[first], p_scope->queue, frame_size - first);
+    memcpy(p_frame->data, &p_scope->p_queue[p_scope->head], first);
+    memcpy(&p_frame->data[first], p_scope->p_queue, frame_size - first);
     p_frame->size = (uint16_t)frame_size;
-    p_scope->head = (p_scope->head + frame_size) % REALTIME_SCOPE_QUEUE_BYTES;
+    p_scope->head = (p_scope->head + frame_size) % p_scope->queue_capacity;
     --p_scope->count;
+    ++p_scope->dequeued;
     return true;
 }

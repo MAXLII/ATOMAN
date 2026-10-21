@@ -46,10 +46,12 @@ typedef struct realtime_scope_port
 } realtime_scope_port_t;
 
 /** Bind once from initialization/task context. The service owns its sampler and request queue. */
-bool realtime_scope_service_bind(const realtime_scope_port_t *p_port);
+bool realtime_scope_service_bind(const realtime_scope_port_t *p_port, uint8_t *p_queue, uint32_t capacity);
 /** Existing control-loop initialization supplies its actual rate, never a host command.
  *  Zero means no sampling source. May only change while acquisition is stopped. */
 bool realtime_scope_service_source_set(uint32_t frequency);
+/** @return Declared sampling-source frequency in Hz; 0 until bound by the application. */
+uint32_t realtime_scope_service_source_frequency_get(void);
 /** ISR entry. The application/demo owns REG_INTERRUPT registration and its priority. */
 void realtime_scope_service_sample(void);
 /** Task-context transport callback: copy complete EA frames, never split a frame.

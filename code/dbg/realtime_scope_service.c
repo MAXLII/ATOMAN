@@ -77,15 +77,27 @@ static void control_request(void *p_pack, DEC_MY_PRINTF)
     memcpy(request.data, p_request->p_data, p_request->len);
     request.packet.p_data = NULL;
 
-    if (    p_sampler == NULL
-         || request_count == REALTIME_SCOPE_REQUEST_DEPTH)
+    bool queued = false;
+
+    if (p_sampler != NULL)
+    {
+        port.p_lock();
+
+        if (request_count < REALTIME_SCOPE_REQUEST_DEPTH)
+        {
+            requests[(request_head + request_count) % REALTIME_SCOPE_REQUEST_DEPTH] = request;
+            ++request_count;
+            queued = true;
+        }
+        port.p_unlock();
+    }
+
+    if (!queued)
     {
         finish(&request, 7u, NULL, 0u);
         send_reply(&request);
         return;
     }
-    requests[(request_head + request_count) % REALTIME_SCOPE_REQUEST_DEPTH] = request;
-    ++request_count;
 }
 static void process(realtime_scope_control_t *p_control);
 static void stop_acquisition(void)
@@ -107,15 +119,22 @@ static void manage(void)
         stop_acquisition();
     active_session = session;
 
-    for (    uint32_t i = 0u; i < REALTIME_SCOPE_REQUEST_DEPTH
-                           && request_count != 0u;
-             ++i)
+    for (uint32_t i = 0u; i < REALTIME_SCOPE_REQUEST_DEPTH; ++i)
     {
-        realtime_scope_control_t *p_request = &requests[request_head];
-        process(p_request);
-        send_reply(p_request);
+        realtime_scope_control_t request;
+        port.p_lock();
+
+        if (request_count == 0u)
+        {
+            port.p_unlock();
+            break;
+        }
+        request = requests[request_head];
         request_head = (request_head + 1u) % REALTIME_SCOPE_REQUEST_DEPTH;
         --request_count;
+        port.p_unlock();
+        process(&request);
+        send_reply(&request);
     }
 }
 void realtime_scope_service_sample(void)
@@ -126,7 +145,7 @@ void realtime_scope_service_sample(void)
 REG_COMM(REALTIME_SCOPE_CMD_SET, REALTIME_SCOPE_CMD_WORD, control_request)
 REG_TASK(1, manage)
 
-bool realtime_scope_service_bind(const realtime_scope_port_t *p_port)
+bool realtime_scope_service_bind(const realtime_scope_port_t *p_port, uint8_t *p_queue, uint32_t capacity)
 {
     if (    p_sampler != NULL
          || p_port == NULL
@@ -139,8 +158,10 @@ bool realtime_scope_service_bind(const realtime_scope_port_t *p_port)
          || p_port->p_identity == NULL
          || p_port->p_resolve == NULL)
         return false;
-    port = *p_port;
-    realtime_scope_init(&sampler);
+
+    if (!realtime_scope_init(&sampler, p_queue, capacity))
+        return false;
+    port           = *p_port;
     p_sampler      = &sampler;
     active_session = port.p_data_session();
     return true;
@@ -153,6 +174,10 @@ bool realtime_scope_service_source_set(uint32_t frequency)
     sample_frequency = frequency;
     return true;
 }
+uint32_t realtime_scope_service_source_frequency_get(void)
+{
+    return sample_frequency;
+}
 uint32_t realtime_scope_service_read(uint8_t *p_data, uint32_t capacity)
 {
     if (    p_sampler == NULL
@@ -160,13 +185,19 @@ uint32_t realtime_scope_service_read(uint8_t *p_data, uint32_t capacity)
          || !port.p_data_connected()
          || port.p_data_session() != active_session)
         return 0u;
-    uint32_t frame_size = (uint32_t)p_sampler->p_active->payload_size + 5u;
-    uint32_t size       = 0u;
+    uint32_t size = 0u;
     realtime_scope_frame_t frame;
 
-    while (capacity - size >= frame_size)
+    while (capacity - size >= 6u)
     {
         port.p_lock();
+        uint32_t frame_size = (uint32_t)p_sampler->p_active->payload_size + 5u;
+
+        if (capacity - size < frame_size)
+        {
+            port.p_unlock();
+            break;
+        }
         bool available = realtime_scope_pop(p_sampler, &frame);
         port.p_unlock();
 
@@ -213,6 +244,8 @@ static void process(realtime_scope_control_t *p_control)
         break;
     case 3u:
         realtime_scope_clear(p_sampler);
+        write_le(result, sample_frequency, 4u);
+        size = 4u;
         break;
     case 4u:
 
@@ -236,6 +269,12 @@ static void process(realtime_scope_control_t *p_control)
                  || !realtime_scope_set(p_sampler, p_data[0], p_address, type))
                 status = 2u;
         }
+
+        if (status == 0u)
+        {
+            write_le(result, sample_frequency, 4u);
+            size = 4u;
+        }
         break;
     case 5u:
         port.p_lock();
@@ -245,7 +284,8 @@ static void process(realtime_scope_control_t *p_control)
         else
         {
             write_le(result, p_sampler->p_active->payload_size, 2u);
-            size = 2u;
+            write_le(&result[2], sample_frequency, 4u);
+            size = 6u;
         }
         port.p_unlock();
         break;
@@ -298,8 +338,10 @@ static void process(realtime_scope_control_t *p_control)
         write_le(&result[13], 0u, 4u); /* Legacy timer-fault slot; this service owns no timer. */
         result[17] = port.p_data_connected() ? 1u : 0u;
         write_le(&result[18], port.p_link_fault != NULL ? port.p_link_fault() : 0u, 4u);
+        write_le(&result[22], p_sampler->queue_high_water, 4u);
+        write_le(&result[26], p_sampler->dequeued, 4u);
         port.p_unlock();
-        size = 22u;
+        size = 30u;
         break;
     default:
         status = 6u;

@@ -17,9 +17,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define REALTIME_SCOPE_CHANNELS    32u
-#define REALTIME_SCOPE_FRAME_MAX   261u
-#define REALTIME_SCOPE_QUEUE_BYTES 65536u
+#define REALTIME_SCOPE_CHANNELS  32u
+#define REALTIME_SCOPE_FRAME_MAX 261u
 
 /* Wire types: signed/unsigned 8,16,32,64; IEEE754 float32/float64; bool. */
 typedef enum
@@ -59,15 +58,19 @@ typedef struct
     realtime_scope_bank_t banks[2];
     realtime_scope_bank_t *p_active;
     realtime_scope_bank_t *p_config;
-    uint8_t queue[REALTIME_SCOPE_QUEUE_BYTES];
+    uint8_t *p_queue;
+    uint32_t queue_capacity;
     realtime_scope_frame_t sample_frame;
     uint32_t head, count, samples, overflows;
+    uint32_t queue_high_water; /**< Maximum queued frames in the current acquisition. */
+    uint32_t dequeued;         /**< Frames copied out for transport in the current acquisition. */
     uint8_t index;
     bool running;
 } realtime_scope_t;
 
 uint8_t realtime_scope_type_size(realtime_scope_type_e type);
-void realtime_scope_init(realtime_scope_t *p_scope);
+/** Caller supplies storage for at least one maximum-size frame; lifetime matches the sampler. */
+bool realtime_scope_init(realtime_scope_t *p_scope, uint8_t *p_queue, uint32_t capacity);
 void realtime_scope_clear(realtime_scope_t *p_scope);
 bool realtime_scope_set(realtime_scope_t *p_scope,
                         uint8_t channel,
