@@ -9,7 +9,7 @@ ATOMAN 是面向数字电源的嵌入式公共工程，本地通常称为 `base`
 | 一级目录 | 有些什么 |
 |---|---|
 | `code/` | 应用与业务、功率控制、公共算法、通信数据源、数据池、硬件接口、注册调度和调试服务；另保留少量历史参考实现 |
-| `platform/` | APM32、ESP32-C5、GD32、HC32、TI C2000、Zynq 工程，以及 MATLAB 分析、PLECS 仿真和 GCC Testbench |
+| `platform/` | APM32、ESP32-C5、GD32、HC32、STM32、TI C2000、Zynq 工程，以及 MATLAB 分析、PLECS 仿真和 GCC Testbench |
 | `verilog/` | IIR、UART DMA、OLED DMA 等 FPGA IP 及配套仿真 |
 | `tests/` | 独立主机测试、黄金数据和硬件验证资源，部分内容仅在本地维护 |
 | `docs/` | 设计、接入、构建、测试、教材和辅助文档 |
@@ -26,8 +26,8 @@ ATOMAN 是面向数字电源的嵌入式公共工程，本地通常称为 `base`
 | 公共算法 | PI/PR、SOGI/DSOGI、SVPWM、滤波、RMS、查表、检测和时序组件 | [控制算法](docs/application/library/control_blocks_usage.md) · [信号处理](docs/application/library/signal_processing_usage.md) · [检测与时序](docs/application/library/detection_sequence_usage.md) |
 | 通信与数据 | 多链路、多协议分发，FRAME 通信，以及项目数据交换 | [Link / link_process](docs/design/framework/section/link_design.md) · [FRAME](docs/design/communication/frame_design.md) · [数据池与模块边界](docs/engineering_design.md) |
 | 仿真 TCP 通信 | MATLAB / PLECS 仿真模块间的 TCP 通信与路由，以及连接 FRAME 上位机进行参数读写和在线调试 | [TCP 组件与接入](docs/SIM_COMM_USAGE.md) · [MATLAB 双节点 S-Function](docs/MATLAB_FRAME_ROUTE_BRIDGE_USAGE.md) · [PLECS 与 FRAME 联调](docs/application/communication/plecs_frame_bridge.md) |
-| 注册与调度 | 初始化、周期任务、中断、状态机和静态模块注册 | [Section 组织架构](docs/design/framework/section/section_design.md) |
-| 调试与观测 | 参数、波形、频响、性能、运行轨迹和故障现场 | [调试系统](docs/design/debug/debug_system_design.md) |
+| 注册与调度 | 初始化、周期任务、中断、状态机、静态模块注册及 SRTOS 任务运行时 | [Section 组织架构](docs/design/framework/section/section_design.md) · [SRTOS 使用](docs/application/framework/srtos/srtos_usage.md) |
+| 调试与观测 | 参数、波形、实时示波器、频响、性能、运行轨迹和故障现场 | [调试系统](docs/design/debug/debug_system_design.md) · [实时示波器](docs/design/debug/realtime_scope_design.md) |
 | 存储与升级 | Flash 分区与访问、Bootloader、IAP、镜像校验和恢复 | [FAL](docs/design/storage/fal_design.md) · [Bootloader](docs/design/bootloader/bootloader_design.md) |
 | 接口与平台 | 项目接口、BSP、平台入口及构建适配 | [工程设计](docs/engineering_design.md) · [MCU 移植](docs/application/porting/mcu_platform_porting.md) · [Zynq](docs/design/platform/zynq7020/zynq7020_platform.md) |
 | ESP32-C5 通信 demo | Type-C USB 虚拟串口、Wi-Fi STA/AP、TCP/UDP 和双 FRAME 验证 | [ESP32-C5 接入与验证](docs/design/platform/esp32c5/esp32c5_platform.md) |
@@ -53,11 +53,11 @@ platform\plecs\npc\compile.bat
 platform\gd32e507\compile.bat
 ```
 
-`check.bat` 提供仓库与文档检查入口，`clean.bat` 用于清理生成物。主机构建、仿真与真实硬件验证分别记录，不能相互替代。
+`check.bat` 提供仓库差异检查入口，`clean.bat` 用于清理生成物。主机构建、仿真与真实硬件验证分别记录，不能相互替代。
 
 ## 与 FRAME 配合
 
-[FRAME](https://github.com/MAXLII/FRAME) 是配套 Windows 上位机，负责设备连接、参数读写、波形显示与在线调试。ATOMAN 提供设备侧协议、调试服务和平台接口；同一套协议可用于 MCU 与 PLECS 联调。
+[FRAME](https://github.com/MAXLII/FRAME) 是配套 Windows 上位机，负责设备连接、参数读写、波形显示、实时示波器与在线调试。ATOMAN 提供设备侧协议、调试服务和平台接口；同一套协议可用于 MCU 与 PLECS 联调。
 
 ## 文档导航
 
@@ -68,7 +68,7 @@ platform\gd32e507\compile.bat
 - [教材](docs/tutorial/TUTORIAL_INDEX.md)：控制原理、参数分析与学习资料。
 - [其他资料](docs/other/OTHER_INDEX.md)：厂商资料及辅助说明。
 
-FPGA IP 的文档位于对应 `verilog/模块/doc/`。新增控制拓扑也可使用仓库内的 [控制拓扑技能](.agents/skills/base-ctrl-topology/SKILL.md)，统一代码组织格式。
+FPGA IP 的文档位于对应 `verilog/模块/doc/`。新增控制拓扑的组织方式见 [CTRL 组织架构](docs/design/control/ctrl_design.md)。
 
 ## 技术合作
 
