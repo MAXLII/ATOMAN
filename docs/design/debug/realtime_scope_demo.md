@@ -56,7 +56,7 @@
 3. 选择 `platform/gd32e507/build_realtime/gd32e507_demo.elf`，展开 `g_scope_demo.wave` 添加成员。采样率应答为 `10000 Hz`（100 μs），50 Hz 波形每周期 200 点。
 4. 可将窗口设为 60 ms 观察约三个周期，点击“运行”。固件更新后重新“参数同步”。
 
-当前 GD32 已恢复基于统一 FIFO SRTOS M 的示波器固件，ELF SHA256 为 `869E5586C46EF3B73278C297A90C6256CCD206CE61C3690862D9742C93196385`，RAM 105864 B/128 KiB。保留固定全局 1 ms 窗口、双 2500 B 缓存和 1 ms 新数据聚合。8 通道/10000 Hz 原生实板连续 60 s/600023 组数据及实际 WPF 页面约 30.188 s/301402 组数据均通过，无缺包、计数跳变、设备溢出或异常停止；WPF 参数调节、15 次时基切换、完整历史保留和三轮重连等行为也通过。采样队列峰值 777 B，原生连接 TCP 环峰值 1517 B、最大批次间隔 2 ms，最终现场保存/释放失败及任务故障均为 0。记录见设计 15.14、FRAME `build/scope-gd32-fifo-native/` 和 `build/scope-gd32-fifo-gui/`。测试结束停止采集并释放连接，板上保留本次示波器固件。前后公平性短测见[测试记录](../../application/framework/srtos/srtos_fairness_test.md)。
+当前 GD32 已烧录基于统一 FIFO SRTOS M 的采样优化固件，ELF SHA256 为 `62A6BF25B99A072B80BBA84680B6C720F7A2EB9B0207EEB88C50BDEE8AE9995D`，RAM 105616 B/128 KiB。保留固定全局 1 ms 窗口、双 2500 B 缓存和 1 ms 新数据聚合。8 通道采样 Perf 平均耗时从 5.99 μs 降至 2.68 μs，减少约 55%；线协议、双链表和变量读取顺序不变。8 通道/10000 Hz 原生实板连续 60 s/599921 组及实际 WPF 页面约 30.027 s/299883 组均通过，无缺包、计数跳变、设备溢出或异常停止；参数调节、15 次时基切换、完整历史保留和三轮重连也通过。记录见设计 15.15、FRAME `build/scope-gd32-sampling-opt-native/` 和 `build/scope-gd32-sampling-opt-gui/`。测试结束停止采集并释放连接，板上保留本次固件，更新后使用当前 ELF 并重新参数同步。前后公平性短测见[测试记录](../../application/framework/srtos/srtos_fairness_test.md)。
 
 此前仅确认 SRTOS 启用或把时间片缩短到 100 μs 均未解决溢出，记录保留于设计 15.11、FRAME `build/scope-gd32-srtos-2500/` 和 `build/scope-gd32-srtos-fast-2500/`；额外时间片覆盖已撤销。
 
