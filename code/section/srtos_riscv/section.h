@@ -1,0 +1,538 @@
+// SPDX-License-Identifier: MIT
+/**
+ * @file section.h
+ * @brief RISC-V section SRTOS public interface.
+ * @details
+ *          This file is part of the digital power framework project.
+ *
+ *          Module responsibilities:
+ *          - Define the shared descriptors stored in the linker-managed section table
+ *          - Provide REG_INIT, REG_TASK, REG_INTERRUPT, REG_FSM, and link registration macros
+ *          - Expose RISC-V shared-stack scheduling and exception-switch APIs
+ *          - Read unified Perf switches and bind optional instrumentation hook points
+ *
+ *          Design notes:
+ *          - C11 compatible
+ *          - No dynamic memory allocation
+ *          - ISR-safe path should be explicitly documented
+ *          - Hardware access should be abstracted through HAL / BSP
+ *
+ * @author Max.Li
+ * @date 2026-07-17
+ * @version 1.0.0
+ *
+ * Copyright (c) 2026 Max.Li.
+ * All rights reserved.
+ *
+ * This file is licensed under the MIT License.
+ * See the LICENSE file in the project root for full license text.
+ */
+
+#ifndef __SECTION_H__
+#define __SECTION_H__
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "platform.h"
+
+/* Maximum bytes consumed from one Link during one section_link_task round. */
+#ifndef SECTION_LINK_RX_BYTE_BUDGET
+#define SECTION_LINK_RX_BYTE_BUDGET 128u
+#endif
+
+#if (SECTION_LINK_RX_BYTE_BUDGET == 0u)
+#error "SECTION_LINK_RX_BYTE_BUDGET must be greater than zero."
+#endif
+
+typedef struct section_item
+{
+    void *p_obj; /* Business object owned by the registration module. */
+    struct section_item *p_next; /* Next wrapper in one runtime registration list. */
+} section_item_t;
+
+#define SECTION_RUNTIME_PREEMPTIVE 1u
+
+#ifndef SECTION_RISCV_INITIAL_CAUSE
+#define SECTION_RISCV_INITIAL_CAUSE 0u /* Standard RV32 has no CLIC alias bits. */
+#endif
+
+typedef enum
+{
+    SECTION_RUNTIME_BAREMETAL = 0, /* Cooperative bare-metal task scheduler. */
+    SECTION_RUNTIME_SRTOS_M,       /* Cortex-M preemptive shared-stack scheduler. */
+    SECTION_RUNTIME_SRTOS_A9,
+    SECTION_RUNTIME_SRTOS_RISCV, /* RISC-V preemptive shared-stack scheduler. */
+} section_runtime_kind_t;
+
+typedef struct
+{
+    void (*my_printf)(const char *__format, ...); /* Formatted-output callback owned by the link. */
+    void (*tx_by_dma)(char *ptr, int len);        /* DMA transmit callback owned by the link. */
+} section_link_tx_func_t;
+
+#define DEC_MY_PRINTF section_link_tx_func_t *my_printf
+
+typedef enum
+{
+    SECTION_INIT = 0,   /* Initialization-function registration entry. */
+    SECTION_TASK,       /* Periodic-task registration entry. */
+    SECTION_INTERRUPT,  /* Interrupt-dispatch registration entry. */
+    SECTION_SHELL,      /* Shell command or variable registration entry. */
+    SECTION_LINK,       /* Communication-link registration entry. */
+    SECTION_PERF,       /* Performance-counter registration entry. */
+    SECTION_COMM,       /* Communication-command registration entry. */
+    SECTION_COMM_ROUTE, /* Communication-route registration entry. */
+    SECTION_SCOPE,      /* Scope-instance registration entry. */
+    SECTION_SFRA,       /* SFRA-instance registration entry. */
+    SECTION_DBG_LIST,   /* Debug-visible list-head registration entry. */
+} SECTION_E;
+
+typedef struct
+{
+    uint32_t section_type; /* Registration type represented by SECTION_E. */
+    void *p_str;           /* Address of the registered object. */
+} reg_section_t;
+
+#define REG_SECTION_INIT(_section_type, _item) {.section_type = (uint32_t)(_section_type), .p_str = (void *)&(_item)}
+
+#define REG_SECTION_FUNC(_section_type, _obj)                                                                  \
+    section_item_t section_item_##_obj = {                                                                     \
+        .p_obj  = (void *)&(_obj),                                                                             \
+        .p_next = NULL,                                                                                        \
+    };                                                                                                         \
+    SECTION_REG_ATTR_PREFIX const reg_section_t reg_section_##_obj SECTION_REG_ATTR_SUFFIX = REG_SECTION_INIT( \
+        _section_type,                                                                                         \
+        section_item_##_obj);
+
+typedef struct
+{
+    const char *p_name;
+    section_item_t *const *pp_head;
+} section_list_registration_t;
+
+#define REG_DBG_LIST(name, list_head)                         \
+    section_list_registration_t dbg_list_##name = {           \
+        .p_name = #name,                                      \
+        .pp_head = &(list_head),                              \
+    };                                                        \
+    REG_SECTION_FUNC(SECTION_DBG_LIST, dbg_list_##name)
+
+#include "perf.h"
+
+#if (PERF_TASK_ENABLE == 1u)
+#define SECTION_TASK_PERF_FIELD      section_perf_record_t *p_perf_record;
+#define SECTION_TASK_PERF_INIT(name) , .p_perf_record = TASK_RECORD_PERF(name)
+#else
+#define SECTION_TASK_PERF_FIELD
+#define SECTION_TASK_PERF_INIT(name)
+#endif
+
+#if (PERF_INTERRUPT_ENABLE == 1u)
+#define SECTION_INTERRUPT_PERF_FIELD      section_perf_record_t *p_perf_record;
+#define SECTION_INTERRUPT_PERF_INIT(name) , .p_perf_record = INTERRUPT_RECORD_PERF(name)
+#else
+#define SECTION_INTERRUPT_PERF_FIELD
+#define SECTION_INTERRUPT_PERF_INIT(name)
+#endif
+
+typedef struct
+{
+    uint32_t cfsr;
+    uint32_t hfsr;
+    uint32_t bfar;
+    uint32_t mmfar;
+    uint32_t exc_return;
+    uint32_t msp;
+    uint32_t psp;
+    uint32_t stacked_lr;
+    uint32_t stacked_pc;
+    uint32_t stacked_xpsr;
+    uint32_t task_sp;
+    uint32_t task_pc;
+    uint32_t task_xpsr;
+    uint32_t task_stack_base;
+    uint32_t task_stack_words;
+    uint32_t task_frame_valid;
+    uint32_t task_name;
+    uint32_t task_stack_free_words;
+    uint32_t task_context_pool_words;
+    uint32_t task_context_pool_used;
+    uint32_t task_context_pool_head;
+    uint32_t task_context_pool_tail;
+    uint32_t task_context_save_fail_count;
+    uint32_t task_context_release_fail_count;
+    uint32_t task_fault_reason;
+    uint32_t task_fault_policy;
+    uint32_t task_context_required_words;
+    uint32_t task_runtime_stack_used_words;
+} section_fault_debug_t;
+
+extern volatile section_fault_debug_t g_section_fault_debug;
+
+typedef struct
+{
+    uint32_t task_switch_count;             /* Number of completed task selections. */
+    uint32_t ready_task_pick_count;         /* Number of newly released tasks selected for execution. */
+    uint32_t unfinished_task_pick_count;    /* Number of suspended or step-continuation tasks selected. */
+    uint32_t context_save_count;            /* Number of shared runtime-stack snapshots created. */
+    uint32_t context_restore_count;         /* Number of suspended snapshots restored. */
+    uint32_t context_alloc_count;           /* Number of successful context-pool allocations. */
+    uint32_t context_release_count;         /* Number of successful FIFO context-pool releases. */
+    uint32_t context_pool_wrap_count;       /* Number of context-pool tail wraps. */
+    uint32_t context_pool_high_water_words; /* Maximum context-pool occupancy, including wrap gaps. */
+    uint32_t runtime_stack_min_free_words;  /* Minimum observed free shared-stack words. */
+    uint32_t runtime_stack_peak_used_words; /* Maximum observed shared-stack context size. */
+    uint32_t runtime_stack_peak_task_name;  /* Task-name address associated with the deepest context. */
+    uint32_t idle_wait_count;      /* Number of waits entered while no task was runnable. */
+    uint32_t invariant_fail_count; /* Number of internal scheduler invariant violations. */
+    uint32_t critical_max_cycles;  /* Longest scheduler IRQ-masked region, in CPU cycles. */
+    uint32_t critical_count;       /* Number of completed outer scheduler critical sections. */
+} section_scheduler_debug_t;
+
+extern volatile section_scheduler_debug_t g_section_scheduler_debug;
+
+typedef struct
+{
+    uint32_t probe_enter_count;
+    uint32_t probe_reentry_count;
+    uint32_t probe_invariant_fail_count;
+    uint32_t probe_max_depth;
+    uint32_t probe_last_tag;
+    uint32_t critical_enter_count;
+    uint32_t critical_exit_count;
+} section_critical_race_debug_t;
+
+extern volatile section_critical_race_debug_t g_section_critical_race_debug;
+
+#ifndef SECTION_TASK_RUNTIME_STACK_WORDS
+#define SECTION_TASK_RUNTIME_STACK_WORDS 1024u
+#endif
+
+#ifndef SECTION_TASK_CONTEXT_POOL_WORDS
+#define SECTION_TASK_CONTEXT_POOL_WORDS 512u
+#endif
+
+#ifndef SECTION_TASK_SLICE_TICKS
+#define SECTION_TASK_SLICE_TICKS 10u
+#endif
+
+#if (SECTION_TASK_SLICE_TICKS == 0u)
+#error "SECTION_TASK_SLICE_TICKS must be greater than zero."
+#endif
+
+#ifndef SECTION_CRITICAL_USE_PRIMASK
+#define SECTION_CRITICAL_USE_PRIMASK 0u
+#endif
+
+#ifndef SECTION_CRITICAL_RACE_PROBE_ENABLE
+#define SECTION_CRITICAL_RACE_PROBE_ENABLE 0u
+#endif
+
+#ifndef SECTION_CRITICAL_RACE_PROBE_SPIN
+#define SECTION_CRITICAL_RACE_PROBE_SPIN 64u
+#endif
+
+#ifndef SECTION_TASK_QUEUE_INTERNAL_CRITICAL
+#define SECTION_TASK_QUEUE_INTERNAL_CRITICAL 1u
+#endif
+
+#define SECTION_TASK_CONTEXT_POOL_FAULT        0u
+#define SECTION_TASK_CONTEXT_POOL_KEEP_RUNNING 1u
+
+#define SECTION_TASK_FAULT_NONE                     0u
+#define SECTION_TASK_FAULT_CONTEXT_POOL_FULL        1u
+#define SECTION_TASK_FAULT_PSP_OVERFLOW             2u
+#define SECTION_TASK_FAULT_CONTEXT_RESTORE_OVERFLOW 3u
+#define SECTION_TASK_FAULT_CONTEXT_RELEASE_ORDER    4u
+#define SECTION_TASK_FAULT_RUNTIME_STACK_TOO_SMALL  5u
+#define SECTION_TASK_FAULT_CONTEXT_POOL_CORRUPT     6u
+
+#ifndef SECTION_TASK_CONTEXT_POOL_FULL_POLICY
+#define SECTION_TASK_CONTEXT_POOL_FULL_POLICY SECTION_TASK_CONTEXT_POOL_FAULT
+#endif
+
+#define SECTION_TASK_RUNTIME_FIELDS   \
+    uint32_t *p_sp;                   \
+    uint32_t *p_stack;                \
+    uint32_t *p_snapshot;             \
+    uint32_t snapshot_words;          \
+    uint32_t snapshot_capacity_words; \
+    uint8_t state;
+
+#define SECTION_TASK_RUNTIME_INIT                                                                             \
+    , .p_sp = NULL, .p_stack = NULL, .p_snapshot = NULL, .snapshot_words = 0u, .snapshot_capacity_words = 0u, \
+        .state = 0u
+
+#ifndef PERF_START
+#define PERF_START(name)
+#endif
+
+#ifndef PERF_END
+#define PERF_END(name)
+#endif
+
+#ifndef P_RECORD_PERF
+#define P_RECORD_PERF(name) NULL
+#endif
+
+#ifndef REG_PERF_RECORD
+#define REG_PERF_RECORD(name)
+#endif
+
+#ifndef REG_TASK_PERF_RECORD
+#define REG_TASK_PERF_RECORD(name)
+#endif
+
+#ifndef REG_INTERRUPT_PERF_RECORD
+#define REG_INTERRUPT_PERF_RECORD(name)
+#endif
+
+typedef struct section_link_t section_link_t;
+
+typedef struct reg_init
+{
+    int8_t priority;
+    void (*p_func)(void);
+} reg_init_t;
+
+#define REG_INIT_RECORD(prio, func) {.priority = (int8_t)(prio), .p_func = (func)}
+
+#define REG_INIT(prio, func)                                  \
+    reg_init_t reg_init_##func = REG_INIT_RECORD(prio, func); \
+    REG_SECTION_FUNC(SECTION_INIT, reg_init_##func)
+
+void section_init(void);
+void section_runtime_reset(void);
+section_runtime_kind_t section_runtime_kind_get(void);
+const char *section_runtime_name_get(void);
+uint32_t section_runtime_preemptive_get(void);
+void section_port_init(void);
+void section_task_irq_exit_request(void);
+
+#if (PERF_ENABLE)
+uint32_t section_perf_task_begin(section_perf_record_t *record);
+void section_perf_task_end(section_perf_record_t *record, uint32_t start_cnt);
+void section_perf_task_period_set(section_perf_record_t *record, uint32_t period_us);
+uint32_t FUNC_RAM section_perf_interrupt_begin(section_perf_record_t *record);
+void FUNC_RAM section_perf_interrupt_end(section_perf_record_t *record, uint32_t start_cnt);
+#endif
+
+typedef enum
+{
+    SECTION_TASK_DONE    = 0,
+    SECTION_TASK_RUNNING = 1,
+} section_task_status_t;
+
+typedef section_task_status_t (*section_task_step_f)(void *ctx);
+
+typedef struct reg_task_t
+{
+    uint32_t t_period;
+    uint32_t time_last;
+    void (*p_func)(void);
+    section_task_step_f p_step_func;
+    void *p_ctx;
+    const char *p_name;
+    SECTION_TASK_PERF_FIELD
+    struct reg_task_t *p_ready_next;
+    uint8_t is_ready;
+    uint8_t is_running;
+    SECTION_TASK_RUNTIME_FIELDS
+} reg_task_t;
+
+#if (PERF_TASK_ENABLE == 1u)
+#define TASK_RECORD_PERF(name) P_RECORD_PERF(name)
+#else
+#define TASK_RECORD_PERF(name) NULL
+#undef REG_TASK_PERF_RECORD
+#define REG_TASK_PERF_RECORD(name)
+#endif
+
+#define REG_TASK_RECORD(period, func)         \
+    {                                         \
+        .t_period = (uint32_t)(period),       \
+        .time_last = 0u,                      \
+        .p_func = (func),                     \
+        .p_step_func = NULL,                  \
+        .p_ctx = NULL,                        \
+        .p_name = #func SECTION_TASK_PERF_INIT(func), \
+        .p_ready_next = NULL,                 \
+        .is_ready = 0u,                       \
+        .is_running = 0u SECTION_TASK_RUNTIME_INIT \
+    }
+
+#define REG_TASK_STEP_RECORD(period, func, ctx, perf_name) \
+    {                                                      \
+        .t_period = (uint32_t)(period),                    \
+        .time_last = 0u,                                   \
+        .p_func = NULL,                                    \
+        .p_step_func = (func),                             \
+        .p_ctx = (ctx),                                    \
+        .p_name = #perf_name SECTION_TASK_PERF_INIT(perf_name), \
+        .p_ready_next = NULL,                              \
+        .is_ready = 0u,                                    \
+        .is_running = 0u SECTION_TASK_RUNTIME_INIT           \
+    }
+
+#define REG_TASK(period, func)                                  \
+    REG_TASK_PERF_RECORD(func)                                  \
+    reg_task_t reg_task_##func = REG_TASK_RECORD(period, func); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STEP_CTX(period, func, ctx)                                    \
+    REG_TASK_PERF_RECORD(func)                                                  \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, func, ctx, func); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_STEP(period, func)                                                                       \
+    static section_task_status_t section_task_step_wrap_##func(void *ctx)                                 \
+    {                                                                                                     \
+        (void)ctx;                                                                                        \
+        return func();                                                                                    \
+    }                                                                                                     \
+    REG_TASK_PERF_RECORD(func)                                                                            \
+    reg_task_t reg_task_##func = REG_TASK_STEP_RECORD(period, section_task_step_wrap_##func, NULL, func); \
+    REG_SECTION_FUNC(SECTION_TASK, reg_task_##func)
+
+#define REG_TASK_MS(period, func) REG_TASK(((uint32_t)(period) * 10u), func)
+#define REG_TASK_STEP_MS(period, func) REG_TASK_STEP(((uint32_t)(period) * 10u), func)
+#define REG_TASK_STEP_CTX_MS(period, func, ctx) REG_TASK_STEP_CTX(((uint32_t)(period) * 10u), func, ctx)
+
+/** @param p_stack Caller-owned, 16-byte-aligned shared stack inside the host task stack.
+ * @param words Shared stack length; must equal SECTION_TASK_RUNTIME_STACK_WORDS. */
+void section_riscv_run(uint32_t *p_stack, uint32_t words);
+/** Prevent virtual task preemption across host SDK and libc calls; IRQs remain enabled. */
+void section_task_preempt_lock(void);
+/** Release one balanced external-call guard. */
+void section_task_preempt_unlock(void);
+/** @param p_frame 32-word integer interrupt frame.
+ * @param status M-mode status captured at outer interrupt entry.
+ * @param cause M-mode cause, including former interrupt priority. */
+void section_riscv_irq_request(uint32_t *p_frame, uint32_t status, uint32_t cause);
+void run_task(void);
+void section_task_tick(void);
+void section_task_start(void);
+void section_task_yield(void);
+void section_task_complete_current(void);
+void section_task_start_request(void);
+uint32_t section_task_scheduler_started(void);
+uint32_t section_task_switch_pending(void);
+uint32_t section_task_slice_elapsed(void);
+uint32_t *section_task_start_sp_get(void);
+uint32_t *section_task_switch_sp(uint32_t *sp);
+
+#define PRIORITY_NUM_MAX 16
+
+#if (PERF_INTERRUPT_ENABLE == 1u)
+#define INTERRUPT_RECORD_PERF(name) P_RECORD_PERF(name)
+#else
+#define INTERRUPT_RECORD_PERF(name) NULL
+#undef REG_INTERRUPT_PERF_RECORD
+#define REG_INTERRUPT_PERF_RECORD(name)
+#endif
+
+typedef struct reg_interrupt
+{
+    uint8_t priority;
+    void (*p_func)(void);
+    SECTION_INTERRUPT_PERF_FIELD
+} reg_interrupt_t;
+
+#define REG_INTERRUPT_RECORD(priority_num, func) \
+    {.priority = (uint8_t)(priority_num), .p_func = (func)SECTION_INTERRUPT_PERF_INIT(func)}
+
+#define REG_INTERRUPT(priority_num, func)                                            \
+    REG_INTERRUPT_PERF_RECORD(func)                                                  \
+    reg_interrupt_t reg_interrupt_##func = REG_INTERRUPT_RECORD(priority_num, func); \
+    REG_SECTION_FUNC(SECTION_INTERRUPT, reg_interrupt_##func)
+
+void FUNC_RAM section_interrupt(void);
+
+typedef struct
+{
+    const char *p_name;
+    uint32_t fsm_sta;
+    void (*func_in)(void);
+    void (*func_exe)(void);
+    uint32_t (*func_chk)(uint32_t);
+    void (*func_out)(void);
+} reg_fsm_func_t;
+
+typedef struct
+{
+    uint32_t fsm_sta;
+    reg_fsm_func_t *p_fsm_func_table;
+    uint32_t fsm_table_size;
+    uint8_t fsm_sta_is_change;
+    uint32_t *p_fsm_ev;
+} reg_fsm_t;
+
+#define FSM_ENTRY(sta, in, exe, chk, out) \
+    {                                     \
+        .p_name = #sta,                   \
+        .fsm_sta = (sta),                 \
+        .func_in = (in),                  \
+        .func_exe = (exe),                \
+        .func_chk = (chk),                \
+        .func_out = (out),                \
+    }
+
+#define REG_FSM(name, init_sta, fsm_ev, ...)                                                       \
+    SECTION_STATIC_ASSERT(sizeof(fsm_ev) == sizeof(uint32_t), "FSM event must be uint32_t-sized"); \
+    static reg_fsm_func_t reg_fsm_func_##name##_table[] = {__VA_ARGS__};                           \
+    static reg_fsm_t reg_fsm_##name = {                                                            \
+        .fsm_sta = (init_sta),                                                                     \
+        .p_fsm_func_table = reg_fsm_func_##name##_table,                                           \
+        .fsm_table_size = sizeof(reg_fsm_func_##name##_table) / sizeof(reg_fsm_func_t),            \
+        .fsm_sta_is_change = 1u,                                                                   \
+        .p_fsm_ev = (uint32_t *)&(fsm_ev),                                                         \
+    };                                                                                             \
+    static void fsm_##name##_run(void)                                                             \
+    {                                                                                              \
+        section_fsm_func(&reg_fsm_##name);                                                         \
+    }                                                                                              \
+    REG_TASK_MS(1, fsm_##name##_run)
+
+#define FSM_GET_STATE(name)  (reg_fsm_##name.fsm_sta)
+#define FSM_EXTERN_VAR(name) extern reg_fsm_t reg_fsm_##name;
+
+void section_fsm_func(reg_fsm_t *str);
+
+typedef void (*section_link_handler_f)(uint8_t data, DEC_MY_PRINTF, void *ctx);
+
+typedef struct
+{
+    section_link_handler_f func;
+    void *ctx;
+} section_link_handler_item_t;
+
+struct section_link_t
+{
+    uint8_t (*rx_get_byte)(uint8_t *p_data);
+    DEC_MY_PRINTF;
+    const section_link_handler_item_t *handler_arr;
+    uint32_t handler_num;
+    uint8_t link_id;
+};
+
+extern section_item_t *p_init_first;
+extern section_item_t *p_task_first;
+extern section_item_t *p_interrupt_first;
+extern section_item_t *p_link_first;
+
+#define REG_LINK(link, print, _rx_get_byte, _handler_arr, _handler_num) \
+    section_link_t section_link_##link = {                              \
+        .rx_get_byte = (_rx_get_byte),                                  \
+        .my_printf   = &(print),                                        \
+        .handler_arr = (_handler_arr),                                  \
+        .handler_num = (uint32_t)(_handler_num),                        \
+        .link_id     = (uint8_t)(link),                                 \
+    };                                                                  \
+    REG_SECTION_FUNC(SECTION_LINK, section_link_##link)
+
+#define EXT_LINK(link)    extern section_link_t section_link_##link
+#define LINK_PRINTF(link) section_link_##link.my_printf
+
+#endif /* __SECTION_H__ */
