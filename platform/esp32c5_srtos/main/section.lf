@@ -1,0 +1,15 @@
+[sections:base_registry]
+entries:
+    section
+
+[scheme:base_registry]
+entries:
+    base_registry -> flash_rodata
+
+[mapping:base_registry]
+archive: libmain.a
+entries:
+    * (base_registry);
+        base_registry -> flash_rodata KEEP() ALIGN(4) SURROUND(_section)
+    realtime_scope (noflash)
+    section_riscv_port (noflash)
