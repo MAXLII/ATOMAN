@@ -257,10 +257,9 @@ int main(void)
 #define SECTION_TASK_RUNTIME_STACK_WORDS 512u
 #define SECTION_TASK_CONTEXT_POOL_WORDS 1024u
 #define SECTION_TASK_SLICE_TICKS 10u
-#define SECTION_TASK_READY_BURST_MAX 4u
 ```
 
-这些值分别控制单个运行任务可用栈、所有悬挂现场共享容量、时间片长度和 Ready 新任务连续选择上限。调整方法见 [SRTOS 使用方法](srtos_usage.md)。
+这些值分别控制单个运行任务可用栈、所有悬挂现场共享容量和固定全局窗口长度。任务完成、切换和恢复不重置窗口；新到期、挂起和主动分步任务统一 FIFO，始终选择队首。调整方法见 [SRTOS 使用方法](srtos_usage.md)。
 
 ## 9. 构建检查
 
@@ -288,7 +287,7 @@ verify: firmware.elf
 4. 同时运行浮点任务和整数任务，确认 FPU 现场互不污染。
 5. 检查 PendSV 始终低于控制中断优先级。
 6. 观察 `g_section_fault_debug`，确认没有栈越界和现场池错误。
-7. 关闭所有其他任务后确认时间片到期不会产生无意义的任务轮换。
+7. 关闭所有其他任务后确认窗口到期仍能挂起并恢复唯一任务，现场池正常回收。
 
 ## 11. 常见接入错误
 

@@ -18,7 +18,7 @@
 | 类型 | 用户操作 | 内容 |
 | --- | --- | --- |
 | 业务任务 | 编写和修改 | 任务函数、任务上下文、周期和完成条件 |
-| 工程配置 | 按资源修改 | 运行栈、现场池、时间片和 Ready 连选上限 |
+| 工程配置 | 按资源修改 | 运行栈、现场池和全局时间片 |
 | SRTOS 内部 | 只调用公共接口 | 队列、现场保存、栈复制和任务状态转换 |
 
 业务代码统一包含：
@@ -65,6 +65,8 @@ REG_TASK(1u, fast_service_task)
 注册宏应放在模块 `.c` 文件中。任务函数和注册对象都具有静态生命周期，不需要运行期创建或释放。
 
 `REG_TASK_MS(10u, ...)` 表示任务每 10 ms 获得一次新的执行资格。任务上一次执行尚未完成时，不会为同一任务叠加第二个实例。
+
+Ready、运行或挂起期间保留这次调用的 `time_last`。完成后再次激活时，间隔不足两个周期就加一个周期；达到两个周期则更新到当前检查 tick。时间片只决定挂起边界，不更新任务周期时间。
 
 ## 4. 普通任务的使用原则
 
@@ -226,15 +228,13 @@ REG_TASK_MS(100u, batch_task)
 #define SECTION_TASK_RUNTIME_STACK_WORDS 768u
 #define SECTION_TASK_CONTEXT_POOL_WORDS 2048u
 #define SECTION_TASK_SLICE_TICKS 10u
-#define SECTION_TASK_READY_BURST_MAX 4u
 ```
 
 | 参数 | 用户调整依据 | 调大后的主要影响 |
 | --- | --- | --- |
 | `SECTION_TASK_RUNTIME_STACK_WORDS` | 单个任务最大调用深度 | 增加静态 RAM，占用不随任务数增长 |
 | `SECTION_TASK_CONTEXT_POOL_WORDS` | 同时悬挂任务的实际现场总量 | 增加静态 RAM，可容纳更多悬挂现场 |
-| `SECTION_TASK_SLICE_TICKS` | 允许的连续运行时间 | 减少切换开销，但增加其他任务等待时间 |
-| `SECTION_TASK_READY_BURST_MAX` | 新任务响应与旧任务推进的平衡 | 新任务偏好增强，未完成任务等待可能增加 |
+| `SECTION_TASK_SLICE_TICKS` | 固定全局窗口长度；完成和换任务不重置 | 减少切换开销，但增加新到期任务的等待时间 |
 
 构建参数覆盖示例：
 
@@ -242,7 +242,6 @@ REG_TASK_MS(100u, batch_task)
 C_DEFS += -DSECTION_TASK_RUNTIME_STACK_WORDS=768u
 C_DEFS += -DSECTION_TASK_CONTEXT_POOL_WORDS=2048u
 C_DEFS += -DSECTION_TASK_SLICE_TICKS=10u
-C_DEFS += -DSECTION_TASK_READY_BURST_MAX=4u
 ```
 
 用户应根据测得的栈高水位、现场池峰值和任务响应时间调整，而不是只按任务数量估算。

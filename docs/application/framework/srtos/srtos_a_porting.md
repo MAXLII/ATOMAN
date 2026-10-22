@@ -246,7 +246,6 @@ A 系列默认配置可以通过平台配置或编译参数覆盖：
 #define SECTION_TASK_RUNTIME_STACK_WORDS 512u
 #define SECTION_TASK_CONTEXT_POOL_WORDS 2048u
 #define SECTION_TASK_SLICE_TICKS 10u
-#define SECTION_TASK_READY_BURST_MAX 4u
 ```
 
 A 系列完整现场通常比 M 系列更大，尤其启用 VFP/NEON 状态保存时。现场池容量应按同时悬挂任务的实测快照总量配置，不能直接照搬 M 系列数值。

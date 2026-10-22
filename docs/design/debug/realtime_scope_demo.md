@@ -56,11 +56,11 @@
 3. 选择 `platform/gd32e507/build_realtime/gd32e507_demo.elf`，展开 `g_scope_demo.wave` 添加成员。采样率应答为 `10000 Hz`（100 μs），50 Hz 波形每周期 200 点。
 4. 可将窗口设为 60 ms 观察约三个周期，点击“运行”。固件更新后重新“参数同步”。
 
-当前 GD32 使用 SRTOS M、默认 1 ms 时间片，采样缓存/TCP 缓存各 2500 B，新数据每 1 ms 聚合。已修复 SysTick 在 PendSV 活动期间重复请求切换、立即挂起新选中网络任务的问题；示波器核心和服务保持通用。8 通道/10000 Hz 原生链路连续 120 s、1199877 组数据通过，缺包、重复、校验错误、计数跳变及设备溢出均为 0。采样队列峰值 740 B，TCP 环峰值 1221 B，最大聚合间隔 2 ms。最终 ELF SHA256 为 `ABCBC350B4BF6252B3C4860FAE206A4C3C0B3B44CEEE0ABF605F49D29223D770`，已烧录并回读校验；RAM 105872 B/128 KiB（80.77%）。长测固件与最终固件除 ELF 标识外 BIN 完全一致，详见设计 15.12 和 FRAME `build/scope-gd32-pendsv-long/`。代码未提交。
+当前 GD32 已恢复基于统一 FIFO SRTOS M 的示波器固件，ELF SHA256 为 `869E5586C46EF3B73278C297A90C6256CCD206CE61C3690862D9742C93196385`，RAM 105864 B/128 KiB。保留固定全局 1 ms 窗口、双 2500 B 缓存和 1 ms 新数据聚合。8 通道/10000 Hz 原生实板连续 60 s/600023 组数据及实际 WPF 页面约 30.188 s/301402 组数据均通过，无缺包、计数跳变、设备溢出或异常停止；WPF 参数调节、15 次时基切换、完整历史保留和三轮重连等行为也通过。采样队列峰值 777 B，原生连接 TCP 环峰值 1517 B、最大批次间隔 2 ms，最终现场保存/释放失败及任务故障均为 0。记录见设计 15.14、FRAME `build/scope-gd32-fifo-native/` 和 `build/scope-gd32-fifo-gui/`。测试结束停止采集并释放连接，板上保留本次示波器固件。前后公平性短测见[测试记录](../../application/framework/srtos/srtos_fairness_test.md)。
 
 此前仅确认 SRTOS 启用或把时间片缩短到 100 μs 均未解决溢出，记录保留于设计 15.11、FRAME `build/scope-gd32-srtos-2500/` 和 `build/scope-gd32-srtos-fast-2500/`；额外时间片覆盖已撤销。
 
-最终固件的实际 WPF 页面复验通过：8 通道连续 60.149 s、601329 组，计数跳变和溢出均为 0。采集中修改幅值/频率，改变时基 30 次，冻结缓存被实时缓存覆盖后仍保持原样，停止后每通道保留完整 100000 点。结果与截图位于 FRAME `build/scope-gd32-pendsv-gui/`；采集已停止，参数恢复默认 2/50 Hz。
+上一版已提交固件（ELF `ABCBC350B4BF6252B3C4860FAE206A4C3C0B3B44CEEE0ABF605F49D29223D770`）的实际 WPF 页面复验通过：8 通道连续 60.149 s、601329 组，计数跳变和溢出均为 0。采集中修改幅值/频率，改变时基 30 次，冻结缓存被实时缓存覆盖后仍保持原样，停止后每通道保留完整 100000 点。结果与截图位于 FRAME `build/scope-gd32-pendsv-gui/`。本轮固定窗口改动没有重跑 WPF 长测。
 
 此前恢复 TCP 为 8192 B、每轮发送的对照也未通过，采样缓存为 2500 B。该版本 ELF SHA256 为 `CED2B19C805F94150A44C752947141F1A9D1B8CF0B446DFAE17B4F4A81DC445A`，RAM 111560 B，TCP 环高水位仅 2516 B。记录见设计 15.10、FRAME `build/scope-gd32-2500-8192/`、`build/scope-gd32-2500-8192-native/` 和设备 `build_realtime/tcp-2500-8192-debug.log`。
 
