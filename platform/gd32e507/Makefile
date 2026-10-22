@@ -12,7 +12,7 @@ SIZE := $(PREFIX)size
 
 MCU_FLAGS := -mcpu=cortex-m33 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard
 PROJECT_DEFINES := -DGD32E50X -DGD32E50X_CL -DUSE_STDPERIPH_DRIVER \
-    -DPLATFORM_GD32E507 -DTOOLCHAIN_GCC \
+    -DPLATFORM_GD32E507 -DTOOLCHAIN_GCC -DREALTIME_SCOPE_ENABLE=1 -DDEMO_REALTIME_SCOPE_ENABLE=1 \
     -DENET_RXBUF_NUM=12 -DENET_TXBUF_NUM=4
 
 INCLUDES := \
@@ -65,6 +65,8 @@ PROJECT_SOURCES := \
     bsp/src/bsp_timer.c \
     bsp/src/bsp_usart.c \
     bsp/src/bsp_enet.c \
+    bsp/src/bsp_tcp_stream.c \
+    bsp/src/bsp_system.c \
     bsp/src/bsp_flash.c \
     bsp/src/bsp_nor_flash.c \
     bsp/src/bsp_nand_flash.c \
@@ -90,6 +92,7 @@ PROJECT_SOURCES := \
     ../../code/business/demo/demo_rtos_risk.c \
     ../../code/business/demo/demo_perf.c \
     ../../code/business/demo/demo_scope.c \
+    ../../code/business/demo/demo_realtime_scope.c \
     ../../code/business/demo/demo_sfra.c \
     ../../code/business/demo/demo_shell.c \
     ../../code/business/demo/demo_task.c \
@@ -106,6 +109,8 @@ PROJECT_SOURCES := \
     ../../code/dbg/scope.c \
     ../../code/dbg/scope_core.c \
     ../../code/dbg/scope_service.c \
+    ../../code/dbg/realtime_scope.c \
+    ../../code/dbg/realtime_scope_service.c \
     ../../code/dbg/sfra.c \
     ../../code/dbg/sfra_core.c \
     ../../code/dbg/sfra_service.c \
@@ -119,6 +124,7 @@ PROJECT_SOURCES := \
     ../../code/interface/demo/common/gpio.c \
     ../../code/interface/demo/common/comm_link.c \
     ../../code/interface/demo/common/jitter.c \
+    ../../code/interface/demo/common/realtime_scope_bindings.c \
     ../../code/section/srtos_m/section.c \
     ../../code/data_source/comm/comm.c \
     ../../code/data_source/comm/comm_v1.c
@@ -158,11 +164,11 @@ $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) $(LD_SCRIPT)
 	$(CC) $(OBJECTS) $(LDFLAGS) $(LIBS) -o $@
 	$(SIZE) $@
 
-$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
-	$(OBJCOPY) -O ihex $< $@
+$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).bin
+	$(OBJCOPY) -I binary -O ihex --change-addresses 0x08000000 $< $@
 
-$(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf
-	$(OBJCOPY) -O binary -S $< $@
+$(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf tools/firmware_image.py
+	python tools/firmware_image.py --elf $< --output $@ --objcopy $(OBJCOPY) --nm $(PREFIX)nm
 
 $(BUILD_DIR)/project/%.o: %.c
 	@$(call make_dir,$(@D))

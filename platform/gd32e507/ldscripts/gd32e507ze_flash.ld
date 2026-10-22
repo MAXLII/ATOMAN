@@ -52,6 +52,14 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH :flash
 
+    .firmware_identity :
+    {
+        . = ALIGN(4);
+        __firmware_elf_sha256 = .;
+        LONG(0); LONG(0); LONG(0); LONG(0);
+        LONG(0); LONG(0); LONG(0); LONG(0);
+    } > FLASH :flash
+
     .rodata :
     {
         . = ALIGN(4);
