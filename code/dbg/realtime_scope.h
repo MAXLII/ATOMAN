@@ -60,8 +60,10 @@ typedef struct
     realtime_scope_bank_t *p_config;
     uint8_t *p_queue;
     uint32_t queue_capacity;
-    realtime_scope_frame_t sample_frame;
-    uint32_t head, count, samples, overflows;
+    uint32_t frame_size;   /**< Active frame stride, prepared before sampling starts. */
+    uint32_t queue_frames; /**< Whole-frame slots available in the supplied storage. */
+    uint32_t queue_limit;  /**< Usable bytes; any incomplete final slot is excluded. */
+    uint32_t head, tail, count, samples, overflows;
     uint32_t queue_high_water; /**< Maximum queued frames in the current acquisition. */
     uint32_t dequeued;         /**< Frames copied out for transport in the current acquisition. */
     uint8_t index;

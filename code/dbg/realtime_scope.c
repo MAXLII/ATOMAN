@@ -2,7 +2,7 @@
 /**
  * @file realtime_scope.c
  * @brief Portable linked-channel sampler and EA encoder.
- * @details Part of base. Owns two fixed banks and a bounded frame queue.
+ * @details Part of base. Owns two fixed banks and a bounded whole-frame queue.
  *          Entity: node addresses belong to firmware, queue bytes to this module.
  *          Prior: adapter validates addresses and excludes concurrent calls.
  *          Time: overflow stops acquisition; index wraps modulo 256.
@@ -103,6 +103,11 @@ bool realtime_scope_start(realtime_scope_t *p_scope)
     p_scope->overflows        = 0u;
     p_scope->queue_high_water = 0u;
     p_scope->dequeued         = 0u;
+    p_scope->frame_size       = (uint32_t)p_scope->p_active->payload_size + 5u;
+    p_scope->queue_frames     = p_scope->queue_capacity / p_scope->frame_size;
+    p_scope->queue_limit      = p_scope->queue_frames * p_scope->frame_size;
+    p_scope->head             = 0u;
+    p_scope->tail             = 0u;
     p_scope->running          = true;
     return true;
 }
@@ -112,46 +117,75 @@ void realtime_scope_stop(realtime_scope_t *p_scope)
     p_scope->running = false;
 }
 
+static inline uint32_t sample_byte(const volatile uint8_t *p_source, uint8_t *p_target)
+{
+    uint8_t value = *p_source;
+    *p_target     = value;
+    return value;
+}
+
+static inline uint32_t sample_four(const volatile uint8_t *p_source, uint8_t *p_target)
+{
+    uint32_t sum = sample_byte(p_source, p_target);
+    sum += sample_byte(p_source + 1u, p_target + 1u);
+    sum += sample_byte(p_source + 2u, p_target + 2u);
+    sum += sample_byte(p_source + 3u, p_target + 3u);
+    return sum;
+}
+
 void realtime_scope_sample(realtime_scope_t *p_scope)
 {
     if (!p_scope->running)
         return;
 
-    uint32_t frame_size = (uint32_t)p_scope->p_active->payload_size + 5u;
-
-    if (p_scope->count >= p_scope->queue_capacity / frame_size)
+    if (p_scope->count >= p_scope->queue_frames)
     {
         ++p_scope->overflows;
         p_scope->running = false;
         return;
     }
-    realtime_scope_frame_t *p_frame = &p_scope->sample_frame;
-    uint16_t pos                    = 2u;
-    p_frame->data[0]                = 0xEAu;
-    p_frame->data[1]                = p_scope->index++;
+    uint8_t *p_frame      = &p_scope->p_queue[p_scope->tail];
+    uint8_t *p_output     = p_frame + 2u;
+    uint16_t payload_size = p_scope->p_active->payload_size;
+    p_frame[0]            = 0xEAu;
+    p_frame[1]            = p_scope->index++;
+    uint32_t sum = UINT32_C(0xEA) + p_frame[1] + (uint8_t)payload_size + (uint8_t)(payload_size >> 8u);
 
     for (const realtime_scope_node_t *p_node = p_scope->p_active->p_head; p_node != NULL; p_node = p_node->p_next)
     {
         uint8_t size = realtime_scope_type_size(p_node->type);
 
-        for (uint8_t i = 0u; i < size; ++i)
-            p_frame->data[pos++] = p_node->p_address[i];
+        /* Preserve byte access and order even for packed or unaligned objects. */
+
+        switch (size)
+        {
+        case 1u:
+            sum += sample_byte(p_node->p_address, p_output);
+            break;
+        case 2u:
+            sum += sample_byte(p_node->p_address, p_output);
+            sum += sample_byte(p_node->p_address + 1u, p_output + 1u);
+            break;
+        case 4u:
+            sum += sample_four(p_node->p_address, p_output);
+            break;
+        case 8u:
+            sum += sample_four(p_node->p_address, p_output);
+            sum += sample_four(p_node->p_address + 4u, p_output + 4u);
+            break;
+        default:
+            break;
+        }
+        p_output += size;
     }
-    p_frame->data[pos++] = (uint8_t)p_scope->p_active->payload_size;
-    p_frame->data[pos++] = (uint8_t)(p_scope->p_active->payload_size >> 8u);
-    uint8_t sum = 0u;
+    p_output[0] = (uint8_t)payload_size;
+    p_output[1] = (uint8_t)(payload_size >> 8u);
+    p_output[2] = (uint8_t)sum;
+    p_scope->tail += p_scope->frame_size;
 
-    for (uint16_t i = 0u; i < pos; ++i)
-        sum = (uint8_t)(sum + p_frame->data[i]);
-    p_frame->data[pos++] = sum;
-    p_frame->size        = pos;
-    uint32_t tail = (p_scope->head + p_scope->count * frame_size) % p_scope->queue_capacity;
-    uint32_t first = p_scope->queue_capacity - tail;
-
-    if (first > frame_size)
-        first = frame_size;
-    memcpy(&p_scope->p_queue[tail], p_frame->data, first);
-    memcpy(p_scope->p_queue, &p_frame->data[first], frame_size - first);
+    if (p_scope->tail == p_scope->queue_limit)
+        p_scope->tail = 0u;
+    /* Publish only the complete frame; caller retains the existing serialization. */
     ++p_scope->count;
 
     if (p_scope->count > p_scope->queue_high_water)
@@ -163,15 +197,12 @@ bool realtime_scope_pop(realtime_scope_t *p_scope, realtime_scope_frame_t *p_fra
 {
     if (p_scope->count == 0u)
         return false;
-    uint32_t frame_size = (uint32_t)p_scope->p_active->payload_size + 5u;
-    uint32_t first      = p_scope->queue_capacity - p_scope->head;
+    memcpy(p_frame->data, &p_scope->p_queue[p_scope->head], p_scope->frame_size);
+    p_frame->size = (uint16_t)p_scope->frame_size;
+    p_scope->head += p_scope->frame_size;
 
-    if (first > frame_size)
-        first = frame_size;
-    memcpy(p_frame->data, &p_scope->p_queue[p_scope->head], first);
-    memcpy(&p_frame->data[first], p_scope->p_queue, frame_size - first);
-    p_frame->size = (uint16_t)frame_size;
-    p_scope->head = (p_scope->head + frame_size) % p_scope->queue_capacity;
+    if (p_scope->head == p_scope->queue_limit)
+        p_scope->head = 0u;
     --p_scope->count;
     ++p_scope->dequeued;
     return true;
