@@ -224,12 +224,10 @@ typedef enum
 #error "Invalid SECTION_TASK_CONTEXT_POOL_FULL_POLICY."
 #endif
 
-static reg_task_t *p_srtos_task_ready_first      = NULL;
-static reg_task_t *p_srtos_task_ready_tail       = NULL;
-static reg_task_t *p_srtos_task_unfinished_first = NULL;
-static reg_task_t *p_srtos_task_unfinished_tail  = NULL;
-static reg_task_t *p_task_current                = NULL;
-static uint8_t task_scheduler_started            = 0u;
+static reg_task_t *p_srtos_task_ready_first = NULL;
+static reg_task_t *p_srtos_task_ready_tail  = NULL;
+static reg_task_t *p_task_current           = NULL;
+static uint8_t task_scheduler_started       = 0u;
 static uint32_t task_runtime_stack[SECTION_TASK_RUNTIME_STACK_WORDS] SECTION_TASK_STACK_ATTR;
 static uint32_t task_context_pool[SECTION_TASK_CONTEXT_POOL_WORDS] SECTION_TASK_STACK_ATTR;
 static uint32_t task_context_pool_head      = 0u;
@@ -258,7 +256,7 @@ static uint32_t task_stack_frame_valid(const reg_task_t *task);
 static uint32_t task_stack_free_words_get(const reg_task_t *task);
 static const uint32_t *task_hw_frame_get(const reg_task_t *task);
 static reg_task_t *task_stack_pick_next(void);
-static void task_slice_reset(void);
+static void task_slice_advance(void);
 static void task_debug_context_pool_update(void);
 static uint32_t task_runtime_stack_used_words_get(uint32_t *sp);
 static void task_fault_set(uint32_t reason,
@@ -286,19 +284,17 @@ static void srtos_task_insert_init(reg_task_t *task)
 
 static void srtos_task_runtime_reset(void)
 {
-    p_srtos_task_ready_first      = NULL;
-    p_srtos_task_ready_tail       = NULL;
-    p_srtos_task_unfinished_first = NULL;
-    p_srtos_task_unfinished_tail  = NULL;
-    p_task_current                = NULL;
-    task_scheduler_started        = 0u;
-    task_context_pool_head        = 0u;
-    task_context_pool_tail        = 0u;
-    task_context_pool_used        = 0u;
-    task_context_pool_gap_start   = 0u;
-    task_context_pool_gap_words   = 0u;
-    task_last_switch_tick         = 0u;
-    task_fault_active             = 0u;
+    p_srtos_task_ready_first    = NULL;
+    p_srtos_task_ready_tail     = NULL;
+    p_task_current              = NULL;
+    task_scheduler_started      = 0u;
+    task_context_pool_head      = 0u;
+    task_context_pool_tail      = 0u;
+    task_context_pool_used      = 0u;
+    task_context_pool_gap_start = 0u;
+    task_context_pool_gap_words = 0u;
+    task_last_switch_tick       = 0u;
+    task_fault_active           = 0u;
     (void)memset((void *)&g_section_fault_debug, 0, sizeof(g_section_fault_debug));
     g_section_fault_debug.task_fault_policy = SECTION_TASK_CONTEXT_POOL_FULL_POLICY;
 }
@@ -313,15 +309,13 @@ static uint32_t srtos_task_activate_if_due(reg_task_t *task, uint32_t elapsed)
 
     if (task->state != (uint8_t)TASK_STACK_STATE_SLEEPING)
     {
-        const uint32_t periods_elapsed = elapsed / task->t_period;
-
-        g_section_fault_debug.task_activation_overrun_count += periods_elapsed;
+        /* Count deferred checks without consuming the pending release. */
+        g_section_fault_debug.task_activation_overrun_count++;
 
         if (elapsed > g_section_fault_debug.task_activation_overrun_max_ticks)
         {
             g_section_fault_debug.task_activation_overrun_max_ticks = elapsed;
         }
-        srtos_task_schedule_next(task, elapsed);
         return 0u;
     }
 
@@ -393,9 +387,8 @@ static void task_fault_set(uint32_t reason,
 
 static void srtos_task_schedule_next(reg_task_t *task, uint32_t elapsed)
 {
-    const uint32_t periods_elapsed = elapsed / task->t_period;
-
-    task->time_last += periods_elapsed * task->t_period;
+    /* Keep phase after a short delay; resynchronise after two or more periods. */
+    task->time_last += (elapsed - task->t_period < task->t_period) ? task->t_period : elapsed;
 }
 
 static uint32_t task_context_alloc(reg_task_t *task, uint32_t required_words)
@@ -705,9 +698,11 @@ static const uint32_t *task_hw_frame_get(const reg_task_t *task)
     return frame;
 }
 
-static void task_slice_reset(void)
+static void task_slice_advance(void)
 {
-    task_last_switch_tick = SECTION_SYS_TICK;
+    const uint32_t elapsed = (uint32_t)(SECTION_SYS_TICK - task_last_switch_tick);
+    /* Advance only whole global windows; a callback switch consumes no new slice. */
+    task_last_switch_tick += (elapsed / SECTION_TASK_SLICE_TICKS) * SECTION_TASK_SLICE_TICKS;
 }
 
 static void task_debug_context_pool_update(void)
@@ -821,30 +816,7 @@ static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t 
 
 static reg_task_t *task_stack_pick_next(void)
 {
-    reg_task_t *candidate            = NULL;
-    static uint32_t ready_pick_count = 0u;
-
-    if (    (p_srtos_task_unfinished_first != NULL)
-         && (    (p_srtos_task_ready_first == NULL)
-              || (ready_pick_count >= SECTION_TASK_READY_BURST_MAX)))
-    {
-        candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_unfinished_first, &p_srtos_task_unfinished_tail);
-        ready_pick_count = 0u;
-    }
-    else
-    {
-        candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first, &p_srtos_task_ready_tail);
-
-        if (candidate != NULL)
-        {
-            ready_pick_count++;
-        }
-        else
-        {
-            candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_unfinished_first, &p_srtos_task_unfinished_tail);
-            ready_pick_count = 0u;
-        }
-    }
+    reg_task_t *candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first, &p_srtos_task_ready_tail);
 
     if (candidate != NULL)
     {
@@ -863,8 +835,7 @@ uint32_t section_task_switch_pending(void)
 {
     uint32_t pending = 0u;
 
-    if (    (p_srtos_task_ready_first != NULL)
-         || (p_srtos_task_unfinished_first != NULL))
+    if (p_srtos_task_ready_first != NULL)
     {
         pending = 1u;
     }
@@ -887,9 +858,9 @@ uint32_t section_task_slice_elapsed(void)
 
 void section_task_irq_exit_request(void)
 {
-    /* A tick can interrupt PendSV before it resets the outgoing time slice.
-     * Do not re-pend that stale slice: tail-chaining would immediately suspend
-     * the newly selected callback before it has received its own time slice. */
+    /* A tick can interrupt PendSV while the same global boundary is pending.
+     * Let the active switch consume that boundary once instead of tail-chaining
+     * a duplicate request while the task context is being saved or restored. */
 
     if (SECTION_PORT_CONTEXT_SWITCH_ACTIVE() != 0u)
     {
@@ -910,6 +881,7 @@ void section_task_start_request(void)
         return;
     }
 
+    task_last_switch_tick  = SECTION_SYS_TICK;
     task_scheduler_started = 1u;
     SECTION_PORT_FPU_LAZY_STACKING_DISABLE();
     SECTION_PORT_CONTEXT_SWITCH_REQUEST();
@@ -926,24 +898,30 @@ void section_task_yield(void)
 
 void section_task_complete_current(void)
 {
+    uint32_t primask = section_critical_enter();
+
     if (p_task_current != NULL)
     {
         p_task_current->state      = (uint8_t)TASK_STACK_STATE_SLEEPING;
         p_task_current->is_running = 0u;
     }
+    section_critical_exit(primask);
 }
 
 static void section_task_continue_current(void)
 {
+    uint32_t primask = section_critical_enter();
+
     if (p_task_current != NULL)
     {
         p_task_current->state      = (uint8_t)TASK_STACK_STATE_READY_NEW;
         p_task_current->is_running = 0u;
-        reg_task_t **first         = &p_srtos_task_unfinished_first;
-        reg_task_t **tail          = &p_srtos_task_unfinished_tail;
+        reg_task_t **first         = &p_srtos_task_ready_first;
+        reg_task_t **tail          = &p_srtos_task_ready_tail;
 
         srtos_task_ready_enqueue_unlocked(first, tail, p_task_current);
     }
+    section_critical_exit(primask);
 }
 
 uint32_t *section_task_start_sp_get(void)
@@ -974,15 +952,14 @@ uint32_t *section_task_start_sp_get(void)
     next->state            = (uint8_t)TASK_STACK_STATE_RUNNING;
     p_task_current         = next;
     task_scheduler_started = 1u;
-    task_slice_reset();
+    task_last_switch_tick  = SECTION_SYS_TICK;
     return next_sp;
 }
 
 uint32_t *section_task_switch_sp(uint32_t *sp)
 {
-    reg_task_t *next           = NULL;
-    uint32_t *next_sp          = NULL;
-    uint32_t has_switch_target = 0u;
+    reg_task_t *next  = NULL;
+    uint32_t *next_sp = NULL;
 
     if (task_scheduler_started == 0u)
     {
@@ -994,29 +971,7 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
         return sp;
     }
 
-    section_task_tick();
-
-    if (    (p_srtos_task_ready_first != NULL)
-         || (p_srtos_task_unfinished_first != NULL))
-    {
-        has_switch_target = 1u;
-    }
-
-    if (has_switch_target == 0u)
-    {
-        if (    (sp != NULL)
-             && (p_task_current != NULL))
-        {
-            if (    (sp < task_runtime_stack_low_get())
-                 || (sp > task_runtime_stack_top_get()))
-            {
-                task_fault_set(SECTION_TASK_FAULT_PSP_OVERFLOW, p_task_current, sp, 0u);
-                return sp;
-            }
-            p_task_current->p_sp = sp;
-        }
-        return sp;
-    }
+    task_slice_advance();
 
     if (    (sp != NULL)
          && (p_task_current != NULL))
@@ -1029,8 +984,8 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
             }
             p_task_current->state      = (uint8_t)TASK_STACK_STATE_READY_OLD;
             p_task_current->is_running = 0u;
-            reg_task_t **first         = &p_srtos_task_unfinished_first;
-            reg_task_t **tail          = &p_srtos_task_unfinished_tail;
+            reg_task_t **first         = &p_srtos_task_ready_first;
+            reg_task_t **tail          = &p_srtos_task_ready_tail;
 
             srtos_task_ready_enqueue_unlocked(first, tail, p_task_current);
         }
@@ -1040,6 +995,7 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
         }
     }
 
+    section_task_tick();
     next = task_stack_pick_next();
 
     if (next != NULL)
@@ -1069,7 +1025,6 @@ uint32_t *section_task_switch_sp(uint32_t *sp)
         g_section_fault_debug.task_name             = (uint32_t)(uintptr_t)next->p_name;
         g_section_fault_debug.task_stack_free_words = task_stack_free_words_get(next);
         task_debug_context_pool_update();
-        task_slice_reset();
         return next_sp;
     }
 
@@ -1088,8 +1043,7 @@ void section_task_start(void)
     {
         section_task_tick();
 
-        if (    (p_srtos_task_ready_first != NULL)
-             || (p_srtos_task_unfinished_first != NULL))
+        if (p_srtos_task_ready_first != NULL)
         {
             __ASM volatile("svc 0");
         }
@@ -1132,24 +1086,24 @@ static uint32_t section_task_start_ready_new_inline(void)
     /* A completed callback no longer owns live stack locals. Start the next
      * new callback on the same runtime stack and avoid a redundant PendSV
      * save/restore cycle. Suspended callbacks remain on the snapshot path. */
-    reg_task_t *next = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first, &p_srtos_task_ready_tail);
+    /* The fast path must not bypass an older suspended context. */
 
-    if (next == NULL)
+    if (    (p_srtos_task_ready_first == NULL)
+         || (p_srtos_task_ready_first->state != (uint8_t)TASK_STACK_STATE_READY_NEW))
     {
         return 0u;
     }
 
+    reg_task_t *next = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first, &p_srtos_task_ready_tail);
+
     next->is_running = 1u;
     next->state      = (uint8_t)TASK_STACK_STATE_RUNNING;
     p_task_current   = next;
-    task_slice_reset();
     return 1u;
 }
 
 static void section_task_entry(void)
 {
-    uint32_t inline_ready_count = 0u;
-
     for (;;)
     {
         section_task_status_t status = SECTION_TASK_DONE;
@@ -1166,22 +1120,24 @@ static void section_task_entry(void)
         if (status == SECTION_TASK_RUNNING)
         {
             section_task_continue_current();
-            inline_ready_count = 0u;
         }
         else
         {
+            uint32_t primask        = section_critical_enter();
+            uint32_t started_inline = 0u;
             section_task_complete_current();
 
-            if (    (    (p_srtos_task_unfinished_first == NULL)
-                      || (inline_ready_count < SECTION_TASK_READY_BURST_MAX))
+            section_task_tick();
+
+            if (    (section_task_slice_elapsed() == 0u)
                  && (section_task_start_ready_new_inline() != 0u))
             {
-                /* Bound inline dispatch so a preempted long callback cannot
-                 * starve behind a continuously replenished ready queue. */
-                inline_ready_count++;
-                continue;
+                started_inline = 1u;
             }
-            inline_ready_count = 0u;
+            section_critical_exit(primask);
+
+            if (started_inline != 0u)
+                continue;
         }
         section_task_yield();
     }

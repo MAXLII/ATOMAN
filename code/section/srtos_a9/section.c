@@ -231,12 +231,10 @@ typedef enum
 #error "Invalid SECTION_TASK_CONTEXT_POOL_FULL_POLICY."
 #endif
 
-static reg_task_t *p_srtos_task_ready_first      = NULL;
-static reg_task_t *p_srtos_task_ready_tail       = NULL;
-static reg_task_t *p_srtos_task_unfinished_first = NULL;
-static reg_task_t *p_srtos_task_unfinished_tail  = NULL;
-static reg_task_t *p_task_current                = NULL;
-static uint8_t task_scheduler_started            = 0u;
+static reg_task_t *p_srtos_task_ready_first = NULL;
+static reg_task_t *p_srtos_task_ready_tail  = NULL;
+static reg_task_t *p_task_current           = NULL;
+static uint8_t task_scheduler_started       = 0u;
 static uint32_t task_runtime_stack[SECTION_TASK_RUNTIME_STACK_WORDS] SECTION_TASK_STACK_ATTR;
 static uint32_t task_context_pool[SECTION_TASK_CONTEXT_POOL_WORDS] SECTION_TASK_STACK_ATTR;
 static uint32_t task_context_pool_head      = 0u;
@@ -245,7 +243,6 @@ static uint32_t task_context_pool_used      = 0u;
 static uint32_t task_context_pool_gap_start = 0u;
 static uint32_t task_context_pool_gap_words = 0u;
 static uint32_t task_last_switch_tick       = 0u;
-static uint32_t task_ready_pick_burst_count = 0u;
 static uint8_t task_fault_active            = 0u;
 
 static void srtos_task_ready_enqueue_unlocked(reg_task_t **first, reg_task_t **tail, reg_task_t *task);
@@ -266,7 +263,7 @@ static uint32_t task_stack_frame_valid(const reg_task_t *p_task);
 static uint32_t task_stack_free_words_get(const reg_task_t *p_task);
 static const uint32_t *task_hw_frame_get(const reg_task_t *p_task);
 static reg_task_t *task_stack_pick_next(void);
-static void task_slice_reset(void);
+static void task_slice_advance(void);
 static void task_debug_context_pool_update(void);
 static void task_debug_stack_min_update(const reg_task_t *p_task);
 static uint32_t task_context_pool_invariant_valid(void);
@@ -295,20 +292,17 @@ static void srtos_task_insert_init(reg_task_t *task)
 
 static void srtos_task_runtime_reset(void)
 {
-    p_srtos_task_ready_first      = NULL;
-    p_srtos_task_ready_tail       = NULL;
-    p_srtos_task_unfinished_first = NULL;
-    p_srtos_task_unfinished_tail  = NULL;
-    p_task_current                = NULL;
-    task_scheduler_started        = 0u;
-    task_context_pool_head        = 0u;
-    task_context_pool_tail        = 0u;
-    task_context_pool_used        = 0u;
-    task_context_pool_gap_start   = 0u;
-    task_context_pool_gap_words   = 0u;
-    task_last_switch_tick         = 0u;
-    task_ready_pick_burst_count   = 0u;
-    task_fault_active             = 0u;
+    p_srtos_task_ready_first    = NULL;
+    p_srtos_task_ready_tail     = NULL;
+    p_task_current              = NULL;
+    task_scheduler_started      = 0u;
+    task_context_pool_head      = 0u;
+    task_context_pool_tail      = 0u;
+    task_context_pool_used      = 0u;
+    task_context_pool_gap_start = 0u;
+    task_context_pool_gap_words = 0u;
+    task_last_switch_tick       = 0u;
+    task_fault_active           = 0u;
     (void)memset((void *)&g_section_fault_debug, 0, sizeof(g_section_fault_debug));
     (void)memset((void *)&g_section_scheduler_debug, 0, sizeof(g_section_scheduler_debug));
     g_section_fault_debug.task_fault_policy                = SECTION_TASK_CONTEXT_POOL_FULL_POLICY;
@@ -394,9 +388,8 @@ static void task_fault_set(uint32_t reason,
 
 static void srtos_task_schedule_next(reg_task_t *task, uint32_t elapsed)
 {
-    const uint32_t periods_elapsed = elapsed / task->t_period;
-
-    task->time_last += periods_elapsed * task->t_period;
+    /* Keep phase after a short delay; resynchronise after two or more periods. */
+    task->time_last += (elapsed - task->t_period < task->t_period) ? task->t_period : elapsed;
 }
 
 static uint32_t task_context_alloc(reg_task_t *p_task, uint32_t required_words)
@@ -809,9 +802,10 @@ static const uint32_t *task_hw_frame_get(const reg_task_t *p_task)
     return &p_task->p_sp[TASK_A9_RETURN_PC_INDEX];
 }
 
-static void task_slice_reset(void)
+static void task_slice_advance(void)
 {
-    task_last_switch_tick = SECTION_SYS_TICK;
+    const uint32_t elapsed = (uint32_t)(SECTION_SYS_TICK - task_last_switch_tick);
+    task_last_switch_tick += (elapsed / SECTION_TASK_SLICE_TICKS) * SECTION_TASK_SLICE_TICKS;
 }
 
 static void task_debug_context_pool_update(void)
@@ -958,43 +952,18 @@ static reg_task_t *srtos_task_ready_pop_unlocked(reg_task_t **first, reg_task_t 
 
 static reg_task_t *task_stack_pick_next(void)
 {
-    reg_task_t *p_candidate = NULL; /* Runnable task selected from one of the 2 scheduler queues. */
-
-    if (    (p_srtos_task_unfinished_first != NULL)
-         && (    (p_srtos_task_ready_first == NULL)
-              || (task_ready_pick_burst_count >= SECTION_TASK_READY_BURST_MAX)))
-    {
-        p_candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_unfinished_first, &p_srtos_task_unfinished_tail);
-        task_ready_pick_burst_count = 0u;
-
-        if (p_candidate != NULL)
-        {
-            g_section_scheduler_debug.unfinished_task_pick_count++;
-        }
-    }
-    else
-    {
-        p_candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first, &p_srtos_task_ready_tail);
-
-        if (p_candidate != NULL)
-        {
-            task_ready_pick_burst_count++;
-            g_section_scheduler_debug.ready_task_pick_count++;
-        }
-        else
-        {
-            p_candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_unfinished_first, &p_srtos_task_unfinished_tail);
-            task_ready_pick_burst_count = 0u;
-
-            if (p_candidate != NULL)
-            {
-                g_section_scheduler_debug.unfinished_task_pick_count++;
-            }
-        }
-    }
+    reg_task_t *p_candidate = srtos_task_ready_pop_unlocked(&p_srtos_task_ready_first, &p_srtos_task_ready_tail);
 
     if (p_candidate != NULL)
     {
+        if (p_candidate->state == (uint8_t)TASK_STACK_STATE_READY_OLD)
+        {
+            g_section_scheduler_debug.unfinished_task_pick_count++;
+        }
+        else
+        {
+            g_section_scheduler_debug.ready_task_pick_count++;
+        }
         p_candidate->is_running = 1u;
     }
 
@@ -1010,8 +979,7 @@ uint32_t section_task_switch_pending(void)
 {
     uint32_t pending = 0u;
 
-    if (    (p_srtos_task_ready_first != NULL)
-         || (p_srtos_task_unfinished_first != NULL))
+    if (p_srtos_task_ready_first != NULL)
     {
         pending = 1u;
     }
@@ -1048,6 +1016,7 @@ void section_task_start_request(void)
         return;
     }
 
+    task_last_switch_tick  = SECTION_SYS_TICK;
     task_scheduler_started = 1u;
     a9_section_port_yield();
 }
@@ -1063,24 +1032,30 @@ void section_task_yield(void)
 
 void section_task_complete_current(void)
 {
+    uint32_t primask = section_critical_enter();
+
     if (p_task_current != NULL)
     {
         p_task_current->state      = (uint8_t)TASK_STACK_STATE_SLEEPING;
         p_task_current->is_running = 0u;
     }
+    section_critical_exit(primask);
 }
 
 static void section_task_continue_current(void)
 {
+    uint32_t primask = section_critical_enter();
+
     if (p_task_current != NULL)
     {
         p_task_current->state      = (uint8_t)TASK_STACK_STATE_READY_NEW;
         p_task_current->is_running = 0u;
-        reg_task_t **first         = &p_srtos_task_unfinished_first;
-        reg_task_t **tail          = &p_srtos_task_unfinished_tail;
+        reg_task_t **first         = &p_srtos_task_ready_first;
+        reg_task_t **tail          = &p_srtos_task_ready_tail;
 
         srtos_task_ready_enqueue_unlocked(first, tail, p_task_current);
     }
+    section_critical_exit(primask);
 }
 
 uint32_t *section_task_start_sp_get(void)
@@ -1112,15 +1087,14 @@ uint32_t *section_task_start_sp_get(void)
     p_task_current         = p_next;
     task_scheduler_started = 1u;
     g_section_scheduler_debug.task_switch_count++;
-    task_slice_reset();
+    task_last_switch_tick = SECTION_SYS_TICK;
     return p_next_sp;
 }
 
 uint32_t *section_task_switch_sp(uint32_t *p_sp)
 {
-    reg_task_t *p_next         = NULL; /* Runnable task selected after saving the current context. */
-    uint32_t *p_next_sp        = NULL; /* Restored A9 context returned to the exception assembly path. */
-    uint32_t has_switch_target = 0u;   /* Whether either scheduler queue contains runnable work. */
+    reg_task_t *p_next  = NULL; /* Runnable task selected after saving the current context. */
+    uint32_t *p_next_sp = NULL; /* Restored A9 context returned to the exception assembly path. */
 
     if (task_scheduler_started == 0u)
     {
@@ -1132,34 +1106,7 @@ uint32_t *section_task_switch_sp(uint32_t *p_sp)
         return p_sp;
     }
 
-    section_task_tick();
-
-    if (    (p_srtos_task_ready_first != NULL)
-         || (p_srtos_task_unfinished_first != NULL))
-    {
-        has_switch_target = 1u;
-    }
-
-    if (has_switch_target == 0u)
-    {
-        if (    (p_sp != NULL)
-             && (p_task_current != NULL))
-        {
-            const uintptr_t stack_pointer = (uintptr_t)p_sp; /* Context pointer supplied by the exception port. */
-            const uintptr_t stack_low     = (uintptr_t)task_runtime_stack_low_get(); /* Inclusive stack lower address. */
-            const uintptr_t stack_top     = (uintptr_t)task_runtime_stack_top_get(); /* Exclusive stack upper address. */
-
-            if (    (stack_pointer < stack_low)  /* Context begins below the shared stack. */
-                 || (stack_pointer > stack_top)) /* Context begins above the shared stack. */
-            {
-                task_fault_set(SECTION_TASK_FAULT_PSP_OVERFLOW, p_task_current, p_sp, 0u);
-                return p_sp;
-            }
-            p_task_current->p_sp = p_sp;
-            task_debug_stack_min_update(p_task_current);
-        }
-        return p_sp;
-    }
+    task_slice_advance();
 
     if (    (p_sp != NULL)
          && (p_task_current != NULL))
@@ -1172,8 +1119,8 @@ uint32_t *section_task_switch_sp(uint32_t *p_sp)
             }
             p_task_current->state      = (uint8_t)TASK_STACK_STATE_READY_OLD;
             p_task_current->is_running = 0u;
-            reg_task_t **first         = &p_srtos_task_unfinished_first;
-            reg_task_t **tail          = &p_srtos_task_unfinished_tail;
+            reg_task_t **first         = &p_srtos_task_ready_first;
+            reg_task_t **tail          = &p_srtos_task_ready_tail;
 
             srtos_task_ready_enqueue_unlocked(first, tail, p_task_current);
         }
@@ -1183,6 +1130,7 @@ uint32_t *section_task_switch_sp(uint32_t *p_sp)
         }
     }
 
+    section_task_tick();
     p_next = task_stack_pick_next();
 
     if (p_next != NULL)
@@ -1214,7 +1162,6 @@ uint32_t *section_task_switch_sp(uint32_t *p_sp)
         task_debug_stack_min_update(p_next);
         task_debug_context_pool_update();
         g_section_scheduler_debug.task_switch_count++;
-        task_slice_reset();
         return p_next_sp;
     }
 
@@ -1233,8 +1180,7 @@ void section_task_start(void)
     {
         section_task_tick();
 
-        if (    (p_srtos_task_ready_first != NULL)
-             || (p_srtos_task_unfinished_first != NULL))
+        if (p_srtos_task_ready_first != NULL)
         {
             a9_section_port_yield();
         }

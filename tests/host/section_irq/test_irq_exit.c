@@ -45,7 +45,7 @@ int main(void)
     scb.SHCSR = SCB_SHCSR_PENDSVACT_Msk;
     section_task_irq_exit_request();
     assert(requests == 0u);
-    /* A new task gets its complete slice after exception return. */
+    /* The next global window must not inherit a duplicate expiry request. */
     task_last_switch_tick        = 100u;
     scb.SHCSR                    = 0u;
     section_testbench_time_100us = 109u;

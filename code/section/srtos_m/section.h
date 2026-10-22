@@ -193,12 +193,12 @@ extern volatile section_critical_race_debug_t g_section_critical_race_debug;
 #define SECTION_TASK_SLICE_TICKS 10u
 #endif
 
-#ifndef SECTION_TASK_READY_BURST_MAX
-#define SECTION_TASK_READY_BURST_MAX 16u
+#if (SECTION_TASK_SLICE_TICKS == 0u)
+#error "SECTION_TASK_SLICE_TICKS must be greater than zero."
 #endif
 
 #ifndef SECTION_CRITICAL_USE_PRIMASK
-#define SECTION_CRITICAL_USE_PRIMASK 0u
+#define SECTION_CRITICAL_USE_PRIMASK 1u
 #endif
 
 #ifndef SECTION_CRITICAL_RACE_PROBE_ENABLE

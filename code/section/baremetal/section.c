@@ -451,9 +451,8 @@ void section_runtime_reset(void)
 
 static void task_schedule_next(reg_task_t *task, uint32_t elapsed)
 {
-    const uint32_t periods_elapsed = elapsed / task->t_period;
-
-    task->time_last += periods_elapsed * task->t_period;
+    /* Keep phase after a short delay; resynchronise after two or more periods. */
+    task->time_last += (elapsed - task->t_period < task->t_period) ? task->t_period : elapsed;
 }
 
 static void task_activate_if_due(reg_task_t *task, uint32_t now)
