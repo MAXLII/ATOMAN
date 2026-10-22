@@ -10,7 +10,7 @@ foreach ($include in @('code/dbg','code/section/baremetal','code/section','code/
     $flags += '-I' + (Join-Path $baseRoot $include)
 }
 $core = Join-Path $baseRoot 'code/dbg/realtime_scope.c'
-foreach ($test in @('test_realtime_scope','test_service')) {
+foreach ($test in @('test_realtime_scope','test_service','test_frame_slots')) {
     $sources = @($core,(Join-Path $PSScriptRoot ($test + '.c')))
     $testFlags = $flags
     if ($test -eq 'test_service') {
