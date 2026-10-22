@@ -3,7 +3,7 @@
  * @file bsp_wifi.h
  * @brief ESP32-C5 radio ownership and nonblocking reconnect interface.
  * @details Part of the base project. One application task owns every public call.
- *          SDK event tasks own netif updates; status is queried from SDK objects.
+ *          SDK events publish atomic connection state; polling reads cached netif data.
  *          Credentials are kept in RAM. No protocol, shared RAM or firmware loader.
  * @author Max.Li
  * @date 2026-10-21
@@ -15,33 +15,6 @@
 #define BSP_WIFI_H
 #include <stdint.h>
 #include <stdbool.h>
-
-#define BSP_WIFI_CHANNEL_CONTROL 0u
-#define BSP_WIFI_CHANNEL_UPLOAD  1u
-typedef uint32_t (*bsp_wifi_packet_read_t)(uint8_t *p_data, uint32_t capacity);
-typedef struct bsp_wifi_channel_status
-{
-    bool connected;
-    uint32_t session;
-    uint32_t error;
-} bsp_wifi_channel_status_t;
-typedef struct
-{
-    uint32_t max_poll_gap_us; /**< Longest interval between cooperative endpoint polls. */
-    uint32_t max_write_us;    /**< Longest SDK socket write call. */
-    uint32_t tx_bytes;        /**< Bytes accepted by the socket in this session. */
-    uint32_t backpressure;    /**< Writes postponed by temporary socket backpressure. */
-} bsp_wifi_debug_t;
-extern volatile bsp_wifi_debug_t g_bsp_wifi_debug[2]; /**< Endpoint diagnostics for ELF observation. */
-/** Configure a TCP endpoint once, from task/init context. A non-NULL packet source
- *  makes it upload-only; BSP copies packets and retains partial-send tails. */
-bool bsp_wifi_channel_configure(uint8_t channel, uint16_t port, bsp_wifi_packet_read_t p_read);
-/** Bounded, nonblocking progress for both TCP endpoints. One SECTION task owns calls. */
-void bsp_wifi_channel_poll(void);
-void bsp_wifi_channel_reset(uint8_t channel);
-void bsp_wifi_channel_status_get(uint8_t channel, bsp_wifi_channel_status_t *p_status);
-int32_t bsp_wifi_channel_read(uint8_t channel, uint8_t *p_data, uint32_t capacity);
-int32_t bsp_wifi_channel_write(uint8_t channel, const uint8_t *p_data, uint32_t length);
 
 typedef enum
 {
@@ -63,7 +36,7 @@ typedef struct bsp_wifi_status
     BSP_WIFI_MODE_E mode; /**< Successfully started mode, or OFF. */
     uint32_t ready;       /**< 1 when interface has IPv4 and STA is associated. */
     uint32_t ipv4_be;     /**< IPv4 address in network byte order; 0 when not ready. */
-    int32_t rssi_dbm;     /**< Current STA signal strength; 0 when unavailable/AP. */
+    int32_t rssi_dbm;     /**< Last explicit STA diagnostic signal strength; 0 when unavailable/AP. */
     int32_t error;        /**< Last setup, query or reconnect ESP-IDF error. */
 } bsp_wifi_status_t;
 
@@ -79,10 +52,14 @@ int32_t bsp_wifi_mac_get(uint8_t p_mac[6]);
 int32_t bsp_wifi_start(const bsp_wifi_config_t *p_config);
 /** @return ESP_OK or ESP-IDF error. Sockets are separately owned by the caller. */
 int32_t bsp_wifi_stop(void);
-/** @brief Refresh status and retry disconnected STA at most once per 5 s.
+/** @brief Read event/netif state and retry disconnected STA at most once per 5 s.
  * @return Latest ESP-IDF error, or ESP_OK. Call periodically from the owner task.
  */
 int32_t bsp_wifi_poll(void);
+/** @brief Explicit RSSI diagnostic; may wait for the Wi-Fi task. Never call from periodic transport work.
+ * @return ESP_OK or SDK error. Owner task must hold its external SDK guard.
+ */
+int32_t bsp_wifi_refresh_rssi(void);
 /** @param p_status Destination for the most recent poll snapshot. */
 void bsp_wifi_status_get(bsp_wifi_status_t *p_status);
 #endif /* BSP_WIFI_H */

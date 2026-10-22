@@ -1,5 +1,8 @@
 get_filename_component(BASE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/private")
+set(BASE_SCOPE_QUEUE_BYTES 16384 CACHE STRING "Internal scope sample queue size in bytes")
+set(BASE_SCOPE_BYTE_BUDGET 1700000 CACHE STRING "Scope upload budget in bytes per second")
+set(BASE_WIFI_UPLOAD_BYTES 3072 CACHE STRING "Wi-Fi upload staging size in bytes")
 set(BASE_SOURCES
     "${BASE_ROOT}/code/section/baremetal/section.c"
     "${BASE_ROOT}/code/data_source/comm/comm.c"
@@ -23,21 +26,25 @@ set(BASE_SOURCES
     "${BASE_ROOT}/code/business/demo/demo_perf.c"
     "${BASE_ROOT}/code/business/demo/demo_realtime_scope.c"
     "${BASE_ROOT}/code/data_pool/demo/demo_data_pool.c")
+set(APP_SOURCES
+    "${BASE_ROOT}/code/business/demo/esp32c5/demo_comm.c"
+    "${BASE_ROOT}/code/business/demo/esp32c5/wifi_demo.c"
+    "${BASE_ROOT}/code/business/demo/esp32c5/demo_scope.c")
 set(BSP_SOURCES
     "../bsp/bsp_usart.c" "../bsp/bsp_wifi.c" "../bsp/bsp_wifi_socket.c"
-    "../bsp/bsp_wifi_channels.c" "../bsp/bsp_comm.c" "../bsp/bsp_system.c" "../bsp/bsp_timer.c")
+    "../bsp/bsp_wifi_channels.c" "../bsp/bsp_comm.c" "../bsp/bsp_system.c" "../bsp/bsp_timer.c" "../bsp/comm_discovery.c"
+)
 set(INTERFACE_SOURCES
     "${BASE_ROOT}/code/interface/demo/esp32c5/comm_link.c"
-    "${BASE_ROOT}/code/interface/demo/esp32c5/comm_discovery.c"
-    "${BASE_ROOT}/code/interface/demo/esp32c5/wifi_demo.c"
+    "${BASE_ROOT}/code/interface/demo/esp32c5/wifi_interface.c"
     "${BASE_ROOT}/code/interface/demo/esp32c5/platform_bindings.c"
     "${BASE_ROOT}/code/interface/demo/esp32c5/realtime_scope_bindings.c")
-idf_component_register(SRCS ${BASE_SOURCES} ${BSP_SOURCES} ${INTERFACE_SOURCES} "../src/app_main.c"
+idf_component_register(SRCS ${BASE_SOURCES} ${APP_SOURCES} ${BSP_SOURCES} ${INTERFACE_SOURCES} "../src/app_main.c"
     INCLUDE_DIRS "${CMAKE_BINARY_DIR}/private" "../inc" "../bsp"
         "${BASE_ROOT}/code/section/baremetal" "${BASE_ROOT}/code/section"
         "${BASE_ROOT}/code/dbg" "${BASE_ROOT}/code/lib"
         "${BASE_ROOT}/code/data_source/comm" "${BASE_ROOT}/code/interface/demo/esp32c5"
-        "${BASE_ROOT}/code/business/demo" "${BASE_ROOT}/code/data_pool/demo"
+        "${BASE_ROOT}/code/business/demo/esp32c5" "${BASE_ROOT}/code/business/demo" "${BASE_ROOT}/code/data_pool/demo"
     REQUIRES esp_driver_usb_serial_jtag esp_driver_gptimer esp_app_format esp_wifi esp_netif esp_timer esp_system lwip vfs
     LDFRAGMENTS "section.lf" WHOLE_ARCHIVE)
 target_compile_features(${COMPONENT_LIB} PUBLIC c_std_11)
@@ -53,6 +60,14 @@ foreach(sdk_component IN LISTS sdk_components)
     endif()
 endforeach()
 target_compile_definitions(${COMPONENT_LIB} PUBLIC PLATFORM_ESP32C5=1 TOOLCHAIN_GCC=1 REALTIME_SCOPE_ENABLE=1 DEMO_REALTIME_SCOPE_ENABLE=1)
+target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    DEMO_TASK_DEAD_LOOP_ENABLE=0
+    BASE_SCOPE_QUEUE_BYTES=${BASE_SCOPE_QUEUE_BYTES}
+    BASE_SCOPE_BYTE_BUDGET=${BASE_SCOPE_BYTE_BUDGET}
+    BSP_WIFI_UPLOAD_BUFFER_SIZE=${BASE_WIFI_UPLOAD_BYTES})
+# IDF headers use GNU asm; keep SDK-facing adapters on GNU C11 and portable sources on C11.
+set_source_files_properties(${BASE_SOURCES} ${APP_SOURCES} ${INTERFACE_SOURCES} PROPERTIES COMPILE_OPTIONS "-std=c11")
 target_compile_options(${COMPONENT_LIB} PRIVATE
+    $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
     -Wall -Wextra -Werror -Wpedantic -Wconversion -Wsign-conversion
     -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wundef)

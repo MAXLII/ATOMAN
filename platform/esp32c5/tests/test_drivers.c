@@ -27,7 +27,15 @@ static uint32_t destroyed;      /**< Number of retired netif resources. */
 static uint32_t connections;    /**< Association requests, including retries. */
 static int64_t now_us;          /**< Deterministic monotonic clock. */
 static bool associated;         /**< Fake association state. */
-static bool reset_called;       /**< SDK reset invocation observed by the host. */
+static uint32_t ap_queries;     /**< Blocking radio RPCs, forbidden in periodic polling. */
+static uint32_t driver_deinitializations;
+static uint32_t event_unregistrations;
+static bool fail_ip_registration;
+static esp_event_handler_t wifi_handler;
+static esp_event_handler_t ip_handler;
+const char fake_wifi_event = 'w';
+const char fake_ip_event   = 'i';
+static bool reset_called; /**< SDK reset invocation observed by the host. */
 static uint32_t interrupt_mask = 0xA5u;
 static esp_app_desc_t descriptor;
 uint8_t _data_start[64], _bss_end[1];
@@ -59,6 +67,36 @@ esp_err_t esp_event_loop_create_default(void)
 {
     return ESP_ERR_INVALID_STATE;
 }
+esp_err_t esp_event_handler_register(esp_event_base_t base,
+                                     int32_t id,
+                                     esp_event_handler_t handler,
+                                     void *p_context)
+{
+    assert(    id == ESP_EVENT_ANY_ID
+            && handler != NULL
+            && p_context == NULL);
+
+    if (base == WIFI_EVENT)
+        wifi_handler = handler;
+    else
+    {
+        assert(base == IP_EVENT);
+
+        if (fail_ip_registration)
+            return ESP_FAIL;
+        ip_handler = handler;
+    }
+    return ESP_OK;
+}
+esp_err_t esp_event_handler_unregister(esp_event_base_t base, int32_t id, esp_event_handler_t handler)
+{
+    assert(    base == WIFI_EVENT
+            && id == ESP_EVENT_ANY_ID
+            && handler == wifi_handler);
+    wifi_handler = NULL;
+    ++event_unregistrations;
+    return ESP_OK;
+}
 esp_netif_t *esp_netif_create_default_wifi_sta(void)
 {
     return &station;
@@ -76,6 +114,11 @@ esp_err_t esp_wifi_init(const wifi_init_config_t *p_config)
 {
     assert(p_config->nvs_enable == 0);
     return init_error;
+}
+esp_err_t esp_wifi_deinit(void)
+{
+    ++driver_deinitializations;
+    return ESP_OK;
 }
 esp_err_t esp_wifi_stop(void)
 {
@@ -115,6 +158,7 @@ esp_err_t esp_wifi_connect(void)
 }
 esp_err_t esp_wifi_sta_get_ap_info(wifi_ap_record_t *p_record)
 {
+    ++ap_queries;
     p_record->rssi = -42;
     return associated == true ? ESP_OK : ESP_FAIL;
 }
@@ -181,6 +225,16 @@ esp_err_t esp_wifi_get_mac(int interface, uint8_t p_mac[6])
 }
 
 /** Record the SDK reset request without terminating the host test. */
+size_t heap_caps_get_free_size(uint32_t caps)
+{
+    assert(caps == (MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    return 1048576u;
+}
+size_t heap_caps_get_minimum_free_size(uint32_t caps)
+{
+    assert(caps == (MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    return 524288u;
+}
 void esp_restart(void)
 {
     reset_called = true;
@@ -197,6 +251,8 @@ int main(void)
     ++now_us;
     assert(bsp_system_tick_100us_get() == 1u);
     now_us = 0;
+    assert(bsp_system_internal_heap_free() == 1048576u);
+    assert(bsp_system_internal_heap_minimum() == 524288u);
     bsp_system_reset();
     assert(reset_called);
     uint32_t saved = bsp_system_critical_enter();
@@ -236,7 +292,15 @@ int main(void)
     assert(bsp_wifi_start(&config) == ESP_ERR_INVALID_STATE);
     assert(bsp_wifi_init() == ESP_FAIL);
     assert(destroyed == 2u);
-    init_error = ESP_OK;
+    init_error           = ESP_OK;
+    fail_ip_registration = true;
+    assert(bsp_wifi_init() == ESP_FAIL);
+    assert(    destroyed == 4u
+            && driver_deinitializations == 1u
+            && event_unregistrations == 1u);
+    assert(    wifi_handler == NULL
+            && ip_handler == NULL);
+    fail_ip_registration = false;
     assert(bsp_wifi_init() == ESP_OK);
     assert(bsp_wifi_init() == ESP_OK);
     assert(bsp_wifi_start(NULL) == ESP_ERR_INVALID_ARG);
@@ -258,17 +322,66 @@ int main(void)
     now_us = INT64_C(5000000);
     assert(    bsp_wifi_poll() == ESP_OK
             && connections == 2u);
+    assert(ap_queries == 0u);
     associated = true;
+    wifi_handler(NULL, WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, NULL);
+    assert(bsp_wifi_poll() == ESP_OK);
+    bsp_wifi_status_get(&snapshot);
+    assert(snapshot.ready == 0u); /* Association alone must not publish stale DHCP state. */
+    ip_event_got_ip_t ip_event = {.esp_netif = &ap};
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event);
+    assert(bsp_wifi_poll() == ESP_OK);
+    bsp_wifi_status_get(&snapshot);
+    assert(snapshot.ready == 0u); /* Ignore other netifs. */
+    ip_event.esp_netif = &station;
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event);
     assert(bsp_wifi_poll() == ESP_OK);
     bsp_wifi_status_get(&snapshot);
     assert(    snapshot.ready == 1u
-            && snapshot.rssi_dbm == -42
+            && snapshot.rssi_dbm == 0
             && snapshot.ipv4_be != 0u);
+    assert(ap_queries == 0u);
+    assert(    bsp_wifi_refresh_rssi() == ESP_OK
+            && ap_queries == 1u);
+    bsp_wifi_status_get(&snapshot);
+    assert(snapshot.rssi_dbm == -42);
+
+    for (uint32_t count = 0u; count < 1000u; ++count)
+        assert(bsp_wifi_poll() == ESP_OK);
+    assert(ap_queries == 1u); /* Periodic work preserves cached RSSI without another RPC. */
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_LOST_IP, NULL);
+    assert(bsp_wifi_poll() == ESP_OK);
+    bsp_wifi_status_get(&snapshot);
+    assert(    snapshot.ready == 0u
+            && snapshot.ipv4_be == 0u
+            && connections == 2u);
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event);
+    assert(bsp_wifi_poll() == ESP_OK);
+    bsp_wifi_status_get(&snapshot);
+    assert(snapshot.ready == 1u);
     associated = false;
+    wifi_handler(NULL, WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, NULL);
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event); /* Stale IP cannot revive a disconnected STA. */
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_LOST_IP, NULL);
     assert(bsp_wifi_poll() == ESP_OK);
     bsp_wifi_status_get(&snapshot);
     assert(    snapshot.ready == 0u
             && snapshot.ipv4_be == 0u);
+    assert(    bsp_wifi_refresh_rssi() == ESP_OK
+            && ap_queries == 1u);
+    now_us = INT64_C(10000000);
+    assert(    bsp_wifi_poll() == ESP_OK
+            && connections == 3u);
+    associated = true;
+    wifi_handler(NULL, WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, NULL);
+    ip_handler(NULL, IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event);
+    assert(bsp_wifi_poll() == ESP_OK);
+    bsp_wifi_status_get(&snapshot);
+    assert(snapshot.ready == 1u);
+    wifi_handler(NULL, WIFI_EVENT, WIFI_EVENT_STA_STOP, NULL);
+    assert(bsp_wifi_poll() == ESP_OK);
+    bsp_wifi_status_get(&snapshot);
+    assert(snapshot.ready == 0u);
     stop_error = ESP_FAIL;
     assert(bsp_wifi_stop() == ESP_FAIL);
     bsp_wifi_status_get(&snapshot);
@@ -288,6 +401,8 @@ int main(void)
     assert(bsp_wifi_poll() == ESP_OK);
     bsp_wifi_status_get(&snapshot);
     assert(snapshot.ready == 1u);
+    assert(    bsp_wifi_refresh_rssi() == ESP_OK
+            && ap_queries == 1u);
     assert(bsp_wifi_stop() == ESP_OK);
     config.mode    = BSP_WIFI_STA;
     config.channel = 157u;
@@ -297,6 +412,6 @@ int main(void)
     bsp_wifi_status_get(&snapshot);
     assert(snapshot.mode == BSP_WIFI_OFF);
     puts(
-        "PASS production Wi-Fi validation, init rollback, band selection, retry deadline, status, stop failure; USB handover, bounds and partial TX");
+        "PASS production Wi-Fi event state, DHCP loss/recovery, RPC-free periodic poll, explicit RSSI, init rollback, band selection, retry deadline, stop failure; USB handover, bounds and partial TX");
     return 0;
 }

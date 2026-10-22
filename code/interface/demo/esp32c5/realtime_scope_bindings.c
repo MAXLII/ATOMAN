@@ -12,18 +12,14 @@
  *          Copyright (c) 2026 Max.Li. Licensed under the MIT License; see LICENSE.
  */
 #include "realtime_scope_service.h"
+#include "realtime_scope_bindings.h"
 #include "bsp_system.h"
 #include "bsp_timer.h"
 #include "bsp_wifi.h"
-#include "esp_attr.h"
+#include "bsp_wifi_channels.h"
 #include <stddef.h>
 
 static uint32_t saved_interrupts;
-#if defined(CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY)
-EXT_RAM_BSS_ATTR static uint8_t sample_queue[4194304]; /**< About 3.6 s at 8 x 32-bit channels, tolerating bounded Wi-Fi retransmission stalls. */
-#else
-static uint8_t sample_queue[65536]; /**< Fallback resource budget for boards without external RAM. */
-#endif
 static void lock(void)
 {
     saved_interrupts = bsp_system_critical_enter();
@@ -34,7 +30,9 @@ static void unlock(void)
 }
 static void stop(void)
 {
+    bsp_system_runtime_enter();
     bsp_wifi_channel_reset(BSP_WIFI_CHANNEL_UPLOAD);
+    bsp_system_runtime_exit();
 }
 static bool connected(void)
 {
@@ -54,13 +52,12 @@ static uint32_t fault(void)
     bsp_wifi_channel_status_get(BSP_WIFI_CHANNEL_UPLOAD, &status);
     return status.error;
 }
-static void bind_service(void)
+bool realtime_scope_bindings_bind(uint8_t *p_queue, uint32_t capacity)
 {
-    static bool bound;
-
-    if (bound)
-        return;
-    const realtime_scope_port_t binding = {.byte_budget      = 2000000u,
+    if (    p_queue == NULL
+         || capacity == 0u)
+        return false;
+    const realtime_scope_port_t binding = {.byte_budget      = BASE_SCOPE_BYTE_BUDGET,
                                            .p_lock           = lock,
                                            .p_unlock         = unlock,
                                            .p_stop           = stop,
@@ -72,11 +69,11 @@ static void bind_service(void)
 
     if (bsp_wifi_channel_configure(BSP_WIFI_CHANNEL_UPLOAD, 9001u, realtime_scope_service_read))
     {
-        bound = realtime_scope_service_bind(&binding, sample_queue, sizeof(sample_queue));
+        bool bound = realtime_scope_service_bind(&binding, p_queue, capacity);
 
         if (bound)
             (void)realtime_scope_service_source_set(bsp_timer_frequency_get());
+        return bound;
     }
+    return false;
 }
-REG_INIT(2, bind_service)
-REG_TASK(1, bind_service)

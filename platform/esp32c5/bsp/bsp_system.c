@@ -15,18 +15,28 @@
 #include "esp_system.h"
 #include "esp_cpu.h"
 #include "esp_app_desc.h"
+#include "esp_attr.h"
+#include "esp_heap_caps.h"
 #include <stddef.h>
 #include <string.h>
 
 extern uint8_t _data_start[];
 extern uint8_t _bss_end[];
-uint32_t bsp_system_critical_enter(void)
+size_t bsp_system_internal_heap_free(void)
+{
+    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+}
+size_t bsp_system_internal_heap_minimum(void)
+{
+    return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+}
+uint32_t IRAM_ATTR bsp_system_critical_enter(void)
 {
     uint32_t enabled = esp_cpu_intr_get_enabled_mask();
     esp_cpu_intr_disable(UINT32_MAX);
     return enabled;
 }
-void bsp_system_critical_exit(uint32_t state)
+void IRAM_ATTR bsp_system_critical_exit(uint32_t state)
 {
     esp_cpu_intr_enable(state);
 }
@@ -47,15 +57,25 @@ const volatile void *bsp_system_sample_address(uint32_t address, uint8_t size)
     return (const volatile void *)(uintptr_t)address;
 }
 
-uint32_t bsp_system_tick_100us_get(void)
+uint32_t IRAM_ATTR bsp_system_tick_100us_get(void)
 {
     return (uint32_t)((uint64_t)esp_timer_get_time() / 100u);
 }
-uint32_t bsp_system_time_us_get(void)
+uint32_t IRAM_ATTR bsp_system_time_us_get(void)
 {
     return (uint32_t)(uint64_t)esp_timer_get_time();
 }
 void bsp_system_reset(void)
 {
     esp_restart();
+}
+
+void __attribute__((weak)) bsp_system_runtime_enter(void)
+{
+    /* Cooperative applications cannot switch tasks inside an SDK transaction. */
+}
+
+void __attribute__((weak)) bsp_system_runtime_exit(void)
+{
+    /* A scheduler-specific BSP may override this balanced boundary. */
 }

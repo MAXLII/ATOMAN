@@ -3,8 +3,8 @@
  * @file bsp_wifi.c
  * @brief ESP-IDF Wi-Fi/netif adapter with task-owned reconnect polling.
  * @details Part of the base project. One caller owns configuration and snapshots.
- *          Default SDK event handlers maintain DHCP/netif. No application callbacks.
- *          Setup may allocate through SDK; poll never waits for association/DHCP.
+ *          SDK event callbacks publish atomic association/IP state; the owner polls it.
+ *          RSSI queries are explicit because the SDK performs a synchronous Wi-Fi RPC.
  * @author Max.Li
  * @date 2026-10-21
  * @version 1.0.0
@@ -14,6 +14,7 @@
 #include "bsp_wifi.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdatomic.h>
 #include <string.h>
 #include "esp_event.h"
 #include "esp_netif.h"
@@ -23,9 +24,54 @@
 #define BSP_WIFI_RETRY_US INT64_C(5000000) /**< Minimum reconnect spacing. */
 static esp_netif_t *p_station;             /**< SDK-owned STA interface after init. */
 static esp_netif_t *p_access_point;        /**< SDK-owned AP interface after init. */
-static bool initialized;         /**< Driver resources have been acquired. */
-static bsp_wifi_status_t status; /**< Only the owner task writes this snapshot. */
-static int64_t last_connect_us;  /**< Last association request in monotonic microseconds. */
+static bool initialized;          /**< Driver resources have been acquired. */
+static bsp_wifi_status_t status;  /**< Only the owner task writes this snapshot. */
+static int64_t last_connect_us;   /**< Last association request in monotonic microseconds. */
+static atomic_uint station_state; /**< SDK event task publishes 0=down, 1=associated, 2=IPv4 ready. */
+_Static_assert(ATOMIC_INT_LOCK_FREE == 2, "Wi-Fi event state requires lock-free unsigned atomics");
+
+/** @brief Publish SDK events without calling the radio or modifying owner snapshots. */
+static void wifi_event(void *p_context,
+                       esp_event_base_t base,
+                       int32_t id,
+                       void *p_data)
+{
+    (void)p_context;
+
+    if (base == WIFI_EVENT)
+    {
+        if (id == WIFI_EVENT_STA_CONNECTED)
+            atomic_store_explicit(&station_state, 1u, memory_order_release);
+        else if (    id == WIFI_EVENT_STA_DISCONNECTED
+                  || id == WIFI_EVENT_STA_STOP)
+            atomic_store_explicit(&station_state, 0u, memory_order_release);
+    }
+    else if (base == IP_EVENT)
+    {
+        if (    id == IP_EVENT_STA_GOT_IP
+             && p_data != NULL)
+        {
+            const ip_event_got_ip_t *p_event = p_data;
+            unsigned expected                = 1u;
+
+            if (p_event->esp_netif == p_station)
+                (void)atomic_compare_exchange_strong_explicit(&station_state,
+                                                              &expected,
+                                                              2u,
+                                                              memory_order_release,
+                                                              memory_order_relaxed);
+        }
+        else if (id == IP_EVENT_STA_LOST_IP)
+        {
+            unsigned expected = 2u;
+            (void)atomic_compare_exchange_strong_explicit(&station_state,
+                                                          &expected,
+                                                          1u,
+                                                          memory_order_release,
+                                                          memory_order_relaxed);
+        }
+    }
+}
 
 int32_t bsp_wifi_mac_get(uint8_t p_mac[6])
 {
@@ -58,6 +104,8 @@ int32_t bsp_wifi_init(void)
 {
     esp_err_t result          = ESP_OK; /* SDK setup result. */
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT(); /* SDK allocation policy. */
+    bool driver_ready         = false; /* Roll back only acquired SDK resources. */
+    bool wifi_events_ready    = false;
 
     if (initialized == true)
     {
@@ -88,10 +136,26 @@ int32_t bsp_wifi_init(void)
     {
         config.nvs_enable = 0; /* Never persist user credentials or erase NVS on failure. */
         result            = esp_wifi_init(&config);
+        driver_ready      = result == ESP_OK;
     }
+
+    if (result == ESP_OK)
+    {
+        result            = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event, NULL);
+        wifi_events_ready = result == ESP_OK;
+    }
+
+    if (result == ESP_OK)
+        result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, wifi_event, NULL);
 
     if (result != ESP_OK)
     {
+        if (wifi_events_ready)
+            (void)esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event);
+
+        if (driver_ready)
+            (void)esp_wifi_deinit();
+
         if (p_station != NULL)
         {
             esp_netif_destroy_default_wifi(p_station);
@@ -120,6 +184,7 @@ int32_t bsp_wifi_stop(void)
         if (result == ESP_OK)
         {
             status = (bsp_wifi_status_t){0};
+            atomic_store_explicit(&station_state, 0u, memory_order_release);
         }
     }
     status.error = result;
@@ -236,13 +301,11 @@ int32_t bsp_wifi_start(const bsp_wifi_config_t *p_config)
 
 int32_t bsp_wifi_poll(void)
 {
-    esp_netif_ip_info_t info      = {0};            /* SDK IPv4 snapshot. */
-    wifi_ap_record_t access_point = {0};            /* Current STA association. */
-    esp_netif_t *p_netif          = p_access_point; /* Select the started mode's netif. */
-    int64_t now_us                = esp_timer_get_time(); /* Monotonic retry deadline. */
-    status.ready                  = 0u;
-    status.ipv4_be                = 0u;
-    status.rssi_dbm               = 0;
+    esp_netif_ip_info_t info = {0};            /* SDK IPv4 snapshot. */
+    esp_netif_t *p_netif     = p_access_point; /* Select the started mode's netif. */
+    int64_t now_us           = esp_timer_get_time(); /* Monotonic retry deadline. */
+    status.ready             = 0u;
+    status.ipv4_be           = 0u;
 
     if (status.mode == BSP_WIFI_OFF)
     {
@@ -251,10 +314,13 @@ int32_t bsp_wifi_poll(void)
 
     if (status.mode == BSP_WIFI_STA)
     {
-        p_netif = p_station;
+        unsigned state = atomic_load_explicit(&station_state, memory_order_acquire);
+        p_netif        = p_station;
 
-        if (esp_wifi_sta_get_ap_info(&access_point) != ESP_OK)
+        if (state == 0u)
         {
+            status.rssi_dbm = 0;
+
             if ((now_us - last_connect_us) >= BSP_WIFI_RETRY_US)
             {
                 last_connect_us = now_us;
@@ -262,7 +328,9 @@ int32_t bsp_wifi_poll(void)
             }
             return status.error;
         }
-        status.rssi_dbm = access_point.rssi;
+
+        if (state != 2u)
+            return status.error;
     }
     status.error = esp_netif_get_ip_info(p_netif, &info);
 
@@ -275,10 +343,35 @@ int32_t bsp_wifi_poll(void)
     return status.error;
 }
 
+int32_t bsp_wifi_refresh_rssi(void)
+{
+    wifi_ap_record_t access_point = {0}; /* Explicit diagnostic, not periodic transport work. */
+
+    status.rssi_dbm = 0;
+
+    if (    status.mode != BSP_WIFI_STA
+         || atomic_load_explicit(&station_state, memory_order_acquire) == 0u)
+        return ESP_OK;
+
+    esp_err_t result = esp_wifi_sta_get_ap_info(&access_point);
+
+    if (result == ESP_OK)
+        status.rssi_dbm = access_point.rssi;
+    status.error = result;
+    return result;
+}
+
 void bsp_wifi_status_get(bsp_wifi_status_t *p_status)
 {
     if (p_status != NULL)
     {
         *p_status = status;
+
+        if (    p_status->mode == BSP_WIFI_STA
+             && atomic_load_explicit(&station_state, memory_order_acquire) != 2u)
+        {
+            p_status->ready   = 0u;
+            p_status->ipv4_be = 0u;
+        }
     }
 }

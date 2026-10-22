@@ -5,7 +5,7 @@ import json
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADERS = ["esp_event.h", "esp_netif.h", "esp_timer.h", "esp_system.h", "esp_wifi.h", "esp_cpu.h", "esp_app_desc.h",
+HEADERS = ["esp_event.h", "esp_netif.h", "esp_timer.h", "esp_system.h", "esp_wifi.h", "esp_cpu.h", "esp_app_desc.h", "esp_attr.h", "esp_heap_caps.h",
            "driver/usb_serial_jtag.h", "driver/usb_serial_jtag_vfs.h"]
 
 
@@ -18,7 +18,10 @@ def main():
     for name in HEADERS:
         path = out / "sdk" / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('#include "fake_sdk.h"\n', encoding="utf-8")
+        content = '#include "fake_sdk.h"\n'
+        if name == "esp_attr.h":
+            content += "#ifndef IRAM_ATTR\n#define IRAM_ATTR\n#endif\n"
+        path.write_text(content, encoding="utf-8")
     command = [args.cc, "-std=c11", "-Wall", "-Wextra", "-Werror", "-Wpedantic", "-Wconversion",
                "-Wsign-conversion", "-Wshadow", "-Wcast-align", "-Wstrict-prototypes",
                "-Wmissing-prototypes", "-Wundef", "-I" + str(ROOT / "bsp"),
@@ -43,18 +46,22 @@ def main():
     socket_errno = out / "sdk/socket_errno.h"
     socket_errno.write_text("#include <errno.h>\n#ifndef EWOULDBLOCK\n#define EWOULDBLOCK EAGAIN\n#endif\n"
         "#ifndef ENOTCONN\n#define ENOTCONN 107\n#endif\n#ifndef ECONNRESET\n#define ECONNRESET 104\n#endif\n", encoding="utf-8")
-    transport_command = command[:command.index(str(ROOT / "bsp/bsp_wifi.c"))] + [
+    transport_common = command[:command.index(str(ROOT / "bsp/bsp_wifi.c"))] + [
         "-include", str(socket_errno),
         "-I" + str(base / "code/interface/demo/esp32c5"), str(ROOT / "bsp/bsp_comm.c"), str(ROOT / "bsp/bsp_wifi_channels.c"),
-        str(base / "code/interface/demo/esp32c5/comm_discovery.c"), str(ROOT / "tests/test_comm_transport.c"),
-        "-o", str(out / "test_comm_transport.exe")]
-    subprocess.run(transport_command, check=True)
-    transport_run = subprocess.run([str(out / "test_comm_transport.exe")], check=True, capture_output=True, text=True)
-    print(transport_run.stdout, end="")
+        str(ROOT / "bsp/comm_discovery.c"), str(ROOT / "tests/test_comm_transport.c")]
+    transport_variants = []
+    for capacity in (2500, 3072):
+        executable = out / ("test_comm_transport.exe" if capacity == 2500 else f"test_comm_transport_{capacity}.exe")
+        transport_command = transport_common + [f"-DBSP_WIFI_UPLOAD_BUFFER_SIZE={capacity}u", "-o", str(executable)]
+        subprocess.run(transport_command, check=True)
+        transport_run = subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+        print(transport_run.stdout, end="")
+        transport_variants.append({"capacity": capacity, "command": transport_command, "output": transport_run.stdout})
     (out / "result.json").write_text(json.dumps({"passed": True, "hardware_tested": False,
         "command": command, "output": run.stdout, "directory_command": directory_command,
-        "directory_output": directory_run.stdout, "transport_command": transport_command,
-        "transport_output": transport_run.stdout}, indent=2) + "\n", encoding="utf-8")
+        "directory_output": directory_run.stdout, "transport_command": transport_variants[0]["command"],
+        "transport_output": transport_variants[0]["output"], "transport_variants": transport_variants}, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

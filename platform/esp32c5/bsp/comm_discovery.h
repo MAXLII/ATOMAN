@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 /**
  * @file comm_discovery.h
- * @brief Demo Interface entry points for device discovery and UDP echo.
- * @details Part of base. Called by the platform main task above BSP byte transport.
+ * @brief BSP discovery and UDP echo service driven by CommLink.
+ * @details Part of base. Bootstrap provides identity; CommLink drives BSP transport polling.
  *          Firmware identity is supplied by the platform without exposing SDK types.
  * @author Max.Li
  * @date 2026-10-22

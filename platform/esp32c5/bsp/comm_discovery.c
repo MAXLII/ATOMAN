@@ -2,7 +2,7 @@
 /**
  * @file comm_discovery.c
  * @brief FRAME discovery replies and the board UDP echo service.
- * @details Part of base. Application messages stay above the BSP byte transport.
+ * @details Part of the ESP32-C5 BSP, serviced by CommLink polling.
  *          One pending datagram is retried on backpressure and cleared on network loss.
  * @author Max.Li
  * @date 2026-10-22

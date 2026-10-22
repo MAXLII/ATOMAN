@@ -10,7 +10,7 @@
  *          Copyright (c) 2026 Max.Li. All rights reserved.
  *          Licensed under the MIT License; see LICENSE in the repository root.
  */
-#include "esp32c5_platform.h"
+#include "app_main.h"
 #include "comm_discovery.h"
 #include "bsp_usart.h"
 #include "bsp_wifi.h"

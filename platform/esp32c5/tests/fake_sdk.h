@@ -15,21 +15,33 @@
 #include <stddef.h>
 #include <stdint.h>
 typedef int32_t esp_err_t;
-#define ESP_OK                     0    /* Successful fake operation. */
-#define ESP_FAIL                   (-1) /* Injected SDK failure. */
-#define ESP_ERR_INVALID_ARG        258  /* Argument error. */
-#define ESP_ERR_INVALID_STATE      259  /* State error. */
-#define ESP_ERR_NO_MEM             257  /* Allocation error. */
-#define ESP_ERR_TIMEOUT            263  /* Expected disconnected USB timeout. */
-#define WIFI_STORAGE_RAM           0    /* No persisted credentials. */
-#define WIFI_MODE_STA              1    /* Station mode. */
-#define WIFI_MODE_AP               2    /* Access-point mode. */
-#define WIFI_IF_STA                0    /* Station interface. */
-#define WIFI_IF_AP                 1    /* Access-point interface. */
-#define WIFI_AUTH_OPEN             0    /* Open network. */
-#define WIFI_AUTH_WPA2_PSK         3    /* WPA2 threshold. */
-#define WIFI_INIT_CONFIG_DEFAULT() {0}  /* Deterministic test initialization. */
-#define WIFI_PS_NONE               0
+typedef const char *esp_event_base_t;
+typedef void (*esp_event_handler_t)(void *p_context, esp_event_base_t base, int32_t id, void *p_data);
+extern const char fake_wifi_event;
+extern const char fake_ip_event;
+#define WIFI_EVENT                  (&fake_wifi_event)
+#define IP_EVENT                    (&fake_ip_event)
+#define ESP_EVENT_ANY_ID            (-1)
+#define WIFI_EVENT_STA_CONNECTED    1
+#define WIFI_EVENT_STA_DISCONNECTED 2
+#define WIFI_EVENT_STA_STOP         3
+#define IP_EVENT_STA_GOT_IP         4
+#define IP_EVENT_STA_LOST_IP        5
+#define ESP_OK                      0    /* Successful fake operation. */
+#define ESP_FAIL                    (-1) /* Injected SDK failure. */
+#define ESP_ERR_INVALID_ARG         258  /* Argument error. */
+#define ESP_ERR_INVALID_STATE       259  /* State error. */
+#define ESP_ERR_NO_MEM              257  /* Allocation error. */
+#define ESP_ERR_TIMEOUT             263  /* Expected disconnected USB timeout. */
+#define WIFI_STORAGE_RAM            0    /* No persisted credentials. */
+#define WIFI_MODE_STA               1    /* Station mode. */
+#define WIFI_MODE_AP                2    /* Access-point mode. */
+#define WIFI_IF_STA                 0    /* Station interface. */
+#define WIFI_IF_AP                  1    /* Access-point interface. */
+#define WIFI_AUTH_OPEN              0    /* Open network. */
+#define WIFI_AUTH_WPA2_PSK          3    /* WPA2 threshold. */
+#define WIFI_INIT_CONFIG_DEFAULT()  {0}  /* Deterministic test initialization. */
+#define WIFI_PS_NONE                0
 typedef struct
 {
     uint8_t app_elf_sha256[32];
@@ -56,6 +68,10 @@ typedef struct
 {
     fake_ip_t ip; /**< Fake IPv4 snapshot. */
 } esp_netif_ip_info_t;
+typedef struct
+{
+    esp_netif_t *esp_netif;
+} ip_event_got_ip_t;
 typedef struct
 {
     int8_t rssi; /**< Test dBm sample. */
@@ -93,10 +109,16 @@ typedef struct
 } usb_serial_jtag_driver_config_t;
 esp_err_t esp_netif_init(void);
 esp_err_t esp_event_loop_create_default(void);
+esp_err_t esp_event_handler_register(esp_event_base_t base,
+                                     int32_t id,
+                                     esp_event_handler_t handler,
+                                     void *p_context);
+esp_err_t esp_event_handler_unregister(esp_event_base_t base, int32_t id, esp_event_handler_t handler);
 esp_netif_t *esp_netif_create_default_wifi_sta(void);
 esp_netif_t *esp_netif_create_default_wifi_ap(void);
 void esp_netif_destroy_default_wifi(esp_netif_t *p_netif);
 esp_err_t esp_wifi_init(const wifi_init_config_t *p_config);
+esp_err_t esp_wifi_deinit(void);
 esp_err_t esp_wifi_get_mac(int interface, uint8_t p_mac[6]);
 esp_err_t esp_wifi_stop(void);
 esp_err_t esp_wifi_set_storage(int storage);
@@ -117,4 +139,8 @@ esp_err_t usb_serial_jtag_driver_uninstall(void);
 esp_err_t usb_serial_jtag_driver_install(usb_serial_jtag_driver_config_t *p_config);
 int usb_serial_jtag_read_bytes(void *p_buffer, uint32_t length, uint32_t ticks);
 int usb_serial_jtag_write_bytes(const void *p_buffer, size_t length, uint32_t ticks);
+#define MALLOC_CAP_INTERNAL 1u
+#define MALLOC_CAP_8BIT     2u
+size_t heap_caps_get_free_size(uint32_t caps);
+size_t heap_caps_get_minimum_free_size(uint32_t caps);
 #endif /* FAKE_SDK_H */

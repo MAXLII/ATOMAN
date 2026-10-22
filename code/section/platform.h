@@ -55,7 +55,8 @@
 #if (defined(PLATFORM_TESTBENCH) + defined(PLATFORM_MATLAB) + defined(PLATFORM_PLECS) + defined(PLATFORM_GD32G553C) \
      + defined(PLATFORM_GD32E507) + defined(PLATFORM_HC32F334) + defined(PLATFORM_HC32F558)                         \
      + defined(PLATFORM_ZYNQ7020) + defined(PLATFORM_APM32F402) + defined(PLATFORM_TMS320F28P55)                    \
-     + defined(PLATFORM_TMS320F280049C) + defined(PLATFORM_STM32F103C8T6) + defined(PLATFORM_ESP32C5)) != 1
+     + defined(PLATFORM_TMS320F280049C) + defined(PLATFORM_STM32F103C8T6) + defined(PLATFORM_ESP32C5)                 \
+     + defined(PLATFORM_ESP32C5_SRTOS)) != 1
 #error "Define exactly one PLATFORM_* identity macro."
 #endif
 
@@ -129,23 +130,24 @@
 /* - SECTION_PORT_FAULT_HOOK: Cortex-M scheduler fault action */
 /* -------------------------------------------------------------------------- */
 
-/* MCU: ESP32-C5, cooperative SECTION on the ESP-IDF main task. */
-#if defined(PLATFORM_ESP32C5)
-#include "esp32c5_platform.h"
-#define SECTION_SYS_TICK platform_tick_100us_get()
-#define SECTION_SYS_TICK_UNIT_US 100u
-#define PLATFORM_PERF_COUNT_UNIT_US 1.0f
+/* MCU: ESP32-C5 hardware bindings shared by bare-metal SECTION and RISC-V SRTOS. */
+#if defined(PLATFORM_ESP32C5) || defined(PLATFORM_ESP32C5_SRTOS)
+#include "platform_bindings.h"
+#define SECTION_RISCV_INITIAL_CAUSE            0x38000000u /* CLIC return to machine mode, previous interrupt level 0. */
+#define SECTION_SYS_TICK                       platform_tick_100us_get()
+#define SECTION_SYS_TICK_UNIT_US               100u
+#define PLATFORM_PERF_COUNT_UNIT_US            1.0f
 #define PLATFORM_PERF_CNT_PER_SECTION_SYS_TICK 100u
-#define PLATFORM_PERF_COUNTER_REFRESH() platform_perf_counter_refresh()
+#define PLATFORM_PERF_COUNTER_REFRESH()        platform_perf_counter_refresh()
 extern uint32_t __section_start;
 extern uint32_t __section_end;
-#define SECTION_START __section_start
-#define SECTION_STOP __section_end
-#define SYSTEM_RESET platform_system_reset()
-#define FUNC_RAM
-#define __LDREXB(p_address) __atomic_load_n((p_address), __ATOMIC_RELAXED)
+#define SECTION_START              __section_start
+#define SECTION_STOP               __section_end
+#define SYSTEM_RESET               platform_system_reset()
+#define FUNC_RAM                   __attribute__((section(".iram1")))
+#define __LDREXB(p_address)        __atomic_load_n((p_address), __ATOMIC_RELAXED)
 #define __STREXB(value, p_address) ((void)(value), (__atomic_test_and_set((p_address), __ATOMIC_ACQUIRE) ? 1u : 0u))
-#define __DMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#define __DMB()                    __atomic_thread_fence(__ATOMIC_SEQ_CST)
 
 /* Host testbench */
 #elif defined(PLATFORM_TESTBENCH)
