@@ -31,6 +31,7 @@
  */
 
 #include "bsp_enet.h"
+#include "bsp_tcp_stream.h"
 #include "bsp_usart.h"
 #include "comm.h"
 #include "comm_addr.h"
@@ -648,6 +649,8 @@ static void service_task(void)
     sys_check_timeouts();
     tcp_transmit_service();
     link_update(now_ms);
+    bsp_tcp_stream_poll(    link_state != 0u
+                         &&!ip4_addr_isany_val(*netif_ip4_addr(&network_interface)));
     g_enet_task_poll_count++;
 }
 
