@@ -146,10 +146,9 @@ static void low_level_init(struct netif *netif)
  * @return ERR_OK if the packet could be sent
  *         an err_t value if the packet couldn't be sent
  *
- * @note Returning ERR_MEM here if a DMA queue of your MAC is full can lead to
- *       strange results. You might consider waiting for space in the DMA queue
- *       to become availale since the stack doesn't retry to send a packet
- *       dropped because of memory failure (except for the TCP timers).
+ * @note DMA ownership is tested once. ERR_MEM leaves a TCP segment in LwIP's
+ *       unsent queue; the owning network task retries tcp_output each pass.
+ *       UDP/control datagrams receive the normal transient send error.
  */
 
 static err_t low_level_output(struct netif *netif, struct pbuf *p)
@@ -160,9 +159,12 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     LWIP_UNUSED_ARG(netif);
 
-    while ((uint32_t)RESET != (dma_current_txdesc->status & ENET_TDES0_DAV))
+    if ((uint32_t)RESET != (dma_current_txdesc->status & ENET_TDES0_DAV))
     {
+        return ERR_MEM;
     }
+    if (p->tot_len > ENET_TXBUF_SIZE)
+        return ERR_BUF;
     buffer = (uint8_t *)(enet_desc_information_get(dma_current_txdesc, TXDESC_BUFFER_1_ADDR));
 
     /* copy frame from pbufs to driver buffers */

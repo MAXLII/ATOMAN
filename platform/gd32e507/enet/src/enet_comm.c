@@ -89,6 +89,8 @@ volatile uint32_t g_enet_tcp_tx_byte_count     = 0u; /* FRAME bytes accepted by 
 volatile uint32_t g_enet_tcp_tx_ack_byte_count = 0u; /* TCP bytes acknowledged and released from the queue. */
 volatile uint32_t g_enet_tcp_tx_drop_count     = 0u; /* Complete FRAME responses dropped before enqueue. */
 volatile uint32_t g_enet_tcp_tx_error_count    = 0u; /* TCP write or flush failures. */
+volatile uint32_t g_enet_tcp_tx_busy_count     = 0u; /* Transient output pressure; queued TCP bytes remain owned. */
+volatile uint32_t g_enet_task_poll_count       = 0u; /* Completed network task passes, including DMA-busy passes. */
 volatile uint32_t g_enet_udp_datagram_count    = 0u; /* Datagrams received by the UDP echo service. */
 volatile uint32_t g_enet_udp_rx_byte_count     = 0u; /* Bytes received by the UDP echo service. */
 volatile uint32_t g_enet_udp_tx_error_count    = 0u; /* UDP echo send failures. */
@@ -354,11 +356,9 @@ static void tcp_transmit_service(void)
 {
     uint16_t submit           = tcp_tx_submit; /* First queued byte not yet owned by LwIP. */
     uint32_t submitted_length = 0u;            /* Bytes submitted during this bounded service pass. */
-    uint8_t output_required   = 0u;            /* Indicates that at least one tcp_write call succeeded. */
     err_t write_status        = ERR_OK;        /* LwIP zero-copy queue result. */
 
-    if (    (p_tcp_connection == NULL) /* No active FRAME TCP client. */
-         || (submit == tcp_tx_head))   /* Every queued byte is already submitted. */
+    if (p_tcp_connection == NULL) /* No active FRAME TCP client. */
     {
         return;
     }
@@ -417,18 +417,21 @@ static void tcp_transmit_service(void)
         submit = (uint16_t)(((uint32_t)submit + (uint32_t)send_length) % ENET_COMM_TCP_TX_RING_SIZE);
         tcp_tx_submit = submit;
         submitted_length += (uint32_t)send_length;
-        output_required = 1u;
     }
 
-    if (output_required == 1u)
-    {
-        write_status = tcp_output(p_tcp_connection);
+    /* A previous output may have met a busy DMA descriptor after tcp_write
+     * accepted all bytes. Retry even without new application data or an ACK. */
+    write_status = tcp_output(p_tcp_connection);
 
-        if (    (write_status != ERR_OK)   /* The queued bytes could not be flushed normally. */
-             && (write_status != ERR_MEM)) /* Temporary descriptor pressure is retried later. */
-        {
-            g_enet_tcp_tx_error_count++;
-        }
+    if (write_status == ERR_MEM)
+    {
+        g_enet_tcp_tx_busy_count++;
+    }
+
+    if (    (write_status != ERR_OK)   /* The queued bytes could not be flushed normally. */
+         && (write_status != ERR_MEM)) /* Temporary descriptor pressure is retried later. */
+    {
+        g_enet_tcp_tx_error_count++;
     }
 }
 
@@ -495,7 +498,13 @@ static uint8_t stack_start(void)
 
     lwip_init();
 
-    if (netif_add(&network_interface, &ip_address, &network_mask, &gateway_address, NULL, ethernetif_init, ethernet_input) == NULL)
+    if (netif_add(&network_interface,
+                  &ip_address,
+                  &network_mask,
+                  &gateway_address,
+                  NULL,
+                  ethernetif_init,
+                  ethernet_input) == NULL)
     {
         bsp_usart_dbg_printf("enet: netif add failed\r\n");
         return 0u;
@@ -639,6 +648,7 @@ static void service_task(void)
     sys_check_timeouts();
     tcp_transmit_service();
     link_update(now_ms);
+    g_enet_task_poll_count++;
 }
 
 REG_INIT(20, service_init)
