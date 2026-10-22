@@ -84,6 +84,7 @@ xvlog.pb
 !/tests/host/inv_i32/
 !/tests/host/lib_utility/
 !/tests/host/section_list/
+!/tests/host/section_irq/
 !/tests/host/realtime_scope/
 /tests/host/*/*
 !/tests/host/*/Makefile

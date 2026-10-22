@@ -604,6 +604,14 @@ extern const uint16_t __section_end;
 /* Optional platform capabilities */
 /* -------------------------------------------------------------------------- */
 
+#ifndef SECTION_PORT_CONTEXT_SWITCH_ACTIVE
+#if defined(SCB_SHCSR_PENDSVACT_Msk)
+#define SECTION_PORT_CONTEXT_SWITCH_ACTIVE() ((SCB->SHCSR & SCB_SHCSR_PENDSVACT_Msk) != 0u)
+#else
+#define SECTION_PORT_CONTEXT_SWITCH_ACTIVE() 0u
+#endif
+#endif
+
 #ifndef PLATFORM_PERF_COUNT_UNIT_US
 #define PLATFORM_PERF_COUNT_UNIT_US 0.5f
 #endif

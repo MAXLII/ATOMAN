@@ -887,6 +887,15 @@ uint32_t section_task_slice_elapsed(void)
 
 void section_task_irq_exit_request(void)
 {
+    /* A tick can interrupt PendSV before it resets the outgoing time slice.
+     * Do not re-pend that stale slice: tail-chaining would immediately suspend
+     * the newly selected callback before it has received its own time slice. */
+
+    if (SECTION_PORT_CONTEXT_SWITCH_ACTIVE() != 0u)
+    {
+        return;
+    }
+
     if (    (section_task_scheduler_started() != 0u) /* The shared-stack scheduler owns task context. */
          && (section_task_slice_elapsed() != 0u))    /* The running task has consumed its current time slice. */
     {
